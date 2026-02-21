@@ -1,54 +1,101 @@
 
 
-## Add Compilation Progress Indicator to Preview Panel
+## Nuclear Fix: Page Freezing and Black Preview
 
-### Problem
-When code generation finishes but compilation hasn't produced HTML yet, the preview shows the empty "Live Preview" placeholder (the decorative splash screen with floating particles). This makes it look like nothing is happening, when actually the compiler is actively working. The `GeneratingOverlay` shows a small "Compiling preview..." badge in the corner, but the main preview area gives no feedback.
+### Root Cause (Final Diagnosis)
 
-### Solution
-Add a dedicated "Compiling" state to the preview panel that shows between the generation skeleton and the final rendered preview. This fills the gap in the state machine:
+The page freezes because the compilation in `CompilationBridge.tsx` calls `compileReactProject()` **synchronously on the main thread**. This function (in `useReactCompiler.ts`) does three heavy operations in one synchronous call:
 
-```text
-State Machine (Before):
-  isGenerating=true, html=null  --> SkeletonPreview
-  isGenerating=false, html=null --> Empty placeholder (BAD - looks broken)
-  isGenerating=false, html=set  --> Rendered iframe
+1. **`buildModuleMap()`** -- iterates all files, creates multiple map entries per file
+2. **`sortByDependency()`** -- builds dependency graph with regex scanning of every file
+3. **`transpileFile()` loop** (line 464) -- runs `stripTypeAnnotations()` on every file (line-by-line parsing with regex), then transforms all imports/exports
 
-State Machine (After):
-  isGenerating=true, html=null        --> SkeletonPreview
-  isCompiling=true, html=null         --> CompilationProgress (NEW)
-  isGenerating=false, html=null       --> Empty placeholder (only before first gen)
-  isGenerating=false, html=set        --> Rendered iframe
+The resulting HTML string is ~50KB+ and includes a `<script src="babel.min.js">` tag (~3MB Babel Standalone) that then does a SECOND transpilation pass inside the iframe. All of this blocks the main thread for 3-10+ seconds.
+
+Additionally, `getCompiledHTML()` is called AGAIN for the hosting compilation (another full synchronous pass), doubling the freeze time.
+
+The previous fixes (debouncing, requestIdleCallback, health check pausing) helped but didn't solve the core problem: **the compilation itself is synchronous and blocks the thread for seconds**.
+
+### Fix Strategy
+
+Instead of trying to make the synchronous compilation "less bad," we will:
+
+1. **Move compilation to a Web Worker** so it runs off the main thread entirely
+2. **As a simpler immediate fix** (since Web Workers can't access hooks), use `setTimeout` chunking to yield control back to the browser between file transpilations
+3. **Eliminate the double compilation** by making the hosting compilation reuse the preview result
+4. **Add a hard guard** against the `getCompiledHTML` hosting path running while preview compilation is still in progress
+
+### Phase 1: Chunked Async Compilation in CompilationBridge
+**File: `src/components/ai-builder/CompilationBridge.tsx`**
+
+Replace the synchronous `compileReactProject()` call with an async chunked approach:
+- Instead of calling `compileReactProject(files)` which does everything synchronously, break the work into microtasks
+- After the call returns, use `setTimeout(0)` to yield before setting state, giving the browser a paint frame
+- Wrap the entire compile call in a `new Promise` + `setTimeout` so it doesn't block
+
+Change the compilation from:
+```typescript
+const compiled = compileReactProjectRef.current(filesRef.current, options);
+setLiveCompiledHTML(compiled.html);
+```
+To:
+```typescript
+// Yield to browser before and after heavy work
+await new Promise(r => setTimeout(r, 0));
+const compiled = compileReactProjectRef.current(filesRef.current, options);
+await new Promise(r => setTimeout(r, 0));
+setLiveCompiledHTML(compiled.html);
 ```
 
-### Changes
+### Phase 2: Eliminate Double Compilation for Hosting
+**File: `src/components/ai-builder/CompilationBridge.tsx`**
 
-#### 1. New Component: `src/components/ai-builder/CompilationProgress.tsx`
-A lightweight, CSS-only animated compilation progress screen showing:
-- A pulsing "Compiling preview..." label with a spinner
-- An indeterminate progress bar (CSS shimmer animation, no JS overhead)
-- The file count being compiled (passed as prop)
-- Subtle phase text ("Transpiling files...", "Building bundle...", "Rendering preview...")
-- Uses the same dark theme as SkeletonPreview for visual continuity
+The hosting compilation (line 237) calls `getCompiledHTMLRef.current()` which is a SECOND full synchronous compilation. Instead, reuse the `liveCompiledHTML` result for hosting when available:
 
-#### 2. Update: `src/components/ai-builder/BuilderPreviewPanel.tsx`
-- Import the new `CompilationProgress` component
-- Add a new condition in the preview area (lines 448-567): when `!html && !isGenerating && isCompiling`, render `CompilationProgress` instead of the empty placeholder
-- Pass `projectFiles?.length` as file count for display
+```typescript
+// Instead of recompiling, reuse the preview result
+setCompiledForHosting(liveCompiledHTML);
+```
 
-The rendering priority becomes:
-1. `html` exists --> render iframe (existing)
-2. `isGenerating` --> render SkeletonPreview (existing)
-3. `isCompiling` --> render CompilationProgress (NEW)
-4. else --> render empty placeholder (existing)
+Only fall back to `getCompiledHTML()` for non-React projects where the preview and hosting formats differ.
 
-### Technical Details
-- The new component uses pure CSS animations (`@keyframes`) to avoid any JS animation overhead during the compilation phase when the main thread is already busy
-- No polling, no refs, no intervals -- just static props and CSS
-- Estimated phase labels are cosmetic only (cycle through on a CSS animation timer), not tied to actual compiler internals
-- The component is intentionally simple (~60 lines) to minimize bundle impact
+### Phase 3: Add Yield Points Inside transpileFile Loop
+**File: `src/hooks/useReactCompiler.ts`**
 
-### Files
-1. `src/components/ai-builder/CompilationProgress.tsx` -- new component
-2. `src/components/ai-builder/BuilderPreviewPanel.tsx` -- add compilation state to preview area conditional
+Make `compileReactProject` return a Promise and add yield points between file transpilations so the browser can paint:
+
+- Convert `compileReactProject` to async
+- After every 2 files transpiled, `await new Promise(r => setTimeout(r, 0))` to yield
+- This keeps the total compilation time the same but prevents the "page not responding" dialog
+
+### Phase 4: Suppress Toasts During Compilation Window
+**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
+
+Add a compilation-aware gate to the `dedupeToast` helper. During `isCompiling=true`, suppress all non-error toasts entirely. This prevents any remaining toast accumulation from triggering during the compilation window.
+
+### Phase 5: Increase Compilation Safety Timeout
+**File: `src/components/ai-builder/CompilationBridge.tsx`**
+
+Increase `COMPILE_TIMEOUT_MS` from 10s to 20s. With the yield points added in Phase 3, the wall-clock time for compilation will increase slightly (yielding adds overhead), so the safety timeout needs to accommodate this.
+
+### Files to Edit
+1. `src/components/ai-builder/CompilationBridge.tsx` -- async compilation with yields, eliminate double compilation, increase timeout
+2. `src/hooks/useReactCompiler.ts` -- convert compileReactProject to async with yield points between files
+3. `src/components/ai-builder/AIAppBuilderWorkspace.tsx` -- suppress non-error toasts during compilation
+
+### Expected Impact
+
+```text
+Before:
+  compileReactProject() blocks main thread 3-10s (synchronous)
+  getCompiledHTML() blocks another 3-10s (hosting, synchronous)
+  Total: 6-20s of main thread blocking
+  Result: "This page isn't responding"
+
+After:
+  compileReactProject() yields every 2 files (~50ms chunks)
+  Hosting reuses preview result (0ms)
+  Total: same compilation time, but spread across yielding chunks
+  Result: Browser stays responsive, progress indicator visible
+```
 
