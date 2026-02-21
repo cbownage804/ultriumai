@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGPTBuilderChat } from '@/hooks/useGPTBuilderChat';
 import { useCustomGPTs } from '@/hooks/useCustomGPTs';
+import { useBuildChime } from '@/hooks/useBuildChime';
 import { GPTBuilderChatPanel } from './GPTBuilderChatPanel';
 import { GPTBuilderPreview, GPTBuilderPreviewHandle } from './GPTBuilderPreview';
 import { GPTBuilderConfigSidebar } from './GPTBuilderConfigSidebar';
@@ -12,18 +13,22 @@ import { GPTBuilderAnalyticsPanel } from './GPTBuilderAnalyticsPanel';
 import { GPTExportImportPanel } from './GPTExportImportPanel';
 import { GPTTemplatePickerModal } from './GPTTemplatePickerModal';
 import { GPTConfigIndicators } from './GPTConfigIndicators';
+import { GPTSettingsModal } from './GPTSettingsModal';
 import { useGPTPreviewCapture } from '@/hooks/useGPTPreviewCapture';
 import { GPTReviewPanel } from './GPTReviewPanel';
+import { KeyboardShortcutsPanel } from '@/components/ai-builder/KeyboardShortcutsPanel';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   ArrowLeft, Save, RotateCcw, Settings2, Eye, MessageSquare, Loader2,
-  BookOpen, Zap, Code2, Layers, FileJson, Copy, BarChart3, ClipboardCheck
+  BookOpen, Zap, Code2, Layers, FileJson, Copy, BarChart3, ClipboardCheck,
+  MessageCirclePlus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { GPTBuilderOnboardingTour } from './GPTBuilderOnboardingTour';
+import confetti from 'canvas-confetti';
 
 type SidePanel = 'config' | 'knowledge' | 'actions' | 'embed' | 'export' | 'analytics' | null;
 
@@ -32,19 +37,54 @@ interface GPTBuilderWorkspaceProps {
   templateId?: string;
 }
 
+const MILESTONES = [10, 25, 50, 100];
+
 export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspaceProps) {
   const navigate = useNavigate();
-  const { config, messages, isGenerating, isLoading, savedGptId, setSavedGptId, sendMessage, updateConfig, resetConfig, stopGeneration } = useGPTBuilderChat(editGptId, templateId);
+  const { config, messages, isGenerating, isLoading, savedGptId, setSavedGptId, sendMessage, updateConfig, resetConfig, clearMessages, stopGeneration } = useGPTBuilderChat(editGptId, templateId);
   const { createGPT, updateGPT } = useCustomGPTs();
   const [activeTab, setActiveTab] = useState<'chat' | 'preview' | 'config'>('chat');
   const [isSaving, setIsSaving] = useState(false);
   const [sidePanel, setSidePanel] = useState<SidePanel>(null);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [showReview, setShowReview] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [buildCount, setBuildCount] = useState(0);
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    try { return localStorage.getItem('gpt-builder-sound-enabled') !== 'false'; } catch { return true; }
+  });
   const previewRef = useRef<GPTBuilderPreviewHandle>(null);
   const { captureGPTThumbnail } = useGPTPreviewCapture();
+  const { onGeneratingChange } = useBuildChime(soundEnabled);
 
   const isEditMode = !!savedGptId;
+
+  // Build chime + build counter
+  useEffect(() => {
+    onGeneratingChange(isGenerating);
+  }, [isGenerating, onGeneratingChange]);
+
+  const prevGeneratingRef = useRef(false);
+  useEffect(() => {
+    if (prevGeneratingRef.current && !isGenerating) {
+      setBuildCount(prev => {
+        const next = prev + 1;
+        if (MILESTONES.includes(next)) {
+          confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
+          toast.success(`🎉 ${next} builds! You're on fire!`);
+        }
+        return next;
+      });
+    }
+    prevGeneratingRef.current = isGenerating;
+  }, [isGenerating]);
+
+  // Sound toggle persistence
+  const handleSoundToggle = useCallback((enabled: boolean) => {
+    setSoundEnabled(enabled);
+    try { localStorage.setItem('gpt-builder-sound-enabled', String(enabled)); } catch {}
+  }, []);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -52,6 +92,10 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault();
         handleSave();
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === '/') {
+        e.preventDefault();
+        setShowShortcuts(v => !v);
       }
       if (e.key === 'Escape') {
         if (sidePanel) { setSidePanel(null); return; }
@@ -63,7 +107,6 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
   }, [sidePanel, showTemplatePicker]);
 
   const handleApplyTemplate = useCallback((tplId: string) => {
-    // Navigate to apply template via URL, which triggers the useEffect in useGPTBuilderChat
     navigate(`/ai-studio/gpt-builder?template=${tplId}`, { replace: true });
     window.location.reload();
   }, [navigate]);
@@ -98,7 +141,6 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
         const result = await updateGPT(savedGptId, gptData);
         if (result) {
           toast.success(`${config.name} has been updated!`);
-          // Capture thumbnail after save
           setTimeout(() => {
             const el = previewRef.current?.getPreviewElement();
             captureGPTThumbnail(el, savedGptId).catch(() => {});
@@ -110,7 +152,6 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
           setSavedGptId(result.id);
           toast.success(`${config.name} has been created!`);
           window.history.replaceState(null, '', `/ai-studio/gpt-builder/${result.id}`);
-          // Capture thumbnail after creation
           setTimeout(() => {
             const el = previewRef.current?.getPreviewElement();
             captureGPTThumbnail(el, result.id).catch(() => {});
@@ -213,6 +254,16 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
               <span className="text-sm font-medium text-white/80 truncate max-w-[200px]">
                 {config.name || 'New GPT'}
               </span>
+              {/* Save status badge */}
+              <div className="flex items-center gap-1">
+                <div className={cn(
+                  "h-1.5 w-1.5 rounded-full",
+                  savedGptId ? "bg-emerald-400" : "bg-amber-400"
+                )} />
+                <span className="text-[10px] text-white/30">
+                  {savedGptId ? 'Saved' : 'Unsaved'}
+                </span>
+              </div>
               {isEditMode && (
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.06] text-white/40">Editing</span>
               )}
@@ -298,13 +349,41 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
                 <Button
                   variant="ghost"
                   size="sm"
+                  onClick={() => setShowSettings(true)}
+                  className="text-white/50 hover:text-white hover:bg-white/[0.06] h-8 px-2"
+                >
+                  <Settings2 className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Settings</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearMessages}
+                  className="text-white/50 hover:text-white hover:bg-white/[0.06] h-8 px-2"
+                >
+                  <MessageCirclePlus className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">New Chat</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={resetConfig}
                   className="text-white/50 hover:text-white hover:bg-white/[0.06] h-8 px-2"
                 >
                   <RotateCcw className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Reset</TooltipContent>
+              <TooltipContent side="bottom" className="text-xs">Reset All</TooltipContent>
             </Tooltip>
 
             <Button
@@ -372,13 +451,44 @@ export function GPTBuilderWorkspace({ editGptId, templateId }: GPTBuilderWorkspa
           </div>
         </div>
 
-        {/* Template Picker Modal */}
+        {/* Status Bar */}
+        <div className="flex items-center h-6 px-3 border-t border-white/[0.06] bg-[#09090b] text-[10px] text-white/30 font-mono shrink-0 gap-3">
+          <div className="flex items-center gap-1.5">
+            <div className={cn(
+              "h-1.5 w-1.5 rounded-full",
+              isGenerating ? "bg-amber-400 animate-pulse" : "bg-emerald-400"
+            )} />
+            <span>{isGenerating ? 'Building' : 'Ready'}</span>
+          </div>
+          <div className="h-3 w-px bg-white/[0.06]" />
+          <span>{messages.length} message{messages.length !== 1 ? 's' : ''}</span>
+          {buildCount > 0 && (
+            <>
+              <div className="h-3 w-px bg-white/[0.06]" />
+              <span className="text-violet-400/50">{buildCount} build{buildCount !== 1 ? 's' : ''}</span>
+            </>
+          )}
+          <div className="flex-1" />
+          <span>{isSaving ? 'Saving...' : savedGptId ? 'Saved' : 'Unsaved'}</span>
+        </div>
+
+        {/* Modals */}
         <GPTTemplatePickerModal
           open={showTemplatePicker}
           onOpenChange={setShowTemplatePicker}
           onSelect={handleApplyTemplate}
         />
         <GPTReviewPanel open={showReview} onClose={() => setShowReview(false)} config={config} />
+        <GPTSettingsModal
+          open={showSettings}
+          onOpenChange={setShowSettings}
+          config={config}
+          onChange={updateConfig}
+          soundEnabled={soundEnabled}
+          onSoundToggle={handleSoundToggle}
+          isEditMode={isEditMode}
+        />
+        <KeyboardShortcutsPanel open={showShortcuts} onOpenChange={setShowShortcuts} />
       </div>
     </TooltipProvider>
   );

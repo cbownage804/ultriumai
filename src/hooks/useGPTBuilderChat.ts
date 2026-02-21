@@ -271,6 +271,10 @@ export function useGPTBuilderChat(editGptId?: string, templateId?: string) {
     setSavedGptId(null);
   }, []);
 
+  const clearMessages = useCallback(() => {
+    setMessages([]);
+  }, []);
+
   const stopGeneration = useCallback(() => {
     abortRef.current?.abort();
     setIsGenerating(false);
@@ -286,6 +290,7 @@ export function useGPTBuilderChat(editGptId?: string, templateId?: string) {
     sendMessage,
     updateConfig,
     resetConfig,
+    clearMessages,
     stopGeneration,
   };
 }
