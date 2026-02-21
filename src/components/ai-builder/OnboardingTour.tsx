@@ -21,7 +21,7 @@ const TOUR_STEPS: TourStep[] = [
     target: '[data-tour="mode-toggle"]',
     title: 'Build vs Chat Mode',
     description: 'Build mode generates code with an agent workflow. Chat mode lets you discuss and plan without generating files.',
-    position: 'bottom',
+    position: 'top',
   },
   {
     target: '[data-tour="preview"]',
@@ -39,7 +39,7 @@ const TOUR_STEPS: TourStep[] = [
     target: '[data-tour="command-palette"]',
     title: 'Command Palette (⌘K)',
     description: 'Your shortcut to everything — search files, switch branches, toggle panels, run commands, and more.',
-    position: 'bottom',
+    position: 'top',
   },
 ];
 
@@ -124,11 +124,22 @@ export function OnboardingTour({ forceShow }: OnboardingTourProps) {
     if (!highlightRect) return { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
 
     const pad = 16;
+    const viewH = window.innerHeight;
+    const viewW = window.innerWidth;
+    const centerX = Math.min(Math.max(highlightRect.left + highlightRect.width / 2, 170), viewW - 170);
+
     switch (step.position) {
-      case 'top':
-        return { bottom: `calc(100vh - ${highlightRect.top}px + ${pad}px)`, left: highlightRect.left + highlightRect.width / 2, transform: 'translateX(-50%)' };
-      case 'bottom':
-        return { top: highlightRect.bottom + pad, left: highlightRect.left + highlightRect.width / 2, transform: 'translateX(-50%)' };
+      case 'top': {
+        const bottomVal = viewH - highlightRect.top + pad;
+        // If not enough space above, flip to center
+        if (bottomVal > viewH - 100) return { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
+        return { bottom: bottomVal, left: centerX, transform: 'translateX(-50%)' };
+      }
+      case 'bottom': {
+        const topVal = highlightRect.bottom + pad;
+        if (topVal > viewH - 120) return { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
+        return { top: topVal, left: centerX, transform: 'translateX(-50%)' };
+      }
       case 'left':
         return { top: highlightRect.top + highlightRect.height / 2, right: `calc(100vw - ${highlightRect.left}px + ${pad}px)`, transform: 'translateY(-50%)' };
       case 'right':
