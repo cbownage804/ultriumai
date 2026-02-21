@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import type { ProjectFile } from './useProjectFileSystem';
 
 const DRAFT_KEY = 'ai-builder-draft';
-const DEBOUNCE_MS = 2000;
+const DEBOUNCE_MS = 1500;
 
 export interface DraftData {
   name: string;
@@ -16,15 +16,6 @@ export function useDraftPersistence() {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const writeDraft = useCallback((name: string, files: ProjectFile[], messages: any[]) => {
-    const trySet = (json: string): boolean => {
-      try {
-        localStorage.setItem(DRAFT_KEY, json);
-        return true;
-      } catch {
-        return false;
-      }
-    };
-
     const baseDraft: DraftData = {
       name,
       files: files.map(f => ({ path: f.path, content: f.content, language: f.language })),
@@ -32,30 +23,46 @@ export function useDraftPersistence() {
       savedAt: new Date().toISOString(),
     };
 
-    // Backup old draft in memory BEFORE removing — so we can restore on failure
-    const backup = localStorage.getItem(DRAFT_KEY);
+    // Build tiered payloads BEFORE touching storage
+    const payloads: string[] = [];
+    try {
+      payloads.push(JSON.stringify(baseDraft));
+    } catch { /* serialization failed */ }
 
-    // Remove old value once to free quota
-    localStorage.removeItem(DRAFT_KEY);
-
-    // Tier 1: Full save (files + messages)
-    const fullJson = JSON.stringify(baseDraft);
-    if (trySet(fullJson)) return;
-
-    // Tier 2: Files + slim messages (strip large content)
-    console.warn('[Draft] localStorage quota exceeded, saving without message content');
+    // Tier 2: slim messages
     const slimMessages = messages.map((m: any) => ({
       role: m.role, timestamp: m.timestamp,
       content: typeof m.content === 'string' ? m.content.slice(0, 200) : '',
     }));
-    if (trySet(JSON.stringify({ ...baseDraft, messages: slimMessages }))) return;
+    try {
+      payloads.push(JSON.stringify({ ...baseDraft, messages: slimMessages }));
+    } catch { /* */ }
 
-    // Tier 3: Files only (no messages)
-    console.warn('[Draft] localStorage still full, saving files only');
-    if (trySet(JSON.stringify({ ...baseDraft, messages: [] }))) return;
+    // Tier 3: files only
+    try {
+      payloads.push(JSON.stringify({ ...baseDraft, messages: [] }));
+    } catch { /* */ }
 
-    // Tier 4: All writes failed — restore the old draft so we don't lose data
-    console.warn('[Draft] localStorage completely full, restoring previous draft');
+    if (payloads.length === 0) return; // nothing serializable
+
+    // Snapshot old value BEFORE any mutation
+    const backup = localStorage.getItem(DRAFT_KEY);
+
+    // Free quota by removing old value
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* */ }
+
+    // Try each tier until one succeeds
+    for (const json of payloads) {
+      try {
+        localStorage.setItem(DRAFT_KEY, json);
+        return; // success — done
+      } catch {
+        // quota exceeded, try next tier
+      }
+    }
+
+    // ALL tiers failed — restore the backup so we don't lose existing data
+    console.warn('[Draft] All localStorage writes failed, restoring backup');
     if (backup) {
       try { localStorage.setItem(DRAFT_KEY, backup); } catch { /* truly full */ }
     }
@@ -87,7 +94,7 @@ export function useDraftPersistence() {
   }, []);
 
   const clearDraft = useCallback(() => {
-    localStorage.removeItem(DRAFT_KEY);
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* */ }
   }, []);
 
   const hasDraft = useCallback((): boolean => {
