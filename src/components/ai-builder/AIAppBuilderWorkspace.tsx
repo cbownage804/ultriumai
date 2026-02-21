@@ -995,7 +995,11 @@ export function AIAppBuilderWorkspace() {
   latestRef.current.messages = messages;
 
   useEffect(() => {
-    const flushDraft = () => saveDraftImmediate(latestRef.current.name, latestRef.current.files, latestRef.current.messages);
+    const flushDraft = () => {
+      saveDraftImmediate(latestRef.current.name, latestRef.current.files, latestRef.current.messages);
+      // Also flush to IndexedDB for more reliable recovery
+      idbPersistence.saveToIDB(sessionId, latestRef.current.name, latestRef.current.files, latestRef.current.messages);
+    };
 
     const handleVisibility = () => {
       if (document.visibilityState === 'hidden') flushDraft();
@@ -1009,7 +1013,16 @@ export function AIAppBuilderWorkspace() {
       window.removeEventListener('beforeunload', flushDraft);
       flushDraft(); // also flush on unmount (route change)
     };
-  }, [saveDraftImmediate]);
+  }, [saveDraftImmediate, idbPersistence, sessionId]);
+
+  // Strip ?new=true from URL once generation starts so tab recovery works
+  useEffect(() => {
+    if (isGenerating && searchParams.get('new') === 'true') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('new');
+      window.history.replaceState({}, '', url.pathname + url.search);
+    }
+  }, [isGenerating, searchParams]);
 
   // Auto-load project from URL ?project=<id> param
   const initialProjectId = searchParams.get('project');

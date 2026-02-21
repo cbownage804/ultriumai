@@ -109,10 +109,12 @@ export function CompilationBridge({
   const prevIsGeneratingForReset = useRef(false);
   useEffect(() => {
     if (isGenerating && !prevIsGeneratingForReset.current) {
-      // Only reset if there's no existing preview (fresh generation, not auto-fix)
-      if (!stableHTMLRef.current) {
-        setStableHTML(null);
-      }
+      // Always reset stableHTML when a new generation starts.
+      // The old preview will be replaced by the new compilation result.
+      setStableHTML(null);
+      // Also reset compilation state so the new build can run
+      compilationAttemptedRef.current = false;
+      compilationLockRef.current = false;
     }
     prevIsGeneratingForReset.current = isGenerating;
   }, [isGenerating, setStableHTML]);
@@ -135,10 +137,24 @@ export function CompilationBridge({
   const compilationDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const compilationCleanupRef = useRef<(() => void) | null>(null);
 
+  // Track previous filesDigest to detect actual file changes
+  const prevFilesDigestRef = useRef<string>('');
+
   useEffect(() => {
-    if (isGenerating || filesRef.current.length === 0 || stableHTMLRef.current) {
+    if (isGenerating || filesRef.current.length === 0) {
       return;
     }
+
+    // If stableHTML already exists but filesDigest changed, reset it so
+    // recompilation can run with the new files
+    if (stableHTMLRef.current && filesDigest !== prevFilesDigestRef.current) {
+      prevFilesDigestRef.current = filesDigest;
+      setStableHTML(null);
+      // Don't return — fall through to start recompilation
+    } else if (stableHTMLRef.current) {
+      return;
+    }
+    prevFilesDigestRef.current = filesDigest;
 
     // Prevent re-entry — only compile once per generation cycle
     if (compilationLockRef.current) return;
