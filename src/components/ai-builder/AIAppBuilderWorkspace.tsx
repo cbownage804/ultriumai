@@ -1058,13 +1058,16 @@ export function AIAppBuilderWorkspace() {
 
   // Restore draft on mount (only if no project param and not explicitly new)
   const isNewProject = searchParams.get('new') === 'true';
+  const hasRestoredRef = useRef(false);
   useEffect(() => {
     if (initialProjectId || isNewProject) return;
     if (project.files.length > 0 || messages.length > 0) return;
+    if (hasRestoredRef.current) return;
 
     // SYNC FIRST: Try localStorage immediately (no async delay)
     const lsDraft = loadDraft();
     if (lsDraft && (lsDraft.files.length > 0 || lsDraft.messages.length > 0)) {
+      hasRestoredRef.current = true;
       setFiles(lsDraft.files);
       renameProject(lsDraft.name);
       if (lsDraft.messages.length > 0) {
@@ -1073,13 +1076,15 @@ export function AIAppBuilderWorkspace() {
     }
 
     // ASYNC SECOND: Check IDB for potentially more complete data
+    let cancelled = false;
     (async () => {
       try {
         const idbSession = await idbPersistence.checkRecovery();
-        if (!idbSession) return;
+        if (cancelled || !idbSession) return;
         const idbTotal = (idbSession.files?.length || 0) + (idbSession.messages?.length || 0);
         const lsTotal = (lsDraft?.files?.length || 0) + (lsDraft?.messages?.length || 0);
         if (idbTotal > lsTotal) {
+          hasRestoredRef.current = true;
           setFiles(idbSession.files);
           renameProject(idbSession.name);
           if (idbSession.messages.length > 0) {
@@ -1088,6 +1093,8 @@ export function AIAppBuilderWorkspace() {
         }
       } catch { /* IDB unavailable */ }
     })();
+
+    return () => { cancelled = true; };
   }, []); // intentionally run once on mount
 
   // Handle recovery dialog actions
