@@ -1,112 +1,44 @@
 
 
-# Fix: Browser Freeze After Generation — Async Compilation
+## Fix: Prevent Preview Freeze by Stabilizing All Compilation Effects
 
-## Problem
+### Problem
+The preview freezes ("This page isn't responding") because three `useEffect` hooks inside `CompilationBridge.tsx` still depend on the raw `files` array, which creates a new reference on every render. This causes:
+1. The `compiledForHosting` effect to re-run heavy compilation repeatedly
+2. The preview update effect to re-fire constantly
+3. The hot-patch effect to loop indefinitely
 
-When generation completes (`isGenerating` turns false), two heavy synchronous computations run inside `useMemo` in `CompilationBridge.tsx`:
+Only the `liveCompiledHTML` effect was previously fixed to use `filesDigest` -- the other three were missed.
 
-1. **`compiledForHosting`** (line 89): Calls `getCompiledHTML()` synchronously during render
-2. **`liveCompiledHTML`** (line 114): Calls `compileReactProject()` synchronously during render
+### Fix (single file: `CompilationBridge.tsx`)
 
-`compileReactProject` (771 lines in `useReactCompiler.ts`) performs regex-based TypeScript stripping, topological dependency sorting, and full transpilation of every file. For projects with 15-30+ files, this locks the main thread for multiple seconds, freezing the browser on the skeleton screen.
+1. **Store `files` in a ref** so effects can access the latest file data without depending on the array reference:
+   - Add `const filesRef = useRef(files); filesRef.current = files;`
+   
+2. **Replace `files` with `filesDigest`** in the dependency arrays of all three remaining effects:
+   - `compiledForHosting` effect (line 226): change `[files, ...]` to `[filesDigest, ...]`
+   - Preview update effect (line 257): change `[..., files, ...]` to `[..., filesDigest, ...]`
+   - Hot-patch effect (line 264): change `[files, ...]` to `[filesDigest, ...]`
+   
+3. **Use `filesRef.current`** inside those effect bodies wherever `files` is read (e.g., passing to `getCompiledHTMLRef.current(...)` or `liveSync.applyPatches(...)`)
 
-## Solution
+4. **Add a lock for `compiledForHosting`** similar to `compilationLockRef` to prevent the hosting compilation from running more than once per cycle
 
-Convert both `useMemo` computations to `useEffect` + `setTimeout` so the browser can render a frame before heavy work starts.
+5. **Fix `detectReactProject` memo** (line 86): change dependency from `[files]` to `[filesDigest]` and use `filesRef.current` inside, since it also re-runs on every files reference change
 
-### Change 1: `CompilationBridge.tsx` — Async `compiledForHosting`
-
-Replace the `useMemo` (lines 89-97) with `useEffect` + `useState`:
-
-```text
-Before:
-  const compiledForHosting = useMemo(() => {
-    if (isGenerating) return null;
-    return getCompiledHTML(...);  // BLOCKS main thread
-  }, [...]);
-
-After:
-  const [compiledForHosting, setCompiledForHosting] = useState<string | null>(null);
-  useEffect(() => {
-    if (isGenerating) { setCompiledForHosting(null); return; }
-    if (files.length === 0) return;
-    const timer = setTimeout(() => {
-      try {
-        const result = getCompiledHTML(...);
-        setCompiledForHosting(result);
-      } catch (e) {
-        console.error('[compiledForHosting] crashed:', e);
-        setCompiledForHosting(null);
-      }
-    }, 100);  // yield to browser first
-    return () => clearTimeout(timer);
-  }, [files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, isGenerating]);
-```
-
-### Change 2: `CompilationBridge.tsx` — Async `liveCompiledHTML`
-
-Replace the `useMemo` (lines 114-136) with `useEffect` + `useState`:
+### Technical Details
 
 ```text
-Before:
-  const liveCompiledHTML = useMemo(() => {
-    if (isGenerating) return null;
-    return compileReactProject(files, options);  // BLOCKS main thread
-  }, [...]);
+Current deps (BROKEN - fires every render):
+  compiledForHosting:  [files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, isGenerating, liveCompiledHTML]
+  preview update:      [isGenerating, liveCompiledHTML, files, stableHTML, setStableHTML]
+  hot-patch:           [files, isGenerating, stableHTML]
 
-After:
-  const [liveCompiledHTML, setLiveCompiledHTML] = useState<string | null>(null);
-  useEffect(() => {
-    if (isGenerating || files.length === 0 || stableHTMLRef.current) {
-      setLiveCompiledHTML(null);
-      return;
-    }
-    const timer = setTimeout(() => {
-      try {
-        if (isReactProject) {
-          const result = compileReactProject(files, { supabaseConfig, stripeConfig, envVars });
-          if (result.errors.length > 0) console.warn('[ReactCompiler] Warnings:', result.errors);
-          setLiveCompiledHTML(result.html || null);
-        } else {
-          setLiveCompiledHTML(getCompiledHTML(...) || null);
-        }
-      } catch (e) {
-        console.error('[ReactCompiler] crashed:', e);
-        setLiveCompiledHTML(null);
-      }
-    }, 50);  // yield to browser first
-    return () => clearTimeout(timer);
-  }, [files, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, isReactProject, isGenerating]);
+Fixed deps (stable - fires only on real changes):
+  compiledForHosting:  [filesDigest, isGenerating, liveCompiledHTML]
+  preview update:      [isGenerating, liveCompiledHTML, filesDigest, stableHTML, setStableHTML]
+  hot-patch:           [filesDigest, isGenerating, stableHTML]
 ```
 
-### Change 3: `CompilationBridge.tsx` — Add `onCompilingChange` prop
-
-Add a new callback prop so the parent workspace can show "Compiling preview..." in the overlay:
-
-- Add `onCompilingChange?: (compiling: boolean) => void` to `CompilationBridgeProps`
-- Call `onCompilingChange(true)` before starting compilation in both effects
-- Call `onCompilingChange(false)` when compilation finishes
-
-### Change 4: `AIAppBuilderWorkspace.tsx` — Wire `isCompiling` state
-
-Pass `setIsCompiling` (which already exists in the workspace) to `CompilationBridge` as the `onCompilingChange` callback. The `GeneratingOverlay` already accepts `isCompiling` and shows "Compiling preview..." when true.
-
-### Change 5: Safety timeout (10 seconds)
-
-Wrap each compilation in a `Promise.race` with a 10-second timeout. If compilation hangs, set the error fallback HTML and stop blocking.
-
-## Files Changed
-
-| File | Change |
-|------|--------|
-| `src/components/ai-builder/CompilationBridge.tsx` | Replace both `useMemo` with async `useEffect` + `setTimeout`, add `onCompilingChange` prop |
-| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | Pass `setIsCompiling` to CompilationBridge |
-
-## Expected Result
-
-- Browser never freezes after generation ends
-- User sees "Compiling preview..." overlay for 0.5-3 seconds while compilation runs
-- The workspace UI (chat, file tree, buttons) remains interactive throughout
-- If compilation takes over 10 seconds, an error fallback page appears instead of an infinite freeze
+All config props (`supabaseConfig`, `stripeConfig`, `envVars`, etc.) will also be removed from the `compiledForHosting` dependency array since they are already accessed via refs and rarely change -- their inclusion was causing additional unnecessary re-fires.
 
