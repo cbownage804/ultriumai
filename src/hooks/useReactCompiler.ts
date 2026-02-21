@@ -138,8 +138,35 @@ export function useReactCompiler() {
 
     // Remove single-line type aliases: type X = string | number;
     result = result.replace(/^(?:export\s+)?type\s+\w+\s*=\s*[^;{]+;/gm, '');
-    // Remove : Type annotations from parameters and variables (simplified)
-    result = result.replace(/: (?:React\.(?:FC|ReactNode|MouseEvent|ChangeEvent|FormEvent|CSSProperties|RefObject)(?:<[^>]+>)?|string|number|boolean|void|any|null|undefined|never|unknown|object|Record<[^>]+>|Array<[^>]+>|[A-Z]\w*(?:\[\])?(?:\s*\|\s*[A-Z]\w*(?:\[\])?)*)/g, '');
+    // Strip return type annotations: ): Type => or ): Type {
+    result = result.replace(
+      /\)\s*:\s*[A-Za-z_][\w.]*(?:<(?:[^<>]|<(?:[^<>]|<[^<>]*>)*>)*>)?(?:\[\])?(?:\s*[|&]\s*[A-Za-z_][\w.]*(?:<(?:[^<>]|<[^<>]*>)*>)?(?:\[\])?)*(?=\s*(?:=>|\{))/g,
+      ')'
+    );
+
+    // Pass 1: Strip `: React.XXX<...>` annotations
+    result = result.replace(
+      /:\s*React\.(?:FC|ReactNode|MouseEvent|ChangeEvent|FormEvent|CSSProperties|RefObject|Dispatch|SetStateAction|MutableRefObject|HTMLAttributes|ComponentProps|ComponentType|ElementType|ReactElement|JSX\.Element)(?:<(?:[^<>]|<(?:[^<>]|<[^<>]*>)*>)*>)?/g,
+      ''
+    );
+
+    // Pass 2: Strip `: primitiveType` annotations with unions/intersections
+    result = result.replace(
+      /:\s*(?:string|number|boolean|void|any|null|undefined|never|unknown|object)(?:\s*[|&]\s*(?:string|number|boolean|void|any|null|undefined|never|unknown|object))*(?=\s*[=,;)\]}])/g,
+      ''
+    );
+
+    // Pass 3: Strip `: UppercaseType` annotations (including dotted paths like JSX.Element)
+    // Uses callback to protect object literal properties like { icon: Star }
+    result = result.replace(
+      /:\s*[A-Z][\w.]*(?:<(?:[^<>]|<(?:[^<>]|<[^<>]*>)*>)*>)?(?:\[\])?(?:\s*[|&]\s*(?:string|number|boolean|null|undefined|void|never|unknown|[A-Z][\w.]*)(?:\[\])?)*(?=\s*[=,;)\]}])/g,
+      (match, offset) => {
+        const before = result.slice(Math.max(0, offset - 30), offset);
+        if (/[{,]\s*\w+\s*$/.test(before)) return match; // protect object property
+        return '';
+      }
+    );
+
     // Phase 31: Preserve generic type parameters in arrow functions before stripping
     // e.g. const f = <T>(x: T) => ...
     const genericsMarker = '___GENERIC___';
@@ -149,9 +176,9 @@ export function useReactCompiler() {
       return `${genericsMarker}${genericsMap.length - 1}`;
     });
 
-    // Safety pass: strip generics after known React hooks and built-in constructors
+    // Safety pass: strip generics after known React hooks and built-in constructors (handles nesting)
     result = result.replace(
-      /\b(useState|useRef|useCallback|useMemo|useReducer|useContext|createContext|forwardRef|memo|lazy|useImperativeHandle|useLayoutEffect|Set|Map|Array|Promise|Record)\s*<[^>]+>/g,
+      /\b(useState|useRef|useCallback|useMemo|useReducer|useContext|createContext|forwardRef|memo|lazy|useImperativeHandle|useLayoutEffect|Set|Map|Array|Promise|Record)\s*<((?:[^<>]|<(?:[^<>]|<[^<>]*>)*>)*)>/g,
       '$1'
     );
     // Broad generic strip: handles all <TypeName> patterns after identifiers (not JSX)

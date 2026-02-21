@@ -40,11 +40,42 @@ function stripTypeAnnotations(code: string): string {
   }
   result = outputLines.join('\n');
 
+
   result = result.replace(/^(?:export\s+)?type\s+\w+\s*=\s*[^;{]+;/gm, '');
-  result = result.replace(/: (?:React\.(?:FC|ReactNode|MouseEvent|ChangeEvent|FormEvent|CSSProperties|RefObject)(?:<[^>]+>)?|string|number|boolean|void|any|null|undefined|never|unknown|object|Record<[^>]+>|Array<[^>]+>|[A-Z]\w*(?:\[\])?(?:\s*\|\s*[A-Z]\w*(?:\[\])?)*)/g, '');
-  // Safety pass: strip generics after known React hooks and built-in constructors
+
+  // Strip return type annotations: ): Type => or ): Type {
   result = result.replace(
-    /\b(useState|useRef|useCallback|useMemo|useReducer|useContext|createContext|forwardRef|memo|lazy|useImperativeHandle|useLayoutEffect|Set|Map|Array|Promise|Record)\s*<[^>]+>/g,
+    /\)\s*:\s*[A-Za-z_][\w.]*(?:<(?:[^<>]|<(?:[^<>]|<[^<>]*>)*>)*>)?(?:\[\])?(?:\s*[|&]\s*[A-Za-z_][\w.]*(?:<(?:[^<>]|<[^<>]*>)*>)?(?:\[\])?)*(?=\s*(?:=>|\{))/g,
+    ')'
+  );
+
+  // Pass 1: Strip `: React.XXX<...>` annotations
+  result = result.replace(
+    /:\s*React\.(?:FC|ReactNode|MouseEvent|ChangeEvent|FormEvent|CSSProperties|RefObject|Dispatch|SetStateAction|MutableRefObject|HTMLAttributes|ComponentProps|ComponentType|ElementType|ReactElement|JSX\.Element)(?:<(?:[^<>]|<(?:[^<>]|<[^<>]*>)*>)*>)?/g,
+    ''
+  );
+
+  // Pass 2: Strip `: primitiveType` annotations with unions/intersections
+  result = result.replace(
+    /:\s*(?:string|number|boolean|void|any|null|undefined|never|unknown|object)(?:\s*[|&]\s*(?:string|number|boolean|void|any|null|undefined|never|unknown|object))*(?=\s*[=,;)\]}])/g,
+    ''
+  );
+
+  // Pass 3: Strip `: UppercaseType` annotations (including dotted paths like JSX.Element)
+  // Uses callback to protect object literal properties like { icon: Star }
+  result = result.replace(
+    /:\s*[A-Z][\w.]*(?:<(?:[^<>]|<(?:[^<>]|<[^<>]*>)*>)*>)?(?:\[\])?(?:\s*[|&]\s*(?:string|number|boolean|null|undefined|void|never|unknown|[A-Z][\w.]*)(?:\[\])?)*(?=\s*[=,;)\]}])/g,
+    (match, offset) => {
+      // Check if this looks like an object property (preceded by identifier at start of key)
+      const before = result.slice(Math.max(0, offset - 30), offset);
+      if (/[{,]\s*\w+\s*$/.test(before)) return match; // protect object property
+      return '';
+    }
+  );
+
+  // Safety pass: strip generics after known React hooks and built-in constructors (handles nesting)
+  result = result.replace(
+    /\b(useState|useRef|useCallback|useMemo|useReducer|useContext|createContext|forwardRef|memo|lazy|useImperativeHandle|useLayoutEffect|Set|Map|Array|Promise|Record)\s*<((?:[^<>]|<(?:[^<>]|<[^<>]*>)*>)*)>/g,
     '$1'
   );
   // Broad generic strip (only after identifiers, not JSX)
@@ -112,7 +143,6 @@ const y = 2;`;
   });
 
   it('preserves function body with braces after interface (Phase 73 regression)', () => {
-    // This is the critical test — interface followed immediately by function
     const code = `interface Props { x: string }
 function App() { return <div /> }`;
     const result = stripTypeAnnotations(code);
@@ -157,18 +187,77 @@ const ref = useRef<HTMLDivElement>(null);`;
     expect(result).toContain('<div>');
     expect(result).toContain('<span>');
   });
+
+  // ── New test cases for comprehensive type stripping ──
+
+  it('strips dotted type paths like JSX.Element fully', () => {
+    const code = `const el: JSX.Element = <div />;`;
+    const result = stripTypeAnnotations(code);
+    expect(result).not.toContain('JSX');
+    expect(result).not.toContain('.Element');
+    expect(result).toContain('const el = <div />;');
+  });
+
+  it('strips nested generics like SetStateAction<boolean>', () => {
+    const code = `const [val, setVal] = useState<SetStateAction<boolean>>(false);`;
+    const result = stripTypeAnnotations(code);
+    expect(result).toContain('useState(false)');
+    expect(result).not.toContain('<');
+    expect(result).not.toContain('>');
+  });
+
+  it('strips function return type annotations', () => {
+    const code = `function App(): React.ReactElement {
+  return <div />;
+}`;
+    const result = stripTypeAnnotations(code);
+    expect(result).toContain('function App() {');
+    expect(result).not.toContain('ReactElement');
+  });
+
+  it('strips arrow function return type annotations', () => {
+    const code = `const App = (): JSX.Element => {
+  return <div />;
+}`;
+    const result = stripTypeAnnotations(code);
+    expect(result).toContain('const App = () => {');
+    expect(result).not.toContain('JSX');
+  });
+
+  it('strips union types like string | number | null', () => {
+    const code = `const x: string | number | null = getValue();`;
+    const result = stripTypeAnnotations(code);
+    expect(result).not.toContain('string');
+    expect(result).not.toContain('number');
+    expect(result).not.toContain('null');
+    expect(result).toContain('const x = getValue();');
+  });
+
+  it('does NOT strip object literal property values like { icon: Star }', () => {
+    const code = `const config = { icon: Star, label: "Hello" };`;
+    const result = stripTypeAnnotations(code);
+    expect(result).toContain('icon: Star');
+    expect(result).toContain('label: "Hello"');
+  });
+
+  it('strips React.FC with generic parameter', () => {
+    const code = `const App: React.FC<Props> = ({ children }) => {
+  return <div>{children}</div>;
+}`;
+    const result = stripTypeAnnotations(code);
+    expect(result).not.toContain('React.FC');
+    expect(result).toContain('const App = ({ children }) => {');
+  });
 });
 
 // ── Anonymous default export detection (Phase 71) ──
 
 function transformDefaultExports(code: string): string {
   let result = code;
-  // Phase 71: anonymous arrow default
   result = result.replace(
     /^export\s+default\s+((?:\([^)]*\)|[a-zA-Z_$]\w*)\s*=>)/gm,
     'const __DefaultExport = $1'
   );
-  // Phase 71: anonymous function default
   result = result.replace(
     /^export\s+default\s+function\s*\(/gm,
     'const __DefaultExport = function('
@@ -203,7 +292,6 @@ describe('Anonymous default export handling (Phase 71)', () => {
   it('does NOT transform named function default', () => {
     const code = `export default function App() { return <div />; }`;
     const result = transformDefaultExports(code);
-    // Named functions should NOT become __DefaultExport
     expect(result).not.toContain('__DefaultExport');
   });
 
