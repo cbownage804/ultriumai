@@ -1075,6 +1075,13 @@ export function BuilderChatPanel({
               </button>
             )}
             <button
+              onClick={() => onUpdateMessages?.(prev => prev.map(m => m.id === msg.id ? { ...m, pinned: !m.pinned } : m))}
+              className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", msg.pinned ? "text-amber-400 hover:text-amber-300 bg-amber-500/10" : "text-white/20 hover:text-white/50 hover:bg-white/[0.05]")}
+              title={msg.pinned ? "Unpin" : "Pin"}
+            >
+              <Pin className="h-3.5 w-3.5" />
+            </button>
+            <button
               className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors"
               title="Helpful"
             >
@@ -1617,9 +1624,30 @@ export function BuilderChatPanel({
                   onClick={() => { setPlusMenuOpen(false); fileInputRef.current?.click(); }}
                   className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
                 >
-                  <Paperclip className="h-4 w-4 text-white/40" />
+                <Paperclip className="h-4 w-4 text-white/40" />
                   Attach
                 </button>
+                {/* Prompt Templates */}
+                <div className="border-t border-white/[0.06] mt-1 pt-1">
+                  <div className="px-3 py-1 text-[9px] text-white/25 uppercase tracking-wider font-medium">Templates</div>
+                  {[
+                    { icon: '🔐', label: 'Add authentication', prompt: 'Add user authentication with login, signup, and protected routes' },
+                    { icon: '📱', label: 'Make responsive', prompt: 'Make the entire app fully responsive for mobile, tablet, and desktop' },
+                    { icon: '🌙', label: 'Add dark mode', prompt: 'Add a dark/light mode toggle with system preference detection' },
+                    { icon: '📊', label: 'Add dashboard', prompt: 'Create an analytics dashboard with charts and KPI cards' },
+                    { icon: '💳', label: 'Add payments', prompt: 'Integrate Stripe payments with a checkout flow' },
+                    { icon: '🔍', label: 'Add search', prompt: 'Add a global search feature with filtering and results highlighting' },
+                  ].map(t => (
+                    <button
+                      key={t.label}
+                      onClick={() => { setPlusMenuOpen(false); setInput(t.prompt); setTimeout(() => textareaRef.current?.focus(), 50); }}
+                      className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[12px] text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors"
+                    >
+                      <span>{t.icon}</span>
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
               </PopoverContent>
             </Popover>
             <input

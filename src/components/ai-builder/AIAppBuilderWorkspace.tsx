@@ -36,6 +36,9 @@ import type { CommandAction } from './EnhancedCommandPalette';
 import { useProjectBundler } from '@/hooks/useProjectBundler';
 import { CompilationBridge } from './CompilationBridge';
 import { useASTBundler } from '@/hooks/useASTBundler';
+import { useBuildChime } from '@/hooks/useBuildChime';
+import { useAICommitMessages } from '@/hooks/useAICommitMessages';
+import { ProjectSettingsModal } from './ProjectSettingsModal';
 import { useIncrementalCompiler } from '@/hooks/useIncrementalCompiler';
 import { useTypeScriptValidator } from '@/hooks/useTypeScriptValidator';
 import { useConflictResolver } from '@/hooks/useConflictResolver';
@@ -543,6 +546,12 @@ export function AIAppBuilderWorkspace() {
   const buildStartTimeRef = useRef<number>(0);
   const [aiAutocompleteEnabled, setAiAutocompleteEnabled] = useState(true);
   const [confirmAction, setConfirmAction] = useState<{ title: string; description: string; onConfirm: () => void } | null>(null);
+  const [buildCount, setBuildCount] = useState(0);
+  const [soundEnabled, setSoundEnabled] = useState(() => localStorage.getItem('builder-sound') !== 'false');
+  const [hideBadge, setHideBadge] = useState(() => localStorage.getItem('builder-hide-badge') === 'true');
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const buildChime = useBuildChime(soundEnabled);
+  const commitMessages = useAICommitMessages();
   const workspaceContainerRef = useRef<HTMLDivElement>(null);
   const [linkedGPT, setLinkedGPT] = useState<LinkedGPTConfig | null>(null);
   const buildAnalytics = useBuildAnalytics();
@@ -960,6 +969,15 @@ export function AIAppBuilderWorkspace() {
         read: false,
       }, ...prev].slice(0, 50));
       buildLog.logBuildComplete(latestFiles.length, duration);
+      // Build chime + counter
+      buildChime.onGeneratingChange(false);
+      setBuildCount(prev => prev + 1);
+      // Auto commit message
+      const diffs = commitMessages.computeDiffs(previousFiles, latestFiles);
+      if (diffs.length > 0) {
+        const cm = commitMessages.generateLocal(diffs);
+        setMessages(prev => prev.map((m, i) => i === prev.length - 1 ? { ...m, commitMessage: `${cm.type}(${cm.scope}): ${cm.subject}` } : m));
+      }
       // Issue 4 fix: Defer non-critical post-build work to unblock preview
       // Run smoke test synchronously (fast, needed for error annotations)
       // Phase 2: Defer ALL post-generation work via requestIdleCallback to unblock preview
@@ -1813,6 +1831,14 @@ export function AIAppBuilderWorkspace() {
     });
   };
 
+  const handleNewConversation = useCallback(() => {
+    setConfirmAction({
+      title: 'Start new conversation?',
+      description: 'This will clear all messages but keep your project files intact.',
+      onConfirm: () => { clearChat(); },
+    });
+  }, [clearChat]);
+
   const handleRename = async () => {
     const newName = editName.trim();
     if (newName && newName !== project.name) {
@@ -2158,7 +2184,7 @@ export function AIAppBuilderWorkspace() {
           setRightTab={setRightTab}
           setShowPromptHistory={setShowPromptHistory}
           setShowVersionHistory={setShowVersionHistory}
-          setShowSettingsPanel={setShowSettingsPanel}
+          setShowSettingsPanel={() => setShowSettingsModal(true)}
           setShowPublishPanel={setShowPublishPanel}
           setShowBilling={setShowBilling}
           setShowShareDialog={setShowShareDialog}
@@ -2178,7 +2204,7 @@ export function AIAppBuilderWorkspace() {
         <div className="flex-1 overflow-hidden">
           {isMobile ? (
             mobileTab === 'chat' ? (
-              <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} contextBudget={contextBudget} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} onReview={() => { projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)); projectReview.setShowPanel(true); }} supabaseConfig={supabaseConfig} onUpdateMessages={setMessages} streamingContentRef={streamingContentRef} questionsSlot={builderQuestions.pending ? (
+              <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} contextBudget={contextBudget} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} onReview={() => { projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)); projectReview.setShowPanel(true); }} supabaseConfig={supabaseConfig} onUpdateMessages={setMessages} streamingContentRef={streamingContentRef} onNewConversation={handleNewConversation} questionsSlot={builderQuestions.pending ? (
                 <div className="px-3 pt-2">
                   <QuestionsCard
                     questions={builderQuestions.pending.questions}
@@ -2248,7 +2274,7 @@ export function AIAppBuilderWorkspace() {
                 )}
                 <div className="flex-1 overflow-hidden flex flex-col">
                   <div className="flex-1 overflow-hidden">
-                    <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} contextBudget={contextBudget} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} onReview={() => { projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)); projectReview.setShowPanel(true); }} supabaseConfig={supabaseConfig} onUpdateMessages={setMessages} streamingContentRef={streamingContentRef} questionsSlot={builderQuestions.pending ? (
+                    <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} contextBudget={contextBudget} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} onReview={() => { projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)); projectReview.setShowPanel(true); }} supabaseConfig={supabaseConfig} onUpdateMessages={setMessages} streamingContentRef={streamingContentRef} onNewConversation={handleNewConversation} questionsSlot={builderQuestions.pending ? (
                       <div className="px-3 pt-2">
                         <QuestionsCard
                           questions={builderQuestions.pending.questions}
@@ -2542,7 +2568,7 @@ export function AIAppBuilderWorkspace() {
                             <>
                               <ResizablePanel defaultSize={18} minSize={12} maxSize={28}>
                                 <PanelErrorBoundary panelName="File Tree">
-                                  <ProjectFileTree files={project.files} activeFilePath={project.activeFilePath} onSelectFile={(path) => { setActiveFile(path); setRightTab('code'); }} onDeleteFile={deleteFile} onCreateFile={handleCreateFile} onRenameFile={handleRenameFile} />
+                                  <ProjectFileTree files={project.files} activeFilePath={project.activeFilePath} onSelectFile={(path) => { setActiveFile(path); setRightTab('code'); }} onDeleteFile={deleteFile} onCreateFile={handleCreateFile} onRenameFile={handleRenameFile} previousFiles={previousFiles} />
                                 </PanelErrorBoundary>
                               </ResizablePanel>
                               <ResizableHandle className="w-px bg-white/[0.06] hover:bg-cyan-500/30 transition-colors" />
@@ -2658,6 +2684,24 @@ export function AIAppBuilderWorkspace() {
           onToggleAutocomplete={() => setAiAutocompleteEnabled(prev => !prev)}
           isSaving={isSaving}
           lastSaved={lastSaved}
+          buildCount={buildCount}
+        />
+
+        {/* Project Settings Modal */}
+        <ProjectSettingsModal
+          open={showSettingsModal}
+          onOpenChange={setShowSettingsModal}
+          projectName={project.name}
+          onRename={(name) => { renameProject(name); setEditName(name); }}
+          publishedUrl={publishedUrl}
+          supabaseConnected={!!supabaseConfig}
+          stripeConnected={!!stripeConfig}
+          githubConnected={!!githubConfig}
+          hideBadge={hideBadge}
+          onToggleHideBadge={(v) => { setHideBadge(v); localStorage.setItem('builder-hide-badge', String(v)); }}
+          soundEnabled={soundEnabled}
+          onToggleSound={(v) => { setSoundEnabled(v); localStorage.setItem('builder-sound', String(v)); }}
+          onDeleteProject={() => { if (currentProjectId) { deleteProject(currentProjectId); resetProject(); setStableHTML(null); dedupeToast('success', 'Project deleted'); } }}
         />
       </div>
 
