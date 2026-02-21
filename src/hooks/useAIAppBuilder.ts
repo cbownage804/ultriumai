@@ -641,7 +641,7 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
 }
 
 /** Generate contextual follow-up suggestions based on the response and conversation state */
-function generateSuggestions(content: string, mode: BuilderMode, messages: BuilderMessage[] = [], currentFiles: ProjectFile[] = []): string[] {
+export function generateSuggestions(content: string, mode: BuilderMode, messages: BuilderMessage[] = [], currentFiles: ProjectFile[] = []): string[] {
   if (mode === 'discuss') {
     const suggestions: string[] = [];
     const lowerContent = content.toLowerCase();

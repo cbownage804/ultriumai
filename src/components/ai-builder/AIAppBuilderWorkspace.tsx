@@ -16,7 +16,7 @@ import { useBranching } from '@/hooks/useBranching';
 import { useProjectPersistence } from '@/hooks/useProjectPersistence';
 import { useDraftPersistence } from '@/hooks/useDraftPersistence';
 import { useBackgroundGeneration, type BackgroundJob } from '@/hooks/useBackgroundGeneration';
-import { parseMultiFileOutput, applyHunkPatch } from '@/hooks/useAIAppBuilder';
+import { parseMultiFileOutput, applyHunkPatch, generateSuggestions } from '@/hooks/useAIAppBuilder';
 import { usePreviewHosting } from '@/hooks/usePreviewHosting';
 import { usePreviewCapture } from '@/hooks/usePreviewCapture';
 import type { SupabaseConfig, GithubConfig, StripeConfig, VercelConfig, ServiceKey, EnvVar } from './ProjectSettings';
@@ -69,6 +69,7 @@ import { WorkspaceBottomBar } from './WorkspaceBottomBar';
 import { WorkspaceStatusBar } from './WorkspaceStatusBar';
 import { WorkspacePanelLayer } from './WorkspacePanelLayer';
 import { WorkspaceTopBar } from './WorkspaceTopBar';
+import { CloudViewPanel } from './CloudViewPanel';
 import { PanelErrorBoundary } from './PanelErrorBoundary';
 import { SafePanel } from './SafePanel';
 import { buildAuthTemplate } from './authTemplates';
@@ -278,8 +279,8 @@ export function AIAppBuilderWorkspace() {
     addSnapshotRef.current('Pre-build snapshot', project.files, 'auto');
 
     const { files: parsedFiles, deletions, edits } = parseMultiFileOutput(job.output_content);
+    let mergedFiles = [...project.files];
     if (parsedFiles.length > 0 || deletions.length > 0 || edits.length > 0) {
-      let mergedFiles = [...project.files];
       if (deletions.length > 0) mergedFiles = mergedFiles.filter(f => !deletions.includes(f.path));
       for (const newFile of parsedFiles) {
         const existingIdx = mergedFiles.findIndex(f => f.path === newFile.path);
@@ -310,13 +311,18 @@ export function AIAppBuilderWorkspace() {
 
       dedupeToast('success', `Build complete — ${totalChanges} files updated`, { duration: 5000 });
     }
-    setMessages(prev => [...prev, {
-      id: crypto.randomUUID(),
-      role: 'assistant' as const,
-      content: job.output_content!,
-      timestamp: new Date(),
-      filesGenerated: parsedFiles.length + deletions.length,
-    }]);
+    const finalFiles = mergedFiles;
+    setMessages(prev => {
+      const suggestions = generateSuggestions(job.output_content!, mode, prev, finalFiles);
+      return [...prev, {
+        id: crypto.randomUUID(),
+        role: 'assistant' as const,
+        content: job.output_content!,
+        timestamp: new Date(),
+        filesGenerated: parsedFiles.length + deletions.length,
+        suggestions,
+      }];
+    });
     setIsGeneratingOverride(false);
 
     // Dispatch bg-job-completed after a short delay to let React render the new files
@@ -661,6 +667,7 @@ export function AIAppBuilderWorkspace() {
   const setShowCollaboration = panelSetters.showCollaboration;
   const setShowAPIBuilder = panelSetters.showAPIBuilder;
   const setShowSupabaseIDE = panelSetters.showSupabaseIDE;
+  const setShowCloudView = panelSetters.showCloudView;
   const setShowGitHubPanel = panelSetters.showGitHubPanel;
   const setShowMigrationPanel = panelSetters.showMigrationPanel;
   const setShowEdgeFnEditor = panelSetters.showEdgeFnEditor;
@@ -2210,6 +2217,7 @@ export function AIAppBuilderWorkspace() {
           setShowBilling={setShowBilling}
           setShowShareDialog={setShowShareDialog}
           setShowSupabaseIDE={setShowSupabaseIDE}
+          setShowCloudView={setShowCloudView}
           setShowTerminal={setShowTerminal}
           onOpenPanel={openPanelByKey}
           previewCurrentUrl={previewCurrentUrl}
@@ -2458,6 +2466,7 @@ export function AIAppBuilderWorkspace() {
                     onGoToFile={(file, line) => { handleSetActiveFile(file); setRightTab('code'); }}
                   />
                 </SafePanel>
+                <CloudViewPanel isOpen={!!panels.showCloudView} onClose={() => setShowCloudView(false)} supabaseConfig={supabaseConfig} onOpenPanel={openPanelByKey} />
                 <SafePanel show={!!panels.showSupabaseIDE} name="Supabase IDE">
                   <SupabaseIDEPanel open={!!panels.showSupabaseIDE} onClose={() => setShowSupabaseIDE(false)} connection={supabaseConnection} onGenerateCode={(code, fileName) => { upsertFile(fileName, code); setRightTab('code'); setActiveFile(fileName); }} />
                 </SafePanel>

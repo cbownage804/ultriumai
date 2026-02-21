@@ -7,7 +7,7 @@ import { SyncStatusIndicator, HeaderCreditsIndicator, ProjectDropdownMenu, UndoP
 import {
   Eye, Code, Database, Search, History,
   Columns, Rocket, Terminal, Globe, Users, Zap, RefreshCw,
-  MessageSquare, Clock,
+  MessageSquare, Clock, Cloud,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ultriumLogo from '/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png';
@@ -38,6 +38,7 @@ interface WorkspaceTopBarProps {
   setShowBilling: (v: boolean) => void;
   setShowShareDialog: (v: boolean) => void;
   setShowSupabaseIDE: (v: boolean) => void;
+  setShowCloudView: (v: boolean) => void;
   setShowTerminal: (v: boolean) => void;
   onOpenPanel: (key: string) => void;
   previewCurrentUrl: string;
@@ -57,7 +58,7 @@ export function WorkspaceTopBar({
   rightTab, setRightTab,
   setShowPromptHistory, setShowVersionHistory,
   setShowSettingsPanel, setShowPublishPanel, setShowBilling, setShowShareDialog,
-  setShowSupabaseIDE, setShowTerminal,
+  setShowSupabaseIDE, setShowCloudView, setShowTerminal,
   onOpenPanel,
   previewCurrentUrl, previewIframeRef,
   syncStatus, lastSaved,
@@ -148,6 +149,14 @@ export function WorkspaceTopBar({
             Preview
           </button>
           <div className="h-4 w-px bg-white/[0.08] mx-0.5" />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button onClick={() => setShowCloudView(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
+                <Cloud className="h-3.5 w-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">Cloud</TooltipContent>
+          </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <button onClick={() => setShowSupabaseIDE(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
