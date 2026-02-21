@@ -1,111 +1,131 @@
 
 
-## Fix: Auto-Recovery + Preview White Screen
+## Fix: Bulletproof Tab Recovery + IDB Immediate Save
 
-### Two issues to fix
+### Problem 1: IDB Save Never Completes
 
-**Issue 1: Recovery dialog asks instead of auto-restoring**
-
-When you switch tabs and come back, the app shows a "Recover unsaved work?" dialog forcing you to click "Restore". You want it to just restore automatically.
-
-**Issue 2: Preview stuck on white screen**
-
-The preview shows a blank white screen because of a guard in `CompilationBridge.tsx` line 311:
+The `saveToIDB` function in `useIndexedDBPersistence.ts` debounces ALL writes by 500ms:
 ```typescript
-if (stableHTML && stableHTML.length > 0) return;
+saveTimer.current = setTimeout(async () => { ... }, SAVE_DEBOUNCE_MS);
 ```
-This check prevents `liveCompiledHTML` from ever replacing `stableHTML` once it's set. So if the first compilation produces an error fallback or partial result, all subsequent compilations are ignored -- the preview never updates.
 
----
+When the visibility handler calls this on tab switch, the browser may freeze or discard the tab before the 500ms timer fires. Result: IDB is empty when recovery runs.
+
+**Fix:** Add a `saveToIDBImmediate` function that writes directly without debounce, specifically for visibility/beforeunload use.
+
+### Problem 2: Recovery Fallthrough Gap
+
+In `AIAppBuilderWorkspace.tsx` line 1061-1070, if `checkRecovery()` returns a session with 0 files (partially written IDB), the code enters the `if (idbSession)` branch, sees 0 files, and does nothing. It never falls through to the localStorage fallback at line 1072.
+
+Actually looking at the code more carefully:
+```typescript
+if (idbSession && (idbSession.files.length > 0 || idbSession.messages.length > 0)) {
+  // restore...
+  return;
+}
+// Falls through to localStorage
+```
+
+If `idbSession` is truthy but has 0 files AND 0 messages, it does fall through. But if `checkRecovery()` returns `null` (no session key), it also falls through. So this path should work... unless `checkRecovery` throws or gets stuck.
+
+**Fix:** Make recovery try BOTH sources and pick whichever has more files, eliminating the sequential fallback entirely.
 
 ### Changes
 
-**File 1: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`** (1 change)
+**File 1: `src/hooks/useIndexedDBPersistence.ts`**
 
-Replace the recovery dialog flow with automatic restore. Instead of calling `setShowRecoveryDialog(true)` at line 1063, directly restore the session inline:
-
-```typescript
-// BEFORE (lines 1061-1064):
-const idbSession = await idbPersistence.checkRecovery();
-if (idbSession && (idbSession.files.length > 0 || idbSession.messages.length > 0)) {
-  setShowRecoveryDialog(true);
-  return;
-}
-
-// AFTER:
-const idbSession = await idbPersistence.checkRecovery();
-if (idbSession && (idbSession.files.length > 0 || idbSession.messages.length > 0)) {
-  // Auto-restore without asking -- user should never lose work
-  setFiles(idbSession.files);
-  renameProject(idbSession.name);
-  if (idbSession.messages.length > 0) {
-    setMessages(idbSession.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
-  }
-  dedupeToast('success', 'Session auto-restored');
-  return;
-}
-```
-
-The `SessionRecoveryDialog` component and its handlers can remain in the code (no harm), but they simply won't be triggered anymore.
-
-**File 2: `src/components/ai-builder/CompilationBridge.tsx`** (1 change)
-
-Fix the preview update effect at line 309-322. The guard `if (stableHTML && stableHTML.length > 0) return;` prevents new compiled HTML from ever replacing the current preview. This means if the first compilation result was wrong (error fallback, partial render), the preview is stuck forever.
-
-Replace with logic that allows `liveCompiledHTML` to replace `stableHTML` when the compiled content has actually changed:
+Add a `saveToIDBImmediate` function that bypasses the debounce timer. This is identical to the existing save logic but executes synchronously (no setTimeout):
 
 ```typescript
-// BEFORE (lines 309-322):
-useEffect(() => {
-  if (liveCompiledHTML) {
-    if (stableHTML && stableHTML.length > 0) return;  // <-- BLOCKS all updates
-    const patched = liveSync.applyPatches(previewIframeRef, filesRef.current);
-    if (!patched) {
-      setStableHTML(liveCompiledHTML);
-      liveSync.resetSnapshot(filesRef.current);
-    }
+const saveToIDBImmediate = useCallback(async (
+  projectId: string, name: string, files: ProjectFile[], messages: any[]
+) => {
+  if (files.length === 0 && messages.length === 0) return;
+  try {
+    const timestamp = new Date().toISOString();
+    await Promise.all([
+      idbSet(FILES_STORE, projectId, files.map(f => ({
+        path: f.path, content: f.content, language: f.language
+      }))),
+      idbSet(MESSAGES_STORE, projectId, messages),
+      idbSet(META_STORE, projectId, { name, savedAt: timestamp }),
+      idbSet(META_STORE, SESSION_KEY, { projectId, name, savedAt: timestamp }),
+    ]);
+  } catch (err) {
+    console.warn('IndexedDB immediate save failed:', err);
   }
-  ...
-}, [...]);
-
-// AFTER:
-useEffect(() => {
-  if (liveCompiledHTML) {
-    // If stableHTML is the same as liveCompiledHTML, skip (no change)
-    if (stableHTML === liveCompiledHTML) return;
-    // Try live-patching first; if that fails, replace the whole preview
-    const patched = liveSync.applyPatches(previewIframeRef, filesRef.current);
-    if (!patched) {
-      setStableHTML(liveCompiledHTML);
-      liveSync.resetSnapshot(filesRef.current);
-    }
-  }
-  if (!isGenerating && !liveCompiledHTML && filesRef.current.length > 0 && stableHTML === null && compilationAttemptedRef.current) {
-    console.warn('[Preview] Generation complete but compilation returned null — showing error fallback');
-    setStableHTML(ERROR_FALLBACK_HTML);
-  }
-}, [isGenerating, liveCompiledHTML, filesDigest, stableHTML, setStableHTML]);
+}, []);
 ```
 
-The key change: instead of `if (stableHTML && stableHTML.length > 0) return` (which blocks ALL updates), we use `if (stableHTML === liveCompiledHTML) return` (which only skips if the content is identical). This allows new compilations to replace old/broken previews.
+Return it alongside `saveToIDB`.
 
----
+**File 2: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
 
-### Technical details
+Change A: Use `saveToIDBImmediate` in the visibility handler instead of `saveToIDB`:
 
-| Change | File | Lines | What it does |
-|--------|------|-------|-------------|
-| Auto-restore | AIAppBuilderWorkspace.tsx | 1061-1064 | Skip dialog, restore directly |
-| Fix preview guard | CompilationBridge.tsx | 309-322 | Allow new compilations to replace stale previews |
+```typescript
+const saveToIDBImmediateRef = useRef(idbPersistence.saveToIDBImmediate);
+saveToIDBImmediateRef.current = idbPersistence.saveToIDBImmediate;
 
-### Why this works
+// In the flushDraft function:
+const flushDraft = () => {
+  saveDraftImmediate(...);
+  saveToIDBImmediateRef.current(...);  // No debounce
+};
+```
 
-- **Auto-restore**: When the tab remounts and finds saved work in IndexedDB, it restores immediately. No dialog, no user action needed. Your files, messages, and project name are all preserved.
-- **White screen fix**: The preview update effect now allows new compiled HTML to replace old/broken HTML. The only skip condition is if the content is identical (no-op optimization). This means every successful recompilation actually shows up in the preview.
+Change B: Make recovery try both IDB and localStorage in parallel, use whichever has more files:
 
-### Risk assessment
+```typescript
+(async () => {
+  // Try both sources in parallel
+  const [idbSession, lsDraft] = await Promise.all([
+    idbPersistence.checkRecovery().catch(() => null),
+    Promise.resolve(loadDraft()),
+  ]);
 
-- Auto-restore is strictly better UX -- the dialog was an unnecessary friction point
-- The `stableHTML === liveCompiledHTML` identity check is safe because React state updates produce new string references when content changes
-- Live-patching still runs first (performance optimization), full replacement is the fallback
+  // Pick the source with more data
+  const idbFileCount = idbSession?.files?.length || 0;
+  const lsFileCount = lsDraft?.files?.length || 0;
+  const idbMsgCount = idbSession?.messages?.length || 0;
+  const lsMsgCount = lsDraft?.messages?.length || 0;
+
+  const useIDB = idbFileCount + idbMsgCount >= lsFileCount + lsMsgCount
+    && (idbFileCount > 0 || idbMsgCount > 0);
+  const useLS = !useIDB && (lsFileCount > 0 || lsMsgCount > 0);
+
+  if (useIDB && idbSession) {
+    setFiles(idbSession.files);
+    renameProject(idbSession.name);
+    if (idbSession.messages.length > 0) {
+      setMessages(idbSession.messages.map(...));
+    }
+    dedupeToast('success', 'Session auto-restored');
+  } else if (useLS && lsDraft) {
+    setFiles(lsDraft.files);
+    renameProject(lsDraft.name);
+    if (lsDraft.messages.length > 0) {
+      setMessages(lsDraft.messages.map(...));
+    }
+    dedupeToast('success', 'Draft auto-restored');
+  }
+})();
+```
+
+This eliminates the sequential fallback pattern entirely. Both sources are checked, and the best one wins.
+
+### Technical summary
+
+| Change | File | Purpose |
+|--------|------|---------|
+| `saveToIDBImmediate` | useIndexedDBPersistence.ts | Bypass 500ms debounce for critical saves |
+| Use immediate save in visibility handler | AIAppBuilderWorkspace.tsx | Ensure IDB is written before tab discard |
+| Parallel recovery from both sources | AIAppBuilderWorkspace.tsx | Always pick the best available recovery data |
+
+### Why this fixes it
+
+- The visibility handler now writes to IDB immediately (no timer that can be killed by browser)
+- localStorage is always checked as a fallback, not skipped
+- Whichever source has more data wins, so partial writes don't cause total loss
+- Even if IDB fails entirely, localStorage still has the data
 
