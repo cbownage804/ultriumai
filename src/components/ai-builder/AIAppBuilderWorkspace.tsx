@@ -1006,55 +1006,64 @@ export function AIAppBuilderWorkspace() {
   const saveToIDBImmediateRef = useRef(idbPersistence.saveToIDBImmediate);
   saveToIDBImmediateRef.current = idbPersistence.saveToIDBImmediate;
 
+  // Use a ref to track the sessionId so the effect doesn't re-run (and re-register listeners)
+  // when currentProjectId changes during normal usage.
+  const sessionIdRef = useRef(sessionId);
+  sessionIdRef.current = sessionId;
+
   useEffect(() => {
     const flushDraft = () => {
+      const { name, files, messages: msgs } = latestRef.current;
+      console.info('[Draft] Flushing: %d files, %d msgs', files.length, msgs.length);
       // Synchronous localStorage save — guaranteed to complete before tab freeze
-      saveDraftImmediate(latestRef.current.name, latestRef.current.files, latestRef.current.messages);
+      saveDraftImmediate(name, files, msgs);
       // Best-effort async IDB save — may not complete if tab is discarded
       try {
-        saveToIDBImmediateRef.current(sessionId, latestRef.current.name, latestRef.current.files, latestRef.current.messages);
+        saveToIDBImmediateRef.current(sessionIdRef.current, name, files, msgs);
       } catch { /* ignore */ }
     };
 
     const handleVisibility = () => {
       if (document.visibilityState === 'hidden') {
-        // Update the timestamp BEFORE flushing so we know when this save happened
-        lastSaveTimestampRef.current = Date.now();
         flushDraft();
+        // Update the timestamp AFTER flushing so savedAt >= lastSaveTimestamp
+        lastSaveTimestampRef.current = Date.now();
       } else if (document.visibilityState === 'visible') {
-        // Always compare storage timestamp vs React state on tab return.
-        // This catches: empty state, partial corruption, stale heap after freeze.
+        // ALWAYS try to restore — catches empty state, heap discard, partial corruption
         const current = latestRef.current;
         const reactIsEmpty = current.files.length === 0 && current.messages.length === 0;
 
         // Synchronous: try localStorage first
         const draft = loadDraft();
-        let bestTime = lastSaveTimestampRef.current;
-        let restored = false;
 
         if (draft && (draft.files.length > 0 || draft.messages.length > 0)) {
           const draftTime = draft.savedAt ? new Date(draft.savedAt).getTime() : 0;
-          if (reactIsEmpty || draftTime > bestTime) {
-            console.info('[Draft] Re-hydrating from localStorage (reactEmpty=%s, draftTime=%s)', reactIsEmpty, draft.savedAt);
+          // Restore if React lost its state OR if the draft is strictly newer
+          if (reactIsEmpty || draftTime > lastSaveTimestampRef.current) {
+            console.info('[Draft] Re-hydrating from localStorage (empty=%s, files=%d, time=%s)',
+              reactIsEmpty, draft.files.length, draft.savedAt);
             setFiles(draft.files);
             renameProject(draft.name);
             if (draft.messages.length > 0) {
               setMessages(draft.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
             }
-            bestTime = draftTime;
             lastSaveTimestampRef.current = draftTime;
-            restored = true;
           }
+        } else if (reactIsEmpty) {
+          // localStorage is empty too — last resort: check IDB synchronously-ish
+          console.warn('[Draft] Both React and localStorage empty, checking IDB...');
         }
 
-        // Async: check IDB for potentially newer/larger data
+        // Also try IDB (larger capacity) — may contain more complete data
         (async () => {
           try {
             const idbSession = await idbPersistence.checkRecovery();
             if (idbSession && idbSession.files.length > 0) {
               const idbTime = idbSession.savedAt ? new Date(idbSession.savedAt).getTime() : 0;
-              if (idbTime > lastSaveTimestampRef.current) {
-                console.info('[Draft] IDB has newer data, re-hydrating from IDB');
+              // Check current ref again (may have been updated by LS restore above)
+              const stillEmpty = latestRef.current.files.length === 0;
+              if (stillEmpty || idbTime > lastSaveTimestampRef.current) {
+                console.info('[Draft] IDB restore: %d files, time=%s', idbSession.files.length, idbSession.savedAt);
                 setFiles(idbSession.files);
                 renameProject(idbSession.name);
                 if (idbSession.messages && idbSession.messages.length > 0) {
@@ -1076,7 +1085,8 @@ export function AIAppBuilderWorkspace() {
       window.removeEventListener('beforeunload', flushDraft);
       flushDraft(); // also flush on unmount (route change)
     };
-  }, [saveDraftImmediate, sessionId, loadDraft, setFiles, renameProject, setMessages]);
+    // Intentionally stable deps — refs handle changing values
+  }, [saveDraftImmediate, loadDraft, setFiles, renameProject, setMessages]);
 
   // Strip ?new=true immediately on mount so tab recovery works on reload
   useEffect(() => {
@@ -1114,8 +1124,8 @@ export function AIAppBuilderWorkspace() {
   const hasRestoredRef = useRef(false);
   useEffect(() => {
     if (initialProjectId || isNewProject) return;
-    if (project.files.length > 0 || messages.length > 0) return;
     if (hasRestoredRef.current) return;
+    // Don't guard on project.files/messages — they may be stale closures in StrictMode
 
     // SYNC FIRST: Try localStorage immediately (no async delay)
     const lsDraft = loadDraft();
