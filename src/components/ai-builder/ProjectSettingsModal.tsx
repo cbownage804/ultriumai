@@ -124,6 +124,17 @@ export function ProjectSettingsModal({
   const [analysisStep, setAnalysisStep] = useState(0); // 0=not started, 1=analyzed domain, 2=detected provider, 3=getting details
   const [analyzingDomain, setAnalyzingDomain] = useState('');
   const [showManualSetup, setShowManualSetup] = useState<Record<string, boolean>>({});
+  const [detectedRegistrar, setDetectedRegistrar] = useState<RegistrarInfo | null>(null);
+
+  // Reset analysis state when modal closes
+  useEffect(() => {
+    if (!open) {
+      setIsAnalyzing(false);
+      setAnalysisStep(0);
+      setAnalyzingDomain('');
+      setDetectedRegistrar(null);
+    }
+  }, [open]);
 
   // Advanced state
   const [allowRemixing, setAllowRemixing] = useState(true);
@@ -169,19 +180,28 @@ export function ProjectSettingsModal({
     setIsAnalyzing(true);
     setAnalyzingDomain(cleaned);
     setAnalysisStep(0);
+    setDetectedRegistrar(null);
 
-    // Step 1: Analyzed domain (animate after small delay)
-    await new Promise(r => setTimeout(r, 600));
-    setAnalysisStep(1);
+    let registrar: RegistrarInfo | null = null;
 
-    // Step 2: Detect DNS provider
-    const registrar = await detectRegistrar(cleaned);
-    await new Promise(r => setTimeout(r, 500));
-    setAnalysisStep(2);
+    try {
+      // Step 1: Analyzed domain (animate after small delay)
+      await new Promise(r => setTimeout(r, 600));
+      setAnalysisStep(1);
 
-    // Step 3: Getting setup details
-    await new Promise(r => setTimeout(r, 800));
-    setAnalysisStep(3);
+      // Step 2: Detect DNS provider
+      registrar = await detectRegistrar(cleaned);
+      setDetectedRegistrar(registrar);
+      await new Promise(r => setTimeout(r, 500));
+      setAnalysisStep(2);
+
+      // Step 3: Getting setup details
+      await new Promise(r => setTimeout(r, 800));
+      setAnalysisStep(3);
+    } catch (err) {
+      console.error('[handleAddDomain] Detection failed:', err);
+      toast.warning('Could not auto-detect DNS provider — using manual setup');
+    }
 
     // Create the domain entry
     const entry: DomainEntry = {
@@ -203,6 +223,7 @@ export function ProjectSettingsModal({
     setIsAnalyzing(false);
     setAnalysisStep(0);
     setAnalyzingDomain('');
+    setDetectedRegistrar(null);
     setSelectedDomain(entry);
 
     if (registrar) {
@@ -534,8 +555,8 @@ export function ProjectSettingsModal({
                     <AnalysisStep
                       label={
                         analysisStep >= 2
-                          ? <>Detected DNS provider{domains.find(d => d.domain === analyzingDomain)?.registrar
-                              ? <>: <span className="font-semibold text-white/80">{domains.find(d => d.domain === analyzingDomain)?.registrar?.name}</span></>
+                          ? <>Detected DNS provider{detectedRegistrar
+                              ? <>: <span className="font-semibold text-white/80">{detectedRegistrar.name}</span></>
                               : null}</>
                           : 'Detecting DNS provider...'
                       }
