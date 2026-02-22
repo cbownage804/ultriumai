@@ -118,11 +118,8 @@ export function CompilationBridge({
   const prevIsGeneratingForReset = useRef(false);
   useEffect(() => {
     if (isGenerating && !prevIsGeneratingForReset.current) {
-      // Generation STARTING — reset BOTH stableHTML and liveCompiledHTML.
-      // If we only reset stableHTML, the preview update effect (line ~331)
-      // immediately restores stableHTML from the stale liveCompiledHTML,
-      // which prevents the fresh recompilation result from being shown.
-      setStableHTML(null);
+      // Generation STARTING — keep the current preview visible (don't null stableHTML).
+      // Only reset liveCompiledHTML so the fresh compilation result will be accepted.
       setLiveCompiledHTML(null);
       compilationAttemptedRef.current = false;
       compilationLockRef.current = false;
@@ -381,11 +378,11 @@ export function CompilationBridge({
         liveSync.resetSnapshot(filesRef.current);
         return;
       }
-      const patched = liveSync.applyPatches(previewIframeRef, filesRef.current);
-      if (!patched) {
-        setStableHTML(liveCompiledHTML);
-        liveSync.resetSnapshot(filesRef.current);
-      }
+      // Always replace stableHTML with the new compilation result.
+      // Hot-patching fails for full regenerations (JS/TS changes),
+      // so just do a direct replacement to ensure the new preview shows.
+      setStableHTML(liveCompiledHTML);
+      liveSync.resetSnapshot(filesRef.current);
     }
     if (!isGenerating && !liveCompiledHTML && filesRef.current.length > 0 && stableHTML === null && compilationAttemptedRef.current) {
       console.warn('[Preview] Generation complete but compilation returned null — showing error fallback');
