@@ -318,6 +318,15 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
     if (iframeRef.current?.contentWindow) iframeRef.current.contentWindow.scrollTo(0, 0);
   }, [html]);
 
+  // Phase 2: Also clear stale errors when generation completes (isGenerating: true→false)
+  const prevIsGeneratingRef = useRef(isGenerating);
+  useEffect(() => {
+    if (prevIsGeneratingRef.current && !isGenerating) {
+      setErrors([]); setConsoleLogs([]);
+    }
+    prevIsGeneratingRef.current = isGenerating;
+  }, [isGenerating]);
+
   // Listen for navigation messages from iframe
   useEffect(() => {
     const handler = (e: MessageEvent) => {
