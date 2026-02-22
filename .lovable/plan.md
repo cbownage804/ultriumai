@@ -1,77 +1,103 @@
 
-# Fix: Preview Not Updating -- Direct Compilation Path
 
-## Root Cause (finally found it)
+# Fix: Preview Not Updating After Generation
 
-Three compounding issues prevent the preview from updating:
+## Root Cause Found
 
-1. **CompilationBridge is blocked by `isGenerating`**: When `handleBgComplete` runs, files are ready, but `isGenerating` (from `useAIAppBuilder`) stays `true` for 2 more seconds (waiting for the delayed `bg-job-completed` event). CompilationBridge skips compilation during this window.
+There is a **race condition** between `handleBgComplete` (direct compilation) and `CompilationBridge`'s `isGenerating` transition effect:
 
-2. **Nuclear fallback uses the wrong compiler**: The fallback calls `getCompiledHTML()` which returns `null` for React projects (lines 231-232 of `useProjectFileSystem.ts` both return null when no HTML files exist alongside React files). So the safety net never works.
+1. `handleBgComplete` runs, compiles files, and calls `handleStableHTML(result)` -- preview should show up
+2. Milliseconds later, `setIsGenerating(false)` fires (line 1344 in `useAIAppBuilder.ts`)
+3. CompilationBridge's `isGenerating` transition effect (line 127-131) sees generation ending and sets `prevFilesDigestRef.current = '__force_recompile__'`
+4. This triggers CompilationBridge's main compilation effect (line 157+), which detects `filesDigest !== prevFilesDigestRef.current` and **resets stableHTML back to null** (line 168)
+5. The preview goes blank again, then a 500ms debounce + 100ms rAF delay starts a redundant recompilation
+6. If that recompilation also has issues (lock contention, digest mismatch), the preview stays blank forever
 
-3. **Accumulated delays**: Even when `isGenerating` finally turns false, there's a 500ms debounce + 100ms rAF deferral before compilation starts. Total delay from files-ready to preview: ~2.6 seconds minimum, assuming nothing else goes wrong.
+Additionally, **visual edits for color/text** send the change through `sendMessage` (full AI generation), which resets the entire preview. Simple property changes should be applied directly to source files and recompiled without triggering AI.
 
-## Fix
+## Fix Plan
 
-### File 1: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
+### 1. CompilationBridge: Don't reset stableHTML if it was JUST set
 
-**Change `handleBgComplete` to compile immediately after merging files**, using the React compiler (same one CompilationBridge uses). This gives us a direct path from files-ready to preview, bypassing the entire effect chain.
+In `CompilationBridge.tsx`, the main compilation effect (line 165-168) resets `stableHTML` to null when `filesDigest` changes. But if `handleBgComplete` just set `stableHTML` with valid compiled HTML, this destroys it. 
 
-```
-handleBgComplete runs
-  -> setFiles(mergedFiles) 
-  -> detect if React project
-  -> if React: call compileReactProject(mergedFiles) 
-  -> if vanilla: call getCompiledHTML(mergedFiles)
-  -> handleStableHTML(result)  // preview updates immediately
-```
+**Fix**: When `isGenerating` transitions to `false`, do NOT set `prevFilesDigestRef` to `'__force_recompile__'`. Instead, check if `stableHTML` is already set with the correct content. If `handleBgComplete` already compiled, skip recompilation entirely.
 
-Specifically:
-- Import `useReactCompiler` and `detectReactProject` in the workspace
-- After `setFiles(mergedFiles)` in `handleBgComplete`, immediately compile the merged files
-- Call `handleStableHTML(result)` with the compilation result
-- This runs BEFORE `isGenerating` turns false, so the preview updates as soon as files are ready
+Specifically in the `isGenerating` transition effect (lines 127-131):
+- Instead of always setting `prevFilesDigestRef.current = '__force_recompile__'`, only do so if `stableHTMLRef.current` is still null (meaning `handleBgComplete`'s direct compilation hasn't produced a result yet)
 
-**Also fix the nuclear fallback** to use the React compiler instead of `getCompiledHTML` when the project is React-based.
+### 2. CompilationBridge: Don't null-out stableHTML on filesDigest change
 
-### File 2: `src/components/ai-builder/CompilationBridge.tsx` (no changes needed)
+In the main compilation effect (lines 165-168), when `stableHTMLRef.current` exists and `filesDigest` changed, it sets `stableHTML(null)` before recompiling. This causes a flash of blank preview. 
 
-CompilationBridge continues working as before for manual edits, file changes, and other non-generation scenarios. The direct compilation in `handleBgComplete` just front-runs it for the generation case.
+**Fix**: Instead of nulling stableHTML, just unlock and recompile. Keep the old preview visible until the new one is ready. Set the `prevFilesDigestRef` and unlock the lock, but don't call `setStableHTML(null)`.
+
+### 3. Visual edits: Apply color/text directly to source files
+
+In `handleVisualEdit` (AIAppBuilderWorkspace.tsx lines 1848-1853), color changes call `sendMessage` which triggers a full AI generation cycle. This is overkill for a simple CSS change.
+
+**Fix**: For `color` and `text` property changes, directly modify the source files (add/update inline styles in HTML, or update CSS files) and call `setFiles` to trigger recompilation via CompilationBridge. Only fall back to `sendMessage` for complex changes that can't be applied mechanically.
 
 ## Technical Details
 
-In `handleBgComplete` (around line 307, after `setFiles(mergedFiles)`):
+### File 1: `src/components/ai-builder/CompilationBridge.tsx`
 
+**Change 1** -- `isGenerating` transition effect (lines 127-131):
 ```typescript
-// Immediately compile for preview -- don't wait for CompilationBridge effects
-const isReact = detectReactProject(mergedFiles);
-if (isReact) {
-  compileReactProject(mergedFiles, {
-    supabaseConfig: supabaseConfig || undefined,
-    stripeConfig: stripeConfig || undefined,
-    envVars,
-  }).then(compiled => {
-    if (compiled.html) {
-      handleStableHTML(compiled.html);
-    }
-  }).catch(err => {
-    console.error('[handleBgComplete] React compilation failed:', err);
-  });
-} else {
-  const result = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
-  if (result) {
-    handleStableHTML(result);
+} else if (!isGenerating && prevIsGeneratingForReset.current) {
+  // Generation ENDING -- only force recompile if handleBgComplete
+  // hasn't already provided a compiled result
+  if (!stableHTMLRef.current) {
+    compilationLockRef.current = false;
+    compilationAttemptedRef.current = false;
+    prevFilesDigestRef.current = '__force_recompile__';
+  }
+  // If stableHTML is already set (from handleBgComplete direct compile),
+  // just sync the digest so we don't trigger a redundant recompile
+  else {
+    prevFilesDigestRef.current = filesDigest;
+    compilationLockRef.current = true;  // lock to prevent re-entry
+    compilationAttemptedRef.current = true;
   }
 }
 ```
 
-And fix the nuclear fallback similarly -- use `compileReactProject` for React projects instead of `getCompiledHTML`.
+**Change 2** -- Main compilation effect (lines 165-175), don't null stableHTML:
+```typescript
+if (stableHTMLRef.current && filesDigest !== prevFilesDigestRef.current) {
+  // Files changed -- recompile but keep current preview visible
+  prevFilesDigestRef.current = filesDigest;
+  compilationLockRef.current = false;
+  // DON'T set stableHTML to null -- keep old preview showing
+  // until new compilation finishes
+} else if (stableHTMLRef.current) {
+  return;  // no change needed
+}
+```
 
-## Why This Will Work
+### File 2: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
 
-- No dependency on `isGenerating` state transitions
-- No dependency on effect ordering or React batching
-- No debounce or deferral delays
-- Uses the correct compiler (React vs vanilla)
-- Preview updates within milliseconds of files being ready
-- CompilationBridge remains as backup for non-generation file changes
+**Change 3** -- `handleVisualEdit` for color (lines 1848-1853):
+
+Instead of calling `sendMessage` for color changes, directly update the source file:
+```typescript
+} else if (property === 'color') {
+  // Apply color directly to source files without triggering AI generation
+  for (const file of htmlFiles) {
+    // Add/update inline style on the matching element
+    // Use a simple regex or string replacement approach
+    // Then call upsertFile to trigger recompilation
+  }
+  // If direct source update fails, fall back to sendMessage
+}
+```
+
+This ensures color changes update instantly without resetting the preview.
+
+## Summary
+
+These three changes work together:
+- **Change 1** prevents CompilationBridge from overwriting `handleBgComplete`'s result
+- **Change 2** prevents blank preview flashes during recompilation 
+- **Change 3** prevents visual edits from triggering unnecessary full AI generation cycles
+
