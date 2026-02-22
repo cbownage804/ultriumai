@@ -1,44 +1,54 @@
 
 
-## Fix: Prevent React Refresh from Injecting into Worker (Final)
+## Fix: Widen parserConfig to Skip ALL Worker Directory Files
 
-### Why Previous Fixes Failed
+### Root Cause
 
-The `window` shim at the top of `compiler.worker.ts` runs **after** `@react-refresh` has already been imported and evaluated as a separate ES module. Vite's dev server injects `import RefreshRuntime from '/@react-refresh'` as the very first line of any file transformed by the React plugin. Since `@react-refresh` is a standalone module, it evaluates in its own scope before our worker code runs, and crashes on `window` access.
+The `parserConfig` regex `/\.worker\.(ts|js|tsx|jsx)$/` correctly excludes `compiler.worker.ts` from React Refresh injection, but `worker-window-shim.ts` does NOT match this pattern (it ends in `-shim.ts`). So Vite injects the `@react-refresh` preamble into the shim file.
 
-The `worker.plugins: () => []` config only affects the **build** pipeline's plugin list. In dev mode, the React SWC plugin's transform hook runs on all modules served through Vite's dev server, including ES module workers (which are served through the same module graph).
+ES module evaluation order:
+1. `compiler.worker.ts` loads (no preamble -- good)
+2. Its first import `./worker-window-shim` loads -- but this file HAS the preamble injected
+3. The preamble does `import RefreshRuntime from '/@react-refresh'` which accesses `window` -- CRASH
+4. The shim's body `(self as any).window = self` never executes
 
-### The Fix
+### Fix
 
-Use the React plugin's `exclude` option to prevent it from transforming worker files. This stops `@react-refresh` from being injected entirely.
+Change the `parserConfig` filter from matching `*.worker.ts` filenames to matching any file inside the `src/workers/` directory:
 
-### Changes
+**File: `vite.config.ts`** (line 16)
 
-**File: `vite.config.ts`**
-
-Update the `react()` plugin call to exclude worker files:
-
+Change:
 ```typescript
-react({
-  exclude: /\.worker\.(ts|js|tsx|jsx)$/,
-}),
+if (/\.worker\.(ts|js|tsx|jsx)$/.test(id)) return undefined;
 ```
 
-This tells `@vitejs/plugin-react-swc` to skip its React Refresh and JSX transforms for any file matching `*.worker.ts` (or `.js`/`.tsx`/`.jsx`). Since the compiler worker doesn't contain React components or JSX, this is safe.
-
-**File: `src/workers/compiler.worker.ts`**
-
-The `window` shim from the previous fix can be kept as a safety net (it won't hurt), or removed since it's no longer needed. I'll keep it for defense-in-depth.
-
-### Technical Details
-
-- The `exclude` option is documented for exactly this use case: "You may use it to exclude JSX/TSX files that run in a worker"
-- The default `exclude` is `/node_modules/`, so we need to include that in our pattern as well, or pass an array
-- Since `exclude` accepts a regex or array, we'll use an array to preserve the default node_modules exclusion
-
-Final config:
+To:
 ```typescript
-react({
-  exclude: [/node_modules/, /\.worker\.(ts|js|tsx|jsx)$/],
-}),
+if (/\/workers\//.test(id)) return undefined;
 ```
+
+This ensures:
+- `compiler.worker.ts` -- skipped (no preamble)
+- `worker-window-shim.ts` -- skipped (no preamble)
+- Any future worker utility files -- also skipped
+
+With this fix, the shim evaluates first (depth-first import order), sets `window = self`, and all subsequent imports (like `useProjectFileSystem.ts` which DO get the preamble) will find `window` already defined.
+
+### Why This Works
+
+```text
+Import evaluation order:
+  compiler.worker.ts        (no preamble -- matched by /workers/)
+    -> worker-window-shim.ts  (no preamble -- matched by /workers/)
+       Body runs: window = self   [SUCCESS]
+    -> useProjectFileSystem.ts (has preamble, but window exists now)
+       @react-refresh accesses window   [OK -- window = self]
+    -> cdnPackageRegistry.ts   (has preamble, window exists)
+       [OK]
+```
+
+### Single File Change
+
+Only `vite.config.ts` line 16 changes. No other files affected.
+
