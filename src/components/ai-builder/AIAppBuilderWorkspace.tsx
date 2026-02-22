@@ -316,29 +316,13 @@ export function AIAppBuilderWorkspace() {
       const curServiceKeys = serviceKeysRef.current;
       const curCdnPackages = cdnPackagesRef.current;
       // Phase 2: Capture compile promise so we can chain dispatch to it
-      // Add 15s timeout to prevent hanging — CompilationBridge will retry if this fails
+      // IMPORTANT: For React projects, do NOT compile here. The worker is single-threaded
+      // and if we send a request that times out, the worker stays blocked processing it,
+      // preventing CompilationBridge from compiling successfully afterward.
+      // Let CompilationBridge be the sole compiler for React projects.
       if (isReact) {
-        const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('handleBgComplete compile timeout (15s)')), 15_000)
-        );
-        compilePromise = Promise.race([
-          compileReactProjectRef.current(mergedFiles, {
-            supabaseConfig: curSupabase || undefined,
-            stripeConfig: curStripe || undefined,
-            envVars: curEnvVars,
-          }),
-          timeoutPromise,
-        ]).then(compiled => {
-          if (compiled.html) {
-            console.info('[handleBgComplete] ✅ Direct React compilation succeeded, updating preview');
-            handleStableHTML(compiled.html);
-          } else {
-            console.warn('[handleBgComplete] React compilation returned empty HTML');
-          }
-        }).catch(err => {
-          console.warn('[handleBgComplete] React compilation failed/timed out, letting CompilationBridge handle it:', err.message);
-          // Don't try vanilla fallback for React projects — let CompilationBridge retry properly
-        });
+        console.info('[handleBgComplete] React project — deferring compilation to CompilationBridge');
+        compilePromise = Promise.resolve();
       } else {
         const result = getCompiledHTML(curSupabase, curStripe, curEnvVars, curServiceKeys, curCdnPackages, bundleForBrowserRef.current, linkedGPTRef.current);
         if (result) {
