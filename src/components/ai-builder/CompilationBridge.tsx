@@ -152,7 +152,8 @@ export function CompilationBridge({
         // Force the main compilation effect to re-run by resetting digest
         // so it sees the current filesDigest as "new" and starts compilation
         prevFilesDigestRef.current = '';
-        console.info('[CompilationBridge] Generation ended with no preview — forcing recompile');
+        immediateCompileNeededRef.current = true; // skip debounce for post-generation
+        console.info('[CompilationBridge] Generation ended with no preview — forcing immediate recompile');
 
         // Safety net: if main effect doesn't produce stableHTML within 3s, force retry
         const safetyTimer = setTimeout(() => {
@@ -188,8 +189,10 @@ export function CompilationBridge({
 
 
   // Phase 5: Debounce compilation — 500ms delay so rapid setFiles calls consolidate
+  // Post-generation uses 0ms (immediate) to avoid being cancelled by rapid re-renders
   const compilationDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const compilationCleanupRef = useRef<(() => void) | null>(null);
+  const immediateCompileNeededRef = useRef(false);
 
   // Track previous filesDigest to detect actual file changes
   const prevFilesDigestRef = useRef<string>('');
@@ -261,8 +264,10 @@ export function CompilationBridge({
       return;
     }
 
-    console.info('[CompilationBridge] Effect: starting 500ms debounce for compilation');
-    // Debounce: wait 500ms for rapid file changes to settle
+    const debounceMs = immediateCompileNeededRef.current ? 0 : 500;
+    immediateCompileNeededRef.current = false;
+    console.info(`[CompilationBridge] Effect: starting ${debounceMs}ms debounce for compilation`);
+    // Debounce: wait for rapid file changes to settle (0ms for post-generation)
     if (compilationDebounceRef.current) clearTimeout(compilationDebounceRef.current);
     compilationDebounceRef.current = setTimeout(() => {
       if (compilationLockRef.current) {
@@ -332,13 +337,13 @@ export function CompilationBridge({
           await new Promise(r => setTimeout(r, 0));
           if (cancelled) return;
           if (isReactProject) {
-            // Race the worker against a 15s timeout — if worker hangs (e.g. esbuild WASM),
+            // Race the worker against a 30s timeout — if worker hangs (e.g. esbuild WASM init),
             // fall back to the vanilla compiler which always works
             const workerTimeout = new Promise<null>((resolve) =>
               setTimeout(() => {
-                console.warn('[CompilationBridge] Worker compilation timed out after 15s — trying vanilla fallback');
+                console.warn('[CompilationBridge] Worker compilation timed out after 30s — trying vanilla fallback');
                 resolve(null);
-              }, 15_000)
+              }, 30_000)
             );
             const workerResult = compileReactProjectRef.current(filesRef.current, {
               supabaseConfig: supabaseConfig || undefined,
