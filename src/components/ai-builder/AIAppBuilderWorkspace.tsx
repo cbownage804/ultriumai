@@ -306,50 +306,8 @@ export function AIAppBuilderWorkspace() {
         }
       }
       setFiles(mergedFiles);
-
-      // Compile directly with mergedFiles (NOT project.files which is stale).
-      // The worker takes files as a parameter, avoiding the stale closure issue.
-      // If this fails, CompilationBridge will retry once isGeneratingOverride becomes false.
-      const isReact = detectReactProject(mergedFiles);
-      if (isReact) {
-        console.info('[handleBgComplete] React project — compiling via worker with mergedFiles');
-        const curSupabase = supabaseConfigRef.current;
-        const curStripe = stripeConfigRef.current;
-        const curEnvVars = envVarsRef.current;
-        const workerPromise = compileReactProjectRef.current(mergedFiles, {
-          supabaseConfig: curSupabase || undefined,
-          stripeConfig: curStripe || undefined,
-          envVars: curEnvVars,
-        });
-        const timeoutPromise = new Promise<null>(r => setTimeout(() => r(null), 20_000));
-        compilePromise = Promise.race([workerPromise, timeoutPromise]).then(compiled => {
-          if (compiled && compiled.html) {
-            console.info('[handleBgComplete] ✅ Worker compilation succeeded, setting preview');
-            handleStableHTML(compiled.html);
-          } else {
-            console.warn('[handleBgComplete] Worker returned empty or timed out — CompilationBridge will retry');
-          }
-        }).catch(err => {
-          console.warn('[handleBgComplete] Worker compilation failed:', err.message, '— CompilationBridge will retry');
-        });
-      } else {
-        // Non-React: use vanilla compiler with mergedFiles via getCompiledHTML
-        // Note: getCompiledHTML reads from project closure, but for non-React the
-        // files are set synchronously and simpler, so this path usually works.
-        const curSupabase = supabaseConfigRef.current;
-        const curStripe = stripeConfigRef.current;
-        const curEnvVars = envVarsRef.current;
-        const curServiceKeys = serviceKeysRef.current;
-        const curCdnPackages = cdnPackagesRef.current;
-        const result = getCompiledHTML(curSupabase, curStripe, curEnvVars, curServiceKeys, curCdnPackages, bundleForBrowserRef.current, linkedGPTRef.current);
-        if (result) {
-          console.info('[handleBgComplete] ✅ Vanilla compilation succeeded');
-          handleStableHTML(result);
-        } else {
-          console.warn('[handleBgComplete] Vanilla compilation returned null — CompilationBridge will retry');
-        }
-        compilePromise = Promise.resolve();
-      }
+      compilePromise = Promise.resolve();
+      console.info('[handleBgComplete] Files set, CompilationBridge will compile');
 
       // Post-build snapshot for history
       const totalChanges = parsedFiles.length + edits.length;
@@ -378,10 +336,6 @@ export function AIAppBuilderWorkspace() {
     // This keeps the skeleton visible until the preview HTML is ready.
     const jobId = job.id;
     compilePromise.finally(() => {
-      // Safety: if compilation didn't produce HTML, let CompilationBridge handle it
-      if (!stableHTMLRef.current) {
-        console.warn('[handleBgComplete] No stableHTML after compile — letting CompilationBridge retry');
-      }
       setIsGeneratingOverride(false);
       setTimeout(() => {
         console.info('[Workspace] 📣 Dispatching bg-job-completed for jobId:', jobId);
