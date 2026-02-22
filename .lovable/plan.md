@@ -1,68 +1,38 @@
 
-## Fix: Break the Infinite Page Reload Loop
+## Fix: Ensure Generated Apps Have Readable Text Colors
+
+### Problem
+When the AI generates a landing page (e.g., "Landing Page: Hero, features, testimonials, footer"), the heading text ends up the same color as the dark background, making it invisible. The system prompt mentions "4.5:1+ contrast" but doesn't explicitly tell the AI to use light text on dark backgrounds.
 
 ### Root Cause
+The `BASE_SYSTEM_PROMPT` in `supabase/functions/ai-app-builder/index.ts` (line 20) says "Dark theme default" and mentions contrast ratios, but doesn't give explicit guidance like "use white/light text on dark backgrounds." The AI model interprets "dark theme" as dark backgrounds but sometimes defaults to dark text colors too.
 
-Two reload mechanisms in `index.html` and `lazyPanels.ts` are fighting each other:
+### Fix (1 file)
 
-1. **`lazyPanels.ts`** (line 14-16): When a lazy chunk fails to load, it sets `sessionStorage.__chunk_reload__ = '1'` as a guard, then calls `window.location.reload()`. On the next page load, the guard prevents another reload.
+**`supabase/functions/ai-app-builder/index.ts`** -- Strengthen the DESIGN section of the system prompt to explicitly mandate light text on dark backgrounds:
 
-2. **`index.html`** (line 207-228): A global error handler catches "dispatcher" or "Invalid hook" errors. It calls `sessionStorage.clear()` (wiping the `__chunk_reload__` guard), then `window.location.reload()`.
-
-When both fire in sequence, the guard is repeatedly wiped, causing an infinite full-page reload loop. The draft persistence system detects each `beforeunload` event and saves, explaining the `[Draft] Flushing` / `[Draft] Immediate save` log pairs before each reload.
-
-### Fix: 2 Changes
-
-**1. `index.html` — Add a reload guard to the global error handler and stop clearing sessionStorage**
-
-Replace `sessionStorage.clear()` with targeted key removal. Add a reload counter that caps at 1 reload to prevent infinite loops:
-
-```text
-// Before (broken):
-sessionStorage.clear();
-setTimeout(function() { window.location.reload(); }, 100);
-
-// After (fixed):
-var HOOK_RELOAD_KEY = '__hook_error_reload__';
-if (sessionStorage.getItem(HOOK_RELOAD_KEY)) return; // Already reloaded once
-sessionStorage.setItem(HOOK_RELOAD_KEY, '1');
-// Only remove specific crash-related keys, NOT __chunk_reload__
-localStorage.removeItem('ultrium_last_crash');
-setTimeout(function() { window.location.reload(); }, 100);
+Update line 20 from:
+```
+DESIGN: Bold typography (Google Fonts @import, display+body pair). 5-7 color palette via CSS custom properties, 4.5:1+ contrast. Micro-interactions on all interactive elements. Layered shadows, backdrop-filter. Spacing: 4/8/12/16/24/32/48/64/96px. Dark theme default.
 ```
 
-**2. `src/components/ai-builder/lazyPanels.ts` — Use localStorage instead of sessionStorage for the chunk reload guard**
-
-Since the global error handler clears sessionStorage, the chunk reload guard should use localStorage (which isn't cleared):
-
-```text
-// Before:
-const key = '__chunk_reload__';
-if (!sessionStorage.getItem(key)) {
-  sessionStorage.setItem(key, '1');
-  window.location.reload();
-}
-
-// After:
-const key = '__chunk_reload__';
-if (!localStorage.getItem(key)) {
-  localStorage.setItem(key, '1');
-  // Auto-clear after 30s so future real errors can still trigger a reload
-  setTimeout(() => { try { localStorage.removeItem(key); } catch {} }, 30000);
-  window.location.reload();
-}
+To:
 ```
+DESIGN: Bold typography (Google Fonts @import, display+body pair). 5-7 color palette via CSS custom properties. CONTRAST CRITICAL: Dark theme default means dark backgrounds (#0a0a0a to #1a1a2e range) with WHITE or LIGHT text (#ffffff, #f0f0f0, #e0e0e0). NEVER use dark text on dark backgrounds. Headings must be white or near-white. Body text at minimum #d1d5db. Muted/secondary text at minimum #9ca3af. All text must have 4.5:1+ contrast ratio against its background. Micro-interactions on all interactive elements. Layered shadows, backdrop-filter. Spacing: 4/8/12/16/24/32/48/64/96px.
+```
+
+This makes the contrast requirement unambiguous: dark backgrounds get light text, with specific minimum brightness values for headings, body, and secondary text.
 
 ### Technical Details
 
 | File | Change |
 |------|--------|
-| `index.html` | Add `__hook_error_reload__` session guard to global error handler; stop using `sessionStorage.clear()` |
-| `src/components/ai-builder/lazyPanels.ts` | Switch chunk reload guard from sessionStorage to localStorage with 30s auto-expiry |
+| `supabase/functions/ai-app-builder/index.ts` (line 20) | Expand DESIGN section with explicit dark-on-light text color guidance |
+
+After editing, the edge function will be redeployed.
 
 ### Result
-
-- The global error handler will only reload once per session (guarded)
-- The chunk reload guard survives sessionStorage clears
-- The 30s auto-expiry on localStorage ensures fresh chunk errors can still trigger one recovery reload
-- No more infinite full-page reload loop
+- All newly generated apps will have clearly readable text
+- Headings will be white/near-white on dark backgrounds
+- Body and secondary text will have minimum brightness thresholds
+- Existing projects are unaffected (only new generations use the updated prompt)
