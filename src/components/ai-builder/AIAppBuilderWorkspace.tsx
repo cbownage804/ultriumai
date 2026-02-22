@@ -325,9 +325,15 @@ export function AIAppBuilderWorkspace() {
           if (compiled.html) {
             console.info('[handleBgComplete] ✅ Direct React compilation succeeded, updating preview');
             handleStableHTML(compiled.html);
+          } else {
+            console.warn('[handleBgComplete] React compilation returned empty HTML — falling back to vanilla');
+            const fallback = getCompiledHTML(curSupabase, curStripe, curEnvVars, curServiceKeys, curCdnPackages, bundleForBrowserRef.current, linkedGPTRef.current);
+            if (fallback) handleStableHTML(fallback);
           }
         }).catch(err => {
-          console.error('[handleBgComplete] React compilation failed:', err);
+          console.error('[handleBgComplete] React compilation failed, trying vanilla fallback:', err);
+          const fallback = getCompiledHTML(curSupabase, curStripe, curEnvVars, curServiceKeys, curCdnPackages, bundleForBrowserRef.current, linkedGPTRef.current);
+          if (fallback) handleStableHTML(fallback);
         });
       } else {
         const result = getCompiledHTML(curSupabase, curStripe, curEnvVars, curServiceKeys, curCdnPackages, bundleForBrowserRef.current, linkedGPTRef.current);
@@ -365,6 +371,10 @@ export function AIAppBuilderWorkspace() {
     // This keeps the skeleton visible until the preview HTML is ready.
     const jobId = job.id;
     compilePromise.finally(() => {
+      // Safety: if compilation didn't produce HTML, let CompilationBridge handle it
+      if (!stableHTMLRef.current) {
+        console.warn('[handleBgComplete] No stableHTML after compile — letting CompilationBridge retry');
+      }
       setIsGeneratingOverride(false);
       setTimeout(() => {
         console.info('[Workspace] 📣 Dispatching bg-job-completed for jobId:', jobId);
