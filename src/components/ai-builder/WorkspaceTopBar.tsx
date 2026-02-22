@@ -4,7 +4,7 @@ import type { UndoEntry } from '@/hooks/useUndoRedo';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { SyncStatusIndicator, ProjectDropdownMenu, UndoPreviewPopover } from './lazyPanels';
 import {
-  Eye, Code, Rocket, MessageSquare, Users,
+  Eye, Code, Rocket, MessageSquare, Users, ListTodo,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ultriumLogo from '/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png';
@@ -49,6 +49,8 @@ interface WorkspaceTopBarProps {
   isMobile: boolean;
   mobileTab: 'chat' | 'preview' | 'editor';
   setMobileTab: (v: 'chat' | 'preview' | 'editor') => void;
+  hasPlan?: boolean;
+  onTogglePlan?: () => void;
 }
 
 export function WorkspaceTopBar({
@@ -59,6 +61,7 @@ export function WorkspaceTopBar({
   setShowSettingsPanel, setShowPublishPanel, setShowBilling, setShowShareDialog,
   syncStatus, lastSaved,
   publishedUrl, isMobile, mobileTab, setMobileTab,
+  hasPlan, onTogglePlan,
 }: WorkspaceTopBarProps) {
   return (
     <>
@@ -134,6 +137,15 @@ export function WorkspaceTopBar({
               Code
             </button>
           </div>
+          {hasPlan && (
+            <button
+              onClick={onTogglePlan}
+              className="ml-2 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md font-medium text-cyan-400/80 hover:text-cyan-300 hover:bg-cyan-500/[0.08] border border-cyan-500/20 transition-all"
+            >
+              <ListTodo className="h-3.5 w-3.5" />
+              Plan
+            </button>
+          )}
         </div>
 
         {/* RIGHT: Sync status + Share + Publish */}

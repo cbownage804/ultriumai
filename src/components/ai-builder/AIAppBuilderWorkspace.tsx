@@ -2419,6 +2419,12 @@ export function AIAppBuilderWorkspace() {
           isMobile={isMobile}
           mobileTab={mobileTab}
           setMobileTab={setMobileTab}
+          hasPlan={!!phasePlanner.activePlan}
+          onTogglePlan={() => {
+            // Scroll to the plan panel in the chat sidebar
+            const el = document.querySelector('[data-phase-planner]');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }}
         />
         {/* ── Main Content ── */}
         <div className="flex-1 overflow-hidden">
@@ -2479,18 +2485,20 @@ export function AIAppBuilderWorkspace() {
                 {/* Agent mode step tracker */}
                 <AgentModePanel run={agentRun} taskQueue={agentTaskQueue} pendingApproval={agentPendingApproval} onCancel={cancelAgent} onCancelTask={cancelAgentTask} onRetryTask={retryAgentTask} onClearCompleted={clearAgentCompleted} onReorderQueue={reorderAgentQueue} onApprovePlan={() => respondToAgentPlan(true)} onRejectPlan={() => respondToAgentPlan(false)} />
                 {phasePlanner.activePlan && (
-                  <PhasePlannerPanel
-                    plan={phasePlanner.activePlan}
-                    onProceed={handlePhaseAdvance}
-                    onSkip={phasePlanner.skipPhase}
-                    onCancel={phasePlanner.cancelPlan}
-                    isGenerating={isGenerating}
-                    onToggleAutoAdvance={phasePlanner.toggleAutoAdvance}
-                    onEditTitle={phasePlanner.editPhaseTitle}
-                    onRemovePhase={phasePlanner.removePhase}
-                    onReorder={phasePlanner.reorderPhases}
-                    totalEstimatedCredits={phasePlanner.totalEstimatedCredits}
-                  />
+                  <div data-phase-planner>
+                    <PhasePlannerPanel
+                      plan={phasePlanner.activePlan}
+                      onProceed={handlePhaseAdvance}
+                      onSkip={phasePlanner.skipPhase}
+                      onCancel={phasePlanner.cancelPlan}
+                      isGenerating={isGenerating}
+                      onToggleAutoAdvance={phasePlanner.toggleAutoAdvance}
+                      onEditTitle={phasePlanner.editPhaseTitle}
+                      onRemovePhase={phasePlanner.removePhase}
+                      onReorder={phasePlanner.reorderPhases}
+                      totalEstimatedCredits={phasePlanner.totalEstimatedCredits}
+                    />
+                  </div>
                 )}
                 <div className="flex-1 overflow-hidden flex flex-col">
                   <div className="flex-1 overflow-hidden">
