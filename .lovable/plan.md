@@ -1,111 +1,73 @@
 
-## Fix: Preview Never Renders After Generation
 
-### Root Cause Analysis
+## Fix: Preview Shows "Compilation Error" Instead of Rendered App
 
-The compilation pipeline has a fragile chain of effects, refs, locks, and timers that must all fire in the correct order. The failure mode:
+### Root Cause
 
-1. `handleBgComplete` calls `setFiles(mergedFiles)` then tries vanilla compile (fails for TSX) 
-2. `compilePromise = Promise.resolve()` resolves immediately via microtask
-3. `setIsGeneratingOverride(false)` fires, causing CompilationBridge to see `isGenerating` transition
-4. CompilationBridge's generation-ending effect schedules `compileNowRef` at 200ms
-5. CompilationBridge's main effect ALSO fires (because `filesDigest` changed), starting a 500ms debounce
-6. At 200ms, `compileNowRef` fires and calls the worker compiler
-7. The worker either: (a) hangs trying to download esbuild-wasm, (b) compiles successfully but the result doesn't propagate, or (c) times out after 30s
+The `handleBgComplete` function tries to compile directly using the worker, but this fails (likely esbuild-wasm initialization timeout or network issue). It then tries `getCompiledHTML` as a vanilla fallback, but this also fails because `getCompiledHTML` reads `project.files` from its React state closure -- which is still the OLD files before `setFiles(mergedFiles)` has taken effect (React batches state updates).
 
-The safety net at 5s fires but does nothing useful -- it toggles `isCompiling` which CompilationBridge doesn't depend on. Even if compilation eventually succeeds or falls back to ERROR_FALLBACK_HTML after 30s, the agent mode's verify step may have already finished and moved on.
+When both fail, `handleBgComplete` sets `ERROR_FALLBACK_HTML` into `stableHTMLRef.current` (the workspace ref passed as `externalStableHTMLRef` to CompilationBridge). When `isGeneratingOverride` goes false, CompilationBridge sees `externalStableHTMLRef` has a value and **syncs it as-is** (line 147-155), skipping its own compilation entirely. So the error fallback gets locked in, and CompilationBridge never gets a chance to try.
 
-### The Fix: Direct Compilation in `handleBgComplete`
+### The Fix: Let CompilationBridge Handle Compilation
 
-Instead of relying on the fragile effect chain, call the worker compiler directly in `handleBgComplete` and await the result before releasing the generation state. This ensures:
-- Compilation runs immediately after files are set
-- The result is available before `isGeneratingOverride` goes false  
-- No coordination needed between multiple effects, timers, and locks
+Remove the direct compilation attempt from `handleBgComplete`. The compilation logic in CompilationBridge already has:
+- Worker compilation with 30s timeout
+- Vanilla fallback
+- Safety timeout with retry
+- ERROR_FALLBACK_HTML as last resort
 
-#### Change 1: Import worker compiler in workspace and compile directly
+CompilationBridge reads files from `filesRef.current` (updated via props), so by the time it runs (200ms after generation ends), React has re-rendered with the new files.
+
+### Changes
+
+#### Change 1: Strip compilation from `handleBgComplete`
 
 **File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
 
-In `handleBgComplete` (around line 321), after the self-contained check fails, instead of just trying vanilla compile:
+In `handleBgComplete`, remove the entire compilation block (the self-contained check, worker compilation, vanilla fallback, and error fallback). Keep only `setFiles(mergedFiles)` and the post-build snapshot. Do NOT set `stableHTMLRef.current` to anything -- leave it null so CompilationBridge knows it needs to compile.
 
-```typescript
-// After self-contained check fails:
-// 1. Try worker compilation for React projects (TSX/JSX)
-const hasReactFiles = mergedFiles.some(f => /\.(tsx|jsx)$/.test(f.path));
-if (hasReactFiles) {
-  try {
-    const compiled = await Promise.race([
-      workerCompiler.compileReactProject(mergedFiles, {
-        supabaseConfig: supabaseConfigRef.current || undefined,
-        stripeConfig: stripeConfigRef.current || undefined,
-        envVars: envVarsRef.current,
-      }),
-      new Promise<null>((resolve) => setTimeout(() => resolve(null), 30_000)),
-    ]);
-    const html = (compiled as any)?.html || null;
-    if (html) {
-      stableHTMLRef.current = html;
-      setStableHTML(html);
-      compilePromise = Promise.resolve();
-    }
-  } catch (e) {
-    console.warn('[handleBgComplete] Worker compilation failed:', e);
-  }
+The code from lines 313-371 (the self-contained check through the error fallback) will be replaced with just:
+
+```
+// Self-contained HTML shortcut (vanilla HTML projects without module scripts)
+const indexFile = mergedFiles.find(f => f.path === 'index.html');
+const hasLocalModuleScripts = /src=["']\.?\/(?:src|main|app|index)\b/i.test(indexFile?.content || '');
+if (indexFile && !hasLocalModuleScripts &&
+    indexFile.content.includes('<!DOCTYPE html') &&
+    indexFile.content.includes('</html>')) {
+  stableHTMLRef.current = indexFile.content;
+  setStableHTML(indexFile.content);
 }
-// 2. Vanilla fallback (existing code)
-if (!stableHTMLRef.current) {
-  // ... existing vanilla compile attempt
-}
+// For React/TSX projects: leave stableHTMLRef null.
+// CompilationBridge will compile after isGenerating transitions to false.
 ```
 
-Make `handleBgComplete` async so it can await the worker.
+This keeps the fast path for vanilla HTML projects (which works reliably) while delegating React compilation to CompilationBridge.
 
-#### Change 2: Make the safety net actually trigger compilation
+#### Change 2: Remove `getCompiledHTML` from `handleBgComplete` dependencies
 
 **File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
 
-The current safety net at line 2217 toggles `isCompiling` which has no effect on CompilationBridge. Instead, expose a `forceCompile` callback from CompilationBridge and call it from the safety net:
+Remove `getCompiledHTML` from the `useCallback` dependency array (line 408) since it's no longer called in handleBgComplete.
 
-```typescript
-// In CompilationBridge: expose forceCompile via callback prop
-onForceCompile?: (fn: () => void) => void;
+#### Change 3: Ensure `compilePromise` resolves correctly
 
-// In the component body:
-useEffect(() => {
-  onForceCompile?.(() => {
-    compilationLockRef.current = false;
-    compileNowRef.current?.();
-  });
-}, [onForceCompile]);
+**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
 
-// In workspace safety net:
-forceCompileRef.current?.();
-```
+The `compilePromise.finally()` at line 401 controls when `isGeneratingOverride` goes false. Since we're no longer awaiting compilation, `compilePromise = Promise.resolve()` should resolve immediately, which is fine -- CompilationBridge triggers compilation on the `isGenerating` transition anyway.
 
-#### Change 3: Ensure ERROR_FALLBACK_HTML always shows
+### Why This Works
 
-If both worker and vanilla compilation fail in `handleBgComplete`, set ERROR_FALLBACK_HTML so the user at least sees an error message instead of the empty placeholder:
+1. Generation completes, `handleBgComplete` calls `setFiles(mergedFiles)`
+2. For vanilla HTML: preview is set immediately (fast path, already works)
+3. For React projects: `stableHTMLRef.current` stays null
+4. `compilePromise` resolves, `setIsGeneratingOverride(false)` fires
+5. CompilationBridge sees generation ending, `externalStableHTMLRef` is null
+6. CompilationBridge enters the `!stableHTMLRef.current` branch (line 156) and calls `compileNowRef` at 200ms
+7. `compileNowRef` reads `filesRef.current` (now updated with new files) and runs worker compilation
+8. If worker fails, CompilationBridge has its own vanilla fallback and ERROR_FALLBACK_HTML
+9. The 5s safety net with `forceCompileRef` provides additional recovery
 
-```typescript
-if (!stableHTMLRef.current) {
-  stableHTMLRef.current = ERROR_FALLBACK_HTML;
-  setStableHTML(ERROR_FALLBACK_HTML);
-}
-```
+### What's Different From Before
 
-### Technical Details
-
-- `handleBgComplete` already has access to `useWorkerCompiler` since it's in the workspace component
-- The workspace already imports `useWorkerCompiler` (line 39)
-- Making `handleBgComplete` async is safe since it's only called from `useBackgroundGeneration.onComplete`
-- The 30s timeout ensures the function doesn't hang indefinitely
-- CompilationBridge still works for subsequent edits (hot-patching, recompilation) -- this change only affects the initial post-generation compilation
-
-### Expected Result
-
-1. Generation completes, `handleBgComplete` fires
-2. Worker compiler is called directly with 30s timeout
-3. If worker succeeds: preview shows immediately
-4. If worker fails: ERROR_FALLBACK_HTML shows (instead of blank)
-5. `isGeneratingOverride` is set to false AFTER compilation result is available
-6. CompilationBridge syncs from `externalStableHTMLRef` and skips redundant recompile
+Previously, `handleBgComplete` was trying to be the primary compiler AND poisoning CompilationBridge with a premature error fallback. Now, `handleBgComplete` is just a file merger, and CompilationBridge is the single owner of compilation. This eliminates the race condition and stale-state bugs.
