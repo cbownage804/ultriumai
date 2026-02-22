@@ -1320,6 +1320,10 @@ export function AIAppBuilderWorkspace() {
     if (isNewProjectRef.current) {
       clearDraft();
       idbPersistence.clearSession();
+      // Reset React state to empty so auto-save/flush don't re-persist old data
+      setFiles([]);
+      setMessages([]);
+      renameProject('Untitled Project');
       const url = new URL(window.location.href);
       url.searchParams.delete('new');
       window.history.replaceState({}, '', url.pathname + url.search);
