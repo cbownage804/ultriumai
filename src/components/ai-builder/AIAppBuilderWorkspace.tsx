@@ -306,8 +306,31 @@ export function AIAppBuilderWorkspace() {
         }
       }
       setFiles(mergedFiles);
+
+      // Direct preview: if index.html is a self-contained HTML document, use it immediately
+      // as the preview instead of waiting for CompilationBridge's slow compilation pipeline.
+      const indexFile = mergedFiles.find(f => f.path === 'index.html');
+      if (indexFile && indexFile.content.includes('<!DOCTYPE html') && indexFile.content.includes('</html>')) {
+        console.info('[handleBgComplete] Self-contained index.html detected — setting preview directly');
+        stableHTMLRef.current = indexFile.content;
+      } else {
+        // Try vanilla compilation immediately (synchronous, fast)
+        try {
+          const compiled = getCompiledHTML(
+            supabaseConfigRef.current, stripeConfigRef.current, envVarsRef.current,
+            serviceKeysRef.current, cdnPackagesRef.current,
+            bundleForBrowserRef.current, linkedGPTRef.current
+          );
+          if (compiled) {
+            console.info('[handleBgComplete] Direct vanilla compilation succeeded');
+            stableHTMLRef.current = compiled;
+          }
+        } catch (e) {
+          console.warn('[handleBgComplete] Direct compilation failed, deferring to CompilationBridge:', e);
+        }
+      }
       compilePromise = Promise.resolve();
-      console.info('[handleBgComplete] Files set, CompilationBridge will compile');
+      console.info('[handleBgComplete] Files set');
 
       // Post-build snapshot for history
       const totalChanges = parsedFiles.length + edits.length;
@@ -342,7 +365,7 @@ export function AIAppBuilderWorkspace() {
         window.dispatchEvent(new CustomEvent('bg-job-completed', { detail: { jobId } }));
       }, 500);
     });
-  }, [project.files, setFiles, setMessages]);
+  }, [project.files, setFiles, setMessages, getCompiledHTML]);
 
   // SSE streaming: apply files incrementally as they arrive
   const lastIncrementalParseRef = useRef(0);
