@@ -181,8 +181,8 @@ export function CompilationBridge({
   const prevFilesDigestRef = useRef<string>('');
 
    useEffect(() => {
+    console.info('[CompilationBridge] Main effect triggered — isGenerating:', isGenerating, 'files:', filesRef.current.length, 'stableHTML:', !!stableHTMLRef.current, 'lock:', compilationLockRef.current);
     if (isGenerating || filesRef.current.length === 0) {
-      console.info('[CompilationBridge] Effect: skipping — isGenerating:', isGenerating, 'files:', filesRef.current.length);
       return;
     }
 
@@ -278,6 +278,7 @@ export function CompilationBridge({
       // Phase 1: Async compilation with yield points to keep browser responsive
       const runCompilation = async () => {
         if (cancelled) return;
+        console.info('[CompilationBridge] runCompilation starting, isReact:', isReactProject, 'files:', filesRef.current.length);
         // Start safety timeout NOW (when compilation actually begins), not before
         safetyTimeout = setTimeout(() => {
           if (cancelled) return;
@@ -285,9 +286,6 @@ export function CompilationBridge({
             compilationRetryCountRef.current++;
             console.warn('[Compilation] Safety timeout reached — retrying once after 2s cooldown');
             clearTimeout(safetyTimeout);
-            // Direct retry: call runCompilation() again after cooldown
-            // (previous approach tried to re-trigger the React effect, which didn't work
-            // because liveCompiledHTML isn't in the effect's dependency array)
             setTimeout(() => {
               if (cancelled) return;
               console.info('[Compilation] Retry: calling runCompilation() directly');
@@ -320,15 +318,39 @@ export function CompilationBridge({
           await new Promise(r => setTimeout(r, 0));
           if (cancelled) return;
           if (isReactProject) {
-            const compiled = await compileReactProjectRef.current(filesRef.current, {
+            // Race the worker against a 15s timeout — if worker hangs (e.g. esbuild WASM),
+            // fall back to the vanilla compiler which always works
+            const workerTimeout = new Promise<null>((resolve) =>
+              setTimeout(() => {
+                console.warn('[CompilationBridge] Worker compilation timed out after 15s — trying vanilla fallback');
+                resolve(null);
+              }, 15_000)
+            );
+            const workerResult = compileReactProjectRef.current(filesRef.current, {
               supabaseConfig: supabaseConfig || undefined,
               stripeConfig: stripeConfig || undefined,
               envVars,
+            }).then(compiled => {
+              if (compiled.errors.length > 0) {
+                console.warn('[ReactCompiler] Warnings:', compiled.errors);
+              }
+              return compiled.html || null;
+            }).catch((err: Error) => {
+              console.warn('[ReactCompiler] Worker failed:', err.message);
+              return null;
             });
-            if (compiled.errors.length > 0) {
-              console.warn('[ReactCompiler] Warnings:', compiled.errors);
+
+            result = await Promise.race([workerResult, workerTimeout]);
+
+            // If worker failed/timed out, try vanilla compiler as fallback
+            if (!result && !cancelled) {
+              console.info('[CompilationBridge] Attempting vanilla fallback compilation');
+              try {
+                result = getCompiledHTMLRef.current(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowserRef.current, linkedGPT);
+              } catch (fallbackErr) {
+                console.warn('[CompilationBridge] Vanilla fallback also failed:', fallbackErr);
+              }
             }
-            result = compiled.html || null;
           } else {
             result = getCompiledHTMLRef.current(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowserRef.current, linkedGPT);
           }
@@ -339,20 +361,19 @@ export function CompilationBridge({
             clearTimeout(safetyTimeout);
             onCompilingChangeRef.current?.(false);
             compilationAttemptedRef.current = true;
-            setLiveCompiledHTML(result);
-            // DIRECT PATH: Set stableHTML immediately from the compilation
-            // callback instead of relying on the effect chain
-            // (liveCompiledHTML → useEffect → setStableHTML) which can
-            // silently fail due to React batching or stale closures.
             if (result) {
+              setLiveCompiledHTML(result);
               setStableHTML(result);
               liveSync.resetSnapshot(filesRef.current);
-              // Gap 5 HMR: Signal soft reload instead of full remount
               if (softReloadPendingRef.current) {
                 softReloadPendingRef.current = false;
                 window.postMessage({ type: '__SOFT_RELOAD__', source: 'compilation-bridge' }, '*');
               }
               window.postMessage({ type: '__PREVIEW_READY__', source: 'compilation-bridge' }, '*');
+            } else {
+              console.warn('[CompilationBridge] Both worker and vanilla compilation returned null — showing error fallback');
+              setLiveCompiledHTML(ERROR_FALLBACK_HTML);
+              setStableHTML(ERROR_FALLBACK_HTML);
             }
           }
         } catch (e) {
@@ -361,7 +382,8 @@ export function CompilationBridge({
             clearTimeout(safetyTimeout);
             onCompilingChangeRef.current?.(false);
             compilationAttemptedRef.current = true;
-            setLiveCompiledHTML(null);
+            setLiveCompiledHTML(ERROR_FALLBACK_HTML);
+            setStableHTML(ERROR_FALLBACK_HTML);
           }
         }
       };
