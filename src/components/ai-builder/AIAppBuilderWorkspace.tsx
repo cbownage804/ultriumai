@@ -289,15 +289,19 @@ export function AIAppBuilderWorkspace() {
         else mergedFiles.push(newFile);
       }
       // Apply diff-based edits (===EDIT: with @@ hunks)
+      // These are only applied HERE (not during streaming) to prevent double-patching corruption
       for (const edit of edits) {
         const fileIdx = mergedFiles.findIndex(f => f.path === edit.path);
         if (fileIdx >= 0) {
           const patched = applyHunkPatch(mergedFiles[fileIdx].content, edit.hunks);
           if (patched !== null) {
+            console.info(`[Build] ✅ Patched ${edit.path}: ${edit.hunks.length} hunks applied`);
             mergedFiles[fileIdx] = { ...mergedFiles[fileIdx], content: patched };
           } else {
-            console.warn(`[Build] Hunk patch failed for ${edit.path}, skipping`);
+            console.warn(`[Build] ❌ Hunk patch failed for ${edit.path} — file content may have diverged from expected line numbers`);
           }
+        } else {
+          console.warn(`[Build] ⚠️ Edit target ${edit.path} not found in project files`);
         }
       }
       setFiles(mergedFiles);
@@ -343,28 +347,21 @@ export function AIAppBuilderWorkspace() {
       streamingContentRef.current = totalContent;
     }
 
-    // Incremental file application: parse and apply files as they appear
+    // Incremental file application: parse and apply ===FILE: blocks as they appear
     // Only re-parse every 2KB of new content to avoid excessive parsing
+    // NOTE: ===EDIT: blocks are NOT applied here — they are applied once in handleBgComplete.
+    // Applying edits during streaming AND again in handleBgComplete caused double-patching
+    // corruption (line numbers shift after first application, breaking subsequent patches).
     if (totalContent.length - lastIncrementalParseRef.current > 2000) {
       lastIncrementalParseRef.current = totalContent.length;
-      const { files: parsedFiles, edits } = parseMultiFileOutput(totalContent);
-      if (parsedFiles.length > 0 || edits.length > 0) {
-        // Apply files incrementally — users see files appear one by one
+      const { files: parsedFiles } = parseMultiFileOutput(totalContent);
+      if (parsedFiles.length > 0) {
+        // Apply full-file blocks incrementally — users see files appear one by one
         let mergedFiles = [...project.files];
         for (const newFile of parsedFiles) {
           const existingIdx = mergedFiles.findIndex(f => f.path === newFile.path);
           if (existingIdx >= 0) mergedFiles[existingIdx] = newFile;
           else mergedFiles.push(newFile);
-        }
-        // Apply diff-based edits incrementally too
-        for (const edit of edits) {
-          const fileIdx = mergedFiles.findIndex(f => f.path === edit.path);
-          if (fileIdx >= 0) {
-            const patched = applyHunkPatch(mergedFiles[fileIdx].content, edit.hunks);
-            if (patched !== null) {
-              mergedFiles[fileIdx] = { ...mergedFiles[fileIdx], content: patched };
-            }
-          }
         }
         setFiles(mergedFiles);
       }
