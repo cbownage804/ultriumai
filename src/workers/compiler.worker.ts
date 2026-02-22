@@ -1,9 +1,5 @@
-// Shim `window` for Vite dev mode — React Refresh preamble references `window`
-// which doesn't exist in Web Workers. This no-ops the refresh runtime.
-declare var window: any;
-if (typeof window === 'undefined') {
-  (self as any).window = self;
-}
+// MUST be the very first import — shims `window` for React Refresh preamble
+import './worker-window-shim';
 
 /**
  * Compiler Web Worker — Gap 1 + Gap 2
