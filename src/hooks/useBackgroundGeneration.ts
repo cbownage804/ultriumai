@@ -363,11 +363,15 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
     // Use ref to avoid stale closure — skip if already watching a job
     if (activeJobRef.current) return activeJobRef.current.id;
     try {
+      // Only look for jobs older than 10 seconds to avoid picking up
+      // the job that was JUST created by the current generation request
+      const tenSecondsAgo = new Date(Date.now() - 10_000).toISOString();
       const { data: jobs } = await supabase
         .from('app_builder_jobs')
         .select('id, status, progress_percent, created_at')
         .eq('user_id', userId)
         .in('status', ['pending', 'processing', 'streaming'])
+        .lt('created_at', tenSecondsAgo)
         .order('created_at', { ascending: false })
         .limit(1);
 
