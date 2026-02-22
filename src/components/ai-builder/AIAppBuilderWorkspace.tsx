@@ -308,29 +308,24 @@ export function AIAppBuilderWorkspace() {
       setFiles(mergedFiles);
 
       // Immediately compile for preview — don't wait for CompilationBridge effects
-      const isReact = detectReactProject(mergedFiles);
       // Phase 6: Read configs from refs to avoid stale closures
       const curSupabase = supabaseConfigRef.current;
       const curStripe = stripeConfigRef.current;
       const curEnvVars = envVarsRef.current;
       const curServiceKeys = serviceKeysRef.current;
       const curCdnPackages = cdnPackagesRef.current;
-      // Phase 2: Capture compile promise so we can chain dispatch to it
-      // IMPORTANT: For React projects, do NOT compile here. The worker is single-threaded
-      // and if we send a request that times out, the worker stays blocked processing it,
-      // preventing CompilationBridge from compiling successfully afterward.
-      // Let CompilationBridge be the sole compiler for React projects.
-      if (isReact) {
-        console.info('[handleBgComplete] React project — deferring compilation to CompilationBridge');
-        compilePromise = Promise.resolve();
+      // Phase 2: Compile directly using vanilla compiler for ALL project types.
+      // The vanilla compiler works synchronously on the main thread and handles
+      // both React and non-React projects. Using the worker here was causing
+      // deadlocks because CompilationBridge couldn't compile while isGenerating was true.
+      const result = getCompiledHTML(curSupabase, curStripe, curEnvVars, curServiceKeys, curCdnPackages, bundleForBrowserRef.current, linkedGPTRef.current);
+      if (result) {
+        console.info('[handleBgComplete] ✅ Direct compilation succeeded, updating preview');
+        handleStableHTML(result);
       } else {
-        const result = getCompiledHTML(curSupabase, curStripe, curEnvVars, curServiceKeys, curCdnPackages, bundleForBrowserRef.current, linkedGPTRef.current);
-        if (result) {
-          console.info('[handleBgComplete] ✅ Direct vanilla compilation succeeded, updating preview');
-          handleStableHTML(result);
-        }
-        compilePromise = Promise.resolve();
+        console.warn('[handleBgComplete] Vanilla compilation returned null — CompilationBridge will retry');
       }
+      compilePromise = Promise.resolve();
 
       // Post-build snapshot for history
       const totalChanges = parsedFiles.length + edits.length;
@@ -2350,7 +2345,7 @@ export function AIAppBuilderWorkspace() {
       <PanelErrorBoundary panelName="Compiler">
         <CompilationBridge
           files={project.files}
-          isGenerating={isGeneratingOverride || (isGenerating && !project.files.length)}
+          isGenerating={isGenerating || isGeneratingOverride}
           supabaseConfig={supabaseConfig}
           stripeConfig={stripeConfig}
           envVars={envVars}
