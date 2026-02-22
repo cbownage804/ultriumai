@@ -1,75 +1,60 @@
 
 
-## Fix: Preview Loading Loop — Remove Problematic `location.reload()` and Fix SW Content Delivery
+## Fix: Always Use srcDoc — Eliminate SW src Race Condition
 
-### Problem
+### Root Cause
 
-The `location.reload()` added in the previous fix fires on **every** `htmlWithErrorCapture` change, including the initial load. This creates a cascade:
+The iframe switches from `srcDoc` to `src=/__preview__/index.html` the moment `setSwHasContent(true)` fires. But `updatePreview()` sends a `postMessage` to the Service Worker, which is **asynchronous**. By the time the iframe navigates to the SW URL, the SW hasn't stored the content yet, so it serves the fallback "Waiting for preview..." HTML (or empty). This causes the React #130/#310 errors seen in the console, and the preview stays black.
 
-1. Compilation succeeds, `stableHTML` is set (29566 chars)
-2. `BuilderPreviewPanel` renders iframe with `src=/__preview__/index.html`
-3. The SW effect fires: calls `updatePreview()` then `location.reload()` after 60ms
-4. But the iframe is **already loading** via `src` — the reload interrupts it or causes a double-load
-5. The SW may not have finished storing the content in 60ms (race condition)
-6. The iframe gets an error/empty response, which triggers error fallback logic
-7. State resets cascade into a full workspace remount, restarting the cycle
+This is a fundamental race condition that cannot be reliably fixed with delays — the timing depends on browser scheduling.
 
-On the second cycle, the worker compile request from the previous mount is orphaned (handler was removed), causing the 30-second timeout.
+### Fix: Remove the srcDoc-to-src Switch Entirely
 
-### Fix: 2 Changes
+Always render the iframe with `srcDoc`. Remove `swHasContent` state. Continue pushing content to the SW via `updatePreview()` (needed for soft reloads / HMR), but never switch the iframe source attribute.
 
-**1. `src/components/ai-builder/BuilderPreviewPanel.tsx` — Replace `location.reload()` with a proper SW update strategy**
+For subsequent HTML updates, React handles `srcDoc` changes natively (the browser re-renders without remounting). For soft reloads via SW, use the existing `swSoftReload` path which manually navigates the iframe.
 
-The iframe already loads from the SW via its `src` attribute on first render. For **subsequent** content updates, we should only reload the iframe when the content actually changes (not on initial mount). Use a ref to track the previous HTML and skip the first call:
+### Changes (1 file)
+
+**`src/components/ai-builder/BuilderPreviewPanel.tsx`**:
+
+1. Remove `swHasContent` state
+2. Simplify the SW effect to only push content and reload on subsequent changes (no state switch)
+3. Change iframe to always use `srcDoc` — remove the conditional `src: previewUrl` branch
 
 ```typescript
-// Gap 4: Push compiled HTML to Service Worker when available
-const prevSwHtmlRef = useRef<string | null>(null);
+// Before (broken):
+const [swHasContent, setSwHasContent] = useState(false);
+// ...
+{...(swReady && previewUrl && swHasContent
+  ? { src: previewUrl }
+  : { srcDoc: htmlWithErrorCapture || '' }
+)}
+
+// After (fixed):
+// No swHasContent state needed
+// ...
+srcDoc={htmlWithErrorCapture || ''}
+```
+
+The SW effect simplifies to:
+```typescript
 useEffect(() => {
   if (swReady && htmlWithErrorCapture) {
     updatePreview(htmlWithErrorCapture);
-    // Only reload iframe for SUBSEQUENT updates (not initial load — src handles that)
+    // Reload for subsequent updates only
     if (prevSwHtmlRef.current !== null && prevSwHtmlRef.current !== htmlWithErrorCapture) {
-      setTimeout(() => {
-        try {
-          iframeRef.current?.contentWindow?.location.reload();
-        } catch {
-          const iframe = iframeRef.current;
-          if (iframe?.src) {
-            const src = iframe.src;
-            iframe.src = '';
-            requestAnimationFrame(() => { iframe.src = src; });
-          }
-        }
-      }, 100); // Increased delay for SW to store content
+      // No reload needed — React updates srcDoc natively
     }
     prevSwHtmlRef.current = htmlWithErrorCapture;
   }
 }, [swReady, htmlWithErrorCapture, updatePreview, iframeRef]);
 ```
 
-This ensures:
-- First render: `updatePreview()` stores the content, iframe loads it naturally via `src`
-- Subsequent updates: `updatePreview()` stores new content, then reload picks it up
-- Same content: no reload at all
-
-**2. `src/components/ai-builder/BuilderPreviewPanel.tsx` — Guard the iframe `src` to only use SW after content is stored**
-
-Currently the iframe uses `src: previewUrl` as soon as `swReady` is true, but the SW might not have any content stored yet. Add a guard so the iframe only uses `src` after the first `updatePreview` call:
-
-Add a `swHasContent` state that flips to true after the first successful `updatePreview()`. Use `srcDoc` as fallback until then. This prevents the iframe from loading an empty SW response.
-
-### Technical Details
-
-- File: `src/components/ai-builder/BuilderPreviewPanel.tsx`
-  - Add `prevSwHtmlRef` to skip reload on initial mount
-  - Add `swHasContent` state to prevent iframe from using SW URL before content is stored
-  - Increase reload delay from 60ms to 100ms for SW write latency
-- No changes needed to `CompilationBridge.tsx` or `useWorkerCompiler.ts`
-
 ### Result
 
-- First load: iframe uses `srcDoc` until SW has content, then switches to `src` on next update
-- Subsequent updates: clean reload after SW stores new content
-- No more cascading reload loop from premature `location.reload()` on initial mount
+- Preview renders immediately via srcDoc on first load — no race condition possible
+- React handles subsequent srcDoc updates natively (no reload needed)
+- SW still receives content for soft reload (HMR) use cases
+- Eliminates the black screen / React error loop entirely
 
