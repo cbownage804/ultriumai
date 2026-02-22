@@ -307,13 +307,49 @@ export function AIAppBuilderWorkspace() {
       }
       setFiles(mergedFiles);
 
-      // Don't compile here — getCompiledHTML reads from stale project.files state
-      // (setFiles above is async). Instead, let CompilationBridge handle compilation
-      // once isGeneratingOverride becomes false and the files state has propagated.
-      // The key fix is that we pass only isGeneratingOverride to CompilationBridge,
-      // NOT isGenerating from the hook, so it unblocks as soon as the bg job completes.
-      console.info('[handleBgComplete] Files set — CompilationBridge will compile when isGeneratingOverride becomes false');
-      compilePromise = Promise.resolve();
+      // Compile directly with mergedFiles (NOT project.files which is stale).
+      // The worker takes files as a parameter, avoiding the stale closure issue.
+      // If this fails, CompilationBridge will retry once isGeneratingOverride becomes false.
+      const isReact = detectReactProject(mergedFiles);
+      if (isReact) {
+        console.info('[handleBgComplete] React project — compiling via worker with mergedFiles');
+        const curSupabase = supabaseConfigRef.current;
+        const curStripe = stripeConfigRef.current;
+        const curEnvVars = envVarsRef.current;
+        const workerPromise = compileReactProjectRef.current(mergedFiles, {
+          supabaseConfig: curSupabase || undefined,
+          stripeConfig: curStripe || undefined,
+          envVars: curEnvVars,
+        });
+        const timeoutPromise = new Promise<null>(r => setTimeout(() => r(null), 20_000));
+        compilePromise = Promise.race([workerPromise, timeoutPromise]).then(compiled => {
+          if (compiled && compiled.html) {
+            console.info('[handleBgComplete] ✅ Worker compilation succeeded, setting preview');
+            handleStableHTML(compiled.html);
+          } else {
+            console.warn('[handleBgComplete] Worker returned empty or timed out — CompilationBridge will retry');
+          }
+        }).catch(err => {
+          console.warn('[handleBgComplete] Worker compilation failed:', err.message, '— CompilationBridge will retry');
+        });
+      } else {
+        // Non-React: use vanilla compiler with mergedFiles via getCompiledHTML
+        // Note: getCompiledHTML reads from project closure, but for non-React the
+        // files are set synchronously and simpler, so this path usually works.
+        const curSupabase = supabaseConfigRef.current;
+        const curStripe = stripeConfigRef.current;
+        const curEnvVars = envVarsRef.current;
+        const curServiceKeys = serviceKeysRef.current;
+        const curCdnPackages = cdnPackagesRef.current;
+        const result = getCompiledHTML(curSupabase, curStripe, curEnvVars, curServiceKeys, curCdnPackages, bundleForBrowserRef.current, linkedGPTRef.current);
+        if (result) {
+          console.info('[handleBgComplete] ✅ Vanilla compilation succeeded');
+          handleStableHTML(result);
+        } else {
+          console.warn('[handleBgComplete] Vanilla compilation returned null — CompilationBridge will retry');
+        }
+        compilePromise = Promise.resolve();
+      }
 
       // Post-build snapshot for history
       const totalChanges = parsedFiles.length + edits.length;
