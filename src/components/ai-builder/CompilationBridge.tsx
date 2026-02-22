@@ -6,7 +6,7 @@ import type { CDNPackage } from './PackageManager';
 import type { LinkedGPTConfig } from './GPTConnectorPanel';
 import { useLivePreviewSync } from '@/hooks/useLivePreviewSync';
 
-const COMPILE_TIMEOUT_MS = 45_000;
+const COMPILE_TIMEOUT_MS = 20_000;
 
 interface CompilationBridgeProps {
   files: ProjectFile[];
@@ -271,17 +271,14 @@ export function CompilationBridge({
           if (compilationRetryCountRef.current < 1) {
             compilationRetryCountRef.current++;
             console.warn('[Compilation] Safety timeout reached — retrying once after 2s cooldown');
-            // Unlock so the retry can proceed
-            compilationLockRef.current = false;
-            compilationAttemptedRef.current = false;
-            // Clear digest to trigger the main effect to re-run
-            prevFilesDigestRef.current = '';
-            onCompilingChangeRef.current?.(false);
-            // Small delay to let browser cool down before retry
+            clearTimeout(safetyTimeout);
+            // Direct retry: call runCompilation() again after cooldown
+            // (previous approach tried to re-trigger the React effect, which didn't work
+            // because liveCompiledHTML isn't in the effect's dependency array)
             setTimeout(() => {
-              // Force effect re-run by toggling a state-like mechanism
-              // The cleared prevFilesDigestRef will cause the main effect to detect a change
-              setLiveCompiledHTML(null);
+              if (cancelled) return;
+              console.info('[Compilation] Retry: calling runCompilation() directly');
+              runCompilation();
             }, 2000);
           } else {
             console.error('[Compilation] Safety timeout reached on retry — showing error fallback');
@@ -352,18 +349,12 @@ export function CompilationBridge({
           }
         }
       };
-      // Defer start with rAF + short timeout for a paint frame
-      const rafId = requestAnimationFrame(() => {
-        if (cancelled) return;
-        const compileTimer = setTimeout(() => {
-          runCompilation();
-        }, 100);
-        compileTimerId = compileTimer;
-      });
+      // Defer start with a short setTimeout (removed rAF which Firefox
+      // throttles under load, preventing compilation from ever starting)
+      compileTimerId = setTimeout(runCompilation, 50);
 
       compilationCleanupRef.current = () => {
         cancelled = true;
-        cancelAnimationFrame(rafId);
         clearTimeout(compileTimerId);
         clearTimeout(safetyTimeout);
         onCompilingChangeRef.current?.(false);
