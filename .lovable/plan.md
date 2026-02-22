@@ -1,57 +1,60 @@
 
-# Fix: Visual Edit Color Persistence + Browser Freeze
+# Fix: Color Persistence + Browser Freeze (Root Causes Found)
 
-## Problem 1: Color Changes Don't Persist
+## Problem 1: Colors Don't Persist — Root Cause
 
 The `buildSelector()` in `VisualEditOverlay.tsx` generates CSS path selectors like:
 ```
-html > body > div > footer:nth-child(5) > p
+html > body > div > section:nth-child(2) > h1
 ```
 
-But `handleVisualEdit` in `AIAppBuilderWorkspace.tsx` tries to match these selectors inside `class` or `id` attributes using regex:
-```regex
-/<[^>]*(?:class|id)=["'][^"']*ESCAPED_SELECTOR[^"']*["']...>/
-```
+The `handleVisualEdit` color path has three fallbacks, and ALL THREE fail:
 
-A CSS path selector will **never** appear inside a class/id attribute. The regex never matches, so the color edit falls through to the DOM serialization fallback. The serialized DOM may not preserve the color because `el.style.color` was set on the iframe element but the serialized `outerHTML` captures the original source attributes, not computed styles.
+1. **Regex match (lines 1944-1969):** Looks for the selector string inside `class`/`id` attributes. A CSS path selector never appears in class/id attributes. Always fails.
 
-**Root cause:** The visual edit pipeline assumes the selector is a class/id name, but it's actually a CSS path.
+2. **DOMParser fallback (lines 1971-1991):** Parses the **source HTML file** and runs `querySelector(selector)`. But the source HTML has a different DOM structure than the iframe DOM — the iframe has injected shim scripts, style tags, and wrapper elements that shift `nth-child` indices. So the selector that matches in the iframe doesn't match the same element in the source. Fails silently or matches the wrong element.
 
-**Fix:** Rewrite the color and text edit logic to use the selector to locate the element in the source by matching its **tag structure** (parent > child position) rather than looking for the selector string inside attributes. As a simpler immediate fix: when the regex-based approach fails, apply the edit by directly modifying the matched element's inline style in the source HTML using a DOM parser approach (parse the HTML, querySelector, modify, serialize back).
+3. **Last resort iframe serialization (lines 1992-2005):** Serializes the iframe DOM (which DOES have the color applied visually at line 186). This should work — BUT the serialized iframe DOM includes all injected elements (shim scripts, style tags, overlay CSS). Saving this bloated HTML as the source file corrupts it for future builds.
 
-**Changes in `AIAppBuilderWorkspace.tsx` (`handleVisualEdit`):**
-- For both `text` and `color` properties: after the current regex fails, add a new fallback that parses the HTML source with DOMParser, uses `querySelector(selector)` to find the element, applies the edit, and serializes back.
-- This correctly handles CSS path selectors because DOMParser.querySelector supports them natively.
+**Fix:** Instead of trying to map iframe CSS path selectors back to source HTML, use **element content matching**. The VisualEditOverlay already captures `el.textContent` and `el.tagName`. Use these to find the matching element in the source HTML by matching tag + text content, which is stable regardless of DOM structure differences.
+
+**Changes in `AIAppBuilderWorkspace.tsx` (`handleVisualEdit` for `color` and `text`):**
+- Replace the DOMParser `querySelector(selector)` fallback with a **text-content-based element finder**: parse the source HTML, walk all elements matching the tag name, and find the one whose `textContent` matches the selected element's text.
+- Also pass the element's `tagName` and `textContent` from VisualEditOverlay alongside the selector (they're already available in `selectedElement`).
+- Update the `onEditApply` callback signature to include `tagName` and `textContent` for robust matching.
+
+**Changes in `VisualEditOverlay.tsx`:**
+- Pass `selectedElement.tagName` and `selectedElement.text` through the `onEditApply` callback so `handleVisualEdit` can use content-based matching.
 
 ---
 
-## Problem 2: Browser Freeze During "Verifying output"
+## Problem 2: Browser Freeze — Root Cause
 
-The `deferPostGen` callback runs ALL post-build analysis synchronously within a single `requestIdleCallback`:
-1. `smokeTest.runSmokeTest` -- scans all files
-2. `conflictDetection.detectConflicts` -- scans all files
-3. `tsValidator.validate` -- scans all files with regex
-4. `lighthouseAudit.runAudit` -- joins ALL file content into one string, runs 15+ regex matches
-5. `bundleSize.analyzeBundle` -- scans all files
-6. `deleteAutoPatcher.patchDeleteButtons` -- scans all files
-7. `fileScaffolding.generateCompanionFiles` -- scans all files
+The deferred steps were split (Phase 2 of previous fix), but the delays are only **0ms, 50ms, 100ms** apart. The browser doesn't get meaningful time to process events between steps. More critically:
 
-For a 623-file project, step 4 alone creates a multi-MB string and runs heavy regex operations. All 7 steps run back-to-back on the main thread, blocking the UI for potentially seconds.
+- **`deferStep1`** runs smoke test + conflict detection + TS validation synchronously on ALL files — for 623 files this alone can take 1-2 seconds.
+- **`deferStep2`** runs `lighthouseAudit.runAudit()` which does `files.map(f => f.content).join('\n')` creating a multi-MB string, then runs 15+ regex matches on it. Plus `bundleSize.analyzeBundle()` which runs `new TextEncoder().encode(f.content)` on every file AND `findEmbeddedImages()` which runs a regex on every file. For 623 files this blocks the main thread for seconds.
+- **`deferStep3`** runs auto-patching + companion file generation — scanning all files again.
+
+The `requestIdleCallback` with short timeouts doesn't help because each individual step is itself a multi-second synchronous operation.
 
 **Fix in `AIAppBuilderWorkspace.tsx`:**
-- Break `deferPostGen` into individual `requestIdleCallback` / `setTimeout` calls so the browser can process events between each step.
-- Specifically: run smoke test + conflict detection first (needed for error annotations), then schedule lighthouse, bundle analysis, and auto-patching as separate deferred callbacks.
+- **Skip heavy analysis for small projects**: Gate lighthouse audit and bundle analysis behind a file count threshold (only run for projects with < 100 files). For larger projects, skip them entirely — these are nice-to-have diagnostics, not critical.
+- **Increase delays between steps**: Change from 0/50/100ms to 0/500/1500ms so the browser has time to paint and process events.
+- **Add early-exit in lighthouse and bundle hooks**: If file count exceeds 200, return immediately with a default "skipped" result.
 
 ---
 
 ## Technical Summary
 
-| Issue | File | Change |
-|-------|------|--------|
-| Color/text edits don't persist | `AIAppBuilderWorkspace.tsx` | Add DOMParser-based fallback for CSS path selectors in `handleVisualEdit` |
-| Browser freeze on large projects | `AIAppBuilderWorkspace.tsx` | Split `deferPostGen` into individual deferred callbacks to yield to the main thread between heavy operations |
+| Issue | File(s) | Change |
+|-------|---------|--------|
+| Color/text edits can't find element in source | `VisualEditOverlay.tsx` | Pass `tagName` + `text` through `onEditApply` |
+| Color/text edits can't find element in source | `AIAppBuilderWorkspace.tsx` | Replace `querySelector(selector)` with text-content-based matching in DOMParser fallback |
+| Browser freeze during "Verifying output" | `AIAppBuilderWorkspace.tsx` | Skip heavy analysis for projects > 100 files, increase inter-step delays |
+| Browser freeze from lighthouse/bundle | `useLighthouseAudit.ts`, `useBundleSizeTracking.ts` | Early-exit when file count > 200 |
 
 ## Expected Result
 
-- Visual edit color and text changes persist correctly to source files regardless of selector format
-- Post-build analysis runs without freezing the browser, even for 600+ file projects
+- Visual edit color and text changes reliably persist to source HTML files using content-based element matching
+- Post-build analysis no longer freezes the browser for large projects
