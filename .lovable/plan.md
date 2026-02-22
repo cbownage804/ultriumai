@@ -1,82 +1,93 @@
 
+# Fix: Prevent Redundant Recompilation After Background Build
 
-# Fix: Keep Preview Visible During Generation (No Blank Screen)
+## Root Cause Found
 
-## Root Cause
+The preview keeps regenerating because of a **state desync between the workspace and CompilationBridge**.
 
-The core problem is on **line 125 of CompilationBridge.tsx**: when any chat message triggers `sendMessage()`, it sets `isGenerating = true`, and CompilationBridge immediately responds by calling `setStableHTML(null)` -- which **blanks the preview**. This happens for every single chat request, including simple "change the colors to teal" messages.
+Here's the exact sequence causing the problem:
 
-This is fundamentally different from how Lovable works. Lovable keeps the current preview visible while generating, then seamlessly updates it when the new code is ready. Your app builder destroys the preview the instant generation starts, showing a skeleton/loading screen instead.
+1. User sends "change colors to teal"
+2. `sendMessage` sets `isGenerating = true`
+3. Background job runs on the server, files stream in
+4. `handleBgComplete` fires -- applies files, **directly compiles, and calls `handleStableHTML(compiled.html)`**
+5. The workspace's `stableHTML` state is updated -- preview SHOULD show the new HTML
+6. But CompilationBridge has **its own separate `stableHTMLRef`** which is still `null`
+7. When `isGenerating` transitions to `false`, CompilationBridge checks `stableHTMLRef.current` (its own ref) -- sees `null`
+8. Thinks compilation never happened -- **forces a redundant full recompile** by setting `prevFilesDigestRef = '__force_recompile__'`
+9. The second compile produces a new HTML string, which changes the `html` prop to BuilderPreviewPanel
+10. BuilderPreviewPanel detects the HTML changed and **remounts the iframe**, causing the visible flash/regeneration
 
-## The Fix (2 files)
+The preview IS being compiled correctly the first time (step 4-5), but CompilationBridge doesn't know about it and triggers a second compile that forces a full iframe remount.
 
-### Change 1: CompilationBridge.tsx -- Don't null stableHTML when generation starts
+## The Fix (2 changes, 1 file each)
 
-Instead of resetting `stableHTML` to null when `isGenerating` becomes true, keep the existing preview visible. Only reset `liveCompiledHTML` (the compilation result tracker) and the compilation flags. The old preview stays in the iframe while the AI works.
+### Change 1: Pass workspace's stableHTMLRef to CompilationBridge
 
-When the new compilation finishes (either via `handleBgComplete` direct compile or via the compilation effect), `setStableHTML` will be called with the new HTML, which will naturally replace the old preview.
+The workspace already has a `stableHTMLRef` (line 2148) that gets updated whenever `handleStableHTML` is called -- including when `handleBgComplete` directly compiles. Pass this ref to CompilationBridge so it can check if the preview was already set externally.
 
-**Lines 119-128 change from:**
-```
-if (isGenerating && !prevIsGeneratingForReset.current) {
-  setStableHTML(null);          // <-- THIS BLANKS THE PREVIEW
-  setLiveCompiledHTML(null);
-  compilationAttemptedRef.current = false;
-  compilationLockRef.current = false;
+**`AIAppBuilderWorkspace.tsx`** -- Add `externalStableHTMLRef={stableHTMLRef}` to the CompilationBridge JSX (near line 2309).
+
+### Change 2: CompilationBridge checks external ref on generation end
+
+**`CompilationBridge.tsx`** -- In the "generation ENDING" effect (lines 126-139):
+
+Currently:
+```typescript
+} else if (!isGenerating && prevIsGeneratingForReset.current) {
+  if (!stableHTMLRef.current) {
+    // Forces recompile -- BUT workspace already has the preview!
+    compilationLockRef.current = false;
+    compilationAttemptedRef.current = false;
+    prevFilesDigestRef.current = '__force_recompile__';
+  } else { ... }
 }
 ```
 
-**To:**
-```
-if (isGenerating && !prevIsGeneratingForReset.current) {
-  // DON'T null stableHTML -- keep the current preview visible
-  // while the AI generates. The new compilation result will
-  // replace it when ready (via handleBgComplete or compilation effect).
-  setLiveCompiledHTML(null);
-  compilationAttemptedRef.current = false;
-  compilationLockRef.current = false;
+Fixed to also check the external ref:
+```typescript
+} else if (!isGenerating && prevIsGeneratingForReset.current) {
+  const externalHasPreview = externalStableHTMLRef?.current;
+  if (!stableHTMLRef.current && externalHasPreview) {
+    // handleBgComplete already compiled and set the preview externally.
+    // Sync our internal state to match, skip redundant recompile.
+    stableHTMLRef.current = externalHasPreview;
+    setStableHTMLLocal(externalHasPreview);
+    prevFilesDigestRef.current = filesDigest;
+    compilationLockRef.current = true;
+    compilationAttemptedRef.current = true;
+  } else if (!stableHTMLRef.current) {
+    compilationLockRef.current = false;
+    compilationAttemptedRef.current = false;
+    prevFilesDigestRef.current = '__force_recompile__';
+  } else {
+    prevFilesDigestRef.current = filesDigest;
+    compilationLockRef.current = true;
+    compilationAttemptedRef.current = true;
+  }
 }
 ```
 
-### Change 2: CompilationBridge.tsx -- Allow recompilation to overwrite existing stableHTML
+## Technical Details
 
-Currently, when `stableHTML` already exists and `filesDigest` changes, the code tries hot-patching first (line 187). But after a full AI generation where files are completely rewritten, hot-patching will always fail (since JS/TS changes force a null return from `detectPatches`). The existing logic already falls through to a full recompile in this case, but we need to make sure the new result overwrites the old stableHTML properly.
+### File 1: `src/components/ai-builder/CompilationBridge.tsx`
 
-The key change: in the compilation effect (line 176), when `stableHTML` exists and `filesDigest` changed, and hot-patching fails, don't just "fall through" -- explicitly unlock and proceed. The `runCompilation` function already calls `setStableHTML(result)` at line 273, which will replace the old preview with the new one.
+- Add `externalStableHTMLRef?: React.RefObject<string | null>` to the `CompilationBridgeProps` interface
+- In the generation ENDING branch (lines 126-139), check `externalStableHTMLRef?.current` before forcing a recompile
+- If the external ref has HTML, sync it into CompilationBridge's internal state and skip recompilation
 
-This is already mostly correct, but we need to ensure `compilationLockRef` is reset when generation ends so the recompilation can proceed.
+### File 2: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
 
-### Change 3: Preview update effect -- Handle stableHTML replacement
-
-In the preview update effect (line 374-394), when `liveCompiledHTML` is set and `stableHTML` already exists (old preview), we need to always update to the new result instead of trying to hot-patch (which will fail for full regenerations).
-
-**Lines 374-389 change to:**
-```
-if (liveCompiledHTML) {
-  if (stableHTML === liveCompiledHTML) return;
-  // If we already have a preview showing (stableHTML is not null),
-  // just replace it with the new compilation result directly.
-  // Hot-patching only works for incremental CSS/HTML changes,
-  // not full regenerations.
-  setStableHTML(liveCompiledHTML);
-  liveSync.resetSnapshot(filesRef.current);
-  return;
-}
-```
+- Add `externalStableHTMLRef={stableHTMLRef}` prop to the `CompilationBridge` JSX element (around line 2309)
 
 ## What This Achieves
 
-- User types "change colors to teal" in chat
-- AI generation starts -- **current preview stays visible** (no skeleton, no blank screen)
-- AI generates new files, `handleBgComplete` compiles them
-- New compiled HTML replaces the old preview seamlessly
-- If the AI correctly updated the colors, the preview now shows teal
-- If it didn't, the user still sees their site (not a blank screen) and can try again
+- `handleBgComplete` compiles once, sets the preview via `handleStableHTML`
+- When `isGenerating` goes to `false`, CompilationBridge sees the external ref has HTML
+- Syncs internal state, marks compilation as done, skips the redundant recompile
+- No iframe remount, no flash, no regeneration
+- Preview stays stable throughout the entire cycle
 
-## Technical Summary
+## Why Previous Fixes Didn't Work
 
-| File | Change |
-|------|--------|
-| `CompilationBridge.tsx` line 125 | Remove `setStableHTML(null)` when generation starts |
-| `CompilationBridge.tsx` lines 374-389 | Always replace stableHTML with new liveCompiledHTML (don't try hot-patching after full regen) |
-
+The previous fix (removing `setStableHTML(null)`) was necessary but not sufficient. It stopped the preview from blanking at the START of generation, but didn't address the SECOND problem: CompilationBridge forcing a redundant recompile at the END of generation because its internal ref was out of sync with the workspace's state.
