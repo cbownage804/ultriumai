@@ -307,24 +307,12 @@ export function AIAppBuilderWorkspace() {
       }
       setFiles(mergedFiles);
 
-      // Immediately compile for preview — don't wait for CompilationBridge effects
-      // Phase 6: Read configs from refs to avoid stale closures
-      const curSupabase = supabaseConfigRef.current;
-      const curStripe = stripeConfigRef.current;
-      const curEnvVars = envVarsRef.current;
-      const curServiceKeys = serviceKeysRef.current;
-      const curCdnPackages = cdnPackagesRef.current;
-      // Phase 2: Compile directly using vanilla compiler for ALL project types.
-      // The vanilla compiler works synchronously on the main thread and handles
-      // both React and non-React projects. Using the worker here was causing
-      // deadlocks because CompilationBridge couldn't compile while isGenerating was true.
-      const result = getCompiledHTML(curSupabase, curStripe, curEnvVars, curServiceKeys, curCdnPackages, bundleForBrowserRef.current, linkedGPTRef.current);
-      if (result) {
-        console.info('[handleBgComplete] ✅ Direct compilation succeeded, updating preview');
-        handleStableHTML(result);
-      } else {
-        console.warn('[handleBgComplete] Vanilla compilation returned null — CompilationBridge will retry');
-      }
+      // Don't compile here — getCompiledHTML reads from stale project.files state
+      // (setFiles above is async). Instead, let CompilationBridge handle compilation
+      // once isGeneratingOverride becomes false and the files state has propagated.
+      // The key fix is that we pass only isGeneratingOverride to CompilationBridge,
+      // NOT isGenerating from the hook, so it unblocks as soon as the bg job completes.
+      console.info('[handleBgComplete] Files set — CompilationBridge will compile when isGeneratingOverride becomes false');
       compilePromise = Promise.resolve();
 
       // Post-build snapshot for history
@@ -2345,7 +2333,7 @@ export function AIAppBuilderWorkspace() {
       <PanelErrorBoundary panelName="Compiler">
         <CompilationBridge
           files={project.files}
-          isGenerating={isGenerating || isGeneratingOverride}
+          isGenerating={isGeneratingOverride}
           supabaseConfig={supabaseConfig}
           stripeConfig={stripeConfig}
           envVars={envVars}
