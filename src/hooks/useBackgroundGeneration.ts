@@ -51,6 +51,7 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
   const [buildQueue, setBuildQueue] = useState<{ id: string; status: string }[]>([]);
   const [buildHistory, setBuildHistory] = useState<BuildHistoryEntry[]>([]);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const activeJobRef = useRef<BackgroundJob | null>(null);
   const realtimeChannelRef = useRef<any>(null);
   const sseAbortRef = useRef<AbortController | null>(null);
   const streamedContentRef = useRef<string>('');
@@ -62,6 +63,7 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
   onErrorRef.current = onError;
   onProgressRef.current = onProgress;
   onStreamDeltaRef.current = onStreamDelta;
+  activeJobRef.current = activeJob;
 
   // ── Pending queue for messages sent during active builds ──
   const pendingQueueRef = useRef<Array<{
@@ -358,8 +360,8 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
 
   /** Check for any active jobs on mount (recovery after tab close) */
   const checkPendingJobs = useCallback(async (userId: string) => {
-    // Skip if we're already watching a job to prevent toast spam on tab switches
-    if (activeJob) return activeJob.id;
+    // Use ref to avoid stale closure — skip if already watching a job
+    if (activeJobRef.current) return activeJobRef.current.id;
     try {
       const { data: jobs } = await supabase
         .from('app_builder_jobs')
@@ -410,7 +412,7 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
       console.error('[BG] checkPendingJobs error:', err);
       return null;
     }
-  }, [startWatching, activeJob]);
+  }, [startWatching]);
 
   /** Get streamed content ref for incremental file parsing */
   const getStreamedContent = useCallback(() => streamedContentRef.current, []);
