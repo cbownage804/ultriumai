@@ -1,94 +1,38 @@
 
-## Fix: Worker Compilation Timeout - Root Cause and Solution
 
-### Root Cause (confirmed via console logs)
+## Fix: Build Error from Dynamic Import in Worker
 
-The worker **always** times out at 30s:
+### Problem
+
+The dynamic `import('esbuild-wasm')` added in the last change causes Vite's Rollup build to attempt code-splitting inside the worker bundle. Workers default to IIFE output format, which does not support code-splitting, resulting in:
+
 ```
-[handleBgComplete] Worker compilation failed: Error: Worker timeout
-[handleBgComplete] No preview available - setting error fallback
-```
-
-The worker never responds because its module fails to evaluate. The static `import * as esbuild from 'esbuild-wasm'` at the top of `compiler.worker.ts` (line 9) runs at module load time. In a Vite worker build (`type: 'module'`), this 10MB+ dependency may fail to resolve or load, causing the entire worker module to crash before `self.onmessage` is ever registered. Since the message handler never exists, the worker silently ignores all messages.
-
-### The Fix (2 changes)
-
-#### Change 1: Dynamic esbuild import in the worker
-
-**File: `src/workers/compiler.worker.ts`**
-
-Replace the static top-level import with a dynamic import inside `ensureEsbuild()`. This ensures the worker module evaluates successfully and registers its message handler, even if esbuild-wasm fails to load. The regex-based fallback for TypeScript stripping will still work.
-
-Before (line 9):
-```typescript
-import * as esbuild from 'esbuild-wasm';
+Invalid value "iife" for option "output.format" - UMD and IIFE output formats
+are not supported for code-splitting builds.
 ```
 
-After:
-```typescript
-let esbuild: any = null;
-```
+### Solution
 
-And update `ensureEsbuild()` to dynamically import:
-```typescript
-async function ensureEsbuild(): Promise<boolean> {
-  if (esbuildReady) return true;
-  if (!esbuildInitPromise) {
-    esbuildInitPromise = (async () => {
-      try {
-        esbuild = await import('esbuild-wasm');
-        await esbuild.initialize({
-          wasmURL: 'https://unpkg.com/esbuild-wasm@0.25.2/esbuild.wasm',
-          worker: false,
-        });
-        esbuildReady = true;
-        console.info('[CompilerWorker] esbuild-wasm initialized');
-      } catch (err: any) {
-        console.warn('[CompilerWorker] esbuild-wasm failed, using regex fallback:', err.message);
-        esbuildInitPromise = null;
-      }
-    })();
-  }
-  await esbuildInitPromise;
-  return esbuildReady;
-}
-```
+Change the worker output format from IIFE to ES module in `vite.config.ts`. The worker is already instantiated with `{ type: 'module' }` in `useWorkerCompiler.ts`, so it already expects ES module format. This is a one-line config change.
 
-Update `esbuildStripTypes` to use the dynamic reference:
-```typescript
-async function esbuildStripTypes(code: string, isTsx: boolean): Promise<string> {
-  if (!esbuild) throw new Error('esbuild not loaded');
-  const result = await esbuild.transform(code, { ... });
-  return result.code;
-}
-```
+### Changes
 
-#### Change 2: Add error logging to worker initialization
+#### File: `vite.config.ts`
 
-**File: `src/workers/compiler.worker.ts`**
-
-Wrap the message handler registration in a try-catch and add a self-test log so we can confirm the worker module evaluates:
+Update the `worker` config to set the output format to `'es'`:
 
 ```typescript
-console.info('[CompilerWorker] Module loaded successfully');
-
-self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
-  // ... existing handler
-};
+worker: {
+  plugins: () => [],
+  format: 'es',
+},
 ```
 
-### Why This Works
+This tells Rollup to emit the worker as an ES module, which supports dynamic imports and code-splitting natively.
 
-1. The static `import * as esbuild from 'esbuild-wasm'` currently crashes the entire worker module if the import fails
-2. By making it dynamic, the worker module always evaluates, `self.onmessage` always gets registered
-3. If esbuild-wasm fails to load dynamically, the worker falls back to regex-based TypeScript stripping (already implemented)
-4. The compilation produces the HTML string with CDN script tags, Babel transpilation, etc. -- all of which is done inside the worker and doesn't depend on esbuild
+### Why This Is Safe
 
-### Expected Result
+- The worker is already created with `{ type: 'module' }` in `useWorkerCompiler.ts` (line 25), so the browser already expects ES module format
+- ES module workers are supported in all modern browsers (Chrome 80+, Firefox 114+, Safari 15+)
+- No other code changes needed
 
-1. Worker module loads successfully (dynamic import can't crash module evaluation)
-2. `handleBgComplete` sends compile request, worker receives it
-3. Worker tries esbuild (may fail), falls back to regex stripping
-4. Worker transpiles files, generates HTML, responds within seconds
-5. `handleBgComplete` sets the compiled HTML and releases state
-6. Preview shows the generated app
