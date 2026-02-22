@@ -1,60 +1,34 @@
 
 
-## Fix: Make Worker Self-Contained to Eliminate React Refresh Crash
+## Fix: esbuild-wasm Version Mismatch Causing Compilation Timeout
 
-### Root Cause
+### Problem
 
-The `parserConfig` exclusion correctly skips files inside `src/workers/`, but the worker imports `DEFAULT_PACKAGES` from `@/lib/cdnPackageRegistry.ts` -- which is **outside** `src/workers/`. Vite injects the React Refresh preamble into that file. When the worker loads it, the `/@react-refresh` virtual module crashes in the worker context, silently killing the worker before any code executes.
-
-This is why none of the `[CompilerWorker]` diagnostic logs appear in the console -- the worker never gets past module initialization.
-
-```text
-Worker module loading:
-  compiler.worker.ts (no preamble -- in workers/)
-    -> worker-window-shim.ts (no preamble -- in workers/)   [OK]
-    -> cdnPackageRegistry.ts (HAS preamble -- NOT in workers/)
-       -> /@react-refresh (Vite virtual module -- CRASHES in worker)
+The console shows:
 ```
+Cannot start service: Host version "0.27.3" does not match binary version "0.25.2"
+```
+
+The installed npm package is `esbuild-wasm@0.27.3`, but the WASM binary URL in `compiler.worker.ts` is hardcoded to download version `0.25.2`:
+
+```typescript
+wasmURL: 'https://unpkg.com/esbuild-wasm@0.25.2/esbuild.wasm'
+```
+
+This mismatch causes esbuild initialization to fail. While the worker has a regex fallback for TypeScript stripping, the failed initialization still consumes time, and the overall compilation times out at 30 seconds, resulting in the "Compilation Error" screen.
 
 ### Fix
 
-Move the shared data (`DEFAULT_PACKAGES` array and `CDNPackageEntry` type) into a new file inside `src/workers/` so the worker only imports from its own directory. The main-thread code (`cdnPackageRegistry.ts`) will re-export from the new shared file.
+**File: `src/workers/compiler.worker.ts` (line 31)**
 
-### Changes
+Update the WASM URL to match the installed package version:
 
-**1. New file: `src/workers/packageData.ts`**
+```typescript
+// Before
+wasmURL: 'https://unpkg.com/esbuild-wasm@0.25.2/esbuild.wasm'
 
-Contains the `CDNPackageEntry` interface and `DEFAULT_PACKAGES` constant (cut from `cdnPackageRegistry.ts`). Since it lives in `src/workers/`, it will NOT receive the React Refresh preamble.
-
-**2. Update: `src/lib/cdnPackageRegistry.ts`**
-
-Replace the inline `CDNPackageEntry` interface and `DEFAULT_PACKAGES` array with re-exports from `@/workers/packageData`. All existing consumers (useReactCompiler, etc.) continue working with zero changes.
-
-**3. Update: `src/workers/compiler.worker.ts`**
-
-Change the import from `@/lib/cdnPackageRegistry` to `./packageData`. This eliminates the only import that reaches outside the workers directory, making the worker fully self-contained.
-
-**4. Update: `src/hooks/useWorkerCompiler.ts`**
-
-- Change the type import to come from `@/workers/packageData` instead of `@/lib/cdnPackageRegistry`.
-- Add an `onerror` handler on the worker to catch and log any future load failures (defense-in-depth).
-
-### Result
-
-```text
-Worker module loading (fixed):
-  compiler.worker.ts (no preamble)
-    -> worker-window-shim.ts (no preamble)     [OK]
-    -> packageData.ts (no preamble -- in workers/)  [OK]
-    -- NO imports outside src/workers/ --
+// After
+wasmURL: 'https://unpkg.com/esbuild-wasm@0.27.3/esbuild.wasm'
 ```
 
-The worker loads cleanly, compilation proceeds, and the preview renders.
-
-### Technical Details
-
-- `useProjectFileSystem` is already a `type`-only import in the worker, so it gets erased by TypeScript and never loads at runtime
-- `CDNPackageEntry` is also type-only in the worker and in `useWorkerCompiler.ts`
-- Only `DEFAULT_PACKAGES` is a runtime value needed by the worker
-- The `onerror` handler will surface worker crashes in the main-thread console going forward, preventing silent failures
-
+This single line change aligns the WASM binary with the host JS module, allowing esbuild to initialize successfully and compile projects within the timeout window.
