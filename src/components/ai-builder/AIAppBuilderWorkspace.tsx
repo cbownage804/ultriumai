@@ -225,7 +225,7 @@ export function AIAppBuilderWorkspace() {
   const {
     messages, setMessages, isGenerating, latestFiles, previousFiles, mode, setMode, thinkingPhase, versions, setVersions,
     totalTokensUsed, contextBudget, continuationRound, sendMessage, stopGenerating, clearChat, restoreVersion, forwardErrorToChat,
-    partialFilesRef, isStreamingPreview, completedFileCountRef,
+    partialFilesRef, isStreamingPreview, completedFileCountRef, parseIncremental,
     streamingContentRef,
   } = useAIAppBuilder();
 
@@ -239,6 +239,9 @@ export function AIAppBuilderWorkspace() {
   const promptHistory = usePromptHistory();
   const codeSmellDetector = useCodeSmellDetector();
   const docGenerator = useDocGenerator();
+  // Ref for project.files — used in commandActions to avoid re-renders on file changes
+  const projectFilesRef = useRef(project.files);
+  projectFilesRef.current = project.files;
   // showPromptHistory now managed by usePanelManager
   const {
     branches, activeBranch, activeBranchName,
@@ -370,41 +373,24 @@ export function AIAppBuilderWorkspace() {
     });
   }, [project.files, setFiles, setMessages, getCompiledHTML]);
 
-  // SSE streaming: apply files incrementally as they arrive
+  // SSE streaming: update streaming ref only — NO setFiles during streaming.
+  // partialFilesRef + StreamingCodeEditor handle live file display via polling.
+  // setFiles is called once in handleBgComplete when generation finishes.
   const lastIncrementalParseRef = useRef(0);
-  const lastSetFilesTimeRef = useRef(0); // Phase 4: throttle setFiles during streaming
   const handleStreamDelta = useCallback((delta: string, totalContent: string) => {
     // Update streaming ref for chat display
     if (streamingContentRef) {
       streamingContentRef.current = totalContent;
     }
 
-    // Incremental file application: parse and apply ===FILE: blocks as they appear
     // Only re-parse every 2KB of new content to avoid excessive parsing
-    // NOTE: ===EDIT: blocks are NOT applied here — they are applied once in handleBgComplete.
-    // Applying edits during streaming AND again in handleBgComplete caused double-patching
-    // corruption (line numbers shift after first application, breaking subsequent patches).
     if (totalContent.length - lastIncrementalParseRef.current > 2000) {
       lastIncrementalParseRef.current = totalContent.length;
-
-      // Phase 4: Throttle setFiles to at most once per 3s to reduce re-renders
-      const now = Date.now();
-      if (now - lastSetFilesTimeRef.current < 3000) return;
-
-      const { files: parsedFiles } = parseMultiFileOutput(totalContent);
-      if (parsedFiles.length > 0) {
-        lastSetFilesTimeRef.current = now;
-        // Apply full-file blocks incrementally — users see files appear one by one
-        let mergedFiles = [...project.files];
-        for (const newFile of parsedFiles) {
-          const existingIdx = mergedFiles.findIndex(f => f.path === newFile.path);
-          if (existingIdx >= 0) mergedFiles[existingIdx] = newFile;
-          else mergedFiles.push(newFile);
-        }
-        setFiles(mergedFiles);
-      }
+      // parseIncremental updates partialFilesRef (ref, no re-render)
+      // StreamingCodeEditor and GeneratingOverlay poll from it
+      parseIncremental(totalContent);
     }
-  }, [project.files, setFiles, streamingContentRef]);
+  }, [streamingContentRef, parseIncremental]);
 
   const handleBgProgress = useCallback((job: BackgroundJob) => {
     if (job.output_content && streamingContentRef) {
@@ -2335,12 +2321,12 @@ export function AIAppBuilderWorkspace() {
       { id: 'console', label: 'Toggle Console', icon: Activity, category: 'panel', action: () => setShowConsole(c => !c) },
       { id: 'shortcuts', label: 'Keyboard Shortcuts', icon: Keyboard, category: 'panel', shortcut: '⌘/', action: () => setShowShortcuts(true) },
       { id: 'prompt-history', label: 'Prompt History', icon: Clock, category: 'panel', action: () => setShowPromptHistory(true), keywords: ['history', 'prompts', 'favorites'] },
-      { id: 'code-smells', label: 'Analyze Code Quality', icon: Zap, category: 'run', action: () => { const smells = codeSmellDetector.analyzeFiles(project.files); setCodeSuggestions(smells); setShowCodeIntel(true); dedupeToast('success', `Found ${smells.length} suggestions`); }, keywords: ['lint', 'quality', 'refactor', 'smell'] },
-      { id: 'gen-readme', label: 'Generate README', icon: BookOpen, category: 'run', action: () => { const prompt = docGenerator.generateReadmePrompt(project.files, project.name); handleSend(prompt); }, keywords: ['doc', 'readme', 'documentation'] },
+      { id: 'code-smells', label: 'Analyze Code Quality', icon: Zap, category: 'run', action: () => { const smells = codeSmellDetector.analyzeFiles(projectFilesRef.current); setCodeSuggestions(smells); setShowCodeIntel(true); dedupeToast('success', `Found ${smells.length} suggestions`); }, keywords: ['lint', 'quality', 'refactor', 'smell'] },
+      { id: 'gen-readme', label: 'Generate README', icon: BookOpen, category: 'run', action: () => { const prompt = docGenerator.generateReadmePrompt(projectFilesRef.current, project.name); handleSend(prompt); }, keywords: ['doc', 'readme', 'documentation'] },
       { id: 'doc-file', label: 'Document Current File', icon: FileCode, category: 'run', action: () => { if (activeFile) { const prompt = docGenerator.generateDocPrompt(activeFile); handleSend(prompt); } else { dedupeToast('error', 'Open a file first'); } }, keywords: ['jsdoc', 'comment', 'document'] },
     ];
     return [...coreActions, ...staticRegistryActions];
-  }, [handleSave, handleUndo, handleRedo, handlePublish, codeSmellDetector, project.files, docGenerator, project.name, activeFile, handleSend, staticRegistryActions]);
+  }, [handleSave, handleUndo, handleRedo, handlePublish, codeSmellDetector, docGenerator, project.name, activeFile, handleSend, staticRegistryActions]);
 
   // Sidebar removed — all tools accessible via ⌘K command palette (Lovable-style)
 
