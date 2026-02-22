@@ -1,68 +1,111 @@
 
+## Fix: Preview Never Renders After Generation
 
-## Fix: Browser Freeze During Generation
+### Root Cause Analysis
 
-### Root Cause
+The compilation pipeline has a fragile chain of effects, refs, locks, and timers that must all fire in the correct order. The failure mode:
 
-The `AIAppBuilderWorkspace` component is **3096 lines** with **100+ hooks** (useState, useMemo, useCallback, useEffect). During streaming generation, `setFiles()` is called every 3 seconds (throttled) from `handleStreamDelta`. Each call triggers a **full re-render** of the entire workspace component, which means:
+1. `handleBgComplete` calls `setFiles(mergedFiles)` then tries vanilla compile (fails for TSX) 
+2. `compilePromise = Promise.resolve()` resolves immediately via microtask
+3. `setIsGeneratingOverride(false)` fires, causing CompilationBridge to see `isGenerating` transition
+4. CompilationBridge's generation-ending effect schedules `compileNowRef` at 200ms
+5. CompilationBridge's main effect ALSO fires (because `filesDigest` changed), starting a 500ms debounce
+6. At 200ms, `compileNowRef` fires and calls the worker compiler
+7. The worker either: (a) hangs trying to download esbuild-wasm, (b) compiles successfully but the result doesn't propagate, or (c) times out after 30s
 
-- All 100+ hooks re-evaluate their dependencies
-- The `commandActions` useMemo (line 2325) depends on `project.files` and rebuilds its entire action list on every file change
-- The `bundleForBrowser` useCallback depends on `astBundler` and `incrementalCompiler`, creating new function references
-- Dozens of useEffect dependency arrays are checked
-- The entire JSX tree (3096 lines of components, panels, dialogs) is re-diffed by React
+The safety net at 5s fires but does nothing useful -- it toggles `isCompiling` which CompilationBridge doesn't depend on. Even if compilation eventually succeeds or falls back to ERROR_FALLBACK_HTML after 30s, the agent mode's verify step may have already finished and moved on.
 
-With files changing every 3 seconds during a 30-60 second generation, that is 10-20 full re-renders of a monster component, each taking 200-500ms, freezing the browser.
+### The Fix: Direct Compilation in `handleBgComplete`
 
-### Fix (3 targeted changes)
+Instead of relying on the fragile effect chain, call the worker compiler directly in `handleBgComplete` and await the result before releasing the generation state. This ensures:
+- Compilation runs immediately after files are set
+- The result is available before `isGeneratingOverride` goes false  
+- No coordination needed between multiple effects, timers, and locks
 
-#### 1. Skip `setFiles` during streaming -- use refs instead
+#### Change 1: Import worker compiler in workspace and compile directly
 
-**File:** `src/components/ai-builder/AIAppBuilderWorkspace.tsx` (lines 390-406)
+**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
 
-The `handleStreamDelta` callback currently calls `setFiles(mergedFiles)` during streaming to show files appearing in the editor. Instead, we should defer this to refs and only call `setFiles` once when generation completes (in `handleBgComplete`). The streaming file display already works via `partialFilesRef` and `StreamingCodeEditor` -- the `setFiles` call during streaming is redundant and only serves to trigger expensive re-renders.
-
-```typescript
-// In handleStreamDelta, replace setFiles(mergedFiles) with a no-op during streaming:
-// The files will be properly set in handleBgComplete when generation finishes.
-// StreamingCodeEditor already reads from partialFilesRef for live file display.
-```
-
-#### 2. Remove `project.files` from `commandActions` dependencies
-
-**File:** `src/components/ai-builder/AIAppBuilderWorkspace.tsx` (line 2343)
-
-The `commandActions` useMemo depends on `project.files`, but the only actions that use files (code smells, gen-readme) can read them at click time from a ref instead. This prevents the entire command action list from being rebuilt on every file change.
+In `handleBgComplete` (around line 321), after the self-contained check fails, instead of just trying vanilla compile:
 
 ```typescript
-// Store project.files in a ref
-const projectFilesRef = useRef(project.files);
-projectFilesRef.current = project.files;
-
-// In commandActions, read from ref instead of closure:
-// action: () => { const smells = codeSmellDetector.analyzeFiles(projectFilesRef.current); ... }
-// Remove project.files from the dependency array
+// After self-contained check fails:
+// 1. Try worker compilation for React projects (TSX/JSX)
+const hasReactFiles = mergedFiles.some(f => /\.(tsx|jsx)$/.test(f.path));
+if (hasReactFiles) {
+  try {
+    const compiled = await Promise.race([
+      workerCompiler.compileReactProject(mergedFiles, {
+        supabaseConfig: supabaseConfigRef.current || undefined,
+        stripeConfig: stripeConfigRef.current || undefined,
+        envVars: envVarsRef.current,
+      }),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 30_000)),
+    ]);
+    const html = (compiled as any)?.html || null;
+    if (html) {
+      stableHTMLRef.current = html;
+      setStableHTML(html);
+      compilePromise = Promise.resolve();
+    }
+  } catch (e) {
+    console.warn('[handleBgComplete] Worker compilation failed:', e);
+  }
+}
+// 2. Vanilla fallback (existing code)
+if (!stableHTMLRef.current) {
+  // ... existing vanilla compile attempt
+}
 ```
 
-#### 3. Guard `handleStreamDelta` to not call `setFiles` at all
+Make `handleBgComplete` async so it can await the worker.
 
-**File:** `src/components/ai-builder/AIAppBuilderWorkspace.tsx` (lines 376-407)
+#### Change 2: Make the safety net actually trigger compilation
 
-Remove the `setFiles` call entirely from the streaming path. The streaming code editor already uses `partialFilesRef` for live display. The final authoritative file state is set in `handleBgComplete` when the job finishes. Calling `setFiles` during streaming provides no user-visible benefit but causes catastrophic re-renders.
+**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
 
-### Technical Detail
+The current safety net at line 2217 toggles `isCompiling` which has no effect on CompilationBridge. Instead, expose a `forceCompile` callback from CompilationBridge and call it from the safety net:
 
-The streaming architecture already has a ref-based path for displaying partial files:
-- `useStreamingPreview` stores files in `partialFilesRef` (no state, no re-renders)
-- `StreamingCodeEditor` polls `partialFilesRef` at 3-second intervals with local state
-- `GeneratingOverlay` reads from `partialFilesRef` and `completedFileCountRef`
+```typescript
+// In CompilationBridge: expose forceCompile via callback prop
+onForceCompile?: (fn: () => void) => void;
 
-The only reason `setFiles` was being called during streaming was to update the file tree sidebar, but this is not visible during generation (the overlay covers it). The fix simply stops calling `setFiles` during streaming and lets `handleBgComplete` set the final file state once.
+// In the component body:
+useEffect(() => {
+  onForceCompile?.(() => {
+    compilationLockRef.current = false;
+    compileNowRef.current?.();
+  });
+}, [onForceCompile]);
+
+// In workspace safety net:
+forceCompileRef.current?.();
+```
+
+#### Change 3: Ensure ERROR_FALLBACK_HTML always shows
+
+If both worker and vanilla compilation fail in `handleBgComplete`, set ERROR_FALLBACK_HTML so the user at least sees an error message instead of the empty placeholder:
+
+```typescript
+if (!stableHTMLRef.current) {
+  stableHTMLRef.current = ERROR_FALLBACK_HTML;
+  setStableHTML(ERROR_FALLBACK_HTML);
+}
+```
+
+### Technical Details
+
+- `handleBgComplete` already has access to `useWorkerCompiler` since it's in the workspace component
+- The workspace already imports `useWorkerCompiler` (line 39)
+- Making `handleBgComplete` async is safe since it's only called from `useBackgroundGeneration.onComplete`
+- The 30s timeout ensures the function doesn't hang indefinitely
+- CompilationBridge still works for subsequent edits (hot-patching, recompilation) -- this change only affects the initial post-generation compilation
 
 ### Expected Result
 
-- No more browser freezes during generation
-- Streaming overlay continues to show file progress (via refs)
-- Files are set once when generation completes
-- Preview compilation runs once after generation, not during
-
+1. Generation completes, `handleBgComplete` fires
+2. Worker compiler is called directly with 30s timeout
+3. If worker succeeds: preview shows immediately
+4. If worker fails: ERROR_FALLBACK_HTML shows (instead of blank)
+5. `isGeneratingOverride` is set to false AFTER compilation result is available
+6. CompilationBridge syncs from `externalStableHTMLRef` and skips redundant recompile
