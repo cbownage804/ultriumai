@@ -360,12 +360,12 @@ export function AIAppBuilderWorkspace() {
         suggestions,
       }];
     });
-    setIsGeneratingOverride(false);
 
-    // Phase 2: Dispatch bg-job-completed AFTER compile promise resolves.
-    // This eliminates the race between polling fallback and fire-and-forget compile.
+    // Phase 2: Clear generating state and dispatch bg-job-completed AFTER compile resolves.
+    // This keeps the skeleton visible until the preview HTML is ready.
     const jobId = job.id;
     compilePromise.finally(() => {
+      setIsGeneratingOverride(false);
       setTimeout(() => {
         console.info('[Workspace] 📣 Dispatching bg-job-completed for jobId:', jobId);
         window.dispatchEvent(new CustomEvent('bg-job-completed', { detail: { jobId } }));
