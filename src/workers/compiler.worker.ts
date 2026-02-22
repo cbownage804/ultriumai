@@ -28,7 +28,7 @@ async function ensureEsbuild(): Promise<boolean> {
         );
         await Promise.race([
           esbuild.initialize({
-            wasmURL: 'https://unpkg.com/esbuild-wasm@0.25.2/esbuild.wasm',
+            wasmURL: 'https://unpkg.com/esbuild-wasm@0.27.3/esbuild.wasm',
             worker: false,
           }),
           timeoutPromise,
