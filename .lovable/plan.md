@@ -1,34 +1,56 @@
 
 
-## Fix: esbuild-wasm Version Mismatch Causing Compilation Timeout
+## Fix: Compilation Loop Caused by Recovery Setting `isGeneratingOverride` for Already-Completed Jobs
 
-### Problem
+### Root Cause
 
-The console shows:
+The loop has two contributing factors:
+
+1. **`checkPendingJobs` treats completed jobs the same as active jobs.** When a recently-completed job is found (lines 406-426 of `useBackgroundGeneration.ts`), it calls `handleBgComplete` immediately AND returns the job ID. The caller in `AIAppBuilderWorkspace.tsx` (line 504-506) then sets `isGeneratingOverride = true` — but the job is already finished. This flips `isGenerating` back to `true` for CompilationBridge, which resets its internal state.
+
+2. **`processedJobIdsRef` resets on remount.** It's a `useRef` inside the hook, so if the workspace component remounts (triggered by the iframe srcdoc change), the Set is empty again and the same completed job gets reprocessed.
+
+The sequence each cycle:
+```text
+Mount -> recoverJobs() -> checkPendingJobs()
+  -> finds completed job -> handleBgComplete() -> starts async compile
+  -> returns job.id -> setIsGeneratingOverride(true)  // WRONG for completed jobs
+  -> CompilationBridge sees isGenerating=true -> resets state
+  -> compile finishes -> setIsGeneratingOverride(false) -> preview loads
+  -> iframe srcdoc change -> remount -> processedJobIdsRef is empty -> repeat
 ```
-Cannot start service: Host version "0.27.3" does not match binary version "0.25.2"
-```
 
-The installed npm package is `esbuild-wasm@0.27.3`, but the WASM binary URL in `compiler.worker.ts` is hardcoded to download version `0.25.2`:
+### Fix (2 changes)
+
+**1. `src/hooks/useBackgroundGeneration.ts` — Move `processedJobIdsRef` to module scope**
+
+Move the `processedJobIdsRef` Set from inside the hook to module-level so it persists across component remounts. This is the primary defense against reprocessing the same job.
 
 ```typescript
-wasmURL: 'https://unpkg.com/esbuild-wasm@0.25.2/esbuild.wasm'
+// Module scope (outside the hook function)
+const processedJobIds = new Set<string>();
+
+// Inside the hook, replace processedJobIdsRef.current with processedJobIds
 ```
 
-This mismatch causes esbuild initialization to fail. While the worker has a regex fallback for TypeScript stripping, the failed initialization still consumes time, and the overall compilation times out at 30 seconds, resulting in the "Compilation Error" screen.
+**2. `src/hooks/useBackgroundGeneration.ts` — Return a discriminated value for completed vs active jobs**
 
-### Fix
+Change `checkPendingJobs` to return `{ type: 'active', id }` for in-progress jobs and `{ type: 'completed', id }` for already-finished jobs. This lets the caller distinguish them.
 
-**File: `src/workers/compiler.worker.ts` (line 31)**
+**3. `src/components/ai-builder/AIAppBuilderWorkspace.tsx` — Only set `isGeneratingOverride` for active jobs**
 
-Update the WASM URL to match the installed package version:
+Update the recovery effect to only set `isGeneratingOverride(true)` when the recovered job is still active (pending/processing/streaming), NOT when it's already completed. Completed jobs are handled entirely by `handleBgComplete` which manages its own `setIsGeneratingOverride(false)` via `compilePromise.finally()`.
 
 ```typescript
-// Before
-wasmURL: 'https://unpkg.com/esbuild-wasm@0.25.2/esbuild.wasm'
-
-// After
-wasmURL: 'https://unpkg.com/esbuild-wasm@0.27.3/esbuild.wasm'
+const recovered = await backgroundGen.checkPendingJobs(userId);
+if (recovered && !cancelled && recovered.type === 'active') {
+  setIsGeneratingOverride(true);
+}
 ```
 
-This single line change aligns the WASM binary with the host JS module, allowing esbuild to initialize successfully and compile projects within the timeout window.
+### Result
+
+- Completed jobs found on mount/tab-return are processed once by `handleBgComplete` without flipping `isGenerating` back to true
+- Even if the component remounts, the module-level Set prevents reprocessing
+- Active (in-progress) jobs still correctly set `isGeneratingOverride` for the overlay
+
