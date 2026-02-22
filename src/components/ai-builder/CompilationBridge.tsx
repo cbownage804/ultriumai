@@ -598,7 +598,7 @@ export function CompilationBridge({
       setStableHTML(liveCompiledHTML);
       liveSync.resetSnapshot(filesRef.current);
     }
-    if (!isGenerating && !liveCompiledHTML && filesRef.current.length > 0 && stableHTML === null && compilationAttemptedRef.current) {
+    if (!isGenerating && !liveCompiledHTML && filesRef.current.length > 0 && stableHTMLRef.current === null && stableHTML === null && compilationAttemptedRef.current) {
       console.warn('[Preview] Generation complete but compilation returned null — showing error fallback');
       setStableHTML(ERROR_FALLBACK_HTML);
     }
