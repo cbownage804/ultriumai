@@ -172,9 +172,14 @@ export function CompilationBridge({
     // If stableHTML already exists but filesDigest changed, reset it so
     // recompilation can run with the new files
     if (stableHTMLRef.current && filesDigest !== prevFilesDigestRef.current) {
-      console.info('[CompilationBridge] Effect: filesDigest changed, recompiling (keeping old preview visible)');
+      // Files changed while preview exists — try hot-patching first
       prevFilesDigestRef.current = filesDigest;
-      // DON'T set stableHTML to null — keep old preview showing until new compilation finishes
+      const patched = liveSync.applyPatches(previewIframeRef, filesRef.current);
+      if (patched) {
+        console.info('[CompilationBridge] Effect: hot-patched successfully, skipping full recompile');
+        return;
+      }
+      console.info('[CompilationBridge] Effect: hot-patch failed, doing full recompile (keeping old preview visible)');
       compilationLockRef.current = false;
       // Fall through to start recompilation
     } else if (stableHTMLRef.current) {
