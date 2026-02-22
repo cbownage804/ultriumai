@@ -115,12 +115,19 @@ export function CompilationBridge({
   const prevIsGeneratingForReset = useRef(false);
   useEffect(() => {
     if (isGenerating && !prevIsGeneratingForReset.current) {
-      // Always reset stableHTML when a new generation starts.
-      // The old preview will be replaced by the new compilation result.
+      // Generation STARTING — reset stableHTML so old preview is replaced
       setStableHTML(null);
-      // Also reset compilation state so the new build can run
       compilationAttemptedRef.current = false;
       compilationLockRef.current = false;
+    } else if (!isGenerating && prevIsGeneratingForReset.current) {
+      // Generation ENDING — force recompilation of the final files
+      // This is critical: without it, the compilation effect may skip
+      // recompilation if the filesDigest didn't change (e.g., patches failed
+      // or the digest was already seen during a previous effect run).
+      compilationLockRef.current = false;
+      compilationAttemptedRef.current = false;
+      prevFilesDigestRef.current = '__force_recompile__';
+      console.info('[CompilationBridge] Generation ended — forcing recompilation');
     }
     prevIsGeneratingForReset.current = isGenerating;
   }, [isGenerating, setStableHTML]);
