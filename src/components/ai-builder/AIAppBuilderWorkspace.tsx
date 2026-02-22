@@ -2307,6 +2307,7 @@ export function AIAppBuilderWorkspace() {
           onCompiledForHosting={handleCompiledForHosting}
           onCompilingChange={setIsCompiling}
           skipNextCompileRef={skipNextCompileRef}
+          externalStableHTMLRef={stableHTMLRef}
         />
       </PanelErrorBoundary>
       <WelcomeOverlay onQuickStart={(prompt) => handleSend(prompt)} />
