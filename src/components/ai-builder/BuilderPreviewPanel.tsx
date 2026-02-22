@@ -445,7 +445,7 @@ window.addEventListener('message', function(e) {
             <div className="flex-1 flex items-center gap-1.5 bg-white/[0.04] border border-white/[0.06] rounded-lg h-7 px-2.5">
               <Lock className="h-2.5 w-2.5 text-emerald-400/60 shrink-0" />
               <span className="text-[11px] text-white/30 font-mono truncate">
-                preview.lovable.app{currentUrl}
+                preview.ultriumai.app{currentUrl}
               </span>
             </div>
 

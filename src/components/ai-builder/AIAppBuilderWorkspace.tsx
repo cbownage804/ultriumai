@@ -1657,6 +1657,8 @@ export function AIAppBuilderWorkspace() {
   const handleAutoFixError = useCallback((error: import('./ErrorConsole').PreviewError) => {
     // Skip resource load errors FIRST — don't even forward to chat
     if (error.message?.includes('Failed to load')) return;
+    // Filter out host-level Vite dev server errors (not from the preview iframe)
+    if (/react.refresh|@react-refresh|preamble was not loaded/i.test(error.message || '')) return;
     // Phase 85: Suppress auto-fix for CDN/infrastructure errors (not code bugs)
     if (error.message?.includes('Failed to fetch dynamically imported module') ||
         error.message?.includes('error loading dynamically imported module') ||
