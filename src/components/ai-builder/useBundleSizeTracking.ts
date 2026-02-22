@@ -86,6 +86,16 @@ export function useBundleSizeTracking(
   const [report, setReport] = useState<BundleSizeReport | null>(null);
 
   const analyzeBundle = useCallback((files: ProjectFile[]): BundleSizeReport => {
+    // Early exit for large projects to prevent browser freeze
+    if (files.length > 200) {
+      const skippedReport: BundleSizeReport = {
+        totalSizeKB: 0, files: [], largestFiles: [], warnings: [],
+        performanceScore: 100, imageSizeWarnings: [], domComplexityWarnings: [],
+      };
+      addBuildLogEntry('info', '⏭️ Bundle analysis skipped (too many files)');
+      setReport(skippedReport);
+      return skippedReport;
+    }
     const codeFiles = files.filter(f => f.path.match(/\.(tsx?|jsx?|css|html|json)$/));
 
     const entries: FileSizeEntry[] = codeFiles.map(f => {
