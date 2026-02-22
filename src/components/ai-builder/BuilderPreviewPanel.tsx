@@ -75,9 +75,13 @@ export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFix
 
   // Force iframe remount when compiled HTML changes (fixes stale preview)
   const prevHtmlRef = useRef<string | null>(null);
+  const hasEverHadHtmlRef = useRef(false);
   useEffect(() => {
-    if (html && prevHtmlRef.current && html !== prevHtmlRef.current) {
-      setIframeKey(k => k + 1);
+    if (html) {
+      if (hasEverHadHtmlRef.current && html !== prevHtmlRef.current) {
+        setIframeKey(k => k + 1);
+      }
+      hasEverHadHtmlRef.current = true;
     }
     prevHtmlRef.current = html;
   }, [html]);
