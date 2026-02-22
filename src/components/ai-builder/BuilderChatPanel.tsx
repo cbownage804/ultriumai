@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect, useCallback, useMemo, type MutableRefObject } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Send, Square, Trash2, Sparkles, Loader2, Bot, User, Lightbulb, FileCode, CheckCircle2,
+  Send, Square, Sparkles, Loader2, Bot, User, Lightbulb, FileCode, CheckCircle2,
   Zap, MessageCircle, Wand2, ImagePlus, X, Brain, Compass, Code2, History, ChevronRight,
-  LayoutGrid, Wrench, AlertTriangle, Copy, RotateCcw, Pencil, GitFork, ChevronDown, Check,
-  Crosshair, ClipboardCheck, ThumbsUp, ThumbsDown, Plus, Camera, Paperclip, AtSign, ExternalLink, Clock, Coins, Link,
-  Pin, Search, RotateCw,
+  LayoutGrid, Wrench, AlertTriangle, Copy, ChevronDown, Check, Pencil,
+  Crosshair, Plus, Camera, Paperclip, AtSign, ExternalLink, Clock, Coins,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -336,15 +335,11 @@ export function BuilderChatPanel({
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
-  const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
   const [plusMenuOpen, setPlusMenuOpen] = useState(false);
-  const [editInput, setEditInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const contextWarningShown = useRef(false);
-  const [messageSearch, setMessageSearch] = useState('');
-  const [showSearch, setShowSearch] = useState(false);
 
   // Context budget warning toast at 80%
   useEffect(() => {
@@ -1062,37 +1057,9 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Bottom action bar — Lovable style */}
+        {/* Bottom action bar — Copy only */}
         {isCompleted && (
           <div className="flex items-center gap-1 pt-1">
-            {onRevertToMessage && msg.filesSnapshot && isLast && (
-              <button
-                onClick={() => onRevertToMessage(msg.id)}
-                className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors"
-                title="Undo changes"
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-              </button>
-            )}
-            <button
-              onClick={() => onUpdateMessages?.(prev => prev.map(m => m.id === msg.id ? { ...m, pinned: !m.pinned } : m))}
-              className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-colors", msg.pinned ? "text-amber-400 hover:text-amber-300 bg-amber-500/10" : "text-white/20 hover:text-white/50 hover:bg-white/[0.05]")}
-              title={msg.pinned ? "Unpin" : "Pin"}
-            >
-              <Pin className="h-3.5 w-3.5" />
-            </button>
-            <button
-              className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors"
-              title="Helpful"
-            >
-              <ThumbsUp className="h-3.5 w-3.5" />
-            </button>
-            <button
-              className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors"
-              title="Not helpful"
-            >
-              <ThumbsDown className="h-3.5 w-3.5" />
-            </button>
             <button
               onClick={() => navigator.clipboard.writeText(msg.content)}
               className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors"
@@ -1100,43 +1067,6 @@ export function BuilderChatPanel({
             >
               <Copy className="h-3.5 w-3.5" />
             </button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors"
-                  title="More"
-                >
-                  <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" sideOffset={6} className="w-52 bg-[#0f0f14] border-white/10 p-1">
-                <DropdownMenuItem
-                  onClick={() => {
-                    navigator.clipboard.writeText(window.location.href + '#msg-' + msg.id);
-                    toast.success('Message link copied');
-                  }}
-                  className="gap-2.5 text-white/70 hover:text-white cursor-pointer px-2.5 py-2"
-                >
-                  <Link className="h-4 w-4" />
-                  Copy message link
-                  <ExternalLink className="h-3 w-3 ml-auto text-white/20" />
-                </DropdownMenuItem>
-                {msg.filesSnapshot && (
-                  <DropdownMenuItem
-                    className="gap-2.5 text-white/70 hover:text-white cursor-pointer px-2.5 py-2"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    Preview
-                    <ExternalLink className="h-3 w-3 ml-auto text-white/20" />
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator className="bg-white/[0.06] my-1" />
-                <div className="flex items-center justify-between px-2.5 py-2 text-sm text-white/50">
-                  <span className="flex items-center gap-2.5"><Coins className="h-4 w-4" />Credits used</span>
-                  <span className="text-white/70">1</span>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         )}
 
@@ -1201,134 +1131,7 @@ export function BuilderChatPanel({
 
   return (
     <div className="flex flex-col h-full bg-[#0a0a0f]">
-      {/* Minimal header — Lovable style */}
-      <div className="flex items-center justify-between px-3 h-10 border-b border-white/[0.06] bg-gradient-to-r from-[#0a0a0f] to-[#0d0a14] shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="h-5 w-5 rounded-md bg-gradient-to-br from-cyan-500/20 to-violet-500/20 flex items-center justify-center border border-white/[0.06]">
-            <Sparkles className="h-2.5 w-2.5 text-cyan-400/70" />
-          </div>
-          <span className="text-[11px] font-medium text-white/50 tracking-wide uppercase">Chat</span>
-        </div>
-        <div className="flex items-center gap-1">
-          {messages.filter(m => m.role === 'user' && !isInternalMessage(m.content)).length > 0 && (
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/[0.03] border border-white/[0.06]">
-              <Zap className="h-2.5 w-2.5 text-white/25" />
-              <span className="text-[9px] text-white/30 font-mono">
-                {messages.filter(m => m.role === 'user' && !isInternalMessage(m.content)).length} msg{messages.filter(m => m.role === 'user' && !isInternalMessage(m.content)).length > 1 ? 's' : ''}
-              </span>
-            </div>
-          )}
-          {versions.length > 0 && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => onOpenEditHistory ? onOpenEditHistory() : setShowHistory(!showHistory)}
-                  className={cn(
-                    "h-6 w-6 rounded-md flex items-center justify-center transition-colors",
-                    showHistory ? "text-cyan-400 bg-cyan-500/10" : "text-white/25 hover:text-white/50 hover:bg-white/5"
-                  )}
-                >
-                  <History className="h-3 w-3" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Edit History</TooltipContent>
-            </Tooltip>
-          )}
-          {messages.length > 0 && (
-            <>
-              {onNewConversation && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={onNewConversation}
-                      className="h-6 w-6 rounded-md flex items-center justify-center text-white/25 hover:text-white/50 hover:bg-white/5 transition-colors"
-                    >
-                      <RotateCw className="h-3 w-3" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="text-xs">New conversation</TooltipContent>
-                </Tooltip>
-              )}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => setShowSearch(s => !s)}
-                    className={cn("h-6 w-6 rounded-md flex items-center justify-center transition-colors", showSearch ? "text-cyan-400 bg-cyan-500/10" : "text-white/25 hover:text-white/50 hover:bg-white/5")}
-                  >
-                    <Search className="h-3 w-3" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">Search messages</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={onClear}
-                    className="h-6 w-6 rounded-md flex items-center justify-center text-white/25 hover:text-white/50 hover:bg-white/5 transition-colors"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">Clear chat</TooltipContent>
-              </Tooltip>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Search bar */}
-      {showSearch && (
-        <div className="px-3 py-1.5 border-b border-white/[0.06] flex items-center gap-2">
-          <Search className="h-3 w-3 text-white/20 shrink-0" />
-          <input
-            autoFocus
-            value={messageSearch}
-            onChange={e => setMessageSearch(e.target.value)}
-            placeholder="Search messages..."
-            className="flex-1 bg-transparent text-[11px] text-white/60 placeholder:text-white/20 outline-none"
-          />
-          <span className="text-[9px] text-white/20 shrink-0">
-            {messageSearch ? `${messages.filter(m => m.content.toLowerCase().includes(messageSearch.toLowerCase())).length} of ${messages.length}` : ''}
-          </span>
-          <button onClick={() => { setShowSearch(false); setMessageSearch(''); }} className="text-white/20 hover:text-white/50">
-            <X className="h-3 w-3" />
-          </button>
-        </div>
-      )}
-
-      {/* Pinned messages section — collapsible */}
-      {messages.some(m => m.pinned) && (() => {
-        const pinnedMsgs = messages.filter(m => m.pinned);
-        return (
-          <div className="border-b border-white/[0.06] bg-amber-500/[0.02]">
-            <button
-              onClick={() => setThinkingCollapsed(prev => ({ ...prev, __pinned__: !prev.__pinned__ }))}
-              className="w-full flex items-center justify-between px-3 py-1.5 hover:bg-white/[0.02] transition-colors"
-            >
-              <div className="text-[10px] text-amber-400/50 uppercase tracking-wider font-medium flex items-center gap-1">
-                <Pin className="h-2.5 w-2.5" /> Pinned ({pinnedMsgs.length})
-              </div>
-              <ChevronDown className={cn("h-2.5 w-2.5 text-white/20 transition-transform", thinkingCollapsed.__pinned__ && "-rotate-90")} />
-            </button>
-            {!thinkingCollapsed.__pinned__ && (
-              <div className="px-3 pb-2 max-h-28 overflow-auto space-y-0.5">
-                {pinnedMsgs.map(m => (
-                  <button
-                    key={m.id}
-                    onClick={() => {
-                      const el = document.getElementById(`msg-${m.id}`);
-                      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }}
-                    className="w-full text-left text-[11px] text-white/50 truncate py-0.5 hover:text-white/70 transition-colors"
-                  >
-                    {m.role === 'user' ? '👤 ' : '🤖 '}{getCleanUserContent(m.content).slice(0, 120)}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      })()}
+      {/* No visible header — Lovable style */}
 
       {/* Version History Drawer */}
       {showHistory && versions.length > 0 && (
@@ -1464,41 +1267,9 @@ export function BuilderChatPanel({
                 className={cn(
                   'group/msg relative',
                   msg.role === 'user' ? 'flex justify-end' : '',
-                  messageSearch && msg.content.toLowerCase().includes(messageSearch.toLowerCase()) ? 'ring-1 ring-cyan-500/30 rounded-xl' : ''
                 )}
               >
                 <div className="relative max-w-[90%]">
-                  {editingMsgId === msg.id ? (
-                    <div className="bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2 space-y-2">
-                      <textarea
-                        value={editInput}
-                        onChange={(e) => setEditInput(e.target.value)}
-                        className="w-full bg-transparent text-sm text-white/90 resize-none outline-none min-h-[40px]"
-                        autoFocus
-                      />
-                      <div className="flex gap-1.5 justify-end">
-                        <button onClick={() => setEditingMsgId(null)} className="text-[10px] text-white/30 hover:text-white/60 px-2 py-1 rounded">Cancel</button>
-                        <button
-                          onClick={() => {
-                            // Phase 23: Branch conversation — truncate history at this message and re-send
-                            if (onForkFromMessage) {
-                              // Mark original message as edited, then fork
-                              onUpdateMessages?.(prev => prev.map(m => 
-                                m.id === msg.id ? { ...m, isEdited: true, originalContent: m.originalContent || m.content, content: editInput } : m
-                              ));
-                              onForkFromMessage(msg.id);
-                            }
-                            onSend(editInput);
-                            setEditingMsgId(null);
-                          }}
-                          className="text-[10px] text-cyan-400 hover:text-cyan-300 px-2 py-1 rounded bg-cyan-500/10"
-                        >
-                          <GitFork className="h-3 w-3 inline mr-1" />
-                          Re-send as branch
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
                   <div
                     className={cn(
                       msg.role === 'user'
@@ -1514,21 +1285,9 @@ export function BuilderChatPanel({
                           <img key={i} src={url} alt={`Reference ${i + 1}`} className="rounded-lg max-h-32 mb-2 mr-2 border border-white/10 inline-block" />
                         ))}
                         <p className="whitespace-pre-wrap text-[13px]">{getCleanUserContent(msg.content)}</p>
-                        {/* Edit pencil — Phase 23 conversation branching */}
-                        <button
-                          onClick={() => { setEditingMsgId(msg.id); setEditInput(msg.content); }}
-                          className="absolute -left-8 top-1/2 -translate-y-1/2 h-6 w-6 rounded-md flex items-center justify-center text-white/0 group-hover/user-msg:text-white/30 hover:!text-white/60 hover:bg-white/[0.05] transition-all"
-                          title="Edit & re-send"
-                        >
-                          <Pencil className="h-3 w-3" />
-                        </button>
-                        {msg.isEdited && (
-                          <span className="text-[9px] text-white/20 ml-1.5">(edited)</span>
-                        )}
                       </div>
                     )}
                   </div>
-                  )}
                   {/* Timestamp — show on hover */}
                   <div className={cn(
                     "text-[9px] text-white/15 mt-1 opacity-0 group-hover/msg:opacity-100 transition-opacity",
