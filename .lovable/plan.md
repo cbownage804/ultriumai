@@ -1,51 +1,51 @@
 
 
-## Phase 4: Gaps 19, 20, 21, 22, 24 (skipping 23 and 25)
+## Phase 5: Final Cleanup — Dead Code and Unused Imports
 
-### Gap 20: Remove SuggestionChips and Intent Chips
+All major visual/UX parity gaps (1-22, 24) are complete. This phase cleans up orphaned files, dead imports, and the two minor items (23 and 25) you previously skipped.
 
-**In `BuilderChatPanel.tsx`:**
-- Delete the `SuggestionChips` component (lines 29-77)
-- Remove its usage (lines 1093-1100)
-- Remove backend intent chips rendering (lines 1102-1127)
-- Remove `generateIntentSuggestions` from the `SupabaseConversational` import (line 23)
+---
 
-### Gap 21: Remove Build Summary Card
+### Task 1: Delete Orphaned Component Files
 
-**In `BuilderChatPanel.tsx`:**
-- Delete the build summary card (lines 1004-1018)
-- Remove `Clock` and `Coins` icon imports (line 7)
+The following files are no longer imported anywhere but still exist on disk:
+- `src/components/ai-builder/WorkspaceBottomBar.tsx`
+- `src/components/ai-builder/WorkspaceStatusBar.tsx`
 
-### Gap 22: Remove Version History Drawer
+**Action:** Delete both files.
 
-**In `BuilderChatPanel.tsx`:**
-- Delete `showHistory` state (line 336)
-- Delete the version history drawer section (lines 1136-1157)
-- Remove `History` and `ChevronRight` icon imports (line 5)
+---
 
-### Gap 19: Remove Dead Imports
+### Task 2: Clean Unused Imports in BuilderChatPanel.tsx
 
-**In `AIAppBuilderWorkspace.tsx`:**
-- Remove `WorkspaceBottomBar` import (line 70)
-- Remove `WorkspaceStatusBar` import (line 71)
+Several icons and modules imported at the top are no longer used after Gaps 16-22 removed their consumers:
+- Icons likely unused: `Bot`, `User`, `Lightbulb`, `Zap`, `MessageCircle`, `Wand2`, `ImagePlus`, `Check`, `Pencil`, `ExternalLink`
+- `AnimatePresence` (no longer used after suggestion chips removal)
+- `DropdownMenu` family (no dropdown menus remain in the component)
+- `Dialog`/`DialogContent`/`DialogHeader`/`DialogTitle` (no dialogs remain)
+- `BuildSummary` type import (build summary card removed)
+- `detectSupabaseIntents`, `analyzeConversationComplexity`, `detectCommunicationStyle`, `detectWebSearchIntent`, `detectURLCloneIntent` (unused analysis functions)
 
-**Delete files:**
-- `src/components/ai-builder/DeviceFrameOverlay.tsx`
-- `src/components/ai-builder/PreviewZoomControls.tsx`
+**Action:** Remove all unused imports.
 
-### Gap 24: Inline `PreviewError` Type
+---
 
-**In `BuilderPreviewPanel.tsx`:**
-- Define `PreviewError` type inline (copy from `ErrorConsole.tsx` lines 7-15)
-- Remove the `import { type PreviewError } from './ErrorConsole'` (line 8)
-- Update `onSmartFixError` prop type reference (line 19) to use the local type
+### Task 3: Clean Unused Props in BuilderChatPanel
+
+Several props are no longer consumed after the simplification:
+- `onForkFromMessage`, `onRevertToMessage` (fork/revert removed in Gap 16)
+- `onOpenEditHistory` (edit history removed)
+- `onReview` (review button removed)
+- `selectedModel`, `onModelChange` (model selector removed in Gap 7)
+
+**Action:** Remove from interface and destructuring.
+
+---
 
 ### Files Modified
-- `BuilderChatPanel.tsx` (Gaps 20, 21, 22)
-- `AIAppBuilderWorkspace.tsx` (Gap 19)
-- `BuilderPreviewPanel.tsx` (Gap 24)
+- `BuilderChatPanel.tsx` (Tasks 2-3)
 
 ### Files Deleted
-- `DeviceFrameOverlay.tsx`
-- `PreviewZoomControls.tsx`
+- `WorkspaceBottomBar.tsx`
+- `WorkspaceStatusBar.tsx`
 
