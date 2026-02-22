@@ -228,24 +228,30 @@ window.addEventListener('message', function(e) {
   ) : null;
 
   // Gap 4: Push compiled HTML to Service Worker when available
-  // Then reload the iframe (without remounting) so it picks up the new content
+  // Only reload iframe for SUBSEQUENT updates — initial load is handled by src attribute
+  const prevSwHtmlRef = useRef<string | null>(null);
+  const [swHasContent, setSwHasContent] = useState(false);
   useEffect(() => {
     if (swReady && htmlWithErrorCapture) {
       updatePreview(htmlWithErrorCapture);
-      // Reload iframe in-place after SW stores the new content (no key change needed)
-      setTimeout(() => {
-        try {
-          iframeRef.current?.contentWindow?.location.reload();
-        } catch {
-          // Cross-origin fallback
-          const iframe = iframeRef.current;
-          if (iframe?.src) {
-            const src = iframe.src;
-            iframe.src = '';
-            requestAnimationFrame(() => { iframe.src = src; });
+      setSwHasContent(true);
+      // Only reload for subsequent updates (not initial — src handles that)
+      if (prevSwHtmlRef.current !== null && prevSwHtmlRef.current !== htmlWithErrorCapture) {
+        setTimeout(() => {
+          try {
+            iframeRef.current?.contentWindow?.location.reload();
+          } catch {
+            // Cross-origin fallback
+            const iframe = iframeRef.current;
+            if (iframe?.src) {
+              const src = iframe.src;
+              iframe.src = '';
+              requestAnimationFrame(() => { iframe.src = src; });
+            }
           }
-        }
-      }, 60);
+        }, 100);
+      }
+      prevSwHtmlRef.current = htmlWithErrorCapture;
     }
   }, [swReady, htmlWithErrorCapture, updatePreview, iframeRef]);
 
@@ -493,7 +499,7 @@ window.addEventListener('message', function(e) {
             <iframe
               ref={iframeRef}
               key={`${iframeKey}-${refreshKey ?? 0}`}
-              {...(swReady && previewUrl
+              {...(swReady && previewUrl && swHasContent
                 ? { src: previewUrl }
                 : { srcDoc: htmlWithErrorCapture || '' }
               )}
