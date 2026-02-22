@@ -5,7 +5,15 @@ import {
   ArrowLeft, ArrowRight, Lock, Wrench, X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { type PreviewError } from './ErrorConsole';
+interface PreviewError {
+  id: string;
+  message: string;
+  source?: string;
+  line?: number;
+  timestamp: Date;
+  type: 'error' | 'warning';
+  fixAttempts?: number;
+}
 import { ResponsivePreviewBar, type ViewportMode, getViewportWidth } from './ResponsivePreviewBar';
 import { SkeletonPreview } from './SkeletonPreview';
 import { CompilationProgress } from './CompilationProgress';
@@ -16,7 +24,7 @@ interface BuilderPreviewPanelProps {
   html: string | null;
   isGenerating: boolean;
   onFixError?: (errorMessage: string) => void;
-  onSmartFixError?: (error: import('./ErrorConsole').PreviewError, context: string) => void;
+  onSmartFixError?: (error: PreviewError, context: string) => void;
   onAIEditRequest?: (selector: string, elementContext: string, prompt: string) => void;
   isProcessingAIEdit?: boolean;
   projectFiles?: ProjectFile[];

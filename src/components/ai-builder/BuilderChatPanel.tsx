@@ -2,9 +2,9 @@ import { useState, useRef, useEffect, useCallback, useMemo, type MutableRefObjec
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Send, Square, Sparkles, Loader2, Bot, User, Lightbulb, FileCode, CheckCircle2,
-  Zap, MessageCircle, Wand2, ImagePlus, X, Brain, Compass, Code2, History, ChevronRight,
+  Zap, MessageCircle, Wand2, ImagePlus, X, Brain, Compass, Code2,
   LayoutGrid, Wrench, AlertTriangle, Copy, ChevronDown, Check, Pencil,
-  Crosshair, Plus, Camera, Paperclip, AtSign, ExternalLink, Clock, Coins,
+  Crosshair, Plus, Camera, Paperclip, AtSign, ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -20,61 +20,11 @@ import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import ReactMarkdown from 'react-markdown';
 import { CodeDiffViewer } from './CodeDiffViewer';
 import { InlineSQLRunner } from './InlineSQLRunner';
-import { SUPABASE_SLASH_COMMANDS, detectSupabaseIntents, generateIntentSuggestions, analyzeConversationComplexity, detectCommunicationStyle, detectWebSearchIntent, detectURLCloneIntent, type ContextBudgetInfo } from './SupabaseConversational';
+import { SUPABASE_SLASH_COMMANDS, detectSupabaseIntents, analyzeConversationComplexity, detectCommunicationStyle, detectWebSearchIntent, detectURLCloneIntent, type ContextBudgetInfo } from './SupabaseConversational';
 import { StarterTemplatePicker } from './StarterTemplatePicker';
 import { MigrationApprovalCard, type MigrationBlock } from './MigrationApprovalCard';
 import { EdgeFunctionCard, type EdgeFunctionBlock } from './EdgeFunctionCard';
 import { StreamingText, StreamingCursor, ElapsedTimer } from './StreamingText';
-
-/** Small component to avoid hooks-in-render violation */
-function SuggestionChips({ suggestions, onSend, onModeChange }: { suggestions: string[]; onSend: (msg: string) => void; onModeChange: (mode: BuilderMode) => void }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <>
-      {!open && (
-        <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          onClick={() => setOpen(true)}
-          className="flex items-center gap-1.5 mt-1 text-[11px] px-2.5 py-1.5 rounded-lg border border-white/[0.08] text-white/40 hover:text-white/70 hover:border-cyan-500/30 hover:bg-cyan-500/[0.05] transition-all w-fit"
-        >
-          <Sparkles className="h-3 w-3" />
-          Suggestions
-        </motion.button>
-      )}
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="flex flex-wrap gap-1.5 pt-2 border-t border-white/[0.04] mt-1 overflow-hidden"
-          >
-            {suggestions.map((suggestion, i) => (
-              <motion.button
-                key={i}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.07, type: 'spring', stiffness: 300, damping: 20 }}
-                onClick={() => {
-                  if (suggestion.includes('→')) {
-                    onModeChange('build');
-                  } else {
-                    onSend(suggestion.replace(/^[^\w]*/, ''));
-                  }
-                }}
-                className="text-[11px] px-2.5 py-1 rounded-full border border-white/[0.08] text-white/50 hover:text-white/80 hover:border-cyan-500/30 hover:bg-cyan-500/[0.05] transition-all"
-              >
-                {suggestion}
-              </motion.button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
-  );
-}
 
 interface BuilderChatPanelProps {
   messages: BuilderMessage[];
@@ -333,7 +283,7 @@ export function BuilderChatPanel({
 }: BuilderChatPanelProps) {
   const [input, setInput] = useState('');
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [showHistory, setShowHistory] = useState(false);
+  
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [plusMenuOpen, setPlusMenuOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -1001,22 +951,6 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Build summary card (Phase 5) */}
-        {isCompleted && msg.buildSummary && (
-          <motion.div
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/[0.02] border border-white/[0.06] text-[11px] text-white/40"
-          >
-            <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{(msg.buildSummary.durationMs / 1000).toFixed(1)}s</span>
-            <span className="flex items-center gap-1"><FileCode className="h-3 w-3" />{msg.buildSummary.filesGenerated} file{msg.buildSummary.filesGenerated !== 1 ? 's' : ''}</span>
-            <span className="flex items-center gap-1"><Coins className="h-3 w-3" />~{Math.round(msg.buildSummary.tokensUsed / 1000)}k tokens</span>
-            {msg.buildSummary.validationErrors > 0 && (
-              <span className="flex items-center gap-1 text-amber-400/60"><AlertTriangle className="h-3 w-3" />{msg.buildSummary.validationErrors} issue{msg.buildSummary.validationErrors !== 1 ? 's' : ''}</span>
-            )}
-          </motion.div>
-        )}
-
         {/* Migration approval cards (Phase 14) */}
         {msg.migrations && msg.migrations.length > 0 && (
           <div className="space-y-2">
@@ -1090,41 +1024,6 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Follow-up suggestion chips — toggled via button */}
-        {!isStreaming && isLast && msg.suggestions && msg.suggestions.length > 0 && (
-          <SuggestionChips
-            suggestions={msg.suggestions}
-            onSend={onSend}
-            onModeChange={onModeChange}
-          />
-        )}
-
-        {/* Backend intent chips */}
-        {!isStreaming && isLast && (() => {
-          const intents = detectSupabaseIntents(text);
-          const intentSuggestions = generateIntentSuggestions(intents);
-          if (intents.length === 0 || intentSuggestions.length === 0) return null;
-          return (
-            <div className="flex flex-wrap gap-1.5 pt-1.5">
-              {intents.map((intent, i) => {
-                const Icon = intent.icon;
-                return (
-                  <motion.div
-                    key={intent.type}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: i * 0.05 }}
-                    className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-[10px]"
-                  >
-                    <Icon className={cn("h-2.5 w-2.5", intent.color)} />
-                    <span className="text-white/40">{intent.description}</span>
-                    {intent.confidence > 0.8 && <span className="text-emerald-400/50">●</span>}
-                  </motion.div>
-                );
-              })}
-            </div>
-          );
-        })()}
       </div>
     );
   };
@@ -1132,29 +1031,6 @@ export function BuilderChatPanel({
   return (
     <div className="flex flex-col h-full bg-[#0a0a0f]">
       {/* No visible header — Lovable style */}
-
-      {/* Version History Drawer */}
-      {showHistory && versions.length > 0 && (
-        <div className="border-b border-white/[0.06] bg-white/[0.02] max-h-40 overflow-auto">
-          <div className="px-3 py-2">
-            <div className="text-[10px] text-white/20 uppercase tracking-wider font-medium mb-1.5">Version History</div>
-            {versions.map((v) => (
-              <button
-                key={v.id}
-                onClick={() => { onRestoreVersion(v.id); setShowHistory(false); }}
-                className="w-full text-left px-2 py-1.5 rounded-md hover:bg-white/5 transition-colors group flex items-center gap-2"
-              >
-                <div className="h-1.5 w-1.5 rounded-full bg-cyan-400/40 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="text-[11px] text-white/60 group-hover:text-white/80 truncate">{v.label}</div>
-                  <div className="text-[9px] text-white/20">{v.files.length} files · {v.timestamp.toLocaleTimeString()}</div>
-                </div>
-                <ChevronRight className="h-3 w-3 text-white/20 group-hover:text-white/40 shrink-0" />
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Messages */}
       <ScrollArea className="flex-1" ref={scrollRef}>

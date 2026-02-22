@@ -67,8 +67,6 @@ import { useOutputValidation } from './useOutputValidation';
 import { useBuildAnalytics } from '@/hooks/useBuildAnalytics';
 import { detectSupabaseIntents, buildSupabaseContext, buildErrorDiagnosisContext, analyzeConversationComplexity } from './SupabaseConversational';
 import { PANEL_REGISTRY } from './panelRegistry';
-import { WorkspaceBottomBar } from './WorkspaceBottomBar';
-import { WorkspaceStatusBar } from './WorkspaceStatusBar';
 import { WorkspacePanelLayer } from './WorkspacePanelLayer';
 import { WorkspaceTopBar } from './WorkspaceTopBar';
 import { CloudViewPanel } from './CloudViewPanel';
