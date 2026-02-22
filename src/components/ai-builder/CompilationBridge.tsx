@@ -7,7 +7,7 @@ import type { CDNPackage } from './PackageManager';
 import type { LinkedGPTConfig } from './GPTConnectorPanel';
 import { useLivePreviewSync } from '@/hooks/useLivePreviewSync';
 
-const COMPILE_TIMEOUT_MS = 20_000;
+const COMPILE_TIMEOUT_MS = 30_000;
 
 interface CompilationBridgeProps {
   files: ProjectFile[];
@@ -149,10 +149,10 @@ export function CompilationBridge({
       } else if (!stableHTMLRef.current) {
         compilationLockRef.current = false;
         compilationAttemptedRef.current = false;
-        // Phase 5: Still set digest so main effect doesn't see stale value
-        prevFilesDigestRef.current = filesDigest;
-        // Use a flag instead of digest manipulation to trigger recompile
-        compilationLockRef.current = false;
+        // Force the main compilation effect to re-run by resetting digest
+        // so it sees the current filesDigest as "new" and starts compilation
+        prevFilesDigestRef.current = '';
+        console.info('[CompilationBridge] Generation ended with no preview — forcing recompile');
       } else {
         // stableHTML already set (from handleBgComplete direct compile),
         // sync the digest so we don't trigger a redundant recompile
