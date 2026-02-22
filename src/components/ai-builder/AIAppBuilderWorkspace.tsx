@@ -275,7 +275,7 @@ export function AIAppBuilderWorkspace() {
 
   // Background generation: server-side builds that survive tab close
   // Saves a snapshot before applying, enabling one-click rollback
-  const handleBgComplete = useCallback((job: BackgroundJob) => {
+  const handleBgComplete = useCallback(async (job: BackgroundJob) => {
     if (!job.output_content) return;
 
     // Save pre-generation snapshot for undo
@@ -319,20 +319,54 @@ export function AIAppBuilderWorkspace() {
         stableHTMLRef.current = indexFile.content;
         setStableHTML(indexFile.content);
       } else {
-        // Try vanilla compilation immediately (synchronous, fast)
-        try {
-          const compiled = getCompiledHTML(
-            supabaseConfigRef.current, stripeConfigRef.current, envVarsRef.current,
-            serviceKeysRef.current, cdnPackagesRef.current,
-            bundleForBrowserRef.current, linkedGPTRef.current
-          );
-          if (compiled) {
-            console.info('[handleBgComplete] Direct vanilla compilation succeeded');
-            stableHTMLRef.current = compiled;
-            setStableHTML(compiled);
+        // 1. Try worker compilation for React projects (TSX/JSX) — off main thread
+        const hasReactFiles = mergedFiles.some(f => /\.(tsx|jsx)$/.test(f.path));
+        if (hasReactFiles) {
+          try {
+            console.info('[handleBgComplete] Attempting worker compilation for React project...');
+            const compiled = await Promise.race([
+              compileReactProjectRef.current(mergedFiles, {
+                supabaseConfig: supabaseConfigRef.current || undefined,
+                stripeConfig: stripeConfigRef.current || undefined,
+                envVars: envVarsRef.current,
+              }),
+              new Promise<null>((resolve) => setTimeout(() => resolve(null), 30_000)),
+            ]);
+            const html = (compiled as any)?.html || null;
+            if (html) {
+              console.info('[handleBgComplete] Worker compilation succeeded');
+              stableHTMLRef.current = html;
+              setStableHTML(html);
+            }
+          } catch (e) {
+            console.warn('[handleBgComplete] Worker compilation failed:', e);
           }
-        } catch (e) {
-          console.warn('[handleBgComplete] Direct compilation failed, deferring to CompilationBridge:', e);
+        }
+
+        // 2. Vanilla fallback (synchronous, fast) — only if worker didn't produce HTML
+        if (!stableHTMLRef.current) {
+          try {
+            const compiled = getCompiledHTML(
+              supabaseConfigRef.current, stripeConfigRef.current, envVarsRef.current,
+              serviceKeysRef.current, cdnPackagesRef.current,
+              bundleForBrowserRef.current, linkedGPTRef.current
+            );
+            if (compiled) {
+              console.info('[handleBgComplete] Direct vanilla compilation succeeded');
+              stableHTMLRef.current = compiled;
+              setStableHTML(compiled);
+            }
+          } catch (e) {
+            console.warn('[handleBgComplete] Vanilla compilation also failed:', e);
+          }
+        }
+
+        // 3. Guaranteed fallback — always show SOMETHING
+        if (!stableHTMLRef.current) {
+          console.warn('[handleBgComplete] All compilation failed — showing error fallback');
+          const fallback = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Compilation Error</title><style>*{margin:0;padding:0;box-sizing:border-box}body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0a0a14;color:#fff;font-family:system-ui,sans-serif}.card{text-align:center;max-width:440px;padding:2rem}h1{font-size:1.5rem;margin-bottom:1rem;color:#f87171}p{color:#ffffff90;line-height:1.6;margin-bottom:0.5rem}code{background:#1e1e2e;padding:2px 6px;border-radius:4px;font-size:0.85em}</style></head><body><div class="card"><h1>⚠️ Compilation Error</h1><p>Your project files were generated but could not be compiled into a preview.</p><p>Check that your project has an <code>index.html</code> file and try regenerating.</p></div></body></html>`;
+          stableHTMLRef.current = fallback;
+          setStableHTML(fallback);
         }
       }
       compilePromise = Promise.resolve();
@@ -2210,14 +2244,16 @@ export function AIAppBuilderWorkspace() {
   // generation ends and we have files, nudge CompilationBridge by toggling isCompiling.
   // Does NOT call getCompiledHTML directly (which caused browser freezes).
   const prevGenForFallbackRef = useRef(false);
+  const forceCompileRef = useRef<(() => void) | null>(null);
+  const handleForceCompile = useCallback((fn: () => void) => {
+    forceCompileRef.current = fn;
+  }, []);
   useEffect(() => {
     if (prevGenForFallbackRef.current && !isGenerating && project.files.length > 0) {
       const timer = setTimeout(() => {
         if (!stableHTMLRef.current && project.files.length > 0) {
-          console.warn('[Workspace] Safety net: stableHTML still null 5s after generation — nudging CompilationBridge');
-          // Toggle isCompiling to force CompilationBridge effects to re-evaluate
-          setIsCompiling(true);
-          setTimeout(() => setIsCompiling(false), 100);
+          console.warn('[Workspace] Safety net: stableHTML still null 5s after generation — forcing compile');
+          forceCompileRef.current?.();
         }
       }, 5000);
       prevGenForFallbackRef.current = isGenerating;
@@ -2357,6 +2393,7 @@ export function AIAppBuilderWorkspace() {
           onCompilingChange={setIsCompiling}
           skipNextCompileRef={skipNextCompileRef}
           externalStableHTMLRef={stableHTMLRef}
+          onForceCompile={handleForceCompile}
         />
       </PanelErrorBoundary>
       <WelcomeOverlay onQuickStart={(prompt) => handleSend(prompt)} />
