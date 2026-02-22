@@ -59,8 +59,9 @@ export type AgentNotification = {
   timestamp: Date;
 };
 
-const MAX_FIX_RETRIES = 3;
+const MAX_FIX_RETRIES = 2;
 const VERIFY_TIMEOUT_MS = 3000;
+const AGENT_WALL_CLOCK_MS = 120_000; // 2 min hard cap on entire agent run
 
 const PLANNING_SYSTEM_PROMPT = `[PLANNING MODE — Do NOT generate code. Return ONLY a JSON object.]
 
@@ -254,6 +255,12 @@ export function useAgentMode() {
     const controller = new AbortController();
     abortRef.current = controller;
     isProcessingRef.current = true;
+
+    // Hard wall-clock timeout to prevent infinite agent runs
+    const wallClockTimer = setTimeout(() => {
+      console.warn('[Agent] Wall-clock timeout reached, aborting');
+      controller.abort();
+    }, AGENT_WALL_CLOCK_MS);
 
     const planStepId = crypto.randomUUID();
     const execStepId = crypto.randomUUID();
@@ -462,6 +469,7 @@ export function useAgentMode() {
         emitNotification(task.id, 'error', 'Agent task failed', (err as Error).message);
       }
     } finally {
+      clearTimeout(wallClockTimer);
       abortRef.current = null;
       isProcessingRef.current = false;
     }
