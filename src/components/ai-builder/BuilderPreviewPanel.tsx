@@ -229,31 +229,15 @@ window.addEventListener('message', function(e) {
 
   // Gap 4: Push compiled HTML to Service Worker when available
   // Only reload iframe for SUBSEQUENT updates — initial load is handled by src attribute
+  // Gap 4: Push compiled HTML to Service Worker (for soft reloads/HMR)
+  // Always use srcDoc for rendering — no src switch to avoid race conditions
   const prevSwHtmlRef = useRef<string | null>(null);
-  const [swHasContent, setSwHasContent] = useState(false);
   useEffect(() => {
     if (swReady && htmlWithErrorCapture) {
       updatePreview(htmlWithErrorCapture);
-      setSwHasContent(true);
-      // Only reload for subsequent updates (not initial — src handles that)
-      if (prevSwHtmlRef.current !== null && prevSwHtmlRef.current !== htmlWithErrorCapture) {
-        setTimeout(() => {
-          try {
-            iframeRef.current?.contentWindow?.location.reload();
-          } catch {
-            // Cross-origin fallback
-            const iframe = iframeRef.current;
-            if (iframe?.src) {
-              const src = iframe.src;
-              iframe.src = '';
-              requestAnimationFrame(() => { iframe.src = src; });
-            }
-          }
-        }, 100);
-      }
       prevSwHtmlRef.current = htmlWithErrorCapture;
     }
-  }, [swReady, htmlWithErrorCapture, updatePreview, iframeRef]);
+  }, [swReady, htmlWithErrorCapture, updatePreview]);
 
   // Gap 5 HMR: Listen for soft reload signals from CompilationBridge
   useEffect(() => {
@@ -499,10 +483,7 @@ window.addEventListener('message', function(e) {
             <iframe
               ref={iframeRef}
               key={`${iframeKey}-${refreshKey ?? 0}`}
-              {...(swReady && previewUrl && swHasContent
-                ? { src: previewUrl }
-                : { srcDoc: htmlWithErrorCapture || '' }
-              )}
+              srcDoc={htmlWithErrorCapture || ''}
               className="w-full h-full border-0 bg-white"
               sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox"
               title="App Preview"
