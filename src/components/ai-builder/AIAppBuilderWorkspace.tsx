@@ -316,24 +316,28 @@ export function AIAppBuilderWorkspace() {
       const curServiceKeys = serviceKeysRef.current;
       const curCdnPackages = cdnPackagesRef.current;
       // Phase 2: Capture compile promise so we can chain dispatch to it
+      // Add 15s timeout to prevent hanging — CompilationBridge will retry if this fails
       if (isReact) {
-        compilePromise = compileReactProjectRef.current(mergedFiles, {
-          supabaseConfig: curSupabase || undefined,
-          stripeConfig: curStripe || undefined,
-          envVars: curEnvVars,
-        }).then(compiled => {
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('handleBgComplete compile timeout (15s)')), 15_000)
+        );
+        compilePromise = Promise.race([
+          compileReactProjectRef.current(mergedFiles, {
+            supabaseConfig: curSupabase || undefined,
+            stripeConfig: curStripe || undefined,
+            envVars: curEnvVars,
+          }),
+          timeoutPromise,
+        ]).then(compiled => {
           if (compiled.html) {
             console.info('[handleBgComplete] ✅ Direct React compilation succeeded, updating preview');
             handleStableHTML(compiled.html);
           } else {
-            console.warn('[handleBgComplete] React compilation returned empty HTML — falling back to vanilla');
-            const fallback = getCompiledHTML(curSupabase, curStripe, curEnvVars, curServiceKeys, curCdnPackages, bundleForBrowserRef.current, linkedGPTRef.current);
-            if (fallback) handleStableHTML(fallback);
+            console.warn('[handleBgComplete] React compilation returned empty HTML');
           }
         }).catch(err => {
-          console.error('[handleBgComplete] React compilation failed, trying vanilla fallback:', err);
-          const fallback = getCompiledHTML(curSupabase, curStripe, curEnvVars, curServiceKeys, curCdnPackages, bundleForBrowserRef.current, linkedGPTRef.current);
-          if (fallback) handleStableHTML(fallback);
+          console.warn('[handleBgComplete] React compilation failed/timed out, letting CompilationBridge handle it:', err.message);
+          // Don't try vanilla fallback for React projects — let CompilationBridge retry properly
         });
       } else {
         const result = getCompiledHTML(curSupabase, curStripe, curEnvVars, curServiceKeys, curCdnPackages, bundleForBrowserRef.current, linkedGPTRef.current);
