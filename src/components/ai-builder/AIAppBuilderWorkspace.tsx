@@ -2053,6 +2053,26 @@ export function AIAppBuilderWorkspace() {
     setStableHTML(html);
   }, []);
 
+  // Nuclear fallback: if CompilationBridge fails to produce stableHTML
+  // within 4s of generation ending, compile directly.
+  const prevGenForFallbackRef = useRef(false);
+  useEffect(() => {
+    const wasGenerating = prevGenForFallbackRef.current;
+    prevGenForFallbackRef.current = isGenerating;
+    if (wasGenerating && !isGenerating && project.files.length > 0) {
+      const timer = setTimeout(() => {
+        if (!stableHTMLRef.current) {
+          console.warn('[Workspace] Nuclear fallback: CompilationBridge failed to produce stableHTML after 4s, compiling directly');
+          const result = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
+          if (result) {
+            handleStableHTML(result);
+          }
+        }
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [isGenerating, project.files.length, getCompiledHTML, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT, handleStableHTML]);
+
   // When the tab returns from background, the browser may have discarded
   // iframe content. Force iframe remount WITHOUT touching stableHTML
   // (toggling stableHTML triggers broken recompilation in CompilationBridge).
