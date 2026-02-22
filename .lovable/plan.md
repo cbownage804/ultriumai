@@ -1,67 +1,68 @@
 
+## Fix: Preview Never Appears Due to Crashed Compiler Worker
 
-## Fix: Preview Never Appears Because React State Is Never Updated
+### Root Cause
 
-### Root Cause (definitive)
+The compiler Web Worker (`src/workers/compiler.worker.ts`) crashes immediately on load because Vite's React SWC plugin injects `@react-refresh` preamble code into ALL processed modules, including workers. Workers don't have `window`, so the `@react-refresh` module throws `ReferenceError: window is not defined`, killing the worker before it can process any compilation requests.
 
-`handleBgComplete` in `AIAppBuilderWorkspace.tsx` sets `stableHTMLRef.current = compiled` (a ref) but never calls the state setter `setStableHTML(compiled)`. Since `compiledHTML = stableHTML` (line 2263) reads from **React state** (not the ref), the preview panel always receives `null`.
+This means:
+- Worker compilation never responds (pending forever)
+- The 30-second `Promise.race` timeout fires, returning `null`
+- Vanilla fallback also returns `null` for React projects (it can't handle JSX)
+- The preview stays blank
+- The "React refresh preamble" error shows in the error bar
+- Auto-fix loops trying (and failing) to fix a host-level error
 
-The CompilationBridge's sync path (line 143) also uses `setStableHTMLLocal()` which only updates its own internal state -- it never calls `onStableHTML()` which would propagate back to the parent's `setStableHTML`.
+### Fix (3 changes)
 
-Two lines of ref-only writes that should be state updates. That's the entire bug.
+#### 1. `vite.config.ts` -- Exclude workers from React plugin
 
-### Fix (2 changes, 2 lines each)
+Add a `worker` configuration that prevents Vite plugins from processing worker files:
 
-#### 1. `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
-
-In `handleBgComplete`, replace the ref-only writes with calls to `handleStableHTML()` which updates both the ref AND the React state:
-
-**Line 315** -- change:
 ```typescript
-// Before:
-stableHTMLRef.current = indexFile.content;
-
-// After:
-handleStableHTML(indexFile.content);
+worker: {
+  plugins: () => [],
+},
 ```
 
-**Line 326** -- change:
-```typescript
-// Before:
-stableHTMLRef.current = compiled;
+This stops `@react-refresh` from being injected into `compiler.worker.ts`, allowing the worker to initialize and run correctly.
 
-// After:
-handleStableHTML(compiled);
+#### 2. `src/components/ai-builder/BuilderPreviewPanel.tsx` -- Filter host-level errors
+
+Add a filter in the error message handler to suppress errors from the host Vite dev server (like `@react-refresh`) that are not actually from the preview iframe:
+
+```typescript
+// In the __PREVIEW_ERROR__ handler, add:
+const isHostDevError = /react.refresh|@react-refresh|preamble was not loaded/i.test(msg);
+if (isHostDevError) return prev; // Don't display host dev errors
 ```
 
-Add `handleStableHTML` to the `useCallback` dependency array on line 368.
+This prevents false-positive errors from triggering the auto-fix loop.
 
-#### 2. `src/components/ai-builder/CompilationBridge.tsx`
+#### 3. `src/components/ai-builder/CompilationBridge.tsx` -- Defensive fallback when worker fails
 
-In the generation-ending effect (line 143), replace `setStableHTMLLocal` with `setStableHTML` so the parent also gets notified:
+As a safety net, if the worker compilation returns null AND vanilla compilation returns null, ensure `ERROR_FALLBACK_HTML` is always set (never leave `stableHTML` as null with `compilationAttemptedRef = true`):
 
-**Lines 142-143** -- change:
-```typescript
-// Before:
-stableHTMLRef.current = externalHasPreview;
-setStableHTMLLocal(externalHasPreview);
+In `compileNowRef`, the existing code at lines 228-236 already handles this, but add a log to confirm the fallback fires. No code change needed here -- the vite.config fix is the primary solution.
 
-// After (setStableHTML already sets the ref + calls onStableHTML):
-setStableHTML(externalHasPreview);
-```
+### Why This Fixes Everything
 
-### Why This Is The Fix
+1. Worker starts correctly (no `@react-refresh` crash)
+2. Worker compiles React project into full HTML document with CDN dependencies
+3. `compileNowRef` receives valid HTML from worker
+4. `setStableHTML(html)` updates both ref and state
+5. `compiledHTML = stableHTML` is now truthy
+6. `BuilderPreviewPanel` receives `html={compiledHTML}` and renders the iframe
+7. Preview appears
+8. No false "React refresh" error in the error bar
+9. No auto-fix loop triggered
 
-1. `handleBgComplete` compiles successfully, calls `handleStableHTML(html)`
-2. `handleStableHTML` sets `stableHTMLRef.current = html` AND calls `setStableHTML(html)` (React state update)
-3. React re-renders, `compiledHTML = stableHTML` now has the HTML
-4. `BuilderPreviewPanel` receives `html={compiledHTML}` with actual content
-5. Preview appears
+### Technical Detail: How Lovable's Compilation Works
 
-### What This Does NOT Change
+The App Builder compiles React projects entirely in the browser:
+- A Web Worker runs esbuild-wasm for TypeScript stripping and regex-based import resolution
+- The output is a self-contained HTML document with CDN-loaded React, Tailwind, and Babel
+- Babel Standalone runs inside the iframe at runtime to transform JSX to JS
+- The compiled HTML is set as `srcdoc` on the preview iframe
 
-- No changes to compilation logic, worker, debouncing, or locking
-- No changes to the CompilationBridge main effect
-- No changes to BuilderPreviewPanel rendering logic
-- The `compileNowRef` fallback path already uses `setStableHTML()` correctly (line 231), so it was always working -- the issue was only in the `handleBgComplete` direct-compilation path
-
+The worker was always the intended compilation path -- it just never worked because of the Vite dev server @react-refresh injection.
