@@ -1,60 +1,68 @@
 
-
-## Fix: Always Use srcDoc — Eliminate SW src Race Condition
+## Fix: Break the Infinite Page Reload Loop
 
 ### Root Cause
 
-The iframe switches from `srcDoc` to `src=/__preview__/index.html` the moment `setSwHasContent(true)` fires. But `updatePreview()` sends a `postMessage` to the Service Worker, which is **asynchronous**. By the time the iframe navigates to the SW URL, the SW hasn't stored the content yet, so it serves the fallback "Waiting for preview..." HTML (or empty). This causes the React #130/#310 errors seen in the console, and the preview stays black.
+Two reload mechanisms in `index.html` and `lazyPanels.ts` are fighting each other:
 
-This is a fundamental race condition that cannot be reliably fixed with delays — the timing depends on browser scheduling.
+1. **`lazyPanels.ts`** (line 14-16): When a lazy chunk fails to load, it sets `sessionStorage.__chunk_reload__ = '1'` as a guard, then calls `window.location.reload()`. On the next page load, the guard prevents another reload.
 
-### Fix: Remove the srcDoc-to-src Switch Entirely
+2. **`index.html`** (line 207-228): A global error handler catches "dispatcher" or "Invalid hook" errors. It calls `sessionStorage.clear()` (wiping the `__chunk_reload__` guard), then `window.location.reload()`.
 
-Always render the iframe with `srcDoc`. Remove `swHasContent` state. Continue pushing content to the SW via `updatePreview()` (needed for soft reloads / HMR), but never switch the iframe source attribute.
+When both fire in sequence, the guard is repeatedly wiped, causing an infinite full-page reload loop. The draft persistence system detects each `beforeunload` event and saves, explaining the `[Draft] Flushing` / `[Draft] Immediate save` log pairs before each reload.
 
-For subsequent HTML updates, React handles `srcDoc` changes natively (the browser re-renders without remounting). For soft reloads via SW, use the existing `swSoftReload` path which manually navigates the iframe.
+### Fix: 2 Changes
 
-### Changes (1 file)
+**1. `index.html` — Add a reload guard to the global error handler and stop clearing sessionStorage**
 
-**`src/components/ai-builder/BuilderPreviewPanel.tsx`**:
+Replace `sessionStorage.clear()` with targeted key removal. Add a reload counter that caps at 1 reload to prevent infinite loops:
 
-1. Remove `swHasContent` state
-2. Simplify the SW effect to only push content and reload on subsequent changes (no state switch)
-3. Change iframe to always use `srcDoc` — remove the conditional `src: previewUrl` branch
-
-```typescript
+```text
 // Before (broken):
-const [swHasContent, setSwHasContent] = useState(false);
-// ...
-{...(swReady && previewUrl && swHasContent
-  ? { src: previewUrl }
-  : { srcDoc: htmlWithErrorCapture || '' }
-)}
+sessionStorage.clear();
+setTimeout(function() { window.location.reload(); }, 100);
 
 // After (fixed):
-// No swHasContent state needed
-// ...
-srcDoc={htmlWithErrorCapture || ''}
+var HOOK_RELOAD_KEY = '__hook_error_reload__';
+if (sessionStorage.getItem(HOOK_RELOAD_KEY)) return; // Already reloaded once
+sessionStorage.setItem(HOOK_RELOAD_KEY, '1');
+// Only remove specific crash-related keys, NOT __chunk_reload__
+localStorage.removeItem('ultrium_last_crash');
+setTimeout(function() { window.location.reload(); }, 100);
 ```
 
-The SW effect simplifies to:
-```typescript
-useEffect(() => {
-  if (swReady && htmlWithErrorCapture) {
-    updatePreview(htmlWithErrorCapture);
-    // Reload for subsequent updates only
-    if (prevSwHtmlRef.current !== null && prevSwHtmlRef.current !== htmlWithErrorCapture) {
-      // No reload needed — React updates srcDoc natively
-    }
-    prevSwHtmlRef.current = htmlWithErrorCapture;
-  }
-}, [swReady, htmlWithErrorCapture, updatePreview, iframeRef]);
+**2. `src/components/ai-builder/lazyPanels.ts` — Use localStorage instead of sessionStorage for the chunk reload guard**
+
+Since the global error handler clears sessionStorage, the chunk reload guard should use localStorage (which isn't cleared):
+
+```text
+// Before:
+const key = '__chunk_reload__';
+if (!sessionStorage.getItem(key)) {
+  sessionStorage.setItem(key, '1');
+  window.location.reload();
+}
+
+// After:
+const key = '__chunk_reload__';
+if (!localStorage.getItem(key)) {
+  localStorage.setItem(key, '1');
+  // Auto-clear after 30s so future real errors can still trigger a reload
+  setTimeout(() => { try { localStorage.removeItem(key); } catch {} }, 30000);
+  window.location.reload();
+}
 ```
+
+### Technical Details
+
+| File | Change |
+|------|--------|
+| `index.html` | Add `__hook_error_reload__` session guard to global error handler; stop using `sessionStorage.clear()` |
+| `src/components/ai-builder/lazyPanels.ts` | Switch chunk reload guard from sessionStorage to localStorage with 30s auto-expiry |
 
 ### Result
 
-- Preview renders immediately via srcDoc on first load — no race condition possible
-- React handles subsequent srcDoc updates natively (no reload needed)
-- SW still receives content for soft reload (HMR) use cases
-- Eliminates the black screen / React error loop entirely
-
+- The global error handler will only reload once per session (guarded)
+- The chunk reload guard survives sessionStorage clears
+- The 30s auto-expiry on localStorage ensures fresh chunk errors can still trigger one recovery reload
+- No more infinite full-page reload loop
