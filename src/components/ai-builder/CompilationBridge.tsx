@@ -231,17 +231,13 @@ export function CompilationBridge({
             onCompilingChangeRef.current?.(false);
             compilationAttemptedRef.current = true;
             setLiveCompiledHTML(result);
-            // Safety net: if stableHTML is still null after React batches,
-            // force-set it directly. This handles edge cases where the
-            // effect-based path (liveCompiledHTML → stableHTML) silently fails.
+            // DIRECT PATH: Set stableHTML immediately from the compilation
+            // callback instead of relying on the effect chain
+            // (liveCompiledHTML → useEffect → setStableHTML) which can
+            // silently fail due to React batching or stale closures.
             if (result) {
-              setTimeout(() => {
-                if (!stableHTMLRef.current) {
-                  console.warn('[CompilationBridge] Safety net: forcing stableHTML update');
-                  setStableHTML(result);
-                  liveSync.resetSnapshot(filesRef.current);
-                }
-              }, 300);
+              setStableHTML(result);
+              liveSync.resetSnapshot(filesRef.current);
             }
           }
         } catch (e) {
