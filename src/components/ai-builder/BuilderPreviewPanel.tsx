@@ -13,6 +13,7 @@ import { SkeletonPreview } from './SkeletonPreview';
 import { CompilationProgress } from './CompilationProgress';
 import { DeviceFrameOverlay, type DeviceType } from './DeviceFrameOverlay';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
+import { usePreviewServiceWorker } from '@/hooks/usePreviewServiceWorker';
 import previewBg from '@/assets/preview-placeholder-bg.jpg';
 
 interface BuilderPreviewPanelProps {
@@ -71,6 +72,9 @@ export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFix
   const internalIframeRef = useRef<HTMLIFrameElement>(null);
   const iframeRef = externalIframeRef || internalIframeRef;
 
+  // Gap 4: Service Worker preview — real browsing context
+  const { isReady: swReady, previewUrl, updatePreview, version: swVersion } = usePreviewServiceWorker();
+
   const viewportWidth = getViewportWidth(viewportMode);
 
   // Phase 4: Never remount iframe on HTML content changes.
@@ -82,6 +86,8 @@ export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFix
     if (html) hasEverHadHtmlRef.current = true;
     prevHtmlRef.current = html;
   }, [html]);
+
+  
 
   // Phase 69: Skip double console injection when compiler already injected interceptors
   // Only inject hot-patch listener and navigation guards (no console/error interceptors)
@@ -193,6 +199,13 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
 </head>`
         )
   ) : null;
+
+  // Gap 4: Push compiled HTML to Service Worker when available
+  useEffect(() => {
+    if (swReady && htmlWithErrorCapture) {
+      updatePreview(htmlWithErrorCapture);
+    }
+  }, [swReady, htmlWithErrorCapture, updatePreview]);
 
   // ── Preview Health Monitor (Phase 1C) ──
   const healthCheckRef = useRef<NodeJS.Timeout | null>(null);
@@ -521,8 +534,11 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
             >
               <iframe
                 ref={iframeRef}
-                key={`${iframeKey}-${refreshKey ?? 0}`}
-                srcDoc={htmlWithErrorCapture || ''}
+                key={`${iframeKey}-${refreshKey ?? 0}-${swReady ? swVersion : ''}`}
+                {...(swReady && previewUrl
+                  ? { src: previewUrl }
+                  : { srcDoc: htmlWithErrorCapture || '' }
+                )}
                 className="w-full h-full border-0 bg-white rounded-[inherit] origin-top-left"
                 sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox"
                 title="App Preview"
