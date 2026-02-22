@@ -35,7 +35,8 @@ import type { ChangelogEntry } from './ChangelogPanel';
 import type { CommandAction } from './EnhancedCommandPalette';
 import { useProjectBundler } from '@/hooks/useProjectBundler';
 import { CompilationBridge } from './CompilationBridge';
-import { useReactCompiler, detectReactProject } from '@/hooks/useReactCompiler';
+import { detectReactProject } from '@/hooks/useReactCompiler';
+import { useWorkerCompiler } from '@/hooks/useWorkerCompiler';
 import { useASTBundler } from '@/hooks/useASTBundler';
 import { useBuildChime } from '@/hooks/useBuildChime';
 import { useAICommitMessages } from '@/hooks/useAICommitMessages';
@@ -562,7 +563,7 @@ export function AIAppBuilderWorkspace() {
   const cdnPackagesRef = useRef(cdnPackages);
   cdnPackagesRef.current = cdnPackages;
   const { findReferencedFiles } = useProjectBundler();
-  const { compileReactProject } = useReactCompiler();
+  const { compileReactProject } = useWorkerCompiler();
   const compileReactProjectRef = useRef(compileReactProject);
   compileReactProjectRef.current = compileReactProject;
   const astBundler = useASTBundler();

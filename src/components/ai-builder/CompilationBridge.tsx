@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
-import { useReactCompiler, detectReactProject } from '@/hooks/useReactCompiler';
+import { detectReactProject } from '@/hooks/useReactCompiler';
+import { useWorkerCompiler } from '@/hooks/useWorkerCompiler';
 import type { SupabaseConfig, StripeConfig, ServiceKey, EnvVar } from './ProjectSettings';
 import type { CDNPackage } from './PackageManager';
 import type { LinkedGPTConfig } from './GPTConnectorPanel';
@@ -67,8 +68,8 @@ export function CompilationBridge({
   skipNextCompileRef,
   externalStableHTMLRef,
 }: CompilationBridgeProps) {
-  // ── React Compiler integration ──
-  const { compileReactProject } = useReactCompiler();
+  // ── Worker-based React Compiler (off main thread) ──
+  const { compileReactProject } = useWorkerCompiler();
 
   // Stabilize function refs to prevent effect re-fires
   const compileReactProjectRef = useRef(compileReactProject);
