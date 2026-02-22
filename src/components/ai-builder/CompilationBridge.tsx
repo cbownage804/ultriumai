@@ -85,17 +85,23 @@ export function CompilationBridge({
   const filesRef = useRef(files);
   filesRef.current = files;
 
-  // Serialize file identity to prevent effect re-fires from reference changes
+  // Serialize file identity to prevent effect re-fires from reference changes.
+  // PERF: Skip expensive hashing during generation — files change frequently via
+  // streaming setFiles calls, but compilation is blocked anyway. This prevents
+  // the main thread from locking up iterating over every character of every file.
+  const prevDigestRef = useRef('');
   const filesDigest = useMemo(() => {
-    if (files.length === 0) return '';
-    return files.map(f => {
+    if (isGenerating || files.length === 0) return prevDigestRef.current || '';
+    const digest = files.map(f => {
       let hash = 5381;
       for (let i = 0; i < f.content.length; i++) {
         hash = ((hash << 5) + hash + f.content.charCodeAt(i)) & 0x7fffffff;
       }
       return f.path + ':' + hash;
     }).join('|');
-  }, [files]);
+    prevDigestRef.current = digest;
+    return digest;
+  }, [files, isGenerating]);
 
   const isReactProject = useMemo(() => {
     try {
