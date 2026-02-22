@@ -1887,6 +1887,7 @@ export function AIAppBuilderWorkspace() {
             const re = new RegExp(`(<[^>]*(?:class|id)=["'][^"']*${escaped}[^"']*["'][^>]*>)([^<]*)(</)`, 'i');
             const newContent = file.content.replace(re, `$1${value}$3`);
             if (newContent !== file.content) {
+              skipNextCompileRef.current = true;
               pushUndo('Visual edit: text', project.files);
               upsertFile(file.path, newContent);
               applied = true;
@@ -1935,6 +1936,7 @@ export function AIAppBuilderWorkspace() {
             }
             
             if (newContent !== file.content) {
+              skipNextCompileRef.current = true;
               pushUndo('Visual edit: color', project.files);
               upsertFile(file.path, newContent);
               applied = true;
@@ -2203,9 +2205,9 @@ export function AIAppBuilderWorkspace() {
         const isReact = detectReactProject(project.files);
         if (isReact) {
           compileReactProjectRef.current(project.files, {
-            supabaseConfig: supabaseConfig || undefined,
-            stripeConfig: stripeConfig || undefined,
-            envVars,
+            supabaseConfig: supabaseConfigRef.current || undefined,
+            stripeConfig: stripeConfigRef.current || undefined,
+            envVars: envVarsRef.current,
           }).then(compiled => {
             if (compiled.html) {
               console.info('[Workspace] Nuclear fallback ✅ React compilation succeeded');
@@ -2215,7 +2217,7 @@ export function AIAppBuilderWorkspace() {
             console.error('[Workspace] Nuclear fallback React compilation failed:', err);
           });
         } else {
-          const result = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
+          const result = getCompiledHTML(supabaseConfigRef.current, stripeConfigRef.current, envVarsRef.current, serviceKeysRef.current, cdnPackagesRef.current, bundleForBrowser, linkedGPTRef.current);
           if (result) {
             handleStableHTML(result);
           }
@@ -2223,7 +2225,7 @@ export function AIAppBuilderWorkspace() {
       }, 10000);
       return () => clearTimeout(timer);
     }
-  }, [isGenerating, project.files.length, getCompiledHTML, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT, handleStableHTML]);
+  }, [isGenerating, project.files.length, getCompiledHTML, bundleForBrowser, handleStableHTML]);
 
   // When the tab returns from background, the browser may have discarded
   // iframe content. Force iframe remount WITHOUT touching stableHTML

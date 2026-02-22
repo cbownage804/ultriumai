@@ -175,11 +175,14 @@ export function CompilationBridge({
   // Track previous filesDigest to detect actual file changes
   const prevFilesDigestRef = useRef<string>('');
 
-  useEffect(() => {
+   useEffect(() => {
     if (isGenerating || filesRef.current.length === 0) {
       console.info('[CompilationBridge] Effect: skipping — isGenerating:', isGenerating, 'files:', filesRef.current.length);
       return;
     }
+
+    // Phase 2: Sync lastMainEffectDigestRef so hot-patch effect skips this digest
+    lastMainEffectDigestRef.current = filesDigest;
 
     // Phase 2: Skip if we just synced from external in the same render cycle
     if (justSyncedFromExternalRef.current) {
