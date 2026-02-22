@@ -626,7 +626,7 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
 
       {/* Lovable-style error overlay banner */}
       {errors.length > 0 && errors.some(e => e.type === 'error') && (
-        <div className="absolute bottom-0 left-0 right-0 z-20 animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div className="relative z-20 animate-in fade-in slide-in-from-bottom-2 duration-300">
           <div className="bg-red-950/95 backdrop-blur-sm border-t border-red-500/30">
             {/* Error summary bar */}
             <div className="flex items-center justify-between px-4 py-2.5">
@@ -728,7 +728,3 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
   );
 }
 
-function extractHead(html: string): string {
-  const match = html.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
-  return match?.[1]?.trim() || '';
-}
