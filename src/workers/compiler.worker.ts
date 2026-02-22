@@ -456,7 +456,10 @@ async function compileReactProject(
   files: ProjectFile[],
   options?: CompileRequest['options']
 ): Promise<CompileResponse> {
+  console.info('[CompilerWorker] compileReactProject called with', files.length, 'files');
+  const t0 = Date.now();
   const useEsbuild = await ensureEsbuild();
+  console.info('[CompilerWorker] esbuild ready:', useEsbuild, 'in', Date.now() - t0, 'ms');
   const errors: string[] = [];
 
   const reactFiles = files
@@ -484,6 +487,7 @@ async function compileReactProject(
       errors.push(`Transpile error in ${sorted[i].path}: ${err.message}`);
     }
   }
+  console.info('[CompilerWorker] Transpiled', transpiledChunks.length, 'chunks in', Date.now() - t0, 'ms');
 
   // Import map is now built inline below using registryMap
 
@@ -815,6 +819,7 @@ window.ENV = ${JSON.stringify(envObj)};
     return { type: 'compile-result', id: '', html: errorHtml + html, isReactProject: true, componentCount, errors };
   }
 
+  console.info('[CompilerWorker] HTML assembled, total time:', Date.now() - t0, 'ms, html length:', html.length);
   return { type: 'compile-result', id: '', html, isReactProject: true, componentCount, errors };
 }
 
@@ -823,12 +828,15 @@ console.info('[CompilerWorker] Module loaded successfully');
 
 self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
   const msg = e.data;
+  console.info('[CompilerWorker] Received message:', msg.type, 'id:', msg.id);
   if (msg.type === 'compile') {
     try {
       const result = await compileReactProject(msg.files, msg.options);
       result.id = msg.id;
+      console.info('[CompilerWorker] Posting result, id:', msg.id, 'html length:', result.html.length);
       (self as any).postMessage(result);
     } catch (err: any) {
+      console.error('[CompilerWorker] Compile threw:', err.message);
       const errorResponse: CompileErrorResponse = {
         type: 'compile-error',
         id: msg.id,
