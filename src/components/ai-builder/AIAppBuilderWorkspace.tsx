@@ -354,13 +354,43 @@ export function AIAppBuilderWorkspace() {
     });
     setIsGeneratingOverride(false);
 
-    // Dispatch bg-job-completed after a short delay to let React render the new files
-    // and trigger any recompilation before the agent proceeds to verify
+    // Phase 1: Dispatch bg-job-completed AFTER compile finishes (not on fixed timer).
+    // This prevents the race where isGenerating goes false before stableHTML is set.
     const jobId = job.id;
-    setTimeout(() => {
-      console.info('[Workspace] 📣 Dispatching bg-job-completed for jobId:', jobId);
-      window.dispatchEvent(new CustomEvent('bg-job-completed', { detail: { jobId } }));
-    }, 2000);
+    const isReactForDispatch = detectReactProject(mergedFiles);
+    const dispatchCompletion = () => {
+      setTimeout(() => {
+        console.info('[Workspace] 📣 Dispatching bg-job-completed for jobId:', jobId);
+        window.dispatchEvent(new CustomEvent('bg-job-completed', { detail: { jobId } }));
+      }, 500);
+    };
+
+    // For React projects, the compile is async — wait for it via a promise chain.
+    // For vanilla projects, compile is synchronous and already done above.
+    if (isReactForDispatch) {
+      // The React compile promise was already started above (line ~313).
+      // We can't await it here since it's fire-and-forget, so we use a
+      // reasonable fallback: wait for stableHTMLRef to be populated.
+      const checkStable = () => {
+        if (stableHTMLRef.current) {
+          dispatchCompletion();
+        } else {
+          // Retry up to 10s
+          let elapsed = 0;
+          const interval = setInterval(() => {
+            elapsed += 200;
+            if (stableHTMLRef.current || elapsed >= 10000) {
+              clearInterval(interval);
+              dispatchCompletion();
+            }
+          }, 200);
+        }
+      };
+      // Give the compile a head start
+      setTimeout(checkStable, 500);
+    } else {
+      dispatchCompletion();
+    }
   }, [project.files, setFiles, setMessages]);
 
   // SSE streaming: apply files incrementally as they arrive
@@ -2152,38 +2182,40 @@ export function AIAppBuilderWorkspace() {
     setStableHTML(html);
   }, []);
 
-  // Nuclear fallback: if CompilationBridge fails to produce stableHTML
-  // within 4s of generation ending, compile directly using the correct compiler.
+  // Phase 3: Nuclear fallback — safety net only (10s). Should never fire with Phase 1 fix.
+  // Guard: skip if stableHTMLRef is already set.
   const prevGenForFallbackRef = useRef(false);
   useEffect(() => {
     const wasGenerating = prevGenForFallbackRef.current;
     prevGenForFallbackRef.current = isGenerating;
     if (wasGenerating && !isGenerating && project.files.length > 0) {
       const timer = setTimeout(() => {
-        if (!stableHTMLRef.current) {
-          console.warn('[Workspace] Nuclear fallback: CompilationBridge failed after 4s, compiling directly');
-          const isReact = detectReactProject(project.files);
-          if (isReact) {
-            compileReactProjectRef.current(project.files, {
-              supabaseConfig: supabaseConfig || undefined,
-              stripeConfig: stripeConfig || undefined,
-              envVars,
-            }).then(compiled => {
-              if (compiled.html) {
-                console.info('[Workspace] Nuclear fallback ✅ React compilation succeeded');
-                handleStableHTML(compiled.html);
-              }
-            }).catch(err => {
-              console.error('[Workspace] Nuclear fallback React compilation failed:', err);
-            });
-          } else {
-            const result = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
-            if (result) {
-              handleStableHTML(result);
+        if (stableHTMLRef.current) {
+          console.info('[Workspace] Nuclear fallback: stableHTML already set, skipping');
+          return;
+        }
+        console.warn('[Workspace] ⚠️ Nuclear fallback fired at 10s — this should not happen with Phase 1 fix');
+        const isReact = detectReactProject(project.files);
+        if (isReact) {
+          compileReactProjectRef.current(project.files, {
+            supabaseConfig: supabaseConfig || undefined,
+            stripeConfig: stripeConfig || undefined,
+            envVars,
+          }).then(compiled => {
+            if (compiled.html) {
+              console.info('[Workspace] Nuclear fallback ✅ React compilation succeeded');
+              handleStableHTML(compiled.html);
             }
+          }).catch(err => {
+            console.error('[Workspace] Nuclear fallback React compilation failed:', err);
+          });
+        } else {
+          const result = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
+          if (result) {
+            handleStableHTML(result);
           }
         }
-      }, 4000);
+      }, 10000);
       return () => clearTimeout(timer);
     }
   }, [isGenerating, project.files.length, getCompiledHTML, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT, handleStableHTML]);

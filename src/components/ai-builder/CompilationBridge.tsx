@@ -116,6 +116,10 @@ export function CompilationBridge({
     onStableHTML(html);
   }, [onStableHTML]);
 
+  // Phase 2: Guard flag to prevent main compilation effect from redundant recompile
+  // after we sync from external HTML in the generation-ending effect.
+  const justSyncedFromExternalRef = useRef(false);
+
   // Reset stableHTML when a new generation starts
   const prevIsGeneratingForReset = useRef(false);
   useEffect(() => {
@@ -136,11 +140,15 @@ export function CompilationBridge({
         prevFilesDigestRef.current = filesDigest;
         compilationLockRef.current = true;
         compilationAttemptedRef.current = true;
+        justSyncedFromExternalRef.current = true; // Phase 2: prevent main effect recompile
         console.info('[CompilationBridge] Synced external stableHTML, skipping redundant recompile');
       } else if (!stableHTMLRef.current) {
         compilationLockRef.current = false;
         compilationAttemptedRef.current = false;
-        prevFilesDigestRef.current = '__force_recompile__';
+        // Phase 5: Still set digest so main effect doesn't see stale value
+        prevFilesDigestRef.current = filesDigest;
+        // Use a flag instead of digest manipulation to trigger recompile
+        compilationLockRef.current = false;
       } else {
         // stableHTML already set (from handleBgComplete direct compile),
         // sync the digest so we don't trigger a redundant recompile
@@ -176,6 +184,14 @@ export function CompilationBridge({
   useEffect(() => {
     if (isGenerating || filesRef.current.length === 0) {
       console.info('[CompilationBridge] Effect: skipping — isGenerating:', isGenerating, 'files:', filesRef.current.length);
+      return;
+    }
+
+    // Phase 2: Skip if we just synced from external in the same render cycle
+    if (justSyncedFromExternalRef.current) {
+      justSyncedFromExternalRef.current = false;
+      prevFilesDigestRef.current = filesDigest;
+      console.info('[CompilationBridge] Effect: skipping — just synced from external');
       return;
     }
 
