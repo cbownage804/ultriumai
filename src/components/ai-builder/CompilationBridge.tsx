@@ -106,6 +106,7 @@ export function CompilationBridge({
   const stableHTMLRef = useRef<string | null>(null);
 
   const setStableHTML = useCallback((html: string | null) => {
+    console.info('[CompilationBridge] setStableHTML:', html ? `${html.length} chars` : 'null');
     setStableHTMLLocal(html);
     stableHTMLRef.current = html;
     onStableHTML(html);

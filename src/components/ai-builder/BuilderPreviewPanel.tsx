@@ -73,6 +73,15 @@ export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFix
 
   const viewportWidth = getViewportWidth(viewportMode);
 
+  // Force iframe remount when compiled HTML changes (fixes stale preview)
+  const prevHtmlRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (html && prevHtmlRef.current && html !== prevHtmlRef.current) {
+      setIframeKey(k => k + 1);
+    }
+    prevHtmlRef.current = html;
+  }, [html]);
+
   // Phase 69: Skip double console injection when compiler already injected interceptors
   // Only inject hot-patch listener and navigation guards (no console/error interceptors)
   const htmlWithErrorCapture = html ? (
