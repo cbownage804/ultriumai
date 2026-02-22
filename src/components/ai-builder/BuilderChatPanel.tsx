@@ -1,26 +1,23 @@
 import { useState, useRef, useEffect, useCallback, useMemo, type MutableRefObject } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Send, Square, Sparkles, Loader2, Bot, User, Lightbulb, FileCode, CheckCircle2,
-  Zap, MessageCircle, Wand2, ImagePlus, X, Brain, Compass, Code2,
+  Send, Square, Sparkles, Loader2, Bot, FileCode, CheckCircle2,
+  X, Brain, Compass, Code2,
   LayoutGrid, Wrench, AlertTriangle, Copy, ChevronDown, Check, Pencil,
-  Crosshair, Plus, Camera, Paperclip, AtSign, ExternalLink,
+  Crosshair, Plus, Camera, Paperclip, AtSign,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import type { BuilderMessage, BuilderMode, ThinkingPhase, VersionSnapshot, BuildSummary } from '@/hooks/useAIAppBuilder';
+import type { BuilderMessage, BuilderMode, ThinkingPhase, VersionSnapshot } from '@/hooks/useAIAppBuilder';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import ReactMarkdown from 'react-markdown';
 import { CodeDiffViewer } from './CodeDiffViewer';
 import { InlineSQLRunner } from './InlineSQLRunner';
-import { SUPABASE_SLASH_COMMANDS, detectSupabaseIntents, analyzeConversationComplexity, detectCommunicationStyle, detectWebSearchIntent, detectURLCloneIntent, type ContextBudgetInfo } from './SupabaseConversational';
+import { SUPABASE_SLASH_COMMANDS, type ContextBudgetInfo } from './SupabaseConversational';
 import { StarterTemplatePicker } from './StarterTemplatePicker';
 import { MigrationApprovalCard, type MigrationBlock } from './MigrationApprovalCard';
 import { EdgeFunctionCard, type EdgeFunctionBlock } from './EdgeFunctionCard';
@@ -44,15 +41,9 @@ interface BuilderChatPanelProps {
   onRestoreVersion: (id: string) => void;
   onOpenTemplates: () => void;
   onFixError: (errorPrompt: string) => void;
-  onForkFromMessage?: (messageId: string) => void;
-  onRevertToMessage?: (messageId: string) => void;
-  selectedModel?: string;
-  onModelChange?: (model: string) => void;
   onToggleVisualEdit?: () => void;
   isVisualEditActive?: boolean;
-  onOpenEditHistory?: () => void;
   onSelectStarterTemplate?: (template: import('./AppStarterTemplates').AppStarterTemplate) => void;
-  onReview?: () => void;
   supabaseConfig?: { url: string; anonKey: string } | null;
   onUpdateMessages?: (updater: (prev: BuilderMessage[]) => BuilderMessage[]) => void;
   /** Questions UI rendered above the input */
@@ -276,8 +267,7 @@ export function BuilderChatPanel({
   messages, isGenerating, fileCount, mode, thinkingPhase, versions,
   totalTokensUsed, previousFiles, latestFiles, contextBudget,
   onModeChange, onSend, onStop, onClear, onRestoreVersion, onOpenTemplates, onFixError,
-  onForkFromMessage, onRevertToMessage, selectedModel, onModelChange,
-  onToggleVisualEdit, isVisualEditActive, onOpenEditHistory, onSelectStarterTemplate, onReview,
+  onToggleVisualEdit, isVisualEditActive, onSelectStarterTemplate,
   supabaseConfig, onUpdateMessages, questionsSlot,
   streamingContentRef, onNewConversation,
 }: BuilderChatPanelProps) {
