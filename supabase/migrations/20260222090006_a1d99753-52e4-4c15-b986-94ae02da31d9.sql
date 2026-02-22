@@ -1,0 +1,1 @@
+UPDATE public.security_settings SET two_factor_enabled = false WHERE user_id = 'b8cfe427-6c70-456c-a793-2279f9ddae40';

@@ -2219,13 +2219,25 @@ export function AIAppBuilderWorkspace() {
     setStableHTML(html);
   }, []);
 
-  // Phase 3: Nuclear fallback disabled — handleBgComplete already compiles directly
-  // and CompilationBridge has its own safety timeout. Three simultaneous compilations
-  // were causing browser freezes.
+  // Phase 3: Lightweight safety net — if stableHTML is still null 5s after
+  // generation ends and we have files, nudge CompilationBridge by toggling isCompiling.
+  // Does NOT call getCompiledHTML directly (which caused browser freezes).
   const prevGenForFallbackRef = useRef(false);
   useEffect(() => {
+    if (prevGenForFallbackRef.current && !isGenerating && project.files.length > 0) {
+      const timer = setTimeout(() => {
+        if (!stableHTMLRef.current && project.files.length > 0) {
+          console.warn('[Workspace] Safety net: stableHTML still null 5s after generation — nudging CompilationBridge');
+          // Toggle isCompiling to force CompilationBridge effects to re-evaluate
+          setIsCompiling(true);
+          setTimeout(() => setIsCompiling(false), 100);
+        }
+      }, 5000);
+      prevGenForFallbackRef.current = isGenerating;
+      return () => clearTimeout(timer);
+    }
     prevGenForFallbackRef.current = isGenerating;
-  }, [isGenerating]);
+  }, [isGenerating, project.files.length]);
 
   // When the tab returns from background, the browser may have discarded
   // iframe content. Force iframe remount WITHOUT touching stableHTML
@@ -2338,7 +2350,7 @@ export function AIAppBuilderWorkspace() {
       <PanelErrorBoundary panelName="Compiler">
         <CompilationBridge
           files={project.files}
-          isGenerating={isGenerating || isGeneratingOverride}
+          isGenerating={isGeneratingOverride || (isGenerating && !project.files.length)}
           supabaseConfig={supabaseConfig}
           stripeConfig={stripeConfig}
           envVars={envVars}
