@@ -11,8 +11,10 @@ const lz = (factory: () => Promise<any>, name: string): any =>
       .catch((err: unknown) => {
         // Only auto-reload once per session to avoid infinite loops
         const key = '__chunk_reload__';
-        if (!sessionStorage.getItem(key)) {
-          sessionStorage.setItem(key, '1');
+        if (!localStorage.getItem(key)) {
+          localStorage.setItem(key, '1');
+          // Auto-clear after 30s so future real errors can still trigger a reload
+          setTimeout(() => { try { localStorage.removeItem(key); } catch {} }, 30000);
           window.location.reload();
         }
         // If we already reloaded, surface the error so the ErrorBoundary catches it

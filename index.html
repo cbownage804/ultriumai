@@ -206,8 +206,12 @@
         // Error handler for dispatcher/hook errors - clears state and reloads
         window.addEventListener('error', function(e) {
           if (e.message && (e.message.includes('dispatcher') || e.message.includes('Invalid hook'))) {
-            // Clear all storage to prevent loops
-            sessionStorage.clear();
+            // Guard: only reload once per session to prevent infinite loops
+            var HOOK_RELOAD_KEY = '__hook_error_reload__';
+            if (sessionStorage.getItem(HOOK_RELOAD_KEY)) return;
+            sessionStorage.setItem(HOOK_RELOAD_KEY, '1');
+            
+            // Remove specific crash keys — do NOT clear all of sessionStorage
             localStorage.removeItem('ultrium_last_crash');
             
             // Clear caches
