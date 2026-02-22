@@ -34,7 +34,7 @@ import type { ActivityEntry } from './ActivityFeed';
 import type { ChangelogEntry } from './ChangelogPanel';
 import type { CommandAction } from './EnhancedCommandPalette';
 import { useProjectBundler } from '@/hooks/useProjectBundler';
-import { CompilationBridge } from './CompilationBridge';
+import { CompilationBridge, ERROR_FALLBACK_HTML } from './CompilationBridge';
 import { detectReactProject } from '@/hooks/useReactCompiler';
 import { useWorkerCompiler } from '@/hooks/useWorkerCompiler';
 import { useASTBundler } from '@/hooks/useASTBundler';
@@ -310,7 +310,7 @@ export function AIAppBuilderWorkspace() {
       }
       setFiles(mergedFiles);
 
-      // Self-contained HTML shortcut (vanilla HTML projects without module scripts)
+      // 1. Self-contained HTML shortcut (vanilla HTML projects without module scripts)
       const indexFile = mergedFiles.find(f => f.path === 'index.html');
       const hasLocalModuleScripts = /src=["']\.?\/(?:src|main|app|index)\b/i.test(indexFile?.content || '');
       if (indexFile && !hasLocalModuleScripts &&
@@ -320,10 +320,42 @@ export function AIAppBuilderWorkspace() {
         stableHTMLRef.current = indexFile.content;
         setStableHTML(indexFile.content);
       }
-      // For React/TSX projects: leave stableHTMLRef null.
-      // CompilationBridge will compile after isGenerating transitions to false.
-      compilePromise = Promise.resolve();
-      console.info('[handleBgComplete] Files set');
+
+      // 2. React/TSX projects: compile directly with worker before releasing state
+      const hasReactFiles = mergedFiles.some(f => /\.(tsx|jsx)$/.test(f.path));
+      if (!stableHTMLRef.current && hasReactFiles) {
+        compilePromise = (async () => {
+          try {
+            const compiled = await Promise.race([
+              compileReactProjectRef.current(mergedFiles, {
+                supabaseConfig: supabaseConfigRef.current || undefined,
+                stripeConfig: stripeConfigRef.current || undefined,
+                envVars: envVarsRef.current,
+              }),
+              new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error('Worker timeout')), 30000)
+              ),
+            ]);
+            if (compiled?.html) {
+              console.info('[handleBgComplete] Worker compilation succeeded');
+              stableHTMLRef.current = compiled.html;
+              setStableHTML(compiled.html);
+            }
+          } catch (e) {
+            console.warn('[handleBgComplete] Worker compilation failed:', e);
+          }
+        })();
+      }
+
+      // 3. Guaranteed fallback: always show something after compilation attempt
+      compilePromise = compilePromise.then(() => {
+        if (!stableHTMLRef.current) {
+          console.warn('[handleBgComplete] No preview available — setting error fallback');
+          stableHTMLRef.current = ERROR_FALLBACK_HTML;
+          setStableHTML(ERROR_FALLBACK_HTML);
+        }
+      });
+      console.info('[handleBgComplete] Files set, compilation queued');
 
       // Post-build snapshot for history
       const totalChanges = parsedFiles.length + edits.length;
