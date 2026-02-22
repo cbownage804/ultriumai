@@ -998,11 +998,13 @@ export function AIAppBuilderWorkspace() {
       // Log files to build log
       latestFiles.forEach(f => buildLog.logFileWrite(f.path));
       // Issue 30 fix: Removed isCompiling flicker (was set true then immediately false next frame)
-      // Defer code smell analysis so it doesn't block preview
-      setTimeout(() => {
-        const smells = codeSmellDetector.analyzeFiles([...project.files, ...latestFiles]);
-        if (smells.length > 0) setCodeSuggestions(smells);
-      }, 200);
+      // Defer code smell analysis — skip for large projects to prevent freeze
+      if (latestFiles.length < 50) {
+        setTimeout(() => {
+          const smells = codeSmellDetector.analyzeFiles([...project.files, ...latestFiles]);
+          if (smells.length > 0) setCodeSuggestions(smells);
+        }, 2000);
+      }
     }
   }, [latestFiles]);
 
@@ -2177,43 +2179,13 @@ export function AIAppBuilderWorkspace() {
     setStableHTML(html);
   }, []);
 
-  // Phase 3: Nuclear fallback — safety net only (10s). Should never fire with Phase 1 fix.
-  // Guard: skip if stableHTMLRef is already set.
+  // Phase 3: Nuclear fallback disabled — handleBgComplete already compiles directly
+  // and CompilationBridge has its own safety timeout. Three simultaneous compilations
+  // were causing browser freezes.
   const prevGenForFallbackRef = useRef(false);
   useEffect(() => {
-    const wasGenerating = prevGenForFallbackRef.current;
     prevGenForFallbackRef.current = isGenerating;
-    if (wasGenerating && !isGenerating && project.files.length > 0) {
-      const timer = setTimeout(() => {
-        if (stableHTMLRef.current) {
-          console.info('[Workspace] Nuclear fallback: stableHTML already set, skipping');
-          return;
-        }
-        console.warn('[Workspace] ⚠️ Nuclear fallback fired at 10s — this should not happen with Phase 1 fix');
-        const isReact = detectReactProject(project.files);
-        if (isReact) {
-          compileReactProjectRef.current(project.files, {
-            supabaseConfig: supabaseConfigRef.current || undefined,
-            stripeConfig: stripeConfigRef.current || undefined,
-            envVars: envVarsRef.current,
-          }).then(compiled => {
-            if (compiled.html) {
-              console.info('[Workspace] Nuclear fallback ✅ React compilation succeeded');
-              handleStableHTML(compiled.html);
-            }
-          }).catch(err => {
-            console.error('[Workspace] Nuclear fallback React compilation failed:', err);
-          });
-        } else {
-          const result = getCompiledHTML(supabaseConfigRef.current, stripeConfigRef.current, envVarsRef.current, serviceKeysRef.current, cdnPackagesRef.current, bundleForBrowser, linkedGPTRef.current);
-          if (result) {
-            handleStableHTML(result);
-          }
-        }
-      }, 10000);
-      return () => clearTimeout(timer);
-    }
-  }, [isGenerating, project.files.length, getCompiledHTML, bundleForBrowser, handleStableHTML]);
+  }, [isGenerating]);
 
   // When the tab returns from background, the browser may have discarded
   // iframe content. Force iframe remount WITHOUT touching stableHTML
