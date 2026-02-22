@@ -11,7 +11,7 @@ import './worker-window-shim';
 
 let esbuild: any = null;
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
-import { DEFAULT_PACKAGES, type CDNPackageEntry } from '@/lib/cdnPackageRegistry';
+import { DEFAULT_PACKAGES, type CDNPackageEntry } from './packageData';
 
 // ── esbuild initialization ──
 let esbuildReady = false;
