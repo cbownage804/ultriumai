@@ -20,7 +20,9 @@ const PHASE_CONFIG: Record<string, { label: string; color: string; gradient: str
 };
 
 export function GeneratingOverlay({ isGenerating, isCompiling, phase, partialFilesRef, completedFileCountRef, continuationRound = 0 }: GeneratingOverlayProps) {
-  const showOverlay = isGenerating || isCompiling;
+  // Phase 4: Only show overlay during generation, not compilation-only.
+  // Compilation happens silently — the old preview stays visible until the new one is ready.
+  const showOverlay = isGenerating;
 
   // Local polling state — reads from refs every 500ms, only THIS component re-renders
   const [localFiles, setLocalFiles] = useState<ProjectFile[]>([]);

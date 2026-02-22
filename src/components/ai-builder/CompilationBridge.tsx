@@ -165,13 +165,7 @@ export function CompilationBridge({
   const compilationAttemptedRef = useRef(false);
   const compilationLockRef = useRef(false);
 
-  // Reset compilation attempted flag when generation starts
-  useEffect(() => {
-    if (isGenerating) {
-      compilationAttemptedRef.current = false;
-      compilationLockRef.current = false;
-    }
-  }, [isGenerating, filesDigest]);
+  // Phase 3: Removed duplicate reset effect — already handled by the generation start/end effect above.
 
 
   // Phase 5: Debounce compilation — 500ms delay so rapid setFiles calls consolidate
