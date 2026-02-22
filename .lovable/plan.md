@@ -1,51 +1,62 @@
 
 
-## Phase 5: Final Cleanup — Dead Code and Unused Imports
+## Fix: Preview Not Loading After Generation
 
-All major visual/UX parity gaps (1-22, 24) are complete. This phase cleans up orphaned files, dead imports, and the two minor items (23 and 25) you previously skipped.
+### Problem Analysis
 
----
+After deep code analysis, I identified a **deadlock race condition** between two competing compilation paths:
 
-### Task 1: Delete Orphaned Component Files
+1. **`handleBgComplete`** (in AIAppBuilderWorkspace) tries to compile via the worker with a 20s timeout
+2. **`CompilationBridge`** tries to compile when `isGeneratingOverride` becomes false
 
-The following files are no longer imported anywhere but still exist on disk:
-- `src/components/ai-builder/WorkspaceBottomBar.tsx`
-- `src/components/ai-builder/WorkspaceStatusBar.tsx`
+The issue is:
+- `handleBgComplete`'s worker compilation sends a request to the shared Web Worker. If it times out (20s), the worker is STILL busy processing the request.
+- When `CompilationBridge` retries (also via the same shared worker), its new request sits in the worker's message queue. Since the worker is single-threaded, it must finish the first request before starting the second.
+- CompilationBridge's worker timeout is 15s. If the first worker request takes longer than 35s total (20s handleBgComplete timeout + 15s CompilationBridge timeout), both time out.
+- The vanilla fallback (`getCompiledHTML`) then runs, but for React projects, it produces a near-empty HTML (just `<div id="root"></div>` with CSS inlined) -- or returns null if there's no `index.html`.
 
-**Action:** Delete both files.
+Additionally, the 500ms debounce in CompilationBridge's main effect can be **cancelled** by rapid re-renders that happen post-generation (auto-save effects, toast notifications, message state updates).
 
----
+### Solution
 
-### Task 2: Clean Unused Imports in BuilderChatPanel.tsx
+**1. Remove direct compilation from `handleBgComplete`** (AIAppBuilderWorkspace.tsx)
 
-Several icons and modules imported at the top are no longer used after Gaps 16-22 removed their consumers:
-- Icons likely unused: `Bot`, `User`, `Lightbulb`, `Zap`, `MessageCircle`, `Wand2`, `ImagePlus`, `Check`, `Pencil`, `ExternalLink`
-- `AnimatePresence` (no longer used after suggestion chips removal)
-- `DropdownMenu` family (no dropdown menus remain in the component)
-- `Dialog`/`DialogContent`/`DialogHeader`/`DialogTitle` (no dialogs remain)
-- `BuildSummary` type import (build summary card removed)
-- `detectSupabaseIntents`, `analyzeConversationComplexity`, `detectCommunicationStyle`, `detectWebSearchIntent`, `detectURLCloneIntent` (unused analysis functions)
+Stop the dual-compilation approach entirely. `handleBgComplete` should only:
+- Parse and merge files
+- Call `setFiles(mergedFiles)` 
+- Call `setIsGeneratingOverride(false)` immediately (no waiting for compilation)
 
-**Action:** Remove all unused imports.
+This prevents the shared worker from being monopolized by a potentially-hanging request.
 
----
+**2. Remove the 500ms debounce for initial compilation** (CompilationBridge.tsx)
 
-### Task 3: Clean Unused Props in BuilderChatPanel
+When generation just ended (no existing `stableHTML`), start compilation immediately (0ms delay) instead of waiting 500ms. The debounce is only useful for rapid manual edits, not for post-generation compilation.
 
-Several props are no longer consumed after the simplification:
-- `onForkFromMessage`, `onRevertToMessage` (fork/revert removed in Gap 16)
-- `onOpenEditHistory` (edit history removed)
-- `onReview` (review button removed)
-- `selectedModel`, `onModelChange` (model selector removed in Gap 7)
+**3. Increase CompilationBridge worker timeout to 30s** (CompilationBridge.tsx)
 
-**Action:** Remove from interface and destructuring.
+The current 15s timeout is too aggressive for first-time esbuild-wasm initialization (WASM download). Increase to 30s to match `COMPILE_TIMEOUT_MS`.
 
----
+**4. Add diagnostic console.log statements** (CompilationBridge.tsx)
 
-### Files Modified
-- `BuilderChatPanel.tsx` (Tasks 2-3)
+Add logging at every decision point so the next failure can be traced immediately.
 
-### Files Deleted
-- `WorkspaceBottomBar.tsx`
-- `WorkspaceStatusBar.tsx`
+### Technical Details
+
+#### File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
+
+In `handleBgComplete` (around lines 308-352), replace the entire compilation block with:
+```
+setFiles(mergedFiles);
+compilePromise = Promise.resolve();
+console.info('[handleBgComplete] Files set, CompilationBridge will compile');
+```
+
+In the `compilePromise.finally()` block (around line 380), remove the compile check and just call `setIsGeneratingOverride(false)` directly.
+
+#### File: `src/components/ai-builder/CompilationBridge.tsx`
+
+- In the generation-ending effect (line 149-168): when no preview exists, call compilation directly instead of relying on the main effect. Set a `immediateCompileNeeded` flag.
+- In the main effect debounce (line 267): use 0ms delay when `immediateCompileNeeded` is true (post-generation), 500ms otherwise.
+- Change the worker timeout from 15s to 30s (line 337-341).
+- Add a `console.info` at every early return to trace which guard condition prevented compilation.
 
