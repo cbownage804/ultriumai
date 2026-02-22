@@ -1312,9 +1312,14 @@ export function AIAppBuilderWorkspace() {
     // Intentionally stable deps — refs handle changing values
   }, [saveDraftImmediate, loadDraft, setFiles, renameProject, setMessages]);
 
+  // Capture ?new=true ONCE before stripping it from the URL
+  const isNewProjectRef = useRef(searchParams.get('new') === 'true');
+
   // Strip ?new=true immediately on mount so tab recovery works on reload
   useEffect(() => {
-    if (searchParams.get('new') === 'true') {
+    if (isNewProjectRef.current) {
+      clearDraft();
+      idbPersistence.clearSession();
       const url = new URL(window.location.href);
       url.searchParams.delete('new');
       window.history.replaceState({}, '', url.pathname + url.search);
@@ -1344,7 +1349,7 @@ export function AIAppBuilderWorkspace() {
   }, [initialProjectId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Restore draft on mount (only if no project param and not explicitly new)
-  const isNewProject = searchParams.get('new') === 'true';
+  const isNewProject = isNewProjectRef.current;
   const hasRestoredRef = useRef(false);
   useEffect(() => {
     if (initialProjectId || isNewProject) return;
@@ -1414,13 +1419,7 @@ export function AIAppBuilderWorkspace() {
     }
   }, [idbPersistence, loadDraft, setFiles, renameProject, setMessages]);
 
-  // Clear draft when starting a new project
-  useEffect(() => {
-    if (isNewProject) {
-      clearDraft();
-      idbPersistence.clearSession();
-    }
-  }, [isNewProject]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Draft clearing for new projects is now handled in the strip ?new=true effect above
 
    // compiledForHosting is now managed by CompilationBridge
    const [compiledForHosting, setCompiledForHostingState] = useState<string | null>(null);
