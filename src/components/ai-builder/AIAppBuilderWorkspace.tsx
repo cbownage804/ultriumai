@@ -313,6 +313,7 @@ export function AIAppBuilderWorkspace() {
       if (indexFile && indexFile.content.includes('<!DOCTYPE html') && indexFile.content.includes('</html>')) {
         console.info('[handleBgComplete] Self-contained index.html detected — setting preview directly');
         stableHTMLRef.current = indexFile.content;
+        setStableHTML(indexFile.content);
       } else {
         // Try vanilla compilation immediately (synchronous, fast)
         try {
@@ -324,6 +325,7 @@ export function AIAppBuilderWorkspace() {
           if (compiled) {
             console.info('[handleBgComplete] Direct vanilla compilation succeeded');
             stableHTMLRef.current = compiled;
+            setStableHTML(compiled);
           }
         } catch (e) {
           console.warn('[handleBgComplete] Direct compilation failed, deferring to CompilationBridge:', e);

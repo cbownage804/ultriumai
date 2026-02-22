@@ -139,8 +139,7 @@ export function CompilationBridge({
       if (!stableHTMLRef.current && externalHasPreview) {
         // handleBgComplete already compiled and set the preview externally.
         // Sync our internal state to match, skip redundant recompile.
-        stableHTMLRef.current = externalHasPreview;
-        setStableHTMLLocal(externalHasPreview);
+        setStableHTML(externalHasPreview);
         prevFilesDigestRef.current = filesDigest;
         compilationLockRef.current = true;
         compilationAttemptedRef.current = true;
