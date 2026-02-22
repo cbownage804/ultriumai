@@ -1521,6 +1521,7 @@ export function useAIAppBuilder() {
     partialFilesRef: streaming.partialFilesRef,
     isStreamingPreview: streaming.isStreaming,
     completedFileCountRef: streaming.completedFileCountRef,
+    parseIncremental: streaming.parseIncremental,
     // Ref-based streaming for chat panel (avoids workspace re-renders)
     streamingContentRef,
   };
