@@ -1,37 +1,89 @@
 
 
-## Problem
+## Reaching True Lovable Parity: Remaining Gaps
 
-The "Compilation Error" keeps appearing because of two bugs in `CompilationBridge.tsx`:
+### Current Architecture vs Lovable
 
-1. **Broken retry mechanism**: The retry (added in the last fix) tries to trigger a React effect re-run by calling `setLiveCompiledHTML(null)`, but `liveCompiledHTML` is not in the effect's dependency array. The effect depends on `[filesDigest, supabaseConfig, stripeConfig, isReactProject, isGenerating]` -- none of which change when `liveCompiledHTML` is set. So the retry never actually executes.
+Your app builder runs **everything on the browser's main thread**: Babel transpilation, regex-based TypeScript stripping, module resolution, and preview rendering. Lovable uses a fundamentally different architecture that avoids browser freezes entirely.
 
-2. **Compilation startup is too fragile**: The chain of `500ms debounce -> requestAnimationFrame -> setTimeout(100ms) -> await setTimeout(0)` means compilation doesn't even start for 600ms+. When the browser is under load (from the agent's verification step running concurrently), `requestAnimationFrame` callbacks can be starved entirely by Firefox, preventing compilation from ever starting.
+### Gap 1: Move Compilation to a Web Worker (HIGH IMPACT)
 
-3. **Browser freeze from agent contention**: The agent's "Verifying output" step (`waitForPreviewErrors`) starts immediately after generation ends and runs concurrent with compilation. Both compete for the main thread, causing Firefox to show "This page is slowing down Firefox."
+**The Problem**: Your `CompilationBridge.tsx` runs Babel transpilation, `stripTypeAnnotations` (500+ lines of regex), and module resolution all on the main thread. This is why the browser freezes.
 
-## Solution
+**The Fix**: Create a dedicated Web Worker (`compiler.worker.ts`) that handles all compilation off the main thread. The main thread only sends files and receives compiled HTML.
 
-Three changes, all in `src/components/ai-builder/CompilationBridge.tsx`:
+```text
+Current:
+  Main Thread: [UI + Compilation + Preview] --> FREEZE
 
-### 1. Fix the retry mechanism -- call `runCompilation()` directly
+Target:
+  Main Thread: [UI + Preview] (always responsive)
+  Web Worker:  [Babel + TypeScript + Bundling] (runs in background)
+```
 
-Instead of trying to re-trigger the React effect (which doesn't work), the timeout handler will directly call `runCompilation()` again after a 2-second cooldown. This bypasses the effect system entirely and guarantees the retry executes.
+**Files to create/modify**:
+- Create `src/workers/compiler.worker.ts` -- moves `useReactCompiler` logic into a worker
+- Create `src/hooks/useWorkerCompiler.ts` -- wrapper hook that posts messages to the worker
+- Modify `CompilationBridge.tsx` -- use worker-based compiler instead of main-thread compiler
+- All the timeout/retry/freeze mitigations become unnecessary since the main thread stays free
 
-### 2. Replace `requestAnimationFrame` with direct `setTimeout`
+### Gap 2: Replace Regex TypeScript Stripping with esbuild-wasm (HIGH IMPACT)
 
-Remove the `requestAnimationFrame` wrapper that Firefox throttles under load. Use a single `setTimeout(50)` instead of `rAF + setTimeout(100)`. This cuts 550ms+ off the compilation start time and removes the browser-throttleable rAF dependency.
+**The Problem**: `stripTypeAnnotations` in `useReactCompiler.ts` is 110 lines of fragile regex that breaks on edge cases (nested generics, complex type unions, decorator patterns). Lovable uses a real compiler.
 
-### 3. Reduce the safety timeout from 45s to 20s
+**The Fix**: Load `esbuild-wasm` (200KB) in the Web Worker. It strips TypeScript AND transpiles JSX in one pass, 100x faster than Babel standalone, with zero edge-case bugs.
 
-With the retry now actually working, we can use a shorter timeout. First attempt times out at 20s, waits 2s, retries. If retry also fails at 20s, show the error. Total worst case: 42s (vs current 90s that never retries).
+**Files to modify**:
+- `src/workers/compiler.worker.ts` -- use `esbuild.transform()` instead of `stripTypeAnnotations` + Babel
+- Remove `stripTypeAnnotations` from `useReactCompiler.ts`
 
-### Technical Details
+### Gap 3: Real Package Resolution via Import Maps (MEDIUM IMPACT)
 
-**File: `src/components/ai-builder/CompilationBridge.tsx`**
+**The Problem**: Your current system loads packages via `window.__pkg_X` globals with CDN fallbacks. Missing packages silently render empty `<span>` elements via Proxy fallbacks. Lovable resolves packages properly.
 
-- Change `COMPILE_TIMEOUT_MS` from `45_000` to `20_000` (line 9)
-- In the safety timeout handler (lines 269-292): replace the broken effect-based retry with a direct `setTimeout(() => runCompilation(), 2000)` call
-- Replace `requestAnimationFrame` + `setTimeout(100)` (lines 356-362) with a single `setTimeout(runCompilation, 50)`
-- Remove the `cancelAnimationFrame` from cleanup since rAF is no longer used
+**The Fix**: Use browser-native Import Maps + esm.sh for proper ESM package resolution. This eliminates the Proxy fallback system and the `cdnPackageRegistry.ts` entirely.
+
+```text
+Current:
+  var { Button } = new Proxy(window.__pkg_X || {}, { get: ... })
+  // Silent failure: renders empty <span>
+
+Target:
+  <script type="importmap">
+  { "imports": { "lucide-react": "https://esm.sh/lucide-react@0.462.0" } }
+  </script>
+  import { Star } from 'lucide-react';  // Real ESM import, real errors
+```
+
+**Files to modify**:
+- Modify `useReactCompiler.ts` `compileReactProject` -- generate import maps instead of async preamble
+- Simplify `transpileFile` -- keep real import statements instead of converting to `window.__pkg_X`
+
+### Gap 4: Sandboxed Preview via iframe sandbox or Service Worker (MEDIUM IMPACT)
+
+**The Problem**: Your preview uses `srcdoc` with injected shims for localStorage, fetch, etc. This is fragile and causes DOM mismatches for visual editing. Lovable uses a proper sandboxed preview origin.
+
+**The Fix**: Use a Service Worker on a preview subdomain (e.g., `preview.ultriumai.app`) that intercepts fetch requests and serves files from the virtual file system. This gives the preview a real browsing context with proper `window.location`, real `localStorage`, and no shimming needed.
+
+**Files to create**:
+- `public/preview-sw.js` -- Service Worker that serves VFS files
+- Modify `BuilderPreviewPanel.tsx` -- use iframe `src` pointing to the SW-controlled origin instead of `srcdoc`
+
+### Gap 5: Proper HMR Instead of Full Reloads (LOW-MEDIUM IMPACT)
+
+**The Problem**: Your `useLivePreviewSync.ts` only hot-patches CSS. Any JS/TS change triggers a full `srcdoc` reload, which loses component state (scroll position, form inputs, expanded accordions).
+
+**The Fix**: With the Service Worker preview (Gap 4), implement Vite-style HMR where changed modules are re-executed and React components are re-rendered without losing state.
+
+### Recommended Implementation Order
+
+1. **Web Worker compilation** (Gap 1) -- eliminates ALL browser freezes immediately
+2. **esbuild-wasm** (Gap 2) -- eliminates TypeScript edge cases, 100x faster
+3. **Import Maps** (Gap 3) -- proper package loading, real error messages
+4. **Service Worker preview** (Gap 4) -- fixes visual editing, enables real HMR
+5. **HMR** (Gap 5) -- preserves component state across edits
+
+### Priority Recommendation
+
+Start with **Gap 1 (Web Worker)** because it solves the immediate browser freeze problem without any other architectural changes. The existing `useReactCompiler` code moves almost verbatim into a worker -- only the communication layer changes. This single change would eliminate the need for all the timeout/retry/rAF workarounds that have been accumulating.
 
