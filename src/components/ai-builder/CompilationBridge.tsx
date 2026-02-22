@@ -7,7 +7,7 @@ import type { CDNPackage } from './PackageManager';
 import type { LinkedGPTConfig } from './GPTConnectorPanel';
 import { useLivePreviewSync } from '@/hooks/useLivePreviewSync';
 
-const COMPILE_TIMEOUT_MS = 45_000;
+const COMPILE_TIMEOUT_MS = 30_000;
 
 interface CompilationBridgeProps {
   files: ProjectFile[];

@@ -17,10 +17,16 @@ let esbuildInitPromise: Promise<void> | null = null;
 async function ensureEsbuild(): Promise<boolean> {
   if (esbuildReady) return true;
   if (!esbuildInitPromise) {
-    esbuildInitPromise = esbuild.initialize({
-      wasmURL: 'https://unpkg.com/esbuild-wasm@0.25.2/esbuild.wasm',
-      worker: false, // We're already in a worker
-    }).then(() => {
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('esbuild WASM download timeout (10s)')), 10_000)
+    );
+    esbuildInitPromise = Promise.race([
+      esbuild.initialize({
+        wasmURL: 'https://unpkg.com/esbuild-wasm@0.25.2/esbuild.wasm',
+        worker: false, // We're already in a worker
+      }),
+      timeoutPromise,
+    ]).then(() => {
       esbuildReady = true;
       console.info('[CompilerWorker] esbuild-wasm initialized');
     }).catch((err) => {
