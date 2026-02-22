@@ -252,11 +252,7 @@ export function CompilationBridge({
       return;
     }
 
-    // Skip initial compilation — handled by compileNow in the generation-ending effect
-    if (!stableHTMLRef.current && !compilationAttemptedRef.current && filesRef.current.length > 0) {
-      console.info('[CompilationBridge] Main effect: deferring to compileNow for initial compilation');
-      return;
-    }
+    // No early return — main effect serves as fallback if compileNowRef doesn't fire
 
     // Phase 2: Sync lastMainEffectDigestRef so hot-patch effect skips this digest
     lastMainEffectDigestRef.current = filesDigest;

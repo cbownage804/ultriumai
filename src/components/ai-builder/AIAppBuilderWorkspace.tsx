@@ -2323,7 +2323,7 @@ export function AIAppBuilderWorkspace() {
       <PanelErrorBoundary panelName="Compiler">
         <CompilationBridge
           files={project.files}
-          isGenerating={isGeneratingOverride}
+          isGenerating={isGenerating || isGeneratingOverride}
           supabaseConfig={supabaseConfig}
           stripeConfig={stripeConfig}
           envVars={envVars}
