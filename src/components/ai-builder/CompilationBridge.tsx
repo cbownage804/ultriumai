@@ -83,7 +83,13 @@ export function CompilationBridge({
   // Serialize file identity to prevent effect re-fires from reference changes
   const filesDigest = useMemo(() => {
     if (files.length === 0) return '';
-    return files.map(f => f.path + ':' + f.content.length).join('|');
+    return files.map(f => {
+      let hash = 5381;
+      for (let i = 0; i < f.content.length; i++) {
+        hash = ((hash << 5) + hash + f.content.charCodeAt(i)) & 0x7fffffff;
+      }
+      return f.path + ':' + hash;
+    }).join('|');
   }, [files]);
 
   const isReactProject = useMemo(() => {
