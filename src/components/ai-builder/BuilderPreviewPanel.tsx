@@ -1,20 +1,16 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import {
-  Copy, CheckCircle, Maximize2, Minimize2, ExternalLink, RefreshCw, Activity,
-  ArrowLeft, ArrowRight, Globe, Lock, Wrench, X, Terminal, Info, AlertTriangle as AlertTriangleIcon,
+  RefreshCw,
+  ArrowLeft, ArrowRight, Lock, Wrench, X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ErrorConsole, type PreviewError } from './ErrorConsole';
-import { PreviewZoomControls } from './PreviewZoomControls';
-import { VisualEditOverlay } from './VisualEditOverlay';
+import { type PreviewError } from './ErrorConsole';
 import { ResponsivePreviewBar, type ViewportMode, getViewportWidth } from './ResponsivePreviewBar';
 import { SkeletonPreview } from './SkeletonPreview';
 import { CompilationProgress } from './CompilationProgress';
-import { DeviceFrameOverlay, type DeviceType } from './DeviceFrameOverlay';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import { usePreviewServiceWorker } from '@/hooks/usePreviewServiceWorker';
-import previewBg from '@/assets/preview-placeholder-bg.jpg';
 
 interface BuilderPreviewPanelProps {
   html: string | null;
@@ -54,20 +50,11 @@ export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFix
   const [internalViewportMode, setInternalViewportMode] = useState<ViewportMode>('desktop');
   const viewportMode = externalViewportMode ?? internalViewportMode;
   const setViewportMode = onExternalViewportChange ?? setInternalViewportMode;
-  const [isLandscape, setIsLandscape] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
   const [errors, setErrors] = useState<PreviewError[]>([]);
-  const [consoleLogs, setConsoleLogs] = useState<{ level: string; message: string; timestamp: Date }[]>([]);
-  const [consoleTab, setConsoleTab] = useState<'errors' | 'console'>('errors');
-  const [internalVisualEdit, setInternalVisualEdit] = useState(false);
-  const isVisualEditActive = externalVisualEdit ?? internalVisualEdit;
-  const toggleVisualEdit = externalToggleVisualEdit ?? (() => setInternalVisualEdit(v => !v));
   const [currentUrl, setCurrentUrl] = useState('/');
   const [urlHistory, setUrlHistory] = useState<string[]>(['/']);
   const [historyIndex, setHistoryIndex] = useState(0);
-  const [zoom, setZoom] = useState(100);
   const containerRef = useRef<HTMLDivElement>(null);
   const internalIframeRef = useRef<HTMLIFrameElement>(null);
   const iframeRef = externalIframeRef || internalIframeRef;
@@ -325,17 +312,6 @@ window.addEventListener('message', function(e) {
     };
   }, [html, isGenerating, iframeRef, isCompiling]);
 
-  // Listen for console logs from iframe
-  useEffect(() => {
-    const consoleHandler = (e: MessageEvent) => {
-      if (e.data?.type === '__CONSOLE_LOG__' && (e.data.level === 'log' || e.data.level === 'info')) {
-        setConsoleLogs(prev => [...prev.slice(-49), { level: e.data.level, message: e.data.message, timestamp: new Date() }]);
-      }
-    };
-    window.addEventListener('message', consoleHandler);
-    return () => window.removeEventListener('message', consoleHandler);
-  }, []);
-
   // Listen for error messages from iframe (including critical errors from error boundary)
   useEffect(() => {
     const handler = (e: MessageEvent) => {
@@ -373,7 +349,7 @@ window.addEventListener('message', function(e) {
   }, [onAutoFixError, isGenerating]);
 
   useEffect(() => { 
-    setErrors([]); setConsoleLogs([]); setCurrentUrl('/'); setUrlHistory(['/']); setHistoryIndex(0);
+    setErrors([]); setCurrentUrl('/'); setUrlHistory(['/']); setHistoryIndex(0);
     // Phase 36: Reset scroll position on new build
     if (iframeRef.current?.contentWindow) iframeRef.current.contentWindow.scrollTo(0, 0);
   }, [html]);
@@ -382,7 +358,7 @@ window.addEventListener('message', function(e) {
   const prevIsGeneratingRef = useRef(isGenerating);
   useEffect(() => {
     if (prevIsGeneratingRef.current && !isGenerating) {
-      setErrors([]); setConsoleLogs([]);
+      setErrors([]);
     }
     prevIsGeneratingRef.current = isGenerating;
   }, [isGenerating]);
@@ -421,51 +397,6 @@ window.addEventListener('message', function(e) {
   const canGoBack = historyIndex > 0;
   const canGoForward = historyIndex < urlHistory.length - 1;
 
-  const copyHTML = useCallback(() => {
-    if (!html) return;
-    navigator.clipboard.writeText(html);
-    setCopied(true);
-    toast.success('HTML copied');
-    setTimeout(() => setCopied(false), 2000);
-  }, [html]);
-
-  const openInNewTab = useCallback(() => {
-    if (!html) return;
-    const blob = new Blob([html], { type: 'text/html' });
-    window.open(URL.createObjectURL(blob), '_blank');
-  }, [html]);
-
-  const toggleFullscreen = useCallback(() => {
-    if (!containerRef.current) return;
-    if (!isFullscreen) {
-      containerRef.current.requestFullscreen?.();
-    } else {
-      document.exitFullscreen?.();
-    }
-    setIsFullscreen(!isFullscreen);
-  }, [isFullscreen]);
-
-  const handleVisualEdit = useCallback((selector: string, property: string, value: string) => {
-    // Persist edits back to project files via parent
-    onVisualEdit?.(selector, property, value);
-  }, [onVisualEdit]);
-
-  const ToolButton = ({ icon: Icon, onClick, disabled, title, active }: {
-    icon: typeof Copy; onClick: () => void; disabled?: boolean; title: string; active?: boolean;
-  }) => (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      title={title}
-      className={cn(
-        "h-7 w-7 rounded-md flex items-center justify-center transition-all",
-        active ? "text-emerald-400" : "text-white/25 hover:text-white/50 hover:bg-white/5",
-        disabled && "opacity-30 pointer-events-none"
-      )}
-    >
-      <Icon className="h-3.5 w-3.5" />
-    </button>
-  );
 
   return (
     <div ref={containerRef} className="flex flex-col h-full bg-[#0d0d14] relative">
@@ -498,55 +429,17 @@ window.addEventListener('message', function(e) {
               </button>
             </div>
 
-            {/* Editable URL bar */}
-            <div className="flex-1 flex items-center gap-1.5 bg-white/[0.04] border border-white/[0.06] rounded-lg h-7 px-2.5 hover:border-white/[0.1] transition-colors focus-within:border-cyan-500/30 focus-within:ring-1 focus-within:ring-cyan-500/20">
+            {/* Read-only URL bar */}
+            <div className="flex-1 flex items-center gap-1.5 bg-white/[0.04] border border-white/[0.06] rounded-lg h-7 px-2.5">
               <Lock className="h-2.5 w-2.5 text-emerald-400/60 shrink-0" />
-              <span className="text-[11px] text-white/25 font-mono shrink-0">localhost:3000</span>
-              <input
-                value={currentUrl}
-                onChange={e => setCurrentUrl(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') {
-                    const path = currentUrl.startsWith('/') ? currentUrl : '/' + currentUrl;
-                    setCurrentUrl(path);
-                    setUrlHistory(prev => [...prev.slice(0, historyIndex + 1), path]);
-                    setHistoryIndex(prev => prev + 1);
-                    onUrlChange?.(path);
-                    // Navigate iframe via postMessage
-                    const iframe = (iframeRef as React.RefObject<HTMLIFrameElement>)?.current;
-                    if (iframe?.contentWindow) {
-                      iframe.contentWindow.postMessage({ type: '__NAVIGATE__', path }, '*');
-                    }
-                  }
-                }}
-                className="flex-1 bg-transparent text-[11px] text-white/40 font-mono outline-none min-w-0"
-                spellCheck={false}
-              />
+              <span className="text-[11px] text-white/30 font-mono truncate">
+                preview.lovable.app{currentUrl}
+              </span>
             </div>
 
-            {/* Right toolbar */}
+            {/* Right toolbar — responsive only */}
             <div className="flex items-center gap-0.5">
               <ResponsivePreviewBar active={viewportMode} onChange={setViewportMode} />
-              {viewportWidth > 0 && (
-                <span className="text-[9px] text-white/15 font-mono">
-                  {viewportWidth}px
-                </span>
-              )}
-
-              <div className="h-4 w-px bg-white/[0.06] mx-1" />
-
-              <VisualEditOverlay
-                isActive={isVisualEditActive}
-                onToggle={toggleVisualEdit}
-                onEditApply={handleVisualEdit}
-                onAIEditRequest={onAIEditRequest}
-                isProcessingAIEdit={isProcessingAIEdit}
-                iframeRef={iframeRef}
-              />
-              <PreviewZoomControls zoom={zoom} onZoomChange={setZoom} />
-              <ToolButton icon={copied ? CheckCircle : Copy} onClick={copyHTML} title="Copy HTML" active={copied} />
-              <ToolButton icon={ExternalLink} onClick={openInNewTab} title="Open in tab" />
-              <ToolButton icon={isFullscreen ? Minimize2 : Maximize2} onClick={toggleFullscreen} title="Fullscreen" />
             </div>
 
             {/* Streaming indicator */}
@@ -560,43 +453,28 @@ window.addEventListener('message', function(e) {
         </div>
       )}
 
-      {/* Preview — Phase 42: Device Frame Overlay */}
+      {/* Preview */}
       <div className="flex-1 min-h-0 flex items-stretch justify-center">
         {html ? (
-          <DeviceFrameOverlay
-            device={viewportMode === 'mobile' ? 'iphone15' : viewportMode === 'tablet' ? 'ipad' : 'none'}
-            isLandscape={isLandscape}
-            onRotate={() => setIsLandscape(prev => !prev)}
+          <div
+            className="h-full transition-all duration-300 mx-auto"
+            style={{
+              width: viewportWidth > 0 ? `${viewportWidth}px` : '100%',
+              maxWidth: '100%',
+            }}
           >
-            <div
-              className={cn(
-                'h-full transition-all duration-300',
-                viewportMode !== 'desktop' && !['iphone15', 'ipad'].includes(viewportMode === 'mobile' ? 'iphone15' : viewportMode === 'tablet' ? 'ipad' : 'none') && 'mx-auto rounded-lg border border-white/[0.06] shadow-2xl shadow-black/50 my-4'
+            <iframe
+              ref={iframeRef}
+              key={`${iframeKey}-${refreshKey ?? 0}-${swReady ? swVersion : ''}`}
+              {...(swReady && previewUrl
+                ? { src: previewUrl }
+                : { srcDoc: htmlWithErrorCapture || '' }
               )}
-              style={{
-                width: viewportWidth > 0 ? `${viewportWidth}px` : '100%',
-                maxWidth: '100%',
-                height: viewportMode === 'desktop' ? '100%' : 'calc(100% - 32px)',
-              }}
-            >
-              <iframe
-                ref={iframeRef}
-                key={`${iframeKey}-${refreshKey ?? 0}-${swReady ? swVersion : ''}`}
-                {...(swReady && previewUrl
-                  ? { src: previewUrl }
-                  : { srcDoc: htmlWithErrorCapture || '' }
-                )}
-                className="w-full h-full border-0 bg-white rounded-[inherit] origin-top-left"
-                sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-                title="App Preview"
-                style={{
-                  transform: zoom !== 100 ? `scale(${zoom / 100})` : undefined,
-                  width: zoom !== 100 ? `${10000 / zoom}%` : '100%',
-                  height: zoom !== 100 ? `${10000 / zoom}%` : '100%',
-                }}
-              />
-            </div>
-          </DeviceFrameOverlay>
+              className="w-full h-full border-0 bg-white"
+              sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+              title="App Preview"
+            />
+          </div>
         ) : isGenerating ? (
           <SkeletonPreview />
         ) : isCompiling ? (
