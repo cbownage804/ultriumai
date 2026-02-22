@@ -1,62 +1,104 @@
 
 
-## Fix: Preview Not Loading After Generation
+## Fix: Direct Compilation in handleBgComplete (Bypass Effect Chain)
 
-### Problem Analysis
+### Root Cause
 
-After deep code analysis, I identified a **deadlock race condition** between two competing compilation paths:
+The CompilationBridge relies on a complex chain of React effects to detect when generation ends and trigger compilation. This chain has proven unreliable across 4+ fix attempts due to:
+- `compileTrigger` increments causing effect re-runs that cancel in-flight debounce timers
+- React 18's batched rendering creating unpredictable timing between state updates and effect execution
+- Multiple guard conditions (`compilationLockRef`, `justSyncedFromExternalRef`, `prevFilesDigestRef`) that interact in subtle ways
 
-1. **`handleBgComplete`** (in AIAppBuilderWorkspace) tries to compile via the worker with a 20s timeout
-2. **`CompilationBridge`** tries to compile when `isGeneratingOverride` becomes false
+The "Compiling preview..." UI appears (meaning compilation starts) but then falls back to "Live Preview" placeholder (meaning it either gets cancelled or produces null).
 
-The issue is:
-- `handleBgComplete`'s worker compilation sends a request to the shared Web Worker. If it times out (20s), the worker is STILL busy processing the request.
-- When `CompilationBridge` retries (also via the same shared worker), its new request sits in the worker's message queue. Since the worker is single-threaded, it must finish the first request before starting the second.
-- CompilationBridge's worker timeout is 15s. If the first worker request takes longer than 35s total (20s handleBgComplete timeout + 15s CompilationBridge timeout), both time out.
-- The vanilla fallback (`getCompiledHTML`) then runs, but for React projects, it produces a near-empty HTML (just `<div id="root"></div>` with CSS inlined) -- or returns null if there's no `index.html`.
+### Solution: Move Compilation Back to handleBgComplete (Correctly This Time)
 
-Additionally, the 500ms debounce in CompilationBridge's main effect can be **cancelled** by rapid re-renders that happen post-generation (auto-save effects, toast notifications, message state updates).
+Instead of relying on CompilationBridge effects for post-generation compilation, `handleBgComplete` will directly compile using the worker and set stableHTML **before** releasing `isGeneratingOverride`. This keeps CompilationBridge blocked (it sees `isGenerating=true`) so there's no worker contention or race condition.
 
-### Solution
+Previous attempts at this approach failed because `isGeneratingOverride` was released too early, causing CompilationBridge to also try to compile and fight over the single-threaded worker. The fix is to only release `isGeneratingOverride` AFTER compilation completes.
 
-**1. Remove direct compilation from `handleBgComplete`** (AIAppBuilderWorkspace.tsx)
-
-Stop the dual-compilation approach entirely. `handleBgComplete` should only:
-- Parse and merge files
-- Call `setFiles(mergedFiles)` 
-- Call `setIsGeneratingOverride(false)` immediately (no waiting for compilation)
-
-This prevents the shared worker from being monopolized by a potentially-hanging request.
-
-**2. Remove the 500ms debounce for initial compilation** (CompilationBridge.tsx)
-
-When generation just ended (no existing `stableHTML`), start compilation immediately (0ms delay) instead of waiting 500ms. The debounce is only useful for rapid manual edits, not for post-generation compilation.
-
-**3. Increase CompilationBridge worker timeout to 30s** (CompilationBridge.tsx)
-
-The current 15s timeout is too aggressive for first-time esbuild-wasm initialization (WASM download). Increase to 30s to match `COMPILE_TIMEOUT_MS`.
-
-**4. Add diagnostic console.log statements** (CompilationBridge.tsx)
-
-Add logging at every decision point so the next failure can be traced immediately.
-
-### Technical Details
+### Changes
 
 #### File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
 
-In `handleBgComplete` (around lines 308-352), replace the entire compilation block with:
-```
+In `handleBgComplete` (around lines 308-344):
+
+Replace:
+```typescript
 setFiles(mergedFiles);
 compilePromise = Promise.resolve();
 console.info('[handleBgComplete] Files set, CompilationBridge will compile');
 ```
 
-In the `compilePromise.finally()` block (around line 380), remove the compile check and just call `setIsGeneratingOverride(false)` directly.
+With direct compilation logic:
+```typescript
+setFiles(mergedFiles);
+setIsCompiling(true);
+
+// Compile directly — CompilationBridge stays blocked (isGeneratingOverride=true)
+compilePromise = (async () => {
+  try {
+    const isReact = mergedFiles.some(f => /\.(tsx|jsx)$/.test(f.path));
+    if (isReact) {
+      const compiled = await Promise.race([
+        compileReactProjectRef.current(mergedFiles, {
+          supabaseConfig: supabaseConfig || undefined,
+          stripeConfig: stripeConfig || undefined,
+          envVars,
+        }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 30000)),
+      ]);
+      if (compiled?.html) {
+        handleStableHTML(compiled.html);
+      }
+    } else {
+      const html = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
+      if (html) handleStableHTML(html);
+    }
+  } catch (err) {
+    console.warn('[handleBgComplete] Compilation failed:', err);
+  } finally {
+    setIsCompiling(false);
+  }
+})();
+```
+
+Also update the `.finally()` block to NOT check stableHTML — just release isGeneratingOverride after compilation.
 
 #### File: `src/components/ai-builder/CompilationBridge.tsx`
 
-- In the generation-ending effect (line 149-168): when no preview exists, call compilation directly instead of relying on the main effect. Set a `immediateCompileNeeded` flag.
-- In the main effect debounce (line 267): use 0ms delay when `immediateCompileNeeded` is true (post-generation), 500ms otherwise.
-- Change the worker timeout from 15s to 30s (line 337-341).
-- Add a `console.info` at every early return to trace which guard condition prevented compilation.
+Simplify the generation-ending effect:
+- Remove the `compileTrigger` mechanism entirely (remove the state, remove the increment)
+- When generation ends with `externalStableHTMLRef` already set, just sync and skip
+- When generation ends without preview (handleBgComplete failed), use a simple `setTimeout(runCompilation, 100)` directly instead of the complex effect-chain-based approach
+- Remove `compileTrigger` from the main effect's dependency array
 
+This makes CompilationBridge a pure fallback for when handleBgComplete's direct compilation fails, plus handling subsequent manual edits.
+
+### Why This Works
+
+1. `handleBgComplete` compiles while `isGeneratingOverride` is still true
+2. CompilationBridge sees `isGenerating=true` and does nothing (no worker contention)
+3. When compilation finishes, `stableHTMLRef` has the result
+4. `setIsGeneratingOverride(false)` fires — CompilationBridge sees `externalStableHTMLRef` is set and syncs without recompiling
+5. If compilation fails, CompilationBridge's fallback kicks in on a simple timer
+
+### Sequence Diagram
+
+```text
+handleBgComplete
+  |
+  +---> setFiles(mergedFiles)
+  +---> setIsCompiling(true)
+  +---> await workerCompile(mergedFiles)  // CompilationBridge blocked by isGenerating=true
+  |       |
+  |       +---> success: handleStableHTML(html)
+  |       +---> failure: (CompilationBridge will retry as fallback)
+  |
+  +---> setIsCompiling(false)
+  +---> setIsGeneratingOverride(false)
+        |
+        CompilationBridge sees isGenerating transition:
+          - externalStableHTMLRef set? -> sync + skip
+          - not set? -> setTimeout(compile, 100) as fallback
+```
