@@ -1,63 +1,68 @@
 
 
-## Fix: Preview Blank Because Broken index.html Set as "Self-Contained"
+## Fix: Browser Freeze During Generation
 
 ### Root Cause
 
-When the AI generates a React project, it creates files like `index.html`, `src/main.tsx`, `src/App.tsx`, and `src/index.css`. The generated `index.html` contains:
+The `AIAppBuilderWorkspace` component is **3096 lines** with **100+ hooks** (useState, useMemo, useCallback, useEffect). During streaming generation, `setFiles()` is called every 3 seconds (throttled) from `handleStreamDelta`. Each call triggers a **full re-render** of the entire workspace component, which means:
 
-```html
-<script type="module" src="/src/main.tsx"></script>
-```
+- All 100+ hooks re-evaluate their dependencies
+- The `commandActions` useMemo (line 2325) depends on `project.files` and rebuilds its entire action list on every file change
+- The `bundleForBrowser` useCallback depends on `astBundler` and `incrementalCompiler`, creating new function references
+- Dozens of useEffect dependency arrays are checked
+- The entire JSX tree (3096 lines of components, panels, dialogs) is re-diffed by React
 
-This is a **local file reference** that cannot resolve inside an `srcdoc` iframe (there is no local file server).
+With files changing every 3 seconds during a 30-60 second generation, that is 10-20 full re-renders of a monster component, each taking 200-500ms, freezing the browser.
 
-However, `handleBgComplete` in `AIAppBuilderWorkspace.tsx` (line 313) checks:
-```typescript
-if (indexFile.content.includes('<!DOCTYPE html') && indexFile.content.includes('</html>'))
-```
+### Fix (3 targeted changes)
 
-This incorrectly treats the file as "self-contained" and sets it as the preview HTML. The result: a blank black iframe. Worse, once `stableHTML` is set to this broken value, CompilationBridge thinks compilation already succeeded and never runs the worker compiler (which would correctly bundle all files into a single self-contained HTML document).
+#### 1. Skip `setFiles` during streaming -- use refs instead
 
-### The Fix (2 changes)
+**File:** `src/components/ai-builder/AIAppBuilderWorkspace.tsx` (lines 390-406)
 
-#### 1. Fix the self-contained detection in `handleBgComplete`
-
-**File:** `src/components/ai-builder/AIAppBuilderWorkspace.tsx` (line 313)
-
-Add a check to reject HTML that references local module scripts. A truly self-contained HTML does NOT have `<script ... src="/src/...">` or `<script type="module" src="./...">` pointing to local project files.
+The `handleStreamDelta` callback currently calls `setFiles(mergedFiles)` during streaming to show files appearing in the editor. Instead, we should defer this to refs and only call `setFiles` once when generation completes (in `handleBgComplete`). The streaming file display already works via `partialFilesRef` and `StreamingCodeEditor` -- the `setFiles` call during streaming is redundant and only serves to trigger expensive re-renders.
 
 ```typescript
-// Before:
-if (indexFile && indexFile.content.includes('<!DOCTYPE html') && indexFile.content.includes('</html>'))
-
-// After:
-const hasLocalModuleScripts = /src=["']\.?\/(?:src|main|app|index)\b/i.test(indexFile?.content || '');
-if (indexFile && !hasLocalModuleScripts && indexFile.content.includes('<!DOCTYPE html') && indexFile.content.includes('</html>'))
+// In handleStreamDelta, replace setFiles(mergedFiles) with a no-op during streaming:
+// The files will be properly set in handleBgComplete when generation finishes.
+// StreamingCodeEditor already reads from partialFilesRef for live file display.
 ```
 
-This ensures only genuinely self-contained HTML (like a static page with inline scripts or CDN-only scripts) bypasses the compiler. React projects with file-based imports will correctly fall through to the worker compiler.
+#### 2. Remove `project.files` from `commandActions` dependencies
 
-#### 2. Remove the vanilla fallback in `handleBgComplete`
+**File:** `src/components/ai-builder/AIAppBuilderWorkspace.tsx` (line 2343)
 
-The `getCompiledHTML` vanilla compiler (lines 318-332) cannot handle React/TSX projects, so it always returns `null` for them. This is harmless but adds noise. More importantly, when both the self-contained check and vanilla compile fail, `handleBgComplete` should NOT set `stableHTML` at all -- letting CompilationBridge handle it via the worker.
+The `commandActions` useMemo depends on `project.files`, but the only actions that use files (code smells, gen-readme) can read them at click time from a ref instead. This prevents the entire command action list from being rebuilt on every file change.
 
-**No code change needed here** -- the fix in step 1 is sufficient. When the self-contained check correctly rejects the file, and vanilla compile returns null, `stableHTMLRef.current` stays null, and CompilationBridge's generation-ending effect will trigger `compileNowRef` which calls the worker compiler.
+```typescript
+// Store project.files in a ref
+const projectFilesRef = useRef(project.files);
+projectFilesRef.current = project.files;
 
-### Why This Fixes Everything
+// In commandActions, read from ref instead of closure:
+// action: () => { const smells = codeSmellDetector.analyzeFiles(projectFilesRef.current); ... }
+// Remove project.files from the dependency array
+```
 
-1. AI generates React project with `index.html` + `main.tsx` + `App.tsx` + `index.css`
-2. `handleBgComplete` detects local script references in `index.html` -- skips "self-contained" shortcut
-3. Vanilla `getCompiledHTML` returns `null` (can't handle JSX)
-4. `stableHTMLRef.current` remains `null`
-5. `isGeneratingOverride` is set to `false`
-6. CompilationBridge's generation-ending effect fires, sees no preview
-7. `compileNowRef` runs the worker compiler after 200ms
-8. Worker produces correct self-contained HTML with CDN React, Babel, bundled modules
-9. `setStableHTML(result)` updates React state
-10. `BuilderPreviewPanel` receives valid HTML and renders the preview
+#### 3. Guard `handleStreamDelta` to not call `setFiles` at all
 
-### What About the Auto-Fix Loop?
+**File:** `src/components/ai-builder/AIAppBuilderWorkspace.tsx` (lines 376-407)
 
-The "React refresh preamble" auto-fix is already filtered in `handleAutoFixError` (line 1661). The auto-fix in the screenshots was from a previous session before the filter was added. With this fix, the preview will render correctly on the first attempt, so no errors will trigger auto-fix.
+Remove the `setFiles` call entirely from the streaming path. The streaming code editor already uses `partialFilesRef` for live display. The final authoritative file state is set in `handleBgComplete` when the job finishes. Calling `setFiles` during streaming provides no user-visible benefit but causes catastrophic re-renders.
+
+### Technical Detail
+
+The streaming architecture already has a ref-based path for displaying partial files:
+- `useStreamingPreview` stores files in `partialFilesRef` (no state, no re-renders)
+- `StreamingCodeEditor` polls `partialFilesRef` at 3-second intervals with local state
+- `GeneratingOverlay` reads from `partialFilesRef` and `completedFileCountRef`
+
+The only reason `setFiles` was being called during streaming was to update the file tree sidebar, but this is not visible during generation (the overlay covers it). The fix simply stops calling `setFiles` during streaming and lets `handleBgComplete` set the final file state once.
+
+### Expected Result
+
+- No more browser freezes during generation
+- Streaming overlay continues to show file progress (via refs)
+- Files are set once when generation completes
+- Preview compilation runs once after generation, not during
 
