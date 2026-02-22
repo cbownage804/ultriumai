@@ -376,6 +376,7 @@ export function AIAppBuilderWorkspace() {
 
   // SSE streaming: apply files incrementally as they arrive
   const lastIncrementalParseRef = useRef(0);
+  const lastSetFilesTimeRef = useRef(0); // Phase 4: throttle setFiles during streaming
   const handleStreamDelta = useCallback((delta: string, totalContent: string) => {
     // Update streaming ref for chat display
     if (streamingContentRef) {
@@ -389,8 +390,14 @@ export function AIAppBuilderWorkspace() {
     // corruption (line numbers shift after first application, breaking subsequent patches).
     if (totalContent.length - lastIncrementalParseRef.current > 2000) {
       lastIncrementalParseRef.current = totalContent.length;
+
+      // Phase 4: Throttle setFiles to at most once per 3s to reduce re-renders
+      const now = Date.now();
+      if (now - lastSetFilesTimeRef.current < 3000) return;
+
       const { files: parsedFiles } = parseMultiFileOutput(totalContent);
       if (parsedFiles.length > 0) {
+        lastSetFilesTimeRef.current = now;
         // Apply full-file blocks incrementally — users see files appear one by one
         let mergedFiles = [...project.files];
         for (const newFile of parsedFiles) {
@@ -2225,6 +2232,17 @@ export function AIAppBuilderWorkspace() {
   useEffect(() => {
     const handleVisible = () => {
       if (document.visibilityState === 'visible' && stableHTMLRef.current) {
+        // Phase 3: Only remount iframe if content appears gone
+        const iframe = previewIframeRef.current;
+        if (iframe) {
+          try {
+            const body = iframe.contentDocument?.body;
+            if (body && body.innerHTML.trim().length > 10) {
+              // Iframe is healthy — skip remount
+              return;
+            }
+          } catch { /* cross-origin — remount to be safe */ }
+        }
         setPreviewRefreshKey(k => k + 1);
       }
     };

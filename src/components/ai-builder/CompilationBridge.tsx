@@ -209,6 +209,7 @@ export function CompilationBridge({
       }
       console.info('[CompilationBridge] Effect: hot-patch failed, doing full recompile (keeping old preview visible)');
       compilationLockRef.current = false;
+      compilationAttemptedRef.current = false; // Phase 1: enable recompilation after hot-patch fail
       // Fall through to start recompilation
     } else if (stableHTMLRef.current) {
       console.info('[CompilationBridge] Effect: stableHTML already set, skipping');
@@ -411,9 +412,14 @@ export function CompilationBridge({
     }
   }, [isGenerating, liveCompiledHTML, filesDigest, stableHTML, setStableHTML]);
 
-  // Hot-patch during manual edits
+  // Hot-patch during manual edits — guarded to skip when main effect already handled this digest
+  const lastMainEffectDigestRef = useRef<string>('');
   useEffect(() => {
-    if (!isGenerating && stableHTML && filesRef.current.length > 0) {
+    // Phase 5: Skip if no preview, during compilation, or if main effect already processed this digest
+    if (!stableHTML || isGenerating || compilationLockRef.current) return;
+    if (filesDigest === lastMainEffectDigestRef.current) return;
+    lastMainEffectDigestRef.current = filesDigest;
+    if (filesRef.current.length > 0) {
       liveSync.applyPatches(previewIframeRef, filesRef.current);
     }
   }, [filesDigest, isGenerating, stableHTML]);
