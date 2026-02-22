@@ -332,6 +332,13 @@ export function CompilationBridge({
   useEffect(() => {
     if (liveCompiledHTML) {
       if (stableHTML === liveCompiledHTML) return;
+      // If we have no current preview (stableHTML is null), always do a full
+      // srcdoc load — hot-patching can't work on an empty iframe.
+      if (stableHTML === null) {
+        setStableHTML(liveCompiledHTML);
+        liveSync.resetSnapshot(filesRef.current);
+        return;
+      }
       const patched = liveSync.applyPatches(previewIframeRef, filesRef.current);
       if (!patched) {
         setStableHTML(liveCompiledHTML);
