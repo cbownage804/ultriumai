@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { clearBuilderDraft } from '@/lib/clearBuilderDraft';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -87,7 +88,7 @@ export function AIStudioCommandPaletteGlobal() {
   };
 
   const quickActions = [
-    { label: 'New App', icon: Plus, action: () => { setOpen(false); navigate('/ai-studio/app-builder?new=true'); } },
+    { label: 'New App', icon: Plus, action: () => { setOpen(false); clearBuilderDraft(); navigate('/ai-studio/app-builder?new=true'); } },
     { label: 'New GPT', icon: Plus, action: () => { setOpen(false); navigate('/ai-studio/gpt-builder'); } },
     { label: 'All Projects', icon: Layout, action: () => { setOpen(false); navigate('/ai-studio/projects'); } },
     { label: 'Dashboard', icon: BarChart3, action: () => { setOpen(false); navigate('/ai-studio'); } },

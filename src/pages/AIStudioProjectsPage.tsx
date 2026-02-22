@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { clearBuilderDraft } from '@/lib/clearBuilderDraft';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -369,7 +370,7 @@ export default function AIStudioProjectsPage() {
               New GPT
             </Button>
             <Button
-              onClick={() => navigate('/ai-studio/app-builder')}
+              onClick={() => { clearBuilderDraft(); navigate('/ai-studio/app-builder?new=true'); }}
               className="bg-gradient-to-r from-cyan-500 to-violet-500 hover:from-cyan-400 hover:to-violet-400 text-white shadow-lg shadow-cyan-500/20"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -518,7 +519,7 @@ export default function AIStudioProjectsPage() {
                 </p>
                 <div className="flex gap-3">
                   <Button
-                    onClick={() => navigate('/ai-studio/app-builder')}
+                    onClick={() => { clearBuilderDraft(); navigate('/ai-studio/app-builder?new=true'); }}
                     className="bg-gradient-to-r from-cyan-500 to-violet-500 hover:from-cyan-400 hover:to-violet-400"
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -549,7 +550,7 @@ export default function AIStudioProjectsPage() {
                 >
                   {/* New project card */}
                   <button
-                    onClick={() => navigate('/ai-studio/app-builder')}
+                    onClick={() => { clearBuilderDraft(); navigate('/ai-studio/app-builder?new=true'); }}
                     className="group h-[260px] rounded-xl border-2 border-dashed border-border/50 hover:border-primary/40 flex flex-col items-center justify-center gap-2 transition-all hover:bg-primary/[0.02]"
                   >
                     <div className="w-10 h-10 rounded-lg bg-primary/5 group-hover:bg-primary/10 flex items-center justify-center transition-colors">

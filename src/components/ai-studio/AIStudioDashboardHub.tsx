@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { clearBuilderDraft } from '@/lib/clearBuilderDraft';
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -395,7 +396,7 @@ export const AIStudioDashboardHub = () => {
                 variant="premium"
                 size="lg"
                 className="w-full min-h-[44px]"
-                onClick={() => navigate("/ai-studio/app-builder?new=true")}
+                onClick={() => { clearBuilderDraft(); navigate("/ai-studio/app-builder?new=true"); }}
               >
                 <Sparkles className="mr-2 h-4 w-4" />
                 New App
@@ -581,7 +582,7 @@ export const AIStudioDashboardHub = () => {
             <h3 className="text-sm font-medium text-foreground mb-1">No projects yet</h3>
             <p className="text-xs text-muted-foreground mb-4">Create your first app or GPT to get started</p>
             <div className="flex items-center justify-center gap-3">
-              <Button variant="outline" size="sm" onClick={() => navigate("/ai-studio/app-builder?new=true")}>
+              <Button variant="outline" size="sm" onClick={() => { clearBuilderDraft(); navigate("/ai-studio/app-builder?new=true"); }}>
                 <Plus className="mr-1.5 h-3.5 w-3.5" /> New App
               </Button>
               <Button variant="outline" size="sm" onClick={() => navigate("/ai-studio/gpt-builder")}>
@@ -609,7 +610,7 @@ export const AIStudioDashboardHub = () => {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 + i * 0.04 }}
-                onClick={() => navigate(`/ai-studio/app-builder?new=true&template=${t.id}`)}
+                onClick={() => { clearBuilderDraft(); navigate(`/ai-studio/app-builder?new=true&template=${t.id}`); }}
                 className="text-left p-4 rounded-xl border border-border/50 bg-card/60 hover:border-violet-500/30 hover:bg-card/80 transition-all group"
               >
                 <div className={cn("h-8 w-8 rounded-lg bg-gradient-to-br flex items-center justify-center mb-3 border border-white/[0.04]", t.color)}>
