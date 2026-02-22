@@ -1,86 +1,77 @@
 
+# Fix: Preview Not Updating -- Direct Compilation Path
 
-# Fix: Preview Not Updating -- Nuclear Approach
+## Root Cause (finally found it)
 
-After tracing the entire pipeline across 5+ files, the issue has resisted multiple targeted fixes. Instead of another surgical patch, this plan adds a **guaranteed fallback mechanism** plus **diagnostic logging** to catch any remaining edge cases.
+Three compounding issues prevent the preview from updating:
 
-## Root Cause Analysis
+1. **CompilationBridge is blocked by `isGenerating`**: When `handleBgComplete` runs, files are ready, but `isGenerating` (from `useAIAppBuilder`) stays `true` for 2 more seconds (waiting for the delayed `bg-job-completed` event). CompilationBridge skips compilation during this window.
 
-The compilation pipeline has multiple guards, locks, refs, and timing dependencies (500ms debounce, 2s bg-job delay, rAF + setTimeout). Any one of these can silently prevent the final `setStableHTML(result)` from reaching the preview. Previous fixes targeted specific paths but the exact failure mode varies.
+2. **Nuclear fallback uses the wrong compiler**: The fallback calls `getCompiledHTML()` which returns `null` for React projects (lines 231-232 of `useProjectFileSystem.ts` both return null when no HTML files exist alongside React files). So the safety net never works.
 
-## Plan
+3. **Accumulated delays**: Even when `isGenerating` finally turns false, there's a 500ms debounce + 100ms rAF deferral before compilation starts. Total delay from files-ready to preview: ~2.6 seconds minimum, assuming nothing else goes wrong.
 
-### 1. Nuclear Fallback Timer in `AIAppBuilderWorkspace.tsx`
-
-Add a `useEffect` that watches for `isGenerating` transitioning from `true` to `false`. When it does, start a **4-second timer**. If `stableHTML` is still `null` after that timer fires (meaning CompilationBridge failed to produce output), directly compile the files and force-set `stableHTML`.
-
-This bypasses the entire CompilationBridge effect chain as a last resort.
-
-```
-When isGenerating goes true -> false:
-  Start 4s timer
-  If stableHTML is still null:
-    Compile project.files directly
-    Call setStableHTML(result)
-    Log warning for diagnostics
-```
-
-### 2. Diagnostic Logging in `CompilationBridge.tsx`
-
-Add `console.info` breadcrumbs at every decision point:
-- When the compilation effect fires and which branch it takes (early return vs proceed)
-- When the debounce starts and when `runCompilation` begins
-- The `compilationLockRef` and `stableHTMLRef` values at each check
-- When `setStableHTML` is called with the final result
-
-This ensures that when the issue occurs again, the console logs will reveal exactly where the flow breaks.
-
-### 3. Force iframeKey increment in `BuilderPreviewPanel.tsx`
-
-Add a secondary safety: increment `iframeKey` whenever `refreshKey` changes (which the workspace already increments on tab-return). This is already partially handled by the key template literal but adding an explicit effect ensures React processes it.
-
-## Technical Details
+## Fix
 
 ### File 1: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
 
-Add after the existing `handleStableHTML` definition (~line 2054):
+**Change `handleBgComplete` to compile immediately after merging files**, using the React compiler (same one CompilationBridge uses). This gives us a direct path from files-ready to preview, bypassing the entire effect chain.
 
-```typescript
-// Nuclear fallback: if CompilationBridge fails to produce stableHTML
-// within 4s of generation ending, compile directly.
-useEffect(() => {
-  if (prevIsGeneratingRef.current && !isGenerating && project.files.length > 0) {
-    const timer = setTimeout(() => {
-      if (!stableHTMLRef.current) {
-        console.warn('[Workspace] Nuclear fallback: CompilationBridge failed to produce stableHTML after 4s, compiling directly');
-        const result = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
-        if (result) {
-          handleStableHTML(result);
-        }
-      }
-    }, 4000);
-    return () => clearTimeout(timer);
-  }
-}, [isGenerating]);
+```
+handleBgComplete runs
+  -> setFiles(mergedFiles) 
+  -> detect if React project
+  -> if React: call compileReactProject(mergedFiles) 
+  -> if vanilla: call getCompiledHTML(mergedFiles)
+  -> handleStableHTML(result)  // preview updates immediately
 ```
 
-This only fires if CompilationBridge's entire pipeline silently fails -- it's a safety net, not the primary path.
+Specifically:
+- Import `useReactCompiler` and `detectReactProject` in the workspace
+- After `setFiles(mergedFiles)` in `handleBgComplete`, immediately compile the merged files
+- Call `handleStableHTML(result)` with the compilation result
+- This runs BEFORE `isGenerating` turns false, so the preview updates as soon as files are ready
 
-### File 2: `src/components/ai-builder/CompilationBridge.tsx`
+**Also fix the nuclear fallback** to use the React compiler instead of `getCompiledHTML` when the project is React-based.
 
-Add console.info breadcrumbs at each guard in the compilation effect:
+### File 2: `src/components/ai-builder/CompilationBridge.tsx` (no changes needed)
 
-- Line 158 (isGenerating check): log if returning early
-- Line 164 (stableHTML + digest check): log which branch
-- Line 183 (compilationLock check): log lock state  
-- Line 189 (inside debounce): log compilation start
-- Line 238 (result ready): log result length
+CompilationBridge continues working as before for manual edits, file changes, and other non-generation scenarios. The direct compilation in `handleBgComplete` just front-runs it for the generation case.
 
-### File 3: `src/components/ai-builder/BuilderPreviewPanel.tsx`
+## Technical Details
 
-No changes needed -- the existing `hasEverHadHtmlRef` logic is correct for the cases where `stableHTML` does get set.
+In `handleBgComplete` (around line 307, after `setFiles(mergedFiles)`):
+
+```typescript
+// Immediately compile for preview -- don't wait for CompilationBridge effects
+const isReact = detectReactProject(mergedFiles);
+if (isReact) {
+  compileReactProject(mergedFiles, {
+    supabaseConfig: supabaseConfig || undefined,
+    stripeConfig: stripeConfig || undefined,
+    envVars,
+  }).then(compiled => {
+    if (compiled.html) {
+      handleStableHTML(compiled.html);
+    }
+  }).catch(err => {
+    console.error('[handleBgComplete] React compilation failed:', err);
+  });
+} else {
+  const result = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
+  if (result) {
+    handleStableHTML(result);
+  }
+}
+```
+
+And fix the nuclear fallback similarly -- use `compileReactProject` for React projects instead of `getCompiledHTML`.
 
 ## Why This Will Work
 
-Even if we never find the exact timing bug in the effect chain, the nuclear fallback guarantees a working preview within 4 seconds of generation completing. The diagnostic logging will help identify the root cause for a permanent fix later.
-
+- No dependency on `isGenerating` state transitions
+- No dependency on effect ordering or React batching
+- No debounce or deferral delays
+- Uses the correct compiler (React vs vanilla)
+- Preview updates within milliseconds of files being ready
+- CompilationBridge remains as backup for non-generation file changes
