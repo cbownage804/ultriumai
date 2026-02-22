@@ -310,7 +310,8 @@ export function AIAppBuilderWorkspace() {
       // Direct preview: if index.html is a self-contained HTML document, use it immediately
       // as the preview instead of waiting for CompilationBridge's slow compilation pipeline.
       const indexFile = mergedFiles.find(f => f.path === 'index.html');
-      if (indexFile && indexFile.content.includes('<!DOCTYPE html') && indexFile.content.includes('</html>')) {
+      const hasLocalModuleScripts = /src=["']\.?\/(?:src|main|app|index)\b/i.test(indexFile?.content || '');
+      if (indexFile && !hasLocalModuleScripts && indexFile.content.includes('<!DOCTYPE html') && indexFile.content.includes('</html>')) {
         console.info('[handleBgComplete] Self-contained index.html detected — setting preview directly');
         stableHTMLRef.current = indexFile.content;
         setStableHTML(indexFile.content);
