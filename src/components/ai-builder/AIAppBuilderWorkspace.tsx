@@ -35,6 +35,7 @@ import type { ChangelogEntry } from './ChangelogPanel';
 import type { CommandAction } from './EnhancedCommandPalette';
 import { useProjectBundler } from '@/hooks/useProjectBundler';
 import { CompilationBridge } from './CompilationBridge';
+import { useReactCompiler, detectReactProject } from '@/hooks/useReactCompiler';
 import { useASTBundler } from '@/hooks/useASTBundler';
 import { useBuildChime } from '@/hooks/useBuildChime';
 import { useAICommitMessages } from '@/hooks/useAICommitMessages';
@@ -306,6 +307,29 @@ export function AIAppBuilderWorkspace() {
       }
       setFiles(mergedFiles);
 
+      // Immediately compile for preview — don't wait for CompilationBridge effects
+      const isReact = detectReactProject(mergedFiles);
+      if (isReact) {
+        compileReactProjectRef.current(mergedFiles, {
+          supabaseConfig: supabaseConfig || undefined,
+          stripeConfig: stripeConfig || undefined,
+          envVars,
+        }).then(compiled => {
+          if (compiled.html) {
+            console.info('[handleBgComplete] ✅ Direct React compilation succeeded, updating preview');
+            handleStableHTML(compiled.html);
+          }
+        }).catch(err => {
+          console.error('[handleBgComplete] React compilation failed:', err);
+        });
+      } else {
+        const result = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
+        if (result) {
+          console.info('[handleBgComplete] ✅ Direct vanilla compilation succeeded, updating preview');
+          handleStableHTML(result);
+        }
+      }
+
       // Post-build snapshot for history
       const totalChanges = parsedFiles.length + edits.length;
       addSnapshotRef.current(
@@ -509,6 +533,9 @@ export function AIAppBuilderWorkspace() {
   const [assets, setAssets] = useState<ProjectAsset[]>([]);
   const [cdnPackages, setCdnPackages] = useState<CDNPackage[]>([]);
   const { findReferencedFiles } = useProjectBundler();
+  const { compileReactProject } = useReactCompiler();
+  const compileReactProjectRef = useRef(compileReactProject);
+  compileReactProjectRef.current = compileReactProject;
   const astBundler = useASTBundler();
   const incrementalCompiler = useIncrementalCompiler();
   const tsValidator = useTypeScriptValidator();
@@ -2054,7 +2081,7 @@ export function AIAppBuilderWorkspace() {
   }, []);
 
   // Nuclear fallback: if CompilationBridge fails to produce stableHTML
-  // within 4s of generation ending, compile directly.
+  // within 4s of generation ending, compile directly using the correct compiler.
   const prevGenForFallbackRef = useRef(false);
   useEffect(() => {
     const wasGenerating = prevGenForFallbackRef.current;
@@ -2062,10 +2089,26 @@ export function AIAppBuilderWorkspace() {
     if (wasGenerating && !isGenerating && project.files.length > 0) {
       const timer = setTimeout(() => {
         if (!stableHTMLRef.current) {
-          console.warn('[Workspace] Nuclear fallback: CompilationBridge failed to produce stableHTML after 4s, compiling directly');
-          const result = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
-          if (result) {
-            handleStableHTML(result);
+          console.warn('[Workspace] Nuclear fallback: CompilationBridge failed after 4s, compiling directly');
+          const isReact = detectReactProject(project.files);
+          if (isReact) {
+            compileReactProjectRef.current(project.files, {
+              supabaseConfig: supabaseConfig || undefined,
+              stripeConfig: stripeConfig || undefined,
+              envVars,
+            }).then(compiled => {
+              if (compiled.html) {
+                console.info('[Workspace] Nuclear fallback ✅ React compilation succeeded');
+                handleStableHTML(compiled.html);
+              }
+            }).catch(err => {
+              console.error('[Workspace] Nuclear fallback React compilation failed:', err);
+            });
+          } else {
+            const result = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
+            if (result) {
+              handleStableHTML(result);
+            }
           }
         }
       }, 4000);
