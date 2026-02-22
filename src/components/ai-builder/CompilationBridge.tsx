@@ -6,7 +6,7 @@ import type { CDNPackage } from './PackageManager';
 import type { LinkedGPTConfig } from './GPTConnectorPanel';
 import { useLivePreviewSync } from '@/hooks/useLivePreviewSync';
 
-const COMPILE_TIMEOUT_MS = 15_000;
+const COMPILE_TIMEOUT_MS = 45_000;
 
 interface CompilationBridgeProps {
   files: ProjectFile[];
@@ -164,6 +164,7 @@ export function CompilationBridge({
   const [liveCompiledHTML, setLiveCompiledHTML] = useState<string | null>(null);
   const compilationAttemptedRef = useRef(false);
   const compilationLockRef = useRef(false);
+  const compilationRetryCountRef = useRef(0);
 
   // Phase 3: Removed duplicate reset effect — already handled by the generation start/end effect above.
 
@@ -253,6 +254,7 @@ export function CompilationBridge({
       }
       console.info('[CompilationBridge] Debounce fired, starting compilation');
       compilationLockRef.current = true;
+      compilationRetryCountRef.current = 0;
 
       onCompilingChangeRef.current?.(true);
 
@@ -265,8 +267,24 @@ export function CompilationBridge({
         if (cancelled) return;
         // Start safety timeout NOW (when compilation actually begins), not before
         safetyTimeout = setTimeout(() => {
-          if (!cancelled) {
-            console.error('[Compilation] Safety timeout reached — showing error fallback');
+          if (cancelled) return;
+          if (compilationRetryCountRef.current < 1) {
+            compilationRetryCountRef.current++;
+            console.warn('[Compilation] Safety timeout reached — retrying once after 2s cooldown');
+            // Unlock so the retry can proceed
+            compilationLockRef.current = false;
+            compilationAttemptedRef.current = false;
+            // Clear digest to trigger the main effect to re-run
+            prevFilesDigestRef.current = '';
+            onCompilingChangeRef.current?.(false);
+            // Small delay to let browser cool down before retry
+            setTimeout(() => {
+              // Force effect re-run by toggling a state-like mechanism
+              // The cleared prevFilesDigestRef will cause the main effect to detect a change
+              setLiveCompiledHTML(null);
+            }, 2000);
+          } else {
+            console.error('[Compilation] Safety timeout reached on retry — showing error fallback');
             onCompilingChangeRef.current?.(false);
             compilationAttemptedRef.current = true;
             setLiveCompiledHTML(ERROR_FALLBACK_HTML);
