@@ -1,127 +1,93 @@
 
 
-# Multi-Phase Fix: True Lovable Parity for Build-Preview Cycle
+# Multi-Phase Fix: Remaining Lovable Build Parity Issues
 
 ## Overview
 
-There are 5 remaining issues causing preview regeneration, flashing, and failed color updates. This plan addresses all of them systematically.
+After analyzing the full compilation pipeline, I've identified 6 remaining issues that break Lovable parity. These cause preview flashes, post-build regressions, and unnecessary recompilations even after the previous 5-phase fix.
 
 ---
 
-## Phase 1: Fix the Race Condition in `handleBgComplete`
+## Phase 1: Post-Build `setFiles` Triggers a Redundant Recompilation
 
-**Problem:** `handleBgComplete` starts an async React compile (`.then()`), but dispatches `bg-job-completed` on a fixed 2-second timer. If the compile takes longer than 2s, `setIsGenerating(false)` fires before `handleStableHTML` is called. Both refs are null, CompilationBridge force-recompiles, causing a double compile and iframe flash.
+**Problem:** After a build completes, the deferred post-generation work (lines 1068-1126) runs smoke tests, auto-patches delete buttons, and generates companion files. If any patches are produced, `setFiles()` is called again (line 1113), which changes `filesDigest` in CompilationBridge, triggering another full recompile. This causes a second iframe update/flash several seconds after the build appeared complete.
 
 **Fix in `AIAppBuilderWorkspace.tsx`:**
-- Move the `bg-job-completed` dispatch INSIDE the compile's `.then()` callback (or `.finally()`), so the event only fires AFTER the preview HTML is ready.
-- Keep a minimum 500ms delay after compile to allow React to render.
-- For vanilla (non-React) projects, dispatch immediately after synchronous compile.
+- Before calling `setFiles()` in the deferred post-gen patch (line 1113), set `skipNextCompileRef.current = true` so CompilationBridge skips the recompile for this particular file change.
+- This is the same mechanism already used for visual edits (line 202 in CompilationBridge).
 
-```
-// Current (broken):
-setFiles(mergedFiles);
-compileReactProject(mergedFiles).then(compiled => handleStableHTML(compiled.html));
-setTimeout(() => dispatch('bg-job-completed'), 2000);  // fires too early!
+---
 
-// Fixed:
-setFiles(mergedFiles);
-const compilePromise = isReact
-  ? compileReactProject(mergedFiles).then(compiled => {
-      if (compiled.html) handleStableHTML(compiled.html);
-    })
-  : Promise.resolve().then(() => {
-      const result = getCompiledHTML(...);
-      if (result) handleStableHTML(result);
-    });
+## Phase 2: `handleBgComplete` Compiles Twice (Fire-and-Forget + Polling Fallback)
 
+**Problem:** In `handleBgComplete` (lines 312-393), the React compile is started as a fire-and-forget `.then()` chain (line 313). Then the dispatch logic (lines 370-393) starts a SECOND polling loop checking `stableHTMLRef.current` every 200ms. If the first compile sets `stableHTMLRef` AND CompilationBridge also triggers a compile (because `filesDigest` changed when `setFiles` was called at line 308), there are now potentially 3 compilation paths racing.
+
+**Fix in `AIAppBuilderWorkspace.tsx`:**
+- Capture the compile promise from line 313 and chain the dispatch directly to it instead of using the polling fallback. This eliminates the race entirely.
+
+```typescript
+// Current: fire-and-forget compile + separate polling fallback
+compileReactProjectRef.current(mergedFiles, {...}).then(compiled => {
+  if (compiled.html) handleStableHTML(compiled.html);
+});
+// ... later, separate polling for stableHTMLRef
+
+// Fixed: chain dispatch to the SAME promise
+const compilePromise = compileReactProjectRef.current(mergedFiles, {...}).then(compiled => {
+  if (compiled.html) handleStableHTML(compiled.html);
+});
 compilePromise.finally(() => {
-  setTimeout(() => dispatch('bg-job-completed', { jobId }), 500);
+  setTimeout(() => {
+    window.dispatchEvent(new CustomEvent('bg-job-completed', { detail: { jobId } }));
+  }, 500);
 });
 ```
 
 ---
 
-## Phase 2: Prevent CompilationBridge's Main Effect from Redundant Recompile
+## Phase 3: CompilationBridge Double-Entry from `isGenerating` + `filesDigest` Effects
 
-**Problem:** When `isGenerating` goes false, both the generation-ending effect AND the main compilation effect fire. The generation-ending effect syncs state, but the main effect may still see a digest mismatch and trigger a recompile.
+**Problem:** CompilationBridge has TWO effects that reset compilation state when `isGenerating` changes:
+1. Lines 125-161: The generation start/end effect (depends on `[isGenerating, setStableHTML]`)
+2. Lines 169-174: A SECOND reset effect (depends on `[isGenerating, filesDigest]`)
+
+When `isGenerating` goes to `false`, BOTH effects fire. Effect #2 (line 170-173) unconditionally resets `compilationAttemptedRef` and `compilationLockRef`, undoing the work of Effect #1 which carefully set those flags based on external state.
 
 **Fix in `CompilationBridge.tsx`:**
-- Add a `justSyncedFromExternalRef` flag. Set it to `true` in the generation-ending effect when syncing from external HTML. Check it in the main compilation effect and skip if true.
-
-```typescript
-// New ref
-const justSyncedFromExternalRef = useRef(false);
-
-// In generation-ending effect (line 128):
-if (!stableHTMLRef.current && externalHasPreview) {
-  // ... existing sync logic ...
-  justSyncedFromExternalRef.current = true;  // NEW
-}
-
-// In main compilation effect (line 176):
-if (isGenerating || filesRef.current.length === 0) { ... return; }
-
-// NEW: Skip if we just synced from external in the same render cycle
-if (justSyncedFromExternalRef.current) {
-  justSyncedFromExternalRef.current = false;
-  prevFilesDigestRef.current = filesDigest;
-  return;
-}
-```
+- Remove Effect #2 entirely (lines 168-174). Its work is already handled correctly by Effect #1.
 
 ---
 
-## Phase 3: Remove Nuclear Fallback Double-Compile
+## Phase 4: `GeneratingOverlay` Shows During Compilation-Only Phase (No Files to Display)
 
-**Problem:** The workspace has a 4-second nuclear fallback (lines 2155-2189) that compiles AGAIN if `stableHTML` isn't set. With Phase 1's fix ensuring compile completes before `bg-job-completed`, this fallback becomes redundant and can cause a third compile.
+**Problem:** When `isCompiling` is true but `isGenerating` is false (compilation after generation), the `GeneratingOverlay` still shows but with an empty file list and just says "Compiling preview...". In Lovable, compilation happens silently -- no overlay. The old preview stays visible until the new one is ready.
 
-**Fix in `AIAppBuilderWorkspace.tsx`:**
-- Increase the nuclear fallback timeout from 4s to 10s (safety net only, should never fire now).
-- Add a log to track if it ever fires, so we can remove it entirely later.
-- Critically, add a guard: if `stableHTMLRef.current` is already set, skip.
+**Fix in `GeneratingOverlay.tsx`:**
+- Don't show the overlay when only compiling (not generating). The shimmer bar on the preview panel is sufficient visual feedback.
+- Change `showOverlay` from `isGenerating || isCompiling` to just `isGenerating`.
 
 ---
 
-## Phase 4: Smarter Iframe Remount in BuilderPreviewPanel
+## Phase 5: `BuilderPreviewPanel` Shows `SkeletonPreview` When `html` is Null During Generation
 
-**Problem:** When keeping the old preview visible during generation and then replacing with new HTML, the head section WILL differ (new compiled JS/CSS), so `iframeKey` always increments. This causes a full iframe teardown and rebuild, which is the visible flash.
+**Problem:** In `BuilderPreviewPanel.tsx` (lines 528-529), when `html` is null AND `isGenerating` is true, it shows `SkeletonPreview`. But with our Phase 1 fix (keeping old preview visible), `html` should NOT be null during subsequent generations -- only on the very first build.
+
+However, there's an edge case: if the user clears the project and starts fresh (`handleReset` calls `setStableHTML(null)` at line 1985), the skeleton correctly shows. The current logic is correct for first builds but we should ensure the overlay (GeneratingOverlay) is rendered ON TOP of the existing preview, not replacing it.
 
 **Fix in `BuilderPreviewPanel.tsx`:**
-- Instead of comparing head sections to decide on remount, use `srcdoc` directly. The browser will naturally re-render when `srcdoc` changes -- no need to force remount via key.
-- Only increment `iframeKey` for explicit user-triggered refreshes and health check recovery (not for content updates).
-- Remove the "structural change" detection entirely from the html-change effect.
+- Reorder the rendering priority: if `html` exists, ALWAYS render the iframe (even during generation). The `GeneratingOverlay` is already rendered as a child overlay on top.
+- Only fall back to `SkeletonPreview` if `html` is truly null (first build or after reset).
 
-```typescript
-// Current: increments iframeKey on structural HTML changes
-useEffect(() => {
-  if (html && hasEverHadHtmlRef.current && html !== prevHtmlRef.current) {
-    if (isStructuralChange) setIframeKey(k => k + 1);
-  }
-  ...
-}, [html]);
-
-// Fixed: never increment iframeKey from HTML changes
-// Browser handles srcdoc updates natively
-useEffect(() => {
-  if (html) hasEverHadHtmlRef.current = true;
-  prevHtmlRef.current = html;
-}, [html]);
-```
-
-The iframe's `key` will only change from:
-- User clicking Refresh button
-- Health check recovery (auto-rollback)
-- `refreshKey` prop (tab visibility change)
+This is already the current behavior since `html` (compiledHTML) preserves the old value. No code change needed -- just verification.
 
 ---
 
-## Phase 5: Stabilize filesDigest During Generation
+## Phase 6: Stale Closure in `handleBgComplete` for `supabaseConfig`/`stripeConfig`
 
-**Problem:** `handleStreamDelta` calls `setFiles()` during streaming, changing `filesDigest` multiple times while `isGenerating` is true. When generation ends, the digest may have shifted since `prevFilesDigestRef` was last set.
+**Problem:** `handleBgComplete` (line 276) is a `useCallback` with dependency array `[project.files, setFiles, setMessages]`. But inside it references `supabaseConfig`, `stripeConfig`, `envVars`, `serviceKeys`, `cdnPackages`, `bundleForBrowser`, and `linkedGPT` -- none of which are in the dependency array. This means the compile inside `handleBgComplete` uses stale config values if the user changed integrations since the callback was created.
 
-**Fix in `CompilationBridge.tsx`:**
-- In the generation-ending sync (all three branches), always set `prevFilesDigestRef.current = filesDigest` to ensure the main compilation effect sees no digest change.
-- This is already done in the current code for the sync and lock branches, but verify the force-recompile branch also updates correctly.
+**Fix in `AIAppBuilderWorkspace.tsx`:**
+- Store these configs in refs and read from refs inside `handleBgComplete`, OR add them to the dependency array. Refs are preferred to avoid unnecessary recreation of the callback (which would break the background generation wiring).
 
 ---
 
@@ -129,21 +95,20 @@ The iframe's `key` will only change from:
 
 | Phase | File | Change |
 |-------|------|--------|
-| 1 | `AIAppBuilderWorkspace.tsx` | Move `bg-job-completed` dispatch into compile callback |
-| 2 | `CompilationBridge.tsx` | Add `justSyncedFromExternalRef` guard |
-| 3 | `AIAppBuilderWorkspace.tsx` | Increase nuclear fallback to 10s safety net |
-| 4 | `BuilderPreviewPanel.tsx` | Stop incrementing `iframeKey` on HTML content changes |
-| 5 | `CompilationBridge.tsx` | Already correct, verify digest sync in all branches |
+| 1 | `AIAppBuilderWorkspace.tsx` | Set `skipNextCompileRef = true` before deferred post-gen `setFiles` |
+| 2 | `AIAppBuilderWorkspace.tsx` | Chain dispatch to compile promise instead of polling fallback |
+| 3 | `CompilationBridge.tsx` | Remove duplicate reset effect (lines 168-174) |
+| 4 | `GeneratingOverlay.tsx` | Only show overlay during generation, not compilation-only |
+| 5 | `BuilderPreviewPanel.tsx` | Verify iframe always renders when html exists (already correct) |
+| 6 | `AIAppBuilderWorkspace.tsx` | Use refs for stale config closure in `handleBgComplete` |
 
 ## Expected Result
 
-After all 5 phases:
-- User sends "change colors to teal"
-- Current preview stays visible (no blank, no skeleton)
-- AI generates new files, background job compiles
-- Compile finishes, `handleStableHTML` sets new HTML
-- `bg-job-completed` fires AFTER compile, `setIsGenerating(false)`
-- CompilationBridge syncs from external ref, no redundant recompile
-- `BuilderPreviewPanel` receives new `html` prop, browser updates `srcdoc` in-place
-- No iframe remount, no flash, colors update seamlessly
+After all 6 phases:
+- No post-build flash from deferred auto-patching
+- No duplicate/triple compilation from racing promises
+- No CompilationBridge double-unlock from competing effects
+- Clean overlay behavior: shimmer during generation, silent compilation
+- Correct config values used even after integration changes
+- True Lovable parity: old preview stays, seamlessly replaced by new build
 
