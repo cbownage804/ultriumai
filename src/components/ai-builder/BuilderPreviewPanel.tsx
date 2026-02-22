@@ -5,6 +5,7 @@ import {
   ArrowLeft, ArrowRight, Lock, Wrench, X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import previewBgNeon from '@/assets/preview-bg-neon.jpg';
 interface PreviewError {
   id: string;
   message: string;
@@ -488,12 +489,20 @@ window.addEventListener('message', function(e) {
         ) : isCompiling ? (
           <CompilationProgress fileCount={projectFiles?.length} />
         ) : (
-          <div className="flex flex-col items-center justify-center h-full w-full text-center select-none">
-            <div className="space-y-3 px-6">
-              <h3 className="font-semibold text-xl text-white/80 tracking-tight">
+          <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden">
+            {/* Neon background */}
+            <img
+              src={previewBgNeon}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover opacity-30"
+              aria-hidden="true"
+            />
+            <div className="absolute inset-0 bg-black/40" />
+            <div className="relative z-10 space-y-3 px-6">
+              <h3 className="font-semibold text-xl text-cyan-300/90 tracking-tight drop-shadow-[0_0_12px_rgba(6,182,212,0.3)]">
                 Live Preview
               </h3>
-              <p className="text-sm text-white/30 max-w-[300px] mx-auto">
+              <p className="text-sm text-white/40 max-w-[300px] mx-auto">
                 Describe what you want to build
               </p>
             </div>
