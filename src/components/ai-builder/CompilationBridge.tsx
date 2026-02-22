@@ -6,7 +6,7 @@ import type { CDNPackage } from './PackageManager';
 import type { LinkedGPTConfig } from './GPTConnectorPanel';
 import { useLivePreviewSync } from '@/hooks/useLivePreviewSync';
 
-const COMPILE_TIMEOUT_MS = 20_000;
+const COMPILE_TIMEOUT_MS = 8_000;
 
 interface CompilationBridgeProps {
   files: ProjectFile[];
@@ -241,6 +241,16 @@ export function CompilationBridge({
         console.info('[CompilationBridge] Debounce fired but lock acquired by another, skipping');
         return;
       }
+      // Skip if handleBgComplete already compiled and set the preview
+      if (externalStableHTMLRef?.current && !stableHTMLRef.current) {
+        console.info('[CompilationBridge] Debounce fired but external preview already set, syncing');
+        stableHTMLRef.current = externalStableHTMLRef.current;
+        setStableHTMLLocal(externalStableHTMLRef.current);
+        compilationLockRef.current = true;
+        compilationAttemptedRef.current = true;
+        onCompilingChangeRef.current?.(false);
+        return;
+      }
       console.info('[CompilationBridge] Debounce fired, starting compilation');
       compilationLockRef.current = true;
 
@@ -260,6 +270,18 @@ export function CompilationBridge({
       // Phase 1: Async compilation with yield points to keep browser responsive
       const runCompilation = async () => {
         if (cancelled) return;
+        // Bail if external compilation (handleBgComplete) already provided a preview
+        if (externalStableHTMLRef?.current) {
+          console.info('[CompilationBridge] runCompilation: external preview arrived, bailing');
+          clearTimeout(safetyTimeout);
+          onCompilingChangeRef.current?.(false);
+          compilationAttemptedRef.current = true;
+          if (!stableHTMLRef.current) {
+            stableHTMLRef.current = externalStableHTMLRef.current;
+            setStableHTMLLocal(externalStableHTMLRef.current);
+          }
+          return;
+        }
         try {
           console.time('[liveCompiledHTML]');
           let result: string | null = null;
