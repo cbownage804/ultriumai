@@ -29,6 +29,7 @@ export default defineConfig(({ mode }) => ({
   },
   worker: {
     plugins: () => [],
+    format: 'es',
   },
   resolve: {
     alias: {
