@@ -112,6 +112,8 @@ export function CompilationBridge({
   // ── stableHTML state ──
   const [stableHTML, setStableHTMLLocal] = useState<string | null>(null);
   const stableHTMLRef = useRef<string | null>(null);
+  // Compile trigger — incrementing forces the main effect to re-run
+  const [compileTrigger, setCompileTrigger] = useState(0);
 
   const setStableHTML = useCallback((html: string | null) => {
     console.info('[CompilationBridge] setStableHTML:', html ? `${html.length} chars` : 'null');
@@ -149,25 +151,24 @@ export function CompilationBridge({
       } else if (!stableHTMLRef.current) {
         compilationLockRef.current = false;
         compilationAttemptedRef.current = false;
-        // Force the main compilation effect to re-run by resetting digest
-        // so it sees the current filesDigest as "new" and starts compilation
         prevFilesDigestRef.current = '';
-        immediateCompileNeededRef.current = true; // skip debounce for post-generation
-        console.info('[CompilationBridge] Generation ended with no preview — forcing immediate recompile');
+        immediateCompileNeededRef.current = true;
+        // Bump compileTrigger to force main effect to re-run even if filesDigest hasn't changed
+        setCompileTrigger(t => t + 1);
+        console.info('[CompilationBridge] Generation ended with no preview — triggering compile via state change');
 
-        // Safety net: if main effect doesn't produce stableHTML within 3s, force retry
+        // Safety net: if still no preview after 5s, force another attempt
         const safetyTimer = setTimeout(() => {
           if (!stableHTMLRef.current && filesRef.current.length > 0) {
-            console.warn('[CompilationBridge] Safety net: no preview 3s after generation — forcing retry');
+            console.warn('[CompilationBridge] Safety net: no preview 5s after generation — forcing retry');
             compilationLockRef.current = false;
             compilationAttemptedRef.current = false;
             prevFilesDigestRef.current = '';
-            // Trigger re-render to re-run main effect
-            setLiveCompiledHTML(null);
+            immediateCompileNeededRef.current = true;
+            setCompileTrigger(t => t + 1);
           }
-        }, 3000);
-        // Store for cleanup
-        (prevIsGeneratingForReset as any)._safetyTimer = safetyTimer;
+        }, 5000);
+        return () => clearTimeout(safetyTimer);
       } else {
         // stableHTML already set (from handleBgComplete direct compile),
         // sync the digest so we don't trigger a redundant recompile
@@ -416,13 +417,13 @@ export function CompilationBridge({
         clearTimeout(safetyTimeout);
         onCompilingChangeRef.current?.(false);
       };
-    }, 500);
+    }, debounceMs);
 
     return () => {
       if (compilationDebounceRef.current) clearTimeout(compilationDebounceRef.current);
       compilationCleanupRef.current?.();
     };
-  }, [filesDigest, supabaseConfig, stripeConfig, isReactProject, isGenerating]);
+  }, [filesDigest, supabaseConfig, stripeConfig, isReactProject, isGenerating, compileTrigger]);
 
   // ── compiledForHosting (deferred until live preview is done) ──
   const [compiledForHosting, setCompiledForHosting] = useState<string | null>(null);
