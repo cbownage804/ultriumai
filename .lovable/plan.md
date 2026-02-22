@@ -1,85 +1,69 @@
 
 
-# Remaining Lovable Parity Items -- Implementation Plan
+# Fix: Preview Not Updating After Build + Color Changes Ignored
 
-## Status Check
+## Root Causes Found
 
-Items 1-6 are already complete. Item 10 (Hide Badge toggle) is **already implemented** in `ProjectSettingsModal.tsx` (line 732) and `ProjectSettings.tsx` (line 282). No work needed there.
+Two critical bugs cause the preview to not reflect changes after a build:
 
-Three items remain: **Security Scan View (#7)**, **Speed/Performance View (#8)**, and **Unified Design View (#9)**.
+### Bug 1: `filesDigest` uses content LENGTH instead of content hash (CompilationBridge.tsx, line 86)
 
----
+The compilation trigger computes a "digest" of files using only `f.path + ':' + f.content.length`. When the AI replaces a color like `#FF5722` (7 chars) with `#009688` (7 chars), the total file length doesn't change, so the digest stays identical. The compilation effect never re-runs because its dependency (`filesDigest`) hasn't changed.
 
-## Item 7: Security Scan -- Top-Level View Icon
+This is the primary reason color changes (and any same-length text replacement) are silently ignored in the preview.
 
-**Goal:** Add a Shield icon to the top bar that opens the SecurityAuditorPanel directly, making it discoverable without Cmd+K.
+**Fix:** Replace `content.length` with a fast content hash (e.g., djb2 or simple checksum) so any character change triggers recompilation.
 
-**Changes:**
+### Bug 2: Background generation doesn't signal `isGenerating` to CompilationBridge (AIAppBuilderWorkspace.tsx, line 2159)
 
-1. **`src/components/ai-builder/WorkspaceTopBar.tsx`**
-   - Add `ShieldCheck` icon import from lucide-react
-   - Add a new prop `setShowSecurityAuditor: (v: boolean) => void`
-   - Add a shield icon button next to the Cloud/Database/Terminal icons in the center toolbar section
-   - Tooltip: "Security"
+`CompilationBridge` receives `isGenerating` from `useAIAppBuilder` (SSE streaming state), but background generation uses a separate `isGeneratingOverride` state. During background builds, the CompilationBridge thinks nothing is generating, compiles intermediate files, and locks itself (`compilationLockRef = true`). When the final files arrive via `handleBgComplete`, the lock may prevent recompilation.
 
-2. **`src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
-   - Pass `setShowSecurityAuditor` down to `WorkspaceTopBar`
+**Fix:** Pass `isGenerating || isGeneratingOverride` to CompilationBridge instead of just `isGenerating`.
 
 ---
 
-## Item 8: Speed/Performance -- Top-Level View Icon
+## File Changes
 
-**Goal:** Add a Gauge/Activity icon to the top bar that opens the PerformanceProfiler panel directly.
+### 1. `src/components/ai-builder/CompilationBridge.tsx`
 
-**Changes:**
+**Line 84-87** -- Replace content-length digest with a fast hash:
 
-1. **`src/components/ai-builder/WorkspaceTopBar.tsx`**
-   - Add `Gauge` icon import from lucide-react
-   - Add a new prop `setShowPerformanceProfiler: (v: boolean) => void`
-   - Add a gauge icon button in the center toolbar
-   - Tooltip: "Speed"
+```typescript
+const filesDigest = useMemo(() => {
+  if (files.length === 0) return '';
+  // Use a fast hash of content (not just length) so same-length edits trigger recompilation
+  return files.map(f => {
+    let hash = 5381;
+    for (let i = 0; i < f.content.length; i++) {
+      hash = ((hash << 5) + hash + f.content.charCodeAt(i)) & 0x7fffffff;
+    }
+    return f.path + ':' + hash;
+  }).join('|');
+}, [files]);
+```
 
-2. **`src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
-   - Pass `setShowPerformanceProfiler` down to `WorkspaceTopBar`
+This uses the djb2 hash algorithm which is fast and produces different outputs for any character change, ensuring even single-character edits (like color hex codes) trigger recompilation.
 
----
+### 2. `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
 
-## Item 9: Unified Design View Panel
+**Line 2159** -- Pass combined generating state to CompilationBridge:
 
-**Goal:** Create a consolidated `DesignViewPanel` that combines Theme Studio and Design System into one slide-out panel (similar to CloudViewPanel pattern).
+```typescript
+isGenerating={isGenerating || isGeneratingOverride}
+```
 
-**Changes:**
-
-1. **Create `src/components/ai-builder/DesignViewPanel.tsx`**
-   - Full-screen overlay panel (same pattern as CloudViewPanel)
-   - Left sidebar with tabs: **Themes**, **Design System**, **Visual Edits**
-   - Themes tab: renders `ThemeStudioPanel` content inline
-   - Design System tab: renders `DesignSystemPanel` content inline
-   - Visual Edits tab: button to activate Visual Edit Mode (sets `isVisualEditActive`)
-
-2. **`src/components/ai-builder/panelKeys.ts`**
-   - Add `'showDesignView'` to `PANEL_KEYS`
-
-3. **`src/components/ai-builder/WorkspaceTopBar.tsx`**
-   - Add `Palette` icon import
-   - Add a new prop `setShowDesignView: (v: boolean) => void`
-   - Add a palette icon button in the center toolbar
-   - Tooltip: "Design"
-
-4. **`src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
-   - Wire up `showDesignView` state and pass to top bar
-   - Render `DesignViewPanel` when open
+This ensures the CompilationBridge correctly defers compilation during background generation and properly resets locks when the build completes.
 
 ---
 
-## Summary of File Changes
+## Why Tab Switch "Fixed" It
 
-| File | Change |
-|------|--------|
-| `WorkspaceTopBar.tsx` | Add 3 new icon buttons (Shield, Gauge, Palette) with props |
-| `AIAppBuilderWorkspace.tsx` | Pass 3 new setters to top bar; render DesignViewPanel |
-| `panelKeys.ts` | Add `showDesignView` key |
-| **NEW** `DesignViewPanel.tsx` | Unified design panel with Themes/Design System/Visual Edits tabs |
+The existing `previewRefreshKey` mechanism (lines 2062-2071) increments on `visibilitychange`, forcing the iframe to remount with whatever `stableHTML` is current. If the files had already been compiled once (with old content due to the digest bug), the stale HTML was shown. But when the user returned to the tab, the iframe remounted, and if any other side-effect had triggered a state update, the new HTML could appear. This was masking the underlying digest bug.
 
-Item 10 (Hide Badge) requires no changes -- already fully implemented.
+## Impact
+
+These two fixes together ensure:
+- Any file content change (even single characters) triggers recompilation
+- Background generation properly blocks premature compilation
+- The preview updates immediately after build completion without requiring a tab switch
 
