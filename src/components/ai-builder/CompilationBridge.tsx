@@ -6,7 +6,7 @@ import type { CDNPackage } from './PackageManager';
 import type { LinkedGPTConfig } from './GPTConnectorPanel';
 import { useLivePreviewSync } from '@/hooks/useLivePreviewSync';
 
-const COMPILE_TIMEOUT_MS = 30_000;
+const COMPILE_TIMEOUT_MS = 15_000;
 
 interface CompilationBridgeProps {
   files: ProjectFile[];
@@ -319,6 +319,9 @@ export function CompilationBridge({
             if (result) {
               setStableHTML(result);
               liveSync.resetSnapshot(filesRef.current);
+              // Notify agent verify step that preview is ready (for vanilla projects
+              // that don't emit __PREVIEW_READY__ from inside the iframe)
+              window.postMessage({ type: '__PREVIEW_READY__', source: 'compilation-bridge' }, '*');
             }
           }
         } catch (e) {

@@ -212,6 +212,8 @@ export function useAgentMode() {
   const waitForPreviewErrors = useCallback((): Promise<string[]> => {
     return new Promise((resolve) => {
       errorBufferRef.current = [];
+      let settled = false;
+
       const handler = (event: MessageEvent) => {
         if (
           event.data?.type === '__PREVIEW_ERROR__' ||
@@ -231,11 +233,28 @@ export function useAgentMode() {
           }
         }
       };
-      window.addEventListener('message', handler);
-      setTimeout(() => {
+
+      const finish = () => {
+        if (settled) return;
+        settled = true;
         window.removeEventListener('message', handler);
+        window.removeEventListener('message', readyHandler);
         resolve([...errorBufferRef.current]);
-      }, VERIFY_TIMEOUT_MS);
+      };
+
+      // Wait for preview to be ready (compiled & rendered) before starting error collection
+      const readyHandler = (event: MessageEvent) => {
+        if (event.data?.type === '__PREVIEW_READY__') {
+          // Preview rendered — collect errors for a short window then resolve
+          setTimeout(finish, VERIFY_TIMEOUT_MS);
+        }
+      };
+
+      window.addEventListener('message', handler);
+      window.addEventListener('message', readyHandler);
+
+      // Hard cap: if preview never becomes ready (compilation failure), resolve after 15s
+      setTimeout(finish, 15_000);
     });
   }, []);
 
