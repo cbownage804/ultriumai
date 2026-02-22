@@ -1,106 +1,82 @@
 
 
-# Fix: Stop Full Preview Regeneration on All Edits
+# Fix: Keep Preview Visible During Generation (No Blank Screen)
 
-## Problem
+## Root Cause
 
-There are two separate issues causing full preview reloads:
+The core problem is on **line 125 of CompilationBridge.tsx**: when any chat message triggers `sendMessage()`, it sets `isGenerating = true`, and CompilationBridge immediately responds by calling `setStableHTML(null)` -- which **blanks the preview**. This happens for every single chat request, including simple "change the colors to teal" messages.
 
-### Issue 1: Visual edits (color/text) always fall back to `sendMessage`
-The `handleVisualEdit` function tries to match CSS path selectors (like `body > div:nth-child(2) > h1`) against source file content using regex. These selectors are CSS DOM paths, not class/id names, so the regex **never matches**. Every color/text edit falls through to `sendMessage()`, which triggers a full AI generation cycle, nulls `stableHTML`, and destroys the preview.
+This is fundamentally different from how Lovable works. Lovable keeps the current preview visible while generating, then seamlessly updates it when the new code is ready. Your app builder destroys the preview the instant generation starts, showing a skeleton/loading screen instead.
 
-### Issue 2: Every new `stableHTML` string causes a full iframe remount
-In `BuilderPreviewPanel.tsx` (line 81), whenever the `html` prop changes to a new string value, `iframeKey` is incremented, which forces a complete iframe teardown and rebuild -- even if the change was minor.
+## The Fix (2 files)
 
-## Fix
+### Change 1: CompilationBridge.tsx -- Don't null stableHTML when generation starts
 
-### Change 1: `AIAppBuilderWorkspace.tsx` -- Serialize iframe DOM instead of regex matching
+Instead of resetting `stableHTML` to null when `isGenerating` becomes true, keep the existing preview visible. Only reset `liveCompiledHTML` (the compilation result tracker) and the compilation flags. The old preview stays in the iframe while the AI works.
 
-For color and text visual edits, the `VisualEditOverlay` has already applied the change to the iframe DOM. Instead of trying to regex-match selectors in source files (which never works), we will:
+When the new compilation finishes (either via `handleBgComplete` direct compile or via the compilation effect), `setStableHTML` will be called with the new HTML, which will naturally replace the old preview.
 
-1. Read the iframe's current DOM (which already has the edit applied)
-2. Serialize it back to the source HTML file
-3. Set `stableHTML` directly to the current iframe content (no recompile)
-4. Skip the `sendMessage` fallback entirely
-
+**Lines 119-128 change from:**
 ```
-VisualEditOverlay applies edit to iframe DOM (already works)
-  -> handleVisualEdit reads iframe DOM
-  -> Serializes to source file via upsertFile (for persistence)
-  -> stableHTML stays unchanged (iframe already shows the edit)
-  -> No recompile, no AI generation
-```
-
-Specifically, replace the `sendMessage` fallback in both the `text` and `color` branches with:
-
-```typescript
-// Instead of sendMessage fallback:
-const iframe = previewIframeRef.current;
-const iframeDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
-if (iframeDoc) {
-  const serializedHTML = '<!DOCTYPE html>\n' + iframeDoc.documentElement.outerHTML;
-  const mainHtml = project.files.find(f => f.path.endsWith('.html'));
-  if (mainHtml) {
-    pushUndo('Visual edit', project.files);
-    // Use a flag to prevent CompilationBridge from recompiling
-    skipNextCompilationRef.current = true;
-    upsertFile(mainHtml.path, serializedHTML);
-  }
-}
-// Do NOT call sendMessage -- the iframe already shows the change
-```
-
-### Change 2: `AIAppBuilderWorkspace.tsx` -- Add `skipNextCompilationRef`
-
-Add a `useRef(false)` flag that tells CompilationBridge to skip recompilation for the next file change. Pass it as a prop to CompilationBridge.
-
-### Change 3: `CompilationBridge.tsx` -- Respect skip flag
-
-Add `skipNextCompilationRef` prop. In the main compilation effect, when `filesDigest` changes and `skipNextCompilationRef.current` is true:
-- Reset the flag to false
-- Sync `prevFilesDigestRef` to the new digest
-- Update the live-sync snapshot
-- Return without recompiling
-
-```typescript
-if (stableHTMLRef.current && filesDigest !== prevFilesDigestRef.current) {
-  if (skipNextCompilationRef?.current) {
-    skipNextCompilationRef.current = false;
-    prevFilesDigestRef.current = filesDigest;
-    liveSync.resetSnapshot(filesRef.current);
-    console.info('[CompilationBridge] Skipping recompile (visual edit)');
-    return;
-  }
-  // ... existing hot-patch / recompile logic
+if (isGenerating && !prevIsGeneratingForReset.current) {
+  setStableHTML(null);          // <-- THIS BLANKS THE PREVIEW
+  setLiveCompiledHTML(null);
+  compilationAttemptedRef.current = false;
+  compilationLockRef.current = false;
 }
 ```
 
-### Change 4: `BuilderPreviewPanel.tsx` -- Don't remount iframe for same-content updates
+**To:**
+```
+if (isGenerating && !prevIsGeneratingForReset.current) {
+  // DON'T null stableHTML -- keep the current preview visible
+  // while the AI generates. The new compilation result will
+  // replace it when ready (via handleBgComplete or compilation effect).
+  setLiveCompiledHTML(null);
+  compilationAttemptedRef.current = false;
+  compilationLockRef.current = false;
+}
+```
 
-Currently line 81 increments `iframeKey` whenever `html !== prevHtmlRef.current`. This causes a full iframe teardown even for minor changes. The fix: only increment `iframeKey` if the HTML structure actually changed significantly (different length by more than a threshold), not for every single-character difference.
+### Change 2: CompilationBridge.tsx -- Allow recompilation to overwrite existing stableHTML
 
-However, since Changes 1-3 prevent `stableHTML` from changing at all during visual edits, this is less critical. We will still add a guard: if the only difference is inline style changes, skip the iframe remount.
+Currently, when `stableHTML` already exists and `filesDigest` changes, the code tries hot-patching first (line 187). But after a full AI generation where files are completely rewritten, hot-patching will always fail (since JS/TS changes force a null return from `detectPatches`). The existing logic already falls through to a full recompile in this case, but we need to make sure the new result overwrites the old stableHTML properly.
 
-## Technical Details
+The key change: in the compilation effect (line 176), when `stableHTML` exists and `filesDigest` changed, and hot-patching fails, don't just "fall through" -- explicitly unlock and proceed. The `runCompilation` function already calls `setStableHTML(result)` at line 273, which will replace the old preview with the new one.
 
-### File 1: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
+This is already mostly correct, but we need to ensure `compilationLockRef` is reset when generation ends so the recompilation can proceed.
 
-- Add `const skipNextCompilationRef = useRef(false);` near other refs
-- Pass `skipNextCompilationRef` to `CompilationBridge` as a prop
-- In `handleVisualEdit` for `text` (line 1862-1868): replace `sendMessage` fallback with iframe DOM serialization
-- In `handleVisualEdit` for `color` (line 1903-1909): replace `sendMessage` fallback with iframe DOM serialization
-- Add `previewIframeRef` and `handleStableHTML` to `handleVisualEdit` dependency array
+### Change 3: Preview update effect -- Handle stableHTML replacement
 
-### File 2: `src/components/ai-builder/CompilationBridge.tsx`
+In the preview update effect (line 374-394), when `liveCompiledHTML` is set and `stableHTML` already exists (old preview), we need to always update to the new result instead of trying to hot-patch (which will fail for full regenerations).
 
-- Add `skipNextCompilationRef` to props interface
-- In main compilation effect (line 174), add skip check before hot-patch/recompile logic
+**Lines 374-389 change to:**
+```
+if (liveCompiledHTML) {
+  if (stableHTML === liveCompiledHTML) return;
+  // If we already have a preview showing (stableHTML is not null),
+  // just replace it with the new compilation result directly.
+  // Hot-patching only works for incremental CSS/HTML changes,
+  // not full regenerations.
+  setStableHTML(liveCompiledHTML);
+  liveSync.resetSnapshot(filesRef.current);
+  return;
+}
+```
 
-## Why This Will Work
+## What This Achieves
 
-- The iframe DOM already has the correct visual state after VisualEditOverlay applies the change
-- Serializing the DOM back to source ensures file persistence without regex guessing
-- The skip flag prevents CompilationBridge from destroying the already-correct preview
-- No `sendMessage` call means no AI generation, no credit usage, no preview reset
-- Changes are instant and non-destructive
+- User types "change colors to teal" in chat
+- AI generation starts -- **current preview stays visible** (no skeleton, no blank screen)
+- AI generates new files, `handleBgComplete` compiles them
+- New compiled HTML replaces the old preview seamlessly
+- If the AI correctly updated the colors, the preview now shows teal
+- If it didn't, the user still sees their site (not a blank screen) and can try again
+
+## Technical Summary
+
+| File | Change |
+|------|--------|
+| `CompilationBridge.tsx` line 125 | Remove `setStableHTML(null)` when generation starts |
+| `CompilationBridge.tsx` lines 374-389 | Always replace stableHTML with new liveCompiledHTML (don't try hot-patching after full regen) |
 
