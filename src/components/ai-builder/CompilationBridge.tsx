@@ -125,10 +125,19 @@ export function CompilationBridge({
       compilationAttemptedRef.current = false;
       compilationLockRef.current = false;
     } else if (!isGenerating && prevIsGeneratingForReset.current) {
-      // Generation ENDING — force recompilation of the final files
-      compilationLockRef.current = false;
-      compilationAttemptedRef.current = false;
-      prevFilesDigestRef.current = '__force_recompile__';
+      // Generation ENDING — only force recompile if handleBgComplete
+      // hasn't already provided a compiled result
+      if (!stableHTMLRef.current) {
+        compilationLockRef.current = false;
+        compilationAttemptedRef.current = false;
+        prevFilesDigestRef.current = '__force_recompile__';
+      } else {
+        // stableHTML already set (from handleBgComplete direct compile),
+        // sync the digest so we don't trigger a redundant recompile
+        prevFilesDigestRef.current = filesDigest;
+        compilationLockRef.current = true;
+        compilationAttemptedRef.current = true;
+      }
     }
     prevIsGeneratingForReset.current = isGenerating;
   }, [isGenerating, setStableHTML]);
@@ -163,12 +172,11 @@ export function CompilationBridge({
     // If stableHTML already exists but filesDigest changed, reset it so
     // recompilation can run with the new files
     if (stableHTMLRef.current && filesDigest !== prevFilesDigestRef.current) {
-      console.info('[CompilationBridge] Effect: filesDigest changed, resetting stableHTML for recompile');
+      console.info('[CompilationBridge] Effect: filesDigest changed, recompiling (keeping old preview visible)');
       prevFilesDigestRef.current = filesDigest;
-      setStableHTML(null);
-      // Also unlock compilation so restored/changed files can recompile
+      // DON'T set stableHTML to null — keep old preview showing until new compilation finishes
       compilationLockRef.current = false;
-      // Don't return — fall through to start recompilation
+      // Fall through to start recompilation
     } else if (stableHTMLRef.current) {
       console.info('[CompilationBridge] Effect: stableHTML already set, skipping');
       return;

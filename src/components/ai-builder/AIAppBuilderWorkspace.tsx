@@ -1840,20 +1840,77 @@ export function AIAppBuilderWorkspace() {
         );
         return;
       } else if (property === 'text') {
-        sendMessage(
-          `Apply this visual edit to the source file. Change the text content of the element matching selector "${selector}" to: "${value}". Only update the text, keep everything else the same.`,
-          project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel
-        );
+        // Direct text replacement in source files without AI generation
+        let applied = false;
+        for (const file of project.files) {
+          if (!file.path.match(/\.(html|htm|jsx|tsx)$/i)) continue;
+          // Try to find and replace the text content near the selector
+          const selectorTag = selector.replace(/[^a-zA-Z0-9]/g, '');
+          if (file.content.includes(selector) || selectorTag) {
+            // For simple text updates, use regex to find the element and update its content
+            const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const re = new RegExp(`(<[^>]*(?:class|id)=["'][^"']*${escaped}[^"']*["'][^>]*>)([^<]*)(</)`, 'i');
+            const newContent = file.content.replace(re, `$1${value}$3`);
+            if (newContent !== file.content) {
+              pushUndo('Visual edit: text', project.files);
+              upsertFile(file.path, newContent);
+              applied = true;
+              break;
+            }
+          }
+        }
+        if (!applied) {
+          // Fallback to AI for complex cases
+          sendMessage(
+            `Apply this visual edit to the source file. Change the text content of the element matching selector "${selector}" to: "${value}". Only update the text, keep everything else the same.`,
+            project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel
+          );
+        }
         return;
       } else if (property === 'color') {
-        sendMessage(
-          `Apply this visual edit to the source file. Change the text color of the element matching selector "${selector}" to: "${value}". Add an inline style or update the existing CSS.`,
-          project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel
-        );
+        // Direct color change in source files without AI generation
+        let applied = false;
+        for (const file of project.files) {
+          if (!file.path.match(/\.(html|htm|jsx|tsx|css)$/i)) continue;
+          const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          
+          // For HTML/JSX files: add/update inline style
+          if (file.path.match(/\.(html|htm|jsx|tsx)$/i)) {
+            // Try to find element with matching selector and add/update color style
+            const styleColorRe = new RegExp(`(<[^>]*(?:class|id)=["'][^"']*${escaped}[^"']*["'][^>]*style=["'])([^"']*)(["'])`, 'i');
+            const noStyleRe = new RegExp(`(<[^>]*(?:class|id)=["'][^"']*${escaped}[^"']*["'][^>]*)(>)`, 'i');
+            
+            let newContent = file.content;
+            if (styleColorRe.test(newContent)) {
+              // Element has existing style — update/add color
+              newContent = newContent.replace(styleColorRe, (_, pre, existingStyle, quote) => {
+                const updatedStyle = existingStyle.replace(/color\s*:[^;]+;?/i, '').replace(/;?\s*$/, '');
+                return `${pre}${updatedStyle ? updatedStyle + '; ' : ''}color: ${value};${quote}`;
+              });
+            } else if (noStyleRe.test(newContent)) {
+              // Element has no style — add it
+              newContent = newContent.replace(noStyleRe, `$1 style="color: ${value};"$2`);
+            }
+            
+            if (newContent !== file.content) {
+              pushUndo('Visual edit: color', project.files);
+              upsertFile(file.path, newContent);
+              applied = true;
+              break;
+            }
+          }
+        }
+        if (!applied) {
+          // Fallback to AI for complex cases
+          sendMessage(
+            `Apply this visual edit to the source file. Change the text color of the element matching selector "${selector}" to: "${value}". Add an inline style or update the existing CSS.`,
+            project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel
+          );
+        }
         return;
       }
     }
-  }, [project.files, sendMessage, supabaseConfig, stripeConfig, serviceKeys, selectedModel]);
+  }, [project.files, sendMessage, supabaseConfig, stripeConfig, serviceKeys, selectedModel, pushUndo, upsertFile]);
 
   const handleInlineAIAction = useCallback((action: string, selection: string, filePath: string) => {
     const prompts: Record<string, string> = {
