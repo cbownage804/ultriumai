@@ -275,6 +275,17 @@ export function CompilationBridge({
       return;
     }
 
+    // Guard: If parent already has a compiled preview (e.g. after remount),
+    // sync it immediately instead of recompiling — prevents infinite compile loop.
+    if (!stableHTMLRef.current && externalStableHTMLRef?.current) {
+      console.info('[CompilationBridge] Effect: syncing existing external preview on mount, skipping recompile');
+      setStableHTML(externalStableHTMLRef.current);
+      prevFilesDigestRef.current = filesDigest;
+      compilationLockRef.current = true;
+      compilationAttemptedRef.current = true;
+      return;
+    }
+
     // No early return — main effect serves as fallback if compileNowRef doesn't fire
 
     // Phase 2: Sync lastMainEffectDigestRef so hot-patch effect skips this digest
