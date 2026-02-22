@@ -106,6 +106,9 @@ export function CompilationBridge({
     }
   }, [filesDigest]);
 
+  // Gap 5 HMR: track when a soft reload should be used instead of iframe remount
+  const softReloadPendingRef = useRef(false);
+
   // ── stableHTML state ──
   const [stableHTML, setStableHTMLLocal] = useState<string | null>(null);
   const stableHTMLRef = useRef<string | null>(null);
@@ -208,11 +211,20 @@ export function CompilationBridge({
       // Files changed while preview exists — try hot-patching first
       prevFilesDigestRef.current = filesDigest;
       const patched = liveSync.applyPatches(previewIframeRef, filesRef.current);
-      if (patched) {
-        console.info('[CompilationBridge] Effect: hot-patched successfully, skipping full recompile');
+      if (patched === true) {
+        console.info('[CompilationBridge] Effect: hot-patched CSS successfully, skipping full recompile');
         return;
       }
-      console.info('[CompilationBridge] Effect: hot-patch failed, doing full recompile (keeping old preview visible)');
+      if (patched === 'soft-reload') {
+        // Gap 5 HMR: JS/TS changed — recompile but do a soft reload instead of iframe remount
+        console.info('[CompilationBridge] Effect: JS changed, will recompile + soft-reload (preserving state)');
+        compilationLockRef.current = false;
+        compilationAttemptedRef.current = false;
+        softReloadPendingRef.current = true;
+        // Fall through to start recompilation
+      } else {
+        console.info('[CompilationBridge] Effect: hot-patch failed, doing full recompile (keeping old preview visible)');
+      }
       compilationLockRef.current = false;
       compilationAttemptedRef.current = false; // Phase 1: enable recompilation after hot-patch fail
       // Fall through to start recompilation
@@ -335,8 +347,11 @@ export function CompilationBridge({
             if (result) {
               setStableHTML(result);
               liveSync.resetSnapshot(filesRef.current);
-              // Notify agent verify step that preview is ready (for vanilla projects
-              // that don't emit __PREVIEW_READY__ from inside the iframe)
+              // Gap 5 HMR: Signal soft reload instead of full remount
+              if (softReloadPendingRef.current) {
+                softReloadPendingRef.current = false;
+                window.postMessage({ type: '__SOFT_RELOAD__', source: 'compilation-bridge' }, '*');
+              }
               window.postMessage({ type: '__PREVIEW_READY__', source: 'compilation-bridge' }, '*');
             }
           }

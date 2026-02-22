@@ -73,7 +73,7 @@ export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFix
   const iframeRef = externalIframeRef || internalIframeRef;
 
   // Gap 4: Service Worker preview — real browsing context
-  const { isReady: swReady, previewUrl, updatePreview, version: swVersion } = usePreviewServiceWorker();
+  const { isReady: swReady, previewUrl, updatePreview, version: swVersion, softReload: swSoftReload } = usePreviewServiceWorker();
 
   const viewportWidth = getViewportWidth(viewportMode);
 
@@ -128,7 +128,22 @@ document.addEventListener('click', function(e) {
 });
 document.addEventListener('submit', function(e) { var form = e.target; if (form && form.tagName === 'FORM' && form.getAttribute('action')) { e.preventDefault(); } });
 window.open = function(url) { window.parent.postMessage({ type: '__PREVIEW_NAV__', href: url, newTab: true }, '*'); return null; };
-window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
+// === HMR STATE PRESERVATION (Gap 5) ===
+window.addEventListener('message', function(e) {
+  if (!e.data || e.data.type !== '__SAVE_STATE_FOR_HMR__') return;
+  try {
+    var state = { scrollX: window.scrollX, scrollY: window.scrollY, inputs: [], openDetails: [] };
+    document.querySelectorAll('input, textarea, select').forEach(function(el, i) {
+      var sel = el.id ? '#' + el.id : (el.name ? '[name="' + el.name + '"]' : el.tagName.toLowerCase() + ':nth-of-type(' + (i+1) + ')');
+      if (el.type === 'checkbox' || el.type === 'radio') { state.inputs.push({ selector: sel, type: el.type, checked: el.checked }); }
+      else { state.inputs.push({ selector: sel, type: el.type || 'text', value: el.value }); }
+    });
+    document.querySelectorAll('details[open]').forEach(function(el, i) {
+      state.openDetails.push(el.id ? '#' + el.id : 'details:nth-of-type(' + (i+1) + ')');
+    });
+    sessionStorage.setItem('__hmr_state__', JSON.stringify(state));
+  } catch(err) {}
+});
 </script>
 </head>`
         )
@@ -195,6 +210,22 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
     });
   };
 })();
+// === HMR STATE PRESERVATION (Gap 5) ===
+window.addEventListener('message', function(e) {
+  if (!e.data || e.data.type !== '__SAVE_STATE_FOR_HMR__') return;
+  try {
+    var state = { scrollX: window.scrollX, scrollY: window.scrollY, inputs: [], openDetails: [] };
+    document.querySelectorAll('input, textarea, select').forEach(function(el, i) {
+      var sel = el.id ? '#' + el.id : (el.name ? '[name="' + el.name + '"]' : el.tagName.toLowerCase() + ':nth-of-type(' + (i+1) + ')');
+      if (el.type === 'checkbox' || el.type === 'radio') { state.inputs.push({ selector: sel, type: el.type, checked: el.checked }); }
+      else { state.inputs.push({ selector: sel, type: el.type || 'text', value: el.value }); }
+    });
+    document.querySelectorAll('details[open]').forEach(function(el, i) {
+      state.openDetails.push(el.id ? '#' + el.id : 'details:nth-of-type(' + (i+1) + ')');
+    });
+    sessionStorage.setItem('__hmr_state__', JSON.stringify(state));
+  } catch(err) {}
+});
 </script>
 </head>`
         )
@@ -206,6 +237,22 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
       updatePreview(htmlWithErrorCapture);
     }
   }, [swReady, htmlWithErrorCapture, updatePreview]);
+
+  // Gap 5 HMR: Listen for soft reload signals from CompilationBridge
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === '__SOFT_RELOAD__') {
+        if (swReady && htmlWithErrorCapture) {
+          console.info('[HMR] Soft reload: updating SW content and reloading iframe');
+          updatePreview(htmlWithErrorCapture, { softReload: true });
+          // Small delay to let SW store the new content before reload
+          setTimeout(() => swSoftReload(iframeRef as React.RefObject<HTMLIFrameElement | null>), 80);
+        }
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [swReady, htmlWithErrorCapture, updatePreview, swSoftReload, iframeRef]);
 
   // ── Preview Health Monitor (Phase 1C) ──
   const healthCheckRef = useRef<NodeJS.Timeout | null>(null);
