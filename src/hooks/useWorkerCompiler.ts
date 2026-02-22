@@ -7,7 +7,7 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import type { ProjectFile } from './useProjectFileSystem';
-import type { CDNPackageEntry } from '@/lib/cdnPackageRegistry';
+import type { CDNPackageEntry } from '@/workers/packageData';
 import type { CompileRequest, CompileResponse, CompileErrorResponse, WorkerResponse } from '@/workers/compiler.worker';
 
 export interface WorkerCompilerResult {

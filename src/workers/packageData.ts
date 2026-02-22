@@ -1,16 +1,22 @@
 /**
  * Package data shared between the compiler worker and main thread.
  * Lives inside src/workers/ to avoid React Refresh preamble injection.
- *
- * IMPORTANT: This file must NOT contain TypeScript-only syntax (interface, enum, type alias)
- * because the SWC plugin skips all /workers/ files entirely, and the raw file may be
- * served to the browser without TypeScript stripping in dev mode.
  */
 
 const ESM_SH = 'https://esm.sh';
 
+export interface CDNPackageEntry {
+  name: string;
+  version: string;
+  cdnUrl: string;
+  /** Global variable name if loaded as UMD */
+  global?: string;
+  /** Dependencies that must be loaded first */
+  peerDeps?: string[];
+}
+
 /** Well-known packages with tested ESM CDN compatibility */
-export const DEFAULT_PACKAGES = [
+export const DEFAULT_PACKAGES: CDNPackageEntry[] = [
   { name: 'lucide-react', version: '0.462.0', cdnUrl: `${ESM_SH}/lucide-react@0.462.0?external=react`, peerDeps: ['react'] },
   { name: 'date-fns', version: '3.6.0', cdnUrl: `${ESM_SH}/date-fns@3.6.0` },
   { name: 'recharts', version: '3.1.0', cdnUrl: `${ESM_SH}/recharts@3.1.0?external=react,react-dom`, peerDeps: ['react', 'react-dom'] },
