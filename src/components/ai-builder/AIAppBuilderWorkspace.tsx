@@ -1093,10 +1093,14 @@ export function AIAppBuilderWorkspace() {
         }
       };
 
-      // Lighthouse + bundle analysis deferred separately to yield to main thread
+      // Lighthouse + bundle analysis — skip for large projects to prevent freeze
       const deferStep2 = () => {
-        lighthouseAudit.runAudit(latestFiles);
-        bundleSize.analyzeBundle(latestFiles);
+        if (latestFiles.length < 100) {
+          lighthouseAudit.runAudit(latestFiles);
+          bundleSize.analyzeBundle(latestFiles);
+        } else {
+          buildLog.addEntry('info', `⏭️ Skipped heavy analysis (${latestFiles.length} files — threshold: 100)`);
+        }
       };
 
       // Auto-patch + companion files deferred separately
@@ -1129,19 +1133,10 @@ export function AIAppBuilderWorkspace() {
         }
       };
 
-      // Schedule each step with yielding between them
-      const scheduleDeferred = (fn: () => void, timeout: number, delay: number) => {
-        setTimeout(() => {
-          if (typeof requestIdleCallback === 'function') {
-            requestIdleCallback(fn, { timeout });
-          } else {
-            setTimeout(fn, 100);
-          }
-        }, delay);
-      };
-      scheduleDeferred(deferStep1, 3000, 0);
-      scheduleDeferred(deferStep2, 5000, 50);
-      scheduleDeferred(deferStep3, 5000, 100);
+      // Schedule each step with meaningful delays to prevent freeze
+      setTimeout(deferStep1, 100);
+      setTimeout(deferStep2, 1500);
+      setTimeout(deferStep3, 3000);
       // Mark preview as good for hot recovery & update conflict resolver base snapshot
       hotRecovery.markAsGood([...project.files]);
       conflictResolver.setBaseSnapshot([...project.files]);
@@ -1831,7 +1826,7 @@ export function AIAppBuilderWorkspace() {
   }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys]);
 
   // Persist visual edits (text/color) to project source files
-  const handleVisualEdit = useCallback((selector: string, property: string, value: string) => {
+  const handleVisualEdit = useCallback((selector: string, property: string, value: string, meta?: { tagName: string; text: string }) => {
     // Find HTML files that might contain the edited content
     const htmlFiles = project.files.filter(f => 
       f.path.endsWith('.html') || f.path.endsWith('.htm') || f.path === 'index.html'
@@ -1903,16 +1898,23 @@ export function AIAppBuilderWorkspace() {
             break;
           }
         }
-        // DOMParser fallback for CSS path selectors (e.g. "html > body > div > h1")
-        if (!applied) {
+        // Content-based fallback: match by tagName + textContent
+        if (!applied && meta?.tagName && meta?.text) {
           const mainHtml = project.files.find(f => f.path === 'index.html' || f.path.endsWith('.html'));
           if (mainHtml) {
             try {
               const parser = new DOMParser();
               const doc = parser.parseFromString(mainHtml.content, 'text/html');
-              const el = doc.querySelector(selector);
-              if (el) {
-                el.textContent = value;
+              const candidates = doc.querySelectorAll(meta.tagName);
+              let targetEl: Element | null = null;
+              for (const el of candidates) {
+                if (el.textContent?.trim() === meta.text.trim()) {
+                  targetEl = el;
+                  break;
+                }
+              }
+              if (targetEl) {
+                targetEl.textContent = value;
                 const serialized = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
                 skipNextCompileRef.current = true;
                 pushUndo('Visual edit: text', project.files);
@@ -1920,7 +1922,7 @@ export function AIAppBuilderWorkspace() {
                 applied = true;
               }
             } catch (e) {
-              console.warn('[VisualEdit] DOMParser text fallback failed:', e);
+              console.warn('[VisualEdit] Content-based text fallback failed:', e);
             }
           }
         }
@@ -1968,16 +1970,23 @@ export function AIAppBuilderWorkspace() {
             break;
           }
         }
-        // DOMParser fallback for CSS path selectors (e.g. "html > body > div > p")
-        if (!applied) {
+        // Content-based fallback: match by tagName + textContent
+        if (!applied && meta?.tagName && meta?.text) {
           const mainHtml = project.files.find(f => f.path === 'index.html' || f.path.endsWith('.html'));
           if (mainHtml) {
             try {
               const parser = new DOMParser();
               const doc = parser.parseFromString(mainHtml.content, 'text/html');
-              const el = doc.querySelector(selector);
-              if (el) {
-                (el as HTMLElement).style.color = value;
+              const candidates = doc.querySelectorAll(meta.tagName);
+              let targetEl: Element | null = null;
+              for (const el of candidates) {
+                if (el.textContent?.trim() === meta.text.trim()) {
+                  targetEl = el;
+                  break;
+                }
+              }
+              if (targetEl) {
+                (targetEl as HTMLElement).style.color = value;
                 const serialized = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
                 skipNextCompileRef.current = true;
                 pushUndo('Visual edit: color', project.files);
@@ -1985,7 +1994,7 @@ export function AIAppBuilderWorkspace() {
                 applied = true;
               }
             } catch (e) {
-              console.warn('[VisualEdit] DOMParser color fallback failed:', e);
+              console.warn('[VisualEdit] Content-based color fallback failed:', e);
             }
           }
         }

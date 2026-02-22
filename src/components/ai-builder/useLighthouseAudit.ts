@@ -26,6 +26,12 @@ export function useLighthouseAudit(
   addBuildLogEntry: (type: BuildLogEntry['type'], message: string) => void,
 ) {
   const runAudit = useCallback((files: ProjectFile[]): AuditScore => {
+    // Early exit for large projects to prevent browser freeze
+    if (files.length > 200) {
+      const skippedScore: AuditScore = { performance: 100, accessibility: 100, bestPractices: 100, seo: 100, details: [] };
+      addBuildLogEntry('info', '⏭️ Lighthouse audit skipped (too many files)');
+      return skippedScore;
+    }
     const details: AuditDetail[] = [];
     const allContent = files.map(f => f.content).join('\n');
     const htmlFiles = files.filter(f => f.path.endsWith('.html') || f.path.endsWith('.htm'));

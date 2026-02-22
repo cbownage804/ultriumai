@@ -6,7 +6,7 @@ import { ChromePicker } from 'react-color';
 interface VisualEditOverlayProps {
   isActive: boolean;
   onToggle: () => void;
-  onEditApply: (selector: string, property: string, value: string) => void;
+  onEditApply: (selector: string, property: string, value: string, meta?: { tagName: string; text: string }) => void;
   onAIEditRequest?: (selector: string, elementContext: string, prompt: string) => void;
   iframeRef: React.RefObject<HTMLIFrameElement | null>;
   isProcessingAIEdit?: boolean;
@@ -186,7 +186,7 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
       el.style.color = editValue;
     }
 
-    onEditApply(selectedElement.selector, editMode, editValue);
+    onEditApply(selectedElement.selector, editMode, editValue, { tagName: selectedElement.tagName, text: selectedElement.text });
     setEditMode(null);
     setSelectedElement(null);
   }, [selectedElement, editMode, editValue, aiPrompt, aiImagePreview, resizeW, resizeH, iframeRef, onEditApply, onAIEditRequest]);
