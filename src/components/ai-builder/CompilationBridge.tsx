@@ -112,9 +112,7 @@ export function CompilationBridge({
   // ── stableHTML state ──
   const [stableHTML, setStableHTMLLocal] = useState<string | null>(null);
   const stableHTMLRef = useRef<string | null>(null);
-  // Compile trigger — incrementing forces the main effect to re-run
-  const [compileTrigger, setCompileTrigger] = useState(0);
-
+  // compileTrigger removed — direct compilation in handleBgComplete replaces the effect-chain approach
   const setStableHTML = useCallback((html: string | null) => {
     console.info('[CompilationBridge] setStableHTML:', html ? `${html.length} chars` : 'null');
     setStableHTMLLocal(html);
@@ -149,13 +147,14 @@ export function CompilationBridge({
         justSyncedFromExternalRef.current = true; // Phase 2: prevent main effect recompile
         console.info('[CompilationBridge] Synced external stableHTML, skipping redundant recompile');
       } else if (!stableHTMLRef.current) {
+        // handleBgComplete's direct compilation failed — let main effect handle it.
+        // The main effect will also fire because isGenerating is in its dependency array.
+        // Just clear the guards so it can proceed.
         compilationLockRef.current = false;
         compilationAttemptedRef.current = false;
         prevFilesDigestRef.current = '';
         immediateCompileNeededRef.current = true;
-        // Bump compileTrigger to force main effect to re-run even if filesDigest hasn't changed
-        setCompileTrigger(t => t + 1);
-        console.info('[CompilationBridge] Generation ended with no preview — triggering compile via state change');
+        console.info('[CompilationBridge] Generation ended with no preview — main effect will compile as fallback');
       } else {
         // stableHTML already set (from handleBgComplete direct compile),
         // sync the digest so we don't trigger a redundant recompile
@@ -414,7 +413,7 @@ export function CompilationBridge({
       // the compilation that was just started in the same render cycle.
       if (compilationDebounceRef.current) clearTimeout(compilationDebounceRef.current);
     };
-  }, [filesDigest, supabaseConfig, stripeConfig, isReactProject, isGenerating, compileTrigger]);
+  }, [filesDigest, supabaseConfig, stripeConfig, isReactProject, isGenerating]);
 
   // ── compiledForHosting (deferred until live preview is done) ──
   const [compiledForHosting, setCompiledForHosting] = useState<string | null>(null);

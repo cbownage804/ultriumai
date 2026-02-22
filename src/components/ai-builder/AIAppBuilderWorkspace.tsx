@@ -306,8 +306,39 @@ export function AIAppBuilderWorkspace() {
         }
       }
       setFiles(mergedFiles);
-      compilePromise = Promise.resolve();
-      console.info('[handleBgComplete] Files set, CompilationBridge will compile');
+      setIsCompiling(true);
+
+      // Direct compilation — CompilationBridge stays blocked (isGeneratingOverride=true)
+      compilePromise = (async () => {
+        try {
+          const isReact = mergedFiles.some(f => /\.(tsx|jsx)$/.test(f.path));
+          if (isReact) {
+            const compiled = await Promise.race([
+              compileReactProjectRef.current(mergedFiles, {
+                supabaseConfig: supabaseConfigRef.current || undefined,
+                stripeConfig: stripeConfigRef.current || undefined,
+                envVars: envVarsRef.current,
+              }),
+              new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 30000)),
+            ]);
+            if (compiled?.html) {
+              handleStableHTML(compiled.html);
+              console.info('[handleBgComplete] Direct compilation succeeded:', compiled.html.length, 'chars');
+            }
+          } else {
+            const html = getCompiledHTML(supabaseConfigRef.current, stripeConfigRef.current, envVarsRef.current, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
+            if (html) {
+              handleStableHTML(html);
+              console.info('[handleBgComplete] Vanilla compilation succeeded:', html.length, 'chars');
+            }
+          }
+        } catch (err) {
+          console.warn('[handleBgComplete] Direct compilation failed, CompilationBridge will retry:', err);
+        } finally {
+          setIsCompiling(false);
+        }
+      })();
+      console.info('[handleBgComplete] Files set, direct compilation started');
 
       // Post-build snapshot for history
       const totalChanges = parsedFiles.length + edits.length;
@@ -332,8 +363,8 @@ export function AIAppBuilderWorkspace() {
       }];
     });
 
-    // Phase 2: Clear generating state and dispatch bg-job-completed AFTER compile resolves.
-    // This keeps the skeleton visible until the preview HTML is ready.
+    // Release generating state AFTER compilation resolves (success or failure).
+    // This keeps CompilationBridge blocked during direct compilation to avoid worker contention.
     const jobId = job.id;
     compilePromise.finally(() => {
       setIsGeneratingOverride(false);
