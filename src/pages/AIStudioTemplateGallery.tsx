@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { clearBuilderDraft } from '@/lib/clearBuilderDraft';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -82,7 +83,7 @@ export default function AIStudioTemplateGallery() {
 
   const handleSelect = (template: SharedTemplate) => {
     if (template.type === 'app') {
-      navigate(`/ai-studio/app-builder?new=true&template=${template.id}`);
+      clearBuilderDraft(); navigate(`/ai-studio/app-builder?new=true&template=${template.id}`);
     } else {
       navigate(`/ai-studio/gpt-builder?template=${template.templateId}`);
     }
