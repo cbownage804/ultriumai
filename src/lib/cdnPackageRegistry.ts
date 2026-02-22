@@ -7,9 +7,19 @@
  * without pulling in React Refresh–injected modules.
  */
 
+export interface CDNPackageEntry {
+  name: string;
+  version: string;
+  cdnUrl: string;
+  /** Global variable name if loaded as UMD */
+  global?: string;
+  /** Dependencies that must be loaded first */
+  peerDeps?: string[];
+}
+
 // Re-export the canonical data from workers/packageData
-export { DEFAULT_PACKAGES, type CDNPackageEntry } from '@/workers/packageData';
-import { DEFAULT_PACKAGES, type CDNPackageEntry } from '@/workers/packageData';
+export { DEFAULT_PACKAGES } from '@/workers/packageData';
+import { DEFAULT_PACKAGES } from '@/workers/packageData';
 
 const ESM_SH = 'https://esm.sh';
 
