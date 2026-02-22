@@ -1,101 +1,94 @@
 
+## Fix: Worker Compilation Timeout - Root Cause and Solution
 
-## Fix: Guaranteed Preview After Generation
+### Root Cause (confirmed via console logs)
 
-### Problem
-`handleBgComplete` currently sets `compilePromise = Promise.resolve()`, which immediately releases `isGeneratingOverride` via `.finally()`. This means CompilationBridge must compile via its effect chain (200ms timer, 500ms debounce, locks, guards). This chain has failed across 4+ fix attempts due to timing races between effects, stale refs, and lock contention.
-
-### Solution: Compile Before Releasing State
-
-Make `handleBgComplete` await the worker compiler directly with the local `mergedFiles` variable (which is always fresh — no stale closure issues). Only release `isGeneratingOverride` AFTER the result is set.
-
-### Changes
-
-#### 1. Direct Worker Compilation in handleBgComplete
-
-**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
-
-Replace the current self-contained check + `compilePromise = Promise.resolve()` block (lines 313-326) with:
-
+The worker **always** times out at 30s:
 ```
-// 1. Self-contained HTML shortcut (vanilla HTML projects)
-const indexFile = mergedFiles.find(f => f.path === 'index.html');
-const hasLocalModuleScripts = /src=["']\.?\/(?:src|main|app|index)\b/i.test(indexFile?.content || '');
-if (indexFile && !hasLocalModuleScripts &&
-    indexFile.content.includes('<!DOCTYPE html') &&
-    indexFile.content.includes('</html>')) {
-  stableHTMLRef.current = indexFile.content;
-  setStableHTML(indexFile.content);
-}
+[handleBgComplete] Worker compilation failed: Error: Worker timeout
+[handleBgComplete] No preview available - setting error fallback
+```
 
-// 2. React/TSX projects: compile directly with worker
-const hasReactFiles = mergedFiles.some(f => /\.(tsx|jsx)$/.test(f.path));
-if (!stableHTMLRef.current && hasReactFiles) {
-  try {
-    const compiled = await Promise.race([
-      workerCompiler.compileReactProject(mergedFiles, {
-        supabaseConfig: supabaseConfigRef.current || undefined,
-        stripeConfig: stripeConfigRef.current || undefined,
-        envVars: envVarsRef.current,
-      }),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Worker timeout')), 30000)
-      ),
-    ]);
-    if (compiled?.html) {
-      stableHTMLRef.current = compiled.html;
-      setStableHTML(compiled.html);
-    }
-  } catch (e) {
-    console.warn('[handleBgComplete] Worker compilation failed:', e);
+The worker never responds because its module fails to evaluate. The static `import * as esbuild from 'esbuild-wasm'` at the top of `compiler.worker.ts` (line 9) runs at module load time. In a Vite worker build (`type: 'module'`), this 10MB+ dependency may fail to resolve or load, causing the entire worker module to crash before `self.onmessage` is ever registered. Since the message handler never exists, the worker silently ignores all messages.
+
+### The Fix (2 changes)
+
+#### Change 1: Dynamic esbuild import in the worker
+
+**File: `src/workers/compiler.worker.ts`**
+
+Replace the static top-level import with a dynamic import inside `ensureEsbuild()`. This ensures the worker module evaluates successfully and registers its message handler, even if esbuild-wasm fails to load. The regex-based fallback for TypeScript stripping will still work.
+
+Before (line 9):
+```typescript
+import * as esbuild from 'esbuild-wasm';
+```
+
+After:
+```typescript
+let esbuild: any = null;
+```
+
+And update `ensureEsbuild()` to dynamically import:
+```typescript
+async function ensureEsbuild(): Promise<boolean> {
+  if (esbuildReady) return true;
+  if (!esbuildInitPromise) {
+    esbuildInitPromise = (async () => {
+      try {
+        esbuild = await import('esbuild-wasm');
+        await esbuild.initialize({
+          wasmURL: 'https://unpkg.com/esbuild-wasm@0.25.2/esbuild.wasm',
+          worker: false,
+        });
+        esbuildReady = true;
+        console.info('[CompilerWorker] esbuild-wasm initialized');
+      } catch (err: any) {
+        console.warn('[CompilerWorker] esbuild-wasm failed, using regex fallback:', err.message);
+        esbuildInitPromise = null;
+      }
+    })();
   }
-}
-
-// 3. Guaranteed fallback: always show something
-if (!stableHTMLRef.current) {
-  stableHTMLRef.current = ERROR_FALLBACK_HTML;
-  setStableHTML(ERROR_FALLBACK_HTML);
+  await esbuildInitPromise;
+  return esbuildReady;
 }
 ```
 
-This ensures:
-- The worker gets the exact `mergedFiles` (no stale state)
-- The result is set BEFORE `isGeneratingOverride` releases
-- CompilationBridge sees `externalStableHTMLRef.current` already set, so it syncs and skips redundant recompile
-- If everything fails, the user sees an error message (not a blank placeholder)
+Update `esbuildStripTypes` to use the dynamic reference:
+```typescript
+async function esbuildStripTypes(code: string, isTsx: boolean): Promise<string> {
+  if (!esbuild) throw new Error('esbuild not loaded');
+  const result = await esbuild.transform(code, { ... });
+  return result.code;
+}
+```
 
-#### 2. Add Config Refs for Worker Access
+#### Change 2: Add error logging to worker initialization
 
-**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
+**File: `src/workers/compiler.worker.ts`**
 
-Add refs to hold the latest config values so `handleBgComplete` can access them without adding to its dependency array:
+Wrap the message handler registration in a try-catch and add a self-test log so we can confirm the worker module evaluates:
 
 ```typescript
-const supabaseConfigRef = useRef(supabaseConfig);
-supabaseConfigRef.current = supabaseConfig;
-const stripeConfigRef = useRef(stripeConfig);
-stripeConfigRef.current = stripeConfig;
-const envVarsRef = useRef(envVars);
-envVarsRef.current = envVars;
+console.info('[CompilerWorker] Module loaded successfully');
+
+self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
+  // ... existing handler
+};
 ```
 
-#### 3. Add workerCompiler to handleBgComplete Dependencies
+### Why This Works
 
-**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
+1. The static `import * as esbuild from 'esbuild-wasm'` currently crashes the entire worker module if the import fails
+2. By making it dynamic, the worker module always evaluates, `self.onmessage` always gets registered
+3. If esbuild-wasm fails to load dynamically, the worker falls back to regex-based TypeScript stripping (already implemented)
+4. The compilation produces the HTML string with CDN script tags, Babel transpilation, etc. -- all of which is done inside the worker and doesn't depend on esbuild
 
-The `workerCompiler` from `useWorkerCompiler()` is already available in the workspace component. Add it to the `useCallback` dependency array for `handleBgComplete`.
+### Expected Result
 
-### Why This Will Work
-
-1. `mergedFiles` is a local variable — always fresh, never stale
-2. Worker compilation happens synchronously (awaited) before any state release
-3. `stableHTMLRef.current` is set before `setIsGeneratingOverride(false)` fires
-4. CompilationBridge's generation-ending effect sees `externalStableHTMLRef.current` is set, syncs it, and skips its own compilation entirely
-5. No effect chains, no timers, no locks to coordinate
-
-### What's Different From Previous Attempts
-
-- Previous attempt 1: Added worker compilation but still had `compilePromise = Promise.resolve()` so state released before compilation finished
-- Previous attempt 2: Removed all compilation from handleBgComplete, relying on CompilationBridge effects which kept failing
-- This attempt: `compilePromise` is the ACTUAL worker compilation promise, so `.finally()` only fires after compilation completes
-
+1. Worker module loads successfully (dynamic import can't crash module evaluation)
+2. `handleBgComplete` sends compile request, worker receives it
+3. Worker tries esbuild (may fail), falls back to regex stripping
+4. Worker transpiles files, generates HTML, responds within seconds
+5. `handleBgComplete` sets the compiled HTML and releases state
+6. Preview shows the generated app
