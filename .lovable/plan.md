@@ -1,46 +1,44 @@
 
 
-## Fix: `window is not defined` in Worker (React Refresh Injection)
+## Fix: Prevent React Refresh from Injecting into Worker (Final)
 
-### Problem
+### Why Previous Fixes Failed
 
-The runtime error `ReferenceError: window is not defined` at `@react-refresh:367:5` confirms that Vite's dev server is injecting the React Refresh preamble into the worker module. Even though `worker.plugins: () => []` is set, Vite's dev-mode HMR transform still processes ES module workers because they're served through the same module graph pipeline.
+The `window` shim at the top of `compiler.worker.ts` runs **after** `@react-refresh` has already been imported and evaluated as a separate ES module. Vite's dev server injects `import RefreshRuntime from '/@react-refresh'` as the very first line of any file transformed by the React plugin. Since `@react-refresh` is a standalone module, it evaluates in its own scope before our worker code runs, and crashes on `window` access.
 
-This crashes the worker immediately since Web Workers don't have a `window` global, which means `self.onmessage` never registers, and all compilation requests time out at 30 seconds.
+The `worker.plugins: () => []` config only affects the **build** pipeline's plugin list. In dev mode, the React SWC plugin's transform hook runs on all modules served through Vite's dev server, including ES module workers (which are served through the same module graph).
 
-### Solution
+### The Fix
 
-Add a `window` shim at the very top of the worker file, before any imports. This is a well-known workaround for Vite's React Refresh injection in workers. The shim creates a minimal `window` proxy pointing to `self` (the worker global), which satisfies the refresh preamble without side effects.
+Use the React plugin's `exclude` option to prevent it from transforming worker files. This stops `@react-refresh` from being injected entirely.
 
 ### Changes
 
-#### File: `src/workers/compiler.worker.ts`
+**File: `vite.config.ts`**
 
-Add these lines at the very top of the file (before line 1), before any other code or imports:
+Update the `react()` plugin call to exclude worker files:
 
 ```typescript
-// Shim `window` for Vite dev mode — React Refresh preamble references `window`
-// which doesn't exist in Web Workers. This no-ops the refresh runtime.
-declare var window: any;
-if (typeof window === 'undefined') {
-  (self as any).window = self;
-}
+react({
+  exclude: /\.worker\.(ts|js|tsx|jsx)$/,
+}),
 ```
 
-This ensures:
-1. The `@react-refresh` preamble Vite injects finds a `window` object and doesn't crash
-2. The refresh runtime effectively no-ops (it won't find React components in a compiler worker)
-3. The rest of the worker module evaluates normally and `self.onmessage` registers
-4. No changes needed to `vite.config.ts` or any other files
+This tells `@vitejs/plugin-react-swc` to skip its React Refresh and JSX transforms for any file matching `*.worker.ts` (or `.js`/`.tsx`/`.jsx`). Since the compiler worker doesn't contain React components or JSX, this is safe.
 
-### Why Previous Fixes Didn't Catch This
+**File: `src/workers/compiler.worker.ts`**
 
-The `worker.plugins: () => []` config prevents user-defined plugins from running in the worker build, but Vite's internal React Refresh transform (from `@vitejs/plugin-react-swc`) injects its preamble at a different stage in dev mode for ES module workers. The `window` shim is the standard fix used across the Vite ecosystem for this exact issue.
+The `window` shim from the previous fix can be kept as a safety net (it won't hurt), or removed since it's no longer needed. I'll keep it for defense-in-depth.
 
-### Expected Result
+### Technical Details
 
-1. Worker module loads without `window is not defined` error
-2. `self.onmessage` registers successfully  
-3. Compilation requests are received and processed
-4. Preview renders after generation completes
+- The `exclude` option is documented for exactly this use case: "You may use it to exclude JSX/TSX files that run in a worker"
+- The default `exclude` is `/node_modules/`, so we need to include that in our pattern as well, or pass an array
+- Since `exclude` accepts a regex or array, we'll use an array to preserve the default node_modules exclusion
 
+Final config:
+```typescript
+react({
+  exclude: [/node_modules/, /\.worker\.(ts|js|tsx|jsx)$/],
+}),
+```
