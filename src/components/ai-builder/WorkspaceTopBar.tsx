@@ -7,7 +7,7 @@ import { SyncStatusIndicator, HeaderCreditsIndicator, ProjectDropdownMenu, UndoP
 import {
   Eye, Code, Database, Search, History,
   Columns, Rocket, Terminal, Globe, Users, Zap, RefreshCw,
-  MessageSquare, Clock, Cloud,
+  MessageSquare, Clock, Cloud, ShieldCheck, Gauge, Palette,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ultriumLogo from '/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png';
@@ -40,6 +40,9 @@ interface WorkspaceTopBarProps {
   setShowSupabaseIDE: (v: boolean) => void;
   setShowCloudView: (v: boolean) => void;
   setShowTerminal: (v: boolean) => void;
+  setShowSecurityAuditor: (v: boolean) => void;
+  setShowPerformanceProfiler: (v: boolean) => void;
+  setShowDesignView: (v: boolean) => void;
   onOpenPanel: (key: string) => void;
   previewCurrentUrl: string;
   previewIframeRef: RefObject<HTMLIFrameElement | null>;
@@ -59,6 +62,7 @@ export function WorkspaceTopBar({
   setShowPromptHistory, setShowVersionHistory,
   setShowSettingsPanel, setShowPublishPanel, setShowBilling, setShowShareDialog,
   setShowSupabaseIDE, setShowCloudView, setShowTerminal,
+  setShowSecurityAuditor, setShowPerformanceProfiler, setShowDesignView,
   onOpenPanel,
   previewCurrentUrl, previewIframeRef,
   syncStatus, lastSaved,
@@ -180,6 +184,30 @@ export function WorkspaceTopBar({
               </button>
             </TooltipTrigger>
             <TooltipContent side="bottom" className="text-xs">Terminal</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button onClick={() => setShowDesignView(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
+                <Palette className="h-3.5 w-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">Design</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button onClick={() => setShowSecurityAuditor(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
+                <ShieldCheck className="h-3.5 w-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">Security</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button onClick={() => setShowPerformanceProfiler(true)} className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
+                <Gauge className="h-3.5 w-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">Speed</TooltipContent>
           </Tooltip>
           <div className="h-4 w-px bg-white/[0.08] mx-0.5" />
           <Tooltip>

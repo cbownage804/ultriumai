@@ -47,7 +47,7 @@ export const PANEL_KEYS = [
   'showChangelogAuto', 'showREADMEGen', 'showLicensePicker', 'showOpenAPISpec', 'showProjectHealth',
   // Non-panel-group panels managed inline
   'showPromptHistory', 'showFileSearch', 'showFileTree', 'showTemplates', 'showShortcuts',
-  'showQuickSwitcher', 'showCloudView',
+  'showQuickSwitcher', 'showCloudView', 'showDesignView',
 ] as const;
 
 export type PanelKey = typeof PANEL_KEYS[number];
