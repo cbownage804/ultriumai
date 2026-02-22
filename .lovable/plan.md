@@ -1,54 +1,60 @@
 
 
-## Fix: Widen parserConfig to Skip ALL Worker Directory Files
+## Fix: Make Worker Self-Contained to Eliminate React Refresh Crash
 
 ### Root Cause
 
-The `parserConfig` regex `/\.worker\.(ts|js|tsx|jsx)$/` correctly excludes `compiler.worker.ts` from React Refresh injection, but `worker-window-shim.ts` does NOT match this pattern (it ends in `-shim.ts`). So Vite injects the `@react-refresh` preamble into the shim file.
+The `parserConfig` exclusion correctly skips files inside `src/workers/`, but the worker imports `DEFAULT_PACKAGES` from `@/lib/cdnPackageRegistry.ts` -- which is **outside** `src/workers/`. Vite injects the React Refresh preamble into that file. When the worker loads it, the `/@react-refresh` virtual module crashes in the worker context, silently killing the worker before any code executes.
 
-ES module evaluation order:
-1. `compiler.worker.ts` loads (no preamble -- good)
-2. Its first import `./worker-window-shim` loads -- but this file HAS the preamble injected
-3. The preamble does `import RefreshRuntime from '/@react-refresh'` which accesses `window` -- CRASH
-4. The shim's body `(self as any).window = self` never executes
+This is why none of the `[CompilerWorker]` diagnostic logs appear in the console -- the worker never gets past module initialization.
+
+```text
+Worker module loading:
+  compiler.worker.ts (no preamble -- in workers/)
+    -> worker-window-shim.ts (no preamble -- in workers/)   [OK]
+    -> cdnPackageRegistry.ts (HAS preamble -- NOT in workers/)
+       -> /@react-refresh (Vite virtual module -- CRASHES in worker)
+```
 
 ### Fix
 
-Change the `parserConfig` filter from matching `*.worker.ts` filenames to matching any file inside the `src/workers/` directory:
+Move the shared data (`DEFAULT_PACKAGES` array and `CDNPackageEntry` type) into a new file inside `src/workers/` so the worker only imports from its own directory. The main-thread code (`cdnPackageRegistry.ts`) will re-export from the new shared file.
 
-**File: `vite.config.ts`** (line 16)
+### Changes
 
-Change:
-```typescript
-if (/\.worker\.(ts|js|tsx|jsx)$/.test(id)) return undefined;
-```
+**1. New file: `src/workers/packageData.ts`**
 
-To:
-```typescript
-if (/\/workers\//.test(id)) return undefined;
-```
+Contains the `CDNPackageEntry` interface and `DEFAULT_PACKAGES` constant (cut from `cdnPackageRegistry.ts`). Since it lives in `src/workers/`, it will NOT receive the React Refresh preamble.
 
-This ensures:
-- `compiler.worker.ts` -- skipped (no preamble)
-- `worker-window-shim.ts` -- skipped (no preamble)
-- Any future worker utility files -- also skipped
+**2. Update: `src/lib/cdnPackageRegistry.ts`**
 
-With this fix, the shim evaluates first (depth-first import order), sets `window = self`, and all subsequent imports (like `useProjectFileSystem.ts` which DO get the preamble) will find `window` already defined.
+Replace the inline `CDNPackageEntry` interface and `DEFAULT_PACKAGES` array with re-exports from `@/workers/packageData`. All existing consumers (useReactCompiler, etc.) continue working with zero changes.
 
-### Why This Works
+**3. Update: `src/workers/compiler.worker.ts`**
+
+Change the import from `@/lib/cdnPackageRegistry` to `./packageData`. This eliminates the only import that reaches outside the workers directory, making the worker fully self-contained.
+
+**4. Update: `src/hooks/useWorkerCompiler.ts`**
+
+- Change the type import to come from `@/workers/packageData` instead of `@/lib/cdnPackageRegistry`.
+- Add an `onerror` handler on the worker to catch and log any future load failures (defense-in-depth).
+
+### Result
 
 ```text
-Import evaluation order:
-  compiler.worker.ts        (no preamble -- matched by /workers/)
-    -> worker-window-shim.ts  (no preamble -- matched by /workers/)
-       Body runs: window = self   [SUCCESS]
-    -> useProjectFileSystem.ts (has preamble, but window exists now)
-       @react-refresh accesses window   [OK -- window = self]
-    -> cdnPackageRegistry.ts   (has preamble, window exists)
-       [OK]
+Worker module loading (fixed):
+  compiler.worker.ts (no preamble)
+    -> worker-window-shim.ts (no preamble)     [OK]
+    -> packageData.ts (no preamble -- in workers/)  [OK]
+    -- NO imports outside src/workers/ --
 ```
 
-### Single File Change
+The worker loads cleanly, compilation proceeds, and the preview renders.
 
-Only `vite.config.ts` line 16 changes. No other files affected.
+### Technical Details
+
+- `useProjectFileSystem` is already a `type`-only import in the worker, so it gets erased by TypeScript and never loads at runtime
+- `CDNPackageEntry` is also type-only in the worker and in `useWorkerCompiler.ts`
+- Only `DEFAULT_PACKAGES` is a runtime value needed by the worker
+- The `onerror` handler will surface worker crashes in the main-thread console going forward, preventing silent failures
 
