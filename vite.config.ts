@@ -10,7 +10,15 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [
-    react(),
+    react({
+      parserConfig(id) {
+        // Skip worker files to prevent React Refresh injection (workers lack `window`)
+        if (/\.worker\.(ts|js|tsx|jsx)$/.test(id)) return undefined;
+        if (id.endsWith('.tsx')) return { syntax: 'typescript', tsx: true };
+        if (id.endsWith('.ts') || id.endsWith('.mts')) return { syntax: 'typescript', tsx: false };
+        if (id.endsWith('.jsx') || id.endsWith('.mdx')) return { syntax: 'ecmascript', jsx: true };
+      },
+    }),
     mode === 'development' &&
     componentTagger(),
   ].filter(Boolean),
