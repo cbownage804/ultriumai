@@ -602,87 +602,15 @@ window.addEventListener('message', function(e) {
         ) : isCompiling ? (
           <CompilationProgress fileCount={projectFiles?.length} />
         ) : (
-          <div className="flex flex-col items-center justify-center h-full w-full text-center relative overflow-hidden select-none">
-            {/* Vibrant background image — full bleed */}
-            <img src={previewBg} alt="" className="absolute inset-0 w-full h-full object-cover opacity-50 transition-opacity duration-1000" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a12] via-[#0a0a12]/60 to-[#0a0a12]/30" />
-            
-            {/* Animated mesh gradient background */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden">
-              <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] rounded-full bg-cyan-500/[0.07] blur-[120px] animate-pulse" />
-              <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full bg-violet-500/[0.06] blur-[100px] animate-pulse" style={{ animationDelay: '1.5s', animationDuration: '4s' }} />
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full bg-fuchsia-500/[0.04] blur-[80px] animate-pulse" style={{ animationDelay: '3s', animationDuration: '5s' }} />
-            </div>
-
-            {/* Floating particles */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden">
-              {[...Array(6)].map((_, i) => (
-                <div
-                  key={i}
-                  className="absolute h-1 w-1 rounded-full bg-cyan-400/30"
-                  style={{
-                    left: `${15 + i * 15}%`,
-                    top: `${20 + (i % 3) * 25}%`,
-                    animation: `float ${3 + i * 0.5}s ease-in-out infinite alternate`,
-                    animationDelay: `${i * 0.4}s`,
-                  }}
-                />
-              ))}
-            </div>
-            
-            <div className="relative z-10 space-y-8 px-6">
-              {/* Glowing icon with breathing animation */}
-              <div className="relative mx-auto w-fit">
-                <div className="absolute -inset-8 bg-cyan-500/15 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '3s' }} />
-                <div className="absolute -inset-5 bg-violet-500/10 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s', animationDuration: '4s' }} />
-                <div className="relative h-20 w-20 rounded-2xl bg-gradient-to-br from-cyan-500/25 via-violet-500/20 to-fuchsia-500/15 border border-cyan-400/15 flex items-center justify-center mx-auto shadow-2xl shadow-cyan-500/20 backdrop-blur-xl transition-transform hover:scale-105 duration-300">
-                  <Activity className="h-9 w-9 text-cyan-300/90" />
-                </div>
-              </div>
-              
-              {/* Title with refined typography */}
-              <div className="space-y-3">
-                <h3 className="font-bold text-3xl tracking-tight bg-gradient-to-r from-cyan-300 via-white/95 to-violet-300 bg-clip-text text-transparent drop-shadow-sm">
-                  Live Preview
-                </h3>
-                <p className="text-sm text-white/40 max-w-[320px] mx-auto leading-relaxed">
-                  Describe what you want to build and watch your app come to life in real-time
-                </p>
-              </div>
-              
-              {/* Feature pills with hover effects */}
-              <div className="flex items-center gap-2.5 justify-center flex-wrap">
-                {[
-                  { label: 'Hot reload', color: 'cyan' },
-                  { label: 'Multi-file', color: 'violet' },
-                  { label: 'Responsive', color: 'emerald' },
-                ].map(({ label, color }) => (
-                  <span
-                    key={label}
-                    className={cn(
-                      "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium backdrop-blur-sm transition-all duration-200 hover:scale-105 cursor-default",
-                      `bg-${color}-500/10 border border-${color}-500/20 text-${color}-300`
-                    )}
-                  >
-                    <span className={`h-1.5 w-1.5 rounded-full bg-${color}-400 shadow-sm shadow-${color}-400`} />
-                    {label}
-                  </span>
-                ))}
-              </div>
-              
-              {/* Keyboard shortcut hint */}
-              <p className="text-[11px] text-white/20">
-                Press <kbd className="px-1.5 py-0.5 bg-white/[0.06] border border-white/[0.08] rounded text-[10px] font-mono text-white/30">⌘K</kbd> for commands
+          <div className="flex flex-col items-center justify-center h-full w-full text-center select-none">
+            <div className="space-y-3 px-6">
+              <h3 className="font-semibold text-xl text-white/80 tracking-tight">
+                Live Preview
+              </h3>
+              <p className="text-sm text-white/30 max-w-[300px] mx-auto">
+                Describe what you want to build
               </p>
             </div>
-
-            {/* CSS for floating particles */}
-            <style>{`
-              @keyframes float {
-                from { transform: translateY(0) scale(1); opacity: 0.3; }
-                to { transform: translateY(-20px) scale(1.5); opacity: 0.1; }
-              }
-            `}</style>
           </div>
         )}
       </div>
@@ -743,50 +671,6 @@ window.addEventListener('message', function(e) {
         </div>
       )}
 
-      {/* Console tab switcher + Error Console */}
-      <div className="border-t border-white/[0.06]">
-        <div className="flex items-center gap-0.5 px-2 py-1 bg-[#0a0a10]">
-          <button
-            onClick={() => setConsoleTab('errors')}
-            className={cn("text-[10px] px-2 py-0.5 rounded font-medium transition-colors", consoleTab === 'errors' ? "bg-white/[0.06] text-white/60" : "text-white/25 hover:text-white/40")}
-          >
-            Errors {errors.filter(e => e.type === 'error').length > 0 && <span className="ml-1 text-red-400">{errors.filter(e => e.type === 'error').length}</span>}
-          </button>
-          <button
-            onClick={() => setConsoleTab('console')}
-            className={cn("text-[10px] px-2 py-0.5 rounded font-medium transition-colors", consoleTab === 'console' ? "bg-white/[0.06] text-white/60" : "text-white/25 hover:text-white/40")}
-          >
-            Console {consoleLogs.length > 0 && <span className="ml-1 text-white/30">{consoleLogs.length}</span>}
-          </button>
-          {consoleTab === 'console' && consoleLogs.length > 0 && (
-            <button onClick={() => setConsoleLogs([])} className="ml-auto text-[9px] text-white/20 hover:text-white/40">Clear</button>
-          )}
-        </div>
-        {consoleTab === 'console' && consoleLogs.length > 0 && (
-          <div className="max-h-32 overflow-auto bg-[#0a0a10] px-2 pb-1 space-y-0.5">
-            {consoleLogs.map((log, i) => (
-              <div key={i} className="flex items-start gap-1.5 text-[10px] font-mono py-0.5">
-                {log.level === 'info' ? <Info className="h-2.5 w-2.5 text-blue-400/50 shrink-0 mt-0.5" /> : <Terminal className="h-2.5 w-2.5 text-white/20 shrink-0 mt-0.5" />}
-                <span className="text-white/40 break-all">{log.message}</span>
-                <span className="text-white/10 shrink-0 ml-auto">{log.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-      {consoleTab === 'errors' && (
-        <ErrorConsole
-          errors={errors}
-          onClear={() => setErrors([])}
-          onFixRequest={(err) => onFixError?.(`Fix this error in my app: "${err.message}"${err.source ? ` (in ${err.source}${err.line ? `:${err.line}` : ''})` : ''}`)}
-          onSmartFixRequest={(err, ctx) => {
-            setErrors(prev => prev.map(e => e.id === err.id ? { ...e, fixAttempts: err.fixAttempts } : e));
-            onSmartFixError?.(err, ctx);
-          }}
-          projectFiles={projectFiles}
-          onStartOver={onStartOver}
-        />
-      )}
     </div>
   );
 }

@@ -21,14 +21,17 @@ interface ProjectFileTreeProps {
 function getFileIcon(path: string) {
   const ext = path.split('.').pop()?.toLowerCase() || '';
   switch (ext) {
-    case 'html': case 'htm': return <FileCode className="h-3.5 w-3.5 text-orange-400/70" />;
-    case 'css': case 'scss': return <FileCode className="h-3.5 w-3.5 text-blue-400/70" />;
-    case 'js': case 'jsx': return <FileCode className="h-3.5 w-3.5 text-yellow-400/70" />;
-    case 'ts': case 'tsx': return <FileCode className="h-3.5 w-3.5 text-blue-500/70" />;
-    case 'json': return <FileText className="h-3.5 w-3.5 text-emerald-400/70" />;
-    case 'md': return <FileText className="h-3.5 w-3.5 text-white/30" />;
-    case 'svg': case 'png': case 'jpg': case 'gif': case 'webp': return <Image className="h-3.5 w-3.5 text-violet-400/70" />;
-    default: return <File className="h-3.5 w-3.5 text-white/30" />;
+    case 'html': case 'htm':
+    case 'css': case 'scss':
+    case 'js': case 'jsx':
+    case 'ts': case 'tsx':
+    case 'json':
+      return <FileCode className="h-3.5 w-3.5 text-white/40" />;
+    case 'svg': case 'png': case 'jpg': case 'gif': case 'webp':
+      return <Image className="h-3.5 w-3.5 text-white/40" />;
+    case 'md':
+      return <FileText className="h-3.5 w-3.5 text-white/40" />;
+    default: return <File className="h-3.5 w-3.5 text-white/40" />;
   }
 }
 
@@ -169,114 +172,25 @@ function TreeItem({
     );
   }
 
-  const [showContextMenu, setShowContextMenu] = useState(false);
-  const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
-  const status = fileStatus?.get(node.path);
-
-  const handleContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setContextMenuPos({ x: e.clientX, y: e.clientY });
-    setShowContextMenu(true);
-  };
-
   return (
-    <div className="relative">
+    <div>
       <div
         className={cn(
-          'flex items-center gap-1.5 w-full rounded-md text-[11px] transition-all group',
+          'flex items-center gap-1.5 w-full rounded-md text-[11px] transition-all',
           isActive
             ? 'bg-cyan-500/10 text-cyan-300'
             : 'text-white/45 hover:text-white/70 hover:bg-white/[0.03]'
         )}
         style={{ paddingLeft: `${depth * 12 + 20}px`, paddingRight: 4, paddingTop: 3, paddingBottom: 3 }}
-        onContextMenu={handleContextMenu}
       >
         <button
           onClick={() => onSelectFile(node.path)}
           className="flex items-center gap-1.5 flex-1 min-w-0 text-left"
         >
           {getFileIcon(node.path)}
-          {isRenaming ? (
-            <input
-              autoFocus
-              value={renameValue}
-              onChange={(e) => onRenameChange(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') onFinishRename(node.path);
-                if (e.key === 'Escape') onCancelRename();
-              }}
-              onBlur={() => onFinishRename(node.path)}
-              onClick={(e) => e.stopPropagation()}
-              className="flex-1 bg-transparent text-[11px] text-white/80 outline-none border-b border-cyan-500/30 font-mono py-0"
-            />
-          ) : (
-            <span className="truncate flex-1 font-mono">{node.name}</span>
-          )}
-          {status && (
-            <div className={cn(
-              "h-1.5 w-1.5 rounded-full shrink-0 ml-1",
-              status === 'new' ? "bg-emerald-400" : "bg-amber-400"
-            )} title={status === 'new' ? 'New file' : 'Modified'} />
-          )}
+          <span className="truncate flex-1 font-mono">{node.name}</span>
         </button>
-        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-          {onRenameFile && (
-            <button
-              className="h-4 w-4 flex items-center justify-center hover:bg-white/10 rounded"
-              onClick={(e) => { e.stopPropagation(); onStartRename(node.path, node.name); }}
-              title="Rename"
-            >
-              <Pencil className="h-2.5 w-2.5 text-white/30" />
-            </button>
-          )}
-          {node.file && (
-            <button
-              className="h-4 w-4 flex items-center justify-center hover:bg-white/10 rounded"
-              onClick={(e) => { e.stopPropagation(); onDownload(node.file!); }}
-              title="Download"
-            >
-              <Download className="h-2.5 w-2.5 text-white/30" />
-            </button>
-          )}
-          <button
-            className="h-4 w-4 flex items-center justify-center hover:bg-white/10 rounded"
-            onClick={(e) => { e.stopPropagation(); onDeleteFile(node.path); }}
-            title="Delete"
-          >
-            <Trash2 className="h-2.5 w-2.5 text-red-400/50" />
-          </button>
-        </div>
       </div>
-
-      {/* Context Menu */}
-      {showContextMenu && (
-        <>
-          <div className="fixed inset-0 z-50" onClick={() => setShowContextMenu(false)} />
-          <div
-            className="fixed z-50 bg-[#0d0d14] border border-white/[0.08] rounded-lg shadow-xl py-1 min-w-[140px]"
-            style={{ left: contextMenuPos.x, top: contextMenuPos.y }}
-          >
-            {onRenameFile && (
-              <button onClick={() => { setShowContextMenu(false); onStartRename(node.path, node.name); }} className="w-full text-left px-3 py-1.5 text-[11px] text-white/60 hover:text-white/90 hover:bg-white/[0.04] flex items-center gap-2">
-                <Pencil className="h-3 w-3" /> Rename
-              </button>
-            )}
-            {node.file && (
-              <button onClick={() => { setShowContextMenu(false); onDownload(node.file!); }} className="w-full text-left px-3 py-1.5 text-[11px] text-white/60 hover:text-white/90 hover:bg-white/[0.04] flex items-center gap-2">
-                <Download className="h-3 w-3" /> Download
-              </button>
-            )}
-            <button onClick={() => { setShowContextMenu(false); navigator.clipboard.writeText(node.path); }} className="w-full text-left px-3 py-1.5 text-[11px] text-white/60 hover:text-white/90 hover:bg-white/[0.04] flex items-center gap-2">
-              <File className="h-3 w-3" /> Copy Path
-            </button>
-            <div className="h-px bg-white/[0.06] my-1" />
-            <button onClick={() => { setShowContextMenu(false); onDeleteFile(node.path); }} className="w-full text-left px-3 py-1.5 text-[11px] text-red-400/70 hover:text-red-400 hover:bg-red-500/[0.04] flex items-center gap-2">
-              <Trash2 className="h-3 w-3" /> Delete
-            </button>
-          </div>
-        </>
-      )}
     </div>
   );
 }
@@ -399,39 +313,10 @@ export function ProjectFileTree({ files, activeFilePath, onSelectFile, onDeleteF
       {/* Header */}
       <div className="px-2 py-1.5 border-b border-white/[0.06] flex items-center justify-between gap-1">
         <span className="text-[10px] font-semibold text-white/20 uppercase tracking-widest shrink-0">Explorer</span>
-        <div className="flex items-center gap-0.5">
-          <span className="text-[9px] text-white/15 font-mono">{files.length}</span>
-          {onCreateFile && (
-            <button
-              onClick={() => setIsCreating(true)}
-              className="h-5 w-5 rounded flex items-center justify-center text-white/20 hover:text-white/60 hover:bg-white/5 transition-colors"
-              title="New file"
-            >
-              <Plus className="h-3 w-3" />
-            </button>
-          )}
-        </div>
+        <span className="text-[9px] text-white/15 font-mono">{files.length}</span>
       </div>
 
-      {/* Search filter */}
-      <div className="px-2 py-1.5 border-b border-white/[0.04]">
-        <div className="flex items-center gap-1.5 bg-white/[0.03] border border-white/[0.06] rounded-md px-2 h-6">
-          <Search className="h-2.5 w-2.5 text-white/20 shrink-0" />
-          <input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Filter files..."
-            className="flex-1 bg-transparent text-[10px] text-white/60 placeholder:text-white/15 outline-none font-mono"
-          />
-          {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="text-white/20 hover:text-white/50">
-              <X className="h-2.5 w-2.5" />
-            </button>
-          )}
-        </div>
-      </div>
-
-      <ScrollArea className="h-[calc(100%-68px)]">
+      <ScrollArea className="h-[calc(100%-32px)]">
         <div className="py-1">
           {/* New file input */}
           {isCreating && (

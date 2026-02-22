@@ -1710,11 +1710,7 @@ export function BuilderChatPanel({
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               onPaste={handlePaste}
-              placeholder={
-                mode === 'discuss'
-                  ? "Ask a question..."
-                  : messages.length === 0 ? 'Describe the app you want to build...' : 'Describe changes...'
-              }
+              placeholder="Ask Lovable..."
               rows={3}
               className="flex-1 bg-transparent text-sm text-white/90 placeholder:text-white/35 resize-none outline-none focus:outline-none focus:ring-0 border-none min-h-[72px] max-h-[200px] py-0.5"
             />
@@ -1726,181 +1722,19 @@ export function BuilderChatPanel({
                 <Square className="h-3 w-3" />
               </button>
             ) : (
-              <div className="flex items-center gap-1.5 shrink-0">
-                {/* Credit cost badge */}
-                {input.trim() && (
-                  <span className={cn(
-                    "text-[9px] font-medium px-1.5 py-0.5 rounded-md border",
-                    mode === 'build'
-                      ? "text-amber-400/70 bg-amber-500/[0.08] border-amber-500/20"
-                      : "text-emerald-400/70 bg-emerald-500/[0.08] border-emerald-500/20"
-                  )}>
-                    {mode === 'build' ? '1 credit' : 'Free'}
-                  </span>
+              <button
+                onClick={handleSend}
+                disabled={!input.trim()}
+                className={cn(
+                  "h-8 w-8 rounded-lg flex items-center justify-center transition-all shrink-0",
+                  input.trim()
+                    ? "bg-white text-black hover:bg-white/90"
+                    : "bg-white/5 text-white/20"
                 )}
-                <button
-                  onClick={handleSend}
-                  disabled={!input.trim()}
-                  className={cn(
-                    "h-8 w-8 rounded-lg flex items-center justify-center transition-all",
-                    input.trim()
-                      ? mode === 'build'
-                        ? "bg-gradient-to-br from-violet-500 to-violet-400 text-white hover:opacity-90 shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40"
-                        : "bg-gradient-to-br from-cyan-500 to-cyan-400 text-black hover:opacity-90 shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40"
-                      : "bg-white/5 text-white/20"
-                  )}
-                >
-                  <Send className="h-3.5 w-3.5" />
-                </button>
-              </div>
+              >
+                <Send className="h-3.5 w-3.5" />
+              </button>
             )}
-          </div>
-          {/* Bottom bar: mode toggle + model selector */}
-          <div className="flex items-center justify-between px-3 py-2 border-t border-white/[0.06] bg-white/[0.02]">
-            <div data-tour="mode-toggle" className="flex items-center gap-0.5 bg-white/[0.03] rounded-md p-0.5">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => onModeChange('discuss')}
-                    className={cn(
-                      "flex items-center gap-1 text-[10px] px-2.5 py-1 rounded transition-all font-medium",
-                      mode === 'discuss'
-                        ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/25"
-                        : "text-white/40 hover:text-white/60 border border-transparent"
-                    )}
-                  >
-                    <MessageCircle className="h-2.5 w-2.5" />
-                    Chat
-                    <span className="text-[8px] opacity-60 ml-0.5">1cr</span>
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs max-w-[180px]">Discuss ideas, ask questions, and plan your project without generating code</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => onModeChange('build')}
-                    className={cn(
-                      "flex items-center gap-1 text-[10px] px-2.5 py-1 rounded transition-all font-medium",
-                      mode === 'build'
-                        ? "bg-violet-500/15 text-violet-300 border border-violet-500/25"
-                        : "text-white/40 hover:text-white/60 border border-transparent"
-                    )}
-                  >
-                    <Wand2 className="h-2.5 w-2.5" />
-                    Build
-                    <span className="text-[8px] opacity-60 ml-0.5">2cr</span>
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs max-w-[180px]">Generate and modify code with the AI agent to build your app</TooltipContent>
-              </Tooltip>
-              {onReview && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={onReview}
-                      className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded transition-all font-medium text-white/40 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/25"
-                    >
-                      <ClipboardCheck className="h-2.5 w-2.5" />
-                      Review
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs max-w-[180px]">Run a health check to find bugs, accessibility issues, and best-practice violations</TooltipContent>
-                </Tooltip>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2">
-              {/* Context budget indicator */}
-              {contextBudget && contextBudget.percentUsed > 0 && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded cursor-default">
-                      <div className="w-10 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-                        <div
-                          className={cn(
-                            "h-full rounded-full transition-all duration-500",
-                            contextBudget.isCritical ? "bg-red-400" : contextBudget.isWarning ? "bg-amber-400" : "bg-emerald-400"
-                          )}
-                          style={{ width: `${contextBudget.percentUsed}%` }}
-                        />
-                      </div>
-                      <span className={cn(
-                        "text-[9px] font-mono",
-                        contextBudget.isCritical ? "text-red-400" : contextBudget.isWarning ? "text-amber-400" : "text-white/30"
-                      )}>
-                        {Math.round(contextBudget.percentUsed)}%
-                      </span>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs max-w-[240px]">
-                    <div className="space-y-1">
-                      <div className="font-medium">Context Budget: {Math.round(contextBudget.percentUsed)}% used</div>
-                      <div className="text-white/50">{(contextBudget.totalChars / 1000).toFixed(0)}K / {(contextBudget.maxChars / 1000).toFixed(0)}K chars</div>
-                      <div className="text-white/40 text-[10px] space-y-0.5">
-                        <div>📄 {contextBudget.filesIncluded} files included{contextBudget.filesOmitted > 0 ? `, ${contextBudget.filesOmitted} omitted` : ''}</div>
-                        <div>💬 History: {(contextBudget.historyChars / 1000).toFixed(0)}K chars</div>
-                        <div>📦 Files: {(contextBudget.fileContextChars / 1000).toFixed(0)}K chars</div>
-                      </div>
-                      {contextBudget.isCritical && <div className="text-red-400 text-[10px]">⚠️ Near limit — try shorter prompts or start a new chat</div>}
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-              {/* Model selector */}
-              {onModelChange && (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="flex items-center gap-1 text-[10px] text-white/50 hover:text-white/70 transition-colors px-1.5 py-1 rounded hover:bg-white/[0.05]">
-                      <span>{AI_MODELS.find(m => m.id === selectedModel)?.icon || '⚡'}</span>
-                      <span>{AI_MODELS.find(m => m.id === selectedModel)?.label || 'Flash'}</span>
-                      <ChevronDown className="h-2.5 w-2.5" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent side="top" align="end" className="w-[160px] p-1 bg-[#0d0d14] border-white/[0.10] shadow-xl z-50">
-                    {AI_MODELS.map(m => (
-                      <button
-                        key={m.id}
-                        onClick={() => onModelChange(m.id)}
-                        className={cn(
-                          "w-full flex items-center gap-1.5 px-2 py-1.5 rounded text-[10px] transition-colors",
-                          selectedModel === m.id ? "bg-white/10 text-white/90" : "text-white/50 hover:text-white/80 hover:bg-white/[0.05]"
-                        )}
-                      >
-                        <span>{m.icon}</span>
-                        <div className="text-left">
-                          <div className="font-medium">{m.label}</div>
-                          <div className="text-[8px] text-white/30">{m.desc}</div>
-                        </div>
-                      </button>
-                    ))}
-                  </PopoverContent>
-                </Popover>
-              )}
-              {(() => {
-                const userMsgCount = messages.filter(m => m.role === 'user' && !isInternalMessage(m.content)).length;
-                if (userMsgCount === 0) return <span className="text-[9px] text-white/40 font-mono flex items-center gap-1"><Coins className="h-2.5 w-2.5 text-amber-400/60" />{mode === 'build' ? '1 credit' : 'Free'}</span>;
-                const analysis = analyzeConversationComplexity(messages.map(m => ({ role: m.role, content: m.content })));
-                const userTexts = messages.filter(m => m.role === 'user').map(m => m.content);
-                const tone = detectCommunicationStyle(userTexts);
-                const toneEmoji = { technical: '🔧', casual: '💬', concise: '⚡', detailed: '📝' }[tone.style];
-                return (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="text-[9px] text-white/40 font-mono cursor-default">
-                        {toneEmoji} {userMsgCount} msg{userMsgCount > 1 ? 's' : ''} · {analysis.topicCount} topic{analysis.topicCount !== 1 ? 's' : ''}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="text-xs max-w-[220px]">
-                      <div className="space-y-1">
-                        <div>{analysis.summary}</div>
-                        <div className="text-white/40">Tone: {tone.style}</div>
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                );
-              })()}
-            </div>
           </div>
         </div>
       </div>

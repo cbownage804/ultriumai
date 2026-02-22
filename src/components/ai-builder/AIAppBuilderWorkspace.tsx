@@ -2867,22 +2867,6 @@ export function AIAppBuilderWorkspace() {
           )}
         </div>
 
-        {/* Status Bar */}
-        <WorkspaceStatusBar
-          hasFiles={hasFiles}
-          isMobile={isMobile}
-          isGenerating={isGenerating}
-          activeFileLanguage={activeFile?.language}
-          cursorPosition={cursorPosition}
-          fileCount={project.files.length}
-          activeBranchName={activeBranchName}
-          dirtyFilesCount={dirtyFiles.size}
-          aiAutocompleteEnabled={aiAutocompleteEnabled}
-          onToggleAutocomplete={() => setAiAutocompleteEnabled(prev => !prev)}
-          isSaving={isSaving}
-          lastSaved={lastSaved}
-          buildCount={buildCount}
-        />
 
         {/* Project Settings Modal */}
         <ProjectSettingsModal
@@ -3053,39 +3037,6 @@ export function AIAppBuilderWorkspace() {
           showChangelogAuto={!!panels.showChangelogAuto} setShowChangelogAuto={setShowChangelogAuto} showREADMEGen={!!panels.showREADMEGen} setShowREADMEGen={setShowREADMEGen} showLicensePicker={!!panels.showLicensePicker} setShowLicensePicker={setShowLicensePicker} showOpenAPISpec={!!panels.showOpenAPISpec} setShowOpenAPISpec={setShowOpenAPISpec} showProjectHealth={!!panels.showProjectHealth} setShowProjectHealth={setShowProjectHealth}
         />
       )}
-      <WorkspaceBottomBar
-        supabaseConfig={supabaseConfig}
-        githubConfig={githubConfig}
-        stripeConfig={stripeConfig}
-        vercelConfig={vercelConfig}
-        serviceKeys={serviceKeys}
-        envVars={envVars}
-        projectName={project.name}
-        projectSlug={previewSlug}
-        showSettingsPanel={showSettingsPanel}
-        setShowSettingsPanel={setShowSettingsPanel}
-        onSupabaseChange={setSupabaseConfig}
-        onGithubChange={setGithubConfig}
-        onStripeChange={setStripeConfig}
-        onVercelChange={setVercelConfig}
-        onServiceKeysChange={setServiceKeys}
-        onEnvVarsChange={setEnvVars}
-        onDeleteProject={() => {
-          if (currentProjectId) deleteProject(currentProjectId);
-          resetProject(); clearChat(); setStableHTML(null); dedupeToast('success', 'Project deleted'); setShowSettingsPanel(false);
-        }}
-        onResetProject={() => { resetProject(); setStableHTML(null); dedupeToast('success', 'Project reset'); setShowSettingsPanel(false); }}
-        files={project.files}
-        compiledHTML={compiledHTML}
-        hostedPreviewUrl={hostedPreviewUrl}
-        isUploadingPreview={isUploadingPreview}
-        onInstantUpload={previewSlug ? () => uploadPreviewNow(previewSlug, compiledHTML) : undefined}
-        cdnPackages={cdnPackages}
-        edgeFunctions={edgeFunctions}
-        publishedUrl={publishedUrl}
-        currentProjectId={currentProjectId}
-        onGithubPullFiles={handleGithubPullFiles}
-      />
       {pendingConflicts && (
         <FileConflictDialog open={!!pendingConflicts} conflicts={pendingConflicts} onResolve={handleConflictResolve} onCancel={() => setPendingConflicts(null)} />
       )}
