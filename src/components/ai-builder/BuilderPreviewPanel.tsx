@@ -328,6 +328,9 @@ window.addEventListener('message', function(e) {
         // Phase 7: Classify errors — only uncaught exceptions and syntax errors are critical
         const isForcedCritical = e.data?.type === '__PREVIEW_CRITICAL_ERROR__';
         const msg = e.data.message || '';
+        // Filter out host-level Vite dev server errors (not from the preview iframe)
+        const isHostDevError = /react.refresh|@react-refresh|preamble was not loaded/i.test(msg);
+        if (isHostDevError) return;
         const isNetworkNoise = /Failed to load|ERR_BLOCKED|ERR_CONNECTION|favicon\.ico|404/i.test(msg);
         const isSyntaxError = /SyntaxError|Unexpected token|Unterminated/i.test(msg);
         const isUncaughtException = e.data.source && !e.data.source.includes('console.');

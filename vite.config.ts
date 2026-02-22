@@ -27,6 +27,9 @@ export default defineConfig(({ mode }) => ({
     // Force re-optimization so stale prebundles can't keep reintroducing multiple instances.
     force: true,
   },
+  worker: {
+    plugins: () => [],
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
