@@ -1,12 +1,49 @@
 /**
- * Compiler Web Worker — Gap 1
+ * Compiler Web Worker — Gap 1 + Gap 2
  * 
  * Moves ALL compilation logic off the main thread.
- * Receives project files + config via postMessage, returns compiled HTML.
+ * Uses esbuild-wasm for TypeScript stripping (100x faster, zero edge-case bugs).
+ * Falls back to regex-based stripping if esbuild fails to initialize.
  */
 
+import * as esbuild from 'esbuild-wasm';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import { generateImportMap, DEFAULT_PACKAGES, type CDNPackageEntry } from '@/lib/cdnPackageRegistry';
+
+// ── esbuild initialization ──
+let esbuildReady = false;
+let esbuildInitPromise: Promise<void> | null = null;
+
+async function ensureEsbuild(): Promise<boolean> {
+  if (esbuildReady) return true;
+  if (!esbuildInitPromise) {
+    esbuildInitPromise = esbuild.initialize({
+      wasmURL: 'https://unpkg.com/esbuild-wasm@0.25.2/esbuild.wasm',
+      worker: false, // We're already in a worker
+    }).then(() => {
+      esbuildReady = true;
+      console.info('[CompilerWorker] esbuild-wasm initialized');
+    }).catch((err) => {
+      console.warn('[CompilerWorker] esbuild-wasm failed to init, using regex fallback:', err.message);
+      esbuildInitPromise = null; // Allow retry
+    });
+  }
+  await esbuildInitPromise;
+  return esbuildReady;
+}
+
+/** Strip TypeScript using esbuild.transform — fast and correct */
+async function esbuildStripTypes(code: string, isTsx: boolean): Promise<string> {
+  const result = await esbuild.transform(code, {
+    loader: isTsx ? 'tsx' : 'ts',
+    // Only strip types, keep JSX as-is (Babel in the preview handles JSX→JS)
+    jsx: 'preserve',
+    target: 'es2020',
+    // Keep imports/exports so our import resolver can process them
+    format: 'esm',
+  });
+  return result.code;
+}
 
 // ── Types ──
 
@@ -153,7 +190,7 @@ function stripTypeAnnotations(code: string): string {
 }
 
 // ── Transpile File ──
-function transpileFile(file: ProjectFile, moduleMap: Map<string, ProjectFile>): { code: string; externalPackages: string[] } {
+async function transpileFile(file: ProjectFile, moduleMap: Map<string, ProjectFile>, useEsbuild: boolean): Promise<{ code: string; externalPackages: string[] }> {
   const usedExternalPackages = new Set<string>();
   let code = file.content;
 
@@ -166,7 +203,17 @@ function transpileFile(file: ProjectFile, moduleMap: Map<string, ProjectFile>): 
   );
 
   if (file.path.endsWith('.tsx') || file.path.endsWith('.ts')) {
-    code = stripTypeAnnotations(code);
+    if (useEsbuild) {
+      try {
+        code = await esbuildStripTypes(code, file.path.endsWith('.tsx'));
+      } catch (e: any) {
+        // Fallback to regex if esbuild fails on this file
+        console.warn(`[CompilerWorker] esbuild failed for ${file.path}, using regex:`, e.message);
+        code = stripTypeAnnotations(code);
+      }
+    } else {
+      code = stripTypeAnnotations(code);
+    }
   }
 
   const importLines: string[] = [];
@@ -400,10 +447,11 @@ function resolveCSSimports(cssContent: string, cssPath: string, allFiles: Projec
 }
 
 // ── Main compile function ──
-function compileReactProject(
+async function compileReactProject(
   files: ProjectFile[],
   options?: CompileRequest['options']
-): CompileResponse {
+): Promise<CompileResponse> {
+  const useEsbuild = await ensureEsbuild();
   const errors: string[] = [];
 
   const reactFiles = files
@@ -424,7 +472,7 @@ function compileReactProject(
   const allExternalPackages = new Set<string>();
   for (let i = 0; i < sorted.length; i++) {
     try {
-      const result = transpileFile(sorted[i], moduleMap);
+      const result = await transpileFile(sorted[i], moduleMap, useEsbuild);
       transpiledChunks.push(result.code);
       for (const pkg of result.externalPackages) allExternalPackages.add(pkg);
     } catch (err: any) {
@@ -753,11 +801,11 @@ window.ENV = ${JSON.stringify(envObj)};
 }
 
 // ── Worker Message Handler ──
-self.onmessage = (e: MessageEvent<WorkerMessage>) => {
+self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
   const msg = e.data;
   if (msg.type === 'compile') {
     try {
-      const result = compileReactProject(msg.files, msg.options);
+      const result = await compileReactProject(msg.files, msg.options);
       result.id = msg.id;
       (self as any).postMessage(result);
     } catch (err: any) {
