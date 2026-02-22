@@ -31,13 +31,28 @@ function getSharedWorker(): Worker {
   return workerInstance;
 }
 
+let releaseTimer: ReturnType<typeof setTimeout> | null = null;
+
 function releaseSharedWorker() {
   workerRefCount--;
-  if (workerRefCount <= 0 && workerInstance) {
-    workerInstance.terminate();
-    workerInstance = null;
-    workerRefCount = 0;
+  if (workerRefCount <= 0) {
+    // Delay termination to survive quick remounts (React strict mode, route transitions)
+    releaseTimer = setTimeout(() => {
+      if (workerRefCount <= 0 && workerInstance) {
+        workerInstance.terminate();
+        workerInstance = null;
+        workerRefCount = 0;
+      }
+    }, 2000);
   }
+}
+
+function getSharedWorkerSafe(): Worker {
+  if (releaseTimer) {
+    clearTimeout(releaseTimer);
+    releaseTimer = null;
+  }
+  return getSharedWorker();
 }
 
 export function useWorkerCompiler() {
@@ -45,7 +60,7 @@ export function useWorkerCompiler() {
   const pendingRef = useRef<Map<string, { resolve: (r: WorkerCompilerResult) => void; reject: (e: Error) => void }>>(new Map());
 
   useEffect(() => {
-    const worker = getSharedWorker();
+    const worker = getSharedWorkerSafe();
     workerRef.current = worker;
 
     worker.onerror = (e) => {
