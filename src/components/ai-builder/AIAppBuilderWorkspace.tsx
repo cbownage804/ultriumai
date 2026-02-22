@@ -310,65 +310,18 @@ export function AIAppBuilderWorkspace() {
       }
       setFiles(mergedFiles);
 
-      // Direct preview: if index.html is a self-contained HTML document, use it immediately
-      // as the preview instead of waiting for CompilationBridge's slow compilation pipeline.
+      // Self-contained HTML shortcut (vanilla HTML projects without module scripts)
       const indexFile = mergedFiles.find(f => f.path === 'index.html');
       const hasLocalModuleScripts = /src=["']\.?\/(?:src|main|app|index)\b/i.test(indexFile?.content || '');
-      if (indexFile && !hasLocalModuleScripts && indexFile.content.includes('<!DOCTYPE html') && indexFile.content.includes('</html>')) {
+      if (indexFile && !hasLocalModuleScripts &&
+          indexFile.content.includes('<!DOCTYPE html') &&
+          indexFile.content.includes('</html>')) {
         console.info('[handleBgComplete] Self-contained index.html detected — setting preview directly');
         stableHTMLRef.current = indexFile.content;
         setStableHTML(indexFile.content);
-      } else {
-        // 1. Try worker compilation for React projects (TSX/JSX) — off main thread
-        const hasReactFiles = mergedFiles.some(f => /\.(tsx|jsx)$/.test(f.path));
-        if (hasReactFiles) {
-          try {
-            console.info('[handleBgComplete] Attempting worker compilation for React project...');
-            const compiled = await Promise.race([
-              compileReactProjectRef.current(mergedFiles, {
-                supabaseConfig: supabaseConfigRef.current || undefined,
-                stripeConfig: stripeConfigRef.current || undefined,
-                envVars: envVarsRef.current,
-              }),
-              new Promise<null>((resolve) => setTimeout(() => resolve(null), 30_000)),
-            ]);
-            const html = (compiled as any)?.html || null;
-            if (html) {
-              console.info('[handleBgComplete] Worker compilation succeeded');
-              stableHTMLRef.current = html;
-              setStableHTML(html);
-            }
-          } catch (e) {
-            console.warn('[handleBgComplete] Worker compilation failed:', e);
-          }
-        }
-
-        // 2. Vanilla fallback (synchronous, fast) — only if worker didn't produce HTML
-        if (!stableHTMLRef.current) {
-          try {
-            const compiled = getCompiledHTML(
-              supabaseConfigRef.current, stripeConfigRef.current, envVarsRef.current,
-              serviceKeysRef.current, cdnPackagesRef.current,
-              bundleForBrowserRef.current, linkedGPTRef.current
-            );
-            if (compiled) {
-              console.info('[handleBgComplete] Direct vanilla compilation succeeded');
-              stableHTMLRef.current = compiled;
-              setStableHTML(compiled);
-            }
-          } catch (e) {
-            console.warn('[handleBgComplete] Vanilla compilation also failed:', e);
-          }
-        }
-
-        // 3. Guaranteed fallback — always show SOMETHING
-        if (!stableHTMLRef.current) {
-          console.warn('[handleBgComplete] All compilation failed — showing error fallback');
-          const fallback = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Compilation Error</title><style>*{margin:0;padding:0;box-sizing:border-box}body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0a0a14;color:#fff;font-family:system-ui,sans-serif}.card{text-align:center;max-width:440px;padding:2rem}h1{font-size:1.5rem;margin-bottom:1rem;color:#f87171}p{color:#ffffff90;line-height:1.6;margin-bottom:0.5rem}code{background:#1e1e2e;padding:2px 6px;border-radius:4px;font-size:0.85em}</style></head><body><div class="card"><h1>⚠️ Compilation Error</h1><p>Your project files were generated but could not be compiled into a preview.</p><p>Check that your project has an <code>index.html</code> file and try regenerating.</p></div></body></html>`;
-          stableHTMLRef.current = fallback;
-          setStableHTML(fallback);
-        }
       }
+      // For React/TSX projects: leave stableHTMLRef null.
+      // CompilationBridge will compile after isGenerating transitions to false.
       compilePromise = Promise.resolve();
       console.info('[handleBgComplete] Files set');
 
@@ -405,7 +358,7 @@ export function AIAppBuilderWorkspace() {
         window.dispatchEvent(new CustomEvent('bg-job-completed', { detail: { jobId } }));
       }, 500);
     });
-  }, [project.files, setFiles, setMessages, getCompiledHTML]);
+  }, [project.files, setFiles, setMessages]);
 
   // SSE streaming: update streaming ref only — NO setFiles during streaming.
   // partialFilesRef + StreamingCodeEditor handle live file display via polling.
