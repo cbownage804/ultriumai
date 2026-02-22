@@ -242,7 +242,7 @@ export function CompilationBridge({
     } finally {
       onCompilingChangeRef.current?.(false);
       compilationAttemptedRef.current = true;
-      compilationLockRef.current = false;
+      // Keep lock=true so the main effect's debounced callback doesn't start a second compilation
     }
   };
 
