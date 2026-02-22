@@ -115,6 +115,7 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
       onProgressRef.current?.(job);
     } else if (job.status === 'completed') {
       cleanup();
+      processedJobIdsRef.current.add(job.id);
       console.info('[BG] ✅ Job completed:', job.id, '— calling onComplete callback');
       onCompleteRef.current?.(job);
       // Process next queued job
@@ -358,6 +359,10 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
     }
   }, []);
 
+  // Track job IDs that have already been processed in this session
+  // to prevent checkPendingJobs from re-firing handleBgComplete
+  const processedJobIdsRef = useRef(new Set<string>());
+
   /** Check for any active jobs on mount (recovery after tab close) */
   const checkPendingJobs = useCallback(async (userId: string) => {
     // Use ref to avoid stale closure — skip if already watching a job
@@ -377,6 +382,10 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
 
       if (jobs && jobs.length > 0) {
         const job = jobs[0];
+        if (processedJobIdsRef.current.has(job.id)) {
+          console.info('[BG] Job already processed in this session, skipping:', job.id);
+          return null;
+        }
         console.info('[BG] Found active job from previous session:', job.id);
         toast.info('Resuming your build from where it left off...', { duration: 4000 });
         setActiveJob({ id: job.id, status: job.status as BackgroundJob['status'], progress_percent: job.progress_percent ?? undefined });
@@ -396,6 +405,12 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
 
       if (completedJobs && completedJobs.length > 0 && completedJobs[0].output_content) {
         const job = completedJobs[0];
+        // Skip if this job was already processed in the current session
+        if (processedJobIdsRef.current.has(job.id)) {
+          console.info('[BG] Completed job already processed, skipping:', job.id);
+          return null;
+        }
+        processedJobIdsRef.current.add(job.id);
         console.info('[BG] Found recently completed job:', job.id);
         toast.success('Your build completed while you were away!', { duration: 5000 });
         const { data: fullJob } = await supabase
