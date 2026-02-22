@@ -156,18 +156,21 @@ export function CompilationBridge({
 
   useEffect(() => {
     if (isGenerating || filesRef.current.length === 0) {
+      console.info('[CompilationBridge] Effect: skipping — isGenerating:', isGenerating, 'files:', filesRef.current.length);
       return;
     }
 
     // If stableHTML already exists but filesDigest changed, reset it so
     // recompilation can run with the new files
     if (stableHTMLRef.current && filesDigest !== prevFilesDigestRef.current) {
+      console.info('[CompilationBridge] Effect: filesDigest changed, resetting stableHTML for recompile');
       prevFilesDigestRef.current = filesDigest;
       setStableHTML(null);
       // Also unlock compilation so restored/changed files can recompile
       compilationLockRef.current = false;
       // Don't return — fall through to start recompilation
     } else if (stableHTMLRef.current) {
+      console.info('[CompilationBridge] Effect: stableHTML already set, skipping');
       return;
     }
     prevFilesDigestRef.current = filesDigest;
@@ -180,12 +183,20 @@ export function CompilationBridge({
     }
 
     // Prevent re-entry — only compile once per generation cycle
-    if (compilationLockRef.current) return;
+    if (compilationLockRef.current) {
+      console.info('[CompilationBridge] Effect: compilationLock is true, skipping');
+      return;
+    }
 
+    console.info('[CompilationBridge] Effect: starting 500ms debounce for compilation');
     // Debounce: wait 500ms for rapid file changes to settle
     if (compilationDebounceRef.current) clearTimeout(compilationDebounceRef.current);
     compilationDebounceRef.current = setTimeout(() => {
-      if (compilationLockRef.current) return;
+      if (compilationLockRef.current) {
+        console.info('[CompilationBridge] Debounce fired but lock acquired by another, skipping');
+        return;
+      }
+      console.info('[CompilationBridge] Debounce fired, starting compilation');
       compilationLockRef.current = true;
 
       onCompilingChangeRef.current?.(true);
