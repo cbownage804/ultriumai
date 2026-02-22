@@ -281,6 +281,7 @@ export function AIAppBuilderWorkspace() {
     addSnapshotRef.current('Pre-build snapshot', project.files, 'auto');
 
     const { files: parsedFiles, deletions, edits } = parseMultiFileOutput(job.output_content);
+    let compilePromise: Promise<void> = Promise.resolve();
     let mergedFiles = [...project.files];
     if (parsedFiles.length > 0 || deletions.length > 0 || edits.length > 0) {
       if (deletions.length > 0) mergedFiles = mergedFiles.filter(f => !deletions.includes(f.path));
@@ -309,11 +310,18 @@ export function AIAppBuilderWorkspace() {
 
       // Immediately compile for preview — don't wait for CompilationBridge effects
       const isReact = detectReactProject(mergedFiles);
+      // Phase 6: Read configs from refs to avoid stale closures
+      const curSupabase = supabaseConfigRef.current;
+      const curStripe = stripeConfigRef.current;
+      const curEnvVars = envVarsRef.current;
+      const curServiceKeys = serviceKeysRef.current;
+      const curCdnPackages = cdnPackagesRef.current;
+      // Phase 2: Capture compile promise so we can chain dispatch to it
       if (isReact) {
-        compileReactProjectRef.current(mergedFiles, {
-          supabaseConfig: supabaseConfig || undefined,
-          stripeConfig: stripeConfig || undefined,
-          envVars,
+        compilePromise = compileReactProjectRef.current(mergedFiles, {
+          supabaseConfig: curSupabase || undefined,
+          stripeConfig: curStripe || undefined,
+          envVars: curEnvVars,
         }).then(compiled => {
           if (compiled.html) {
             console.info('[handleBgComplete] ✅ Direct React compilation succeeded, updating preview');
@@ -323,11 +331,12 @@ export function AIAppBuilderWorkspace() {
           console.error('[handleBgComplete] React compilation failed:', err);
         });
       } else {
-        const result = getCompiledHTML(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowser, linkedGPT);
+        const result = getCompiledHTML(curSupabase, curStripe, curEnvVars, curServiceKeys, curCdnPackages, bundleForBrowserRef.current, linkedGPTRef.current);
         if (result) {
           console.info('[handleBgComplete] ✅ Direct vanilla compilation succeeded, updating preview');
           handleStableHTML(result);
         }
+        compilePromise = Promise.resolve();
       }
 
       // Post-build snapshot for history
@@ -354,43 +363,15 @@ export function AIAppBuilderWorkspace() {
     });
     setIsGeneratingOverride(false);
 
-    // Phase 1: Dispatch bg-job-completed AFTER compile finishes (not on fixed timer).
-    // This prevents the race where isGenerating goes false before stableHTML is set.
+    // Phase 2: Dispatch bg-job-completed AFTER compile promise resolves.
+    // This eliminates the race between polling fallback and fire-and-forget compile.
     const jobId = job.id;
-    const isReactForDispatch = detectReactProject(mergedFiles);
-    const dispatchCompletion = () => {
+    compilePromise.finally(() => {
       setTimeout(() => {
         console.info('[Workspace] 📣 Dispatching bg-job-completed for jobId:', jobId);
         window.dispatchEvent(new CustomEvent('bg-job-completed', { detail: { jobId } }));
       }, 500);
-    };
-
-    // For React projects, the compile is async — wait for it via a promise chain.
-    // For vanilla projects, compile is synchronous and already done above.
-    if (isReactForDispatch) {
-      // The React compile promise was already started above (line ~313).
-      // We can't await it here since it's fire-and-forget, so we use a
-      // reasonable fallback: wait for stableHTMLRef to be populated.
-      const checkStable = () => {
-        if (stableHTMLRef.current) {
-          dispatchCompletion();
-        } else {
-          // Retry up to 10s
-          let elapsed = 0;
-          const interval = setInterval(() => {
-            elapsed += 200;
-            if (stableHTMLRef.current || elapsed >= 10000) {
-              clearInterval(interval);
-              dispatchCompletion();
-            }
-          }, 200);
-        }
-      };
-      // Give the compile a head start
-      setTimeout(checkStable, 500);
-    } else {
-      dispatchCompletion();
-    }
+    });
   }, [project.files, setFiles, setMessages]);
 
   // SSE streaming: apply files incrementally as they arrive
@@ -562,6 +543,17 @@ export function AIAppBuilderWorkspace() {
   const [envVariables, setEnvVariables] = useState<EnvVariable[]>([]);
   const [assets, setAssets] = useState<ProjectAsset[]>([]);
   const [cdnPackages, setCdnPackages] = useState<CDNPackage[]>([]);
+  // Phase 6: Refs to avoid stale closures in handleBgComplete
+  const supabaseConfigRef = useRef(supabaseConfig);
+  supabaseConfigRef.current = supabaseConfig;
+  const stripeConfigRef = useRef(stripeConfig);
+  stripeConfigRef.current = stripeConfig;
+  const envVarsRef = useRef(envVars);
+  envVarsRef.current = envVars;
+  const serviceKeysRef = useRef(serviceKeys);
+  serviceKeysRef.current = serviceKeys;
+  const cdnPackagesRef = useRef(cdnPackages);
+  cdnPackagesRef.current = cdnPackages;
   const { findReferencedFiles } = useProjectBundler();
   const { compileReactProject } = useReactCompiler();
   const compileReactProjectRef = useRef(compileReactProject);
@@ -588,6 +580,8 @@ export function AIAppBuilderWorkspace() {
       return '';
     }
   }, [astBundler, incrementalCompiler]);
+  const bundleForBrowserRef = useRef(bundleForBrowser);
+  bundleForBrowserRef.current = bundleForBrowser;
   const [remoteCursors, setRemoteCursors] = useState<RemoteCursor[]>([]);
   const channelRef = useRef<any>(null);
   const [isChatCollapsed, setIsChatCollapsed] = useState(false);
@@ -628,6 +622,8 @@ export function AIAppBuilderWorkspace() {
   const commitMessages = useAICommitMessages();
   const workspaceContainerRef = useRef<HTMLDivElement>(null);
   const [linkedGPT, setLinkedGPT] = useState<LinkedGPTConfig | null>(null);
+  const linkedGPTRef = useRef(linkedGPT);
+  linkedGPTRef.current = linkedGPT;
   const buildAnalytics = useBuildAnalytics();
   const outputValidation = useOutputValidation();
   const [changelogEntries, setChangelogEntries] = useState<ChangelogEntry[]>([]);
@@ -1107,6 +1103,8 @@ export function AIAppBuilderWorkspace() {
         // Phase 3: Gate the second setFiles behind requestIdleCallback (2s+) to prevent double compilation
         if (batchFiles.length > 0) {
           const deferPatch = () => {
+            // Phase 1: Skip recompile for post-gen auto-patches (delete buttons, companion files)
+            skipNextCompileRef.current = true;
             const currentFiles = project.files;
             const map = new Map(currentFiles.map(f => [f.path, f]));
             for (const f of batchFiles) map.set(f.path, f);
