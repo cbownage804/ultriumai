@@ -228,11 +228,26 @@ window.addEventListener('message', function(e) {
   ) : null;
 
   // Gap 4: Push compiled HTML to Service Worker when available
+  // Then reload the iframe (without remounting) so it picks up the new content
   useEffect(() => {
     if (swReady && htmlWithErrorCapture) {
       updatePreview(htmlWithErrorCapture);
+      // Reload iframe in-place after SW stores the new content (no key change needed)
+      setTimeout(() => {
+        try {
+          iframeRef.current?.contentWindow?.location.reload();
+        } catch {
+          // Cross-origin fallback
+          const iframe = iframeRef.current;
+          if (iframe?.src) {
+            const src = iframe.src;
+            iframe.src = '';
+            requestAnimationFrame(() => { iframe.src = src; });
+          }
+        }
+      }, 60);
     }
-  }, [swReady, htmlWithErrorCapture, updatePreview]);
+  }, [swReady, htmlWithErrorCapture, updatePreview, iframeRef]);
 
   // Gap 5 HMR: Listen for soft reload signals from CompilationBridge
   useEffect(() => {
@@ -477,7 +492,7 @@ window.addEventListener('message', function(e) {
           >
             <iframe
               ref={iframeRef}
-              key={`${iframeKey}-${refreshKey ?? 0}-${swReady ? swVersion : ''}`}
+              key={`${iframeKey}-${refreshKey ?? 0}`}
               {...(swReady && previewUrl
                 ? { src: previewUrl }
                 : { srcDoc: htmlWithErrorCapture || '' }
