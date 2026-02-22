@@ -156,19 +156,6 @@ export function CompilationBridge({
         // Bump compileTrigger to force main effect to re-run even if filesDigest hasn't changed
         setCompileTrigger(t => t + 1);
         console.info('[CompilationBridge] Generation ended with no preview — triggering compile via state change');
-
-        // Safety net: if still no preview after 5s, force another attempt
-        const safetyTimer = setTimeout(() => {
-          if (!stableHTMLRef.current && filesRef.current.length > 0) {
-            console.warn('[CompilationBridge] Safety net: no preview 5s after generation — forcing retry');
-            compilationLockRef.current = false;
-            compilationAttemptedRef.current = false;
-            prevFilesDigestRef.current = '';
-            immediateCompileNeededRef.current = true;
-            setCompileTrigger(t => t + 1);
-          }
-        }, 5000);
-        return () => clearTimeout(safetyTimer);
       } else {
         // stableHTML already set (from handleBgComplete direct compile),
         // sync the digest so we don't trigger a redundant recompile
@@ -420,8 +407,12 @@ export function CompilationBridge({
     }, debounceMs);
 
     return () => {
+      // Only cancel the debounce timer — do NOT cancel in-progress compilation.
+      // When compileTrigger increments, the effect re-runs and this cleanup fires.
+      // Cancelling the running compilation here was the root cause of blank previews:
+      // the generation-ending effect incremented compileTrigger, which cancelled
+      // the compilation that was just started in the same render cycle.
       if (compilationDebounceRef.current) clearTimeout(compilationDebounceRef.current);
-      compilationCleanupRef.current?.();
     };
   }, [filesDigest, supabaseConfig, stripeConfig, isReactProject, isGenerating, compileTrigger]);
 
