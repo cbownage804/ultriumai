@@ -144,6 +144,7 @@ export function CompilationBridge({
     } else if (!isGenerating && prevIsGeneratingForReset.current) {
       // Generation ENDING — check if handleBgComplete already compiled
       const externalHasPreview = externalStableHTMLRef?.current;
+      console.info('[CompilationBridge] Generation ENDING — externalHasPreview:', !!externalHasPreview, 'stableHTML:', !!stableHTMLRef.current, 'filesDigest:', filesDigest.substring(0, 50), 'files:', filesRef.current.length);
       if (!stableHTMLRef.current && externalHasPreview) {
         // handleBgComplete already compiled and set the preview externally.
         // Sync our internal state to match, skip redundant recompile.
@@ -159,6 +160,7 @@ export function CompilationBridge({
         compilationLockRef.current = false;
         compilationAttemptedRef.current = false;
         const timer = setTimeout(() => {
+          console.info('[CompilationBridge] 200ms timer fired — calling compileNowRef');
           compileNowRef.current?.();
         }, 200);
         // Store cleanup so the effect's return can cancel it if needed
@@ -195,7 +197,11 @@ export function CompilationBridge({
   // ── compileNowRef: direct compilation that bypasses the main effect's guard chain ──
   const compileNowRef = useRef<() => Promise<void>>();
   compileNowRef.current = async () => {
-    if (compilationLockRef.current) return;
+    console.info('[CompilationBridge] compileNowRef called — lock:', compilationLockRef.current, 'files:', filesRef.current.length, 'isReact:', isReactProject);
+    if (compilationLockRef.current) {
+      console.warn('[CompilationBridge] compileNowRef BLOCKED by lock');
+      return;
+    }
     compilationLockRef.current = true;
     compilationRetryCountRef.current = 0;
     onCompilingChangeRef.current?.(true);
