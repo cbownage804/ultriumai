@@ -8,7 +8,7 @@
 
 import * as esbuild from 'esbuild-wasm';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
-import { generateImportMap, DEFAULT_PACKAGES, type CDNPackageEntry } from '@/lib/cdnPackageRegistry';
+import { DEFAULT_PACKAGES, type CDNPackageEntry } from '@/lib/cdnPackageRegistry';
 
 // ── esbuild initialization ──
 let esbuildReady = false;
@@ -249,27 +249,17 @@ async function transpileFile(file: ProjectFile, moduleMap: Map<string, ProjectFi
           }
           return '';
         }
-        const NO_DEFAULT_EXPORT = new Set([
-          'lucide-react', 'date-fns', 'recharts', 'react-icons',
-          '@radix-ui/react-slot', '@radix-ui/react-icons',
-          'class-variance-authority', 'tailwind-merge', 'clsx',
-          'lodash-es', 'uuid',
-        ]);
-        const hasNoDefault = NO_DEFAULT_EXPORT.has(specifier);
-        const parts: string[] = [];
+        // Gap 3: Clean import resolution via import maps — no Proxy fallbacks
         const importVar = `__pkg_${specifier.replace(/[^a-zA-Z0-9]/g, '_')}`;
         usedExternalPackages.add(specifier);
+        const parts: string[] = [];
         if (defaultImport) {
-          if (hasNoDefault) {
-            parts.push(`var ${defaultImport} = window.${importVar} || {};`);
-          } else {
-            parts.push(`var ${defaultImport} = (window.${importVar} || {}).default || new Proxy({}, { get: function(_, p) { if (typeof p === 'symbol') return function() { return ''; }; var pkg = window.${importVar} || {}; if (pkg[p] != null) return pkg[p]; return React.forwardRef(function(props, ref) { var safe = {}; var html = typeof p === 'string' && /^[a-z]/.test(p) ? p : 'div'; Object.keys(props || {}).forEach(function(k) { if (k === 'children' || k === 'className' || k === 'style' || k === 'id' || k === 'ref' || k === 'key' || k === 'onClick' || k === 'onChange' || k === 'onSubmit' || k === 'href' || k === 'src' || k === 'alt' || k === 'type' || k === 'value' || k === 'placeholder' || k === 'disabled' || k === 'role' || /^aria-/.test(k) || /^data-/.test(k)) safe[k] = props[k]; }); safe.ref = ref; return React.createElement(html, safe); }); } });`);
-          }
+          parts.push(`var ${defaultImport} = (window.${importVar} || {}).default || window.${importVar} || {};`);
         }
         if (namedImports) {
           const names = namedImports.split(',').map((n: string) => n.trim().split(/\s+as\s+/));
           const destructure = names.map(([orig, alias]: string[]) => alias ? `${orig.trim()}: ${alias.trim()}` : orig.trim()).join(', ');
-          parts.push(`var { ${destructure} } = new Proxy(window.${importVar} || {}, { get: function(t, p) { if (typeof p === 'symbol' || p === 'toString' || p === 'valueOf' || p === 'toJSON' || p === '$$typeof') return t[p] || function() { return ''; }; if (t[p] != null) return t[p]; return function(props) { var safe = {}; Object.keys(props || {}).forEach(function(k) { if (k === 'children' || k === 'className' || k === 'style' || k === 'id' || k === 'onClick' || k === 'role' || /^aria-/.test(k) || /^data-/.test(k)) safe[k] = props[k]; }); return React.createElement('span', safe); }; } });`);
+          parts.push(`var { ${destructure} } = window.${importVar} || {};`);
         }
         return parts.length > 0 ? parts.join('\n') : `// [external] ${specifier}`;
       }
@@ -480,7 +470,7 @@ async function compileReactProject(
     }
   }
 
-  const importMap = generateImportMap([...DEFAULT_PACKAGES, ...(options?.userPackages || [])]);
+  // Import map is now built inline below using registryMap
 
   const usesReactRouter = reactFiles.some(f => /from\s+['"]react-router-dom['"]/.test(f.content));
   if (usesReactRouter) allExternalPackages.add('react-router-dom');
@@ -565,6 +555,19 @@ try {
   );
   const preloadHints = usedPackages.map(p => `  <link rel="modulepreload" href="${p.cdnUrl}" />`).join('\n');
 
+  // Gap 3: Build comprehensive import map including auto-detected packages
+  const ESM_SH = 'https://esm.sh';
+  const registryMap = new Map(DEFAULT_PACKAGES.map(p => [p.name, p.cdnUrl]));
+  if (options?.userPackages) {
+    for (const p of options.userPackages) registryMap.set(p.name, p.cdnUrl);
+  }
+  // Add any packages used in code but not in registry
+  for (const pkg of allExternalPackages) {
+    if (!registryMap.has(pkg) && pkg !== 'react' && pkg !== 'react-dom' && pkg !== 'react-dom/client') {
+      registryMap.set(pkg, `${ESM_SH}/${pkg}`);
+    }
+  }
+
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -585,7 +588,7 @@ ${preloadHints}
       "react/jsx-runtime": "data:text/javascript,const R=window.React;export const jsx=R.createElement;export const jsxs=R.createElement;export const Fragment=R.Fragment;",
       "react-dom": "data:text/javascript,const RD=window.ReactDOM;export default RD;export const{createRoot,createPortal,flushSync}=RD;",
       "react-dom/client": "data:text/javascript,export const{createRoot}=window.ReactDOM;",
-      ${Object.entries(importMap)
+      ${Array.from(registryMap.entries())
         .filter(([k]) => !['react', 'react-dom', 'react-dom/client', 'react/jsx-runtime'].includes(k))
         .map(([k, v]) => `"${k}": "${v}"`)
         .join(',\n      ')}
@@ -666,25 +669,25 @@ window.ENV = ${JSON.stringify(envObj)};
     try {
       window.__modules = window.__modules || {};
 
+      // Gap 3: Load packages via import maps — single CDN, real errors
+      var __pkgErrors = [];
       ${Array.from(allExternalPackages).map(pkg => {
         const varName = `__pkg_${pkg.replace(/[^a-zA-Z0-9]/g, '_')}`;
         return `window.${varName} = {};
       try {
         window.${varName} = await Promise.race([
           import('${pkg}'),
-          new Promise(function(_, r) { setTimeout(function() { r(new Error('timeout')); }, 5000); })
+          new Promise(function(_, r) { setTimeout(function() { r(new Error('Import timeout: ${pkg}')); }, 8000); })
         ]);
       } catch(__e) {
-        try {
-          window.${varName} = await Promise.race([
-            import('https://cdn.jsdelivr.net/npm/${pkg}/+esm'),
-            new Promise(function(_, r) { setTimeout(function() { r(new Error('timeout')); }, 5000); })
-          ]);
-        } catch(__e2) {
-          console.warn('Package ${pkg} unavailable from both CDNs (timeout or error)');
-        }
+        console.error('[Import] Failed to load ${pkg}:', __e.message);
+        __pkgErrors.push('${pkg}: ' + __e.message);
       }`;
       }).join('\n      ')}
+      if (__pkgErrors.length > 0) {
+        console.warn('[Import] ' + __pkgErrors.length + ' package(s) failed to load:', __pkgErrors.join(', '));
+        window.parent.postMessage({ type: '__CONSOLE_LOG__', level: 'warn', message: 'Failed packages: ' + __pkgErrors.join(', '), timestamp: Date.now() }, '*');
+      }
 
       var code = ${JSON.stringify(`
     var { useState, useEffect, useCallback, useMemo, useRef, useContext, createContext, memo, forwardRef, Fragment, useReducer, useLayoutEffect, useId, useSyncExternalStore, useTransition, useDeferredValue, useInsertionEffect, Suspense, lazy, StrictMode } = React;
