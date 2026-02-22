@@ -1,68 +1,63 @@
 
-## Fix: Preview Never Appears Due to Crashed Compiler Worker
+
+## Fix: Preview Blank Because Broken index.html Set as "Self-Contained"
 
 ### Root Cause
 
-The compiler Web Worker (`src/workers/compiler.worker.ts`) crashes immediately on load because Vite's React SWC plugin injects `@react-refresh` preamble code into ALL processed modules, including workers. Workers don't have `window`, so the `@react-refresh` module throws `ReferenceError: window is not defined`, killing the worker before it can process any compilation requests.
+When the AI generates a React project, it creates files like `index.html`, `src/main.tsx`, `src/App.tsx`, and `src/index.css`. The generated `index.html` contains:
 
-This means:
-- Worker compilation never responds (pending forever)
-- The 30-second `Promise.race` timeout fires, returning `null`
-- Vanilla fallback also returns `null` for React projects (it can't handle JSX)
-- The preview stays blank
-- The "React refresh preamble" error shows in the error bar
-- Auto-fix loops trying (and failing) to fix a host-level error
-
-### Fix (3 changes)
-
-#### 1. `vite.config.ts` -- Exclude workers from React plugin
-
-Add a `worker` configuration that prevents Vite plugins from processing worker files:
-
-```typescript
-worker: {
-  plugins: () => [],
-},
+```html
+<script type="module" src="/src/main.tsx"></script>
 ```
 
-This stops `@react-refresh` from being injected into `compiler.worker.ts`, allowing the worker to initialize and run correctly.
+This is a **local file reference** that cannot resolve inside an `srcdoc` iframe (there is no local file server).
 
-#### 2. `src/components/ai-builder/BuilderPreviewPanel.tsx` -- Filter host-level errors
-
-Add a filter in the error message handler to suppress errors from the host Vite dev server (like `@react-refresh`) that are not actually from the preview iframe:
-
+However, `handleBgComplete` in `AIAppBuilderWorkspace.tsx` (line 313) checks:
 ```typescript
-// In the __PREVIEW_ERROR__ handler, add:
-const isHostDevError = /react.refresh|@react-refresh|preamble was not loaded/i.test(msg);
-if (isHostDevError) return prev; // Don't display host dev errors
+if (indexFile.content.includes('<!DOCTYPE html') && indexFile.content.includes('</html>'))
 ```
 
-This prevents false-positive errors from triggering the auto-fix loop.
+This incorrectly treats the file as "self-contained" and sets it as the preview HTML. The result: a blank black iframe. Worse, once `stableHTML` is set to this broken value, CompilationBridge thinks compilation already succeeded and never runs the worker compiler (which would correctly bundle all files into a single self-contained HTML document).
 
-#### 3. `src/components/ai-builder/CompilationBridge.tsx` -- Defensive fallback when worker fails
+### The Fix (2 changes)
 
-As a safety net, if the worker compilation returns null AND vanilla compilation returns null, ensure `ERROR_FALLBACK_HTML` is always set (never leave `stableHTML` as null with `compilationAttemptedRef = true`):
+#### 1. Fix the self-contained detection in `handleBgComplete`
 
-In `compileNowRef`, the existing code at lines 228-236 already handles this, but add a log to confirm the fallback fires. No code change needed here -- the vite.config fix is the primary solution.
+**File:** `src/components/ai-builder/AIAppBuilderWorkspace.tsx` (line 313)
+
+Add a check to reject HTML that references local module scripts. A truly self-contained HTML does NOT have `<script ... src="/src/...">` or `<script type="module" src="./...">` pointing to local project files.
+
+```typescript
+// Before:
+if (indexFile && indexFile.content.includes('<!DOCTYPE html') && indexFile.content.includes('</html>'))
+
+// After:
+const hasLocalModuleScripts = /src=["']\.?\/(?:src|main|app|index)\b/i.test(indexFile?.content || '');
+if (indexFile && !hasLocalModuleScripts && indexFile.content.includes('<!DOCTYPE html') && indexFile.content.includes('</html>'))
+```
+
+This ensures only genuinely self-contained HTML (like a static page with inline scripts or CDN-only scripts) bypasses the compiler. React projects with file-based imports will correctly fall through to the worker compiler.
+
+#### 2. Remove the vanilla fallback in `handleBgComplete`
+
+The `getCompiledHTML` vanilla compiler (lines 318-332) cannot handle React/TSX projects, so it always returns `null` for them. This is harmless but adds noise. More importantly, when both the self-contained check and vanilla compile fail, `handleBgComplete` should NOT set `stableHTML` at all -- letting CompilationBridge handle it via the worker.
+
+**No code change needed here** -- the fix in step 1 is sufficient. When the self-contained check correctly rejects the file, and vanilla compile returns null, `stableHTMLRef.current` stays null, and CompilationBridge's generation-ending effect will trigger `compileNowRef` which calls the worker compiler.
 
 ### Why This Fixes Everything
 
-1. Worker starts correctly (no `@react-refresh` crash)
-2. Worker compiles React project into full HTML document with CDN dependencies
-3. `compileNowRef` receives valid HTML from worker
-4. `setStableHTML(html)` updates both ref and state
-5. `compiledHTML = stableHTML` is now truthy
-6. `BuilderPreviewPanel` receives `html={compiledHTML}` and renders the iframe
-7. Preview appears
-8. No false "React refresh" error in the error bar
-9. No auto-fix loop triggered
+1. AI generates React project with `index.html` + `main.tsx` + `App.tsx` + `index.css`
+2. `handleBgComplete` detects local script references in `index.html` -- skips "self-contained" shortcut
+3. Vanilla `getCompiledHTML` returns `null` (can't handle JSX)
+4. `stableHTMLRef.current` remains `null`
+5. `isGeneratingOverride` is set to `false`
+6. CompilationBridge's generation-ending effect fires, sees no preview
+7. `compileNowRef` runs the worker compiler after 200ms
+8. Worker produces correct self-contained HTML with CDN React, Babel, bundled modules
+9. `setStableHTML(result)` updates React state
+10. `BuilderPreviewPanel` receives valid HTML and renders the preview
 
-### Technical Detail: How Lovable's Compilation Works
+### What About the Auto-Fix Loop?
 
-The App Builder compiles React projects entirely in the browser:
-- A Web Worker runs esbuild-wasm for TypeScript stripping and regex-based import resolution
-- The output is a self-contained HTML document with CDN-loaded React, Tailwind, and Babel
-- Babel Standalone runs inside the iframe at runtime to transform JSX to JS
-- The compiled HTML is set as `srcdoc` on the preview iframe
+The "React refresh preamble" auto-fix is already filtered in `handleAutoFixError` (line 1661). The auto-fix in the screenshots was from a previous session before the filter was added. With this fix, the preview will render correctly on the first attempt, so no errors will trigger auto-fix.
 
-The worker was always the intended compilation path -- it just never worked because of the Vite dev server @react-refresh injection.
