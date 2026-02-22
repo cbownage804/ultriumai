@@ -242,7 +242,7 @@ export function CompilationBridge({
     } finally {
       onCompilingChangeRef.current?.(false);
       compilationAttemptedRef.current = true;
-      // Keep lock=true so the main effect's debounced callback doesn't start a second compilation
+      compilationLockRef.current = false;
     }
   };
 
@@ -323,6 +323,12 @@ export function CompilationBridge({
     compilationDebounceRef.current = setTimeout(() => {
       if (compilationLockRef.current) {
         console.info('[CompilationBridge] Debounce fired but lock acquired by another, skipping');
+        return;
+      }
+      // Skip if compileNowRef (or anything else) already produced a preview
+      if (stableHTMLRef.current) {
+        console.info('[CompilationBridge] Debounce fired but stableHTML already set, skipping');
+        compilationAttemptedRef.current = true;
         return;
       }
       // Skip if handleBgComplete already compiled and set the preview
