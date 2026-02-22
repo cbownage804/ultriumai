@@ -1066,9 +1066,8 @@ export function AIAppBuilderWorkspace() {
         setMessages(prev => prev.map((m, i) => i === prev.length - 1 ? { ...m, commitMessage: commitMsg } : m));
       }
       // Issue 4 fix: Defer non-critical post-build work to unblock preview
-      // Run smoke test synchronously (fast, needed for error annotations)
-      // Phase 2: Defer ALL post-generation work via requestIdleCallback to unblock preview
-      const deferPostGen = () => {
+      // Phase 2: Defer post-generation work in separate callbacks to avoid freezing
+      const deferStep1 = () => {
         const smokeResult = smokeTest.runSmokeTest(latestFiles);
         const conflictWarnings = conflictDetection.detectConflicts(latestFiles);
         if (conflictWarnings.length > 0) {
@@ -1092,9 +1091,16 @@ export function AIAppBuilderWorkspace() {
         } else {
           buildLog.addEntry('info', `✅ Validation passed (${validationResult.validationTimeMs}ms)`);
         }
+      };
+
+      // Lighthouse + bundle analysis deferred separately to yield to main thread
+      const deferStep2 = () => {
         lighthouseAudit.runAudit(latestFiles);
         bundleSize.analyzeBundle(latestFiles);
-        // Auto-patch broken delete/remove buttons deterministically (zero credits)
+      };
+
+      // Auto-patch + companion files deferred separately
+      const deferStep3 = () => {
         const patchResult = deleteAutoPatcher.patchDeleteButtons(latestFiles);
         const companions = fileScaffolding.generateCompanionFiles(latestFiles, project.files);
         const batchFiles: typeof latestFiles = [];
@@ -1107,10 +1113,8 @@ export function AIAppBuilderWorkspace() {
           batchFiles.push(...companions);
           buildLog.addEntry('info', `🧪 Auto-generated ${companions.length} test file(s)`);
         }
-        // Phase 3: Gate the second setFiles behind requestIdleCallback (2s+) to prevent double compilation
         if (batchFiles.length > 0) {
           const deferPatch = () => {
-            // Phase 1: Skip recompile for post-gen auto-patches (delete buttons, companion files)
             skipNextCompileRef.current = true;
             const currentFiles = project.files;
             const map = new Map(currentFiles.map(f => [f.path, f]));
@@ -1124,11 +1128,20 @@ export function AIAppBuilderWorkspace() {
           }
         }
       };
-      if (typeof requestIdleCallback === 'function') {
-        requestIdleCallback(deferPostGen, { timeout: 3000 });
-      } else {
-        setTimeout(deferPostGen, 500);
-      }
+
+      // Schedule each step with yielding between them
+      const scheduleDeferred = (fn: () => void, timeout: number, delay: number) => {
+        setTimeout(() => {
+          if (typeof requestIdleCallback === 'function') {
+            requestIdleCallback(fn, { timeout });
+          } else {
+            setTimeout(fn, 100);
+          }
+        }, delay);
+      };
+      scheduleDeferred(deferStep1, 3000, 0);
+      scheduleDeferred(deferStep2, 5000, 50);
+      scheduleDeferred(deferStep3, 5000, 100);
       // Mark preview as good for hot recovery & update conflict resolver base snapshot
       hotRecovery.markAsGood([...project.files]);
       conflictResolver.setBaseSnapshot([...project.files]);
@@ -1879,24 +1892,40 @@ export function AIAppBuilderWorkspace() {
         let applied = false;
         for (const file of project.files) {
           if (!file.path.match(/\.(html|htm|jsx|tsx)$/i)) continue;
-          // Try to find and replace the text content near the selector
-          const selectorTag = selector.replace(/[^a-zA-Z0-9]/g, '');
-          if (file.content.includes(selector) || selectorTag) {
-            // For simple text updates, use regex to find the element and update its content
-            const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const re = new RegExp(`(<[^>]*(?:class|id)=["'][^"']*${escaped}[^"']*["'][^>]*>)([^<]*)(</)`, 'i');
-            const newContent = file.content.replace(re, `$1${value}$3`);
-            if (newContent !== file.content) {
-              skipNextCompileRef.current = true;
-              pushUndo('Visual edit: text', project.files);
-              upsertFile(file.path, newContent);
-              applied = true;
-              break;
+          const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const re = new RegExp(`(<[^>]*(?:class|id)=["'][^"']*${escaped}[^"']*["'][^>]*>)([^<]*)(</)`, 'i');
+          const newContent = file.content.replace(re, `$1${value}$3`);
+          if (newContent !== file.content) {
+            skipNextCompileRef.current = true;
+            pushUndo('Visual edit: text', project.files);
+            upsertFile(file.path, newContent);
+            applied = true;
+            break;
+          }
+        }
+        // DOMParser fallback for CSS path selectors (e.g. "html > body > div > h1")
+        if (!applied) {
+          const mainHtml = project.files.find(f => f.path === 'index.html' || f.path.endsWith('.html'));
+          if (mainHtml) {
+            try {
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(mainHtml.content, 'text/html');
+              const el = doc.querySelector(selector);
+              if (el) {
+                el.textContent = value;
+                const serialized = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+                skipNextCompileRef.current = true;
+                pushUndo('Visual edit: text', project.files);
+                upsertFile(mainHtml.path, serialized);
+                applied = true;
+              }
+            } catch (e) {
+              console.warn('[VisualEdit] DOMParser text fallback failed:', e);
             }
           }
         }
         if (!applied) {
-          // Serialize iframe DOM back to source (the overlay already applied the edit)
+          // Last resort: serialize iframe DOM
           const iframe = previewIframeRef.current;
           const iframeDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
           if (iframeDoc) {
@@ -1915,37 +1944,53 @@ export function AIAppBuilderWorkspace() {
         let applied = false;
         for (const file of project.files) {
           if (!file.path.match(/\.(html|htm|jsx|tsx|css)$/i)) continue;
+          if (!file.path.match(/\.(html|htm|jsx|tsx)$/i)) continue;
           const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
           
-          // For HTML/JSX files: add/update inline style
-          if (file.path.match(/\.(html|htm|jsx|tsx)$/i)) {
-            // Try to find element with matching selector and add/update color style
-            const styleColorRe = new RegExp(`(<[^>]*(?:class|id)=["'][^"']*${escaped}[^"']*["'][^>]*style=["'])([^"']*)(["'])`, 'i');
-            const noStyleRe = new RegExp(`(<[^>]*(?:class|id)=["'][^"']*${escaped}[^"']*["'][^>]*)(>)`, 'i');
-            
-            let newContent = file.content;
-            if (styleColorRe.test(newContent)) {
-              // Element has existing style — update/add color
-              newContent = newContent.replace(styleColorRe, (_, pre, existingStyle, quote) => {
-                const updatedStyle = existingStyle.replace(/color\s*:[^;]+;?/i, '').replace(/;?\s*$/, '');
-                return `${pre}${updatedStyle ? updatedStyle + '; ' : ''}color: ${value};${quote}`;
-              });
-            } else if (noStyleRe.test(newContent)) {
-              // Element has no style — add it
-              newContent = newContent.replace(noStyleRe, `$1 style="color: ${value};"$2`);
-            }
-            
-            if (newContent !== file.content) {
-              skipNextCompileRef.current = true;
-              pushUndo('Visual edit: color', project.files);
-              upsertFile(file.path, newContent);
-              applied = true;
-              break;
+          const styleColorRe = new RegExp(`(<[^>]*(?:class|id)=["'][^"']*${escaped}[^"']*["'][^>]*style=["'])([^"']*)(["'])`, 'i');
+          const noStyleRe = new RegExp(`(<[^>]*(?:class|id)=["'][^"']*${escaped}[^"']*["'][^>]*)(>)`, 'i');
+          
+          let newContent = file.content;
+          if (styleColorRe.test(newContent)) {
+            newContent = newContent.replace(styleColorRe, (_, pre, existingStyle, quote) => {
+              const updatedStyle = existingStyle.replace(/color\s*:[^;]+;?/i, '').replace(/;?\s*$/, '');
+              return `${pre}${updatedStyle ? updatedStyle + '; ' : ''}color: ${value};${quote}`;
+            });
+          } else if (noStyleRe.test(newContent)) {
+            newContent = newContent.replace(noStyleRe, `$1 style="color: ${value};"$2`);
+          }
+          
+          if (newContent !== file.content) {
+            skipNextCompileRef.current = true;
+            pushUndo('Visual edit: color', project.files);
+            upsertFile(file.path, newContent);
+            applied = true;
+            break;
+          }
+        }
+        // DOMParser fallback for CSS path selectors (e.g. "html > body > div > p")
+        if (!applied) {
+          const mainHtml = project.files.find(f => f.path === 'index.html' || f.path.endsWith('.html'));
+          if (mainHtml) {
+            try {
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(mainHtml.content, 'text/html');
+              const el = doc.querySelector(selector);
+              if (el) {
+                (el as HTMLElement).style.color = value;
+                const serialized = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+                skipNextCompileRef.current = true;
+                pushUndo('Visual edit: color', project.files);
+                upsertFile(mainHtml.path, serialized);
+                applied = true;
+              }
+            } catch (e) {
+              console.warn('[VisualEdit] DOMParser color fallback failed:', e);
             }
           }
         }
         if (!applied) {
-          // Serialize iframe DOM back to source (the overlay already applied the edit)
+          // Last resort: serialize iframe DOM
           const iframe = previewIframeRef.current;
           const iframeDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
           if (iframeDoc) {
