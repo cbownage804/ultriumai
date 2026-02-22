@@ -1,10 +1,9 @@
 /**
- * Preview Service Worker — Gap 4
+ * Preview Service Worker — Gap 4 + Gap 5 (HMR)
  * 
  * Intercepts fetch requests under /__preview__/ scope and serves
- * compiled HTML from an in-memory store. This gives the preview iframe
- * a real browsing context with proper navigation, localStorage, and
- * window.location — eliminating the need for srcdoc shims.
+ * compiled HTML from an in-memory store. Supports state-preserving
+ * soft reloads for JS/TS changes (Gap 5 HMR).
  */
 
 const PREVIEW_SCOPE = '/__preview__/';
@@ -13,7 +12,7 @@ let currentVersion = 0;
 
 // Listen for HTML updates from the main thread
 self.addEventListener('message', (event) => {
-  const { type, html, version } = event.data || {};
+  const { type, html, version, softReload } = event.data || {};
   
   if (type === 'UPDATE_PREVIEW') {
     currentHTML = html || '';
@@ -22,7 +21,11 @@ self.addEventListener('message', (event) => {
     // Notify all clients that new content is available
     self.clients.matchAll().then(clients => {
       clients.forEach(client => {
-        client.postMessage({ type: 'PREVIEW_UPDATED', version: currentVersion });
+        client.postMessage({ 
+          type: 'PREVIEW_UPDATED', 
+          version: currentVersion,
+          softReload: !!softReload,
+        });
       });
     });
   }
@@ -57,7 +60,6 @@ self.addEventListener('fetch', (event) => {
   }
   
   // For any other paths under /__preview__/, return 404
-  // (all resources are inlined in the compiled HTML)
   event.respondWith(
     new Response('Not Found', { status: 404, headers: { 'Content-Type': 'text/plain' } })
   );
