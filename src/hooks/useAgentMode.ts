@@ -220,7 +220,13 @@ export function useAgentMode() {
         ) {
           const raw = event.data.message || event.data.error || event.data;
           const msg = typeof raw === 'string' ? raw : (raw?.message || String(raw));
-          if (msg && typeof msg === 'string' && !errorBufferRef.current.includes(msg)) {
+          // Skip compilation infrastructure errors — these aren't code bugs
+          if (msg && typeof msg === 'string' &&
+              !errorBufferRef.current.includes(msg) &&
+              !msg.includes('Compilation Error') &&
+              !msg.includes('could not be compiled') &&
+              !msg.includes('Preview timed out') &&
+              !msg.includes('Loading preview')) {
             errorBufferRef.current.push(msg);
           }
         }

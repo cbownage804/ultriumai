@@ -6,7 +6,7 @@ import type { CDNPackage } from './PackageManager';
 import type { LinkedGPTConfig } from './GPTConnectorPanel';
 import { useLivePreviewSync } from '@/hooks/useLivePreviewSync';
 
-const COMPILE_TIMEOUT_MS = 8_000;
+const COMPILE_TIMEOUT_MS = 30_000;
 
 interface CompilationBridgeProps {
   files: ProjectFile[];
@@ -258,18 +258,21 @@ export function CompilationBridge({
 
       let cancelled = false;
       let compileTimerId: ReturnType<typeof setTimeout>;
-      const safetyTimeout = setTimeout(() => {
-        if (!cancelled) {
-          console.error('[Compilation] Safety timeout reached (10s) — showing error fallback');
-          onCompilingChangeRef.current?.(false);
-          compilationAttemptedRef.current = true;
-          setLiveCompiledHTML(ERROR_FALLBACK_HTML);
-        }
-      }, COMPILE_TIMEOUT_MS);
+      let safetyTimeout: ReturnType<typeof setTimeout>;
 
       // Phase 1: Async compilation with yield points to keep browser responsive
       const runCompilation = async () => {
         if (cancelled) return;
+        // Start safety timeout NOW (when compilation actually begins), not before
+        safetyTimeout = setTimeout(() => {
+          if (!cancelled) {
+            console.error('[Compilation] Safety timeout reached — showing error fallback');
+            onCompilingChangeRef.current?.(false);
+            compilationAttemptedRef.current = true;
+            setLiveCompiledHTML(ERROR_FALLBACK_HTML);
+          }
+        }, COMPILE_TIMEOUT_MS);
+
         // Bail if external compilation (handleBgComplete) already provided a preview
         if (externalStableHTMLRef?.current) {
           console.info('[CompilationBridge] runCompilation: external preview arrived, bailing');
