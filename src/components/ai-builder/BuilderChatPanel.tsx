@@ -1335,7 +1335,7 @@ export function BuilderChatPanel({
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               onPaste={handlePaste}
-              placeholder="Ask Lovable..."
+              placeholder="Ask UltriumAI..."
               rows={3}
               className="flex-1 bg-transparent text-sm text-white/90 placeholder:text-white/35 resize-none outline-none focus:outline-none focus:ring-0 border-none min-h-[72px] max-h-[200px] py-0.5"
             />
