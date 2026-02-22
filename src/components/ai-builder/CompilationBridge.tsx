@@ -147,14 +147,15 @@ export function CompilationBridge({
         justSyncedFromExternalRef.current = true; // Phase 2: prevent main effect recompile
         console.info('[CompilationBridge] Synced external stableHTML, skipping redundant recompile');
       } else if (!stableHTMLRef.current) {
-        // handleBgComplete's direct compilation failed — let main effect handle it.
-        // The main effect will also fire because isGenerating is in its dependency array.
-        // Just clear the guards so it can proceed.
+        // Direct compilation — bypass the main effect's guard chain entirely
+        console.info('[CompilationBridge] Generation ended with no preview — compiling directly in 200ms');
         compilationLockRef.current = false;
         compilationAttemptedRef.current = false;
-        prevFilesDigestRef.current = '';
-        immediateCompileNeededRef.current = true;
-        console.info('[CompilationBridge] Generation ended with no preview — main effect will compile as fallback');
+        const timer = setTimeout(() => {
+          compileNowRef.current?.();
+        }, 200);
+        // Store cleanup so the effect's return can cancel it if needed
+        compilationCleanupRef.current = () => clearTimeout(timer);
       } else {
         // stableHTML already set (from handleBgComplete direct compile),
         // sync the digest so we don't trigger a redundant recompile
@@ -184,9 +185,76 @@ export function CompilationBridge({
   // Track previous filesDigest to detect actual file changes
   const prevFilesDigestRef = useRef<string>('');
 
+  // ── compileNowRef: direct compilation that bypasses the main effect's guard chain ──
+  const compileNowRef = useRef<() => Promise<void>>();
+  compileNowRef.current = async () => {
+    if (compilationLockRef.current) return;
+    compilationLockRef.current = true;
+    compilationRetryCountRef.current = 0;
+    onCompilingChangeRef.current?.(true);
+
+    try {
+      let result: string | null = null;
+      const currentFiles = filesRef.current;
+
+      if (isReactProject) {
+        try {
+          const compiled = await Promise.race([
+            compileReactProjectRef.current(currentFiles, {
+              supabaseConfig: supabaseConfig || undefined,
+              stripeConfig: stripeConfig || undefined,
+              envVars,
+            }),
+            new Promise<null>((resolve) =>
+              setTimeout(() => resolve(null), 30_000)
+            ),
+          ]);
+          result = (compiled as any)?.html || null;
+        } catch {
+          result = null;
+        }
+      }
+
+      // Vanilla fallback
+      if (!result) {
+        try {
+          result = getCompiledHTMLRef.current(
+            supabaseConfig, stripeConfig, envVars,
+            serviceKeys, cdnPackages,
+            bundleForBrowserRef.current, linkedGPT
+          );
+        } catch { result = null; }
+      }
+
+      if (result) {
+        setLiveCompiledHTML(result);
+        setStableHTML(result);
+        liveSync.resetSnapshot(currentFiles);
+        prevFilesDigestRef.current = filesDigest;
+      } else {
+        setLiveCompiledHTML(ERROR_FALLBACK_HTML);
+        setStableHTML(ERROR_FALLBACK_HTML);
+      }
+    } catch (err) {
+      console.error('[CompilationBridge] compileNow crashed:', err);
+      setLiveCompiledHTML(ERROR_FALLBACK_HTML);
+      setStableHTML(ERROR_FALLBACK_HTML);
+    } finally {
+      onCompilingChangeRef.current?.(false);
+      compilationAttemptedRef.current = true;
+      compilationLockRef.current = false;
+    }
+  };
+
    useEffect(() => {
     console.info('[CompilationBridge] Main effect triggered — isGenerating:', isGenerating, 'files:', filesRef.current.length, 'stableHTML:', !!stableHTMLRef.current, 'lock:', compilationLockRef.current);
     if (isGenerating || filesRef.current.length === 0) {
+      return;
+    }
+
+    // Skip initial compilation — handled by compileNow in the generation-ending effect
+    if (!stableHTMLRef.current && !compilationAttemptedRef.current && filesRef.current.length > 0) {
+      console.info('[CompilationBridge] Main effect: deferring to compileNow for initial compilation');
       return;
     }
 
