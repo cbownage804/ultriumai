@@ -70,6 +70,7 @@ import { WorkspaceStatusBar } from './WorkspaceStatusBar';
 import { WorkspacePanelLayer } from './WorkspacePanelLayer';
 import { WorkspaceTopBar } from './WorkspaceTopBar';
 import { CloudViewPanel } from './CloudViewPanel';
+import { DesignViewPanel } from './DesignViewPanel';
 import { PanelErrorBoundary } from './PanelErrorBoundary';
 import { SafePanel } from './SafePanel';
 import { buildAuthTemplate } from './authTemplates';
@@ -668,6 +669,7 @@ export function AIAppBuilderWorkspace() {
   const setShowAPIBuilder = panelSetters.showAPIBuilder;
   const setShowSupabaseIDE = panelSetters.showSupabaseIDE;
   const setShowCloudView = panelSetters.showCloudView;
+  const setShowDesignView = panelSetters.showDesignView;
   const setShowGitHubPanel = panelSetters.showGitHubPanel;
   const setShowMigrationPanel = panelSetters.showMigrationPanel;
   const setShowEdgeFnEditor = panelSetters.showEdgeFnEditor;
@@ -2219,6 +2221,9 @@ export function AIAppBuilderWorkspace() {
           setShowSupabaseIDE={setShowSupabaseIDE}
           setShowCloudView={setShowCloudView}
           setShowTerminal={setShowTerminal}
+          setShowSecurityAuditor={setShowSecurityAuditor}
+          setShowPerformanceProfiler={setShowPerformanceProfiler}
+          setShowDesignView={setShowDesignView}
           onOpenPanel={openPanelByKey}
           previewCurrentUrl={previewCurrentUrl}
           previewIframeRef={previewIframeRef}
@@ -2467,6 +2472,14 @@ export function AIAppBuilderWorkspace() {
                   />
                 </SafePanel>
                 <CloudViewPanel isOpen={!!panels.showCloudView} onClose={() => setShowCloudView(false)} supabaseConfig={supabaseConfig} onOpenPanel={openPanelByKey} />
+                <DesignViewPanel
+                  isOpen={!!panels.showDesignView}
+                  onClose={() => setShowDesignView(false)}
+                  themeStudioProps={{ onOpen: () => { setShowDesignView(false); setShowThemeStudio(true); } }}
+                  designSystemProps={{ onOpen: () => { setShowDesignView(false); setShowDesignSystem(true); } }}
+                  onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)}
+                  isVisualEditActive={isVisualEditActive}
+                />
                 <SafePanel show={!!panels.showSupabaseIDE} name="Supabase IDE">
                   <SupabaseIDEPanel open={!!panels.showSupabaseIDE} onClose={() => setShowSupabaseIDE(false)} connection={supabaseConnection} onGenerateCode={(code, fileName) => { upsertFile(fileName, code); setRightTab('code'); setActiveFile(fileName); }} />
                 </SafePanel>
