@@ -1,93 +1,57 @@
 
 
-# Multi-Phase Fix: Remaining Lovable Build Parity Issues
+# Multi-Phase Fix: Final Lovable Build Parity Issues
 
 ## Overview
 
-After analyzing the full compilation pipeline, I've identified 6 remaining issues that break Lovable parity. These cause preview flashes, post-build regressions, and unnecessary recompilations even after the previous 5-phase fix.
+After a thorough analysis of the full compilation pipeline following the previous 11-phase fixes, I've identified 5 remaining issues that break Lovable parity. These cause subtle but noticeable UX regressions: stale previews after manual edits, error console noise, and unnecessary work during tab returns.
 
 ---
 
-## Phase 1: Post-Build `setFiles` Triggers a Redundant Recompilation
+## Phase 1: Manual Code Edits Don't Trigger Recompilation for React Projects
 
-**Problem:** After a build completes, the deferred post-generation work (lines 1068-1126) runs smoke tests, auto-patches delete buttons, and generates companion files. If any patches are produced, `setFiles()` is called again (line 1113), which changes `filesDigest` in CompilationBridge, triggering another full recompile. This causes a second iframe update/flash several seconds after the build appeared complete.
-
-**Fix in `AIAppBuilderWorkspace.tsx`:**
-- Before calling `setFiles()` in the deferred post-gen patch (line 1113), set `skipNextCompileRef.current = true` so CompilationBridge skips the recompile for this particular file change.
-- This is the same mechanism already used for visual edits (line 202 in CompilationBridge).
-
----
-
-## Phase 2: `handleBgComplete` Compiles Twice (Fire-and-Forget + Polling Fallback)
-
-**Problem:** In `handleBgComplete` (lines 312-393), the React compile is started as a fire-and-forget `.then()` chain (line 313). Then the dispatch logic (lines 370-393) starts a SECOND polling loop checking `stableHTMLRef.current` every 200ms. If the first compile sets `stableHTMLRef` AND CompilationBridge also triggers a compile (because `filesDigest` changed when `setFiles` was called at line 308), there are now potentially 3 compilation paths racing.
-
-**Fix in `AIAppBuilderWorkspace.tsx`:**
-- Capture the compile promise from line 313 and chain the dispatch directly to it instead of using the polling fallback. This eliminates the race entirely.
-
-```typescript
-// Current: fire-and-forget compile + separate polling fallback
-compileReactProjectRef.current(mergedFiles, {...}).then(compiled => {
-  if (compiled.html) handleStableHTML(compiled.html);
-});
-// ... later, separate polling for stableHTMLRef
-
-// Fixed: chain dispatch to the SAME promise
-const compilePromise = compileReactProjectRef.current(mergedFiles, {...}).then(compiled => {
-  if (compiled.html) handleStableHTML(compiled.html);
-});
-compilePromise.finally(() => {
-  setTimeout(() => {
-    window.dispatchEvent(new CustomEvent('bg-job-completed', { detail: { jobId } }));
-  }, 500);
-});
-```
-
----
-
-## Phase 3: CompilationBridge Double-Entry from `isGenerating` + `filesDigest` Effects
-
-**Problem:** CompilationBridge has TWO effects that reset compilation state when `isGenerating` changes:
-1. Lines 125-161: The generation start/end effect (depends on `[isGenerating, setStableHTML]`)
-2. Lines 169-174: A SECOND reset effect (depends on `[isGenerating, filesDigest]`)
-
-When `isGenerating` goes to `false`, BOTH effects fire. Effect #2 (line 170-173) unconditionally resets `compilationAttemptedRef` and `compilationLockRef`, undoing the work of Effect #1 which carefully set those flags based on external state.
+**Problem:** When a user manually edits code in the Monaco editor, `handleContentChange` calls `upsertFile()` which updates `project.files` and changes `filesDigest` in CompilationBridge. The main compilation effect (line 178) detects the digest change and tries hot-patching via `liveSync.applyPatches()`. However, for React projects, the `useLivePreviewSync` hook at line 56 (`useLivePreviewSync.ts`) returns `null` for any `.tsx`/`.ts`/`.jsx`/`.js` file change -- forcing a full reload path. But the "full reload" path in CompilationBridge (lines 210-212) only unlocks `compilationLockRef` and falls through -- it doesn't actually trigger a new compilation because `compilationLockRef` was already `true` from the previous build.
 
 **Fix in `CompilationBridge.tsx`:**
-- Remove Effect #2 entirely (lines 168-174). Its work is already handled correctly by Effect #1.
+- When hot-patching fails for a files-changed scenario (line 210), explicitly reset `compilationAttemptedRef` to `false` alongside unlocking `compilationLockRef`, so the subsequent logic (lines 226-321) actually starts a new compilation.
 
 ---
 
-## Phase 4: `GeneratingOverlay` Shows During Compilation-Only Phase (No Files to Display)
+## Phase 2: Error Console Accumulates Stale Errors Across Builds
 
-**Problem:** When `isCompiling` is true but `isGenerating` is false (compilation after generation), the `GeneratingOverlay` still shows but with an empty file list and just says "Compiling preview...". In Lovable, compilation happens silently -- no overlay. The old preview stays visible until the new one is ready.
-
-**Fix in `GeneratingOverlay.tsx`:**
-- Don't show the overlay when only compiling (not generating). The shimmer bar on the preview panel is sufficient visual feedback.
-- Change `showOverlay` from `isGenerating || isCompiling` to just `isGenerating`.
-
----
-
-## Phase 5: `BuilderPreviewPanel` Shows `SkeletonPreview` When `html` is Null During Generation
-
-**Problem:** In `BuilderPreviewPanel.tsx` (lines 528-529), when `html` is null AND `isGenerating` is true, it shows `SkeletonPreview`. But with our Phase 1 fix (keeping old preview visible), `html` should NOT be null during subsequent generations -- only on the very first build.
-
-However, there's an edge case: if the user clears the project and starts fresh (`handleReset` calls `setStableHTML(null)` at line 1985), the skeleton correctly shows. The current logic is correct for first builds but we should ensure the overlay (GeneratingOverlay) is rendered ON TOP of the existing preview, not replacing it.
+**Problem:** In `BuilderPreviewPanel.tsx` (line 315-319), errors and console logs are cleared when `html` changes. However, during a build where the preview stays visible (Phase 4 of previous fix -- no iframe remount), `html` updates in-place via `srcdoc`. The browser doesn't necessarily fire a fresh `error` event for resolved issues, but the old error entries remain in state from the previous render cycle. This means users see errors from the OLD build persisting after a successful new build.
 
 **Fix in `BuilderPreviewPanel.tsx`:**
-- Reorder the rendering priority: if `html` exists, ALWAYS render the iframe (even during generation). The `GeneratingOverlay` is already rendered as a child overlay on top.
-- Only fall back to `SkeletonPreview` if `html` is truly null (first build or after reset).
-
-This is already the current behavior since `html` (compiledHTML) preserves the old value. No code change needed -- just verification.
+- Also clear errors and console logs when `isGenerating` transitions from `true` to `false` (build complete). This ensures the error console reflects only the NEW build's state.
 
 ---
 
-## Phase 6: Stale Closure in `handleBgComplete` for `supabaseConfig`/`stripeConfig`
+## Phase 3: `previewRefreshKey` Causes Unnecessary Iframe Remount on Tab Return
 
-**Problem:** `handleBgComplete` (line 276) is a `useCallback` with dependency array `[project.files, setFiles, setMessages]`. But inside it references `supabaseConfig`, `stripeConfig`, `envVars`, `serviceKeys`, `cdnPackages`, `bundleForBrowser`, and `linkedGPT` -- none of which are in the dependency array. This means the compile inside `handleBgComplete` uses stale config values if the user changed integrations since the callback was created.
+**Problem:** When a user switches away from the browser tab and comes back, `visibilitychange` fires and increments `previewRefreshKey` (line 2227). Since `iframeKey` is now `${iframeKey}-${refreshKey}`, this forces a full iframe teardown and rebuild -- even though the `srcdoc` hasn't changed. For complex previews with external resource loads, this causes a visible flash and reload delay.
+
+In real Lovable, tab return just checks if the iframe is still healthy and only remounts if the content is gone.
 
 **Fix in `AIAppBuilderWorkspace.tsx`:**
-- Store these configs in refs and read from refs inside `handleBgComplete`, OR add them to the dependency array. Refs are preferred to avoid unnecessary recreation of the callback (which would break the background generation wiring).
+- Before incrementing `previewRefreshKey`, check iframe health first. Only increment if the iframe body appears blank (similar to the health check logic already in `BuilderPreviewPanel`). If the iframe is still healthy, skip the remount.
+
+---
+
+## Phase 4: `handleStreamDelta` Triggers Redundant `setFiles` During Streaming
+
+**Problem:** `handleStreamDelta` (line 379) calls `setFiles(mergedFiles)` every 2KB of new content during streaming. Each call changes `filesDigest` in CompilationBridge, but CompilationBridge correctly skips compilation while `isGenerating` is true (line 179). However, each `setFiles` call triggers a React re-render of the entire workspace component tree -- including all 100+ hooks. With large multi-file generations producing 50KB+ of content, this causes 25+ unnecessary workspace re-renders during streaming.
+
+**Fix in `AIAppBuilderWorkspace.tsx`:**
+- Throttle `handleStreamDelta`'s `setFiles` calls to at most once every 3 seconds using a ref-based timestamp guard. The files are already being parsed into `partialFilesRef` for the overlay display -- the actual `setFiles` merge only needs to happen periodically for the editor display.
+
+---
+
+## Phase 5: `CompilationBridge` Hot-Patch Effect Fires on Every `filesDigest` Change
+
+**Problem:** The hot-patch effect at the bottom of CompilationBridge (lines 414-419) fires on every `filesDigest` change. It calls `liveSync.applyPatches()` which internally compares files to the previous snapshot. For React/TS files, this always returns `null` (needs full reload), but the comparison work is still done on every keystroke in the editor.
+
+**Fix in `CompilationBridge.tsx`:**
+- Guard the hot-patch effect: only run if `stableHTML` exists AND we're not currently in a compilation cycle (i.e., `compilationLockRef.current` is false or a compilation just completed). Also skip if the main compilation effect already handled this digest change.
 
 ---
 
@@ -95,20 +59,18 @@ This is already the current behavior since `html` (compiledHTML) preserves the o
 
 | Phase | File | Change |
 |-------|------|--------|
-| 1 | `AIAppBuilderWorkspace.tsx` | Set `skipNextCompileRef = true` before deferred post-gen `setFiles` |
-| 2 | `AIAppBuilderWorkspace.tsx` | Chain dispatch to compile promise instead of polling fallback |
-| 3 | `CompilationBridge.tsx` | Remove duplicate reset effect (lines 168-174) |
-| 4 | `GeneratingOverlay.tsx` | Only show overlay during generation, not compilation-only |
-| 5 | `BuilderPreviewPanel.tsx` | Verify iframe always renders when html exists (already correct) |
-| 6 | `AIAppBuilderWorkspace.tsx` | Use refs for stale config closure in `handleBgComplete` |
+| 1 | `CompilationBridge.tsx` | Reset `compilationAttemptedRef` when hot-patch fails to enable recompilation |
+| 2 | `BuilderPreviewPanel.tsx` | Clear errors on generation end (isGenerating false transition) |
+| 3 | `AIAppBuilderWorkspace.tsx` | Check iframe health before forcing remount on tab return |
+| 4 | `AIAppBuilderWorkspace.tsx` | Throttle `setFiles` in `handleStreamDelta` to once per 3s |
+| 5 | `CompilationBridge.tsx` | Skip redundant hot-patch effect when main effect already handled digest |
 
 ## Expected Result
 
-After all 6 phases:
-- No post-build flash from deferred auto-patching
-- No duplicate/triple compilation from racing promises
-- No CompilationBridge double-unlock from competing effects
-- Clean overlay behavior: shimmer during generation, silent compilation
-- Correct config values used even after integration changes
-- True Lovable parity: old preview stays, seamlessly replaced by new build
+After all 5 phases:
+- Manual code edits in Monaco trigger proper React recompilation and preview update
+- Error console clears on new successful build (no stale errors from previous build)
+- Tab return only remounts iframe if content is actually gone (no unnecessary flash)
+- Streaming performance improved: 25+ fewer re-renders during large generations
+- No wasted hot-patch comparison work on every keystroke
 
