@@ -1,57 +1,55 @@
 
 
-# Multi-Phase Fix: Final Lovable Build Parity Issues
+# Final Lovable Build Parity: Remaining Issues
 
 ## Overview
 
-After a thorough analysis of the full compilation pipeline following the previous 11-phase fixes, I've identified 5 remaining issues that break Lovable parity. These cause subtle but noticeable UX regressions: stale previews after manual edits, error console noise, and unnecessary work during tab returns.
+After reviewing the full compilation pipeline post-16 phases of fixes, I've identified 5 remaining issues that break true Lovable parity. These are subtle but impactful: a stale `extractHead` function, a missing `lastMainEffectDigestRef` sync, visual edit recompile waste on React projects, an error overlay that blocks interaction, and a redundant nuclear fallback that should be removed entirely.
 
 ---
 
-## Phase 1: Manual Code Edits Don't Trigger Recompilation for React Projects
+## Phase 1: Remove Dead `extractHead` Function in `BuilderPreviewPanel.tsx`
 
-**Problem:** When a user manually edits code in the Monaco editor, `handleContentChange` calls `upsertFile()` which updates `project.files` and changes `filesDigest` in CompilationBridge. The main compilation effect (line 178) detects the digest change and tries hot-patching via `liveSync.applyPatches()`. However, for React projects, the `useLivePreviewSync` hook at line 56 (`useLivePreviewSync.ts`) returns `null` for any `.tsx`/`.ts`/`.jsx`/`.js` file change -- forcing a full reload path. But the "full reload" path in CompilationBridge (lines 210-212) only unlocks `compilationLockRef` and falls through -- it doesn't actually trigger a new compilation because `compilationLockRef` was already `true` from the previous build.
-
-**Fix in `CompilationBridge.tsx`:**
-- When hot-patching fails for a files-changed scenario (line 210), explicitly reset `compilationAttemptedRef` to `false` alongside unlocking `compilationLockRef`, so the subsequent logic (lines 226-321) actually starts a new compilation.
-
----
-
-## Phase 2: Error Console Accumulates Stale Errors Across Builds
-
-**Problem:** In `BuilderPreviewPanel.tsx` (line 315-319), errors and console logs are cleared when `html` changes. However, during a build where the preview stays visible (Phase 4 of previous fix -- no iframe remount), `html` updates in-place via `srcdoc`. The browser doesn't necessarily fire a fresh `error` event for resolved issues, but the old error entries remain in state from the previous render cycle. This means users see errors from the OLD build persisting after a successful new build.
+**Problem:** Lines 731-734 contain an unused `extractHead` helper function left over from the old iframe remount logic (removed in Phase 4 of a previous fix). This is dead code that adds confusion.
 
 **Fix in `BuilderPreviewPanel.tsx`:**
-- Also clear errors and console logs when `isGenerating` transitions from `true` to `false` (build complete). This ensures the error console reflects only the NEW build's state.
+- Delete the `extractHead` function (lines 731-734).
 
 ---
 
-## Phase 3: `previewRefreshKey` Causes Unnecessary Iframe Remount on Tab Return
+## Phase 2: `lastMainEffectDigestRef` Not Updated in Main Compilation Effect
 
-**Problem:** When a user switches away from the browser tab and comes back, `visibilitychange` fires and increments `previewRefreshKey` (line 2227). Since `iframeKey` is now `${iframeKey}-${refreshKey}`, this forces a full iframe teardown and rebuild -- even though the `srcdoc` hasn't changed. For complex previews with external resource loads, this causes a visible flash and reload delay.
-
-In real Lovable, tab return just checks if the iframe is still healthy and only remounts if the content is gone.
-
-**Fix in `AIAppBuilderWorkspace.tsx`:**
-- Before incrementing `previewRefreshKey`, check iframe health first. Only increment if the iframe body appears blank (similar to the health check logic already in `BuilderPreviewPanel`). If the iframe is still healthy, skip the remount.
-
----
-
-## Phase 4: `handleStreamDelta` Triggers Redundant `setFiles` During Streaming
-
-**Problem:** `handleStreamDelta` (line 379) calls `setFiles(mergedFiles)` every 2KB of new content during streaming. Each call changes `filesDigest` in CompilationBridge, but CompilationBridge correctly skips compilation while `isGenerating` is true (line 179). However, each `setFiles` call triggers a React re-render of the entire workspace component tree -- including all 100+ hooks. With large multi-file generations producing 50KB+ of content, this causes 25+ unnecessary workspace re-renders during streaming.
-
-**Fix in `AIAppBuilderWorkspace.tsx`:**
-- Throttle `handleStreamDelta`'s `setFiles` calls to at most once every 3 seconds using a ref-based timestamp guard. The files are already being parsed into `partialFilesRef` for the overlay display -- the actual `setFiles` merge only needs to happen periodically for the editor display.
-
----
-
-## Phase 5: `CompilationBridge` Hot-Patch Effect Fires on Every `filesDigest` Change
-
-**Problem:** The hot-patch effect at the bottom of CompilationBridge (lines 414-419) fires on every `filesDigest` change. It calls `liveSync.applyPatches()` which internally compares files to the previous snapshot. For React/TS files, this always returns `null` (needs full reload), but the comparison work is still done on every keystroke in the editor.
+**Problem:** In `CompilationBridge.tsx`, the hot-patch guard at line 416-424 uses `lastMainEffectDigestRef` to skip redundant patches when the main compilation effect already handled a digest. However, the main compilation effect (lines 178-328) never sets `lastMainEffectDigestRef.current = filesDigest`. This means the guard is ineffective -- every digest change still triggers a hot-patch comparison.
 
 **Fix in `CompilationBridge.tsx`:**
-- Guard the hot-patch effect: only run if `stableHTML` exists AND we're not currently in a compilation cycle (i.e., `compilationLockRef.current` is false or a compilation just completed). Also skip if the main compilation effect already handled this digest change.
+- At the top of the main compilation effect (after the `isGenerating` / `justSyncedFromExternal` guards), set `lastMainEffectDigestRef.current = filesDigest` so the hot-patch effect correctly skips already-processed digests.
+
+---
+
+## Phase 3: Visual Edits on React Projects Trigger Full Recompile Instead of Iframe-Only Update
+
+**Problem:** When `handleVisualEdit` applies a text or color change for React projects, `upsertFile()` changes `filesDigest`. Even though `skipNextCompileRef` is set for the serialized-HTML fallback path (lines 1905, 1953), the primary regex-match path (lines 1890-1893 for text, 1937-1941 for color) does NOT set `skipNextCompileRef`. This means successful regex-based visual edits on React projects still trigger a full recompile in CompilationBridge, even though the visual edit was already applied to the iframe.
+
+**Fix in `AIAppBuilderWorkspace.tsx`:**
+- In `handleVisualEdit`, set `skipNextCompileRef.current = true` before calling `upsertFile()` in the regex-match success paths for both `text` (line 1891) and `color` (line 1938) edits.
+
+---
+
+## Phase 4: Error Overlay Banner Blocks Bottom of Preview Content
+
+**Problem:** The error overlay at line 628-681 in `BuilderPreviewPanel.tsx` is `absolute bottom-0` with `z-20`, permanently covering the bottom portion of the preview iframe when errors exist. In Lovable, the error banner is dismissible AND the preview content shifts up to accommodate it (not overlapped). Currently, users cannot see or interact with the bottom of their preview when errors are present.
+
+**Fix in `BuilderPreviewPanel.tsx`:**
+- Change the error overlay from `absolute` to a flex-layout element that pushes the iframe up. Alternatively, add bottom padding to the iframe container when errors are visible, so no content is hidden behind the overlay.
+
+---
+
+## Phase 5: Nuclear Fallback Should Be Fully Guarded Against Stale Closure Configs
+
+**Problem:** The nuclear fallback at lines 2190-2226 still uses direct `supabaseConfig`, `stripeConfig`, etc. from the closure (not from refs). If the user changed integrations since the effect captured these values, the nuclear compile uses stale config -- producing incorrect preview HTML. This is the same stale closure issue fixed in Phase 6 for `handleBgComplete`, but the nuclear fallback was missed.
+
+**Fix in `AIAppBuilderWorkspace.tsx`:**
+- Read from `supabaseConfigRef.current`, `stripeConfigRef.current`, `envVarsRef.current`, `serviceKeysRef.current`, `cdnPackagesRef.current`, and `linkedGPTRef.current` inside the nuclear fallback, matching what was done for `handleBgComplete`.
 
 ---
 
@@ -59,18 +57,18 @@ In real Lovable, tab return just checks if the iframe is still healthy and only 
 
 | Phase | File | Change |
 |-------|------|--------|
-| 1 | `CompilationBridge.tsx` | Reset `compilationAttemptedRef` when hot-patch fails to enable recompilation |
-| 2 | `BuilderPreviewPanel.tsx` | Clear errors on generation end (isGenerating false transition) |
-| 3 | `AIAppBuilderWorkspace.tsx` | Check iframe health before forcing remount on tab return |
-| 4 | `AIAppBuilderWorkspace.tsx` | Throttle `setFiles` in `handleStreamDelta` to once per 3s |
-| 5 | `CompilationBridge.tsx` | Skip redundant hot-patch effect when main effect already handled digest |
+| 1 | `BuilderPreviewPanel.tsx` | Remove dead `extractHead` function |
+| 2 | `CompilationBridge.tsx` | Set `lastMainEffectDigestRef` in main compilation effect |
+| 3 | `AIAppBuilderWorkspace.tsx` | Set `skipNextCompileRef` for regex-match visual edits |
+| 4 | `BuilderPreviewPanel.tsx` | Fix error overlay blocking preview content |
+| 5 | `AIAppBuilderWorkspace.tsx` | Use config refs in nuclear fallback |
 
 ## Expected Result
 
 After all 5 phases:
-- Manual code edits in Monaco trigger proper React recompilation and preview update
-- Error console clears on new successful build (no stale errors from previous build)
-- Tab return only remounts iframe if content is actually gone (no unnecessary flash)
-- Streaming performance improved: 25+ fewer re-renders during large generations
-- No wasted hot-patch comparison work on every keystroke
+- No dead code in preview panel
+- Hot-patch guard actually prevents redundant work
+- Visual edits (text/color) don't trigger unnecessary React recompilations
+- Error overlay doesn't hide preview content
+- Nuclear fallback uses fresh config values
 
