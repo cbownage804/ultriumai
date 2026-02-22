@@ -2219,36 +2219,13 @@ export function AIAppBuilderWorkspace() {
     setStableHTML(html);
   }, []);
 
-  // Phase 3: Post-generation safety net — if stableHTML is still null 5s after
-  // generation ends and we have files, force a vanilla compilation as fallback.
-  // This catches race conditions where CompilationBridge's effect chain fails to fire.
+  // Phase 3: Nuclear fallback disabled — handleBgComplete already compiles directly
+  // and CompilationBridge has its own safety timeout. Three simultaneous compilations
+  // were causing browser freezes.
   const prevGenForFallbackRef = useRef(false);
   useEffect(() => {
-    if (prevGenForFallbackRef.current && !isGenerating && project.files.length > 0) {
-      const timer = setTimeout(() => {
-        if (!stableHTMLRef.current && project.files.length > 0) {
-          console.warn('[Workspace] Safety net: stableHTML still null 5s after generation — forcing vanilla compile');
-          try {
-            const result = getCompiledHTML(supabaseConfig, stripeConfig, undefined, undefined, undefined, bundleForBrowserRef.current, linkedGPTRef.current);
-            if (result) {
-              handleStableHTML(result);
-              setIsCompiling(false);
-            } else {
-              // Try React worker via CompilationBridge by toggling isCompiling
-              console.warn('[Workspace] Vanilla compile returned null — nudging CompilationBridge');
-              setIsCompiling(true);
-              setTimeout(() => setIsCompiling(false), 100);
-            }
-          } catch (e) {
-            console.error('[Workspace] Safety net compile failed:', e);
-          }
-        }
-      }, 5000);
-      prevGenForFallbackRef.current = isGenerating;
-      return () => clearTimeout(timer);
-    }
     prevGenForFallbackRef.current = isGenerating;
-  }, [isGenerating, project.files.length, getCompiledHTML, supabaseConfig, stripeConfig, handleStableHTML]);
+  }, [isGenerating]);
 
   // When the tab returns from background, the browser may have discarded
   // iframe content. Force iframe remount WITHOUT touching stableHTML
