@@ -358,6 +358,8 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
 
   /** Check for any active jobs on mount (recovery after tab close) */
   const checkPendingJobs = useCallback(async (userId: string) => {
+    // Skip if we're already watching a job to prevent toast spam on tab switches
+    if (activeJob) return activeJob.id;
     try {
       const { data: jobs } = await supabase
         .from('app_builder_jobs')
@@ -408,7 +410,7 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
       console.error('[BG] checkPendingJobs error:', err);
       return null;
     }
-  }, [startWatching]);
+  }, [startWatching, activeJob]);
 
   /** Get streamed content ref for incremental file parsing */
   const getStreamedContent = useCallback(() => streamedContentRef.current, []);
