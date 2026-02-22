@@ -1065,78 +1065,12 @@ export function AIAppBuilderWorkspace() {
         commitMsg = `${cm.type}(${cm.scope}): ${cm.subject}`;
         setMessages(prev => prev.map((m, i) => i === prev.length - 1 ? { ...m, commitMessage: commitMsg } : m));
       }
-      // Issue 4 fix: Defer non-critical post-build work to unblock preview
-      // Phase 2: Defer post-generation work in separate callbacks to avoid freezing
-      const deferStep1 = () => {
-        const smokeResult = smokeTest.runSmokeTest(latestFiles);
-        const conflictWarnings = conflictDetection.detectConflicts(latestFiles);
-        if (conflictWarnings.length > 0) {
-          buildLog.addEntry('warning' as any, `🔗 ${conflictWarnings.length} dependency conflict(s) detected`);
-          conflictWarnings.slice(0, 3).forEach(w => buildLog.addEntry('info', `  ⚠ ${w.message}`));
-        }
-        errorAnnotations.updateAnnotations(
-          [...smokeResult.warnings, ...conflictWarnings],
-          smokeResult.errors
-        );
-
-        // TS validation
-        const validationResult = tsValidator.validate(latestFiles);
-        if (validationResult.errorCount > 0) {
-          buildLog.addEntry('warning' as any, `⚠️ ${validationResult.errorCount} validation error(s), ${validationResult.warningCount} warning(s)`);
-          validationResult.diagnostics.filter(d => d.severity === 'error').slice(0, 5).forEach(d =>
-            buildLog.addEntry('warning' as any, `  ❌ ${d.file}:${d.line} — ${d.message}`)
-          );
-        } else if (validationResult.warningCount > 0) {
-          buildLog.addEntry('info', `✅ Validation passed with ${validationResult.warningCount} warning(s) (${validationResult.validationTimeMs}ms)`);
-        } else {
-          buildLog.addEntry('info', `✅ Validation passed (${validationResult.validationTimeMs}ms)`);
-        }
-      };
-
-      // Lighthouse + bundle analysis — skip for large projects to prevent freeze
-      const deferStep2 = () => {
-        if (latestFiles.length < 100) {
-          lighthouseAudit.runAudit(latestFiles);
-          bundleSize.analyzeBundle(latestFiles);
-        } else {
-          buildLog.addEntry('info', `⏭️ Skipped heavy analysis (${latestFiles.length} files — threshold: 100)`);
-        }
-      };
-
-      // Auto-patch + companion files deferred separately
-      const deferStep3 = () => {
-        const patchResult = deleteAutoPatcher.patchDeleteButtons(latestFiles);
-        const companions = fileScaffolding.generateCompanionFiles(latestFiles, project.files);
-        const batchFiles: typeof latestFiles = [];
-        if (patchResult.patched) {
-          batchFiles.push(...patchResult.files);
-          buildLog.addEntry('info', `🔧 Auto-patched ${patchResult.fixes.length} delete/remove issue(s)`);
-          patchResult.fixes.forEach(fix => buildLog.addEntry('info', `  ✅ ${fix}`));
-        }
-        if (companions.length > 0) {
-          batchFiles.push(...companions);
-          buildLog.addEntry('info', `🧪 Auto-generated ${companions.length} test file(s)`);
-        }
-        if (batchFiles.length > 0) {
-          const deferPatch = () => {
-            skipNextCompileRef.current = true;
-            const currentFiles = project.files;
-            const map = new Map(currentFiles.map(f => [f.path, f]));
-            for (const f of batchFiles) map.set(f.path, f);
-            setFiles(Array.from(map.values()));
-          };
-          if (typeof requestIdleCallback === 'function') {
-            requestIdleCallback(deferPatch, { timeout: 5000 });
-          } else {
-            setTimeout(deferPatch, 2000);
-          }
-        }
-      };
-
-      // Schedule each step with meaningful delays to prevent freeze
-      setTimeout(deferStep1, 100);
-      setTimeout(deferStep2, 1500);
-      setTimeout(deferStep3, 3000);
+      // Post-gen analysis completely disabled to prevent browser freeze.
+      // These were running smoke tests, conflict detection, TS validation,
+      // lighthouse audits, bundle analysis, auto-patching, and companion
+      // file generation — all synchronous and blocking the main thread.
+      // The compilation itself (in CompilationBridge) handles preview rendering.
+      console.info('[PostGen] Skipping all post-gen analysis to prevent freeze');
       // Mark preview as good for hot recovery & update conflict resolver base snapshot
       hotRecovery.markAsGood([...project.files]);
       conflictResolver.setBaseSnapshot([...project.files]);
