@@ -1,69 +1,40 @@
 
 
-# Fix: Preview Not Updating After Build + Color Changes Ignored
+# Fix: Preview Not Updating After Build
 
-## Root Causes Found
+## Root Cause
 
-Two critical bugs cause the preview to not reflect changes after a build:
+After deep analysis, the core issue is that when compiled HTML changes, the iframe's `srcDoc` attribute is updated by React on the **same DOM element** (same `key`), but some browsers don't reliably re-navigate the iframe when `srcDoc` changes via property assignment. The iframe only reliably loads new content when it's **remounted** (destroyed and recreated).
 
-### Bug 1: `filesDigest` uses content LENGTH instead of content hash (CompilationBridge.tsx, line 86)
+Currently, `iframeKey` only changes on health-check failures or tab visibility -- NOT when the compiled HTML changes. This is why tab-switching "fixes" it (it increments `refreshKey`, forcing a remount).
 
-The compilation trigger computes a "digest" of files using only `f.path + ':' + f.content.length`. When the AI replaces a color like `#FF5722` (7 chars) with `#009688` (7 chars), the total file length doesn't change, so the digest stays identical. The compilation effect never re-runs because its dependency (`filesDigest`) hasn't changed.
+## Fix
 
-This is the primary reason color changes (and any same-length text replacement) are silently ignored in the preview.
+### 1. `src/components/ai-builder/BuilderPreviewPanel.tsx`
 
-**Fix:** Replace `content.length` with a fast content hash (e.g., djb2 or simple checksum) so any character change triggers recompilation.
-
-### Bug 2: Background generation doesn't signal `isGenerating` to CompilationBridge (AIAppBuilderWorkspace.tsx, line 2159)
-
-`CompilationBridge` receives `isGenerating` from `useAIAppBuilder` (SSE streaming state), but background generation uses a separate `isGeneratingOverride` state. During background builds, the CompilationBridge thinks nothing is generating, compiles intermediate files, and locks itself (`compilationLockRef = true`). When the final files arrive via `handleBgComplete`, the lock may prevent recompilation.
-
-**Fix:** Pass `isGenerating || isGeneratingOverride` to CompilationBridge instead of just `isGenerating`.
-
----
-
-## File Changes
-
-### 1. `src/components/ai-builder/CompilationBridge.tsx`
-
-**Line 84-87** -- Replace content-length digest with a fast hash:
+Add an effect that increments `iframeKey` whenever the `html` prop changes from one non-null value to a **different** non-null value. This forces the iframe to remount with the new content.
 
 ```typescript
-const filesDigest = useMemo(() => {
-  if (files.length === 0) return '';
-  // Use a fast hash of content (not just length) so same-length edits trigger recompilation
-  return files.map(f => {
-    let hash = 5381;
-    for (let i = 0; i < f.content.length; i++) {
-      hash = ((hash << 5) + hash + f.content.charCodeAt(i)) & 0x7fffffff;
-    }
-    return f.path + ':' + hash;
-  }).join('|');
-}, [files]);
+// Force iframe remount when compiled HTML changes
+const prevHtmlRef = useRef<string | null>(null);
+useEffect(() => {
+  if (html && prevHtmlRef.current && html !== prevHtmlRef.current) {
+    setIframeKey(k => k + 1);
+  }
+  prevHtmlRef.current = html;
+}, [html]);
 ```
 
-This uses the djb2 hash algorithm which is fast and produces different outputs for any character change, ensuring even single-character edits (like color hex codes) trigger recompilation.
+This is safe because:
+- `null` to non-null: iframe is freshly created (wasn't in DOM before) -- no remount needed
+- Non-null to different non-null: this is the problematic case -- forces remount
+- Same value: no-op
 
-### 2. `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
+### 2. `src/components/ai-builder/CompilationBridge.tsx` (safety net)
 
-**Line 2159** -- Pass combined generating state to CompilationBridge:
+Add a `console.info` log when `setStableHTML` is called with a new value, so future debugging is easier. No logic changes needed beyond previous fixes.
 
-```typescript
-isGenerating={isGenerating || isGeneratingOverride}
-```
+## Why This Works
 
-This ensures the CompilationBridge correctly defers compilation during background generation and properly resets locks when the build completes.
-
----
-
-## Why Tab Switch "Fixed" It
-
-The existing `previewRefreshKey` mechanism (lines 2062-2071) increments on `visibilitychange`, forcing the iframe to remount with whatever `stableHTML` is current. If the files had already been compiled once (with old content due to the digest bug), the stale HTML was shown. But when the user returned to the tab, the iframe remounted, and if any other side-effect had triggered a state update, the new HTML could appear. This was masking the underlying digest bug.
-
-## Impact
-
-These two fixes together ensure:
-- Any file content change (even single characters) triggers recompilation
-- Background generation properly blocks premature compilation
-- The preview updates immediately after build completion without requiring a tab switch
+The existing flow (djb2 hash digest, generation-ending forced recompile) correctly produces new `liveCompiledHTML` and sets `stableHTML`. The problem was only in the **last mile**: the browser iframe not re-rendering despite `srcDoc` changing. Forcing a remount via key change is the standard React pattern for this.
 
