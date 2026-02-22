@@ -6,7 +6,7 @@
  * Falls back to regex-based stripping if esbuild fails to initialize.
  */
 
-import * as esbuild from 'esbuild-wasm';
+let esbuild: any = null;
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import { DEFAULT_PACKAGES, type CDNPackageEntry } from '@/lib/cdnPackageRegistry';
 
@@ -17,22 +17,27 @@ let esbuildInitPromise: Promise<void> | null = null;
 async function ensureEsbuild(): Promise<boolean> {
   if (esbuildReady) return true;
   if (!esbuildInitPromise) {
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('esbuild WASM download timeout (10s)')), 10_000)
-    );
-    esbuildInitPromise = Promise.race([
-      esbuild.initialize({
-        wasmURL: 'https://unpkg.com/esbuild-wasm@0.25.2/esbuild.wasm',
-        worker: false, // We're already in a worker
-      }),
-      timeoutPromise,
-    ]).then(() => {
-      esbuildReady = true;
-      console.info('[CompilerWorker] esbuild-wasm initialized');
-    }).catch((err) => {
-      console.warn('[CompilerWorker] esbuild-wasm failed to init, using regex fallback:', err.message);
-      esbuildInitPromise = null; // Allow retry
-    });
+    esbuildInitPromise = (async () => {
+      try {
+        esbuild = await import('esbuild-wasm');
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('esbuild WASM download timeout (10s)')), 10_000)
+        );
+        await Promise.race([
+          esbuild.initialize({
+            wasmURL: 'https://unpkg.com/esbuild-wasm@0.25.2/esbuild.wasm',
+            worker: false,
+          }),
+          timeoutPromise,
+        ]);
+        esbuildReady = true;
+        console.info('[CompilerWorker] esbuild-wasm initialized');
+      } catch (err: any) {
+        console.warn('[CompilerWorker] esbuild-wasm failed, using regex fallback:', err?.message);
+        esbuild = null;
+        esbuildInitPromise = null;
+      }
+    })();
   }
   await esbuildInitPromise;
   return esbuildReady;
@@ -40,6 +45,7 @@ async function ensureEsbuild(): Promise<boolean> {
 
 /** Strip TypeScript using esbuild.transform — fast and correct */
 async function esbuildStripTypes(code: string, isTsx: boolean): Promise<string> {
+  if (!esbuild) throw new Error('esbuild not loaded');
   const result = await esbuild.transform(code, {
     loader: isTsx ? 'tsx' : 'ts',
     // Only strip types, keep JSX as-is (Babel in the preview handles JSX→JS)
@@ -810,6 +816,8 @@ window.ENV = ${JSON.stringify(envObj)};
 }
 
 // ── Worker Message Handler ──
+console.info('[CompilerWorker] Module loaded successfully');
+
 self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
   const msg = e.data;
   if (msg.type === 'compile') {
