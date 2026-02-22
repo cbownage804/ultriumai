@@ -28,6 +28,7 @@ interface CompilationBridgeProps {
   onStableHTML: (html: string | null) => void;
   onCompiledForHosting: (html: string | null) => void;
   onCompilingChange?: (compiling: boolean) => void;
+  skipNextCompileRef?: React.MutableRefObject<boolean>;
 }
 
 const ERROR_FALLBACK_HTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Compilation Error</title><style>*{margin:0;padding:0;box-sizing:border-box}body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0a0a14;color:#fff;font-family:system-ui,sans-serif}.card{text-align:center;max-width:440px;padding:2rem}h1{font-size:1.5rem;margin-bottom:1rem;color:#f87171}p{color:#ffffff90;line-height:1.6;margin-bottom:0.5rem}code{background:#1e1e2e;padding:2px 6px;border-radius:4px;font-size:0.85em}</style></head><body><div class="card"><h1>⚠️ Compilation Error</h1><p>Your project files were generated but could not be compiled into a preview.</p><p>Check that your project has an <code>index.html</code> file and try regenerating.</p></div></body></html>`;
@@ -62,6 +63,7 @@ export function CompilationBridge({
   onStableHTML,
   onCompiledForHosting,
   onCompilingChange,
+  skipNextCompileRef,
 }: CompilationBridgeProps) {
   // ── React Compiler integration ──
   const { compileReactProject } = useReactCompiler();
@@ -172,6 +174,14 @@ export function CompilationBridge({
     // If stableHTML already exists but filesDigest changed, reset it so
     // recompilation can run with the new files
     if (stableHTMLRef.current && filesDigest !== prevFilesDigestRef.current) {
+      // Check if this file change should skip recompilation (e.g. visual edit already applied to iframe)
+      if (skipNextCompileRef?.current) {
+        skipNextCompileRef.current = false;
+        prevFilesDigestRef.current = filesDigest;
+        liveSync.resetSnapshot(filesRef.current);
+        console.info('[CompilationBridge] Skipping recompile (visual edit — iframe already correct)');
+        return;
+      }
       // Files changed while preview exists — try hot-patching first
       prevFilesDigestRef.current = filesDigest;
       const patched = liveSync.applyPatches(previewIframeRef, filesRef.current);

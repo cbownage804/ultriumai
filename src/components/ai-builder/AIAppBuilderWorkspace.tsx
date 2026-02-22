@@ -1860,11 +1860,18 @@ export function AIAppBuilderWorkspace() {
           }
         }
         if (!applied) {
-          // Fallback to AI for complex cases
-          sendMessage(
-            `Apply this visual edit to the source file. Change the text content of the element matching selector "${selector}" to: "${value}". Only update the text, keep everything else the same.`,
-            project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel
-          );
+          // Serialize iframe DOM back to source (the overlay already applied the edit)
+          const iframe = previewIframeRef.current;
+          const iframeDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
+          if (iframeDoc) {
+            const serializedHTML = '<!DOCTYPE html>\n' + iframeDoc.documentElement.outerHTML;
+            const mainHtml = project.files.find(f => f.path === 'index.html' || f.path.endsWith('.html'));
+            if (mainHtml) {
+              skipNextCompileRef.current = true;
+              pushUndo('Visual edit: text', project.files);
+              upsertFile(mainHtml.path, serializedHTML);
+            }
+          }
         }
         return;
       } else if (property === 'color') {
@@ -1901,11 +1908,18 @@ export function AIAppBuilderWorkspace() {
           }
         }
         if (!applied) {
-          // Fallback to AI for complex cases
-          sendMessage(
-            `Apply this visual edit to the source file. Change the text color of the element matching selector "${selector}" to: "${value}". Add an inline style or update the existing CSS.`,
-            project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel
-          );
+          // Serialize iframe DOM back to source (the overlay already applied the edit)
+          const iframe = previewIframeRef.current;
+          const iframeDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
+          if (iframeDoc) {
+            const serializedHTML = '<!DOCTYPE html>\n' + iframeDoc.documentElement.outerHTML;
+            const mainHtml = project.files.find(f => f.path === 'index.html' || f.path.endsWith('.html'));
+            if (mainHtml) {
+              skipNextCompileRef.current = true;
+              pushUndo('Visual edit: color', project.files);
+              upsertFile(mainHtml.path, serializedHTML);
+            }
+          }
         }
         return;
       }
@@ -2132,6 +2146,7 @@ export function AIAppBuilderWorkspace() {
   // ── Compilation is now isolated in CompilationBridge (fixes React Error #310) ──
   const [stableHTML, setStableHTML] = useState<string | null>(null);
   const stableHTMLRef = useRef<string | null>(null);
+  const skipNextCompileRef = useRef(false);
   const handleStableHTML = useCallback((html: string | null) => {
     stableHTMLRef.current = html;
     setStableHTML(html);
@@ -2291,6 +2306,7 @@ export function AIAppBuilderWorkspace() {
           onStableHTML={handleStableHTML}
           onCompiledForHosting={handleCompiledForHosting}
           onCompilingChange={setIsCompiling}
+          skipNextCompileRef={skipNextCompileRef}
         />
       </PanelErrorBoundary>
       <WelcomeOverlay onQuickStart={(prompt) => handleSend(prompt)} />

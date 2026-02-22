@@ -73,13 +73,21 @@ export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFix
 
   const viewportWidth = getViewportWidth(viewportMode);
 
-  // Force iframe remount when compiled HTML changes (fixes stale preview)
+  // Force iframe remount when compiled HTML changes significantly (fixes stale preview)
+  // Skip remount for minor changes (e.g. inline style tweaks from visual edits)
   const prevHtmlRef = useRef<string | null>(null);
   const hasEverHadHtmlRef = useRef(false);
   useEffect(() => {
     if (html) {
       if (hasEverHadHtmlRef.current && html !== prevHtmlRef.current) {
-        setIframeKey(k => k + 1);
+        // Only remount if the HTML changed significantly (>50 char diff or structural change)
+        const lenDiff = Math.abs((html?.length || 0) - (prevHtmlRef.current?.length || 0));
+        const isStructuralChange = lenDiff > 200 || 
+          // Head section changed — must remount
+          (prevHtmlRef.current && extractHead(html) !== extractHead(prevHtmlRef.current));
+        if (isStructuralChange) {
+          setIframeKey(k => k + 1);
+        }
       }
       hasEverHadHtmlRef.current = true;
     }
@@ -720,4 +728,9 @@ window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
       )}
     </div>
   );
+}
+
+function extractHead(html: string): string {
+  const match = html.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
+  return match?.[1]?.trim() || '';
 }
