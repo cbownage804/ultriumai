@@ -502,7 +502,7 @@ export function AIAppBuilderWorkspace() {
         const userId = session?.user?.id;
         if (!userId || cancelled) return;
         const recovered = await backgroundGen.checkPendingJobs(userId);
-        if (recovered && !cancelled) {
+        if (recovered && !cancelled && recovered.type === 'active') {
           setIsGeneratingOverride(true);
         }
       } catch (err) {

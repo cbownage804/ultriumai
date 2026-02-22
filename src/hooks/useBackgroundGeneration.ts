@@ -44,6 +44,9 @@ interface UseBackgroundGenerationOptions {
  * Hook for server-side background generation with SSE streaming, build queue, and history.
  * Generation survives tab close — user can come back and see results.
  */
+// Module-level Set so it survives component remounts (useRef resets on remount)
+const processedJobIds = new Set<string>();
+
 export function useBackgroundGeneration(options: UseBackgroundGenerationOptions = {}) {
   const { onComplete, onError, onProgress, onStreamDelta, pollIntervalMs = 3000 } = options;
   const [activeJob, setActiveJob] = useState<BackgroundJob | null>(null);
@@ -115,7 +118,7 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
       onProgressRef.current?.(job);
     } else if (job.status === 'completed') {
       cleanup();
-      processedJobIdsRef.current.add(job.id);
+      processedJobIds.add(job.id);
       console.info('[BG] ✅ Job completed:', job.id, '— calling onComplete callback');
       onCompleteRef.current?.(job);
       // Process next queued job
@@ -359,14 +362,12 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
     }
   }, []);
 
-  // Track job IDs that have already been processed in this session
-  // to prevent checkPendingJobs from re-firing handleBgComplete
-  const processedJobIdsRef = useRef(new Set<string>());
+  // processedJobIds is at module scope (see top of file)
 
   /** Check for any active jobs on mount (recovery after tab close) */
   const checkPendingJobs = useCallback(async (userId: string) => {
     // Use ref to avoid stale closure — skip if already watching a job
-    if (activeJobRef.current) return activeJobRef.current.id;
+    if (activeJobRef.current) return { type: 'active' as const, id: activeJobRef.current.id };
     try {
       // Only look for jobs older than 10 seconds to avoid picking up
       // the job that was JUST created by the current generation request
@@ -382,7 +383,7 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
 
       if (jobs && jobs.length > 0) {
         const job = jobs[0];
-        if (processedJobIdsRef.current.has(job.id)) {
+        if (processedJobIds.has(job.id)) {
           console.info('[BG] Job already processed in this session, skipping:', job.id);
           return null;
         }
@@ -390,7 +391,7 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
         toast.info('Resuming your build from where it left off...', { duration: 4000 });
         setActiveJob({ id: job.id, status: job.status as BackgroundJob['status'], progress_percent: job.progress_percent ?? undefined });
         startWatching(job.id);
-        return job.id;
+        return { type: 'active' as const, id: job.id };
       }
 
       const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
@@ -406,11 +407,11 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
       if (completedJobs && completedJobs.length > 0 && completedJobs[0].output_content) {
         const job = completedJobs[0];
         // Skip if this job was already processed in the current session
-        if (processedJobIdsRef.current.has(job.id)) {
+        if (processedJobIds.has(job.id)) {
           console.info('[BG] Completed job already processed, skipping:', job.id);
           return null;
         }
-        processedJobIdsRef.current.add(job.id);
+        processedJobIds.add(job.id);
         console.info('[BG] Found recently completed job:', job.id);
         toast.success('Your build completed while you were away!', { duration: 5000 });
         const { data: fullJob } = await supabase
@@ -422,7 +423,7 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
         if (fullJob) {
           setActiveJob(fullJob as unknown as BackgroundJob);
           onCompleteRef.current?.(fullJob as unknown as BackgroundJob);
-          return job.id;
+          return { type: 'completed' as const, id: job.id };
         }
       }
 
