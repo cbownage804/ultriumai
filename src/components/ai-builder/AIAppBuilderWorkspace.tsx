@@ -490,6 +490,40 @@ export function AIAppBuilderWorkspace() {
     return () => window.removeEventListener('bg-job-started', handler);
   }, [backgroundGen]);
 
+  // ── Recover background jobs on mount and tab return ──
+  useEffect(() => {
+    let cancelled = false;
+
+    const recoverJobs = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session?.user?.id;
+        if (!userId || cancelled) return;
+        const recovered = await backgroundGen.checkPendingJobs(userId);
+        if (recovered && !cancelled) {
+          setIsGeneratingOverride(true);
+        }
+      } catch (err) {
+        console.warn('[BG Recovery] Failed:', err);
+      }
+    };
+
+    // Check on mount
+    recoverJobs();
+
+    // Check when tab becomes visible again
+    const handleVisible = () => {
+      if (document.visibilityState === 'visible') {
+        recoverJobs();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisible);
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', handleVisible);
+    };
+  }, [backgroundGen]);
+
   // Phase 47: Wire useAutoFixLoop for structured error auto-fix
   const autoFixLoop = useAutoFixLoop({
     maxAttempts: 3,
