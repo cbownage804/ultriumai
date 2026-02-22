@@ -153,6 +153,20 @@ export function CompilationBridge({
         // so it sees the current filesDigest as "new" and starts compilation
         prevFilesDigestRef.current = '';
         console.info('[CompilationBridge] Generation ended with no preview — forcing recompile');
+
+        // Safety net: if main effect doesn't produce stableHTML within 3s, force retry
+        const safetyTimer = setTimeout(() => {
+          if (!stableHTMLRef.current && filesRef.current.length > 0) {
+            console.warn('[CompilationBridge] Safety net: no preview 3s after generation — forcing retry');
+            compilationLockRef.current = false;
+            compilationAttemptedRef.current = false;
+            prevFilesDigestRef.current = '';
+            // Trigger re-render to re-run main effect
+            setLiveCompiledHTML(null);
+          }
+        }, 3000);
+        // Store for cleanup
+        (prevIsGeneratingForReset as any)._safetyTimer = safetyTimer;
       } else {
         // stableHTML already set (from handleBgComplete direct compile),
         // sync the digest so we don't trigger a redundant recompile
