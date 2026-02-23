@@ -353,7 +353,7 @@ export function AIAppBuilderWorkspace() {
                 envVars: envVarsRef.current,
               }),
               new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error('Worker timeout')), 30000)
+                setTimeout(() => reject(new Error('Worker timeout')), 15000)
               ),
             ]);
             if (compiled?.html) {
@@ -418,15 +418,20 @@ export function AIAppBuilderWorkspace() {
       }];
     });
 
-    // Release generating state AFTER compilation resolves (success or failure).
-    // This keeps CompilationBridge blocked during direct compilation to avoid worker contention.
+    // Release generating state IMMEDIATELY so the overlay clears and CompilationBridge
+    // can take over. Compilation is a separate phase handled by isCompiling state.
+    // Previously this was in compilePromise.finally() which could delay up to 30s if the
+    // worker hung, leaving the user stuck at "Analyzing..." with a blank preview.
     const jobId = job.id;
-    compilePromise.finally(() => {
-      setIsGeneratingOverride(false);
-      setTimeout(() => {
-        console.info('[Workspace] 📣 Dispatching bg-job-completed for jobId:', jobId);
-        window.dispatchEvent(new CustomEvent('bg-job-completed', { detail: { jobId } }));
-      }, 500);
+    setIsGeneratingOverride(false);
+    setTimeout(() => {
+      console.info('[Workspace] 📣 Dispatching bg-job-completed for jobId:', jobId);
+      window.dispatchEvent(new CustomEvent('bg-job-completed', { detail: { jobId } }));
+    }, 500);
+
+    // Still wait for compilation to finish for logging/cleanup, but don't block UI
+    compilePromise.catch((err) => {
+      console.warn('[handleBgComplete] Compilation promise rejected:', err);
     });
   }, [project.files, setFiles, setMessages]);
 
