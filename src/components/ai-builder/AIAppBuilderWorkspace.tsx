@@ -81,6 +81,7 @@ import { useAPIBuilder } from '@/hooks/useAPIBuilder';
 import { useProjectReview } from './useProjectReview';
 import { useSupabaseConnection } from '@/hooks/useSupabaseConnection';
 import { useIndexedDBPersistence } from '@/hooks/useIndexedDBPersistence';
+import { isDraftCleared, resetDraftClearedFlag } from '@/lib/clearBuilderDraft';
 import { useSchemaIntrospection } from '@/hooks/useSchemaIntrospection';
 import { usePromptChains } from '@/hooks/usePromptChains';
 import { useAICodeReview } from '@/hooks/useAICodeReview';
@@ -1338,6 +1339,12 @@ export function AIAppBuilderWorkspace() {
       const refFiles = latestRef.current.files;
       const bgFiles = latestFilesRef.current;
       const files = bgFiles.length >= refFiles.length ? bgFiles : refFiles;
+      // If clearBuilderDraft() was called (user starting a new project),
+      // skip the flush so we don't re-persist stale data from the old component.
+      if (isDraftCleared()) {
+        console.info('[Draft] Flush suppressed — draft was intentionally cleared');
+        return;
+      }
       console.info('[Draft] Flushing: %d files (ref=%d, bg=%d), %d msgs', files.length, refFiles.length, bgFiles.length, msgs.length);
       // Synchronous localStorage save — guaranteed to complete before tab freeze
       saveDraftImmediate(name, files, msgs);
@@ -1417,6 +1424,9 @@ export function AIAppBuilderWorkspace() {
 
   // Strip ?new=true immediately on mount so tab recovery works on reload
   useEffect(() => {
+    // Always reset the draft-cleared flag on mount so future saves work
+    resetDraftClearedFlag();
+
     if (isNewProjectRef.current) {
       clearDraft();
       idbPersistence.clearSession();
