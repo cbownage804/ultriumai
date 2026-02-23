@@ -1,59 +1,46 @@
 
+## Fix: Provider Error Fallback Using Cross-Provider Model
 
-## Fix: Project Auto-Naming Not Persisting + Thumbnail Not Capturing
+### Problem
 
-### Issue 1: Project Auto-Naming Doesn't Persist to Database
+The logs show the exact failure chain:
+1. Primary model (`google/gemini-3-flash-preview`) returns 400 "Provider returned error"
+2. Fallback model (`google/gemini-2.5-flash`) ALSO returns 400 -- because it's the same Gemini provider
+3. Background orchestrator retries 3 times, but each retry hits the same dead provider
+4. Result: 100% build failure when Google's Gemini API has issues
 
-**Root cause**: `renameProject` in `useProjectFileSystem.ts` (line 156) only updates React state -- it never writes to the database. So when the auto-name logic fires after the first build, the name shows in the UI momentarily but reverts to "Untitled Project" in the dashboard because the DB row was never updated.
+### Root Cause
 
-**Fix**: After `renameProject()` is called in the auto-name block (line 1177 of `AIAppBuilderWorkspace.tsx`), immediately persist the new name to the database if `currentProjectId` exists.
+Both the primary and fallback models are Google Gemini. When the Gemini provider is down or rejecting requests, retrying with another Gemini model accomplishes nothing.
 
-**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx` (~line 1176-1179)**
-- After `renameProject(projectName)`, add a direct Supabase update:
-  ```
-  if (currentProjectId) {
-    supabase.from('builder_projects')
-      .update({ name: projectName })
-      .eq('id', currentProjectId)
-      .then(() => console.log('Project auto-named:', projectName));
-  }
-  ```
+### Fix
 
----
+**File: `supabase/functions/ai-app-builder/index.ts` (~lines 687-721)**
 
-### Issue 2: Thumbnail Never Captures After Build
+Change the provider-error fallback model from `google/gemini-2.5-flash` to `openai/gpt-5-mini` (a different provider entirely). This ensures that when Gemini is failing, the system falls back to OpenAI instead of retrying the same broken provider.
 
-**Root cause**: The auto-capture effect (line 2102) fires when `isGenerating` flips from true to false, and reads `compiledForHosting`. But `compiledForHosting` is set by `CompilationBridge` asynchronously AFTER the generation completes, so it is still `null` when the effect runs. The `if (html)` check silently fails.
+Additionally, add a **second fallback tier**: if the first fallback (OpenAI) also fails, try one more model (`google/gemini-2.5-pro`) as a last resort, since different Gemini model tiers can have independent availability.
 
-**Fix**: Instead of relying on `compiledForHosting` (which lags behind), listen for the `stableHTML` ref which is set directly in `handleBgComplete`. Use a longer delay and read from the ref.
+```text
+Current fallback chain:
+  google/gemini-3-flash-preview (primary)
+  -> google/gemini-2.5-flash (fallback) -- SAME PROVIDER, fails identically
 
-**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx` (~line 2100-2112)**
-- Change the auto-capture effect to use `stableHTMLRef.current` (already set in `handleBgComplete`) instead of `compiledForHosting` state
-- Increase the timeout from 2000ms to 4000ms to allow compilation to finish for React projects
-- Add a fallback: if `stableHTMLRef.current` is still null at 4s, try `compiledForHostingRef.current`
-
-```
-useEffect(() => {
-  if (wasGeneratingRef.current && !isGenerating && project.files.length > 0 && currentProjectId) {
-    setTimeout(() => {
-      const html = compiledForHostingRef.current || stableHTMLRef.current;
-      if (html) {
-        captureAndUpload(html, currentProjectId).catch(() => {});
-      }
-    }, 4000);
-  }
-  wasGeneratingRef.current = isGenerating;
-}, [isGenerating, project.files.length, currentProjectId, captureAndUpload]);
+New fallback chain:
+  google/gemini-3-flash-preview (primary)
+  -> openai/gpt-5-mini (1st fallback) -- DIFFERENT PROVIDER
+  -> google/gemini-2.5-pro (2nd fallback) -- different Gemini tier as last resort
 ```
 
-Note: Removing `compiledForHosting` from the dependency array prevents the effect from re-running every time compilation finishes (which was causing additional no-op invocations).
+Changes:
+- Line 651: Change `FALLBACK_MODEL` to `"openai/gpt-5-mini"` (used for token-limit retries too)
+- Lines 688-721: After the first provider-error fallback fails, add a second try with `google/gemini-2.5-pro`
+- Log which fallback succeeded for debugging
 
----
-
-### Summary
+### Technical Details
 
 | File | Change |
 |---|---|
-| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` (~line 1176) | Persist auto-generated name to DB immediately after renaming |
-| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` (~line 2100) | Fix thumbnail capture to use ref instead of stale state, increase delay |
+| `supabase/functions/ai-app-builder/index.ts` (lines 651, 687-726) | Switch fallback to cross-provider model (openai/gpt-5-mini), add second-tier fallback (google/gemini-2.5-pro) |
 
+No frontend or background function changes needed -- the background function already retries the `ai-app-builder` endpoint, which will now internally cascade across providers.
