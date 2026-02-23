@@ -313,8 +313,7 @@ export function AIAppBuilderWorkspace() {
       }
       setFiles(mergedFiles);
 
-      // 1. Self-contained HTML shortcut (vanilla HTML projects without module scripts)
-      // Only use shortcut if index.html was NEWLY generated AND no React files exist
+      // 1. Self-contained HTML shortcut — ONLY for vanilla HTML with a NEWLY generated index.html
       const hasReactFiles = mergedFiles.some(f => /\.(tsx|jsx)$/.test(f.path));
       const newIndexFile = parsedFiles.find(f => f.path === 'index.html');
       const hasLocalModuleScripts = /src=["']\.?\/(?:src|main|app|index)\b/i.test(newIndexFile?.content || '');
@@ -327,10 +326,13 @@ export function AIAppBuilderWorkspace() {
         setPreviewRefreshKey(k => k + 1);
       }
 
-      // 2. React/TSX projects: compile directly with worker before releasing state
-      if (!stableHTMLRef.current && hasReactFiles) {
+      // 2. Always compile if shortcut didn't fire — handles React projects AND
+      // vanilla HTML 2nd+ builds where index.html wasn't regenerated
+      if (!stableHTMLRef.current) {
+        console.info('[handleBgComplete] Compiling project — hasReactFiles:', hasReactFiles, 'fileCount:', mergedFiles.length);
         compilePromise = (async () => {
           try {
+            // Try worker compilation first (handles React + vanilla)
             const compiled = await Promise.race([
               compileReactProjectRef.current(mergedFiles, {
                 supabaseConfig: supabaseConfigRef.current || undefined,
@@ -342,13 +344,23 @@ export function AIAppBuilderWorkspace() {
               ),
             ]);
             if (compiled?.html) {
-              console.info('[handleBgComplete] Worker compilation succeeded');
+              console.info('[handleBgComplete] Worker compilation succeeded —', compiled.html.length, 'chars');
               stableHTMLRef.current = compiled.html;
               setStableHTML(compiled.html);
               setPreviewRefreshKey(k => k + 1);
             }
           } catch (e) {
             console.warn('[handleBgComplete] Worker compilation failed:', e);
+            // Vanilla HTML fallback: use existing index.html from merged files
+            if (!stableHTMLRef.current && !hasReactFiles) {
+              const existingIndex = mergedFiles.find(f => f.path === 'index.html');
+              if (existingIndex?.content?.includes('</html>')) {
+                console.info('[handleBgComplete] Falling back to existing index.html');
+                stableHTMLRef.current = existingIndex.content;
+                setStableHTML(existingIndex.content);
+                setPreviewRefreshKey(k => k + 1);
+              }
+            }
           }
         })();
       }
