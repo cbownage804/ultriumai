@@ -1,46 +1,53 @@
 
-## Fix: Provider Error Fallback Using Cross-Provider Model
 
-### Problem
+## Fix: Preview Not Updating on 2nd+ Builds + Data Loss on Tab Switch
 
-The logs show the exact failure chain:
-1. Primary model (`google/gemini-3-flash-preview`) returns 400 "Provider returned error"
-2. Fallback model (`google/gemini-2.5-flash`) ALSO returns 400 -- because it's the same Gemini provider
-3. Background orchestrator retries 3 times, but each retry hits the same dead provider
-4. Result: 100% build failure when Google's Gemini API has issues
+### Problem 1: Preview Only Updates on First Build
 
-### Root Cause
+**Root cause**: When a new generation starts, `stableHTMLRef.current` is never cleared. So when the second build completes in `handleBgComplete`:
+- Line 326: `if (!stableHTMLRef.current && hasReactFiles)` evaluates to FALSE because the ref still holds the first build's HTML
+- The React compilation is skipped entirely
+- `CompilationBridge`'s generation-ending effect also sees a truthy `stableHTMLRef.current` and just syncs the digest without recompiling
+- Result: the preview stays frozen on the first build's output
 
-Both the primary and fallback models are Google Gemini. When the Gemini provider is down or rejecting requests, retrying with another Gemini model accomplishes nothing.
-
-### Fix
-
-**File: `supabase/functions/ai-app-builder/index.ts` (~lines 687-721)**
-
-Change the provider-error fallback model from `google/gemini-2.5-flash` to `openai/gpt-5-mini` (a different provider entirely). This ensures that when Gemini is failing, the system falls back to OpenAI instead of retrying the same broken provider.
-
-Additionally, add a **second fallback tier**: if the first fallback (OpenAI) also fails, try one more model (`google/gemini-2.5-pro`) as a last resort, since different Gemini model tiers can have independent availability.
+**Fix**: Clear `stableHTMLRef.current` at the START of `handleBgComplete` (before the compilation logic runs). This ensures every build triggers fresh compilation.
 
 ```text
-Current fallback chain:
-  google/gemini-3-flash-preview (primary)
-  -> google/gemini-2.5-flash (fallback) -- SAME PROVIDER, fails identically
+File: src/components/ai-builder/AIAppBuilderWorkspace.tsx (~line 285, inside handleBgComplete)
 
-New fallback chain:
-  google/gemini-3-flash-preview (primary)
-  -> openai/gpt-5-mini (1st fallback) -- DIFFERENT PROVIDER
-  -> google/gemini-2.5-pro (2nd fallback) -- different Gemini tier as last resort
+Add at the top of handleBgComplete, before the compilation logic:
+  stableHTMLRef.current = null;
 ```
 
-Changes:
-- Line 651: Change `FALLBACK_MODEL` to `"openai/gpt-5-mini"` (used for token-limit retries too)
-- Lines 688-721: After the first provider-error fallback fails, add a second try with `google/gemini-2.5-pro`
-- Log which fallback succeeded for debugging
+This single line ensures the guard condition on line 326 passes on every build, not just the first one.
 
-### Technical Details
+---
 
-| File | Change |
-|---|---|
-| `supabase/functions/ai-app-builder/index.ts` (lines 651, 687-726) | Switch fallback to cross-provider model (openai/gpt-5-mini), add second-tier fallback (google/gemini-2.5-pro) |
+### Problem 2: Data Lost When Switching Tabs During Build
 
-No frontend or background function changes needed -- the background function already retries the `ai-app-builder` endpoint, which will now internally cascade across providers.
+**Root cause**: Two issues compound:
+1. The `isNewProjectRef.current` flag prevents the visibility handler from restoring data (line 1293/1311). This flag is only set to `false` AFTER generation completes (line 1230), so if the user switches tabs during a build, the handler exits early.
+2. The `saveDraftImmediate` added in the last fix only fires when generation completes -- not during streaming. If the user switches tabs mid-generation, no draft has been saved yet.
+
+**Fix**: In the `flushDraft` function (line 1291), remove the `isNewProjectRef.current` early return guard. If there are files or messages, they should always be saved regardless of the project's "new" status.
+
+Also in `handleVisibility` (line 1311), remove the `isNewProjectRef.current` guard so restoration works even for fresh projects that have started generating.
+
+```text
+File: src/components/ai-builder/AIAppBuilderWorkspace.tsx
+
+Line 1293: Remove `if (isNewProjectRef.current) return;` from flushDraft
+Line 1311: Remove `if (isNewProjectRef.current) return;` from handleVisibility
+```
+
+---
+
+### Summary
+
+| File | Line | Change |
+|---|---|---|
+| `AIAppBuilderWorkspace.tsx` | ~285 (handleBgComplete) | Add `stableHTMLRef.current = null;` before compilation logic so every build recompiles |
+| `AIAppBuilderWorkspace.tsx` | ~1293 | Remove `isNewProjectRef.current` guard from `flushDraft` |
+| `AIAppBuilderWorkspace.tsx` | ~1311 | Remove `isNewProjectRef.current` guard from `handleVisibility` |
+
+All changes are in a single file. The preview fix is a one-line addition; the persistence fix removes two guard conditions that were overly protective.
