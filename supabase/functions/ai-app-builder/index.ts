@@ -684,7 +684,44 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
           }
         }
 
-        return new Response(JSON.stringify({ error: parsedMsg, requestId }), {
+        // Auto-retry on generic provider/upstream errors (not token-related)
+        if (/provider|upstream|internal/i.test(parsedMsg)) {
+          console.log(`[${requestId}] Provider error — retrying with fallback model ${FALLBACK_MODEL}`);
+          const retryController2 = new AbortController();
+          const retryTimer2 = setTimeout(() => retryController2.abort(), 25_000);
+          try {
+            const retryResp2 = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+              method: "POST",
+              headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+              body: JSON.stringify({
+                model: FALLBACK_MODEL,
+                messages: [{ role: "system", content: systemPrompt }, ...sanitizedMessages],
+                stream,
+              }),
+              signal: retryController2.signal,
+            });
+            if (retryResp2.ok) {
+              console.log(`[${requestId}] Provider error retry succeeded with fallback model`);
+              if (stream) {
+                return new Response(retryResp2.body, {
+                  headers: { ...corsHeaders, "Content-Type": "text/event-stream", "X-Request-Id": requestId },
+                });
+              }
+              const retryData2 = await retryResp2.json();
+              return new Response(JSON.stringify({ content: retryData2.choices?.[0]?.message?.content || "", requestId }), {
+                headers: { ...corsHeaders, "Content-Type": "application/json", "X-Request-Id": requestId },
+              });
+            }
+            console.error(`[${requestId}] Provider error retry also failed:`, retryResp2.status);
+          } catch (retryErr2) {
+            console.error(`[${requestId}] Provider error retry failed:`, retryErr2);
+          } finally {
+            clearTimeout(retryTimer2);
+          }
+        }
+
+        // Sanitized user-facing error for all remaining 400s
+        return new Response(JSON.stringify({ error: "The AI model encountered an issue processing your request. Please try again or simplify your prompt.", requestId }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "X-Request-Id": requestId },
         });
       }
