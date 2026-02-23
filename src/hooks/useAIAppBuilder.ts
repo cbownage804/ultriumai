@@ -909,7 +909,8 @@ export function useAIAppBuilder() {
     // ── Image generation intent detection ──
     // If the user asks to "generate a logo/image/icon", call the image-generation edge function
     // and pass the resulting data URL so the AI can embed it in code
-    const imageGenIntent = detectImageGenerationIntent(input);
+    // Skip if user already attached images — they want to USE those, not generate new ones
+    const imageGenIntent = (imageDataUrls?.length) ? null : detectImageGenerationIntent(input);
     let generatedImageDataUrls = imageDataUrls ? [...imageDataUrls] : [];
     if (imageGenIntent) {
       toast.info('Generating image...', { duration: 4000 });
@@ -1306,10 +1307,41 @@ export function useAIAppBuilder() {
     const activeServiceIds = serviceKeys?.map(sk => sk.serviceId) || [];
 
     try {
+      // Strip large base64 data URLs from messages before sending to edge function
+      // to prevent payload size issues. The AI gateway receives them via the nested
+      // ai-app-builder call which re-serializes from the stored job data.
+      const sanitizedApiMessages = apiMessages.map((msg: any) => {
+        if (typeof msg.content === 'string') {
+          // Replace inline base64 data URLs >10KB with placeholder
+          return { ...msg, content: msg.content.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]{10000,}/g, '[image-data-url-stripped-for-transport]') };
+        }
+        if (Array.isArray(msg.content)) {
+          return {
+            ...msg,
+            content: msg.content.map((block: any) => {
+              // Keep image_url blocks but cap at 500KB to prevent oversized payloads
+              if (block.type === 'image_url' && block.image_url?.url?.length > 500000) {
+                return { ...block, image_url: { ...block.image_url, url: block.image_url.url.slice(0, 500000) } };
+              }
+              // Strip large data URLs from text blocks (they're duplicated in image_url blocks anyway)
+              if (block.type === 'text' && block.text?.length > 10000) {
+                return { ...block, text: block.text.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]{10000,}/g, '[image-visible-in-image_url-block]') };
+              }
+              return block;
+            }),
+          };
+        }
+        return msg;
+      });
+
+      // Add timeout to prevent hanging indefinitely on large payloads
+      const invokeController = new AbortController();
+      const invokeTimeout = setTimeout(() => invokeController.abort(), 30000);
+
       const { data, error } = await supabase.functions.invoke('ai-builder-background', {
         body: {
           action: 'start',
-          messages: apiMessages,
+          messages: sanitizedApiMessages,
           mode: effectiveMode,
           model: effectiveModel,
           supabaseConfig: supabaseConfig || undefined,
@@ -1317,6 +1349,7 @@ export function useAIAppBuilder() {
           activeServices: activeServiceIds,
         },
       });
+      clearTimeout(invokeTimeout);
 
       if (error) {
         throw new Error(error.message || 'Failed to start build');
