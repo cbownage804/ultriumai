@@ -83,14 +83,48 @@ function getDisplayContent(msg: BuilderMessage): { text: string; fileNames: stri
   const fileNames: string[] = [];
   let insideFile = false;
 
+  let insideEdit = false;
+
   for (const line of lines) {
     const fileMatch = line.match(/^===FILE:\s*(.+?)===$/);
     const deleteMatch = line.match(/^===DELETE:\s*(.+?)===$/);
+    const editMatch = line.match(/^===EDIT:\s*(.+?)===$/);
     if (fileMatch) {
       insideFile = true;
+      insideEdit = false;
       fileNames.push(fileMatch[1].trim());
     } else if (deleteMatch) {
       insideFile = true;
+      insideEdit = false;
+    } else if (editMatch) {
+      insideEdit = true;
+      insideFile = false;
+      fileNames.push(editMatch[1].trim());
+    } else if (insideEdit) {
+      // Skip all lines inside ===EDIT: blocks (diff hunks, @@ markers, +/- lines)
+      // Check if we've exited — conversational prose signals exit
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      // Diff content: @@ markers, +/- prefixed, or indented code
+      if (/^@@\s/.test(trimmed) || /^[+-]\s/.test(trimmed) || /^[+-][a-zA-Z<{]/.test(trimmed)) continue;
+      // Still looks like code/CSS/HTML
+      if (/^[\s]*[{}<;:.#@/\\]/.test(line) || /:\s*[#\d]/.test(trimmed) || /^\s*\w+[-\w]*\s*[:={]/.test(trimmed)) continue;
+      // Conversational exit
+      const conversationalPatterns = [
+        /^(#{1,4}\s)/,
+        /^(what'?s|would you|let me|here'?s|i('?ve| have)|shall|want me|feel free|happy to|hope this)/i,
+        /^(Great|Perfect|Done|Now |Next |The app|Your app|I've |Here are|Here is|Let me|I can|This )/i,
+        /^(🎉|👋|✅|🚀|💡|📝|🔧)/,
+        /^\*\*[\w\s]+\*\*[.:]/,
+        /^\d+\.\s+\*\*[A-Z]/,
+        /^[-•]\s+\*\*[A-Z]/,
+        /^[-•]\s+[A-Z][a-z].*[:.]$/,
+      ];
+      if (conversationalPatterns.some(r => r.test(trimmed))) {
+        insideEdit = false;
+        textLines.push(line);
+      }
+      // Otherwise still inside edit content, skip
     } else if (insideFile) {
       // Check if we've exited the file block — a blank line followed by conversational text
       // or a new ===FILE: marker means we left the file section
@@ -153,8 +187,24 @@ function getDisplayContent(msg: BuilderMessage): { text: string; fileNames: stri
     .replace(/(?:\*{0,2})?🔍\s*Diagnosis:?\*{0,2}[\s\S]*?(?=\n===FILE|\n#{1,4}\s[^D]|$)/gi, '')
     // Remove "Symptom:", "Root cause:", "Fix approach:" lines
     .replace(/^[-•*]\s*\*{0,2}(?:Symptom|Root cause|Fix approach|Files affected)\*{0,2}\s*:.*$/gm, '')
-    // Remove raw ===FILE: / ===DELETE: markers that weren't caught
-    .replace(/^===(?:FILE|DELETE):.*===$/gm, '')
+    // Remove raw ===FILE: / ===DELETE: / ===EDIT: markers that weren't caught
+    .replace(/^===(?:FILE|DELETE|EDIT):.*===$/gm, '')
+    // Remove diff hunk headers (@@ ... @@)
+    .replace(/^@@\s.*@@.*$/gm, '')
+    // Remove diff +/- prefixed lines
+    .replace(/^[+-]\s.*$/gm, '')
+    // Remove raw CSS property lines (e.g. "background-color: #050505;")
+    .replace(/^\s*[\w-]+\s*:\s*[#\w\d(),.\s%-]+;\s*$/gm, '')
+    // Remove raw CSS variable lines (e.g. "--bg-dark: #050505;")
+    .replace(/^\s*--[\w-]+\s*:.*$/gm, '')
+    // Remove bare CSS/HTML-like lines (selectors, tags, closing braces)
+    .replace(/^\s*[{}]\s*$/gm, '')
+    // Remove lines that are just a CSS class name or property name
+    .replace(/^\s*\.[\w-]+\s*\{?\s*$/gm, '')
+    // Remove "className=" leaked fragments
+    .replace(/^.*className=["'].*$/gm, '')
+    // Remove raw HTML tag lines
+    .replace(/^\s*<\/?[\w-]+[^>]*>\s*$/gm, '')
     // Remove "Auto-fix error" lines and everything after
     .replace(/Auto-fix error[\s\S]*$/gi, '')
     // Remove "This is auto-fix attempt" lines
@@ -592,9 +642,9 @@ export function BuilderChatPanel({
        const fileNames: string[] = [];
        // Only scan first 5KB for file names to avoid CPU spikes on large content
        const scanContent = msg.content.length > 5000 ? msg.content.slice(0, 5000) : msg.content;
-       for (const match of scanContent.matchAll(/^===FILE:\s*(.+?)===$/gm)) {
-         fileNames.push(match[1].trim());
-       }
+        for (const match of scanContent.matchAll(/^===(?:FILE|EDIT):\s*(.+?)===$/gm)) {
+          fileNames.push(match[1].trim());
+        }
        // Only extract plan steps from first 3KB to avoid regex backtracking on large content
        const planContent = msg.content.length > 3000 ? msg.content.slice(0, 3000) : msg.content;
        const planSteps = msg.planSteps || extractPlanSteps(planContent, true, false);
