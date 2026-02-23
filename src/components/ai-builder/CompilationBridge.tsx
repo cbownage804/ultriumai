@@ -142,6 +142,7 @@ export function CompilationBridge({
       compilationAttemptedRef.current = false;
       compilationLockRef.current = false;
       justSyncedFromExternalRef.current = false;
+      prevFilesDigestRef.current = ''; // Ensure main effect sees a digest change when generation ends
     } else if (!isGenerating && prevIsGeneratingForReset.current) {
       // Generation ENDING — check if handleBgComplete already compiled
       const externalHasPreview = externalStableHTMLRef?.current;
@@ -156,16 +157,12 @@ export function CompilationBridge({
         justSyncedFromExternalRef.current = true; // Phase 2: prevent main effect recompile
         console.info('[CompilationBridge] Synced external stableHTML, skipping redundant recompile');
       } else if (!stableHTMLRef.current) {
-        // Direct compilation — bypass the main effect's guard chain entirely
-        console.info('[CompilationBridge] Generation ended with no preview — compiling directly in 200ms');
+        // No preview yet — let the main effect handle compilation.
+        // Set immediateCompileNeededRef so it uses 0ms debounce instead of 500ms.
+        console.info('[CompilationBridge] Generation ended with no preview — letting main effect compile');
         compilationLockRef.current = false;
         compilationAttemptedRef.current = false;
-        const timer = setTimeout(() => {
-          console.info('[CompilationBridge] 200ms timer fired — calling compileNowRef');
-          compileNowRef.current?.();
-        }, 200);
-        // Store cleanup so the effect's return can cancel it if needed
-        compilationCleanupRef.current = () => clearTimeout(timer);
+        immediateCompileNeededRef.current = true;
       } else {
         // stableHTML already set (from handleBgComplete direct compile),
         // sync the digest so we don't trigger a redundant recompile
