@@ -95,6 +95,11 @@ const SafeScanProduct = lazy(() => import('@/pages/safesuite/products/SafeScanPr
 const SafeWebProduct = lazy(() => import('@/pages/safesuite/products/SafeWebProduct'));
 const SafeTrackProduct = lazy(() => import('@/pages/safesuite/products/SafeTrackProduct'));
 const SafeSuiteFeatures = lazy(() => import('@/pages/safesuite/SafeSuiteFeatures'));
+const SafePassNotes = lazy(() => import('@/pages/safesuite/SafePassNotes'));
+const SafePassCards = lazy(() => import('@/pages/safesuite/SafePassCards'));
+const SafePassIdentity = lazy(() => import('@/pages/safesuite/SafePassIdentity'));
+const SafePassHealth = lazy(() => import('@/pages/safesuite/SafePassHealth'));
+const SafePassUsers = lazy(() => import('@/pages/safesuite/SafePassUsers'));
 
 // SafePass standalone removed - redirects in routes
 
@@ -710,6 +715,11 @@ function AppRouter() {
           <Route path="/safesuite/pass/reminders" element={<SuspenseWrapper><SafePassReminders /></SuspenseWrapper>} />
           <Route path="/safesuite/pass/breach" element={<SuspenseWrapper><SafePassBreach /></SuspenseWrapper>} />
           <Route path="/safesuite/pass/settings" element={<SuspenseWrapper variant="form"><SafePassSettings /></SuspenseWrapper>} />
+          <Route path="/safesuite/pass/notes" element={<SuspenseWrapper><SafePassNotes /></SuspenseWrapper>} />
+          <Route path="/safesuite/pass/cards" element={<SuspenseWrapper><SafePassCards /></SuspenseWrapper>} />
+          <Route path="/safesuite/pass/identity" element={<SuspenseWrapper><SafePassIdentity /></SuspenseWrapper>} />
+          <Route path="/safesuite/pass/health" element={<SuspenseWrapper><SafePassHealth /></SuspenseWrapper>} />
+          <Route path="/safesuite/pass/users" element={<SuspenseWrapper><SafePassUsers /></SuspenseWrapper>} />
           <Route path="/safesuite/scan" element={<SuspenseWrapper><SafeSuiteScan /></SuspenseWrapper>} />
           <Route path="/safesuite/scan/settings" element={<SuspenseWrapper variant="form"><SafeScanSettings /></SuspenseWrapper>} />
           <Route path="/safesuite/web" element={<SuspenseWrapper><SafeSuiteWeb /></SuspenseWrapper>} />
