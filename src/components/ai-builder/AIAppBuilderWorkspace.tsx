@@ -282,6 +282,9 @@ export function AIAppBuilderWorkspace() {
     preGenSnapshotRef.current = [...project.files];
     addSnapshotRef.current('Pre-build snapshot', project.files, 'auto');
 
+    // Clear stale HTML so every build triggers fresh compilation
+    stableHTMLRef.current = null;
+
     const { files: parsedFiles, deletions, edits } = parseMultiFileOutput(job.output_content);
     let compilePromise: Promise<void> = Promise.resolve();
     let mergedFiles = [...project.files];
@@ -1289,8 +1292,6 @@ export function AIAppBuilderWorkspace() {
 
   useEffect(() => {
     const flushDraft = () => {
-      // Never flush stale data for a fresh new project
-      if (isNewProjectRef.current) return;
       const { name, files, messages: msgs } = latestRef.current;
       console.info('[Draft] Flushing: %d files, %d msgs', files.length, msgs.length);
       // Synchronous localStorage save — guaranteed to complete before tab freeze
@@ -1307,8 +1308,6 @@ export function AIAppBuilderWorkspace() {
         // Do NOT update lastSaveTimestampRef here — the draft's savedAt
         // must remain > lastSaveTimestampRef so restoration triggers on return.
       } else if (document.visibilityState === 'visible') {
-        // Skip restoration for fresh new projects
-        if (isNewProjectRef.current) return;
         // ALWAYS try to restore — catches empty state, heap discard, partial corruption
         const current = latestRef.current;
         const reactIsEmpty = current.files.length === 0 && current.messages.length === 0;
