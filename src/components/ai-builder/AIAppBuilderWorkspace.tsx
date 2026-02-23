@@ -284,6 +284,7 @@ export function AIAppBuilderWorkspace() {
 
     // Clear stale HTML so every build triggers fresh compilation
     stableHTMLRef.current = null;
+    setStableHTML(null); // Also clear React state so CompilationBridge sees the reset
 
     const { files: parsedFiles, deletions, edits } = parseMultiFileOutput(job.output_content);
     let compilePromise: Promise<void> = Promise.resolve();
@@ -312,6 +313,10 @@ export function AIAppBuilderWorkspace() {
         }
       }
       setFiles(mergedFiles);
+      // Synchronously update ref so visibilitychange handler always has latest files
+      latestRef.current.files = mergedFiles;
+      // Immediately persist so tab-switch can't lose data
+      saveDraftImmediate(project.name, mergedFiles, []);
 
       // 1. Self-contained HTML shortcut — ONLY for vanilla HTML with a NEWLY generated index.html
       const hasReactFiles = mergedFiles.some(f => /\.(tsx|jsx)$/.test(f.path));
@@ -373,6 +378,10 @@ export function AIAppBuilderWorkspace() {
           setStableHTML(ERROR_FALLBACK_HTML);
           setPreviewRefreshKey(k => k + 1);
         }
+      });
+      // Wait for compilation, then always force iframe refresh
+      compilePromise.then(() => {
+        setPreviewRefreshKey(k => k + 1);
       });
       console.info('[handleBgComplete] Files set, compilation queued');
 

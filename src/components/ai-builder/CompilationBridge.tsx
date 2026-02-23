@@ -136,19 +136,19 @@ export function CompilationBridge({
   const prevIsGeneratingForReset = useRef(false);
   useEffect(() => {
     if (isGenerating && !prevIsGeneratingForReset.current) {
-      // Generation STARTING — reset internal state so 2nd+ builds recompile correctly.
-      // Clear stableHTML ref (but keep state for visual continuity until new HTML arrives).
+      // Generation STARTING — reset ALL internal state so 2nd+ builds recompile correctly.
       stableHTMLRef.current = null;
       setLiveCompiledHTML(null);
       compilationAttemptedRef.current = false;
       compilationLockRef.current = false;
+      justSyncedFromExternalRef.current = false;
     } else if (!isGenerating && prevIsGeneratingForReset.current) {
       // Generation ENDING — check if handleBgComplete already compiled
       const externalHasPreview = externalStableHTMLRef?.current;
       console.info('[CompilationBridge] Generation ENDING — externalHasPreview:', !!externalHasPreview, 'stableHTML:', !!stableHTMLRef.current, 'filesDigest:', filesDigest.substring(0, 50), 'files:', filesRef.current.length);
-      if (!stableHTMLRef.current && externalHasPreview) {
+      if (externalHasPreview) {
         // handleBgComplete already compiled and set the preview externally.
-        // Sync our internal state to match, skip redundant recompile.
+        // Always sync — don't check stableHTMLRef.current (it may be stale from previous build).
         setStableHTML(externalHasPreview);
         prevFilesDigestRef.current = filesDigest;
         compilationLockRef.current = true;
