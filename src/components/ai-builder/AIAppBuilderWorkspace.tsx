@@ -362,8 +362,8 @@ export function AIAppBuilderWorkspace() {
             }
           } catch (e) {
             console.warn('[handleBgComplete] Worker compilation failed:', e);
-            // Fallback: use existing index.html from merged files (works for vanilla AND React with errors)
-            if (!stableHTMLRef.current) {
+            // Vanilla-only fallback: use index.html directly (React index.html is just an empty #root div)
+            if (!stableHTMLRef.current && !hasReactFiles) {
               const existingIndex = mergedFiles.find(f => f.path === 'index.html');
               if (existingIndex?.content?.includes('</html>')) {
                 console.info('[handleBgComplete] Falling back to existing index.html');
@@ -372,6 +372,7 @@ export function AIAppBuilderWorkspace() {
                 setPreviewRefreshKey(k => k + 1);
               }
             }
+            // React projects: stableHTMLRef stays null → guaranteed fallback below shows ERROR_FALLBACK_HTML
           }
         })();
       }
