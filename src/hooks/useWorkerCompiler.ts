@@ -7,7 +7,7 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import type { ProjectFile } from './useProjectFileSystem';
-import type { CDNPackageEntry } from '@/workers/packageData';
+import type { CDNPackageEntry } from '@/lib/cdnPackageRegistry';
 import type { CompileRequest, CompileResponse, CompileErrorResponse, WorkerResponse } from '@/workers/compiler.worker';
 
 export interface WorkerCompilerResult {
@@ -130,7 +130,7 @@ export function useWorkerCompiler() {
           supabaseConfig: options.supabaseConfig || undefined,
           stripeConfig: options.stripeConfig || undefined,
           envVars: options.envVars,
-          userPackages: options.userPackages,
+          userPackages: options.userPackages as any,
         } : undefined,
       };
 
