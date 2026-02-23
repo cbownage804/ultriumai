@@ -301,13 +301,20 @@ function CopyCodeButton({ text }: { text: string }) {
   );
 }
 
+/** Lovable-style AI avatar */
+function AIAvatar({ className }: { className?: string }) {
+  return (
+    <div className={cn("h-7 w-7 rounded-full bg-gradient-to-br from-violet-600/80 to-cyan-500/80 flex items-center justify-center shrink-0 shadow-md shadow-violet-500/10", className)}>
+      <Bot className="h-3.5 w-3.5 text-white" />
+    </div>
+  );
+}
+
 function TypingIndicator() {
   return (
-    <div className="flex gap-2.5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-      <div className="h-6 w-6 rounded-md bg-gradient-to-br from-cyan-500/20 to-violet-500/20 flex items-center justify-center shrink-0 border border-white/[0.06]">
-        <Bot className="h-3 w-3 text-cyan-400" />
-      </div>
-      <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl px-3.5 py-3">
+    <div className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <AIAvatar />
+      <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl px-4 py-3">
         <div className="flex gap-1">
           <div className="h-2 w-2 rounded-full bg-white/20 animate-bounce [animation-delay:0ms]" />
           <div className="h-2 w-2 rounded-full bg-white/20 animate-bounce [animation-delay:150ms]" />
@@ -558,63 +565,65 @@ export function BuilderChatPanel({
     const currentIdx = phases.indexOf(thinkingPhase as any);
 
     return (
-      <div className="flex gap-2.5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-        <div className="h-6 w-6 rounded-md bg-gradient-to-br from-cyan-500/20 to-violet-500/20 flex items-center justify-center shrink-0 border border-white/[0.06]">
-          <Loader2 className="h-3 w-3 text-cyan-400 animate-spin" />
-        </div>
-        <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl px-3.5 py-2.5 w-full max-w-[280px]">
-          {/* Collapsible thinking header */}
-          <button
-            onClick={() => setThinkingCollapsed(prev => ({ ...prev, __active__: !prev.__active__ }))}
-            className="flex items-center gap-2 w-full"
-          >
-            <ChevronDown className={cn("h-2.5 w-2.5 text-white/20 transition-transform", thinkingCollapsed.__active__ && "-rotate-90")} />
-            <Icon className={cn("h-3.5 w-3.5 animate-pulse", phase.color)} />
-            <span className={cn("text-xs font-medium", phase.color)}>{phase.label}</span>
-            <ElapsedTimer isActive={isGenerating} />
-          </button>
+      <div className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <AIAvatar />
+        <div className="flex-1 space-y-3">
+          {/* Lovable-style "Generating code" status bar */}
+          <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-4 py-3 max-w-[320px]">
+            <div className="flex items-center gap-3">
+              <Loader2 className="h-4 w-4 text-cyan-400 animate-spin shrink-0" />
+              <span className="text-[13px] font-medium text-white/80">Generating code</span>
+              <ElapsedTimer isActive={isGenerating} />
+              <button onClick={onStop} className="ml-auto text-[12px] text-cyan-400 hover:text-cyan-300 font-medium transition-colors">Stop</button>
+              <ChevronDown
+                onClick={() => setThinkingCollapsed(prev => ({ ...prev, __active__: !prev.__active__ }))}
+                className={cn("h-3.5 w-3.5 text-white/30 cursor-pointer hover:text-white/50 transition-all", thinkingCollapsed.__active__ && "-rotate-90")}
+              />
+            </div>
+            {/* Progress dots */}
+            <div className="flex gap-1.5 mt-2.5">
+              <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              {phases.map((step, i) => (
+                <div
+                  key={step}
+                  className={cn(
+                    "h-1.5 rounded-full transition-all duration-500 flex-1",
+                    i <= currentIdx ? 'bg-cyan-400' : 'bg-white/[0.06]'
+                  )}
+                />
+              ))}
+            </div>
+          </div>
 
-          {/* Expanded thinking steps */}
+          {/* Expanded thinking steps — Lovable style with WORKING/NEXT labels */}
           {!thinkingCollapsed.__active__ && (
-            <div className="mt-2 space-y-1 pl-1">
-              {phases.map((step, i) => {
-                const stepPhase = THINKING_LABELS[step];
-                const StepIcon = stepPhase.icon;
-                const isDone = i < currentIdx;
-                const isActive = i === currentIdx;
-                return (
-                  <div key={step} className="flex items-center gap-2 py-0.5">
-                    {isDone ? (
-                      <CheckCircle2 className="h-3 w-3 text-emerald-400/60 shrink-0" />
-                    ) : isActive ? (
-                      <Loader2 className="h-3 w-3 animate-spin text-cyan-400 shrink-0" />
-                    ) : (
-                      <div className="h-3 w-3 rounded-full border border-white/10 shrink-0" />
-                    )}
-                    <span className={cn(
-                      "text-[11px]",
-                      isDone ? "text-white/30 line-through" : isActive ? "text-white/70" : "text-white/15"
-                    )}>
-                      {stepPhase.label.replace('...', '')}
-                    </span>
-                  </div>
-                );
-              })}
+            <div className="rounded-2xl border border-white/[0.08] overflow-hidden bg-white/[0.02] max-w-[320px]">
+              <div className="px-4 py-2.5 space-y-1">
+                {phases.map((step, i) => {
+                  const stepPhase = THINKING_LABELS[step];
+                  const isDone = i < currentIdx;
+                  const isActive = i === currentIdx;
+                  return (
+                    <div key={step} className="flex items-center gap-2.5 py-1">
+                      {isDone ? (
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400/70 shrink-0" />
+                      ) : isActive ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-400 shrink-0" />
+                      ) : (
+                        <div className="h-3.5 w-3.5 rounded-full border border-white/[0.12] shrink-0" />
+                      )}
+                      <span className={cn(
+                        "text-[13px]",
+                        isDone ? "text-white/40" : isActive ? "text-white/80" : "text-white/25"
+                      )}>
+                        {stepPhase.label.replace('...', '')}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
-
-          {/* Progress bar */}
-          <div className="flex gap-1 mt-2">
-            {phases.map((step, i) => (
-              <div
-                key={step}
-                className={cn(
-                  "h-1 rounded-full transition-all duration-500 flex-1",
-                  i <= currentIdx ? 'bg-cyan-400' : 'bg-white/5'
-                )}
-              />
-            ))}
-          </div>
         </div>
       </div>
     );
@@ -725,7 +734,9 @@ export function BuilderChatPanel({
        const planSteps = msg.planSteps || extractPlanSteps(planContent, true, false);
 
     return (
-      <div className="space-y-3">
+      <div className="flex gap-3">
+        <AIAvatar className="mt-0.5" />
+        <div className="flex-1 space-y-3">
           <button
             onClick={() => setThinkingCollapsed(prev => ({ ...prev, [msg.id]: !(thinkingCollapsed[msg.id] ?? true) }))}
             className="flex items-center gap-1.5 text-white/30 text-[13px] hover:text-white/50 transition-colors"
@@ -734,34 +745,81 @@ export function BuilderChatPanel({
             <span>Thinking...</span>
           </button>
           {planSteps && planSteps.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-white/[0.1] overflow-hidden">
-              <div className="px-4 py-3 border-b border-white/[0.06]">
-                <span className="text-[13px] font-medium text-white/80">Working on tasks...</span>
-                <div className="flex gap-0.5 mt-2">
+            <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-white/[0.08] overflow-hidden bg-white/[0.02]">
+              {/* Lovable-style Editing header with file pill */}
+              {fileNames.length > 0 && (
+                <div className="px-4 py-3 border-b border-white/[0.06]">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[14px] font-semibold text-white/90">Editing</span>
+                    <span className="text-[12px] font-mono px-2 py-0.5 rounded-md bg-white/[0.08] text-white/60 border border-white/[0.08]">{fileNames[0]?.split('/').pop()}</span>
+                    {fileNames.length > 1 && <span className="text-[11px] text-white/30">+{fileNames.length - 1}</span>}
+                    <ChevronDown className="h-3.5 w-3.5 text-white/25 ml-auto" />
+                  </div>
+                  <p className="text-[12px] text-white/40 mt-1">{planSteps.find(s => s.status === 'active')?.label || 'Working...'}</p>
+                </div>
+              )}
+              {/* WORKING / NEXT section labels */}
+              <div className="px-4 py-2.5 space-y-1">
+                {(() => {
+                  const activeIdx = planSteps.findIndex(s => s.status === 'active');
+                  const workingSteps = planSteps.filter(s => s.status === 'active');
+                  const nextSteps = planSteps.filter(s => s.status === 'pending');
+                  return (
+                    <>
+                      {workingSteps.length > 0 && (
+                        <>
+                          <div className="flex items-center gap-2 py-1">
+                            <div className="h-px flex-1 bg-white/[0.06]" />
+                            <span className="text-[10px] font-bold text-white/30 tracking-widest uppercase">Working</span>
+                            <div className="h-px flex-1 bg-white/[0.06]" />
+                          </div>
+                          {workingSteps.map((step, i) => (
+                            <div key={`w-${i}`} className="flex items-center gap-2.5 py-1.5">
+                              <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-400 shrink-0" />
+                              <span className="text-[13px] text-white/80">{step.label}</span>
+                            </div>
+                          ))}
+                        </>
+                      )}
+                      {nextSteps.length > 0 && (
+                        <>
+                          <div className="flex items-center gap-2 py-1 mt-1">
+                            <div className="h-px flex-1 bg-white/[0.06]" />
+                            <span className="text-[10px] font-bold text-white/30 tracking-widest uppercase">Next</span>
+                            <div className="h-px flex-1 bg-white/[0.06]" />
+                          </div>
+                          {nextSteps.map((step, i) => (
+                            <div key={`n-${i}`} className="flex items-center gap-2.5 py-1.5">
+                              <div className="h-3.5 w-3.5 rounded-full border border-white/[0.12] shrink-0" />
+                              <span className="text-[13px] text-white/25">{step.label}</span>
+                            </div>
+                          ))}
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+              {/* Bottom progress bar */}
+              <div className="px-4 pb-3">
+                <div className="flex gap-0.5">
                   {planSteps.map((step, i) => (
-                    <div key={i} className={cn("h-1 rounded-full flex-1 transition-all duration-500", step.status === 'done' ? 'bg-emerald-400' : step.status === 'active' ? 'bg-cyan-400 animate-pulse' : 'bg-white/[0.08]')} />
+                    <div key={i} className={cn("h-1 rounded-full flex-1 transition-all duration-500", step.status === 'done' ? 'bg-emerald-400' : step.status === 'active' ? 'bg-cyan-400 animate-pulse' : 'bg-white/[0.06]')} />
                   ))}
                 </div>
               </div>
-              <div className="px-4 py-2 space-y-0.5">
-                {planSteps.map((step, i) => (
-                  <div key={i} className="flex items-start gap-2.5 py-1.5">
-                    {step.status === 'done' ? <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" /> : step.status === 'active' ? <Loader2 className="h-4 w-4 animate-spin text-cyan-400 shrink-0 mt-0.5" /> : <div className="h-4 w-4 rounded-full border border-white/[0.15] shrink-0 mt-0.5" />}
-                    <span className={cn("text-[13px] leading-snug", step.status === 'done' ? "text-white/50" : step.status === 'active' ? "text-white/80" : "text-white/30")}>{step.label}</span>
-                  </div>
-                ))}
-              </div>
             </motion.div>
           )}
-          {fileNames.length > 0 && (
-            <div className="rounded-xl border border-white/[0.1] px-4 py-3">
-              <div className="flex items-center gap-2">
+          {fileNames.length > 0 && (!planSteps || planSteps.length === 0) && (
+            <div className="rounded-2xl border border-white/[0.08] px-4 py-3 bg-white/[0.02]">
+              <div className="flex items-center gap-2.5">
                 <FileCode className="h-4 w-4 text-cyan-400" />
-                <span className="text-[13px] text-white/70">{fileNames.length} file{fileNames.length !== 1 ? 's' : ''} in progress...</span>
+                <span className="text-[13px] text-white/70 font-medium">{fileNames.length} file{fileNames.length !== 1 ? 's' : ''} in progress...</span>
               </div>
             </div>
           )}
         </div>
+      </div>
       );
     }
 
@@ -795,7 +853,9 @@ export function BuilderChatPanel({
     const bodyText = introLine ? displayText.replace(introLine, '').trim() : displayText;
 
     return (
-      <div className={cn("space-y-3", isChatMode && "border-l-2 border-teal-500/30 pl-3")}>
+      <div className={cn("flex gap-3", isChatMode && "")}>
+        <AIAvatar className="mt-0.5 shrink-0" />
+        <div className={cn("flex-1 space-y-3 min-w-0", isChatMode && "border-l-2 border-teal-500/30 pl-3")}>
         {/* "Thought for Xs" — Lovable style collapsible */}
         {(isCompleted || isStreaming) && (
           <button
@@ -812,59 +872,94 @@ export function BuilderChatPanel({
           <p className="text-[13px] text-white/50 leading-relaxed">{introLine}</p>
         )}
 
-        {/* Task breakdown checklist — shows plan steps as a visual checklist */}
+        {/* Task breakdown checklist — Lovable style with DONE/WORKING/NEXT labels */}
         {planSteps && planSteps.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl border border-white/[0.1] overflow-hidden"
+            className="rounded-2xl border border-white/[0.08] overflow-hidden bg-white/[0.02]"
           >
-            <div className="px-4 py-3 border-b border-white/[0.06]">
-              <div className="flex items-center justify-between">
-                <span className="text-[13px] font-medium text-white/80">
-                  {isStreaming ? 'Working on tasks...' : `Completed ${planSteps.filter(s => s.status === 'done').length} of ${planSteps.length} tasks`}
-                </span>
-                {!isStreaming && planSteps.every(s => s.status === 'done') && (
-                  <span className="text-[11px] text-emerald-400/70 font-medium flex items-center gap-1">
-                    <CheckCircle2 className="h-3 w-3" /> All done
+            {/* Editing header with file pill — only when files exist */}
+            {fileNames.length > 0 && (
+              <div className="px-4 py-3 border-b border-white/[0.06]">
+                <div className="flex items-center gap-2">
+                  <span className="text-[14px] font-semibold text-white/90">
+                    {isStreaming ? 'Editing' : 'Edited'}
                   </span>
+                  <span className="text-[12px] font-mono px-2 py-0.5 rounded-md bg-white/[0.08] text-white/60 border border-white/[0.08]">
+                    {fileNames[0]?.split('/').pop()}
+                  </span>
+                  {fileNames.length > 1 && <span className="text-[11px] text-white/30">+{fileNames.length - 1}</span>}
+                  <ChevronDown className="h-3.5 w-3.5 text-white/25 ml-auto" />
+                </div>
+                {planSteps.find(s => s.status === 'active') && (
+                  <p className="text-[12px] text-white/40 mt-1">{planSteps.find(s => s.status === 'active')?.label}</p>
                 )}
               </div>
-              {/* Progress bar */}
-              <div className="flex gap-0.5 mt-2">
-                {planSteps.map((step, i) => (
-                  <div
-                    key={i}
-                    className={cn(
-                      "h-1 rounded-full flex-1 transition-all duration-500",
-                      step.status === 'done' ? 'bg-emerald-400' :
-                      step.status === 'active' ? 'bg-cyan-400 animate-pulse' :
-                      'bg-white/[0.08]'
+            )}
+            <div className="px-4 py-2.5 space-y-1">
+              {(() => {
+                const doneSteps = planSteps.filter(s => s.status === 'done');
+                const workingSteps = planSteps.filter(s => s.status === 'active');
+                const nextSteps = planSteps.filter(s => s.status === 'pending');
+                return (
+                  <>
+                    {doneSteps.length > 0 && (
+                      <>
+                        <div className="flex items-center gap-2 py-1">
+                          <div className="h-px flex-1 bg-white/[0.06]" />
+                          <span className="text-[10px] font-bold text-emerald-400/50 tracking-widest uppercase">Done</span>
+                          <div className="h-px flex-1 bg-white/[0.06]" />
+                        </div>
+                        {doneSteps.map((step, i) => (
+                          <div key={`d-${i}`} className="flex items-center gap-2.5 py-1">
+                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400/60 shrink-0" />
+                            <span className="text-[13px] text-white/40">{step.label}</span>
+                          </div>
+                        ))}
+                      </>
                     )}
-                  />
+                    {workingSteps.length > 0 && (
+                      <>
+                        <div className="flex items-center gap-2 py-1">
+                          <div className="h-px flex-1 bg-white/[0.06]" />
+                          <span className="text-[10px] font-bold text-white/30 tracking-widest uppercase">Working</span>
+                          <div className="h-px flex-1 bg-white/[0.06]" />
+                        </div>
+                        {workingSteps.map((step, i) => (
+                          <div key={`w-${i}`} className="flex items-center gap-2.5 py-1.5">
+                            <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-400 shrink-0" />
+                            <span className="text-[13px] text-white/80">{step.label}</span>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                    {nextSteps.length > 0 && (
+                      <>
+                        <div className="flex items-center gap-2 py-1 mt-1">
+                          <div className="h-px flex-1 bg-white/[0.06]" />
+                          <span className="text-[10px] font-bold text-white/30 tracking-widest uppercase">Next</span>
+                          <div className="h-px flex-1 bg-white/[0.06]" />
+                        </div>
+                        {nextSteps.map((step, i) => (
+                          <div key={`n-${i}`} className="flex items-center gap-2.5 py-1.5">
+                            <div className="h-3.5 w-3.5 rounded-full border border-white/[0.12] shrink-0" />
+                            <span className="text-[13px] text-white/25">{step.label}</span>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+            {/* Bottom progress bar */}
+            <div className="px-4 pb-3">
+              <div className="flex gap-0.5">
+                {planSteps.map((step, i) => (
+                  <div key={i} className={cn("h-1 rounded-full flex-1 transition-all duration-500", step.status === 'done' ? 'bg-emerald-400' : step.status === 'active' ? 'bg-cyan-400 animate-pulse' : 'bg-white/[0.06]')} />
                 ))}
               </div>
-            </div>
-            <div className="px-4 py-2 space-y-0.5">
-              {planSteps.map((step, i) => (
-                <div key={i} className="flex items-start gap-2.5 py-1.5">
-                  {step.status === 'done' ? (
-                    <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-                  ) : step.status === 'active' ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-cyan-400 shrink-0 mt-0.5" />
-                  ) : (
-                    <div className="h-4 w-4 rounded-full border border-white/[0.15] shrink-0 mt-0.5" />
-                  )}
-                  <span className={cn(
-                    "text-[13px] leading-snug",
-                    step.status === 'done' ? "text-white/50" :
-                    step.status === 'active' ? "text-white/80" :
-                    "text-white/30"
-                  )}>
-                    {step.label}
-                  </span>
-                </div>
-              ))}
             </div>
           </motion.div>
         )}
@@ -874,15 +969,22 @@ export function BuilderChatPanel({
           <motion.div
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl border border-white/[0.1] overflow-hidden"
+            className="rounded-2xl border border-white/[0.08] overflow-hidden bg-white/[0.02]"
           >
-            {/* Card header — clean, no bookmark */}
+            {/* Lovable-style Editing header with file pill */}
             <div className="px-4 py-3">
-              <span className="text-[13px] font-medium text-white/80">
-                {isStreaming 
-                  ? (totalFiles > 1 ? `Generating ${totalFiles} files...` : `Generating ${fileNames[0]?.split('/').pop() || 'code'}...`)
-                  : (totalFiles > 1 ? `Updated ${totalFiles} files` : fileNames[0]?.split('/').pop() || 'Code changes')}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[14px] font-semibold text-white/90">
+                  {isStreaming ? 'Editing' : 'Edited'}
+                </span>
+                {fileNames.length > 0 && (
+                  <span className="text-[12px] font-mono px-2 py-0.5 rounded-md bg-white/[0.08] text-white/60 border border-white/[0.08]">
+                    {fileNames[0]?.split('/').pop()}
+                  </span>
+                )}
+                {totalFiles > 1 && <span className="text-[11px] text-white/30">+{totalFiles - 1} more</span>}
+                <ChevronDown className="h-3.5 w-3.5 text-white/25 ml-auto" />
+              </div>
             </div>
 
             {/* File list inside card */}
@@ -1230,6 +1332,7 @@ export function BuilderChatPanel({
           </div>
         )}
 
+        </div>
       </div>
     );
   };
