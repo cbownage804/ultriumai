@@ -1,55 +1,52 @@
 
 
-## Fix SafePass 404s + AI Studio Performance
+## Fix: AI Builder "Provider returned error" 400 + Improve Retry Resilience
 
-### Two Issues
+### Root Cause
 
----
+The Lovable AI gateway at `ai.gateway.lovable.dev` returned HTTP 400 with body `"Provider returned error"`. This happens when the upstream model provider (e.g., Gemini) rejects the request for non-token-related reasons (content policy, temporary model issue, malformed multimodal input, etc.).
 
-### Issue 1: SafePass 404 Routes
+The current code in `ai-app-builder/index.ts` (lines 646-689) only auto-retries 400 errors when the message matches `/token|exceeds|maximum/`. For all other 400 errors like "Provider returned error," it passes the raw error through to the client, causing the build to fail with a confusing message.
 
-The sidebar navigation in `SafeSuiteLayout.tsx` links to 5 routes that have no corresponding `<Route>` entries in `App.tsx`:
+### Fix
 
-| Sidebar Link | Route Path | Page Component (exists) | Registered in App.tsx? |
-|---|---|---|---|
-| Secure Notes | `/safesuite/pass/notes` | `SafePassNotes.tsx` | No |
-| Credit Cards | `/safesuite/pass/cards` | `SafePassCards.tsx` | No |
-| Identity Profiles | `/safesuite/pass/identity` | `SafePassIdentity.tsx` | No |
-| Password Health | `/safesuite/pass/health` | `SafePassHealth.tsx` | No |
-| User Management | `/safesuite/pass/users` | `SafePassUsers.tsx` | No |
+**File: `supabase/functions/ai-app-builder/index.ts` (lines ~646-689)**
 
-All 5 page components already exist in `src/pages/safesuite/`. They just need to be lazy-imported and routed.
+Expand the 400 error handler to also retry on generic provider errors:
 
-**File: `src/App.tsx`**
-- Add 5 lazy imports for `SafePassNotes`, `SafePassCards`, `SafePassIdentity`, `SafePassHealth`, `SafePassUsers`
-- Add 5 `<Route>` entries after the existing `/safesuite/pass/shared` route (line ~705)
+1. After the existing token-limit retry block, add a second retry path for "Provider returned error" or any generic non-token 400:
+   - Retry once with the fallback model (`google/gemini-2.5-flash`)
+   - If the fallback also fails, return a user-friendly error message: "The AI model couldn't process this request. Try rephrasing or simplifying your prompt."
+   - Log the original error for debugging
 
----
+2. Improve the user-facing error message for all 400s — instead of showing raw gateway JSON like `{"error":"Provider returned error","requestId":"..."}`, show a clean message.
 
-### Issue 2: AI Studio App Builder Sluggishness
+### Technical Details
 
-The `AIAppBuilderWorkspace.tsx` is a 3,105-line monolith that initializes 50+ hooks synchronously on mount. This was diagnosed in a prior conversation and a deferred-mount plan was approved but never implemented.
+```text
+Current 400 handler flow:
+  400 received -> is token error? -> yes: retry with reduced context
+                                  -> no: pass raw error to client
 
-**New file: `src/hooks/useDeferredMount.ts`** (~15 lines)
-- Returns a `ready` boolean that starts `false` and flips to `true` after `requestIdleCallback` (or 100ms fallback)
-- This allows critical hooks to initialize immediately while non-essential ones wait for the browser to be idle
+New 400 handler flow:
+  400 received -> is token error? -> yes: retry with reduced context
+                -> is provider error? -> yes: retry with fallback model
+                -> else: return clean user-friendly error
+```
 
-**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
-- Import `useDeferredMount` and call it at the top of the component
-- Wrap the following ~15 non-critical hooks (lines ~530-558) behind the `ready` gate, providing stable no-op defaults when not ready:
-  - `useCodeSmellDetector`, `useDocGenerator`, `useAutoFixLoop`, `useGithubSync`, `useInlineAIEdit`, `useBuildLog`, `usePostBuildSmokeTest`, `useHotModuleRecovery`, `useSelfReviewPass`, `useDependencyConflictDetection`, `useSmartFileScaffolding`, `useInlineErrorAnnotations`, `usePromptMemory`, `useLighthouseAudit`, `useBundleSizeTracking`, `useDeleteButtonAutoPatcher`, `usePromptPhasePlanner`
-- Add a 500ms delay to the `recoverJobs()` mount effect (line ~515)
-- Gate the realtime cursor channel behind `currentProjectId && activeFile` instead of just `currentProjectId`
+Changes:
+- Add a `/provider|upstream|internal/i` regex check after the token-limit check
+- On match, retry with the fallback model (`google/gemini-2.5-flash`) using full context (not reduced, since it's not a token issue)
+- If retry succeeds, return the response
+- If retry fails, return: "The AI provider encountered an error. Please try again."
+- For ALL 400 error paths, sanitize the error message to never expose raw JSON to the user
 
-**Expected impact**: First paint drops from ~10s to ~1-2s. Deferred hooks initialize within 100-500ms after paint, invisible to the user.
-
----
-
-### Summary
+### Files Changed
 
 | File | Change |
 |---|---|
-| `src/App.tsx` (~line 705) | Add 5 lazy imports + 5 routes for missing SafePass pages |
-| `src/hooks/useDeferredMount.ts` (new) | Tiny hook returning idle-deferred `ready` boolean |
-| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` (~lines 497-560) | Defer ~15 non-critical hooks and delay mount effects |
+| `supabase/functions/ai-app-builder/index.ts` (lines 646-689) | Add fallback model retry for generic provider 400 errors, sanitize user-facing error messages |
+
+### No frontend changes needed
+The client already displays the error message from the edge function response. Improving the server-side error handling and retry logic will fix both the build failure and the confusing error message.
 
