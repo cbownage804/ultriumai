@@ -648,7 +648,7 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
         console.error(`[${requestId}] AI gateway 400:`, parsedMsg);
 
         // Auto-retry with reduced context if token limit exceeded
-        const FALLBACK_MODEL = "google/gemini-2.5-flash";
+        const FALLBACK_MODEL = "openai/gpt-5-mini";
         if (/token|exceeds|maximum/i.test(parsedMsg)) {
           console.log(`[${requestId}] Token limit exceeded — retrying with reduced context + fallback model`);
           const reducedMessages = trimMessagesToFit(sanitizedMessages, 400_000);
@@ -712,11 +712,46 @@ SETUP AWARENESS: If the discussed features need backend services, mention it nat
                 headers: { ...corsHeaders, "Content-Type": "application/json", "X-Request-Id": requestId },
               });
             }
-            console.error(`[${requestId}] Provider error retry also failed:`, retryResp2.status);
+            console.error(`[${requestId}] Tier-1 fallback (openai/gpt-5-mini) also failed:`, retryResp2.status);
           } catch (retryErr2) {
-            console.error(`[${requestId}] Provider error retry failed:`, retryErr2);
+            console.error(`[${requestId}] Tier-1 fallback failed:`, retryErr2);
           } finally {
             clearTimeout(retryTimer2);
+          }
+
+          // Tier-2 fallback: try a different Gemini tier as last resort
+          const TIER2_MODEL = "google/gemini-2.5-pro";
+          console.log(`[${requestId}] Trying tier-2 fallback model ${TIER2_MODEL}`);
+          const retryController3 = new AbortController();
+          const retryTimer3 = setTimeout(() => retryController3.abort(), 30_000);
+          try {
+            const retryResp3 = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+              method: "POST",
+              headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+              body: JSON.stringify({
+                model: TIER2_MODEL,
+                messages: [{ role: "system", content: systemPrompt }, ...sanitizedMessages],
+                stream,
+              }),
+              signal: retryController3.signal,
+            });
+            if (retryResp3.ok) {
+              console.log(`[${requestId}] Tier-2 fallback succeeded with ${TIER2_MODEL}`);
+              if (stream) {
+                return new Response(retryResp3.body, {
+                  headers: { ...corsHeaders, "Content-Type": "text/event-stream", "X-Request-Id": requestId },
+                });
+              }
+              const retryData3 = await retryResp3.json();
+              return new Response(JSON.stringify({ content: retryData3.choices?.[0]?.message?.content || "", requestId }), {
+                headers: { ...corsHeaders, "Content-Type": "application/json", "X-Request-Id": requestId },
+              });
+            }
+            console.error(`[${requestId}] Tier-2 fallback also failed:`, retryResp3.status);
+          } catch (retryErr3) {
+            console.error(`[${requestId}] Tier-2 fallback error:`, retryErr3);
+          } finally {
+            clearTimeout(retryTimer3);
           }
         }
 
