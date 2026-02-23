@@ -373,10 +373,8 @@ export function CompilationBridge({
       setStableHTML(liveCompiledHTML);
       liveSync.resetSnapshot(filesRef.current);
     }
-    if (!isGenerating && !liveCompiledHTML && filesRef.current.length > 0 && stableHTMLRef.current === null && stableHTML === null) {
-      console.warn('[Preview] Generation complete but no compilation — showing error fallback');
-      setStableHTML(ERROR_FALLBACK_HTML);
-    }
+    // Removed: premature error fallback that fired before the 150ms compilation debounce.
+    // The main compilation effect (line 202) handles error fallback after actual compile failure.
   }, [isGenerating, liveCompiledHTML, filesDigest, stableHTML, setStableHTML]);
 
   // Hot-patch during manual edits
