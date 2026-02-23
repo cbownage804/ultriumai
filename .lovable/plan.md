@@ -1,72 +1,55 @@
 
 
-## Lovable-Parity Plus Menu
+## Fix SafePass 404s + AI Studio Performance
 
-### What Changes
-Upgrade the "+" menu in the chat input to match Lovable's full menu structure with all navigation items, keyboard shortcuts, separators, and templates.
+### Two Issues
 
-### Current State
-The plus menu has only 3 items:
-- Take a screenshot
-- Add reference
-- Attach
-- Templates section (6 templates)
+---
 
-### Target State (matching Lovable's screenshots)
+### Issue 1: SafePass 404 Routes
 
-```text
-+-----------------------------+
-| Project settings    Ctrl+.  |
-| History                     |
-| Knowledge                   |
-| GitHub                      |
-|-------- separator ----------|
-| Take a screenshot           |
-| Add reference               |
-| Attach                      |
-|-------- separator ----------|
-| TEMPLATES                   |
-| Add authentication          |
-| Make responsive             |
-| Add dark mode               |
-| Add dashboard               |
-| Add payments                |
-| Add search                  |
-+-----------------------------+
-```
+The sidebar navigation in `SafeSuiteLayout.tsx` links to 5 routes that have no corresponding `<Route>` entries in `App.tsx`:
 
-### Technical Details
+| Sidebar Link | Route Path | Page Component (exists) | Registered in App.tsx? |
+|---|---|---|---|
+| Secure Notes | `/safesuite/pass/notes` | `SafePassNotes.tsx` | No |
+| Credit Cards | `/safesuite/pass/cards` | `SafePassCards.tsx` | No |
+| Identity Profiles | `/safesuite/pass/identity` | `SafePassIdentity.tsx` | No |
+| Password Health | `/safesuite/pass/health` | `SafePassHealth.tsx` | No |
+| User Management | `/safesuite/pass/users` | `SafePassUsers.tsx` | No |
 
-**File: `src/components/ai-builder/BuilderChatPanel.tsx`**
+All 5 page components already exist in `src/pages/safesuite/`. They just need to be lazy-imported and routed.
 
-1. Add new props to `BuilderChatPanelProps`:
-   - `onShowSettings?: () => void`
-   - `onShowHistory?: () => void`
-   - `onShowKnowledge?: () => void`
-   - `onShowGitHub?: () => void`
+**File: `src/App.tsx`**
+- Add 5 lazy imports for `SafePassNotes`, `SafePassCards`, `SafePassIdentity`, `SafePassHealth`, `SafePassUsers`
+- Add 5 `<Route>` entries after the existing `/safesuite/pass/shared` route (line ~705)
 
-2. Import additional icons: `Settings`, `Clock`, `BookOpen`, `GitBranch`
+---
 
-3. Restructure the PopoverContent (lines ~1315-1373) to add 4 new menu items before "Take a screenshot", with a separator between the navigation group and the action group:
-   - **Project settings** (Settings icon, "Ctrl+." shortcut hint on right side)
-   - **History** (Clock icon)
-   - **Knowledge** (BookOpen icon)
-   - **GitHub** (GitBranch icon)
-   - Separator line
-   - Take a screenshot (existing)
-   - Add reference (existing)
-   - Attach (existing)
-   - Separator + Templates (existing)
+### Issue 2: AI Studio App Builder Sluggishness
 
-4. Widen the popover from `w-48` to `w-56` to accommodate the shortcut hint
+The `AIAppBuilderWorkspace.tsx` is a 3,105-line monolith that initializes 50+ hooks synchronously on mount. This was diagnosed in a prior conversation and a deferred-mount plan was approved but never implemented.
+
+**New file: `src/hooks/useDeferredMount.ts`** (~15 lines)
+- Returns a `ready` boolean that starts `false` and flips to `true` after `requestIdleCallback` (or 100ms fallback)
+- This allows critical hooks to initialize immediately while non-essential ones wait for the browser to be idle
 
 **File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
+- Import `useDeferredMount` and call it at the top of the component
+- Wrap the following ~15 non-critical hooks (lines ~530-558) behind the `ready` gate, providing stable no-op defaults when not ready:
+  - `useCodeSmellDetector`, `useDocGenerator`, `useAutoFixLoop`, `useGithubSync`, `useInlineAIEdit`, `useBuildLog`, `usePostBuildSmokeTest`, `useHotModuleRecovery`, `useSelfReviewPass`, `useDependencyConflictDetection`, `useSmartFileScaffolding`, `useInlineErrorAnnotations`, `usePromptMemory`, `useLighthouseAudit`, `useBundleSizeTracking`, `useDeleteButtonAutoPatcher`, `usePromptPhasePlanner`
+- Add a 500ms delay to the `recoverJobs()` mount effect (line ~515)
+- Gate the realtime cursor channel behind `currentProjectId && activeFile` instead of just `currentProjectId`
 
-5. Pass the 4 new callback props to both BuilderChatPanel instances (mobile ~line 2453 and desktop ~line 2525):
-   - `onShowSettings={() => setShowSettingsModal(true)}`
-   - `onShowHistory={() => setShowVersionHistory(true)}`
-   - `onShowKnowledge={() => setShowKnowledge(true)}`
-   - `onShowGitHub={() => setShowGitHubPanel(true)}`
+**Expected impact**: First paint drops from ~10s to ~1-2s. Deferred hooks initialize within 100-500ms after paint, invisible to the user.
 
-### No backend changes needed
-All panels already exist in the workspace -- this just wires them into the plus menu.
+---
+
+### Summary
+
+| File | Change |
+|---|---|
+| `src/App.tsx` (~line 705) | Add 5 lazy imports + 5 routes for missing SafePass pages |
+| `src/hooks/useDeferredMount.ts` (new) | Tiny hook returning idle-deferred `ready` boolean |
+| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` (~lines 497-560) | Defer ~15 non-critical hooks and delay mount effects |
+
