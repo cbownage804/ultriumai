@@ -2,31 +2,20 @@
  * CDN Package Registry
  * Maps npm packages to ESM CDN URLs for in-browser import resolution.
  *
- * The canonical package list lives in src/workers/packageData.ts so the
- * compiler worker can import it without pulling in React Refresh–injected modules.
- * The CDNPackageEntry type is defined HERE (not in the worker file) because
- * worker files skip SWC transpilation and cannot use `export interface`.
+ * The canonical data (CDNPackageEntry + DEFAULT_PACKAGES) lives in
+ * src/workers/packageData.ts so the compiler worker can import it
+ * without pulling in React Refresh–injected modules.
  */
 
-export interface CDNPackageEntry {
-  name: string;
-  version: string;
-  cdnUrl: string;
-  /** Global variable name if loaded as UMD */
-  global?: string;
-  /** Dependencies that must be loaded first */
-  peerDeps?: string[];
-}
-
 // Re-export the canonical data from workers/packageData
-export { DEFAULT_PACKAGES } from '@/workers/packageData';
-import { DEFAULT_PACKAGES } from '@/workers/packageData';
+export { DEFAULT_PACKAGES, type CDNPackageEntry } from '@/workers/packageData';
+import { DEFAULT_PACKAGES, type CDNPackageEntry } from '@/workers/packageData';
 
 const ESM_SH = 'https://esm.sh';
 
 /** Build a lookup map from package name to CDN entry */
 export function buildPackageLookup(
-  defaults: CDNPackageEntry[] = DEFAULT_PACKAGES as CDNPackageEntry[],
+  defaults: CDNPackageEntry[] = DEFAULT_PACKAGES,
   userPackages: CDNPackageEntry[] = [],
 ): Map<string, CDNPackageEntry> {
   const map = new Map<string, CDNPackageEntry>();
@@ -53,7 +42,7 @@ export function generateImportMap(
 
 /** Generate CDN preload script tags for packages */
 export function generatePreloadScripts(packages: CDNPackageEntry[]): string {
-  const allPkgs = [...(DEFAULT_PACKAGES as CDNPackageEntry[]), ...packages];
+  const allPkgs = [...DEFAULT_PACKAGES, ...packages];
   const unique = new Map<string, CDNPackageEntry>();
   for (const p of allPkgs) unique.set(p.name, p);
 
