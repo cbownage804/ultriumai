@@ -1,52 +1,62 @@
 
 
-## Fix: AI Builder "Provider returned error" 400 + Improve Retry Resilience
+## Fix: "Provider returned error" Build Failures + Raw JSON in Error Messages
 
 ### Root Cause
 
-The Lovable AI gateway at `ai.gateway.lovable.dev` returned HTTP 400 with body `"Provider returned error"`. This happens when the upstream model provider (e.g., Gemini) rejects the request for non-token-related reasons (content policy, temporary model issue, malformed multimodal input, etc.).
+There are **two layers** of the problem:
 
-The current code in `ai-app-builder/index.ts` (lines 646-689) only auto-retries 400 errors when the message matches `/token|exceeds|maximum/`. For all other 400 errors like "Provider returned error," it passes the raw error through to the client, causing the build to fail with a confusing message.
+1. **`ai-builder-background/index.ts`** (the orchestrator) calls `ai-app-builder` (the AI gateway wrapper). When `ai-app-builder` returns a 400, the background function on line 493 does:
+   ```
+   throw new Error(`AI builder returned ${resp.status}: ${errText.slice(0, 500)}`);
+   ```
+   This dumps the raw JSON response (`{"error":"Provider returned error","requestId":"..."}`) into the `error_message` column, which flows directly to the chat UI and toast.
 
-### Fix
+2. **`ai-builder-background/index.ts`** only retries on 500/408/504 errors (line 484). It does NOT retry on 400 errors at all -- so even though `ai-app-builder` now has retry logic for provider errors, the background function doesn't give it a chance to use a different model because it treats ALL non-ok responses below 500 as fatal.
 
-**File: `supabase/functions/ai-app-builder/index.ts` (lines ~646-689)**
+3. The **client-side error classifier** (`classifyError` in `useAIAppBuilder.ts`) doesn't have a case for "provider error" 400s -- they fall into the generic "unknown" bucket with the raw error string as the message.
 
-Expand the 400 error handler to also retry on generic provider errors:
+### Fix (3 files)
 
-1. After the existing token-limit retry block, add a second retry path for "Provider returned error" or any generic non-token 400:
-   - Retry once with the fallback model (`google/gemini-2.5-flash`)
-   - If the fallback also fails, return a user-friendly error message: "The AI model couldn't process this request. Try rephrasing or simplifying your prompt."
-   - Log the original error for debugging
+**1. `supabase/functions/ai-builder-background/index.ts` (line 484-493)**
 
-2. Improve the user-facing error message for all 400s — instead of showing raw gateway JSON like `{"error":"Provider returned error","requestId":"..."}`, show a clean message.
+Add 400 to the retryable status codes when the error text matches `/provider|upstream|internal/i`. Also sanitize the error text before throwing so the database never stores raw JSON:
 
-### Technical Details
+- Line 484: Change the retry condition from `resp.status >= 500 || resp.status === 408 || resp.status === 504` to also include `resp.status === 400` when the error text matches provider-related patterns
+- Line 493: Parse the error text -- if it's JSON, extract the `error` field. Always produce a clean human-readable string.
 
-```text
-Current 400 handler flow:
-  400 received -> is token error? -> yes: retry with reduced context
-                                  -> no: pass raw error to client
+**2. `src/hooks/useAIAppBuilder.ts` (line 38-42, 58-62)**
 
-New 400 handler flow:
-  400 received -> is token error? -> yes: retry with reduced context
-                -> is provider error? -> yes: retry with fallback model
-                -> else: return clean user-friendly error
+Add a classifier case for provider/upstream 400 errors so the user sees a friendly message instead of raw JSON:
+
+- Add a new case after the `payload_too_large` check:
+  ```
+  if (status === 400 && /provider|upstream|internal|encountered an issue/i.test(errorMsg))
+  ```
+  Returns category `server`, retryable `true`, with message "The AI provider encountered a temporary issue."
+
+- Update the fallback "unknown" case to strip any JSON from the error message before displaying.
+
+**3. `src/hooks/useBackgroundGeneration.ts` (line 130)**
+
+Sanitize the `error_message` before displaying in the toast -- strip JSON wrapper and requestId to show only the human-readable part:
+
+```typescript
+const cleanMsg = job.error_message?.replace(/\{"error":"([^"]+)".*\}/, '$1')
+  ?.replace(/AI builder returned \d+:\s*/, '')
+  ?.slice(0, 100) || 'Unknown error';
+toast.error(`Build failed: ${cleanMsg}`);
 ```
 
-Changes:
-- Add a `/provider|upstream|internal/i` regex check after the token-limit check
-- On match, retry with the fallback model (`google/gemini-2.5-flash`) using full context (not reduced, since it's not a token issue)
-- If retry succeeds, return the response
-- If retry fails, return: "The AI provider encountered an error. Please try again."
-- For ALL 400 error paths, sanitize the error message to never expose raw JSON to the user
+### Cookie Warnings
 
-### Files Changed
+The `__cf_bm` cookie warnings in the console are cosmetic Cloudflare cookie-domain mismatches when loading chunks from `ultriumai.app`. They do NOT affect functionality and cannot be fixed from the application code (they're a Cloudflare infrastructure behavior). No action needed.
+
+### Summary
 
 | File | Change |
 |---|---|
-| `supabase/functions/ai-app-builder/index.ts` (lines 646-689) | Add fallback model retry for generic provider 400 errors, sanitize user-facing error messages |
-
-### No frontend changes needed
-The client already displays the error message from the edge function response. Improving the server-side error handling and retry logic will fix both the build failure and the confusing error message.
+| `supabase/functions/ai-builder-background/index.ts` (~line 484-493) | Retry 400s with provider errors, sanitize error text before storing |
+| `src/hooks/useAIAppBuilder.ts` (~line 38-62) | Add classifier case for provider 400 errors |
+| `src/hooks/useBackgroundGeneration.ts` (~line 130) | Sanitize error_message before displaying in toast |
 
