@@ -481,16 +481,25 @@ async function runGenerationWithContinuation(
             body: payload,
           });
           if (resp.ok) return resp;
-          if (resp.status >= 500 || resp.status === 408 || resp.status === 504) {
+          const errText = await resp.text().catch(() => "Unknown error");
+          // Check if this is a retryable status (5xx, timeout, or provider-error 400)
+          const isProviderError = resp.status === 400 && /provider|upstream|internal/i.test(errText);
+          if (resp.status >= 500 || resp.status === 408 || resp.status === 504 || isProviderError) {
             if (attempt < maxRetries) {
               const backoff = (attempt + 1) * 2000;
-              console.warn(`[BG] Job ${jobId}: Retry ${attempt + 1}/${maxRetries} after ${resp.status}`);
+              console.warn(`[BG] Job ${jobId}: Retry ${attempt + 1}/${maxRetries} after ${resp.status}${isProviderError ? ' (provider error)' : ''}`);
               await new Promise(r => setTimeout(r, backoff));
               continue;
             }
           }
-          const errText = await resp.text().catch(() => "Unknown error");
-          throw new Error(`AI builder returned ${resp.status}: ${errText.slice(0, 500)}`);
+          // Sanitize error text: extract human-readable message from JSON if present
+          let cleanError = errText;
+          try {
+            const parsed = JSON.parse(errText);
+            if (parsed?.error) cleanError = parsed.error;
+          } catch {}
+          cleanError = cleanError.slice(0, 200);
+          throw new Error(`AI builder error (${resp.status}): ${cleanError}`);
         } catch (err: any) {
           if (err.message?.startsWith("AI builder returned")) throw err;
           if (attempt < maxRetries) {

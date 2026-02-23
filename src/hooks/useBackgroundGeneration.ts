@@ -127,7 +127,10 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
       cleanup();
       console.error('[BG] ❌ Job failed:', job.id, job.error_message);
       onErrorRef.current?.(job);
-      toast.error(`Build failed: ${job.error_message?.slice(0, 100) || 'Unknown error'}`);
+      const cleanMsg = job.error_message?.replace(/\{"error":"([^"]+)".*\}/, '$1')
+        ?.replace(/AI builder (?:returned|error) \(?(\d+)\)?:\s*/i, '')
+        ?.slice(0, 100) || 'Unknown error';
+      toast.error(`Build failed: ${cleanMsg}`);
       processQueue();
     } else if (job.status === 'cancelled') {
       cleanup();

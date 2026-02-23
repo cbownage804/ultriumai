@@ -40,6 +40,11 @@ function classifyError(status: number, errorMsg: string, err?: Error): Classifie
     userMessage: 'Your project context is too large for a single request.',
     suggestion: 'Try a more specific request like "update only the header component" instead of broad changes.',
   };
+  if (status === 400 && /provider|upstream|internal|encountered an issue/i.test(errorMsg)) return {
+    category: 'server', retryable: true, retryDelayMs: 5000,
+    userMessage: 'The AI provider encountered a temporary issue.',
+    suggestion: 'This usually resolves quickly. Try again in a few seconds.',
+  };
   if (status === 504 || status === 408 || err?.name === 'AbortError' || /timeout/i.test(errorMsg)) return {
     category: 'timeout', retryable: true, retryDelayMs: 2000,
     userMessage: 'The AI took too long to respond.',
@@ -55,9 +60,16 @@ function classifyError(status: number, errorMsg: string, err?: Error): Classifie
     userMessage: 'AI service is temporarily unavailable.',
     suggestion: 'This usually resolves in a few seconds. Try again shortly.',
   };
+  // Strip raw JSON from error message before displaying
+  let cleanMsg = errorMsg || 'Something went wrong.';
+  try {
+    const parsed = JSON.parse(cleanMsg);
+    if (parsed?.error) cleanMsg = parsed.error;
+  } catch {}
+  cleanMsg = cleanMsg.replace(/AI builder returned \d+:\s*/i, '').slice(0, 150);
   return {
     category: 'unknown', retryable: false,
-    userMessage: errorMsg || 'Something went wrong.',
+    userMessage: cleanMsg,
     suggestion: 'Try rephrasing your request or refreshing the page.',
   };
 }
