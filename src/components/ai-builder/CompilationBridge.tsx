@@ -157,12 +157,21 @@ export function CompilationBridge({
         justSyncedFromExternalRef.current = true; // Phase 2: prevent main effect recompile
         console.info('[CompilationBridge] Synced external stableHTML, skipping redundant recompile');
       } else if (!stableHTMLRef.current) {
-        // No preview yet — let the main effect handle compilation.
-        // Set immediateCompileNeededRef so it uses 0ms debounce instead of 500ms.
-        console.info('[CompilationBridge] Generation ended with no preview — letting main effect compile');
+        // No preview yet — compile directly instead of relying on the main effect chain.
+        // The main effect's dependency on filesDigest + isGenerating creates timing issues
+        // where the effect re-fires and cancels its own debounce timer.
+        console.info('[CompilationBridge] Generation ended with no preview — calling compileNowRef directly');
         compilationLockRef.current = false;
         compilationAttemptedRef.current = false;
-        immediateCompileNeededRef.current = true;
+        // Use a short delay to let React finish the current render cycle
+        // so filesRef.current has the merged files from handleBgComplete.
+        const directCompileTimer = setTimeout(() => {
+          if (!stableHTMLRef.current && !compilationLockRef.current) {
+            console.info('[CompilationBridge] Direct post-generation compile firing');
+            compileNowRef.current?.();
+          }
+        }, 100);
+        compilationCleanupRef.current = () => clearTimeout(directCompileTimer);
       } else {
         // stableHTML already set (from handleBgComplete direct compile),
         // sync the digest so we don't trigger a redundant recompile
@@ -334,10 +343,13 @@ export function CompilationBridge({
     }
     prevFilesDigestRef.current = filesDigest;
 
-    // CRITICAL FIX: Always unlock when we have no preview.
-    // This handles auto-restore where files exist but stableHTML is null
-    // and compilationLockRef is still true from a previous session.
-    if (!stableHTMLRef.current) {
+    // Unlock stale locks from previous sessions, but only if no active compile is running.
+    // Check: if compilationAttemptedRef is still false and lock is true, a direct compile
+    // (compileNowRef) may be in progress — don't unlock it.
+    if (!stableHTMLRef.current && !compilationLockRef.current) {
+      // Already unlocked, no-op
+    } else if (!stableHTMLRef.current && compilationAttemptedRef.current) {
+      // Previous session left lock on but compilation was done — safe to unlock
       compilationLockRef.current = false;
     }
 
