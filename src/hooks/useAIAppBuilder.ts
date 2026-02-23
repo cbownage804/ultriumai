@@ -377,6 +377,7 @@ const FILE_DELIMITER = /^===FILE:\s*(.+?)===$/;
 const DELETE_DELIMITER = /^===DELETE:\s*(.+?)===$/;
 const EDIT_DELIMITER = /^===EDIT:\s*(.+?)===$/;
 const HUNK_HEADER = /^@@\s*(\d+)-(\d+)\s*@@$/;
+const UNIFIED_HUNK_HEADER = /^@@\s*-(\d+)(?:,(\d+))?\s*\+(\d+)(?:,(\d+))?\s*@@/;
 
 /** Detect conversational prose that should not be part of a code file */
 function isConversationalLine(line: string): boolean {
@@ -451,13 +452,23 @@ function parseEditBlocks(raw: string): EditBlock[] {
   let currentHunkStart = 0;
   let currentHunkEnd = 0;
   let inHunk = false;
+  let isUnifiedFormat = false; // tracks if current hunk uses +/- prefixes
 
   const flushHunk = () => {
     if (inHunk && currentHunkStart > 0) {
-      currentHunks.push({ startLine: currentHunkStart, endLine: currentHunkEnd, newLines: [...currentHunkLines] });
+      let newLines = [...currentHunkLines];
+      if (isUnifiedFormat) {
+        // In unified diff, only keep '+' lines (new content) and context lines (no prefix)
+        // Strip the leading +/- character
+        newLines = currentHunkLines
+          .filter(l => !l.startsWith('-')) // remove deleted lines
+          .map(l => l.startsWith('+') ? l.slice(1) : l); // strip '+' prefix from additions
+      }
+      currentHunks.push({ startLine: currentHunkStart, endLine: currentHunkEnd, newLines });
     }
     currentHunkLines = [];
     inHunk = false;
+    isUnifiedFormat = false;
   };
 
   const flushEdit = () => {
@@ -485,19 +496,32 @@ function parseEditBlocks(raw: string): EditBlock[] {
         continue;
       }
 
+      // Try custom format first: @@ startLine-endLine @@
       const hunkMatch = line.match(HUNK_HEADER);
       if (hunkMatch) {
         flushHunk();
         currentHunkStart = parseInt(hunkMatch[1]);
         currentHunkEnd = parseInt(hunkMatch[2]);
         inHunk = true;
+        isUnifiedFormat = false;
+        continue;
+      }
+
+      // Try unified diff format: @@ -oldStart,oldCount +newStart,newCount @@
+      const unifiedMatch = line.match(UNIFIED_HUNK_HEADER);
+      if (unifiedMatch) {
+        flushHunk();
+        currentHunkStart = parseInt(unifiedMatch[1]);
+        const oldCount = parseInt(unifiedMatch[2] || '1');
+        currentHunkEnd = currentHunkStart + oldCount - 1;
+        inHunk = true;
+        isUnifiedFormat = true;
         continue;
       }
 
       if (inHunk) {
         // Stop hunk on blank line followed by conversational prose
         if (!line.trim() && currentHunkLines.length > 0) {
-          // peek ahead handled by the next iteration
           currentHunkLines.push(line);
         } else if (isConversationalLine(line)) {
           flushEdit();
