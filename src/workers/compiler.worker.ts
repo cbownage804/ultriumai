@@ -11,9 +11,7 @@ import './worker-window-shim';
 
 let esbuild: any = null;
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
-import { DEFAULT_PACKAGES } from './packageData';
-// CDNPackageEntry type is inferred from the array elements
-type CDNPackageEntry = (typeof DEFAULT_PACKAGES)[number];
+import { DEFAULT_PACKAGES, type CDNPackageEntry } from './packageData';
 
 // ── esbuild initialization ──
 let esbuildReady = false;
