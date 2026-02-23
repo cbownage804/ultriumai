@@ -5,7 +5,7 @@ import {
   X, Brain, Compass, Code2,
   LayoutGrid, Wrench, AlertTriangle, Copy, ChevronDown, Check, Pencil,
   Crosshair, Plus, Camera, Paperclip, AtSign, Rocket,
-  Settings, Clock, BookOpen, GitBranch,
+  Settings, Clock, BookOpen, GitBranch, Eye,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -315,6 +315,55 @@ function TypingIndicator() {
         </div>
       </div>
     </div>
+  );
+}
+
+/** File Read Card — shown when the AI reads/analyzes a project file */
+function FileReadCard({ fileName, description, isExpanded, onToggle }: { fileName: string; description?: string; isExpanded: boolean; onToggle: () => void }) {
+  const shortName = fileName.split('/').pop() || fileName;
+  const ext = shortName.split('.').pop()?.toLowerCase() || '';
+  const isImage = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'ico'].includes(ext);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-xl border border-white/[0.08] overflow-hidden bg-white/[0.02]"
+    >
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center gap-2.5 px-3.5 py-2.5 hover:bg-white/[0.02] transition-colors"
+      >
+        <Eye className="h-3.5 w-3.5 text-cyan-400/70 shrink-0" />
+        <div className="flex-1 text-left">
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] font-medium text-white/60">Read</span>
+            <span className="text-[12px] font-mono text-cyan-300/70">{shortName}</span>
+          </div>
+          {description && (
+            <p className="text-[11px] text-white/30 mt-0.5">{description}</p>
+          )}
+        </div>
+        <ChevronDown className={cn("h-3 w-3 text-white/20 transition-transform", !isExpanded && "-rotate-90")} />
+      </button>
+      {isExpanded && (
+        <div className="px-3.5 pb-3 border-t border-white/[0.06]">
+          <div className="mt-2 rounded-lg bg-black/30 border border-white/[0.06] p-3">
+            {isImage ? (
+              <div className="flex items-center justify-center py-4">
+                <div className="h-16 w-16 rounded-lg bg-white/[0.04] flex items-center justify-center border border-white/[0.06]">
+                  <FileCode className="h-6 w-6 text-white/20" />
+                </div>
+              </div>
+            ) : (
+              <p className="text-[11px] text-white/30 font-mono">
+                {fileName}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+    </motion.div>
   );
 }
 
@@ -632,6 +681,32 @@ export function BuilderChatPanel({
     // Send a build message with the plan context
     const planSummary = msg.content.slice(0, 2000);
     onSend(`Build everything we just discussed. Here's the plan for reference:\n\n${planSummary}`);
+  };
+
+  const [expandedFileReads, setExpandedFileReads] = useState<Set<string>>(new Set());
+
+  const toggleFileReadExpanded = (key: string) => {
+    setExpandedFileReads(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
+
+  /** Extract file read markers from message content */
+  const extractFileReads = (content: string): { fileName: string; description: string }[] => {
+    const reads: { fileName: string; description: string }[] = [];
+    // Match patterns like "Reading logo.svg" or "Analyzing styles.css" or "[READ] file.tsx"
+    const patterns = [
+      /(?:Reading|Analyzing|Reviewing|Inspecting|Checking)\s+[`"]?([^\s`"]+\.\w{1,6})[`"]?(?:\s*[-—:]\s*(.+))?/gi,
+      /\[READ\]\s*([^\s]+\.\w{1,6})(?:\s*[-—:]\s*(.+))?/gi,
+    ];
+    for (const pattern of patterns) {
+      for (const match of content.matchAll(pattern)) {
+        reads.push({ fileName: match[1], description: match[2]?.trim() || '' });
+      }
+    }
+    return reads;
   };
 
   const renderAssistantMessage = (msg: BuilderMessage, isLast: boolean) => {
@@ -959,6 +1034,28 @@ export function BuilderChatPanel({
             })()}
           </div>
         )}
+
+        {/* File Read Cards — shown when AI reads/analyzes project files */}
+        {!isStreaming && (() => {
+          const fileReads = extractFileReads(msg.content);
+          if (fileReads.length === 0) return null;
+          return (
+            <div className="space-y-1.5">
+              {fileReads.map((fr, i) => {
+                const key = `${msg.id}-read-${fr.fileName}`;
+                return (
+                  <FileReadCard
+                    key={key}
+                    fileName={fr.fileName}
+                    description={fr.description}
+                    isExpanded={expandedFileReads.has(key)}
+                    onToggle={() => toggleFileReadExpanded(key)}
+                  />
+                );
+              })}
+            </div>
+          );
+        })()}
 
         {/* Inline diffs — collapsible per file */}
         {isCompleted && !isStreaming && previousFiles.length > 0 && fileNames.length > 0 && (
@@ -1325,6 +1422,39 @@ export function BuilderChatPanel({
 
       {/* Questions slot — rendered right above the input like Lovable */}
       {questionsSlot}
+
+      {/* Contextual suggestion chips — shown when project has files and not generating */}
+      {!isGenerating && fileCount > 0 && displayMessages.length > 0 && (
+        <div className="px-3 pt-2 shrink-0">
+          <div className="flex flex-wrap gap-1.5 overflow-x-auto scrollbar-hide">
+            {(() => {
+              // Generate contextual suggestions based on project state
+              const chips: { label: string; prompt: string }[] = [];
+              const lastAssistant = [...messages].reverse().find(m => m.role === 'assistant');
+              const hasImages = latestFiles.some(f => /\.(png|jpg|jpeg|gif|svg|webp)$/i.test(f.path));
+              const hasAuth = latestFiles.some(f => f.content.includes('auth') || f.content.includes('login'));
+              const hasForm = latestFiles.some(f => f.content.includes('<form') || f.content.includes('onSubmit'));
+
+              if (!hasImages) chips.push({ label: 'Add a photo gallery', prompt: 'Add a photo gallery section with grid layout' });
+              if (!hasAuth && fileCount > 3) chips.push({ label: 'Add authentication', prompt: 'Add user authentication with login and signup' });
+              if (!hasForm) chips.push({ label: 'Add a contact form', prompt: 'Add a contact form with validation' });
+              chips.push({ label: 'Add customer reviews', prompt: 'Add a customer reviews/testimonials section' });
+              chips.push({ label: 'Make it responsive', prompt: 'Make the entire app fully responsive for all screen sizes' });
+              if (fileCount > 2) chips.push({ label: 'Test the site end-to-end', prompt: 'Review the site for bugs, accessibility issues, and broken links' });
+
+              return chips.slice(0, 4).map((chip, i) => (
+                <button
+                  key={i}
+                  onClick={() => onSend(chip.prompt)}
+                  className="px-3 py-1.5 rounded-lg text-[11px] bg-white/[0.04] border border-white/[0.08] text-white/50 hover:text-white/80 hover:bg-white/[0.08] hover:border-white/[0.15] transition-all whitespace-nowrap"
+                >
+                  {chip.label}
+                </button>
+              ));
+            })()}
+          </div>
+        </div>
+      )}
 
       {/* Quick Actions + Context Indicator + Mode Toggle + Input */}
       <div className="p-3 border-t border-white/[0.06] shrink-0 space-y-2" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))' }}>
