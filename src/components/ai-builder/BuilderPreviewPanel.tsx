@@ -490,7 +490,12 @@ window.addEventListener('message', function(e) {
             />
           </div>
         ) : isGenerating || isCompiling ? (
-          <SkeletonPreview />
+          <SkeletonPreview
+            projectFiles={projectFiles}
+            completedFileCount={completedFileCount}
+            isGenerating={isGenerating}
+            isCompiling={isCompiling}
+          />
         ) : (
           <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden">
             {/* Neon background */}
