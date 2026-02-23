@@ -273,6 +273,12 @@ export function AIAppBuilderWorkspace() {
   // Ref to break circular declaration order (versionTimeline declared after callbacks)
   const addSnapshotRef = useRef<(label: string, files: ProjectFile[], type: 'auto' | 'manual' | 'ai-generation' | 'revert', messageId?: string, commitMessage?: string) => void>(() => {});
 
+  // Refs for draft persistence inside handleBgComplete (declared before callback, assigned later)
+  const saveDraftImmediateRef = useRef<(name: string, files: ProjectFile[], messages: any[]) => void>(() => {});
+  const latestFilesRef = useRef<ProjectFile[]>(project.files);
+  latestFilesRef.current = project.files;
+
+
   // Background generation: server-side builds that survive tab close
   // Saves a snapshot before applying, enabling one-click rollback
   const handleBgComplete = useCallback(async (job: BackgroundJob) => {
@@ -313,10 +319,10 @@ export function AIAppBuilderWorkspace() {
         }
       }
       setFiles(mergedFiles);
-      // Synchronously update ref so visibilitychange handler always has latest files
-      latestRef.current.files = mergedFiles;
+      // Synchronously update refs so visibilitychange handler always has latest files
+      latestFilesRef.current = mergedFiles;
       // Immediately persist so tab-switch can't lose data
-      saveDraftImmediate(project.name, mergedFiles, []);
+      saveDraftImmediateRef.current(project.name, mergedFiles, []);
 
       // 1. Self-contained HTML shortcut — ONLY for vanilla HTML with a NEWLY generated index.html
       const hasReactFiles = mergedFiles.some(f => /\.(tsx|jsx)$/.test(f.path));
@@ -586,6 +592,7 @@ export function AIAppBuilderWorkspace() {
   const phasePlanner = usePromptPhasePlanner();
   const builderQuestions = useBuilderQuestions();
   const { saveDraft, saveDraftImmediate, loadDraft, clearDraft, hasDraft } = useDraftPersistence();
+  saveDraftImmediateRef.current = saveDraftImmediate;
   const { previewUrl: hostedPreviewUrl, isUploading: isUploadingPreview, uploadPreview, uploadPreviewNow, clearPreviewTimer } = usePreviewHosting();
   const idbPersistence = useIndexedDBPersistence();
   const [showRecoveryDialog, setShowRecoveryDialog] = useState(false);
@@ -1317,8 +1324,13 @@ export function AIAppBuilderWorkspace() {
 
   useEffect(() => {
     const flushDraft = () => {
-      const { name, files, messages: msgs } = latestRef.current;
-      console.info('[Draft] Flushing: %d files, %d msgs', files.length, msgs.length);
+      // Use latestRef but prefer latestFilesRef if it has more files
+      // (handleBgComplete updates latestFilesRef synchronously before React re-renders)
+      const { name, messages: msgs } = latestRef.current;
+      const refFiles = latestRef.current.files;
+      const bgFiles = latestFilesRef.current;
+      const files = bgFiles.length >= refFiles.length ? bgFiles : refFiles;
+      console.info('[Draft] Flushing: %d files (ref=%d, bg=%d), %d msgs', files.length, refFiles.length, bgFiles.length, msgs.length);
       // Synchronous localStorage save — guaranteed to complete before tab freeze
       saveDraftImmediate(name, files, msgs);
       // Best-effort async IDB save — may not complete if tab is discarded
