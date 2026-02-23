@@ -345,6 +345,8 @@ export interface BuilderMessage {
   pinned?: boolean;
   /** Auto-generated commit message for this build */
   commitMessage?: string;
+  /** Which mode this message was sent/received in */
+  mode?: BuilderMode;
 }
 
 export type BuilderMode = 'build' | 'discuss';
@@ -823,6 +825,7 @@ export function useAIAppBuilder() {
       imageUrl: imageDataUrls?.[0] || undefined,
       imageUrls: imageDataUrls?.length ? imageDataUrls : undefined,
       workflowSteps: detectWorkflowIntent(input)?.steps,
+      mode: effectiveMode,
     };
 
     setMessages(prev => [...prev, userMsg]);
@@ -1351,6 +1354,7 @@ export function useAIAppBuilder() {
         id: crypto.randomUUID(), role: 'assistant' as const,
         content: `⚠️ ${classified.userMessage}\n\n💡 **Suggestion:** ${classified.suggestion}`,
         timestamp: new Date(), classifiedError: classified,
+        mode: effectiveMode,
       }]);
       setIsGenerating(false);
       setThinkingPhase(null);
