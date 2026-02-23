@@ -1,38 +1,27 @@
 
-## Fix: Ensure Generated Apps Have Readable Text Colors
+## Fix: Prevent Light Text on Light Backgrounds
 
 ### Problem
-When the AI generates a landing page (e.g., "Landing Page: Hero, features, testimonials, footer"), the heading text ends up the same color as the dark background, making it invisible. The system prompt mentions "4.5:1+ contrast" but doesn't explicitly tell the AI to use light text on dark backgrounds.
-
-### Root Cause
-The `BASE_SYSTEM_PROMPT` in `supabase/functions/ai-app-builder/index.ts` (line 20) says "Dark theme default" and mentions contrast ratios, but doesn't give explicit guidance like "use white/light text on dark backgrounds." The AI model interprets "dark theme" as dark backgrounds but sometimes defaults to dark text colors too.
+The system prompt currently only guards against dark text on dark backgrounds. When the AI generates a light-themed page (white/light background), it can still use light gray or white text — making headings and buttons invisible, as shown in the screenshot.
 
 ### Fix (1 file)
 
-**`supabase/functions/ai-app-builder/index.ts`** -- Strengthen the DESIGN section of the system prompt to explicitly mandate light text on dark backgrounds:
+**`supabase/functions/ai-app-builder/index.ts`** (line 20) -- Expand the DESIGN contrast rule to be bidirectional:
 
-Update line 20 from:
+Update the contrast section from:
 ```
-DESIGN: Bold typography (Google Fonts @import, display+body pair). 5-7 color palette via CSS custom properties, 4.5:1+ contrast. Micro-interactions on all interactive elements. Layered shadows, backdrop-filter. Spacing: 4/8/12/16/24/32/48/64/96px. Dark theme default.
+CONTRAST CRITICAL: Dark theme default means dark backgrounds (#0a0a0a to #1a1a2e range) with WHITE or LIGHT text (#ffffff, #f0f0f0, #e0e0e0). NEVER use dark text on dark backgrounds. Headings must be white or near-white. Body text at minimum #d1d5db. Muted/secondary text at minimum #9ca3af. All text must have 4.5:1+ contrast ratio against its background.
 ```
 
 To:
 ```
-DESIGN: Bold typography (Google Fonts @import, display+body pair). 5-7 color palette via CSS custom properties. CONTRAST CRITICAL: Dark theme default means dark backgrounds (#0a0a0a to #1a1a2e range) with WHITE or LIGHT text (#ffffff, #f0f0f0, #e0e0e0). NEVER use dark text on dark backgrounds. Headings must be white or near-white. Body text at minimum #d1d5db. Muted/secondary text at minimum #9ca3af. All text must have 4.5:1+ contrast ratio against its background. Micro-interactions on all interactive elements. Layered shadows, backdrop-filter. Spacing: 4/8/12/16/24/32/48/64/96px.
+CONTRAST CRITICAL: All text must have 4.5:1+ contrast ratio against its background. For DARK backgrounds (#0a0a0a to #1a1a2e): use WHITE or LIGHT text (#ffffff, #f0f0f0). Headings white/near-white, body min #d1d5db, muted min #9ca3af. For LIGHT/WHITE backgrounds (#f0f0f0 to #ffffff): use DARK text (#111827, #1f2937). Headings near-black, body max #374151, muted max #6b7280. NEVER use light text on light backgrounds. NEVER use dark text on dark backgrounds. Buttons must have contrasting text against their fill color.
 ```
 
-This makes the contrast requirement unambiguous: dark backgrounds get light text, with specific minimum brightness values for headings, body, and secondary text.
-
-### Technical Details
-
-| File | Change |
-|------|--------|
-| `supabase/functions/ai-app-builder/index.ts` (line 20) | Expand DESIGN section with explicit dark-on-light text color guidance |
-
-After editing, the edge function will be redeployed.
+This makes the rule bidirectional: dark backgrounds get light text, light backgrounds get dark text, with specific thresholds for both directions.
 
 ### Result
-- All newly generated apps will have clearly readable text
-- Headings will be white/near-white on dark backgrounds
-- Body and secondary text will have minimum brightness thresholds
-- Existing projects are unaffected (only new generations use the updated prompt)
+- Light-themed generated apps will have dark, readable text
+- Dark-themed generated apps continue to have light, readable text
+- Button text will contrast against button fill colors
+- Covers both theme directions with explicit color ranges
