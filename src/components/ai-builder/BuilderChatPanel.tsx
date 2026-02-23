@@ -1361,6 +1361,39 @@ export function BuilderChatPanel({
               </button>
             )}
           </div>
+          {/* Chat / Build mode toggle */}
+          <div className="flex items-center gap-1.5 pt-1.5">
+            <button
+              onClick={() => onModeChange('discuss')}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all",
+                mode === 'discuss'
+                  ? "bg-teal-500/20 text-teal-400 ring-1 ring-teal-500/30"
+                  : "text-white/40 hover:text-white/60 hover:bg-white/5"
+              )}
+            >
+              Chat
+              <span className={cn(
+                "text-[10px] px-1.5 py-0.5 rounded-full font-semibold",
+                mode === 'discuss' ? "bg-teal-500/20 text-teal-300" : "bg-white/5 text-white/30"
+              )}>1cr</span>
+            </button>
+            <button
+              onClick={() => onModeChange('build')}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all",
+                mode === 'build'
+                  ? "bg-violet-500/20 text-violet-400 ring-1 ring-violet-500/30"
+                  : "text-white/40 hover:text-white/60 hover:bg-white/5"
+              )}
+            >
+              Build
+              <span className={cn(
+                "text-[10px] px-1.5 py-0.5 rounded-full font-semibold",
+                mode === 'build' ? "bg-violet-500/20 text-violet-300" : "bg-white/5 text-white/30"
+              )}>3cr</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
