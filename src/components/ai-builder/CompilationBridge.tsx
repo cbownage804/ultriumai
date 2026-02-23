@@ -157,17 +157,22 @@ export function CompilationBridge({
         justSyncedFromExternalRef.current = true; // Phase 2: prevent main effect recompile
         console.info('[CompilationBridge] Synced external stableHTML, skipping redundant recompile');
       } else if (!stableHTMLRef.current) {
-        // No preview yet — compile directly instead of relying on the main effect chain.
-        // The main effect's dependency on filesDigest + isGenerating creates timing issues
-        // where the effect re-fires and cancels its own debounce timer.
-        console.info('[CompilationBridge] Generation ended with no preview — calling compileNowRef directly');
-        compilationLockRef.current = false;
-        compilationAttemptedRef.current = false;
-        // Use a short delay to let React finish the current render cycle
+        // No preview yet — compile directly after a short delay.
+        // CRITICAL: Lock + set digest so the main useEffect does NOT also start a compilation.
+        // The main effect checks compilationLockRef and prevFilesDigestRef, so setting both
+        // prevents any race condition between the two compilation paths.
+        console.info('[CompilationBridge] Generation ended with no preview — will compile directly in 100ms');
+        compilationLockRef.current = true;
+        compilationAttemptedRef.current = true;
+        prevFilesDigestRef.current = filesDigest; // main effect sees no digest change → skips
+        // Short delay to let React finish the current render cycle
         // so filesRef.current has the merged files from handleBgComplete.
         const directCompileTimer = setTimeout(() => {
-          if (!stableHTMLRef.current && !compilationLockRef.current) {
+          if (!stableHTMLRef.current) {
             console.info('[CompilationBridge] Direct post-generation compile firing');
+            // Unlock just before calling — compileNowRef re-acquires lock synchronously
+            compilationLockRef.current = false;
+            compilationAttemptedRef.current = false;
             compileNowRef.current?.();
           }
         }, 100);
@@ -343,14 +348,17 @@ export function CompilationBridge({
     }
     prevFilesDigestRef.current = filesDigest;
 
-    // Unlock stale locks from previous sessions, but only if no active compile is running.
-    // Check: if compilationAttemptedRef is still false and lock is true, a direct compile
-    // (compileNowRef) may be in progress — don't unlock it.
-    if (!stableHTMLRef.current && !compilationLockRef.current) {
-      // Already unlocked, no-op
-    } else if (!stableHTMLRef.current && compilationAttemptedRef.current) {
-      // Previous session left lock on but compilation was done — safe to unlock
-      compilationLockRef.current = false;
+    // Stale lock recovery: only unlock if a previous session left the lock on
+    // AND compilation was already attempted (meaning the lock is truly stale).
+    // If lock is true and attempted is also true from the generation-ending effect
+    // (which pre-locks to prevent this effect from racing), respect that lock.
+    if (!stableHTMLRef.current && compilationLockRef.current && compilationAttemptedRef.current) {
+      // Check if the generation-ending effect is handling compilation.
+      // If prevFilesDigestRef matches current digest, the gen-ending effect set it — don't unlock.
+      if (filesDigest !== prevFilesDigestRef.current) {
+        // Truly stale lock from a previous session
+        compilationLockRef.current = false;
+      }
     }
 
     // Prevent re-entry — only compile once per generation cycle
