@@ -1,53 +1,58 @@
 
 
-## Fix: Preview Not Updating on 2nd+ Builds + Data Loss on Tab Switch
+## Fix: Preview Not Updating on 2nd+ Builds
 
-### Problem 1: Preview Only Updates on First Build
+### Root Cause
 
-**Root cause**: When a new generation starts, `stableHTMLRef.current` is never cleared. So when the second build completes in `handleBgComplete`:
-- Line 326: `if (!stableHTMLRef.current && hasReactFiles)` evaluates to FALSE because the ref still holds the first build's HTML
-- The React compilation is skipped entirely
-- `CompilationBridge`'s generation-ending effect also sees a truthy `stableHTMLRef.current` and just syncs the digest without recompiling
-- Result: the preview stays frozen on the first build's output
-
-**Fix**: Clear `stableHTMLRef.current` at the START of `handleBgComplete` (before the compilation logic runs). This ensures every build triggers fresh compilation.
+In `handleBgComplete` (line 317), the self-contained HTML check searches `mergedFiles` (ALL project files) instead of `parsedFiles` (only NEWLY changed files):
 
 ```text
-File: src/components/ai-builder/AIAppBuilderWorkspace.tsx (~line 285, inside handleBgComplete)
-
-Add at the top of handleBgComplete, before the compilation logic:
-  stableHTMLRef.current = null;
+const indexFile = mergedFiles.find(f => f.path === 'index.html');
 ```
 
-This single line ensures the guard condition on line 326 passes on every build, not just the first one.
+On the 2nd build, the AI typically only updates a component file (e.g., `App.tsx`) -- not `index.html`. But the OLD `index.html` from the first build is still in `mergedFiles`. If that old `index.html` passes the self-contained check (no local module script references), it:
 
----
+1. Sets `stableHTMLRef.current` to the OLD `index.html` content (line 323)
+2. Short-circuits the worker compilation at line 330 (`!stableHTMLRef.current` is now false)
+3. The preview shows the OLD content, ignoring the updated component files entirely
 
-### Problem 2: Data Lost When Switching Tabs During Build
+### Fix (single file change)
 
-**Root cause**: Two issues compound:
-1. The `isNewProjectRef.current` flag prevents the visibility handler from restoring data (line 1293/1311). This flag is only set to `false` AFTER generation completes (line 1230), so if the user switches tabs during a build, the handler exits early.
-2. The `saveDraftImmediate` added in the last fix only fires when generation completes -- not during streaming. If the user switches tabs mid-generation, no draft has been saved yet.
+**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx` (~line 317)**
 
-**Fix**: In the `flushDraft` function (line 1291), remove the `isNewProjectRef.current` early return guard. If there are files or messages, they should always be saved regardless of the project's "new" status.
-
-Also in `handleVisibility` (line 1311), remove the `isNewProjectRef.current` guard so restoration works even for fresh projects that have started generating.
+Change the self-contained HTML check to only look at NEWLY generated files, and skip it entirely if there are React component files (which require worker compilation):
 
 ```text
-File: src/components/ai-builder/AIAppBuilderWorkspace.tsx
+Before:
+  const indexFile = mergedFiles.find(f => f.path === 'index.html');
+  const hasLocalModuleScripts = ...
+  if (indexFile && !hasLocalModuleScripts && ...) {
 
-Line 1293: Remove `if (isNewProjectRef.current) return;` from flushDraft
-Line 1311: Remove `if (isNewProjectRef.current) return;` from handleVisibility
+After:
+  const hasReactFiles = mergedFiles.some(f => /\.(tsx|jsx)$/.test(f.path));
+  const newIndexFile = parsedFiles.find(f => f.path === 'index.html');
+  const hasLocalModuleScripts = ...
+  if (newIndexFile && !hasReactFiles && !hasLocalModuleScripts && ...) {
 ```
 
----
+Key changes:
+- Move `hasReactFiles` detection BEFORE the self-contained check (currently it's after, at line 329)
+- Only check `parsedFiles` (newly generated files) for index.html, not `mergedFiles`
+- Skip the self-contained shortcut entirely when React files (.tsx/.jsx) exist in the project -- these always need worker compilation
+- Remove the duplicate `hasReactFiles` declaration at line 329 (now declared earlier)
+
+### Why This Works
+
+- **1st build (vanilla HTML):** AI generates index.html, it's in `parsedFiles`, no .tsx files exist -- shortcut fires correctly
+- **1st build (React):** AI generates index.html + App.tsx -- `hasReactFiles` is true, shortcut is skipped, worker compiles
+- **2nd build (React, component-only change):** AI updates App.tsx only -- `newIndexFile` is null (index.html wasn't changed), shortcut is skipped, worker compiles the full project with updated component -- preview updates correctly
 
 ### Summary
 
-| File | Line | Change |
-|---|---|---|
-| `AIAppBuilderWorkspace.tsx` | ~285 (handleBgComplete) | Add `stableHTMLRef.current = null;` before compilation logic so every build recompiles |
-| `AIAppBuilderWorkspace.tsx` | ~1293 | Remove `isNewProjectRef.current` guard from `flushDraft` |
-| `AIAppBuilderWorkspace.tsx` | ~1311 | Remove `isNewProjectRef.current` guard from `handleVisibility` |
+| Line | Change |
+|------|--------|
+| ~317 | Move `hasReactFiles` check before self-contained HTML check |
+| ~317 | Search `parsedFiles` instead of `mergedFiles` for index.html |
+| ~319 | Add `!hasReactFiles` guard to skip shortcut for React projects |
+| ~329 | Remove duplicate `hasReactFiles` (already declared above) |
 
-All changes are in a single file. The preview fix is a one-line addition; the persistence fix removes two guard conditions that were overly protective.
