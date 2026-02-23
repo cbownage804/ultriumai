@@ -1378,7 +1378,6 @@ export function AIAppBuilderWorkspace() {
     if (isNewProjectRef.current) {
       // Clear all storage synchronously
       clearDraft();
-      idbPersistence.clearSession();
       // Reset React state to empty so auto-save/flush don't re-persist old data
       setFiles([]);
       setMessages([]);
@@ -1386,9 +1385,13 @@ export function AIAppBuilderWorkspace() {
       const url = new URL(window.location.href);
       url.searchParams.delete('new');
       window.history.replaceState({}, '', url.pathname + url.search);
-      // NOW consume the flag so future saves/restores work normally
-      // Use a microtask to ensure all synchronous cleanup above completes first
-      queueMicrotask(() => consumeNewSessionFlag());
+      // Await IDB clear, THEN consume the flag so the async restore effect
+      // in the draft-restore block sees the flag and skips properly.
+      idbPersistence.clearSession().finally(() => {
+        // Delay flag consumption to ensure the draft restore effect has
+        // already checked isNewSessionPending() and returned early
+        setTimeout(() => consumeNewSessionFlag(), 200);
+      });
     } else {
       // Not a new project — ensure no stale flag blocks saves
       consumeNewSessionFlag();
