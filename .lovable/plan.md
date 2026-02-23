@@ -1,27 +1,45 @@
 
-## Fix: Prevent Light Text on Light Backgrounds
+## Add Chat/Build Mode Toggle (Like Lovable)
 
-### Problem
-The system prompt currently only guards against dark text on dark backgrounds. When the AI generates a light-themed page (white/light background), it can still use light gray or white text — making headings and buttons invisible, as shown in the screenshot.
+### What This Does
+Adds a visible "Chat" / "Build" mode toggle below the input area in the AI App Builder, matching Lovable's pattern. Users can switch between:
+- **Chat** (1 credit) -- Discussion only, no code generated
+- **Build** (3 credits) -- Full code generation with file output
 
-### Fix (1 file)
+### Current State
+The mode system already exists (`BuilderMode = 'build' | 'discuss'`) with:
+- Auto-detection on first message
+- Credit cost differentiation (3cr build, 1cr discuss)
+- Code output blocking in discuss mode
 
-**`supabase/functions/ai-app-builder/index.ts`** (line 20) -- Expand the DESIGN contrast rule to be bidirectional:
+But there is **no visible toggle** for users to manually switch modes.
 
-Update the contrast section from:
+### Changes
+
+**`src/components/ai-builder/BuilderChatPanel.tsx`**
+
+Add a segmented pill toggle below the input box (inside the bottom `div`, after the input container closes). The toggle will have two options:
+
+- **Chat** (teal accent, "1cr" badge) -- maps to `mode === 'discuss'`
+- **Build** (violet accent, "3cr" badge) -- maps to `mode === 'build'`
+
+The toggle will be a compact pill bar styled like Lovable's:
+
+```text
++--------------------------------------------------+
+|  [+]  [Edit]  Ask UltriumAI...           [Send]  |
++--------------------------------------------------+
+  [ Chat 1cr ]  [ Build 3cr ]
 ```
-CONTRAST CRITICAL: Dark theme default means dark backgrounds (#0a0a0a to #1a1a2e range) with WHITE or LIGHT text (#ffffff, #f0f0f0, #e0e0e0). NEVER use dark text on dark backgrounds. Headings must be white or near-white. Body text at minimum #d1d5db. Muted/secondary text at minimum #9ca3af. All text must have 4.5:1+ contrast ratio against its background.
-```
 
-To:
-```
-CONTRAST CRITICAL: All text must have 4.5:1+ contrast ratio against its background. For DARK backgrounds (#0a0a0a to #1a1a2e): use WHITE or LIGHT text (#ffffff, #f0f0f0). Headings white/near-white, body min #d1d5db, muted min #9ca3af. For LIGHT/WHITE backgrounds (#f0f0f0 to #ffffff): use DARK text (#111827, #1f2937). Headings near-black, body max #374151, muted max #6b7280. NEVER use light text on light backgrounds. NEVER use dark text on dark backgrounds. Buttons must have contrasting text against their fill color.
-```
+### Technical Details
 
-This makes the rule bidirectional: dark backgrounds get light text, light backgrounds get dark text, with specific thresholds for both directions.
+| File | Change |
+|------|--------|
+| `src/components/ai-builder/BuilderChatPanel.tsx` (after line ~1363) | Add a `div` with two toggle buttons below the input container. Each button calls `onModeChange('discuss')` or `onModeChange('build')`. Active button gets a highlighted background (teal for Chat, violet for Build) with a small credit badge. |
 
-### Result
-- Light-themed generated apps will have dark, readable text
-- Dark-themed generated apps continue to have light, readable text
-- Button text will contrast against button fill colors
-- Covers both theme directions with explicit color ranges
+- The "Chat" label maps to the existing `'discuss'` mode internally
+- The "Build" label maps to the existing `'build'` mode
+- Active state uses the same accent colors already defined (violet for build, teal for discuss)
+- Credit badges show "1cr" and "3cr" matching the existing `creditCost` logic in `useAIAppBuilder.ts`
+- No backend changes needed -- all mode logic already exists
