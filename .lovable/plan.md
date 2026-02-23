@@ -1,62 +1,59 @@
 
 
-## Fix: "Provider returned error" Build Failures + Raw JSON in Error Messages
+## Fix: Project Auto-Naming Not Persisting + Thumbnail Not Capturing
 
-### Root Cause
+### Issue 1: Project Auto-Naming Doesn't Persist to Database
 
-There are **two layers** of the problem:
+**Root cause**: `renameProject` in `useProjectFileSystem.ts` (line 156) only updates React state -- it never writes to the database. So when the auto-name logic fires after the first build, the name shows in the UI momentarily but reverts to "Untitled Project" in the dashboard because the DB row was never updated.
 
-1. **`ai-builder-background/index.ts`** (the orchestrator) calls `ai-app-builder` (the AI gateway wrapper). When `ai-app-builder` returns a 400, the background function on line 493 does:
-   ```
-   throw new Error(`AI builder returned ${resp.status}: ${errText.slice(0, 500)}`);
-   ```
-   This dumps the raw JSON response (`{"error":"Provider returned error","requestId":"..."}`) into the `error_message` column, which flows directly to the chat UI and toast.
+**Fix**: After `renameProject()` is called in the auto-name block (line 1177 of `AIAppBuilderWorkspace.tsx`), immediately persist the new name to the database if `currentProjectId` exists.
 
-2. **`ai-builder-background/index.ts`** only retries on 500/408/504 errors (line 484). It does NOT retry on 400 errors at all -- so even though `ai-app-builder` now has retry logic for provider errors, the background function doesn't give it a chance to use a different model because it treats ALL non-ok responses below 500 as fatal.
-
-3. The **client-side error classifier** (`classifyError` in `useAIAppBuilder.ts`) doesn't have a case for "provider error" 400s -- they fall into the generic "unknown" bucket with the raw error string as the message.
-
-### Fix (3 files)
-
-**1. `supabase/functions/ai-builder-background/index.ts` (line 484-493)**
-
-Add 400 to the retryable status codes when the error text matches `/provider|upstream|internal/i`. Also sanitize the error text before throwing so the database never stores raw JSON:
-
-- Line 484: Change the retry condition from `resp.status >= 500 || resp.status === 408 || resp.status === 504` to also include `resp.status === 400` when the error text matches provider-related patterns
-- Line 493: Parse the error text -- if it's JSON, extract the `error` field. Always produce a clean human-readable string.
-
-**2. `src/hooks/useAIAppBuilder.ts` (line 38-42, 58-62)**
-
-Add a classifier case for provider/upstream 400 errors so the user sees a friendly message instead of raw JSON:
-
-- Add a new case after the `payload_too_large` check:
+**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx` (~line 1176-1179)**
+- After `renameProject(projectName)`, add a direct Supabase update:
   ```
-  if (status === 400 && /provider|upstream|internal|encountered an issue/i.test(errorMsg))
+  if (currentProjectId) {
+    supabase.from('builder_projects')
+      .update({ name: projectName })
+      .eq('id', currentProjectId)
+      .then(() => console.log('Project auto-named:', projectName));
+  }
   ```
-  Returns category `server`, retryable `true`, with message "The AI provider encountered a temporary issue."
 
-- Update the fallback "unknown" case to strip any JSON from the error message before displaying.
+---
 
-**3. `src/hooks/useBackgroundGeneration.ts` (line 130)**
+### Issue 2: Thumbnail Never Captures After Build
 
-Sanitize the `error_message` before displaying in the toast -- strip JSON wrapper and requestId to show only the human-readable part:
+**Root cause**: The auto-capture effect (line 2102) fires when `isGenerating` flips from true to false, and reads `compiledForHosting`. But `compiledForHosting` is set by `CompilationBridge` asynchronously AFTER the generation completes, so it is still `null` when the effect runs. The `if (html)` check silently fails.
 
-```typescript
-const cleanMsg = job.error_message?.replace(/\{"error":"([^"]+)".*\}/, '$1')
-  ?.replace(/AI builder returned \d+:\s*/, '')
-  ?.slice(0, 100) || 'Unknown error';
-toast.error(`Build failed: ${cleanMsg}`);
+**Fix**: Instead of relying on `compiledForHosting` (which lags behind), listen for the `stableHTML` ref which is set directly in `handleBgComplete`. Use a longer delay and read from the ref.
+
+**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx` (~line 2100-2112)**
+- Change the auto-capture effect to use `stableHTMLRef.current` (already set in `handleBgComplete`) instead of `compiledForHosting` state
+- Increase the timeout from 2000ms to 4000ms to allow compilation to finish for React projects
+- Add a fallback: if `stableHTMLRef.current` is still null at 4s, try `compiledForHostingRef.current`
+
+```
+useEffect(() => {
+  if (wasGeneratingRef.current && !isGenerating && project.files.length > 0 && currentProjectId) {
+    setTimeout(() => {
+      const html = compiledForHostingRef.current || stableHTMLRef.current;
+      if (html) {
+        captureAndUpload(html, currentProjectId).catch(() => {});
+      }
+    }, 4000);
+  }
+  wasGeneratingRef.current = isGenerating;
+}, [isGenerating, project.files.length, currentProjectId, captureAndUpload]);
 ```
 
-### Cookie Warnings
+Note: Removing `compiledForHosting` from the dependency array prevents the effect from re-running every time compilation finishes (which was causing additional no-op invocations).
 
-The `__cf_bm` cookie warnings in the console are cosmetic Cloudflare cookie-domain mismatches when loading chunks from `ultriumai.app`. They do NOT affect functionality and cannot be fixed from the application code (they're a Cloudflare infrastructure behavior). No action needed.
+---
 
 ### Summary
 
 | File | Change |
 |---|---|
-| `supabase/functions/ai-builder-background/index.ts` (~line 484-493) | Retry 400s with provider errors, sanitize error text before storing |
-| `src/hooks/useAIAppBuilder.ts` (~line 38-62) | Add classifier case for provider 400 errors |
-| `src/hooks/useBackgroundGeneration.ts` (~line 130) | Sanitize error_message before displaying in toast |
+| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` (~line 1176) | Persist auto-generated name to DB immediately after renaming |
+| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` (~line 2100) | Fix thumbnail capture to use ref instead of stale state, increase delay |
 
