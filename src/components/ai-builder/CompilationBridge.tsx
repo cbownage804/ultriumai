@@ -39,12 +39,9 @@ export const ERROR_FALLBACK_HTML = `<!DOCTYPE html><html><head><meta charset="UT
 /**
  * CompilationBridge — isolated child component for all compilation hooks.
  *
- * If this component crashes, PanelErrorBoundary catches it without
- * affecting the parent workspace's hook count (fixes React Error #310).
- * Renders nothing — communicates results via callbacks.
- *
- * Both compilations are deferred via useEffect + setTimeout to prevent
- * blocking the main thread after generation completes.
+ * SINGLE COMPILATION PATH: One effect triggers compilation when isGenerating
+ * transitions to false. A single `compilationInFlightRef` prevents double-entry.
+ * No more competing timers or lock coordination.
  */
 export function CompilationBridge({
   files,
@@ -89,8 +86,7 @@ export function CompilationBridge({
 
   // Serialize file identity to prevent effect re-fires from reference changes.
   // PERF: Skip expensive hashing during generation — files change frequently via
-  // streaming setFiles calls, but compilation is blocked anyway. This prevents
-  // the main thread from locking up iterating over every character of every file.
+  // streaming setFiles calls, but compilation is blocked anyway.
   const prevDigestRef = useRef('');
   const filesDigest = useMemo(() => {
     if (isGenerating || files.length === 0) return prevDigestRef.current || '';
@@ -120,7 +116,6 @@ export function CompilationBridge({
   // ── stableHTML state ──
   const [stableHTML, setStableHTMLLocal] = useState<string | null>(null);
   const stableHTMLRef = useRef<string | null>(null);
-  // compileTrigger removed — direct compilation in handleBgComplete replaces the effect-chain approach
   const setStableHTML = useCallback((html: string | null) => {
     console.info('[CompilationBridge] setStableHTML:', html ? `${html.length} chars` : 'null');
     setStableHTMLLocal(html);
@@ -128,421 +123,194 @@ export function CompilationBridge({
     onStableHTML(html);
   }, [onStableHTML]);
 
-  // Phase 2: Guard flag to prevent main compilation effect from redundant recompile
-  // after we sync from external HTML in the generation-ending effect.
-  const justSyncedFromExternalRef = useRef(false);
-
-  // Reset stableHTML when a new generation starts
-  const prevIsGeneratingForReset = useRef(false);
-  useEffect(() => {
-    if (isGenerating && !prevIsGeneratingForReset.current) {
-      // Generation STARTING — reset ALL internal state so 2nd+ builds recompile correctly.
-      stableHTMLRef.current = null;
-      setLiveCompiledHTML(null);
-      compilationAttemptedRef.current = false;
-      compilationLockRef.current = false;
-      justSyncedFromExternalRef.current = false;
-      prevFilesDigestRef.current = ''; // Ensure main effect sees a digest change when generation ends
-    } else if (!isGenerating && prevIsGeneratingForReset.current) {
-      // Generation ENDING — check if handleBgComplete already compiled
-      const externalHasPreview = externalStableHTMLRef?.current;
-      console.info('[CompilationBridge] Generation ENDING — externalHasPreview:', !!externalHasPreview, 'stableHTML:', !!stableHTMLRef.current, 'filesDigest:', filesDigest.substring(0, 50), 'files:', filesRef.current.length);
-      if (externalHasPreview) {
-        // handleBgComplete already compiled and set the preview externally.
-        // Always sync — don't check stableHTMLRef.current (it may be stale from previous build).
-        setStableHTML(externalHasPreview);
-        prevFilesDigestRef.current = filesDigest;
-        compilationLockRef.current = true;
-        compilationAttemptedRef.current = true;
-        justSyncedFromExternalRef.current = true; // Phase 2: prevent main effect recompile
-        console.info('[CompilationBridge] Synced external stableHTML, skipping redundant recompile');
-      } else if (!stableHTMLRef.current) {
-        // No preview yet — compile directly after a short delay.
-        // CRITICAL: Lock + set digest so the main useEffect does NOT also start a compilation.
-        // The main effect checks compilationLockRef and prevFilesDigestRef, so setting both
-        // prevents any race condition between the two compilation paths.
-        console.info('[CompilationBridge] Generation ended with no preview — will compile directly in 100ms');
-        compilationLockRef.current = true;
-        compilationAttemptedRef.current = true;
-        prevFilesDigestRef.current = filesDigest; // main effect sees no digest change → skips
-        // Short delay to let React finish the current render cycle
-        // so filesRef.current has the merged files from handleBgComplete.
-        const directCompileTimer = setTimeout(() => {
-          if (!stableHTMLRef.current) {
-            console.info('[CompilationBridge] Direct post-generation compile firing');
-            // Unlock just before calling — compileNowRef re-acquires lock synchronously
-            compilationLockRef.current = false;
-            compilationAttemptedRef.current = false;
-            compileNowRef.current?.();
-          }
-        }, 100);
-        compilationCleanupRef.current = () => clearTimeout(directCompileTimer);
-      } else {
-        // stableHTML already set (from handleBgComplete direct compile),
-        // sync the digest so we don't trigger a redundant recompile
-        prevFilesDigestRef.current = filesDigest;
-        compilationLockRef.current = true;
-        compilationAttemptedRef.current = true;
-      }
-    }
-    prevIsGeneratingForReset.current = isGenerating;
-  }, [isGenerating, setStableHTML]);
+  // ── SINGLE in-flight guard — replaces all previous lock/attempted/digest refs ──
+  const compilationInFlightRef = useRef(false);
 
   // ── liveCompiledHTML (async, post-generation) ──
   const [liveCompiledHTML, setLiveCompiledHTML] = useState<string | null>(null);
-  const compilationAttemptedRef = useRef(false);
-  const compilationLockRef = useRef(false);
-  const compilationRetryCountRef = useRef(0);
 
-  // Phase 3: Removed duplicate reset effect — already handled by the generation start/end effect above.
+  const liveSync = useLivePreviewSync();
 
-
-  // Phase 5: Debounce compilation — 500ms delay so rapid setFiles calls consolidate
-  // Post-generation uses 0ms (immediate) to avoid being cancelled by rapid re-renders
-  const compilationDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const compilationCleanupRef = useRef<(() => void) | null>(null);
-  const immediateCompileNeededRef = useRef(false);
-
-  // Track previous filesDigest to detect actual file changes
+  // Track previous filesDigest for hot-patch detection
   const prevFilesDigestRef = useRef<string>('');
 
-  // ── compileNowRef: direct compilation that bypasses the main effect's guard chain ──
-  const compileNowRef = useRef<() => Promise<void>>();
-  compileNowRef.current = async () => {
-    console.info('[CompilationBridge] compileNowRef called — lock:', compilationLockRef.current, 'files:', filesRef.current.length, 'isReact:', isReactProject);
-    if (compilationLockRef.current) {
-      console.warn('[CompilationBridge] compileNowRef BLOCKED by lock');
-      return;
-    }
-    compilationLockRef.current = true;
-    compilationRetryCountRef.current = 0;
-    onCompilingChangeRef.current?.(true);
+  // ── Core compile function ──
+  const runCompile = useCallback(async () => {
+    const currentFiles = filesRef.current;
+    console.info('[CompilationBridge] runCompile — isReact:', isReactProject, 'files:', currentFiles.length);
 
-    try {
-      let result: string | null = null;
-      const currentFiles = filesRef.current;
+    let result: string | null = null;
 
-      if (isReactProject) {
-        try {
-          const compiled = await Promise.race([
-            compileReactProjectRef.current(currentFiles, {
-              supabaseConfig: supabaseConfig || undefined,
-              stripeConfig: stripeConfig || undefined,
-              envVars,
-            }),
-            new Promise<null>((resolve) =>
-              setTimeout(() => resolve(null), 30_000)
-            ),
-          ]);
-          result = (compiled as any)?.html || null;
-        } catch {
-          result = null;
-        }
+    if (isReactProject) {
+      try {
+        const workerTimeout = new Promise<null>((resolve) =>
+          setTimeout(() => {
+            console.warn('[CompilationBridge] Worker compilation timed out after 30s — trying vanilla fallback');
+            resolve(null);
+          }, 30_000)
+        );
+        const workerResult = compileReactProjectRef.current(currentFiles, {
+          supabaseConfig: supabaseConfig || undefined,
+          stripeConfig: stripeConfig || undefined,
+          envVars,
+        }).then(compiled => {
+          if (compiled.errors.length > 0) {
+            console.warn('[ReactCompiler] Warnings:', compiled.errors);
+          }
+          return compiled.html || null;
+        }).catch((err: Error) => {
+          console.warn('[ReactCompiler] Worker failed:', err.message);
+          return null;
+        });
+
+        result = await Promise.race([workerResult, workerTimeout]);
+      } catch {
+        result = null;
       }
 
-      // Vanilla fallback
+      // Vanilla fallback if worker failed
       if (!result) {
         try {
-          result = getCompiledHTMLRef.current(
-            supabaseConfig, stripeConfig, envVars,
-            serviceKeys, cdnPackages,
-            bundleForBrowserRef.current, linkedGPT
-          );
-        } catch { result = null; }
+          result = getCompiledHTMLRef.current(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowserRef.current, linkedGPT);
+        } catch { /* noop */ }
       }
-
-      if (result) {
-        setLiveCompiledHTML(result);
-        setStableHTML(result);
-        liveSync.resetSnapshot(currentFiles);
-        prevFilesDigestRef.current = filesDigest;
-      } else {
-        setLiveCompiledHTML(ERROR_FALLBACK_HTML);
-        setStableHTML(ERROR_FALLBACK_HTML);
-      }
-    } catch (err) {
-      console.error('[CompilationBridge] compileNow crashed:', err);
-      setLiveCompiledHTML(ERROR_FALLBACK_HTML);
-      setStableHTML(ERROR_FALLBACK_HTML);
-    } finally {
-      onCompilingChangeRef.current?.(false);
-      compilationAttemptedRef.current = true;
-      compilationLockRef.current = false;
+    } else {
+      try {
+        result = getCompiledHTMLRef.current(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowserRef.current, linkedGPT);
+      } catch { result = null; }
     }
-  };
 
-  // Expose forceCompile to parent via callback prop
+    return result;
+  }, [isReactProject, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, linkedGPT]);
+
+  // ── Reset stableHTML when a new generation starts ──
+  const prevIsGeneratingRef = useRef(false);
   useEffect(() => {
-    onForceCompile?.(() => {
-      console.info('[CompilationBridge] forceCompile invoked by safety net');
-      compilationLockRef.current = false;
-      compilationAttemptedRef.current = false;
-      compileNowRef.current?.();
-    });
-  }, [onForceCompile]);
-
-   useEffect(() => {
-    console.info('[CompilationBridge] Main effect triggered — isGenerating:', isGenerating, 'files:', filesRef.current.length, 'stableHTML:', !!stableHTMLRef.current, 'lock:', compilationLockRef.current);
-    if (isGenerating || filesRef.current.length === 0) {
-      return;
+    if (isGenerating && !prevIsGeneratingRef.current) {
+      // Generation STARTING — reset ALL internal state
+      stableHTMLRef.current = null;
+      setLiveCompiledHTML(null);
+      compilationInFlightRef.current = false;
+      prevFilesDigestRef.current = '';
     }
+    prevIsGeneratingRef.current = isGenerating;
+  }, [isGenerating]);
 
-    // Guard: If parent already has a compiled preview (e.g. after remount),
-    // sync it immediately instead of recompiling — prevents infinite compile loop.
+  // ── SINGLE COMPILATION PATH ──
+  // Fires when: isGenerating becomes false, files exist, and no preview yet.
+  // Also fires when filesDigest changes (manual edits after generation).
+  useEffect(() => {
+    if (isGenerating || filesRef.current.length === 0) return;
+
+    // Sync from external if handleBgComplete already compiled
     if (!stableHTMLRef.current && externalStableHTMLRef?.current) {
-      console.info('[CompilationBridge] Effect: syncing existing external preview on mount, skipping recompile');
+      console.info('[CompilationBridge] Syncing existing external preview');
       setStableHTML(externalStableHTMLRef.current);
       prevFilesDigestRef.current = filesDigest;
-      compilationLockRef.current = true;
-      compilationAttemptedRef.current = true;
       return;
     }
 
-    // No early return — main effect serves as fallback if compileNowRef doesn't fire
-
-    // Phase 2: Sync lastMainEffectDigestRef so hot-patch effect skips this digest
-    lastMainEffectDigestRef.current = filesDigest;
-
-    // Phase 2: Skip if we just synced from external in the same render cycle
-    if (justSyncedFromExternalRef.current) {
-      justSyncedFromExternalRef.current = false;
-      prevFilesDigestRef.current = filesDigest;
-      console.info('[CompilationBridge] Effect: skipping — just synced from external');
-      return;
-    }
-
-    // If stableHTML already exists but filesDigest changed, reset it so
-    // recompilation can run with the new files
-    if (stableHTMLRef.current && filesDigest !== prevFilesDigestRef.current) {
-      // Check if this file change should skip recompilation (e.g. visual edit already applied to iframe)
+    // If stableHTML exists and files changed — try hot-patching
+    if (stableHTMLRef.current) {
+      if (filesDigest === prevFilesDigestRef.current) return; // No change
+      
+      // Skip if visual edit already applied to iframe
       if (skipNextCompileRef?.current) {
         skipNextCompileRef.current = false;
         prevFilesDigestRef.current = filesDigest;
         liveSync.resetSnapshot(filesRef.current);
-        console.info('[CompilationBridge] Skipping recompile (visual edit — iframe already correct)');
+        console.info('[CompilationBridge] Skipping recompile (visual edit)');
         return;
       }
-      // Files changed while preview exists — try hot-patching first
+
       prevFilesDigestRef.current = filesDigest;
       const patched = liveSync.applyPatches(previewIframeRef, filesRef.current);
       if (patched === true) {
-        console.info('[CompilationBridge] Effect: hot-patched CSS successfully, skipping full recompile');
+        console.info('[CompilationBridge] Hot-patched CSS successfully');
         return;
       }
       if (patched === 'soft-reload') {
-        // Gap 5 HMR: JS/TS changed — recompile but do a soft reload instead of iframe remount
-        console.info('[CompilationBridge] Effect: JS changed, will recompile + soft-reload (preserving state)');
-        compilationLockRef.current = false;
-        compilationAttemptedRef.current = false;
         softReloadPendingRef.current = true;
-        // Fall through to start recompilation
-      } else {
-        console.info('[CompilationBridge] Effect: hot-patch failed, doing full recompile (keeping old preview visible)');
       }
-      compilationLockRef.current = false;
-      compilationAttemptedRef.current = false; // Phase 1: enable recompilation after hot-patch fail
-      // Fall through to start recompilation
-    } else if (stableHTMLRef.current) {
-      console.info('[CompilationBridge] Effect: stableHTML already set, skipping');
-      return;
+      // Fall through to full recompile
+      stableHTMLRef.current = null; // Allow recompile
     }
+
     prevFilesDigestRef.current = filesDigest;
 
-    // Stale lock recovery: only unlock if a previous session left the lock on
-    // AND compilation was already attempted (meaning the lock is truly stale).
-    // If lock is true and attempted is also true from the generation-ending effect
-    // (which pre-locks to prevent this effect from racing), respect that lock.
-    if (!stableHTMLRef.current && compilationLockRef.current && compilationAttemptedRef.current) {
-      // Check if the generation-ending effect is handling compilation.
-      // If prevFilesDigestRef matches current digest, the gen-ending effect set it — don't unlock.
-      if (filesDigest !== prevFilesDigestRef.current) {
-        // Truly stale lock from a previous session
-        compilationLockRef.current = false;
-      }
-    }
-
-    // Prevent re-entry — only compile once per generation cycle
-    if (compilationLockRef.current) {
-      console.info('[CompilationBridge] Effect: compilationLock is true, skipping');
+    // Already compiling? Skip.
+    if (compilationInFlightRef.current) {
+      console.info('[CompilationBridge] Compilation already in flight, skipping');
       return;
     }
 
-    const debounceMs = immediateCompileNeededRef.current ? 0 : 500;
-    immediateCompileNeededRef.current = false;
-    console.info(`[CompilationBridge] Effect: starting ${debounceMs}ms debounce for compilation`);
-    // Debounce: wait for rapid file changes to settle (0ms for post-generation)
-    if (compilationDebounceRef.current) clearTimeout(compilationDebounceRef.current);
-    compilationDebounceRef.current = setTimeout(() => {
-      if (compilationLockRef.current) {
-        console.info('[CompilationBridge] Debounce fired but lock acquired by another, skipping');
-        return;
-      }
-      // Skip if compileNowRef (or anything else) already produced a preview
-      if (stableHTMLRef.current) {
-        console.info('[CompilationBridge] Debounce fired but stableHTML already set, skipping');
-        compilationAttemptedRef.current = true;
-        return;
-      }
-      // Skip if handleBgComplete already compiled and set the preview
-      if (externalStableHTMLRef?.current && !stableHTMLRef.current) {
-        console.info('[CompilationBridge] Debounce fired but external preview already set, syncing');
-        stableHTMLRef.current = externalStableHTMLRef.current;
-        setStableHTMLLocal(externalStableHTMLRef.current);
-        compilationLockRef.current = true;
-        compilationAttemptedRef.current = true;
-        onCompilingChangeRef.current?.(false);
-        return;
-      }
-      console.info('[CompilationBridge] Debounce fired, starting compilation');
-      compilationLockRef.current = true;
-      compilationRetryCountRef.current = 0;
+    // Single 150ms debounce, then compile
+    const timer = setTimeout(async () => {
+      // Double-check guards after debounce
+      if (compilationInFlightRef.current) return;
+      if (stableHTMLRef.current && !softReloadPendingRef.current) return;
 
+      compilationInFlightRef.current = true;
       onCompilingChangeRef.current?.(true);
+      console.info('[CompilationBridge] Starting compilation');
 
-      let cancelled = false;
-      let compileTimerId: ReturnType<typeof setTimeout>;
-      let safetyTimeout: ReturnType<typeof setTimeout>;
+      try {
+        // Yield to browser
+        await new Promise(r => setTimeout(r, 0));
 
-      // Phase 1: Async compilation with yield points to keep browser responsive
-      const runCompilation = async () => {
-        if (cancelled) return;
-        console.info('[CompilationBridge] runCompilation starting, isReact:', isReactProject, 'files:', filesRef.current.length);
-        // Start safety timeout NOW (when compilation actually begins), not before
-        safetyTimeout = setTimeout(() => {
-          if (cancelled) return;
-          if (compilationRetryCountRef.current < 1) {
-            compilationRetryCountRef.current++;
-            console.warn('[Compilation] Safety timeout reached — retrying once after 2s cooldown');
-            clearTimeout(safetyTimeout);
-            setTimeout(() => {
-              if (cancelled) return;
-              console.info('[Compilation] Retry: calling runCompilation() directly');
-              runCompilation();
-            }, 2000);
-          } else {
-            console.error('[Compilation] Safety timeout reached on retry — showing error fallback');
-            onCompilingChangeRef.current?.(false);
-            compilationAttemptedRef.current = true;
-            setLiveCompiledHTML(ERROR_FALLBACK_HTML);
-          }
-        }, COMPILE_TIMEOUT_MS);
-
-        // Bail if external compilation (handleBgComplete) already provided a preview
-        if (externalStableHTMLRef?.current) {
-          console.info('[CompilationBridge] runCompilation: external preview arrived, bailing');
-          clearTimeout(safetyTimeout);
-          onCompilingChangeRef.current?.(false);
-          compilationAttemptedRef.current = true;
-          if (!stableHTMLRef.current) {
-            stableHTMLRef.current = externalStableHTMLRef.current;
-            setStableHTMLLocal(externalStableHTMLRef.current);
-          }
+        // Bail if external arrived during debounce
+        if (externalStableHTMLRef?.current && !stableHTMLRef.current) {
+          setStableHTML(externalStableHTMLRef.current);
           return;
         }
-        try {
-          console.time('[liveCompiledHTML]');
-          let result: string | null = null;
-          // Yield to browser before heavy work
-          await new Promise(r => setTimeout(r, 0));
-          if (cancelled) return;
-          if (isReactProject) {
-            // Race the worker against a 30s timeout — if worker hangs (e.g. esbuild WASM init),
-            // fall back to the vanilla compiler which always works
-            const workerTimeout = new Promise<null>((resolve) =>
-              setTimeout(() => {
-                console.warn('[CompilationBridge] Worker compilation timed out after 30s — trying vanilla fallback');
-                resolve(null);
-              }, 30_000)
-            );
-            const workerResult = compileReactProjectRef.current(filesRef.current, {
-              supabaseConfig: supabaseConfig || undefined,
-              stripeConfig: stripeConfig || undefined,
-              envVars,
-            }).then(compiled => {
-              if (compiled.errors.length > 0) {
-                console.warn('[ReactCompiler] Warnings:', compiled.errors);
-              }
-              return compiled.html || null;
-            }).catch((err: Error) => {
-              console.warn('[ReactCompiler] Worker failed:', err.message);
-              return null;
-            });
 
-            result = await Promise.race([workerResult, workerTimeout]);
+        console.time('[liveCompiledHTML]');
+        const result = await runCompile();
+        console.timeEnd('[liveCompiledHTML]');
 
-            // If worker failed/timed out, try vanilla compiler as fallback
-            if (!result && !cancelled) {
-              console.info('[CompilationBridge] Attempting vanilla fallback compilation');
-              try {
-                result = getCompiledHTMLRef.current(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowserRef.current, linkedGPT);
-              } catch (fallbackErr) {
-                console.warn('[CompilationBridge] Vanilla fallback also failed:', fallbackErr);
-              }
-            }
-          } else {
-            result = getCompiledHTMLRef.current(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowserRef.current, linkedGPT);
+        if (result) {
+          setLiveCompiledHTML(result);
+          setStableHTML(result);
+          liveSync.resetSnapshot(filesRef.current);
+          if (softReloadPendingRef.current) {
+            softReloadPendingRef.current = false;
+            window.postMessage({ type: '__SOFT_RELOAD__', source: 'compilation-bridge' }, '*');
           }
-          // Yield to browser after heavy work before state update
-          await new Promise(r => setTimeout(r, 0));
-          console.timeEnd('[liveCompiledHTML]');
-          if (!cancelled) {
-            clearTimeout(safetyTimeout);
-            onCompilingChangeRef.current?.(false);
-            compilationAttemptedRef.current = true;
-            if (result) {
-              setLiveCompiledHTML(result);
-              setStableHTML(result);
-              liveSync.resetSnapshot(filesRef.current);
-              if (softReloadPendingRef.current) {
-                softReloadPendingRef.current = false;
-                window.postMessage({ type: '__SOFT_RELOAD__', source: 'compilation-bridge' }, '*');
-              }
-              window.postMessage({ type: '__PREVIEW_READY__', source: 'compilation-bridge' }, '*');
-            } else {
-              console.warn('[CompilationBridge] Both worker and vanilla compilation returned null — showing error fallback');
-              setLiveCompiledHTML(ERROR_FALLBACK_HTML);
-              setStableHTML(ERROR_FALLBACK_HTML);
-            }
-          }
-        } catch (e) {
-          console.error('[ReactCompiler] Compilation crashed:', e);
-          if (!cancelled) {
-            clearTimeout(safetyTimeout);
-            onCompilingChangeRef.current?.(false);
-            compilationAttemptedRef.current = true;
-            setLiveCompiledHTML(ERROR_FALLBACK_HTML);
-            setStableHTML(ERROR_FALLBACK_HTML);
-          }
+          window.postMessage({ type: '__PREVIEW_READY__', source: 'compilation-bridge' }, '*');
+        } else {
+          console.warn('[CompilationBridge] Compilation returned null — showing error fallback');
+          setLiveCompiledHTML(ERROR_FALLBACK_HTML);
+          setStableHTML(ERROR_FALLBACK_HTML);
         }
-      };
-      // Defer start with a short setTimeout (removed rAF which Firefox
-      // throttles under load, preventing compilation from ever starting)
-      compileTimerId = setTimeout(runCompilation, 50);
-
-      compilationCleanupRef.current = () => {
-        cancelled = true;
-        clearTimeout(compileTimerId);
-        clearTimeout(safetyTimeout);
+      } catch (err) {
+        console.error('[CompilationBridge] Compilation crashed:', err);
+        setLiveCompiledHTML(ERROR_FALLBACK_HTML);
+        setStableHTML(ERROR_FALLBACK_HTML);
+      } finally {
+        compilationInFlightRef.current = false;
         onCompilingChangeRef.current?.(false);
-      };
-    }, debounceMs);
+      }
+    }, 150);
 
-    return () => {
-      // Only cancel the debounce timer — do NOT cancel in-progress compilation.
-      // When compileTrigger increments, the effect re-runs and this cleanup fires.
-      // Cancelling the running compilation here was the root cause of blank previews:
-      // the generation-ending effect incremented compileTrigger, which cancelled
-      // the compilation that was just started in the same render cycle.
-      if (compilationDebounceRef.current) clearTimeout(compilationDebounceRef.current);
-    };
-  }, [filesDigest, supabaseConfig, stripeConfig, isReactProject, isGenerating]);
+    return () => clearTimeout(timer);
+  }, [filesDigest, isGenerating, supabaseConfig, stripeConfig, isReactProject, setStableHTML, runCompile]);
+
+  // Expose forceCompile to parent
+  useEffect(() => {
+    onForceCompile?.(() => {
+      console.info('[CompilationBridge] forceCompile invoked');
+      compilationInFlightRef.current = false;
+      stableHTMLRef.current = null;
+      prevFilesDigestRef.current = '';
+      // Trigger recompile by resetting — the main effect will pick it up
+      setLiveCompiledHTML(null);
+    });
+  }, [onForceCompile]);
 
   // ── compiledForHosting (deferred until live preview is done) ──
   const [compiledForHosting, setCompiledForHosting] = useState<string | null>(null);
-
-  // Only compile for hosting AFTER liveCompiledHTML is settled to avoid
-  // two heavy synchronous compilations running back-to-back and freezing the page.
   const hostingLockRef = useRef(false);
+
   useEffect(() => {
     if (isGenerating) {
       setCompiledForHosting(null);
@@ -550,16 +318,13 @@ export function CompilationBridge({
       return;
     }
     if (filesRef.current.length === 0) return;
-    // Wait until the live preview compilation is done
-    if (!compilationAttemptedRef.current) return;
-    // Prevent re-entry
+    if (!stableHTMLRef.current) return; // Wait until preview is ready
     if (hostingLockRef.current) return;
     hostingLockRef.current = true;
 
     const doCompile = () => {
       try {
         console.time('[compiledForHosting]');
-        // Phase 2: Reuse live preview result for React projects to eliminate double compilation
         if (isReactProject && liveCompiledHTML) {
           console.timeEnd('[compiledForHosting]');
           setCompiledForHosting(liveCompiledHTML);
@@ -573,7 +338,6 @@ export function CompilationBridge({
         setCompiledForHosting(null);
       }
     };
-    // Defer hosting compilation 2s + requestIdleCallback to avoid main-thread contention
     const timer = setTimeout(() => {
       if (typeof requestIdleCallback === 'function') {
         requestIdleCallback(() => doCompile(), { timeout: 5000 });
@@ -597,44 +361,32 @@ export function CompilationBridge({
     return () => clearPreviewTimer();
   }, [compiledForHosting, previewSlug, uploadPreview, clearPreviewTimer]);
 
-  const liveSync = useLivePreviewSync();
-
   // ── Preview update effects ──
   useEffect(() => {
     if (liveCompiledHTML) {
       if (stableHTML === liveCompiledHTML) return;
-      // If we have no current preview (stableHTML is null), always do a full
-      // srcdoc load — hot-patching can't work on an empty iframe.
       if (stableHTML === null) {
         setStableHTML(liveCompiledHTML);
         liveSync.resetSnapshot(filesRef.current);
         return;
       }
-      // Always replace stableHTML with the new compilation result.
-      // Hot-patching fails for full regenerations (JS/TS changes),
-      // so just do a direct replacement to ensure the new preview shows.
       setStableHTML(liveCompiledHTML);
       liveSync.resetSnapshot(filesRef.current);
     }
-    if (!isGenerating && !liveCompiledHTML && filesRef.current.length > 0 && stableHTMLRef.current === null && stableHTML === null && compilationAttemptedRef.current) {
-      console.warn('[Preview] Generation complete but compilation returned null — showing error fallback');
+    if (!isGenerating && !liveCompiledHTML && filesRef.current.length > 0 && stableHTMLRef.current === null && stableHTML === null) {
+      console.warn('[Preview] Generation complete but no compilation — showing error fallback');
       setStableHTML(ERROR_FALLBACK_HTML);
     }
   }, [isGenerating, liveCompiledHTML, filesDigest, stableHTML, setStableHTML]);
 
-  // Hot-patch during manual edits — guarded to skip when main effect already handled this digest
-  const lastMainEffectDigestRef = useRef<string>('');
+  // Hot-patch during manual edits
   useEffect(() => {
-    // Phase 5: Skip if no preview, during compilation, or if main effect already processed this digest
-    if (!stableHTML || isGenerating || compilationLockRef.current) return;
-    if (filesDigest === lastMainEffectDigestRef.current) return;
-    lastMainEffectDigestRef.current = filesDigest;
+    if (!stableHTML || isGenerating || compilationInFlightRef.current) return;
     if (filesRef.current.length > 0) {
       liveSync.applyPatches(previewIframeRef, filesRef.current);
     }
   }, [filesDigest, isGenerating, stableHTML]);
 
-
-  // This component renders nothing — it only manages compilation state
+  // This component renders nothing
   return null;
 }
