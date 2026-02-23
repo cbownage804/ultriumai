@@ -165,6 +165,8 @@ export default function AIStudioProjectsPage() {
       if (error) throw error;
       if (deleteTarget.type === 'app') {
         setProjects(prev => prev.filter(p => p.id !== deleteTarget.id));
+        // Purge all draft data so deleted project can never be restored
+        clearBuilderDraft();
       } else {
         setGpts(prev => prev.filter(g => g.id !== deleteTarget.id));
       }
@@ -194,6 +196,8 @@ export default function AIStudioProjectsPage() {
         const { error } = await supabase.from('builder_projects').delete().in('id', appIds);
         if (error) throw error;
         setProjects(prev => prev.filter(p => !appIds.includes(p.id)));
+        // Purge drafts so deleted projects can never be restored
+        clearBuilderDraft();
       }
       if (gptIds.length > 0) {
         const { error } = await supabase.from('custom_gpts').delete().in('id', gptIds);

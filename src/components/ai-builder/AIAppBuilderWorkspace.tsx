@@ -2973,7 +2973,7 @@ export function AIAppBuilderWorkspace() {
           onToggleHideBadge={(v) => { setHideBadge(v); localStorage.setItem('builder-hide-badge', String(v)); }}
           soundEnabled={soundEnabled}
           onToggleSound={(v) => { setSoundEnabled(v); localStorage.setItem('builder-sound', String(v)); }}
-          onDeleteProject={() => { if (currentProjectId) { deleteProject(currentProjectId); resetProject(); setStableHTML(null); dedupeToast('success', 'Project deleted'); } }}
+          onDeleteProject={() => { if (currentProjectId) { deleteProject(currentProjectId); resetProject(); setStableHTML(null); clearDraft(); idbPersistence.clearSession(); dedupeToast('success', 'Project deleted'); } }}
           onOpenSupabaseConfig={() => { setShowSettingsModal(false); setTimeout(() => setShowSettingsPanel(true), 150); }}
           onOpenStripeConfig={() => { setShowSettingsModal(false); setTimeout(() => setShowSettingsPanel(true), 150); }}
           onOpenGithubConfig={() => { setShowSettingsModal(false); setTimeout(() => setShowSettingsPanel(true), 150); }}
