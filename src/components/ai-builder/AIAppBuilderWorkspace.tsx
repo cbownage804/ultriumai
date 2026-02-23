@@ -314,19 +314,20 @@ export function AIAppBuilderWorkspace() {
       setFiles(mergedFiles);
 
       // 1. Self-contained HTML shortcut (vanilla HTML projects without module scripts)
-      const indexFile = mergedFiles.find(f => f.path === 'index.html');
-      const hasLocalModuleScripts = /src=["']\.?\/(?:src|main|app|index)\b/i.test(indexFile?.content || '');
-      if (indexFile && !hasLocalModuleScripts &&
-          indexFile.content.includes('<!DOCTYPE html') &&
-          indexFile.content.includes('</html>')) {
+      // Only use shortcut if index.html was NEWLY generated AND no React files exist
+      const hasReactFiles = mergedFiles.some(f => /\.(tsx|jsx)$/.test(f.path));
+      const newIndexFile = parsedFiles.find(f => f.path === 'index.html');
+      const hasLocalModuleScripts = /src=["']\.?\/(?:src|main|app|index)\b/i.test(newIndexFile?.content || '');
+      if (newIndexFile && !hasReactFiles && !hasLocalModuleScripts &&
+          newIndexFile.content.includes('<!DOCTYPE html') &&
+          newIndexFile.content.includes('</html>')) {
         console.info('[handleBgComplete] Self-contained index.html detected — setting preview directly');
-        stableHTMLRef.current = indexFile.content;
-        setStableHTML(indexFile.content);
+        stableHTMLRef.current = newIndexFile.content;
+        setStableHTML(newIndexFile.content);
         setPreviewRefreshKey(k => k + 1);
       }
 
       // 2. React/TSX projects: compile directly with worker before releasing state
-      const hasReactFiles = mergedFiles.some(f => /\.(tsx|jsx)$/.test(f.path));
       if (!stableHTMLRef.current && hasReactFiles) {
         compilePromise = (async () => {
           try {
