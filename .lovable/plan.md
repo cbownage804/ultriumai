@@ -1,45 +1,55 @@
 
-## Add Chat/Build Mode Toggle (Like Lovable)
 
-### What This Does
-Adds a visible "Chat" / "Build" mode toggle below the input area in the AI App Builder, matching Lovable's pattern. Users can switch between:
-- **Chat** (1 credit) -- Discussion only, no code generated
-- **Build** (3 credits) -- Full code generation with file output
+## Full Chat (Plan) Mode Parity
 
-### Current State
-The mode system already exists (`BuilderMode = 'build' | 'discuss'`) with:
+### Overview
+The Chat/Build toggle and backend logic already exist, but the Chat mode experience lacks the key interactive elements that make Lovable's Plan mode powerful. This plan adds the missing pieces to reach full parity.
+
+### What Already Works
+- Chat/Build toggle pill (just added)
+- DISCUSS_SYSTEM_PROMPT on the backend (opinionated architect persona, no code output)
+- Client-side code blocking in discuss mode
+- Credit differentiation (1cr chat, 3cr build)
 - Auto-detection on first message
-- Credit cost differentiation (3cr build, 1cr discuss)
-- Code output blocking in discuss mode
+- Contextual suggestions in discuss mode
 
-But there is **no visible toggle** for users to manually switch modes.
+### What's Missing (4 changes)
 
-### Changes
+---
 
-**`src/components/ai-builder/BuilderChatPanel.tsx`**
+**1. "Approve & Build" action button on chat-mode responses**
 
-Add a segmented pill toggle below the input box (inside the bottom `div`, after the input container closes). The toggle will have two options:
+When the AI presents a plan in Chat mode and the response contains plan signals (e.g., "here's the plan", "I'd recommend", "ready to build"), render an "Approve & Build" button at the bottom of the assistant message. Clicking it:
+- Switches mode to `'build'`
+- Sends an automatic message: "Build everything we just discussed" with the plan context
 
-- **Chat** (teal accent, "1cr" badge) -- maps to `mode === 'discuss'`
-- **Build** (violet accent, "3cr" badge) -- maps to `mode === 'build'`
+This is the core Lovable parity feature -- the plan-to-build handoff.
 
-The toggle will be a compact pill bar styled like Lovable's:
+**2. Chat mode badge on messages**
 
-```text
-+--------------------------------------------------+
-|  [+]  [Edit]  Ask UltriumAI...           [Send]  |
-+--------------------------------------------------+
-  [ Chat 1cr ]  [ Build 3cr ]
-```
+Add a small teal "Chat" or violet "Build" badge next to the timestamp on each message, so users can see which mode each message was sent in. This requires adding a `mode` field to the `BuilderMessage` interface and setting it when messages are created.
+
+**3. Smarter discuss-mode suggestions with "Start Building" CTA**
+
+Improve the follow-up suggestion chips after chat-mode responses. When the AI's response contains plan signals, the first suggestion should be a prominent "Start Building" chip that switches to build mode and sends the plan. Other suggestions should be contextual refinement options.
+
+**4. Chat mode visual differentiation in message rendering**
+
+When in discuss mode, assistant messages should show a subtle teal accent (left border or icon tint) to visually distinguish them from build-mode responses. This helps users understand which mode produced each response.
+
+---
 
 ### Technical Details
 
 | File | Change |
 |------|--------|
-| `src/components/ai-builder/BuilderChatPanel.tsx` (after line ~1363) | Add a `div` with two toggle buttons below the input container. Each button calls `onModeChange('discuss')` or `onModeChange('build')`. Active button gets a highlighted background (teal for Chat, violet for Build) with a small credit badge. |
+| `src/hooks/useAIAppBuilder.ts` (BuilderMessage interface, ~line 313) | Add `mode?: BuilderMode` field to track which mode each message was sent in |
+| `src/hooks/useAIAppBuilder.ts` (sendMessage, ~line 818-828) | Set `mode: effectiveMode` on both user and assistant messages when created |
+| `src/components/ai-builder/BuilderChatPanel.tsx` (renderAssistantMessage, ~line 567) | Add "Approve & Build" button when message is in discuss mode and contains plan signals. Add teal left-border accent for discuss-mode messages |
+| `src/components/ai-builder/BuilderChatPanel.tsx` (message timestamp area, ~line 1158) | Show mode badge (Chat/Build pill) next to timestamp |
+| `src/components/ai-builder/BuilderChatPanel.tsx` (after assistant message rendering, ~line 984) | Add discuss-mode follow-up suggestion chips with prominent "Start Building" CTA |
+| `src/hooks/useAIAppBuilder.ts` (generateSuggestions, ~line 644) | Enhance discuss-mode suggestions to be more contextual and include a build transition option |
 
-- The "Chat" label maps to the existing `'discuss'` mode internally
-- The "Build" label maps to the existing `'build'` mode
-- Active state uses the same accent colors already defined (violet for build, teal for discuss)
-- Credit badges show "1cr" and "3cr" matching the existing `creditCost` logic in `useAIAppBuilder.ts`
-- No backend changes needed -- all mode logic already exists
+### No backend changes needed
+The existing `DISCUSS_SYSTEM_PROMPT` and `TRANSITION CUE` behavior in the edge function already guides the AI to suggest switching to Build mode. The frontend just needs to make that transition interactive.
+
