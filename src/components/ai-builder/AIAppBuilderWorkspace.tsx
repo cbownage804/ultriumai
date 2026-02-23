@@ -355,15 +355,27 @@ export function AIAppBuilderWorkspace() {
               ),
             ]);
             if (compiled?.html) {
-              console.info('[handleBgComplete] Worker compilation succeeded —', compiled.html.length, 'chars');
-              stableHTMLRef.current = compiled.html;
-              setStableHTML(compiled.html);
-              setPreviewRefreshKey(k => k + 1);
+              // Check if compiled HTML contains a syntax/compilation error
+              const isErrorHTML = /Syntax Error|Compilation Error|Module Error/i.test(compiled.html) && compiled.html.length < 5000;
+              if (!isErrorHTML) {
+                console.info('[handleBgComplete] Worker compilation succeeded —', compiled.html.length, 'chars');
+                stableHTMLRef.current = compiled.html;
+                setStableHTML(compiled.html);
+                setPreviewRefreshKey(k => k + 1);
+              } else {
+                console.warn('[handleBgComplete] Worker returned error HTML, trying vanilla fallback');
+                const existingIndex = mergedFiles.find(f => f.path === 'index.html');
+                if (existingIndex?.content?.includes('</html>')) {
+                  stableHTMLRef.current = existingIndex.content;
+                  setStableHTML(existingIndex.content);
+                  setPreviewRefreshKey(k => k + 1);
+                }
+              }
             }
           } catch (e) {
             console.warn('[handleBgComplete] Worker compilation failed:', e);
-            // Vanilla HTML fallback: use existing index.html from merged files
-            if (!stableHTMLRef.current && !hasReactFiles) {
+            // Fallback: use existing index.html from merged files (works for vanilla AND React with errors)
+            if (!stableHTMLRef.current) {
               const existingIndex = mergedFiles.find(f => f.path === 'index.html');
               if (existingIndex?.content?.includes('</html>')) {
                 console.info('[handleBgComplete] Falling back to existing index.html');
