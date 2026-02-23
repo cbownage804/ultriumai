@@ -324,16 +324,18 @@ export function AIAppBuilderWorkspace() {
       // Immediately persist so tab-switch can't lose data
       saveDraftImmediateRef.current(project.name, mergedFiles, []);
 
-      // 1. Self-contained HTML shortcut — ONLY for vanilla HTML with a NEWLY generated index.html
+      // 1. Self-contained HTML shortcut — for vanilla HTML with a generated or patched index.html
       const hasReactFiles = mergedFiles.some(f => /\.(tsx|jsx)$/.test(f.path));
       const newIndexFile = parsedFiles.find(f => f.path === 'index.html');
-      const hasLocalModuleScripts = /src=["']\.?\/(?:src|main|app|index)\b/i.test(newIndexFile?.content || '');
-      if (newIndexFile && !hasReactFiles && !hasLocalModuleScripts &&
-          newIndexFile.content.includes('<!DOCTYPE html') &&
-          newIndexFile.content.includes('</html>')) {
+      const editedIndex = edits.some(e => e.path === 'index.html');
+      const indexFile = newIndexFile || (editedIndex ? mergedFiles.find(f => f.path === 'index.html') : null);
+      const hasLocalModuleScripts = /src=["']\.?\/(?:src|main|app|index)\b/i.test(indexFile?.content || '');
+      if (indexFile && !hasReactFiles && !hasLocalModuleScripts &&
+          indexFile.content.includes('<!DOCTYPE html') &&
+          indexFile.content.includes('</html>')) {
         console.info('[handleBgComplete] Self-contained index.html detected — setting preview directly');
-        stableHTMLRef.current = newIndexFile.content;
-        setStableHTML(newIndexFile.content);
+        stableHTMLRef.current = indexFile.content;
+        setStableHTML(indexFile.content);
         setPreviewRefreshKey(k => k + 1);
       }
 
