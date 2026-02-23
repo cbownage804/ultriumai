@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import type { ProjectFile } from './useProjectFileSystem';
+import { isNewSessionPending } from '@/lib/clearBuilderDraft';
 
 const DRAFT_KEY = 'ai-builder-draft';
 const DEBOUNCE_MS = 1500;
@@ -16,6 +17,8 @@ export function useDraftPersistence() {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const writeDraft = useCallback((name: string, files: ProjectFile[], messages: any[]) => {
+    // Never persist if a new-session intent is active
+    if (isNewSessionPending()) return;
     const baseDraft: DraftData = {
       name,
       files: files.map(f => ({ path: f.path, content: f.content, language: f.language })),

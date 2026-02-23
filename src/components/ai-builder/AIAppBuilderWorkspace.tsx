@@ -81,7 +81,7 @@ import { useAPIBuilder } from '@/hooks/useAPIBuilder';
 import { useProjectReview } from './useProjectReview';
 import { useSupabaseConnection } from '@/hooks/useSupabaseConnection';
 import { useIndexedDBPersistence } from '@/hooks/useIndexedDBPersistence';
-import { isDraftCleared, resetDraftClearedFlag } from '@/lib/clearBuilderDraft';
+import { isNewSessionPending, consumeNewSessionFlag } from '@/lib/clearBuilderDraft';
 import { useSchemaIntrospection } from '@/hooks/useSchemaIntrospection';
 import { usePromptChains } from '@/hooks/usePromptChains';
 import { useAICodeReview } from '@/hooks/useAICodeReview';
@@ -1341,8 +1341,8 @@ export function AIAppBuilderWorkspace() {
       const files = bgFiles.length >= refFiles.length ? bgFiles : refFiles;
       // If clearBuilderDraft() was called (user starting a new project),
       // skip the flush so we don't re-persist stale data from the old component.
-      if (isDraftCleared()) {
-        console.info('[Draft] Flush suppressed — draft was intentionally cleared');
+      if (isNewSessionPending()) {
+        console.info('[Draft] Flush suppressed — new session pending');
         return;
       }
       console.info('[Draft] Flushing: %d files (ref=%d, bg=%d), %d msgs', files.length, refFiles.length, bgFiles.length, msgs.length);
@@ -1360,6 +1360,11 @@ export function AIAppBuilderWorkspace() {
         // Do NOT update lastSaveTimestampRef here — the draft's savedAt
         // must remain > lastSaveTimestampRef so restoration triggers on return.
       } else if (document.visibilityState === 'visible') {
+        // If this is a new project session, don't restore old data
+        if (isNewSessionPending()) {
+          console.info('[Draft] Visibility restore skipped — new session pending');
+          return;
+        }
         // ALWAYS try to restore — catches empty state, heap discard, partial corruption
         const current = latestRef.current;
         const reactIsEmpty = current.files.length === 0 && current.messages.length === 0;
@@ -1424,10 +1429,8 @@ export function AIAppBuilderWorkspace() {
 
   // Strip ?new=true immediately on mount so tab recovery works on reload
   useEffect(() => {
-    // Always reset the draft-cleared flag on mount so future saves work
-    resetDraftClearedFlag();
-
     if (isNewProjectRef.current) {
+      // Clear all storage synchronously
       clearDraft();
       idbPersistence.clearSession();
       // Reset React state to empty so auto-save/flush don't re-persist old data
@@ -1437,6 +1440,12 @@ export function AIAppBuilderWorkspace() {
       const url = new URL(window.location.href);
       url.searchParams.delete('new');
       window.history.replaceState({}, '', url.pathname + url.search);
+      // NOW consume the flag so future saves/restores work normally
+      // Use a microtask to ensure all synchronous cleanup above completes first
+      queueMicrotask(() => consumeNewSessionFlag());
+    } else {
+      // Not a new project — ensure no stale flag blocks saves
+      consumeNewSessionFlag();
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1466,7 +1475,7 @@ export function AIAppBuilderWorkspace() {
   const isNewProject = isNewProjectRef.current;
   const hasRestoredRef = useRef(false);
   useEffect(() => {
-    if (initialProjectId || isNewProject) return;
+    if (initialProjectId || isNewProject || isNewSessionPending()) return;
     if (hasRestoredRef.current) return;
     // Don't guard on project.files/messages — they may be stale closures in StrictMode
 
