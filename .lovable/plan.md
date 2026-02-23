@@ -1,55 +1,141 @@
 
 
-## Fix: Preview Not Updating + State Lost on Tab Switch
+# True Parity Plan: Match Lovable's Builder Experience
 
-Two distinct bugs are causing the problems shown in your screenshots.
+## Problem Summary
 
----
+Your App Builder has a recurring "Compiling preview..." infinite loop caused by **two competing compilation paths** in `CompilationBridge.tsx` that race against each other. Additionally, the UX during generation doesn't match Lovable's polished experience shown in your screenshots.
 
-### Bug 1: State Lost on Tab Switch
+## Part 1: Fix the Compilation Loop (Critical)
 
-**Root Cause**: When `handleBgComplete` calls `setFiles(mergedFiles)`, React schedules the state update asynchronously. But `latestRef.current.files` (which the draft persistence reads) is only updated on the NEXT render. If you switch browser tabs before React re-renders, the `visibilitychange: hidden` handler calls `flushDraft()` which saves the OLD (empty/stale) files, not the newly merged ones.
+### Root Cause
 
-**Fix** (in `AIAppBuilderWorkspace.tsx`, inside `handleBgComplete`, right after `setFiles(mergedFiles)`):
+`CompilationBridge.tsx` has TWO compilation triggers that fight:
+1. **Generation-ending effect** (line 146-186): Sets locks, waits 100ms, calls `compileNowRef()`
+2. **Main useEffect** (line 284-537): Watches `filesDigest` + `isGenerating`, does 500ms debounced compile
 
-Add an immediate, synchronous draft save using the `mergedFiles` array directly, bypassing the ref that hasn't been updated yet:
+When generation ends, BOTH fire because their shared dependencies (`isGenerating`, `filesDigest`) change simultaneously. The locking mechanism (`compilationLockRef`, `compilationAttemptedRef`, `prevFilesDigestRef`) tries to coordinate them but frequently fails due to React batching and timer ordering.
+
+### Solution: Single Compilation Path
+
+Replace both paths with ONE simple trigger:
+
+- **Remove** the generation-ending direct compile (the 100ms timer path)
+- **Remove** all lock/attempted/digest coordination refs
+- **Simplify** the main effect to: "When `isGenerating` transitions false and files exist, compile after 150ms"
+- Use a single `compilationInFlightRef` boolean (set synchronously in the effect, cleared in finally block) to prevent double-entry
+
+### Technical Changes
+
+**File: `src/components/ai-builder/CompilationBridge.tsx`**
+
+- Remove `compilationLockRef`, `compilationAttemptedRef`, `prevFilesDigestRef`, `immediateCompileNeededRef`, `justSyncedFromExternalRef`, `compilationCleanupRef`
+- Replace the generation start/end effect (lines 137-189) with a simple reset on generation start
+- Replace the main effect (lines 284-537) with a clean single-path compiler:
 
 ```text
-setFiles(mergedFiles);
-// Immediately persist so tab-switch can't lose data
-saveDraftImmediate(project.name, mergedFiles, []);
+useEffect:
+  if isGenerating or files.length === 0 -> return
+  if stableHTMLRef.current -> check for hot-patch, return
+  if compilationInFlightRef.current -> return (already compiling)
+  
+  // Single 150ms debounce, then compile
+  timer = setTimeout(() => {
+    compilationInFlightRef.current = true
+    onCompilingChange(true)
+    try {
+      result = await compile(files)
+      setStableHTML(result || ERROR_FALLBACK)
+    } finally {
+      compilationInFlightRef.current = false
+      onCompilingChange(false)
+    }
+  }, 150)
+  
+  return () => clearTimeout(timer) // only cancel debounce, not in-flight
 ```
 
-Also update `latestRef.current.files = mergedFiles` directly inside `handleBgComplete` so the visibility handler always has the latest files, even if React hasn't re-rendered yet.
+- Keep the external sync logic (if `externalStableHTMLRef` has a value, use it immediately)
+- Keep hot-patch logic for CSS-only changes during manual edits
 
 ---
 
-### Bug 2: Preview Not Updating on 2nd+ Builds
+## Part 2: Lovable-Style "Getting Ready" Feature Carousel
 
-**Root Cause**: There is a state synchronization conflict between `handleBgComplete` (in the workspace) and `CompilationBridge`. When `handleBgComplete` compiles and sets `stableHTMLRef.current`, the `CompilationBridge` sees `externalStableHTMLRef.current` is already set and skips recompilation (line 149-157). But when the NEXT build comes, `handleBgComplete` clears `stableHTMLRef.current = null` (line 286) in the workspace -- but `CompilationBridge` has its OWN `stableHTMLRef` that may still be set, causing guard conditions to skip compilation.
+In Lovable's screenshots, while the AI is generating, the right-side preview shows a **rotating carousel of feature cards** (Edit visually, Revert and edit messages, Ecommerce included, Measure performance, Custom rules, Lovable Cloud, Publish your project) with screenshots and descriptions.
 
-Additionally, when hunk patches produce syntax errors (as shown in your first screenshot), the worker compiler correctly reports the error, but the error HTML is displayed. On the next build attempt, `stableHTMLRef` still holds the error fallback HTML, and the digest-based change detection may not trigger recompilation.
+### Technical Changes
 
-**Fix** (in `AIAppBuilderWorkspace.tsx`):
+**File: `src/components/ai-builder/SkeletonPreview.tsx`**
 
-1. After `setFiles(mergedFiles)`, also update `latestRef.current.files` synchronously
-2. Force-clear `stableHTML` state (not just ref) before starting compilation, so CompilationBridge sees the null and doesn't skip
-3. Always call `setPreviewRefreshKey(k => k + 1)` at the END of `handleBgComplete`, not just inside individual branches -- ensures the iframe always gets the latest content
+Replace the static shimmer skeleton with a feature carousel:
 
-**Fix** (in `CompilationBridge.tsx`):
-
-1. When generation ends and `externalStableHTMLRef` has content, always sync -- don't check `stableHTMLRef.current` first (it may be stale from a previous build cycle)
-2. Clear `compilationLockRef` at the START of each generation cycle, not just when `stableHTMLRef` is null
+- Auto-rotating cards (every 4 seconds) with smooth transitions
+- Each card shows: a screenshot/illustration, a title, and a one-line description
+- Cards highlight your platform's features:
+  - "Edit visually" - Click to edit directly or describe changes
+  - "Revert and edit messages" - Go back to any point in history
+  - "Full-stack included" - Data, hosting, auth, AI included
+  - "Publish your project" - Instantly publish to your domain
+  - "Measure performance" - Track visitors, views, and trends
+- "Getting ready..." spinner at the top center
+- Dark background matching the current theme
 
 ---
 
-### Technical Summary
+## Part 3: Progress Steps in Chat (DONE / WORKING / NEXT)
 
-| File | Line(s) | Change |
-|------|---------|--------|
-| `AIAppBuilderWorkspace.tsx` | ~314 | Add `latestRef.current.files = mergedFiles` + `saveDraftImmediate(...)` right after `setFiles(mergedFiles)` |
-| `AIAppBuilderWorkspace.tsx` | ~286 | Also call `setStableHTML(null)` (state setter, not just ref) to notify CompilationBridge |
-| `AIAppBuilderWorkspace.tsx` | ~376 | Add a final unconditional `setPreviewRefreshKey(k => k + 1)` after the compile promise chain |
-| `CompilationBridge.tsx` | ~138-144 | On generation start, also clear `compilationLockRef` and `justSyncedFromExternalRef` |
-| `CompilationBridge.tsx` | ~149 | Remove the `!stableHTMLRef.current` guard -- always sync from external when generation ends |
+Lovable shows build progress as a checklist in the chat with status indicators:
+- Green check = DONE
+- Spinning loader = WORKING  
+- Empty circle = NEXT
+
+### Technical Changes
+
+**File: `src/components/ai-builder/BuilderChatPanel.tsx`**
+
+Add a `BuildProgressCard` component that renders when the AI's response includes progress markers. The edge function already sends progress phases via the streaming content - parse `[PROGRESS]` markers or use the existing `phase` detection to show steps like:
+- Set up design system
+- Build homepage sections
+- Add interactivity
+
+**File: `src/hooks/useBackgroundGeneration.ts`** (or the edge function prompt)
+
+Update the system prompt to emit structured progress markers that the chat can parse and display as the checklist UI.
+
+---
+
+## Part 4: Scraping Preview Card in Chat
+
+When the AI scrapes a website (clone/replicate intent), Lovable shows an expandable card with:
+- "Reading" / "Fetching [url]" header
+- A screenshot or preview of the scraped site
+- Description like "Gathering content and branding details now"
+
+### Technical Changes
+
+**File: `src/components/ai-builder/BuilderChatPanel.tsx`**
+
+Add a `ScrapingCard` component that appears when the `firecrawl-scrape` response returns branding/screenshot data. Parse the assistant message for scraping activity markers and display:
+- Collapsible card with the site URL
+- Screenshot from the scrape response (if `formats: ['screenshot']` was used)
+- Status text ("Gathering content and branding details")
+
+---
+
+## Implementation Order
+
+1. **Part 1 first** - Fix the compilation loop (this is the blocker)
+2. **Part 2** - Feature carousel (visual polish, quick win)
+3. **Part 3** - Progress steps in chat
+4. **Part 4** - Scraping preview card
+
+## Summary of Files Changed
+
+| File | Change |
+|------|--------|
+| `CompilationBridge.tsx` | Rewrite to single compilation path |
+| `SkeletonPreview.tsx` | Replace with Lovable-style feature carousel |
+| `BuilderChatPanel.tsx` | Add BuildProgressCard + ScrapingCard components |
+| `GeneratingOverlay.tsx` | Minor: change "Generating..." to "Getting ready..." |
 
