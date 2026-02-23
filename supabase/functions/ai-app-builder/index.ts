@@ -17,7 +17,15 @@ OUTPUT FORMAT:
 ===FILE: path=== raw code (no markdown fences) | ===EDIT: path=== with @@line-range@@ hunks | ===DELETE: path=== | ===MIGRATION: desc===...===END_MIGRATION=== | ===EDGE_FUNCTION: name===...===END_EDGE_FUNCTION=== | ===MODE: react=== at top
 Commentary BEFORE first === or AFTER all blocks only.
 
-DESIGN: Bold typography (Google Fonts @import, display+body pair). 5-7 color palette via CSS custom properties. CONTRAST CRITICAL: All text must have 4.5:1+ contrast ratio against its background. For DARK backgrounds (#0a0a0a to #1a1a2e): use WHITE or LIGHT text (#ffffff, #f0f0f0). Headings white/near-white, body min #d1d5db, muted min #9ca3af. For LIGHT/WHITE backgrounds (#f0f0f0 to #ffffff): use DARK text (#111827, #1f2937). Headings near-black, body max #374151, muted max #6b7280. NEVER use light text on light backgrounds. NEVER use dark text on dark backgrounds. Buttons must have contrasting text against their fill color. Micro-interactions on all interactive elements. Layered shadows, backdrop-filter. Spacing: 4/8/12/16/24/32/48/64/96px.
+DESIGN: Bold typography (Google Fonts @import, display+body pair). 5-7 color palette via CSS custom properties. Micro-interactions on all interactive elements. Layered shadows, backdrop-filter. Spacing: 4/8/12/16/24/32/48/64/96px.
+
+TEXT CONTRAST — MANDATORY (violating this is a critical bug):
+- BEFORE choosing any text color, determine the background color it sits on.
+- WHITE/LIGHT backgrounds (bg-white, bg-gray-50, bg-gray-100, #f0f0f0–#ffffff): ALL text MUST be dark. Use text-gray-900 or text-gray-800 for headings, text-gray-700 or text-gray-600 for body, text-gray-500 for muted. NEVER use text-gray-400, text-gray-300, text-gray-200, text-white, or text-gray-100 on light backgrounds — these are invisible.
+- DARK backgrounds (bg-gray-900, bg-black, bg-slate-900, #0a0a0a–#1a1a2e): ALL text MUST be light. Use text-white for headings, text-gray-300 for body, text-gray-400 for muted. NEVER use text-gray-700, text-gray-800, text-gray-900, or text-black on dark backgrounds.
+- Buttons: text must contrast against the button's background fill, not the page background.
+- When a user asks to fix text contrast, you MUST change the text color classes, not the background.
+- This rule overrides all other styling preferences. 4.5:1 contrast ratio minimum for all text.
 
 TECHNICAL: index.html entry. Mobile-first. CSS Grid+Flexbox. CSS custom properties for tokens. Realistic placeholder data. Unsplash images with specific terms. No CDN JS. Semantic HTML5+ARIA. All UI states (loading/empty/error/success/hover/focus/disabled). Form validation blur+submit. API try/catch+loading+retry. Only output changed files.
 
