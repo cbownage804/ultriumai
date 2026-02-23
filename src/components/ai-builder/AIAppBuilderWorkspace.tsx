@@ -2235,8 +2235,13 @@ export function AIAppBuilderWorkspace() {
   const stableHTMLRef = useRef<string | null>(null);
   const skipNextCompileRef = useRef(false);
   const handleStableHTML = useCallback((html: string | null) => {
+    const changed = html !== stableHTMLRef.current;
     stableHTMLRef.current = html;
     setStableHTML(html);
+    // Force iframe remount when new compiled HTML arrives (browsers don't reliably re-render srcDoc changes)
+    if (html && changed) {
+      setPreviewRefreshKey(k => k + 1);
+    }
   }, []);
 
   // Phase 3: Lightweight safety net — if stableHTML is still null 5s after
