@@ -1231,6 +1231,9 @@ export function AIAppBuilderWorkspace() {
       // Immediately save to cloud when generation finishes so project appears in recents
       if (project.files.length > 0) {
         saveProject(project.name, project.files, undefined, undefined, messages, { versions });
+        // Force immediate localStorage draft save so tab-switch doesn't lose data
+        // (the debounced saveDraft won't fire for ~2.5s which creates a data-loss window)
+        saveDraftImmediate(project.name, project.files, messages);
       }
     }
   }, [isGenerating]); // eslint-disable-line react-hooks/exhaustive-deps
