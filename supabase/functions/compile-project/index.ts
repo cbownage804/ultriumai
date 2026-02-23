@@ -1,4 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// Use the Deno-native WASM build of esbuild (no binary needed)
+import * as esbuild from "https://deno.land/x/esbuild@v0.20.1/wasm.js";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,7 +24,6 @@ interface CompileOptions {
 
 // ── CDN URLs ──
 const CDN = {
-  babel: "https://unpkg.com/@babel/standalone@7.26.5/babel.min.js",
   react: "https://unpkg.com/react@18.3.1/umd/react.production.min.js",
   reactDom: "https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js",
   tailwind: "https://cdn.tailwindcss.com",
@@ -56,6 +57,62 @@ const DEFAULT_PACKAGES = [
   { name: "cmdk", version: "1.0.0", cdnUrl: `${ESM_SH}/cmdk@1.0.0?external=react,react-dom` },
 ];
 
+// ── esbuild initialization (singleton) ──
+let esbuildReady = false;
+async function ensureEsbuild() {
+  if (esbuildReady) return;
+  try {
+    // deno.land/x/esbuild WASM build auto-initializes
+    // Just call initialize() with no args for Deno
+    await esbuild.initialize({ worker: false });
+    esbuildReady = true;
+    console.log("[esbuild] Initialized WASM module");
+  } catch (err: any) {
+    // If already initialized, that's fine
+    if (err.message?.includes("Cannot call")) {
+      esbuildReady = true;
+      return;
+    }
+    console.error("[esbuild] Init failed:", err.message);
+    throw err;
+  }
+}
+
+// ── esbuild transform wrapper ──
+async function transformFile(code: string, filePath: string): Promise<string> {
+  const loader = filePath.endsWith(".tsx") ? "tsx" as const
+    : filePath.endsWith(".jsx") ? "jsx" as const
+    : filePath.endsWith(".ts") ? "ts" as const
+    : "js" as const;
+
+  const result = await esbuild.transform(code, {
+    loader,
+    jsx: "transform",
+    jsxFactory: "React.createElement",
+    jsxFragment: "React.Fragment",
+    target: "es2020",
+    format: "esm",
+    // Strip all types, enums, interfaces properly
+    tsconfigRaw: JSON.stringify({
+      compilerOptions: {
+        jsx: "react",
+        target: "ES2020",
+        module: "ESNext",
+        experimentalDecorators: true,
+        verbatimModuleSyntax: false,
+      },
+    }),
+  });
+
+  if (result.warnings.length > 0) {
+    for (const w of result.warnings) {
+      console.warn(`[esbuild] Warning in ${filePath}: ${w.text}`);
+    }
+  }
+
+  return result.code;
+}
+
 // ── Module Map ──
 function buildModuleMap(files: ProjectFile[]): Map<string, ProjectFile> {
   const map = new Map<string, ProjectFile>();
@@ -79,116 +136,20 @@ function buildModuleMap(files: ProjectFile[]): Map<string, ProjectFile> {
   return map;
 }
 
-// ── Type Stripping (regex-based, reliable for server) ──
-function stripTypeAnnotations(code: string): string {
-  let result = code;
-
-  result = result.replace(/^import\s+type\s+\{[^}]*\}\s+from\s+['"][^'"]+['"];?\s*$/gm, "");
-  result = result.replace(
-    /^(import\s+\{)([^}]+)(\}\s+from\s+['"][^'"]+['"];?\s*)$/gm,
-    (_match: string, prefix: string, names: string, suffix: string) => {
-      const filtered = names.split(",").map((n: string) => n.trim()).filter((n: string) => !n.startsWith("type ") && n.length > 0);
-      if (filtered.length === 0) return "";
-      return `${prefix} ${filtered.join(", ")} ${suffix}`;
-    }
-  );
-
-  const lines = result.split("\n");
-  const outputLines: string[] = [];
-  let stripping = false;
-  let braceDepth = 0;
-
-  for (const line of lines) {
-    if (!stripping) {
-      if (/^(?:export\s+)?(?:interface|enum)\s+\w+/.test(line.trim()) ||
-        /^(?:export\s+)?type\s+\w+\s*=\s*\{/.test(line.trim())) {
-        stripping = true;
-        braceDepth = 0;
-        for (const ch of line) {
-          if (ch === "{") braceDepth++;
-          if (ch === "}") braceDepth--;
-        }
-        if (braceDepth <= 0) stripping = false;
-        continue;
-      }
-      outputLines.push(line);
-    } else {
-      for (const ch of line) {
-        if (ch === "{") braceDepth++;
-        if (ch === "}") braceDepth--;
-      }
-      if (braceDepth <= 0) stripping = false;
-    }
-  }
-  result = outputLines.join("\n");
-
-  result = result.replace(/^(?:export\s+)?type\s+\w+\s*=\s*[^;{]+;/gm, "");
-  result = result.replace(
-    /\)\s*:\s*[A-Za-z_][\w.]*(?:<(?:[^<>]|<(?:[^<>]|<[^<>]*>)*>)*>)?(?:\[\])?(?:\s*[|&]\s*[A-Za-z_][\w.]*(?:<(?:[^<>]|<[^<>]*>)*>)?(?:\[\])?)*(?=\s*(?:=>|\{))/g,
-    ")"
-  );
-  result = result.replace(
-    /:\s*React\.(?:FC|ReactNode|MouseEvent|ChangeEvent|FormEvent|CSSProperties|RefObject|Dispatch|SetStateAction|MutableRefObject|HTMLAttributes|ComponentProps|ComponentType|ElementType|ReactElement|JSX\.Element)(?:<(?:[^<>]|<(?:[^<>]|<[^<>]*>)*>)*>)?/g,
-    ""
-  );
-  result = result.replace(
-    /:\s*(?:string|number|boolean|void|any|null|undefined|never|unknown|object)(?:\s*[|&]\s*(?:string|number|boolean|void|any|null|undefined|never|unknown|object))*(?=\s*[=,;)\]}])/g,
-    ""
-  );
-  result = result.replace(
-    /:\s*[A-Z][\w.]*(?:<(?:[^<>]|<(?:[^<>]|<[^<>]*>)*>)*>)?(?:\[\])?(?:\s*[|&]\s*(?:string|number|boolean|null|undefined|void|never|unknown|[A-Z][\w.]*)(?:\[\])?)*(?=\s*[=,;)\]}])/g,
-    (match: string, offset: number) => {
-      const before = result.slice(Math.max(0, offset - 30), offset);
-      if (/[{,]\s*\w+\s*$/.test(before)) return match;
-      return "";
-    }
-  );
-
-  const genericsMarker = "___GENERIC___";
-  const genericsMap: string[] = [];
-  result = result.replace(/=\s*<[A-Z][\w,\s]*>(?=\s*\()/g, (match: string) => {
-    genericsMap.push(match);
-    return `${genericsMarker}${genericsMap.length - 1}`;
-  });
-  result = result.replace(
-    /\b(useState|useRef|useCallback|useMemo|useReducer|useContext|createContext|forwardRef|memo|lazy|useImperativeHandle|useLayoutEffect|Set|Map|Array|Promise|Record)\s*<((?:[^<>]|<(?:[^<>]|<[^<>]*>)*>)*)>/g,
-    "$1"
-  );
-  result = result.replace(
-    /(?<=\w)<(?:[A-Za-z][\w.]*(?:\[\])?(?:\s*\|\s*[\w.]+(?:\[\])?)*(?:\s*,\s*[\w.]+(?:\[\])?(?:\s*\|\s*[\w.]+)?)*)>/g,
-    ""
-  );
-  result = result.replace(
-    new RegExp(`${genericsMarker}(\\d+)`, "g"),
-    (_: string, idx: string) => genericsMap[parseInt(idx)] || ""
-  );
-  result = result.replace(/\s+as\s+\w+(?:<[^>]+>)?/g, "");
-  result = result.replace(/\s+satisfies\s+\w+/g, "");
-  return result;
-}
-
-// ── Transpile File ──
-function transpileFile(
-  file: ProjectFile,
-  moduleMap: Map<string, ProjectFile>
+// ── Rewrite imports from esbuild ESM output to our module system ──
+function rewriteImports(
+  code: string,
+  filePath: string,
+  moduleMap: Map<string, ProjectFile>,
 ): { code: string; externalPackages: string[] } {
   const usedExternalPackages = new Set<string>();
-  let code = file.content;
 
-  code = code.replace(/import\s*\{([^}]*)\}/gs, (_match: string, names: string) => {
-    const cleaned = names.replace(/\n/g, " ").replace(/\s+/g, " ").trim();
-    return `import { ${cleaned} }`;
-  });
-
-  if (file.path.endsWith(".tsx") || file.path.endsWith(".ts")) {
-    code = stripTypeAnnotations(code);
-  }
-
-  const importLines: string[] = [];
+  // Handle import statements
   code = code.replace(
     /^import\s+(?:(\w+)(?:\s*,\s*)?)?(?:\{([^}]+)\})?\s+from\s+['"]([^'"]+)['"];?\s*$/gm,
     (_match: string, defaultImport: string, namedImports: string, specifier: string) => {
       if (!specifier.startsWith(".") && !specifier.startsWith("/")) {
+        // External package
         if (specifier === "react") {
           const parts: string[] = [];
           if (defaultImport && defaultImport !== "React") parts.push(`const ${defaultImport} = React;`);
@@ -217,6 +178,25 @@ function transpileFile(
           }
           return "";
         }
+        // react/jsx-runtime — esbuild may output this
+        if (specifier === "react/jsx-runtime" || specifier === "react/jsx-dev-runtime") {
+          const parts: string[] = [];
+          if (namedImports) {
+            const names = namedImports.split(",").map((n: string) => n.trim().split(/\s+as\s+/));
+            for (const [orig, alias] of names) {
+              const target = (alias || orig).trim();
+              if (orig.trim() === "jsx" || orig.trim() === "jsxs") {
+                parts.push(`const ${target} = React.createElement;`);
+              } else if (orig.trim() === "Fragment") {
+                parts.push(`const ${target} = React.Fragment;`);
+              } else if (orig.trim() === "jsxDEV") {
+                parts.push(`const ${target} = React.createElement;`);
+              }
+            }
+          }
+          return parts.join("\n");
+        }
+
         const importVar = `__pkg_${specifier.replace(/[^a-zA-Z0-9]/g, "_")}`;
         usedExternalPackages.add(specifier);
         const parts: string[] = [];
@@ -231,6 +211,7 @@ function transpileFile(
         return parts.length > 0 ? parts.join("\n") : `// [external] ${specifier}`;
       }
 
+      // Local module
       const resolved = moduleMap.get(specifier) ||
         moduleMap.get(specifier.replace(/^\.\//, "")) ||
         moduleMap.get(specifier.replace(/\.\w+$/, ""));
@@ -247,21 +228,24 @@ function transpileFile(
         }).join(", ");
         parts.push(`const { ${destructure} } = __modules['${moduleKey}'] || {};`);
       }
-      importLines.push(moduleKey);
       return parts.join("\n");
     }
   );
 
+  // Side-effect imports
   code = code.replace(/^import\s+['"][^'"]+['"];?\s*$/gm, "");
 
+  // Re-exports: export * from
   code = code.replace(
     /^export\s*\*\s+from\s+['"]([^'"]+)['"];?\s*$/gm,
     (_match: string, specifier: string) => {
       const resolved = moduleMap.get(specifier) || moduleMap.get(specifier.replace(/^\.\//, "")) || moduleMap.get(specifier.replace(/\.\w+$/, ""));
       const sourceKey = resolved?.path || specifier;
-      return `Object.assign(__modules['${file.path}'] || (__modules['${file.path}'] = {}), __modules['${sourceKey}'] || {});`;
+      return `Object.assign(__modules['${filePath}'] || (__modules['${filePath}'] = {}), __modules['${sourceKey}'] || {});`;
     }
   );
+
+  // Re-exports: export { X } from
   code = code.replace(
     /^export\s*\{([^}]+)\}\s*from\s+['"]([^'"]+)['"];?\s*$/gm,
     (_match: string, names: string, specifier: string) => {
@@ -271,23 +255,18 @@ function transpileFile(
         const [orig, alias] = n.trim().split(/\s+as\s+/);
         return { orig: orig.trim(), alias: (alias || orig).trim() };
       });
-      const lines = [`__modules['${file.path}'] = __modules['${file.path}'] || {};`];
+      const lines = [`__modules['${filePath}'] = __modules['${filePath}'] || {};`];
       for (const { orig, alias } of pairs) {
-        if (orig === "default") {
-          lines.push(`__modules['${file.path}']['${alias}'] = (__modules['${sourceKey}'] || {}).default;`);
-        } else {
-          lines.push(`__modules['${file.path}']['${alias}'] = (__modules['${sourceKey}'] || {})['${orig}'];`);
-        }
+        lines.push(`__modules['${filePath}']['${alias}'] = (__modules['${sourceKey}'] || {})['${orig === "default" ? "default" : orig}'];`);
       }
       return lines.join("\n");
     }
   );
 
-  // Anonymous default exports
+  // Default exports
   code = code.replace(/^export\s+default\s+((?:\([^)]*\)|[a-zA-Z_$]\w*)\s*=>)/gm, "const __DefaultExport = $1");
   code = code.replace(/^export\s+default\s+function\s*\(/gm, "const __DefaultExport = function(");
   code = code.replace(/^export\s+default\s+(\{)/gm, "const __DefaultExport = $1");
-
   code = code.replace(
     /^export\s+default\s+(?:function\s+(\w+)|class\s+(\w+)|(\w+))/gm,
     (_match: string, fnName: string, className: string, varName: string) => {
@@ -298,8 +277,10 @@ function transpileFile(
     }
   );
 
+  // Named export blocks: export { ... }
   code = code.replace(/^export\s*\{[^}]+\}\s*;?\s*$/gm, "");
 
+  // Named export declarations
   const exportedNames: string[] = [];
   code = code.replace(
     /^export\s+((?:const|let|var|function|class)\s+(\w+))/gm,
@@ -309,6 +290,7 @@ function transpileFile(
     }
   );
 
+  // Dynamic imports of local modules
   code = code.replace(
     /\bimport\s*\(\s*['"](\.[^'"]+)['"]\s*\)/g,
     (_match: string, specifier: string) => {
@@ -318,23 +300,25 @@ function transpileFile(
     }
   );
 
-  const defaultMatch = file.content.match(/export\s+default\s+(?:function\s+|class\s+)?(\w+)/);
-  const hasAnonymousDefault = /export\s+default\s+(?:\([^)]*\)|[a-zA-Z_$]\w*)\s*=>/.test(file.content) ||
-    /export\s+default\s+function\s*\(/.test(file.content) ||
-    /export\s+default\s+\{/.test(file.content);
+  // Module registration
+  const originalContent = code; // for default export detection
+  const defaultMatch = originalContent.match(/export\s+default\s+(?:function\s+|class\s+)?(\w+)/);
+  const hasAnonymousDefault = /export\s+default\s+(?:\([^)]*\)|[a-zA-Z_$]\w*)\s*=>/.test(originalContent) ||
+    /export\s+default\s+function\s*\(/.test(originalContent) ||
+    /export\s+default\s+\{/.test(originalContent);
   const defaultExport = hasAnonymousDefault ? "__DefaultExport" : defaultMatch?.[1];
   const registration: string[] = [];
 
-  registration.push(`__modules['${file.path}'] = __modules['${file.path}'] || {};`);
+  registration.push(`__modules['${filePath}'] = __modules['${filePath}'] || {};`);
   if (defaultExport) {
-    registration.push(`__modules['${file.path}'].default = typeof ${defaultExport} !== 'undefined' ? ${defaultExport} : undefined;`);
+    registration.push(`__modules['${filePath}'].default = typeof ${defaultExport} !== 'undefined' ? ${defaultExport} : undefined;`);
   }
   for (const name of exportedNames) {
-    registration.push(`__modules['${file.path}']['${name}'] = typeof ${name} !== 'undefined' ? ${name} : undefined;`);
+    registration.push(`__modules['${filePath}']['${name}'] = typeof ${name} !== 'undefined' ? ${name} : undefined;`);
   }
 
   return {
-    code: `/* === ${file.path} === */\n(function() {\n${code}\n${registration.join("\n")}\n})();`,
+    code: `/* === ${filePath} === */\n(function() {\n${code}\n${registration.join("\n")}\n})();`,
     externalPackages: Array.from(usedExternalPackages),
   };
 }
@@ -397,9 +381,12 @@ function resolveCSSimports(cssContent: string, cssPath: string, allFiles: Projec
 }
 
 // ── Main compile function ──
-function compileProject(files: ProjectFile[], options?: CompileOptions): { html: string; componentCount: number; errors: string[] } {
+async function compileProject(files: ProjectFile[], options?: CompileOptions): Promise<{ html: string; componentCount: number; errors: string[] }> {
   const t0 = Date.now();
   const errors: string[] = [];
+
+  // Ensure esbuild is initialized
+  await ensureEsbuild();
 
   const reactFiles = files
     .filter((f) => /\.(tsx?|jsx?)$/.test(f.path))
@@ -414,15 +401,30 @@ function compileProject(files: ProjectFile[], options?: CompileOptions): { html:
   const moduleMap = buildModuleMap(files);
   const sorted = sortByDependency(reactFiles, moduleMap);
 
+  // Phase 1: Transform all files with esbuild (parallel)
+  const transformResults = await Promise.allSettled(
+    sorted.map(async (file) => {
+      const transformed = await transformFile(file.content, file.path);
+      return { file, transformed };
+    })
+  );
+
+  // Phase 2: Rewrite imports to our module system
   const transpiledChunks: string[] = [];
   const allExternalPackages = new Set<string>();
-  for (const file of sorted) {
+
+  for (const result of transformResults) {
+    if (result.status === "rejected") {
+      errors.push(`esbuild error: ${result.reason?.message || result.reason}`);
+      continue;
+    }
+    const { file, transformed } = result.value;
     try {
-      const result = transpileFile(file, moduleMap);
-      transpiledChunks.push(result.code);
-      for (const pkg of result.externalPackages) allExternalPackages.add(pkg);
+      const rewritten = rewriteImports(transformed, file.path, moduleMap);
+      transpiledChunks.push(rewritten.code);
+      for (const pkg of rewritten.externalPackages) allExternalPackages.add(pkg);
     } catch (err: any) {
-      errors.push(`Transpile error in ${file.path}: ${err.message}`);
+      errors.push(`Rewrite error in ${file.path}: ${err.message}`);
     }
   }
 
@@ -530,7 +532,7 @@ try {
     for (const p of options.userPackages) registryMap.set(p.name, p.cdnUrl);
   }
   for (const pkg of allExternalPackages) {
-    if (!registryMap.has(pkg) && pkg !== "react" && pkg !== "react-dom" && pkg !== "react-dom/client") {
+    if (!registryMap.has(pkg) && pkg !== "react" && pkg !== "react-dom" && pkg !== "react-dom/client" && pkg !== "react/jsx-runtime" && pkg !== "react/jsx-dev-runtime") {
       registryMap.set(pkg, `${ESM_SH}/${pkg}`);
     }
   }
@@ -556,7 +558,7 @@ ${preloadHints}
       "react-dom": "data:text/javascript,const RD=window.ReactDOM;export default RD;export const{createRoot,createPortal,flushSync}=RD;",
       "react-dom/client": "data:text/javascript,export const{createRoot}=window.ReactDOM;",
       ${Array.from(registryMap.entries())
-        .filter(([k]) => !["react", "react-dom", "react-dom/client", "react/jsx-runtime"].includes(k))
+        .filter(([k]) => !["react", "react-dom", "react-dom/client", "react/jsx-runtime", "react/jsx-dev-runtime"].includes(k))
         .map(([k, v]) => `"${k}": "${v}"`)
         .join(",\n      ")}
     }
@@ -613,8 +615,6 @@ window.ENV = ${JSON.stringify(envObj)};
     const { createRoot, createPortal } = ReactDOM;
   </script>
 
-  <script src="${CDN.babel}"></script>
-
   <script>
   document.getElementById('root').innerHTML =
     '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui;color:#888">' +
@@ -647,6 +647,7 @@ window.ENV = ${JSON.stringify(envObj)};
         console.warn('[Import] ' + __pkgErrors.length + ' package(s) failed:', __pkgErrors.join(', '));
       }
 
+      // All code is already compiled by esbuild server-side — no Babel needed!
       var code = ${JSON.stringify(`
     var { useState, useEffect, useCallback, useMemo, useRef, useContext, createContext, memo, forwardRef, Fragment, useReducer, useLayoutEffect, useId, useSyncExternalStore, useTransition, useDeferredValue, useInsertionEffect, Suspense, lazy, StrictMode } = React;
     var { createRoot, createPortal, flushSync } = ReactDOM;
@@ -656,19 +657,14 @@ window.ENV = ${JSON.stringify(envObj)};
 
     ${mountScript}
       `)};
-      var transformed = Babel.transform(code, {
-        presets: ['react', ['typescript', { isTSX: true, allExtensions: true }]],
-        filename: 'app.tsx',
-        sourceType: 'script',
-      });
-      new Function(transformed.code)();
+      new Function(code)();
       __iifeDone = true;
     } catch(e) {
       __iifeDone = true;
-      console.error('[Babel] Transpilation error:', e.message);
-      window.parent.postMessage({ type: '__PREVIEW_ERROR__', error: { message: 'Syntax Error: ' + e.message, source: 'babel', critical: true } }, '*');
+      console.error('[Runtime] Execution error:', e.message);
+      window.parent.postMessage({ type: '__PREVIEW_ERROR__', error: { message: 'Runtime Error: ' + e.message, source: 'esbuild-compiled', critical: true } }, '*');
       var root = document.getElementById('root');
-      if (root) root.innerHTML = '<div style="padding:40px;color:#ef4444;font-family:system-ui"><h2>Syntax Error</h2><pre style="white-space:pre-wrap;margin-top:12px;font-size:13px;color:#fca5a5">' + e.message + '</pre></div>';
+      if (root) root.innerHTML = '<div style="padding:40px;color:#ef4444;font-family:system-ui"><h2>Runtime Error</h2><pre style="white-space:pre-wrap;margin-top:12px;font-size:13px;color:#fca5a5">' + e.message + '</pre></div>';
     }
   })();
   setTimeout(function() {
@@ -741,7 +737,7 @@ window.ENV = ${JSON.stringify(envObj)};
 </body>
 </html>`;
 
-  console.log(`[compile-project] Compiled ${files.length} files in ${Date.now() - t0}ms, HTML: ${html.length} chars`);
+  console.log(`[compile-project] esbuild compiled ${files.length} files in ${Date.now() - t0}ms, HTML: ${html.length} chars`);
   return { html, componentCount, errors };
 }
 
@@ -760,7 +756,7 @@ serve(async (req) => {
       );
     }
 
-    const result = compileProject(files, options);
+    const result = await compileProject(files, options);
 
     return new Response(
       JSON.stringify(result),
