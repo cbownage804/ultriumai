@@ -377,6 +377,7 @@ export function AIAppBuilderWorkspace() {
         timestamp: new Date(),
         filesGenerated: parsedFiles.length + deletions.length,
         suggestions,
+        mode,
       }];
     });
 

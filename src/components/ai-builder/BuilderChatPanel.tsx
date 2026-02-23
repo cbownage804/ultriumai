@@ -4,7 +4,7 @@ import {
   Send, Square, Sparkles, Loader2, Bot, FileCode, CheckCircle2,
   X, Brain, Compass, Code2,
   LayoutGrid, Wrench, AlertTriangle, Copy, ChevronDown, Check, Pencil,
-  Crosshair, Plus, Camera, Paperclip, AtSign,
+  Crosshair, Plus, Camera, Paperclip, AtSign, Rocket,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -564,6 +564,20 @@ export function BuilderChatPanel({
     return null;
   };
 
+  // Plan signal detection for "Approve & Build" button
+  const PLAN_SIGNALS = ['here\'s what i\'d recommend', 'here\'s the plan', 'i\'d suggest', 'let me outline', 'for v1', 'here are the steps', 'the architecture', 'ready to', 'here\'s my recommendation', 'i recommend', 'plan:', 'approach:', 'implementation plan'];
+  const hasPlanSignals = (content: string) => {
+    const lower = content.toLowerCase();
+    return PLAN_SIGNALS.some(signal => lower.includes(signal));
+  };
+
+  const handleApproveAndBuild = (msg: BuilderMessage) => {
+    onModeChange('build');
+    // Send a build message with the plan context
+    const planSummary = msg.content.slice(0, 2000);
+    onSend(`Build everything we just discussed. Here's the plan for reference:\n\n${planSummary}`);
+  };
+
   const renderAssistantMessage = (msg: BuilderMessage, isLast: boolean) => {
     const isStreaming = isGenerating && isLast;
 
@@ -578,8 +592,9 @@ export function BuilderChatPanel({
        // Only extract plan steps from first 3KB to avoid regex backtracking on large content
        const planContent = msg.content.length > 3000 ? msg.content.slice(0, 3000) : msg.content;
        const planSteps = msg.planSteps || extractPlanSteps(planContent, true, false);
-      return (
-        <div className="space-y-3">
+
+    return (
+      <div className="space-y-3">
           <button
             onClick={() => setThinkingCollapsed(prev => ({ ...prev, [msg.id]: !(thinkingCollapsed[msg.id] ?? true) }))}
             className="flex items-center gap-1.5 text-white/30 text-[13px] hover:text-white/50 transition-colors"
@@ -625,6 +640,8 @@ export function BuilderChatPanel({
     const totalFiles = hasFiles ? msg.filesGenerated! : fileNames.length;
     const isCompleted = hasFiles || fileNames.length > 0;
     const isThinkingCollapsed = thinkingCollapsed[msg.id] ?? true;
+    const isChatMode = msg.mode === 'discuss';
+    const showApproveButton = !isStreaming && isChatMode && hasPlanSignals(msg.content);
 
     // Clean display text — strip plan step duplicates (numbered, checkbox, bullet patterns)
     const planSteps = msg.planSteps || (text ? extractPlanSteps(text, isStreaming, !!hasFiles) : null);
@@ -647,7 +664,7 @@ export function BuilderChatPanel({
     const bodyText = introLine ? displayText.replace(introLine, '').trim() : displayText;
 
     return (
-      <div className="space-y-3">
+      <div className={cn("space-y-3", isChatMode && "border-l-2 border-teal-500/30 pl-3")}>
         {/* "Thought for Xs" — Lovable style collapsible */}
         {(isCompleted || isStreaming) && (
           <button
@@ -994,7 +1011,53 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Streaming progress */}
+        {/* Approve & Build — plan-to-build handoff */}
+        {showApproveButton && (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="pt-1"
+          >
+            <button
+              onClick={() => handleApproveAndBuild(msg)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-teal-500/20 to-cyan-500/15 border border-teal-500/30 text-teal-300 hover:from-teal-500/30 hover:to-cyan-500/25 hover:border-teal-500/50 transition-all text-sm font-medium group/approve"
+            >
+              <Rocket className="h-4 w-4 group-hover/approve:animate-bounce" />
+              Approve & Build
+              <span className="text-[10px] text-teal-400/60 ml-1">3cr</span>
+            </button>
+          </motion.div>
+        )}
+
+        {/* Suggestion chips — contextual follow-ups */}
+        {!isStreaming && msg.suggestions && msg.suggestions.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {msg.suggestions.map((suggestion, i) => {
+              const isStartBuilding = suggestion.includes('🚀') || suggestion.toLowerCase().includes('start building') || suggestion.toLowerCase().includes('ready to build');
+              return (
+                <button
+                  key={i}
+                  onClick={() => {
+                    if (isStartBuilding) {
+                      handleApproveAndBuild(msg);
+                    } else {
+                      onSend(suggestion.replace(/^🚀\s*/, ''));
+                    }
+                  }}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-[11px] transition-all",
+                    isStartBuilding
+                      ? "bg-teal-500/15 border border-teal-500/30 text-teal-300 hover:bg-teal-500/25 hover:border-teal-500/50 font-medium"
+                      : "bg-white/[0.04] border border-white/[0.06] text-white/50 hover:text-white/80 hover:bg-white/[0.08]"
+                  )}
+                >
+                  {suggestion}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {isStreaming && !hasFiles && fileNames.length > 0 && (
           <div className="flex items-center gap-2 text-xs">
             <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />
@@ -1154,13 +1217,23 @@ export function BuilderChatPanel({
                       </div>
                     )}
                   </div>
-                  {/* Timestamp — show on hover */}
+                  {/* Timestamp + mode badge — show on hover */}
                   <div className={cn(
-                    "text-[9px] text-white/15 mt-1 opacity-0 group-hover/msg:opacity-100 transition-opacity",
-                    msg.role === 'user' ? 'text-right' : 'text-left'
+                    "flex items-center gap-1.5 text-[9px] text-white/15 mt-1 opacity-0 group-hover/msg:opacity-100 transition-opacity",
+                    msg.role === 'user' ? 'justify-end' : 'justify-start'
                   )}>
                     {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     {msg.tokenEstimate && ` · ~${msg.tokenEstimate} tokens`}
+                    {msg.mode && (
+                      <span className={cn(
+                        "px-1.5 py-0.5 rounded-full text-[8px] font-semibold uppercase tracking-wider",
+                        msg.mode === 'discuss'
+                          ? "bg-teal-500/15 text-teal-400/70"
+                          : "bg-violet-500/15 text-violet-400/70"
+                      )}>
+                        {msg.mode === 'discuss' ? 'Chat' : 'Build'}
+                      </span>
+                    )}
                   </div>
                 </div>
               </Wrapper>
