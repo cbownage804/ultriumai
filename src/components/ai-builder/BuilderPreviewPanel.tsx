@@ -489,10 +489,8 @@ window.addEventListener('message', function(e) {
               title="App Preview"
             />
           </div>
-        ) : isGenerating ? (
+        ) : isGenerating || isCompiling ? (
           <SkeletonPreview />
-        ) : isCompiling ? (
-          <CompilationProgress fileCount={projectFiles?.length} />
         ) : (
           <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden">
             {/* Neon background */}
