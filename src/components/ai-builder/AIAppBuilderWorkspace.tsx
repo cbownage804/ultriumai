@@ -354,7 +354,7 @@ export function AIAppBuilderWorkspace() {
                 envVars: envVarsRef.current,
               }),
               new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error('Worker timeout')), 15000)
+                setTimeout(() => reject(new Error('Worker timeout')), 30_000)
               ),
             ]);
             if (compiled?.html) {
