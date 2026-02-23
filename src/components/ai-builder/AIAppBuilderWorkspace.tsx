@@ -294,7 +294,7 @@ export function AIAppBuilderWorkspace() {
     setStableHTML(null); // Also clear React state so CompilationBridge sees the reset
 
     const { files: parsedFiles, deletions, edits } = parseMultiFileOutput(job.output_content);
-    let compilePromise: Promise<void> = Promise.resolve();
+    // (compilePromise removed — compilation is now handled solely by CompilationBridge)
     let mergedFiles = [...project.files];
     if (parsedFiles.length > 0 || deletions.length > 0 || edits.length > 0) {
       if (deletions.length > 0) mergedFiles = mergedFiles.filter(f => !deletions.includes(f.path));
@@ -325,7 +325,7 @@ export function AIAppBuilderWorkspace() {
       // Immediately persist so tab-switch can't lose data
       saveDraftImmediateRef.current(project.name, mergedFiles, []);
 
-      // 1. Self-contained HTML shortcut — for vanilla HTML with a generated or patched index.html
+      // Self-contained HTML shortcut — for vanilla HTML with a generated or patched index.html
       const hasReactFiles = mergedFiles.some(f => /\.(tsx|jsx)$/.test(f.path));
       const newIndexFile = parsedFiles.find(f => f.path === 'index.html');
       const editedIndex = edits.some(e => e.path === 'index.html');
@@ -340,60 +340,10 @@ export function AIAppBuilderWorkspace() {
         setPreviewRefreshKey(k => k + 1);
       }
 
-      // 2. Always compile if shortcut didn't fire — handles React projects AND
-      // vanilla HTML 2nd+ builds where index.html wasn't regenerated
-      if (!stableHTMLRef.current) {
-        console.info('[handleBgComplete] Compiling project — hasReactFiles:', hasReactFiles, 'fileCount:', mergedFiles.length);
-        compilePromise = (async () => {
-          try {
-            // Try worker compilation first (handles React + vanilla)
-            const compiled = await Promise.race([
-              compileReactProjectRef.current(mergedFiles, {
-                supabaseConfig: supabaseConfigRef.current || undefined,
-                stripeConfig: stripeConfigRef.current || undefined,
-                envVars: envVarsRef.current,
-              }),
-              new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error('Worker timeout')), 30_000)
-              ),
-            ]);
-            if (compiled?.html) {
-              console.info('[handleBgComplete] Worker compilation succeeded —', compiled.html.length, 'chars, errors:', compiled.errors?.length || 0);
-              stableHTMLRef.current = compiled.html;
-              setStableHTML(compiled.html);
-              setPreviewRefreshKey(k => k + 1);
-            }
-          } catch (e) {
-            console.warn('[handleBgComplete] Worker compilation failed:', e);
-            // Vanilla-only fallback: use index.html directly (React index.html is just an empty #root div)
-            if (!stableHTMLRef.current && !hasReactFiles) {
-              const existingIndex = mergedFiles.find(f => f.path === 'index.html');
-              if (existingIndex?.content?.includes('</html>')) {
-                console.info('[handleBgComplete] Falling back to existing index.html');
-                stableHTMLRef.current = existingIndex.content;
-                setStableHTML(existingIndex.content);
-                setPreviewRefreshKey(k => k + 1);
-              }
-            }
-            // React projects: stableHTMLRef stays null → guaranteed fallback below shows ERROR_FALLBACK_HTML
-          }
-        })();
-      }
-
-      // 3. Guaranteed fallback: always show something after compilation attempt
-      compilePromise = compilePromise.then(() => {
-        if (!stableHTMLRef.current) {
-          console.warn('[handleBgComplete] No preview available — setting error fallback');
-          stableHTMLRef.current = ERROR_FALLBACK_HTML;
-          setStableHTML(ERROR_FALLBACK_HTML);
-          setPreviewRefreshKey(k => k + 1);
-        }
-      });
-      // Wait for compilation, then always force iframe refresh
-      compilePromise.then(() => {
-        setPreviewRefreshKey(k => k + 1);
-      });
-      console.info('[handleBgComplete] Files set, compilation queued');
+      // Compilation is NOT done here — CompilationBridge handles it when
+      // isGenerating flips to false. This eliminates the race condition where
+      // both handleBgComplete and CompilationBridge would compile simultaneously.
+      console.info('[handleBgComplete] Files merged (%d files), deferring compilation to CompilationBridge', mergedFiles.length);
 
       // Post-build snapshot for history
       const totalChanges = parsedFiles.length + edits.length;
@@ -430,10 +380,6 @@ export function AIAppBuilderWorkspace() {
       window.dispatchEvent(new CustomEvent('bg-job-completed', { detail: { jobId } }));
     }, 500);
 
-    // Still wait for compilation to finish for logging/cleanup, but don't block UI
-    compilePromise.catch((err) => {
-      console.warn('[handleBgComplete] Compilation promise rejected:', err);
-    });
   }, [project.files, setFiles, setMessages]);
 
   // SSE streaming: update streaming ref only — NO setFiles during streaming.
