@@ -1,14 +1,18 @@
 /**
- * useWorkerCompiler — Hook that communicates with the compiler Web Worker.
+ * useWorkerCompiler — Hook that compiles projects via server-side Edge Function.
  * 
- * Replaces direct calls to useReactCompiler's compileReactProject,
- * moving all compilation off the main thread.
+ * PRIMARY PATH: Calls the `compile-project` edge function for reliable,
+ * server-side compilation (Lovable parity).
+ * 
+ * FALLBACK: If the edge function fails (network error, timeout), falls back
+ * to the in-browser Web Worker compiler.
  */
 
 import { useCallback, useEffect, useRef } from 'react';
 import type { ProjectFile } from './useProjectFileSystem';
 import type { CDNPackageEntry } from '@/workers/packageData';
 import type { CompileRequest, CompileResponse, CompileErrorResponse, WorkerResponse } from '@/workers/compiler.worker';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface WorkerCompilerResult {
   html: string;
@@ -17,6 +21,7 @@ export interface WorkerCompilerResult {
   errors: string[];
 }
 
+// ── Shared Worker for fallback ──
 let workerInstance: Worker | null = null;
 let workerRefCount = 0;
 
@@ -36,7 +41,6 @@ let releaseTimer: ReturnType<typeof setTimeout> | null = null;
 function releaseSharedWorker() {
   workerRefCount--;
   if (workerRefCount <= 0) {
-    // Delay termination to survive quick remounts (React strict mode, route transitions)
     releaseTimer = setTimeout(() => {
       if (workerRefCount <= 0 && workerInstance) {
         workerInstance.terminate();
@@ -53,6 +57,49 @@ function getSharedWorkerSafe(): Worker {
     releaseTimer = null;
   }
   return getSharedWorker();
+}
+
+// ── Server-side compilation ──
+async function compileViaEdgeFunction(
+  files: ProjectFile[],
+  options?: {
+    supabaseConfig?: { url: string; anonKey: string } | null;
+    stripeConfig?: { publishableKey: string } | null;
+    envVars?: { key: string; value: string }[];
+    userPackages?: CDNPackageEntry[];
+  }
+): Promise<WorkerCompilerResult> {
+  const t0 = Date.now();
+  console.info('[ServerCompiler] Calling compile-project edge function with', files.length, 'files');
+
+  const { data, error } = await supabase.functions.invoke('compile-project', {
+    body: {
+      files: files.map(f => ({ path: f.path, content: f.content, language: f.language })),
+      options: options ? {
+        supabaseConfig: options.supabaseConfig || undefined,
+        stripeConfig: options.stripeConfig || undefined,
+        envVars: options.envVars,
+        userPackages: options.userPackages,
+      } : undefined,
+    },
+  });
+
+  if (error) {
+    throw new Error(`Edge function error: ${error.message}`);
+  }
+
+  if (!data || !data.html) {
+    throw new Error('Edge function returned empty result');
+  }
+
+  console.info('[ServerCompiler] Compiled in', Date.now() - t0, 'ms, HTML:', data.html.length, 'chars');
+
+  return {
+    html: data.html,
+    isReactProject: true,
+    componentCount: data.componentCount || 0,
+    errors: data.errors || [],
+  };
 }
 
 export function useWorkerCompiler() {
@@ -93,7 +140,6 @@ export function useWorkerCompiler() {
 
     return () => {
       worker.removeEventListener('message', handler);
-      // Reject any pending compilations
       for (const [, { reject }] of pendingRef.current) {
         reject(new Error('Worker compiler unmounted'));
       }
@@ -103,7 +149,7 @@ export function useWorkerCompiler() {
     };
   }, []);
 
-  const compileReactProject = useCallback(async (
+  const compileViaWorker = useCallback(async (
     files: ProjectFile[],
     options?: {
       supabaseConfig?: { url: string; anonKey: string } | null;
@@ -137,6 +183,37 @@ export function useWorkerCompiler() {
       worker.postMessage(request);
     });
   }, []);
+
+  /**
+   * Primary compilation function:
+   * 1. Try server-side edge function (fast, reliable, Lovable parity)
+   * 2. Fall back to in-browser worker if edge function fails
+   */
+  const compileReactProject = useCallback(async (
+    files: ProjectFile[],
+    options?: {
+      supabaseConfig?: { url: string; anonKey: string } | null;
+      stripeConfig?: { publishableKey: string } | null;
+      envVars?: { key: string; value: string }[];
+      userPackages?: CDNPackageEntry[];
+    }
+  ): Promise<WorkerCompilerResult> => {
+    // Try server-side compilation first
+    try {
+      const result = await Promise.race([
+        compileViaEdgeFunction(files, options),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Server compilation timeout (25s)')), 25_000)
+        ),
+      ]);
+      return result;
+    } catch (serverErr: any) {
+      console.warn('[Compiler] Server compilation failed, falling back to worker:', serverErr.message);
+    }
+
+    // Fallback to worker
+    return compileViaWorker(files, options);
+  }, [compileViaWorker]);
 
   return { compileReactProject };
 }
