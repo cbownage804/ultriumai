@@ -5,6 +5,7 @@ import {
   X, Brain, Compass, Code2,
   LayoutGrid, Wrench, AlertTriangle, Copy, ChevronDown, Check, Pencil,
   Crosshair, Plus, Camera, Paperclip, AtSign, Rocket,
+  Settings, Clock, BookOpen, GitBranch,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -52,6 +53,10 @@ interface BuilderChatPanelProps {
   streamingContentRef?: MutableRefObject<string>;
   /** New conversation handler — clears messages but keeps files */
   onNewConversation?: () => void;
+  onShowSettings?: () => void;
+  onShowHistory?: () => void;
+  onShowKnowledge?: () => void;
+  onShowGitHub?: () => void;
 }
 
 
@@ -270,6 +275,7 @@ export function BuilderChatPanel({
   onToggleVisualEdit, isVisualEditActive, onSelectStarterTemplate,
   supabaseConfig, onUpdateMessages, questionsSlot,
   streamingContentRef, onNewConversation,
+  onShowSettings, onShowHistory, onShowKnowledge, onShowGitHub,
 }: BuilderChatPanelProps) {
   const [input, setInput] = useState('');
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -1312,12 +1318,44 @@ export function BuilderChatPanel({
                   <Plus className="h-4 w-4" />
                 </button>
               </PopoverTrigger>
-              <PopoverContent side="top" align="start" className="w-48 p-1 bg-[#1a1a22] border-white/[0.1] shadow-xl">
+              <PopoverContent side="top" align="start" className="w-56 p-1 bg-[#1a1a22] border-white/[0.1] shadow-xl">
+                {/* Navigation group */}
+                <button
+                  onClick={() => { setPlusMenuOpen(false); onShowSettings?.(); }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
+                >
+                  <Settings className="h-4 w-4 text-white/40" />
+                  <span className="flex-1 text-left">Project settings</span>
+                  <kbd className="text-[10px] text-white/25 font-mono">Ctrl+.</kbd>
+                </button>
+                <button
+                  onClick={() => { setPlusMenuOpen(false); onShowHistory?.(); }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
+                >
+                  <Clock className="h-4 w-4 text-white/40" />
+                  History
+                </button>
+                <button
+                  onClick={() => { setPlusMenuOpen(false); onShowKnowledge?.(); }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
+                >
+                  <BookOpen className="h-4 w-4 text-white/40" />
+                  Knowledge
+                </button>
+                <button
+                  onClick={() => { setPlusMenuOpen(false); onShowGitHub?.(); }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
+                >
+                  <GitBranch className="h-4 w-4 text-white/40" />
+                  GitHub
+                </button>
+                {/* Separator */}
+                <div className="border-t border-white/[0.06] my-1" />
+                {/* Action group */}
                 <button
                   onClick={async () => {
                     setPlusMenuOpen(false);
                     try {
-                      // Find the preview iframe
                       const iframe = document.querySelector('iframe[title="Preview"]') as HTMLIFrameElement | null;
                       if (!iframe) { toast.error('No preview to capture'); return; }
                       const html2canvas = (await import('html2canvas')).default;
@@ -1346,7 +1384,7 @@ export function BuilderChatPanel({
                   onClick={() => { setPlusMenuOpen(false); fileInputRef.current?.click(); }}
                   className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
                 >
-                <Paperclip className="h-4 w-4 text-white/40" />
+                  <Paperclip className="h-4 w-4 text-white/40" />
                   Attach
                 </button>
                 {/* Prompt Templates */}
