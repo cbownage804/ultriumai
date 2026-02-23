@@ -1176,12 +1176,19 @@ export function AIAppBuilderWorkspace() {
           if (projectName.length >= 3) {
             renameProject(projectName);
             hasAutoNamed.current = true;
+            // Persist auto-generated name to database
+            if (currentProjectId) {
+              supabase.from('builder_projects')
+                .update({ name: projectName } as any)
+                .eq('id', currentProjectId)
+                .then(() => console.log('Project auto-named:', projectName));
+            }
           }
         }
       }
     }
     prevIsGeneratingRef.current = isGenerating;
-  }, [isGenerating, latestFiles.length, messages, project.name, renameProject]);
+  }, [isGenerating, latestFiles.length, messages, project.name, renameProject, currentProjectId]);
 
   // Issue 8 fix: streamingFilePath as ref to avoid workspace re-renders
   const streamingFilePathRef = useRef<string | null>(null);
@@ -2097,19 +2104,19 @@ export function AIAppBuilderWorkspace() {
     }
   }, [saveProject, project.name, project.files, branches, activeBranch, messages, clearDraft, compiledForHosting, captureAndUpload, linkedGPT]);
 
-  // Auto-capture thumbnail after generation completes (Issue 18: reuse stableHTML instead of redundant getCompiledHTML)
+  // Auto-capture thumbnail after generation completes — use refs to avoid stale closure
   const wasGeneratingRef = useRef(false);
   useEffect(() => {
     if (wasGeneratingRef.current && !isGenerating && project.files.length > 0 && currentProjectId) {
-      const html = compiledForHosting;
-      if (html) {
-        setTimeout(() => {
+      setTimeout(() => {
+        const html = compiledForHostingRef.current || stableHTMLRef.current;
+        if (html) {
           captureAndUpload(html, currentProjectId).catch(() => {});
-        }, 2000);
-      }
+        }
+      }, 4000);
     }
     wasGeneratingRef.current = isGenerating;
-  }, [isGenerating, project.files.length, currentProjectId, compiledForHosting, captureAndUpload]);
+  }, [isGenerating, project.files.length, currentProjectId, captureAndUpload]);
 
   // Auto-advance to next phase when generation completes and autoAdvance is on
   useEffect(() => {
