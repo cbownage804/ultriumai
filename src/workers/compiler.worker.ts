@@ -509,8 +509,39 @@ async function compileReactProject(
 
   let mountScript: string;
   const hasEntryMount = entryFile && /createRoot|ReactDOM\.render/.test(entryFile.content);
+
+  // ErrorBoundary class — always injected so runtime errors show visually instead of blank page
+  const errorBoundaryClass = `
+    class __PreviewErrorBoundary extends React.Component {
+      constructor(props) { super(props); this.state = { hasError: false, error: null }; }
+      static getDerivedStateFromError(error) { return { hasError: true, error }; }
+      componentDidCatch(error, info) { console.error('React Boundary:', error, info); window.parent.postMessage({ type: '__PREVIEW_ERROR__', error: { message: error.message, stack: info.componentStack, source: 'react-boundary', critical: true } }, '*'); }
+      render() {
+        if (this.state.hasError) {
+          return React.createElement('div', { style: { padding: 40, color: '#ef4444', fontFamily: 'system-ui' } },
+            React.createElement('h2', null, 'Runtime Error'),
+            React.createElement('pre', { style: { whiteSpace: 'pre-wrap', marginTop: 12 } }, this.state.error?.message)
+          );
+        }
+        return this.props.children;
+      }
+    }`;
+
   if (hasEntryMount) {
-    mountScript = '';
+    // Entry file handles mounting — patch createRoot to auto-wrap with ErrorBoundary
+    mountScript = `
+(function() {
+  ${errorBoundaryClass}
+  var _origCreateRoot = ReactDOM.createRoot.bind(ReactDOM);
+  ReactDOM.createRoot = function(container, options) {
+    var root = _origCreateRoot(container, options);
+    var _origRender = root.render.bind(root);
+    root.render = function(element) {
+      _origRender(React.createElement(__PreviewErrorBoundary, null, element));
+    };
+    return root;
+  };
+})();`;
   } else {
     const routerWrapStart = usesReactRouter ? `
     var { MemoryRouter } = window.__pkg_react_router_dom || {};
@@ -525,22 +556,9 @@ try {
                          (typeof ${rootComponent} !== 'undefined' ? ${rootComponent} : null);
   if (RootComponent) {
     ${routerWrapStart}
-    class ErrorBoundary extends React.Component {
-      constructor(props) { super(props); this.state = { hasError: false, error: null }; }
-      static getDerivedStateFromError(error) { return { hasError: true, error }; }
-      componentDidCatch(error, info) { console.error('React Boundary:', error, info); window.parent.postMessage({ type: '__PREVIEW_ERROR__', error: { message: error.message, stack: info.componentStack, source: 'react-boundary', critical: true } }, '*'); }
-      render() {
-        if (this.state.hasError) {
-          return React.createElement('div', { style: { padding: 40, color: '#ef4444', fontFamily: 'system-ui' } },
-            React.createElement('h2', null, 'Runtime Error'),
-            React.createElement('pre', { style: { whiteSpace: 'pre-wrap', marginTop: 12 } }, this.state.error?.message)
-          );
-        }
-        return this.props.children;
-      }
-    }
+    ${errorBoundaryClass}
     var root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(React.createElement(ErrorBoundary, null, wrappedElement));
+    root.render(React.createElement(__PreviewErrorBoundary, null, wrappedElement));
     window.parent.postMessage({ type: '__PREVIEW_READY__' }, '*');
   } else {
     document.getElementById('root').innerHTML = '<div style="padding:40px;text-align:center;color:#888;">No root component found. Export a default component from App.tsx.</div>';
