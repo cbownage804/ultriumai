@@ -12,9 +12,8 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react({
       parserConfig(id) {
-        // Worker files: parse as plain TypeScript (no JSX/TSX) to prevent React Refresh injection
-        // (workers lack `window`), but still transpile TS syntax like interfaces/types.
-        if (/\/workers\//.test(id)) return { syntax: 'typescript', tsx: false };
+        // Skip worker files to prevent React Refresh injection (workers lack `window`)
+        if (/\/workers\//.test(id)) return undefined;
         if (id.endsWith('.tsx')) return { syntax: 'typescript', tsx: true };
         if (id.endsWith('.ts') || id.endsWith('.mts')) return { syntax: 'typescript', tsx: false };
         if (id.endsWith('.jsx') || id.endsWith('.mdx')) return { syntax: 'ecmascript', jsx: true };
