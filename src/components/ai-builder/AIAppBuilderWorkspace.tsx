@@ -322,6 +322,7 @@ export function AIAppBuilderWorkspace() {
         console.info('[handleBgComplete] Self-contained index.html detected — setting preview directly');
         stableHTMLRef.current = indexFile.content;
         setStableHTML(indexFile.content);
+        setPreviewRefreshKey(k => k + 1);
       }
 
       // 2. React/TSX projects: compile directly with worker before releasing state
@@ -343,6 +344,7 @@ export function AIAppBuilderWorkspace() {
               console.info('[handleBgComplete] Worker compilation succeeded');
               stableHTMLRef.current = compiled.html;
               setStableHTML(compiled.html);
+              setPreviewRefreshKey(k => k + 1);
             }
           } catch (e) {
             console.warn('[handleBgComplete] Worker compilation failed:', e);
@@ -356,6 +358,7 @@ export function AIAppBuilderWorkspace() {
           console.warn('[handleBgComplete] No preview available — setting error fallback');
           stableHTMLRef.current = ERROR_FALLBACK_HTML;
           setStableHTML(ERROR_FALLBACK_HTML);
+          setPreviewRefreshKey(k => k + 1);
         }
       });
       console.info('[handleBgComplete] Files set, compilation queued');
