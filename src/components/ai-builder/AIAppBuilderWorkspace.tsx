@@ -355,22 +355,10 @@ export function AIAppBuilderWorkspace() {
               ),
             ]);
             if (compiled?.html) {
-              // Check if compiled HTML contains a syntax/compilation error
-              const isErrorHTML = /Syntax Error|Compilation Error|Module Error/i.test(compiled.html) && compiled.html.length < 5000;
-              if (!isErrorHTML) {
-                console.info('[handleBgComplete] Worker compilation succeeded —', compiled.html.length, 'chars');
-                stableHTMLRef.current = compiled.html;
-                setStableHTML(compiled.html);
-                setPreviewRefreshKey(k => k + 1);
-              } else {
-                console.warn('[handleBgComplete] Worker returned error HTML, trying vanilla fallback');
-                const existingIndex = mergedFiles.find(f => f.path === 'index.html');
-                if (existingIndex?.content?.includes('</html>')) {
-                  stableHTMLRef.current = existingIndex.content;
-                  setStableHTML(existingIndex.content);
-                  setPreviewRefreshKey(k => k + 1);
-                }
-              }
+              console.info('[handleBgComplete] Worker compilation succeeded —', compiled.html.length, 'chars, errors:', compiled.errors?.length || 0);
+              stableHTMLRef.current = compiled.html;
+              setStableHTML(compiled.html);
+              setPreviewRefreshKey(k => k + 1);
             }
           } catch (e) {
             console.warn('[handleBgComplete] Worker compilation failed:', e);
