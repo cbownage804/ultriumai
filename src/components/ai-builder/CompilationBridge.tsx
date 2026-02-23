@@ -136,8 +136,9 @@ export function CompilationBridge({
   const prevIsGeneratingForReset = useRef(false);
   useEffect(() => {
     if (isGenerating && !prevIsGeneratingForReset.current) {
-      // Generation STARTING — keep the current preview visible (don't null stableHTML).
-      // Only reset liveCompiledHTML so the fresh compilation result will be accepted.
+      // Generation STARTING — reset internal state so 2nd+ builds recompile correctly.
+      // Clear stableHTML ref (but keep state for visual continuity until new HTML arrives).
+      stableHTMLRef.current = null;
       setLiveCompiledHTML(null);
       compilationAttemptedRef.current = false;
       compilationLockRef.current = false;
