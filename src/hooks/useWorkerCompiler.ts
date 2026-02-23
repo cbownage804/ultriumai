@@ -188,6 +188,9 @@ export function useWorkerCompiler() {
    * Primary compilation function:
    * 1. Try server-side edge function (fast, reliable, Lovable parity)
    * 2. Fall back to in-browser worker if edge function fails
+   *
+   * @param localOnly — If true, skip edge function and compile locally only.
+   *   Used for incremental edits where speed matters more than full server parity.
    */
   const compileReactProject = useCallback(async (
     files: ProjectFile[],
@@ -196,8 +199,26 @@ export function useWorkerCompiler() {
       stripeConfig?: { publishableKey: string } | null;
       envVars?: { key: string; value: string }[];
       userPackages?: CDNPackageEntry[];
+      /** Skip edge function — compile locally for instant feedback on edits */
+      localOnly?: boolean;
     }
   ): Promise<WorkerCompilerResult> => {
+    // For incremental edits, skip the network round-trip entirely
+    if (options?.localOnly) {
+      console.info('[Compiler] Local-only mode — skipping edge function for instant update');
+      try {
+        return await Promise.race([
+          compileViaWorker(files, options),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('Local compilation timeout (15s)')), 15_000)
+          ),
+        ]);
+      } catch (workerErr: any) {
+        console.warn('[Compiler] Local compilation failed:', workerErr.message);
+        // Fall through to server as last resort
+      }
+    }
+
     // Try server-side compilation first
     try {
       const result = await Promise.race([

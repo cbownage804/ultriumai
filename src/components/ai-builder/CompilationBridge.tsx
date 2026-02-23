@@ -125,6 +125,8 @@ export function CompilationBridge({
 
   // ── SINGLE in-flight guard — replaces all previous lock/attempted/digest refs ──
   const compilationInFlightRef = useRef(false);
+  // Track whether the next compile is an incremental edit (not first generation)
+  const isIncrementalEditRef = useRef(false);
 
   // ── liveCompiledHTML (async, post-generation) ──
   const [liveCompiledHTML, setLiveCompiledHTML] = useState<string | null>(null);
@@ -137,22 +139,25 @@ export function CompilationBridge({
   // ── Core compile function ──
   const runCompile = useCallback(async () => {
     const currentFiles = filesRef.current;
-    console.info('[CompilationBridge] runCompile — isReact:', isReactProject, 'files:', currentFiles.length);
+    const useLocalOnly = isIncrementalEditRef.current;
+    console.info('[CompilationBridge] runCompile — isReact:', isReactProject, 'files:', currentFiles.length, 'localOnly:', useLocalOnly);
 
     let result: string | null = null;
 
     if (isReactProject) {
       try {
+        const timeout = useLocalOnly ? 15_000 : 30_000;
         const workerTimeout = new Promise<null>((resolve) =>
           setTimeout(() => {
-            console.warn('[CompilationBridge] Worker compilation timed out after 30s — trying vanilla fallback');
+            console.warn(`[CompilationBridge] Compilation timed out after ${timeout / 1000}s`);
             resolve(null);
-          }, 30_000)
+          }, timeout)
         );
         const workerResult = compileReactProjectRef.current(currentFiles, {
           supabaseConfig: supabaseConfig || undefined,
           stripeConfig: stripeConfig || undefined,
           envVars,
+          localOnly: useLocalOnly,
         }).then(compiled => {
           if (compiled.errors.length > 0) {
             console.warn('[ReactCompiler] Warnings:', compiled.errors);
@@ -180,6 +185,8 @@ export function CompilationBridge({
       } catch { result = null; }
     }
 
+    // Reset flag after use
+    isIncrementalEditRef.current = false;
     return result;
   }, [isReactProject, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, linkedGPT]);
 
@@ -232,7 +239,8 @@ export function CompilationBridge({
       if (patched === 'soft-reload') {
         softReloadPendingRef.current = true;
       }
-      // Fall through to full recompile
+      // Fall through to full recompile — but mark as incremental edit for local-only compilation
+      isIncrementalEditRef.current = true;
       stableHTMLRef.current = null; // Allow recompile
     }
 
@@ -244,7 +252,8 @@ export function CompilationBridge({
       return;
     }
 
-    // Single 150ms debounce, then compile
+    // Shorter debounce for incremental edits (50ms) vs initial generation (150ms)
+    const debounceMs = isIncrementalEditRef.current ? 50 : 150;
     const timer = setTimeout(async () => {
       // Double-check guards after debounce
       if (compilationInFlightRef.current) return;

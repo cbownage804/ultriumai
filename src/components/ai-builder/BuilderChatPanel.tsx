@@ -483,12 +483,25 @@ export function BuilderChatPanel({
   };
 
   // Compress an image file to max 1200px to avoid oversized payloads
+  // Also enforces a 500KB cap on the output data URL
+  const MAX_DATA_URL_SIZE = 500_000; // 500KB — prevents edge function payload errors
+  const MAX_IMAGE_COUNT = 5;
+
   const compressImage = useCallback((file: File): Promise<string> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
+      // Reject files over 20MB upfront
+      if (file.size > 20 * 1024 * 1024) {
+        reject(new Error(`File too large: ${(file.size / 1024 / 1024).toFixed(1)}MB (max 20MB)`));
+        return;
+      }
+
       const img = new window.Image();
       const url = URL.createObjectURL(file);
+
+      const cleanup = () => URL.revokeObjectURL(url);
+
       img.onload = () => {
-        URL.revokeObjectURL(url);
+        cleanup();
         const MAX = 1200;
         let { width, height } = img;
         if (width > MAX || height > MAX) {
@@ -499,7 +512,11 @@ export function BuilderChatPanel({
         const canvas = document.createElement('canvas');
         canvas.width = width;
         canvas.height = height;
-        const ctx = canvas.getContext('2d')!;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas context unavailable'));
+          return;
+        }
         // Preserve transparency for PNGs by not filling background
         const keepPng = file.type === 'image/png';
         if (!keepPng) {
@@ -507,12 +524,46 @@ export function BuilderChatPanel({
           ctx.fillRect(0, 0, width, height);
         }
         ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL(keepPng ? 'image/png' : 'image/jpeg', 0.8));
+
+        let dataUrl = canvas.toDataURL(keepPng ? 'image/png' : 'image/jpeg', 0.8);
+
+        // If still too large, progressively reduce quality
+        if (dataUrl.length > MAX_DATA_URL_SIZE && !keepPng) {
+          for (const q of [0.6, 0.4, 0.25]) {
+            dataUrl = canvas.toDataURL('image/jpeg', q);
+            if (dataUrl.length <= MAX_DATA_URL_SIZE) break;
+          }
+        }
+
+        // Last resort: scale down further
+        if (dataUrl.length > MAX_DATA_URL_SIZE) {
+          const scale = 0.5;
+          const smallCanvas = document.createElement('canvas');
+          smallCanvas.width = Math.round(width * scale);
+          smallCanvas.height = Math.round(height * scale);
+          const sCtx = smallCanvas.getContext('2d');
+          if (sCtx) {
+            sCtx.drawImage(canvas, 0, 0, smallCanvas.width, smallCanvas.height);
+            dataUrl = smallCanvas.toDataURL('image/jpeg', 0.5);
+          }
+        }
+
+        resolve(dataUrl);
       };
+
       img.onerror = () => {
-        URL.revokeObjectURL(url);
+        cleanup();
+        // Fallback: read raw file as data URL (works for exotic formats)
         const reader = new FileReader();
-        reader.onload = (ev) => resolve(ev.target?.result as string);
+        reader.onload = (ev) => {
+          const result = ev.target?.result as string;
+          if (result && result.length <= MAX_DATA_URL_SIZE * 2) {
+            resolve(result);
+          } else {
+            reject(new Error('Image too large after processing'));
+          }
+        };
+        reader.onerror = () => reject(new Error('Failed to read image file'));
         reader.readAsDataURL(file);
       };
       img.src = url;
@@ -523,18 +574,38 @@ export function BuilderChatPanel({
     const files = e.target.files;
     if (!files) return;
     Array.from(files).forEach(async (file) => {
-      // Support both images and other file types; SVGs can't be reliably canvas-compressed
-      if (!file.type.startsWith('image/') || file.type === 'image/svg+xml') {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          setImagePreviews(prev => [...prev, ev.target?.result as string]);
-        };
-        reader.readAsDataURL(file);
-        return;
+      // Enforce max image count
+      setImagePreviews(prev => {
+        if (prev.length >= MAX_IMAGE_COUNT) {
+          toast.error(`Max ${MAX_IMAGE_COUNT} images allowed`);
+          return prev;
+        }
+        return prev;
+      });
+
+      try {
+        // Support both images and other file types; SVGs can't be reliably canvas-compressed
+        if (!file.type.startsWith('image/') || file.type === 'image/svg+xml') {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            setImagePreviews(prev => {
+              if (prev.length >= MAX_IMAGE_COUNT) return prev;
+              return [...prev, ev.target?.result as string];
+            });
+          };
+          reader.onerror = () => toast.error(`Failed to read ${file.name}`);
+          reader.readAsDataURL(file);
+          return;
+        }
+        // Compress raster images to prevent network errors from oversized payloads
+        const compressed = await compressImage(file);
+        setImagePreviews(prev => {
+          if (prev.length >= MAX_IMAGE_COUNT) return prev;
+          return [...prev, compressed];
+        });
+      } catch (err: any) {
+        toast.error(err?.message || `Failed to process ${file.name}`);
       }
-      // Compress raster images to prevent network errors from oversized payloads
-      const compressed = await compressImage(file);
-      setImagePreviews(prev => [...prev, compressed]);
     });
     e.target.value = '';
   }, [compressImage]);
@@ -548,7 +619,15 @@ export function BuilderChatPanel({
         const file = item.getAsFile();
         if (!file) continue;
         compressImage(file).then(compressed => {
-          setImagePreviews(prev => [...prev, compressed]);
+          setImagePreviews(prev => {
+            if (prev.length >= MAX_IMAGE_COUNT) {
+              toast.error(`Max ${MAX_IMAGE_COUNT} images allowed`);
+              return prev;
+            }
+            return [...prev, compressed];
+          });
+        }).catch((err: any) => {
+          toast.error(err?.message || 'Failed to paste image');
         });
       }
     }
