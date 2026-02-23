@@ -511,8 +511,8 @@ export function AIAppBuilderWorkspace() {
       }
     };
 
-    // Check on mount
-    recoverJobs();
+    // Check on mount (deferred 500ms to unblock first paint)
+    const mountTimer = setTimeout(recoverJobs, 500);
 
     // Check when tab becomes visible again
     const handleVisible = () => {
@@ -523,6 +523,7 @@ export function AIAppBuilderWorkspace() {
     document.addEventListener('visibilitychange', handleVisible);
     return () => {
       cancelled = true;
+      clearTimeout(mountTimer);
       document.removeEventListener('visibilitychange', handleVisible);
     };
   }, [backgroundGen]);
@@ -943,24 +944,27 @@ export function AIAppBuilderWorkspace() {
     }
   }, [envVariables]);
 
-  // Fetch schema when Supabase config changes (for AI context injection + type generation)
+  // Fetch schema when Supabase config changes (deferred 2s to unblock first paint)
   useEffect(() => {
     if (supabaseConfig?.url && serviceKeys.length > 0) {
-      const serviceKey = serviceKeys.find(k => k.serviceId === 'supabase_service_role');
-      if (serviceKey) {
-        schemaIntrospection.fetchSchema(supabaseConfig.url, serviceKey.apiKey).then(schema => {
-          if (schema) {
-            const typesFile = schemaIntrospection.generateTypesFile();
-            if (typesFile) upsertFile(typesFile.path, typesFile.content);
-          }
-        });
-      }
+      const timer = setTimeout(() => {
+        const serviceKey = serviceKeys.find(k => k.serviceId === 'supabase_service_role');
+        if (serviceKey) {
+          schemaIntrospection.fetchSchema(supabaseConfig.url, serviceKey.apiKey).then(schema => {
+            if (schema) {
+              const typesFile = schemaIntrospection.generateTypesFile();
+              if (typesFile) upsertFile(typesFile.path, typesFile.content);
+            }
+          });
+        }
+      }, 2000);
+      return () => clearTimeout(timer);
     }
   }, [supabaseConfig?.url, serviceKeys]);
 
-  // Collaborative cursor broadcasting via Supabase Realtime
+  // Collaborative cursor broadcasting via Supabase Realtime (gated on active file)
   useEffect(() => {
-    if (!currentProjectId) return;
+    if (!currentProjectId || !activeFile) return;
     const channel = supabase.channel(`cursors:${currentProjectId}`);
     channelRef.current = channel;
 
