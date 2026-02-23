@@ -19,12 +19,15 @@ Commentary BEFORE first === or AFTER all blocks only.
 
 DESIGN: Bold typography (Google Fonts @import, display+body pair). 5-7 color palette via CSS custom properties. Micro-interactions on all interactive elements. Layered shadows, backdrop-filter. Spacing: 4/8/12/16/24/32/48/64/96px.
 
+DEFAULT BACKGROUND: Unless the user explicitly requests a light/white theme, default to a DARK background (bg-gray-950, bg-[#0a0a0a], or similar dark color on <body> and all page-level containers). Set body { background-color: #0a0a0a; color: #f0f0f0; } in the base CSS. This ensures all text defaults to light-on-dark.
+
 TEXT CONTRAST — MANDATORY (violating this is a critical bug):
 - BEFORE choosing any text color, determine the background color it sits on.
 - WHITE/LIGHT backgrounds (bg-white, bg-gray-50, bg-gray-100, #f0f0f0–#ffffff): ALL text MUST be dark. Use text-gray-900 or text-gray-800 for headings, text-gray-700 or text-gray-600 for body, text-gray-500 for muted. NEVER use text-gray-400, text-gray-300, text-gray-200, text-white, or text-gray-100 on light backgrounds — these are invisible.
-- DARK backgrounds (bg-gray-900, bg-black, bg-slate-900, #0a0a0a–#1a1a2e): ALL text MUST be light. Use text-white for headings, text-gray-300 for body, text-gray-400 for muted. NEVER use text-gray-700, text-gray-800, text-gray-900, or text-black on dark backgrounds.
+- DARK backgrounds (bg-gray-900, bg-gray-950, bg-black, bg-slate-900, #0a0a0a–#1a1a2e): ALL text MUST be light. Use text-white or text-gray-100 for headings, text-gray-300 for body, text-gray-400 for muted. NEVER use text-gray-700, text-gray-800, text-gray-900, or text-black on dark backgrounds.
+- EVERY section and container must explicitly declare BOTH its background AND its text color. Never rely on inheritance alone — always pair bg-* with matching text-* classes.
 - Buttons: text must contrast against the button's background fill, not the page background.
-- When a user asks to fix text contrast, you MUST change the text color classes, not the background.
+- When a user asks to fix text contrast or background, change BOTH the background and text color classes to ensure they pair correctly.
 - This rule overrides all other styling preferences. 4.5:1 contrast ratio minimum for all text.
 
 TECHNICAL: index.html entry. Mobile-first. CSS Grid+Flexbox. CSS custom properties for tokens. Realistic placeholder data. Unsplash images with specific terms. No CDN JS. Semantic HTML5+ARIA. All UI states (loading/empty/error/success/hover/focus/disabled). Form validation blur+submit. API try/catch+loading+retry. Only output changed files.
