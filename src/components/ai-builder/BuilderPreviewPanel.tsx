@@ -1,8 +1,8 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import {
   RefreshCw,
-  ArrowLeft, ArrowRight, Lock, Wrench, X,
+  ArrowLeft, ArrowRight, Lock, Wrench, X, ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import previewBgNeon from '@/assets/preview-bg-neon.jpg';
@@ -64,6 +64,10 @@ export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFix
   const [currentUrl, setCurrentUrl] = useState('/');
   const [urlHistory, setUrlHistory] = useState<string[]>(['/']);
   const [historyIndex, setHistoryIndex] = useState(0);
+  const [isUrlEditing, setIsUrlEditing] = useState(false);
+  const [urlDraft, setUrlDraft] = useState('/');
+  const [showRouteDropdown, setShowRouteDropdown] = useState(false);
+  const urlInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const internalIframeRef = useRef<HTMLIFrameElement>(null);
   const iframeRef = externalIframeRef || internalIframeRef;
@@ -411,9 +415,67 @@ window.addEventListener('message', function(e) {
     return () => window.removeEventListener('message', handler);
   }, [historyIndex, onUrlChange]);
 
+  // Extract routes from project files for the route dropdown
+  const detectedRoutes = useMemo(() => {
+    if (!projectFiles || projectFiles.length === 0) return ['/'];
+    const routes = new Set<string>(['/']);
+    for (const file of projectFiles) {
+      // Match React Router <Route path="..." /> patterns
+      const routeMatches = file.content.matchAll(/<Route\s[^>]*path=["']([^"']+)["']/g);
+      for (const m of routeMatches) {
+        const path = m[1];
+        if (path && !path.includes(':') && !path.includes('*')) routes.add(path);
+      }
+      // Match hash-based routes: case '#/about': or '#about'
+      const hashMatches = file.content.matchAll(/['"]#\/?([a-zA-Z0-9_/-]+)['"]/g);
+      for (const m of hashMatches) {
+        routes.add('/#' + m[1]);
+      }
+      // Match window.location.hash assignments
+      const hashAssign = file.content.matchAll(/location\.hash\s*=\s*['"]#?\/?([a-zA-Z0-9_/-]+)['"]/g);
+      for (const m of hashAssign) {
+        routes.add('/#' + m[1]);
+      }
+      // Match href="#..." links
+      const hrefHash = file.content.matchAll(/href=["']#([a-zA-Z0-9_/-]+)["']/g);
+      for (const m of hrefHash) {
+        routes.add('/#' + m[1]);
+      }
+      // Match href="/..." links (non-external)
+      const hrefPath = file.content.matchAll(/href=["'](\/[a-zA-Z0-9_/-]*)["']/g);
+      for (const m of hrefPath) {
+        if (!m[1].startsWith('//')) routes.add(m[1]);
+      }
+    }
+    return Array.from(routes).sort();
+  }, [projectFiles]);
+
+  const navigateToRoute = useCallback((route: string) => {
+    setCurrentUrl(route);
+    onUrlChange?.(route);
+    setUrlHistory(prev => [...prev.slice(0, historyIndex + 1), route]);
+    setHistoryIndex(prev => prev + 1);
+    // Send navigation message to iframe
+    if (iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.postMessage({
+        type: '__NAVIGATE__',
+        url: route,
+      }, '*');
+    }
+    setShowRouteDropdown(false);
+    setIsUrlEditing(false);
+  }, [historyIndex, onUrlChange, iframeRef]);
+
   const canGoBack = historyIndex > 0;
   const canGoForward = historyIndex < urlHistory.length - 1;
 
+  // Close route dropdown on outside click
+  useEffect(() => {
+    if (!showRouteDropdown) return;
+    const handler = () => setShowRouteDropdown(false);
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, [showRouteDropdown]);
 
   return (
     <div ref={containerRef} className="flex flex-col h-full bg-[#0d0d14] relative">
@@ -446,12 +508,83 @@ window.addEventListener('message', function(e) {
               </button>
             </div>
 
-            {/* Read-only URL bar */}
-            <div className="flex-1 flex items-center gap-1.5 bg-white/[0.04] border border-white/[0.06] rounded-lg h-7 px-2.5">
-              <Lock className="h-2.5 w-2.5 text-emerald-400/60 shrink-0" />
-              <span className="text-[11px] text-white/30 font-mono truncate">
-                preview.ultriumai.app{currentUrl}
-              </span>
+            {/* Editable URL bar with route dropdown */}
+            <div className="flex-1 relative" onClick={(e) => e.stopPropagation()}>
+              <div
+                className={cn(
+                  "flex items-center gap-1.5 bg-white/[0.04] border rounded-lg h-7 px-2.5 cursor-text transition-colors",
+                  isUrlEditing ? "border-cyan-500/40 bg-white/[0.06]" : "border-white/[0.06] hover:border-white/10"
+                )}
+                onClick={() => {
+                  if (!isUrlEditing) {
+                    setIsUrlEditing(true);
+                    setUrlDraft(currentUrl);
+                    setTimeout(() => urlInputRef.current?.select(), 0);
+                  }
+                }}
+              >
+                <Lock className="h-2.5 w-2.5 text-emerald-400/60 shrink-0" />
+                {isUrlEditing ? (
+                  <input
+                    ref={urlInputRef}
+                    value={urlDraft}
+                    onChange={(e) => setUrlDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        navigateToRoute(urlDraft.startsWith('/') ? urlDraft : '/' + urlDraft);
+                      } else if (e.key === 'Escape') {
+                        setIsUrlEditing(false);
+                      }
+                    }}
+                    onBlur={() => setTimeout(() => setIsUrlEditing(false), 200)}
+                    autoFocus
+                    className="flex-1 bg-transparent text-[11px] text-white/60 font-mono outline-none min-w-0"
+                    spellCheck={false}
+                  />
+                ) : (
+                  <span className="text-[11px] text-white/30 font-mono truncate flex-1">
+                    {currentUrl}
+                  </span>
+                )}
+                {detectedRoutes.length > 1 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowRouteDropdown(prev => !prev);
+                      setIsUrlEditing(false);
+                    }}
+                    className="h-4 w-4 rounded flex items-center justify-center text-white/20 hover:text-white/50 transition-colors shrink-0"
+                    title={`${detectedRoutes.length} pages detected`}
+                  >
+                    <ChevronDown className={cn("h-3 w-3 transition-transform", showRouteDropdown && "rotate-180")} />
+                  </button>
+                )}
+              </div>
+
+              {/* Route dropdown */}
+              {showRouteDropdown && detectedRoutes.length > 1 && (
+                <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-[#12121a] border border-white/[0.08] rounded-lg shadow-2xl overflow-hidden">
+                  <div className="px-2.5 py-1.5 text-[9px] text-white/25 uppercase tracking-wider font-medium border-b border-white/[0.06]">
+                    Pages ({detectedRoutes.length})
+                  </div>
+                  <div className="max-h-48 overflow-y-auto py-1">
+                    {detectedRoutes.map(route => (
+                      <button
+                        key={route}
+                        onClick={() => navigateToRoute(route)}
+                        className={cn(
+                          "w-full text-left px-3 py-1.5 text-[11px] font-mono transition-colors",
+                          route === currentUrl
+                            ? "text-cyan-400 bg-cyan-500/10"
+                            : "text-white/50 hover:text-white/80 hover:bg-white/[0.04]"
+                        )}
+                      >
+                        {route}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Right toolbar — responsive only */}
