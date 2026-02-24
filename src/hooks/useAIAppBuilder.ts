@@ -989,7 +989,20 @@ export function useAIAppBuilder() {
       }
     }
     // Replace imageDataUrls with potentially augmented version
-    const effectiveImageDataUrls = generatedImageDataUrls.length > 0 ? generatedImageDataUrls : imageDataUrls;
+    let effectiveImageDataUrls = generatedImageDataUrls.length > 0 ? generatedImageDataUrls : imageDataUrls;
+
+    // Compress uploaded images before sending to AI — shrink below embed cap
+    if (effectiveImageDataUrls?.length) {
+      try {
+        const { optimizeImage: optimizeImg } = await import('@/utils/imageOptimization');
+        const compressed = await Promise.all(
+          effectiveImageDataUrls.map(url => optimizeImg(url, { maxWidth: 400, quality: 0.7, tryWebP: true }))
+        );
+        effectiveImageDataUrls = compressed.map(r => r.dataUrl);
+      } catch (compErr) {
+        console.warn('Image compression failed, using originals:', compErr);
+      }
+    }
 
     // Phase 86: Inject schema context if Supabase is connected and types.ts exists
     if (supabaseConfig && currentFiles.some(f => f.path === 'types.ts' || f.path === 'src/types.ts')) {
@@ -1048,6 +1061,16 @@ export function useAIAppBuilder() {
       if (effectiveImageDataUrls?.length) {
         const logoUrls = effectiveImageDataUrls.map((url, i) => `IMAGE_${i + 1}_DATA_URL: ${url}`).join('\n');
         apiMessages.push({ role: 'system', content: `[ASSET PRIORITY — CRITICAL]\nThe user has uploaded ${effectiveImageDataUrls.length} image(s) to use as the logo/branding.\n\nYou MUST embed the uploaded image in the navbar and footer using the exact data URL below.\nDo NOT use a text placeholder like "Glenn's Body Shop Logo" — use an <img> tag with this src:\n\n${logoUrls}\n\nExample usage:\n<img src="${effectiveImageDataUrls[0]}" alt="Logo" style="height:48px;" />\n\nUse the SCRAPED CONTENT for the site's text and data. The uploaded image is ONLY for the logo.` });
+      }
+    }
+
+    // ASSET PRIORITY for logo intent even without URL clone
+    if (!urlClone.hasURL && effectiveImageDataUrls?.length) {
+      const isLogoIntentEarly = /\b(logo|icon|favicon|brand|nav\s*bar|header|footer)\b/i.test(input)
+        || /\b(use\s*(this|it|that|the\s*attach))/i.test(input);
+      if (isLogoIntentEarly) {
+        const logoUrls = effectiveImageDataUrls.map((url, i) => `IMAGE_${i + 1}_DATA_URL: ${url}`).join('\n');
+        apiMessages.push({ role: 'system', content: `[ASSET PRIORITY — CRITICAL]\nThe user has uploaded ${effectiveImageDataUrls.length} image(s) to use as the logo/branding.\n\nYou MUST embed the uploaded image using the exact data URL below.\nDo NOT use a text placeholder — use an <img> tag with this src:\n\n${logoUrls}\n\nExample usage:\n<img src="${effectiveImageDataUrls[0]}" alt="Logo" style="height:48px;" />` });
       }
     }
 
@@ -1267,13 +1290,13 @@ export function useAIAppBuilder() {
       // CRITICAL: Also pass the raw data URLs as text so the AI can embed them in code.
       // Vision models can "see" the image but cannot extract the data URL string from the image_url block.
       // BUT: cap data URL size to prevent token overflow (max ~50KB per image = ~67K chars base64)
-      const MAX_DATA_URL_SIZE = 50000;
+      const MAX_DATA_URL_SIZE = 150000;
       const isLogoIntent = !!imageGenIntent
         || /\b(logo|icon|favicon|brand|nav\s*bar|header|footer)\b/i.test(input)
         || /\b(use\s*(this|it|that|the\s*attach))/i.test(input);
       if (rasterUrls.length > 0 && isLogoIntent) {
         const dataUrlRef = rasterUrls.map((url, i) => {
-          if (url.length > MAX_DATA_URL_SIZE) {
+          if (!isLogoIntent && url.length > MAX_DATA_URL_SIZE) {
             return `[EMBEDDABLE DATA URL FOR IMAGE ${i + 1}] — Image is too large to embed inline (${Math.round(url.length / 1024)}KB). The image is visible in the image_url block above — use a placeholder <img> with a TODO comment to replace with a hosted URL.`;
           }
           return `[EMBEDDABLE DATA URL FOR IMAGE ${i + 1}] — Copy this EXACT string into <img src="...">:\n${url}`;
