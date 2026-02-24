@@ -622,7 +622,7 @@ window.addEventListener('message', function(e) {
               title="App Preview"
             />
           </div>
-        ) : isGenerating || isCompiling ? (
+        ) : isGenerating || isCompiling || (projectFiles && projectFiles.length > 0) ? (
           <SkeletonPreview
             projectFiles={projectFiles}
             completedFileCount={completedFileCount}

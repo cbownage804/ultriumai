@@ -316,9 +316,10 @@ export function AIAppBuilderWorkspace() {
     preGenSnapshotRef.current = [...project.files];
     addSnapshotRef.current('Pre-build snapshot', project.files, 'auto');
 
-    // Clear stale HTML so every build triggers fresh compilation
-    stableHTMLRef.current = null;
-    setStableHTML(null); // Also clear React state so CompilationBridge sees the reset
+    // Only clear HTML on first build — keep previous preview visible during recompilation
+    if (!stableHTMLRef.current) {
+      setStableHTML(null);
+    }
 
     const { files: parsedFiles, deletions, edits } = parseMultiFileOutput(job.output_content);
     // (compilePromise removed — compilation is now handled solely by CompilationBridge)
