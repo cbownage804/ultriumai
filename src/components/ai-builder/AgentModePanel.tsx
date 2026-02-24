@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle2, Loader2, XCircle, Wrench, Brain, Code2, Search, ChevronDown, X, RotateCcw, Shield, FileCode, ArrowRight } from 'lucide-react';
+import { CheckCircle2, Loader2, XCircle, Wrench, Brain, Code2, Search, ChevronDown, X, RotateCcw, Shield, FileCode, ArrowRight, Undo2, Zap, Coins } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { AgentRun, AgentStep, AgentTask, AgentPlan } from '@/hooks/useAgentMode';
@@ -11,6 +11,7 @@ const STEP_META: Record<AgentStep['type'], { icon: typeof Brain; label: string }
   fix: { icon: Wrench, label: 'Fixing issues' },
   research: { icon: Search, label: 'Researching docs' },
   compile: { icon: Code2, label: 'Build verification' },
+  tool: { icon: Zap, label: 'Tool call' },
 };
 
 function formatElapsed(startMs?: number, endMs?: number): string {
@@ -117,9 +118,11 @@ interface AgentModePanelProps {
   onReorderQueue?: (newOrder: AgentTask[]) => void;
   onApprovePlan?: () => void;
   onRejectPlan?: () => void;
+  onRollbackToStep?: (stepId: string) => void;
+  streamingContent?: string;
 }
 
-export function AgentModePanel({ run, taskQueue, pendingApproval, onCancel, onCancelTask, onRetryTask, onClearCompleted, onApprovePlan, onRejectPlan }: AgentModePanelProps) {
+export function AgentModePanel({ run, taskQueue, pendingApproval, onCancel, onCancelTask, onRetryTask, onClearCompleted, onApprovePlan, onRejectPlan, onRollbackToStep, streamingContent }: AgentModePanelProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const hasActiveContent = run || taskQueue.some(t => ['queued', 'running', 'awaiting_approval'].includes(t.status));

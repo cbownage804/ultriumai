@@ -6,7 +6,7 @@ import { useAgentBuildVerifier } from './useAgentBuildVerifier';
 
 export type AgentStep = {
   id: string;
-  type: 'plan' | 'execute' | 'verify' | 'fix' | 'research' | 'compile';
+  type: 'plan' | 'execute' | 'verify' | 'fix' | 'research' | 'compile' | 'tool';
   label: string;
   status: 'pending' | 'running' | 'done' | 'error';
   detail?: string;
@@ -15,6 +15,12 @@ export type AgentStep = {
   completedAt?: number;
   /** Snapshot of project files taken BEFORE this step executed */
   preSnapshot?: ProjectFile[];
+  /** Token usage for this step */
+  tokensUsed?: number;
+  /** Whether this step can run in parallel with others */
+  parallel?: boolean;
+  /** Group ID for parallel steps */
+  parallelGroup?: string;
 };
 
 export type AgentPlan = {
@@ -24,6 +30,8 @@ export type AgentPlan = {
   steps: string[];
   dependencies: string[];
   approved: boolean;
+  /** Steps that can execute concurrently (indices into steps array) */
+  parallelGroups?: number[][];
 };
 
 export type AgentRun = {
