@@ -49,13 +49,21 @@ export function useProjectFileSystem() {
   const setFiles = useCallback((files: ProjectFile[]) => {
     setProject(prev => {
       const entryFile = files.find(f => f.path === 'index.html') || files[0];
+      const filePaths = new Set(files.map(f => f.path));
+      // Preserve existing open tabs that still exist, and ensure entry file is open
+      const preservedOpen = prev.openFilePaths.filter(p => filePaths.has(p));
+      const openFilePaths = preservedOpen.length > 0
+        ? (entryFile && !preservedOpen.includes(entryFile.path)
+            ? [...preservedOpen, entryFile.path]
+            : preservedOpen)
+        : (entryFile ? [entryFile.path] : []);
       return {
         ...prev,
         files,
-        activeFilePath: prev.activeFilePath && files.some(f => f.path === prev.activeFilePath)
+        activeFilePath: prev.activeFilePath && filePaths.has(prev.activeFilePath)
           ? prev.activeFilePath
           : entryFile?.path || null,
-        openFilePaths: entryFile ? [entryFile.path] : [],
+        openFilePaths,
       };
     });
   }, []);

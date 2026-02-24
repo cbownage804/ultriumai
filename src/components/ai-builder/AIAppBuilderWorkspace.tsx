@@ -298,6 +298,8 @@ export function AIAppBuilderWorkspace() {
   const isMobileRef = useRef(false);
   const setMobileTabRef = useRef<(tab: 'chat' | 'preview' | 'editor') => void>(() => {});
   const outputValidationRef = useRef<ReturnType<typeof useOutputValidation>>({ validate: () => ({ isValid: true, issues: [], score: 100 }) });
+  const setActiveFileRef = useRef(setActiveFile);
+  setActiveFileRef.current = setActiveFile;
 
 
   // Background generation: server-side builds that survive tab close
@@ -431,6 +433,16 @@ export function AIAppBuilderWorkspace() {
       // Diff review removed — always auto-apply all changes immediately
 
       setFiles(mergedFiles);
+      // Open all newly generated/edited files as tabs
+      const changedPaths = [...parsedFiles.map(f => f.path), ...edits.map(e => e.path)];
+      if (changedPaths.length > 0) {
+        const mainFile = changedPaths.find(p => /App\.(tsx|jsx)$/.test(p)) || changedPaths[0];
+        for (const p of changedPaths) {
+          setActiveFileRef.current(p);
+        }
+        // Set the main app file as active
+        if (mainFile) setActiveFileRef.current(mainFile);
+      }
       // Synchronously update refs so visibilitychange handler always has latest files
       latestFilesRef.current = mergedFiles;
       // Immediately persist so tab-switch can't lose data
