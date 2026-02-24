@@ -41,8 +41,9 @@ export function clearBuilderDraft() {
     sessionStorage.setItem(NEW_SESSION_FLAG, '1');
   } catch { /* */ }
 
-  // Clear localStorage draft
+  // Clear localStorage draft and cached compiled HTML
   try { localStorage.removeItem(DRAFT_KEY); } catch { /* */ }
+  try { localStorage.removeItem('ai-builder-compiled-html'); } catch { /* */ }
 
   // Clear IndexedDB session
   try {
