@@ -361,8 +361,9 @@ function trimMessagesToFit(messages: any[], maxChars: number): any[] {
   // Phase 1: Summarize old assistant messages (they contain huge file outputs)
   // NEVER summarize messages containing ASSET PRIORITY or EMBEDDABLE DATA URL — they have logo data URLs
   const isAssetMessage = (m: any): boolean => {
-    const c = typeof m.content === 'string' ? m.content : '';
-    return /ASSET PRIORITY|EMBEDDABLE DATA URL/i.test(c);
+    if (typeof m.content === 'string') return /ASSET PRIORITY|EMBEDDABLE DATA URL/i.test(m.content);
+    if (Array.isArray(m.content)) return m.content.some((b: any) => b.type === 'text' && /ASSET PRIORITY|EMBEDDABLE DATA URL/i.test(b.text || ''));
+    return false;
   };
   if (total > maxChars * 0.7) {
     result = result.map((m, i) => {
