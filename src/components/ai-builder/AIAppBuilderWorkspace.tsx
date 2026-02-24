@@ -16,6 +16,8 @@ import { useBranching } from '@/hooks/useBranching';
 import { useProjectPersistence } from '@/hooks/useProjectPersistence';
 import { useDraftPersistence } from '@/hooks/useDraftPersistence';
 import { useBackgroundGeneration, type BackgroundJob } from '@/hooks/useBackgroundGeneration';
+import { useAtomicFileApply } from '@/hooks/useAtomicFileApply';
+import { AgentDiffReviewModal, type FileChange } from './AgentDiffReviewModal';
 import { parseMultiFileOutput, applyHunkPatch, generateSuggestions } from '@/hooks/useAIAppBuilder';
 import { usePreviewHosting } from '@/hooks/usePreviewHosting';
 import { usePreviewCapture } from '@/hooks/usePreviewCapture';
@@ -228,6 +230,7 @@ export function AIAppBuilderWorkspace() {
     totalTokensUsed, contextBudget, continuationRound, sendMessage, stopGenerating, clearChat, restoreVersion, forwardErrorToChat,
     partialFilesRef, isStreamingPreview, completedFileCountRef, parseIncremental,
     streamingContentRef,
+    conversationForks, activeForkId, forkConversation, switchFork, deleteFork,
   } = useAIAppBuilder();
 
   const {
@@ -268,8 +271,12 @@ export function AIAppBuilderWorkspace() {
     executeAgentTask, getNextQueuedTask, isAnyRunning: isAgentRunning,
   } = useAgentMode();
   const autoRecovery = useAutoErrorRecovery();
+  const { applyBatch } = useAtomicFileApply();
 
-  // ── Pre-generation snapshot for undo/rollback ──
+  // ── Agent Diff Review Modal state ──
+  const [showAgentDiffReview, setShowAgentDiffReview] = useState(false);
+  const [agentDiffChanges, setAgentDiffChanges] = useState<FileChange[]>([]);
+  const diffResolverRef = useRef<((selectedPaths: string[] | null) => void) | null>(null);
   const preGenSnapshotRef = useRef<ProjectFile[] | null>(null);
   // Ref to break circular declaration order (versionTimeline declared after callbacks)
   const addSnapshotRef = useRef<(label: string, files: ProjectFile[], type: 'auto' | 'manual' | 'ai-generation' | 'revert', messageId?: string, commitMessage?: string) => void>(() => {});
@@ -2551,7 +2558,7 @@ export function AIAppBuilderWorkspace() {
         <div className="flex-1 overflow-hidden">
           {isMobile ? (
             mobileTab === 'chat' ? (
-              <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} contextBudget={contextBudget} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} onReview={() => { projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)); projectReview.setShowPanel(true); }} supabaseConfig={supabaseConfig} onUpdateMessages={setMessages} streamingContentRef={streamingContentRef} onNewConversation={handleNewConversation} onShowSettings={() => setShowSettingsModal(true)} onShowHistory={() => setShowVersionHistory(true)} onShowKnowledge={() => setShowKnowledge(true)} onShowGitHub={() => setShowGitHubPanel(true)} questionsSlot={builderQuestions.pending ? (
+              <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} contextBudget={contextBudget} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} onReview={() => { projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)); projectReview.setShowPanel(true); }} supabaseConfig={supabaseConfig} onUpdateMessages={setMessages} streamingContentRef={streamingContentRef} onNewConversation={handleNewConversation} onShowSettings={() => setShowSettingsModal(true)} onShowHistory={() => setShowVersionHistory(true)} onShowKnowledge={() => setShowKnowledge(true)} onShowGitHub={() => setShowGitHubPanel(true)} conversationForks={conversationForks} activeForkId={activeForkId} onForkConversation={forkConversation} onSwitchFork={switchFork} onDeleteFork={deleteFork} questionsSlot={builderQuestions.pending ? (
                 <div className="px-3 pt-2">
                   <QuestionsCard
                     questions={builderQuestions.pending.questions}
@@ -2623,7 +2630,7 @@ export function AIAppBuilderWorkspace() {
                 )}
                 <div className="flex-1 overflow-hidden flex flex-col">
                   <div className="flex-1 overflow-hidden">
-                    <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} contextBudget={contextBudget} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} onReview={() => { projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)); projectReview.setShowPanel(true); }} supabaseConfig={supabaseConfig} onUpdateMessages={setMessages} streamingContentRef={streamingContentRef} onNewConversation={handleNewConversation} onShowSettings={() => setShowSettingsModal(true)} onShowHistory={() => setShowVersionHistory(true)} onShowKnowledge={() => setShowKnowledge(true)} onShowGitHub={() => setShowGitHubPanel(true)} questionsSlot={builderQuestions.pending ? (
+                    <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} contextBudget={contextBudget} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} onReview={() => { projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)); projectReview.setShowPanel(true); }} supabaseConfig={supabaseConfig} onUpdateMessages={setMessages} streamingContentRef={streamingContentRef} onNewConversation={handleNewConversation} onShowSettings={() => setShowSettingsModal(true)} onShowHistory={() => setShowVersionHistory(true)} onShowKnowledge={() => setShowKnowledge(true)} onShowGitHub={() => setShowGitHubPanel(true)} conversationForks={conversationForks} activeForkId={activeForkId} onForkConversation={forkConversation} onSwitchFork={switchFork} onDeleteFork={deleteFork} questionsSlot={builderQuestions.pending ? (
                       <div className="px-3 pt-2">
                         <QuestionsCard
                           questions={builderQuestions.pending.questions}
@@ -3201,6 +3208,14 @@ export function AIAppBuilderWorkspace() {
       {pendingConflicts && (
         <FileConflictDialog open={!!pendingConflicts} conflicts={pendingConflicts} onResolve={handleConflictResolve} onCancel={() => setPendingConflicts(null)} />
       )}
+      {/* Agent Diff Review Modal */}
+      <AgentDiffReviewModal
+        isOpen={showAgentDiffReview}
+        onClose={() => { setShowAgentDiffReview(false); diffResolverRef.current?.(null); }}
+        changes={agentDiffChanges}
+        onApproveSelected={(paths) => { setShowAgentDiffReview(false); diffResolverRef.current?.(paths); }}
+        onRejectAll={() => { setShowAgentDiffReview(false); diffResolverRef.current?.(null); }}
+      />
     </TooltipProvider>
   );
 }

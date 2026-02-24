@@ -1,6 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type { ProjectFile } from './useProjectFileSystem';
 import { toast } from 'sonner';
+import { useAgentWebResearch } from './useAgentWebResearch';
+import { useAgentBuildVerifier } from './useAgentBuildVerifier';
 
 export type AgentStep = {
   id: string;
@@ -152,6 +154,10 @@ export function useAgentMode() {
   const isProcessingRef = useRef(false);
   const errorBufferRef = useRef<string[]>([]);
   const approvalResolverRef = useRef<((approved: boolean) => void) | null>(null);
+
+  // Integration hooks
+  const { detectResearchNeeded, executeResearch, buildResearchContext } = useAgentWebResearch();
+  const { verifyBuild } = useAgentBuildVerifier();
 
   useEffect(() => {
     persistTasks(taskQueue);
@@ -383,6 +389,38 @@ export function useAgentMode() {
       updateStep(execStepId, { status: 'done', detail: 'Code generated', completedAt: Date.now() });
       completedStepLabels.push('Code generation complete');
 
+      // ─── Research: scan AI response for [SEARCH: ...] markers ───
+      const lastAssistantMsg = document.querySelector('[data-last-assistant]')?.textContent || '';
+      const researchQueries = detectResearchNeeded(lastAssistantMsg);
+      if (researchQueries.length > 0 && !controller.signal.aborted) {
+        const researchStepId = crypto.randomUUID();
+        setCurrentRun(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            steps: [
+              ...prev.steps,
+              { id: researchStepId, type: 'research' as const, label: `Researching: ${researchQueries[0].slice(0, 40)}...`, status: 'running' as const, startedAt: Date.now() },
+            ],
+          };
+        });
+
+        const results = await Promise.all(researchQueries.slice(0, 3).map(q => executeResearch(q)));
+        const validResults = results.filter(Boolean) as import('./useAgentWebResearch').ResearchResult[];
+        
+        if (validResults.length > 0) {
+          const researchCtx = buildResearchContext(validResults);
+          const enrichedPrompt = `${task.prompt}\n${researchCtx}`;
+          updateStep(researchStepId, { status: 'done', detail: `${validResults.length} source(s) found`, completedAt: Date.now() });
+          
+          // Re-send with enriched context
+          await sendMessage(enrichedPrompt, currentFiles, ...extraArgs);
+          completedStepLabels.push('Web research complete');
+        } else {
+          updateStep(researchStepId, { status: 'done', detail: 'No results found', completedAt: Date.now() });
+        }
+      }
+
       // Track modified files for cross-step context
       currentFiles.forEach(f => {
         const snapFile = execSnapshot.find(s => s.path === f.path);
@@ -395,7 +433,40 @@ export function useAgentMode() {
       const verifySnapshot = snapshotFiles(currentFiles);
       updateStep(verifyStepId, { status: 'running', startedAt: Date.now(), preSnapshot: verifySnapshot });
 
-      const errors = await waitForPreviewErrors();
+      const runtimeErrors = await waitForPreviewErrors();
+      if (controller.signal.aborted) return;
+
+      // ─── Build verification: run esbuild-wasm compilation check ───
+      const modifiedFiles = Array.from(modifiedFilesCtx.keys())
+        .map(p => currentFiles.find(f => f.path === p))
+        .filter(Boolean) as ProjectFile[];
+
+      let compileErrors: string[] = [];
+      if (modifiedFiles.length > 0) {
+        const compileStepId = crypto.randomUUID();
+        setCurrentRun(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            steps: [
+              ...prev.steps,
+              { id: compileStepId, type: 'compile' as const, label: 'Compiling TypeScript', status: 'running' as const, startedAt: Date.now() },
+            ],
+          };
+        });
+
+        const buildResult = await verifyBuild(modifiedFiles, currentFiles);
+        compileErrors = buildResult.errors.map(e => `${e.file}${e.line ? `:${e.line}` : ''}: ${e.message}`);
+        
+        updateStep(compileStepId, {
+          status: buildResult.success ? 'done' : 'error',
+          detail: buildResult.success ? `Compiled in ${Math.round(buildResult.duration)}ms` : `${buildResult.errors.length} error(s)`,
+          completedAt: Date.now(),
+        });
+      }
+
+      // Merge runtime + compile errors
+      const errors = [...runtimeErrors, ...compileErrors];
       if (controller.signal.aborted) return;
 
       let fixCount = 0;
@@ -498,7 +569,7 @@ export function useAgentMode() {
       abortRef.current = null;
       isProcessingRef.current = false;
     }
-  }, [updateStep, completeRun, waitForPreviewErrors, emitNotification, rollbackToSnapshot]);
+  }, [updateStep, completeRun, waitForPreviewErrors, emitNotification, rollbackToSnapshot, detectResearchNeeded, executeResearch, buildResearchContext, verifyBuild]);
 
   const enqueueTask = useCallback((prompt: string, imageDataUrls?: string[] | null): AgentTask => {
     const task: AgentTask = {

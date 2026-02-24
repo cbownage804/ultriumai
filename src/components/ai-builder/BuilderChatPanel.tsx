@@ -57,6 +57,12 @@ interface BuilderChatPanelProps {
   onShowHistory?: () => void;
   onShowKnowledge?: () => void;
   onShowGitHub?: () => void;
+  // Conversation forking
+  conversationForks?: { id: string; label: string; createdAt: Date }[];
+  activeForkId?: string | null;
+  onForkConversation?: () => void;
+  onSwitchFork?: (forkId: string) => void;
+  onDeleteFork?: (forkId: string) => void;
 }
 
 
@@ -382,6 +388,7 @@ export function BuilderChatPanel({
   supabaseConfig, onUpdateMessages, questionsSlot,
   streamingContentRef, onNewConversation,
   onShowSettings, onShowHistory, onShowKnowledge, onShowGitHub,
+  conversationForks, activeForkId, onForkConversation, onSwitchFork, onDeleteFork,
 }: BuilderChatPanelProps) {
   const [input, setInput] = useState('');
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -1834,6 +1841,54 @@ export function BuilderChatPanel({
                   <GitBranch className="h-4 w-4 text-white/40" />
                   GitHub
                 </button>
+                {onForkConversation && (
+                  <button
+                    onClick={() => { setPlusMenuOpen(false); onForkConversation(); }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
+                  >
+                    <GitBranch className="h-4 w-4 text-amber-400/60" />
+                    <span className="flex-1 text-left">Fork conversation</span>
+                    {conversationForks && conversationForks.length > 0 && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-medium">{conversationForks.length}</span>
+                    )}
+                  </button>
+                )}
+                {conversationForks && conversationForks.length > 0 && onSwitchFork && (
+                  <>
+                    <div className="border-t border-white/[0.06] my-1" />
+                    <div className="px-3 py-1 text-[9px] text-white/25 uppercase tracking-wider font-medium">Forks</div>
+                    {!activeForkId && (
+                      <button className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[12px] text-emerald-400 bg-emerald-500/[0.06]">
+                        <span>●</span> Main (active)
+                      </button>
+                    )}
+                    {activeForkId && (
+                      <button
+                        onClick={() => { setPlusMenuOpen(false); onSwitchFork('main'); }}
+                        className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[12px] text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors"
+                      >
+                        <span className="text-white/30">○</span> Main
+                      </button>
+                    )}
+                    {conversationForks.filter(f => f.id !== 'main').map(fork => (
+                      <button
+                        key={fork.id}
+                        onClick={() => { setPlusMenuOpen(false); onSwitchFork(fork.id); }}
+                        className={cn(
+                          "w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[12px] transition-colors",
+                          fork.id === activeForkId
+                            ? "text-amber-400 bg-amber-500/[0.06]"
+                            : "text-white/60 hover:text-white hover:bg-white/[0.06]"
+                        )}
+                      >
+                        <span className={fork.id === activeForkId ? "text-amber-400" : "text-white/30"}>
+                          {fork.id === activeForkId ? '●' : '○'}
+                        </span>
+                        {fork.label}
+                      </button>
+                    ))}
+                  </>
+                )}
                 {/* Separator */}
                 <div className="border-t border-white/[0.06] my-1" />
                 {/* Action group */}

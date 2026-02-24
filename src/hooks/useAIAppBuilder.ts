@@ -1568,6 +1568,65 @@ export function useAIAppBuilder() {
     await sendMessage(lastUserMsg.content, currentFiles, supabaseConfig, stripeConfig, serviceKeys, lastUserMsg.imageUrls, model);
   }, [messages, sendMessage]);
 
+  // ── Conversation Forking ──
+  const [conversationForks, setConversationForks] = useState<{
+    id: string;
+    label: string;
+    messages: BuilderMessage[];
+    filesSnapshot: ProjectFile[];
+    createdAt: Date;
+  }[]>([]);
+  const [activeForkId, setActiveForkId] = useState<string | null>(null);
+
+  const forkConversation = useCallback((label?: string) => {
+    const fork = {
+      id: crypto.randomUUID(),
+      label: label || `Fork ${conversationForks.length + 1}`,
+      messages: [...messages],
+      filesSnapshot: [...latestFiles],
+      createdAt: new Date(),
+    };
+    setConversationForks(prev => [...prev, fork]);
+    toast.success(`Conversation forked: ${fork.label}`);
+    return fork.id;
+  }, [messages, latestFiles, conversationForks.length]);
+
+  const switchFork = useCallback((forkId: string) => {
+    const fork = conversationForks.find(f => f.id === forkId);
+    if (!fork) return;
+    // Save current state as the "main" branch if not already forked
+    if (!activeForkId) {
+      const mainFork = {
+        id: 'main',
+        label: 'Main',
+        messages: [...messages],
+        filesSnapshot: [...latestFiles],
+        createdAt: new Date(),
+      };
+      setConversationForks(prev => {
+        if (prev.some(f => f.id === 'main')) {
+          return prev.map(f => f.id === 'main' ? mainFork : f);
+        }
+        return [mainFork, ...prev];
+      });
+    } else {
+      // Update the current fork's state
+      setConversationForks(prev => prev.map(f =>
+        f.id === activeForkId ? { ...f, messages: [...messages], filesSnapshot: [...latestFiles] } : f
+      ));
+    }
+    setMessages(fork.messages);
+    setLatestFiles(fork.filesSnapshot);
+    setActiveForkId(forkId === 'main' ? null : forkId);
+    toast.info(`Switched to: ${fork.label}`);
+  }, [conversationForks, activeForkId, messages, latestFiles]);
+
+  const deleteFork = useCallback((forkId: string) => {
+    if (forkId === 'main') return;
+    setConversationForks(prev => prev.filter(f => f.id !== forkId));
+    if (activeForkId === forkId) setActiveForkId(null);
+  }, [activeForkId]);
+
   return {
     messages,
     setMessages,
@@ -1590,6 +1649,12 @@ export function useAIAppBuilder() {
     tryToFix,
     editAndResend,
     retryLastMessage,
+    // Conversation forking
+    conversationForks,
+    activeForkId,
+    forkConversation,
+    switchFork,
+    deleteFork,
     // Streaming preview refs (not state — avoids workspace re-renders)
     partialFilesRef: streaming.partialFilesRef,
     isStreamingPreview: streaming.isStreaming,
