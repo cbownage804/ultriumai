@@ -19,7 +19,7 @@ import { useDraftPersistence } from '@/hooks/useDraftPersistence';
 import { useBackgroundGeneration, type BackgroundJob } from '@/hooks/useBackgroundGeneration';
 import { useAtomicFileApply } from '@/hooks/useAtomicFileApply';
 import { AgentDiffReviewModal, type FileChange } from './AgentDiffReviewModal';
-import { parseMultiFileOutput, applyHunkPatch, generateSuggestions } from '@/hooks/useAIAppBuilder';
+import { parseMultiFileOutput, applyHunkPatch, generateSuggestions, type BuilderMessage } from '@/hooks/useAIAppBuilder';
 import { usePreviewHosting } from '@/hooks/usePreviewHosting';
 import { usePreviewCapture } from '@/hooks/usePreviewCapture';
 import type { SupabaseConfig, GithubConfig, StripeConfig, VercelConfig, ServiceKey, EnvVar } from './ProjectSettings';
@@ -295,6 +295,16 @@ export function AIAppBuilderWorkspace() {
   const handleBgComplete = useCallback(async (job: BackgroundJob) => {
     if (!job.output_content) return;
 
+    // ── Suppress compilation for discuss-mode responses ──
+    // If the last message was a discuss-mode response, no files changed.
+    // Skip the entire build pipeline to preserve the current preview state.
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg?.mode === 'discuss') {
+      console.info('[handleBgComplete] Discuss-mode response — skipping compilation');
+      setIsGeneratingOverride(false);
+      return;
+    }
+
     // Save pre-generation snapshot for undo
     preGenSnapshotRef.current = [...project.files];
     addSnapshotRef.current('Pre-build snapshot', project.files, 'auto');
@@ -518,7 +528,7 @@ export function AIAppBuilderWorkspace() {
       window.dispatchEvent(new CustomEvent('bg-job-completed', { detail: { jobId } }));
     }, 500);
 
-  }, [project.files, setFiles, setMessages]);
+  }, [project.files, setFiles, setMessages, messages]);
 
   // SSE streaming: update streaming ref only — NO setFiles during streaming.
   // partialFilesRef + StreamingCodeEditor handle live file display via polling.
@@ -1673,22 +1683,87 @@ export function AIAppBuilderWorkspace() {
   }, [canUndo, canRedo, isGenerating, stopGenerating, showSettingsPanel, showFileSearch, showVersionHistory, showConsole, showEnvVars, showAssets, showPackages, showActivity, showBilling, showFileTree]);
 
   // ── Smart auto-escalation: detect complex prompts that benefit from Agent mode ──
+  // Phase: Tightened to prevent casual chat from triggering builds
   const shouldAutoEscalate = useCallback((input: string): boolean => {
     if (mode === 'build') return false; // Already in agent mode
+    // Short messages should NEVER escalate — they're almost always conversational
+    if (input.length < 80) return false;
     const lower = input.toLowerCase();
-    // Multi-file signals
-    const multiFileSignals = /\b(multiple files|several components|full.?stack|entire|refactor|overhaul|restructure|migrate|add.*and.*and)\b/i;
-    // Integration signals
-    const integrationSignals = /\b(supabase|stripe|api|database|auth|edge function|migration|deploy|backend)\b/i;
+    // Count how many signal categories match — require at least 2 to escalate
+    let signalCount = 0;
+    // Multi-file signals (specific phrases, not single words)
+    if (/\b(multiple files|several components|full.?stack|refactor all|overhaul|restructure|migrate from)\b/i.test(input)) signalCount++;
+    // Integration signals (specific tool names, not generic words like "api" or "add")
+    if (/\b(supabase|stripe|edge function|migration|deploy to|backend server)\b/i.test(input)) signalCount++;
     // Complexity signals (long prompt with action verbs)
-    const isComplex = input.length > 300 && /\b(create|build|implement|add|set up|configure|integrate)\b/i.test(lower);
+    if (input.length > 300 && /\b(create|build|implement|set up|configure|integrate)\b/i.test(lower)) signalCount++;
     // Multi-step signals
-    const multiStep = (lower.match(/\b(then|also|and then|next|after that|additionally|finally|step \d)\b/g) || []).length >= 2;
+    if ((lower.match(/\b(then|and then|next|after that|additionally|finally|step \d)\b/g) || []).length >= 2) signalCount++;
 
-    return multiFileSignals.test(input) || integrationSignals.test(input) || isComplex || multiStep;
+    return signalCount >= 2;
   }, [mode]);
 
-  const handleSend = (input: string, imageDataUrls?: string[] | null, skipQuestions?: boolean) => {
+  const handleSend = async (input: string, imageDataUrls?: string[] | null, skipQuestions?: boolean) => {
+    // ── LIGHTWEIGHT CHAT PATH ──
+    // When in discuss mode and auto-escalation doesn't trigger, bypass the entire
+    // build pipeline and call vanguard-general-chat directly. This avoids:
+    // - Background jobs, DB polling, compilation, version snapshots
+    // - Heavy file context scoring, import graph computation
+    // - Browser freezes from 100+ hooks reacting to build state changes
+    if (mode === 'discuss' && !shouldAutoEscalate(input)) {
+      const userMsg: BuilderMessage = {
+        id: crypto.randomUUID(),
+        role: 'user',
+        content: input,
+        timestamp: new Date(),
+        mode: 'discuss',
+      };
+      setMessages(prev => [...prev, userMsg]);
+      
+      // Build lightweight conversation history (last 20 messages, no file content)
+      const recentMessages = messages.slice(-20).map(m => ({
+        role: m.role,
+        content: m.role === 'assistant' 
+          ? m.content.replace(/===FILE:[\s\S]*?(?====FILE:|$)/g, '').slice(0, 500)
+          : m.content.slice(0, 2000),
+      }));
+      
+      try {
+        setIsGeneratingOverride(true);
+        const { data, error } = await supabase.functions.invoke('vanguard-general-chat', {
+          body: {
+            messages: [{ role: 'user', content: input }],
+            conversationHistory: recentMessages,
+            stream: false,
+          },
+        });
+        
+        if (error) throw error;
+        
+        const responseContent = data?.response || data?.choices?.[0]?.message?.content || 'I couldn\'t generate a response. Please try again.';
+        
+        setMessages(prev => [...prev, {
+          id: crypto.randomUUID(),
+          role: 'assistant' as const,
+          content: responseContent,
+          timestamp: new Date(),
+          mode: 'discuss',
+        }]);
+      } catch (err: any) {
+        console.error('[Chat] Lightweight chat error:', err);
+        setMessages(prev => [...prev, {
+          id: crypto.randomUUID(),
+          role: 'assistant' as const,
+          content: `⚠️ Chat error: ${err.message || 'Something went wrong'}. Please try again.`,
+          timestamp: new Date(),
+          mode: 'discuss',
+        }]);
+      } finally {
+        setIsGeneratingOverride(false);
+      }
+      return; // Skip entire build pipeline
+    }
+
     // Questions: intercept large prompts and ask clarifying questions first
     if (!skipQuestions) {
       const pendingQ = builderQuestions.analyzeForQuestions(input);
