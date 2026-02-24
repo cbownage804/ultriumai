@@ -353,10 +353,17 @@ function trimMessagesToFit(messages: any[], maxChars: number): any[] {
   let total = estimateTotalChars(result);
 
   // Phase 1: Summarize old assistant messages (they contain huge file outputs)
+  // NEVER summarize messages containing ASSET PRIORITY or EMBEDDABLE DATA URL — they have logo data URLs
+  const isAssetMessage = (m: any): boolean => {
+    const c = typeof m.content === 'string' ? m.content : '';
+    return /ASSET PRIORITY|EMBEDDABLE DATA URL/i.test(c);
+  };
   if (total > maxChars * 0.7) {
     result = result.map((m, i) => {
       // Keep first 2 and last 3 messages intact
       if (i < 2 || i >= result.length - 3) return m;
+      // Never summarize asset messages — they contain critical data URLs
+      if (isAssetMessage(m)) return m;
       if (m.role === 'assistant' && typeof m.content === 'string' && m.content.length > 500) {
         return { ...m, content: summarizeMessage(m) };
       }
@@ -368,12 +375,16 @@ function trimMessagesToFit(messages: any[], maxChars: number): any[] {
     total = estimateTotalChars(result);
   }
 
-  // Phase 2: Remove middle messages, keeping summary context
+  // Phase 2: Remove middle messages, keeping summary context — but preserve asset messages
   if (total > maxChars && result.length > 6) {
+    const middleMessages = result.slice(2, -3);
+    const assetMessages = middleMessages.filter(isAssetMessage);
+    const nonAssetMiddle = middleMessages.filter(m => !isAssetMessage(m));
     const keep = [
       ...result.slice(0, 2),
-      { role: 'system', content: `[CONVERSATION SUMMARY — ${result.length - 5} messages condensed]\n` +
-        result.slice(2, -3).map((m: any) => `[${m.role}] ${summarizeMessage(m)}`).join('\n') +
+      ...assetMessages,
+      { role: 'system', content: `[CONVERSATION SUMMARY — ${nonAssetMiddle.length} messages condensed]\n` +
+        nonAssetMiddle.map((m: any) => `[${m.role}] ${summarizeMessage(m)}`).join('\n') +
         '\n[END SUMMARY]' },
       ...result.slice(-3),
     ];
@@ -381,9 +392,9 @@ function trimMessagesToFit(messages: any[], maxChars: number): any[] {
     total = estimateTotalChars(result);
   }
 
-  // Phase 3: Remove all middle messages if still too large
+  // Phase 3: Remove all middle messages if still too large — but never asset messages
   while (total > maxChars && result.length > 4) {
-    const removeIdx = result.findIndex((_m: any, i: number) => i > 0 && i < result.length - 3);
+    const removeIdx = result.findIndex((_m: any, i: number) => i > 0 && i < result.length - 3 && !isAssetMessage(result[i]));
     if (removeIdx === -1) break;
     total -= estimateTotalChars([result[removeIdx]]);
     result.splice(removeIdx, 1);
