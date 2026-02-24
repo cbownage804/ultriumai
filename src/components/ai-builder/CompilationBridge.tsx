@@ -8,6 +8,7 @@ import type { LinkedGPTConfig } from './GPTConnectorPanel';
 import { useLivePreviewSync } from '@/hooks/useLivePreviewSync';
 
 const COMPILE_TIMEOUT_MS = 30_000;
+const COMPILE_SAFETY_TIMEOUT_MS = 45_000; // Hard safety net — if isCompiling stays true longer, force reset
 
 interface CompilationBridgeProps {
   files: ProjectFile[];
@@ -199,6 +200,8 @@ export function CompilationBridge({
       setLiveCompiledHTML(null);
       compilationInFlightRef.current = false;
       prevFilesDigestRef.current = '';
+      // Safety: force-clear isCompiling in case it was stuck from previous cycle
+      onCompilingChangeRef.current?.(false);
     }
     prevIsGeneratingRef.current = isGenerating;
   }, [isGenerating]);
@@ -254,6 +257,7 @@ export function CompilationBridge({
 
     // Shorter debounce for incremental edits (50ms) vs initial generation (150ms)
     const debounceMs = isIncrementalEditRef.current ? 50 : 150;
+    let safetyTimer: ReturnType<typeof setTimeout> | undefined;
     const timer = setTimeout(async () => {
       // Double-check guards after debounce
       if (compilationInFlightRef.current) return;
@@ -262,6 +266,19 @@ export function CompilationBridge({
       compilationInFlightRef.current = true;
       onCompilingChangeRef.current?.(true);
       console.info('[CompilationBridge] Starting compilation');
+
+      // Safety net: force-reset isCompiling if compilation hangs
+      safetyTimer = setTimeout(() => {
+        if (compilationInFlightRef.current) {
+          console.warn('[CompilationBridge] Compilation safety timeout — force resetting');
+          compilationInFlightRef.current = false;
+          onCompilingChangeRef.current?.(false);
+          if (!stableHTMLRef.current) {
+            setLiveCompiledHTML(ERROR_FALLBACK_HTML);
+            setStableHTML(ERROR_FALLBACK_HTML);
+          }
+        }
+      }, COMPILE_SAFETY_TIMEOUT_MS);
 
       try {
         // Yield to browser
@@ -296,12 +313,16 @@ export function CompilationBridge({
         setLiveCompiledHTML(ERROR_FALLBACK_HTML);
         setStableHTML(ERROR_FALLBACK_HTML);
       } finally {
+        clearTimeout(safetyTimer);
         compilationInFlightRef.current = false;
         onCompilingChangeRef.current?.(false);
       }
     }, debounceMs);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(safetyTimer);
+    };
   }, [filesDigest, isGenerating, supabaseConfig, stripeConfig, isReactProject, setStableHTML, runCompile]);
 
   // Expose forceCompile to parent
