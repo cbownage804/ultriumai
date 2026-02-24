@@ -289,6 +289,12 @@ export function AIAppBuilderWorkspace() {
   const latestFilesRef = useRef<ProjectFile[]>(project.files);
   latestFilesRef.current = project.files;
 
+  // Refs for UI state needed inside handleBgComplete (declared before callback, assigned later)
+  const rightTabRef = useRef<'preview' | 'code' | 'split'>('preview');
+  const setRightTabRef = useRef<(tab: 'preview' | 'code' | 'split') => void>(() => {});
+  const isMobileRef = useRef(false);
+  const setMobileTabRef = useRef<(tab: 'chat' | 'preview' | 'editor') => void>(() => {});
+
 
   // Background generation: server-side builds that survive tab close
   // Saves a snapshot before applying, enabling one-click rollback
@@ -296,11 +302,11 @@ export function AIAppBuilderWorkspace() {
     if (!job.output_content) return;
 
     // ── Suppress compilation for discuss-mode responses ──
-    // If the last message was a discuss-mode response, no files changed.
-    // Skip the entire build pipeline to preserve the current preview state.
-    const lastMsg = messages[messages.length - 1];
-    if (lastMsg?.mode === 'discuss') {
-      console.info('[handleBgComplete] Discuss-mode response — skipping compilation');
+    // Check actual output content for file markers instead of relying on stale `messages` closure.
+    const hasFileMarkers = /===FILE:|===EDIT:/.test(job.output_content);
+    const isShortChatResponse = job.output_content.length < 2000 && !hasFileMarkers;
+    if (isShortChatResponse && !job.output_content.includes('<!DOCTYPE')) {
+      console.info('[handleBgComplete] No file markers detected — treating as chat response');
       setIsGeneratingOverride(false);
       return;
     }
@@ -493,6 +499,22 @@ export function AIAppBuilderWorkspace() {
       // both handleBgComplete and CompilationBridge would compile simultaneously.
       console.info('[handleBgComplete] Files merged (%d files), deferring compilation to CompilationBridge', mergedFiles.length);
 
+      // Force CompilationBridge to recompile (safety net for timing races)
+      setTimeout(() => {
+        if (!stableHTMLRef.current) {
+          console.warn('[handleBgComplete] Safety net: stableHTML still null 300ms after merge — forcing compile');
+          forceCompileRef.current?.();
+        }
+      }, 300);
+
+      // Auto-switch to preview tab so user sees the result immediately
+      if (rightTabRef.current !== 'preview' && rightTabRef.current !== 'split') {
+        setRightTabRef.current('preview');
+      }
+      if (isMobileRef.current) {
+        setMobileTabRef.current('preview');
+      }
+
       // Post-build snapshot for history
       const totalChanges = parsedFiles.length + edits.length;
       addSnapshotRef.current(
@@ -528,7 +550,7 @@ export function AIAppBuilderWorkspace() {
       window.dispatchEvent(new CustomEvent('bg-job-completed', { detail: { jobId } }));
     }, 500);
 
-  }, [project.files, setFiles, setMessages, messages]);
+  }, [project.files, setFiles, setMessages]);
 
   // SSE streaming: update streaming ref only — NO setFiles during streaming.
   // partialFilesRef + StreamingCodeEditor handle live file display via polling.
@@ -701,6 +723,8 @@ export function AIAppBuilderWorkspace() {
   const [showRecoveryDialog, setShowRecoveryDialog] = useState(false);
 
   const [rightTab, setRightTab] = useState<'preview' | 'code' | 'split'>('preview');
+  rightTabRef.current = rightTab;
+  setRightTabRef.current = setRightTab;
   const [previewCurrentUrl, setPreviewCurrentUrl] = useState('/');
   // showShortcuts now managed by usePanelManager
   const [isEditingName, setIsEditingName] = useState(false);
@@ -2548,7 +2572,9 @@ export function AIAppBuilderWorkspace() {
 
   // Mobile detection
   const [isMobile, setIsMobile] = useState(false);
+  isMobileRef.current = isMobile;
   const [mobileTab, setMobileTab] = useState<'chat' | 'preview' | 'editor'>('chat');
+  setMobileTabRef.current = setMobileTab;
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 768px)');
