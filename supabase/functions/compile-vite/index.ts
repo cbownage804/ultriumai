@@ -40,6 +40,38 @@ serve(async (req) => {
       );
     }
 
+    // Auto-inject index.html if missing — Vite requires it as entry point
+    const hasIndexHtml = files.some((f: any) => f.path === "index.html");
+    if (!hasIndexHtml) {
+      // Determine the main entry file
+      const mainEntry = files.find((f: any) =>
+        f.path === "src/main.tsx" || f.path === "src/main.ts"
+      );
+      const entryPath = mainEntry ? `/${mainEntry.path}` : "/src/App.tsx";
+      
+      // Check if there's a CSS file to include
+      const cssFile = files.find((f: any) =>
+        f.path === "src/index.css" || f.path === "src/styles.css" || f.path === "src/App.css"
+      );
+
+      // If no main entry exists, create one that imports the App component
+      if (!mainEntry) {
+        const hasApp = files.some((f: any) => f.path === "src/App.tsx" || f.path === "src/App.ts");
+        if (hasApp) {
+          files.push({
+            path: "src/main.tsx",
+            content: `import React from 'react';\nimport ReactDOM from 'react-dom/client';\nimport App from './App';\n${cssFile ? `import './${cssFile.path.split('/').pop()}';\n` : ''}ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><App /></React.StrictMode>);`
+          });
+        }
+      }
+
+      files.push({
+        path: "index.html",
+        content: `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8" />\n<meta name="viewport" content="width=device-width, initial-scale=1.0" />\n<title>App</title>\n</head>\n<body>\n<div id="root"></div>\n<script type="module" src="${mainEntry ? entryPath : '/src/main.tsx'}"></script>\n</body>\n</html>`
+      });
+      console.log(`[compile-vite] Auto-injected index.html + ${!mainEntry ? 'main.tsx' : 'no extra entry'}`);
+    }
+
     console.log(`[compile-vite] Forwarding ${files.length} files to Vite sandbox at ${SANDBOX_URL}`);
     const t0 = Date.now();
 
