@@ -405,3 +405,7 @@ verify_jwt = false
 
 [functions.image-generation]
 verify_jwt = false
+
+# Real Terminal Execution (sandboxed command runner)
+[functions.terminal-exec]
+verify_jwt = false

@@ -9,6 +9,8 @@ const STEP_META: Record<AgentStep['type'], { icon: typeof Brain; label: string }
   execute: { icon: Code2, label: 'Generating code' },
   verify: { icon: Search, label: 'Verifying output' },
   fix: { icon: Wrench, label: 'Fixing issues' },
+  research: { icon: Search, label: 'Researching docs' },
+  compile: { icon: Code2, label: 'Build verification' },
 };
 
 function formatElapsed(startMs?: number, endMs?: number): string {

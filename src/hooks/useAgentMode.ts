@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 
 export type AgentStep = {
   id: string;
-  type: 'plan' | 'execute' | 'verify' | 'fix';
+  type: 'plan' | 'execute' | 'verify' | 'fix' | 'research' | 'compile';
   label: string;
   status: 'pending' | 'running' | 'done' | 'error';
   detail?: string;
