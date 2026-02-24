@@ -1,0 +1,91 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
+
+/**
+ * compile-vite — Edge function bridge to the Vite Sandbox Droplet.
+ * 
+ * Receives the same payload as compile-project, forwards to the Droplet
+ * running a real Vite build, and returns the compiled HTML.
+ * 
+ * Falls back gracefully if the Droplet is unreachable.
+ */
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  const SANDBOX_URL = Deno.env.get("VITE_SANDBOX_URL");
+  const SANDBOX_TOKEN = Deno.env.get("VITE_SANDBOX_TOKEN");
+
+  if (!SANDBOX_URL || !SANDBOX_TOKEN) {
+    return new Response(
+      JSON.stringify({ error: "Vite sandbox not configured", fallback: true }),
+      { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  try {
+    const body = await req.json();
+    const { files, options } = body;
+
+    if (!files || !Array.isArray(files) || files.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "No files provided" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log(`[compile-vite] Forwarding ${files.length} files to Vite sandbox at ${SANDBOX_URL}`);
+    const t0 = Date.now();
+
+    // Forward to Droplet with 35s timeout (Droplet has 30s internal timeout)
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 35_000);
+
+    const response = await fetch(`${SANDBOX_URL}/compile`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-sandbox-token": SANDBOX_TOKEN,
+      },
+      body: JSON.stringify({ files, options }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      console.error(`[compile-vite] Sandbox error (${response.status}):`, result.error);
+      return new Response(
+        JSON.stringify({ error: result.error, fallback: true }),
+        { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log(`[compile-vite] Success: ${result.html?.length || 0} chars in ${Date.now() - t0}ms`);
+
+    return new Response(
+      JSON.stringify(result),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+
+  } catch (err: any) {
+    const isTimeout = err.name === "AbortError";
+    console.error(`[compile-vite] ${isTimeout ? "Timeout" : "Error"}:`, err.message);
+
+    return new Response(
+      JSON.stringify({
+        error: isTimeout ? "Vite sandbox timed out" : err.message,
+        fallback: true,
+      }),
+      { status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});

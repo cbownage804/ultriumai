@@ -59,7 +59,55 @@ function getSharedWorkerSafe(): Worker {
   return getSharedWorker();
 }
 
-// ── Server-side compilation ──
+// ── Vite Sandbox compilation (true Vite on Droplet) ──
+async function compileViaViteSandbox(
+  files: ProjectFile[],
+  options?: {
+    supabaseConfig?: { url: string; anonKey: string } | null;
+    stripeConfig?: { publishableKey: string } | null;
+    envVars?: { key: string; value: string }[];
+    userPackages?: CDNPackageEntry[];
+  }
+): Promise<WorkerCompilerResult> {
+  const t0 = Date.now();
+  console.info('[ViteSandbox] Calling compile-vite edge function with', files.length, 'files');
+
+  const { data, error } = await supabase.functions.invoke('compile-vite', {
+    body: {
+      files: files.map(f => ({ path: f.path, content: f.content, language: f.language })),
+      options: options ? {
+        supabaseConfig: options.supabaseConfig || undefined,
+        stripeConfig: options.stripeConfig || undefined,
+        envVars: options.envVars,
+        userPackages: options.userPackages,
+      } : undefined,
+    },
+  });
+
+  if (error) {
+    throw new Error(`Vite sandbox error: ${error.message}`);
+  }
+
+  // If sandbox returned fallback flag, throw to trigger fallback path
+  if (data?.fallback) {
+    throw new Error(data.error || 'Vite sandbox unavailable — falling back');
+  }
+
+  if (!data || !data.html) {
+    throw new Error('Vite sandbox returned empty result');
+  }
+
+  console.info('[ViteSandbox] ✅ Compiled via real Vite in', Date.now() - t0, 'ms, HTML:', data.html.length, 'chars');
+
+  return {
+    html: data.html,
+    isReactProject: true,
+    componentCount: data.componentCount || 0,
+    errors: data.errors || [],
+  };
+}
+
+// ── Legacy server-side compilation (esbuild edge function) ──
 async function compileViaEdgeFunction(
   files: ProjectFile[],
   options?: {
@@ -219,7 +267,20 @@ export function useWorkerCompiler() {
       }
     }
 
-    // Try server-side compilation first
+    // 1. Try Vite Sandbox (true Vite on Droplet — Lovable parity)
+    try {
+      const result = await Promise.race([
+        compileViaViteSandbox(files, options),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Vite sandbox timeout (35s)')), 35_000)
+        ),
+      ]);
+      return result;
+    } catch (viteErr: any) {
+      console.warn('[Compiler] Vite sandbox failed, trying legacy server:', viteErr.message);
+    }
+
+    // 2. Fall back to legacy esbuild edge function
     try {
       const result = await Promise.race([
         compileViaEdgeFunction(files, options),
@@ -229,10 +290,10 @@ export function useWorkerCompiler() {
       ]);
       return result;
     } catch (serverErr: any) {
-      console.warn('[Compiler] Server compilation failed, falling back to worker:', serverErr.message);
+      console.warn('[Compiler] Legacy server compilation failed, falling back to worker:', serverErr.message);
     }
 
-    // Fallback to worker
+    // 3. Last resort: in-browser worker
     return compileViaWorker(files, options);
   }, [compileViaWorker]);
 
