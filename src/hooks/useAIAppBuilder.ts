@@ -996,7 +996,7 @@ export function useAIAppBuilder() {
       try {
         const { optimizeImage: optimizeImg } = await import('@/utils/imageOptimization');
         const compressed = await Promise.all(
-          effectiveImageDataUrls.map(url => optimizeImg(url, { maxWidth: 400, quality: 0.7, tryWebP: true }))
+          effectiveImageDataUrls.map(url => optimizeImg(url, { maxWidth: 200, quality: 0.5, tryWebP: true }))
         );
         effectiveImageDataUrls = compressed.map(r => r.dataUrl);
       } catch (compErr) {
@@ -1060,7 +1060,7 @@ export function useAIAppBuilder() {
       // If images are also attached, add explicit priority instructions WITH the actual data URLs
       if (effectiveImageDataUrls?.length) {
         const logoUrls = effectiveImageDataUrls.map((url, i) => `IMAGE_${i + 1}_DATA_URL: ${url}`).join('\n');
-        apiMessages.push({ role: 'system', content: `[ASSET PRIORITY — CRITICAL]\nThe user has uploaded ${effectiveImageDataUrls.length} image(s) to use as the logo/branding.\n\nYou MUST embed the uploaded image in the navbar and footer using the exact data URL below.\nDo NOT use a text placeholder like "Glenn's Body Shop Logo" — use an <img> tag with this src:\n\n${logoUrls}\n\nExample usage:\n<img src="${effectiveImageDataUrls[0]}" alt="Logo" style="height:48px;" />\n\nUse the SCRAPED CONTENT for the site's text and data. The uploaded image is ONLY for the logo.` });
+        apiMessages.push({ role: 'system', content: `[ASSET PRIORITY — CRITICAL]\nThe user has uploaded ${effectiveImageDataUrls.length} image(s) to use as the logo/branding.\n\nYou MUST embed the uploaded image in the navbar and footer.\nDo NOT use a text placeholder like "Glenn's Body Shop Logo".\nIMPORTANT: Store the data URL in a JS constant, do NOT put it directly in an HTML src attribute:\n  const LOGO_URL = "${effectiveImageDataUrls[0]}";\nThen reference it: <img src={LOGO_URL} alt="Logo" style="height:48px;" />\n\n${logoUrls}\n\nUse the SCRAPED CONTENT for the site's text and data. The uploaded image is ONLY for the logo.` });
       }
     }
 
@@ -1070,7 +1070,7 @@ export function useAIAppBuilder() {
         || /\b(use\s*(this|it|that|the\s*attach))/i.test(input);
       if (isLogoIntentEarly) {
         const logoUrls = effectiveImageDataUrls.map((url, i) => `IMAGE_${i + 1}_DATA_URL: ${url}`).join('\n');
-        apiMessages.push({ role: 'system', content: `[ASSET PRIORITY — CRITICAL]\nThe user has uploaded ${effectiveImageDataUrls.length} image(s) to use as the logo/branding.\n\nYou MUST embed the uploaded image using the exact data URL below.\nDo NOT use a text placeholder — use an <img> tag with this src:\n\n${logoUrls}\n\nExample usage:\n<img src="${effectiveImageDataUrls[0]}" alt="Logo" style="height:48px;" />` });
+        apiMessages.push({ role: 'system', content: `[ASSET PRIORITY — CRITICAL]\nThe user has uploaded ${effectiveImageDataUrls.length} image(s) to use as the logo/branding.\n\nYou MUST embed the uploaded image.\nDo NOT use a text placeholder.\nIMPORTANT: Store the data URL in a JS constant, do NOT put it directly in an HTML src attribute:\n  const LOGO_URL = "${effectiveImageDataUrls[0]}";\nThen reference it: <img src={LOGO_URL} alt="Logo" style="height:48px;" />\n\n${logoUrls}` });
       }
     }
 
