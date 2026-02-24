@@ -20,6 +20,12 @@ function formatElapsed(startMs?: number, endMs?: number): string {
   return elapsed < 1000 ? `${elapsed}ms` : `${(elapsed / 1000).toFixed(1)}s`;
 }
 
+function formatTokens(tokens?: number): string {
+  if (!tokens) return '';
+  if (tokens >= 1000) return `${(tokens / 1000).toFixed(1)}K`;
+  return `${tokens}`;
+}
+
 interface PlanApprovalCardProps {
   plan: AgentPlan;
   onApprove: () => void;
@@ -292,10 +298,12 @@ export function AgentModePanel({ run, taskQueue, pendingApproval, onCancel, onCa
                       const isDone = step.status === 'done';
                       const isError = step.status === 'error';
                       const hasSnapshot = !!step.preSnapshot;
+                      const isParallel = !!step.parallel;
                       return (
                         <div key={step.id} className={cn(
-                          "flex items-center gap-2 py-1 px-1.5 rounded-md",
+                          "flex items-center gap-2 py-1 px-1.5 rounded-md group/step",
                           isActive && "bg-cyan-500/[0.05]",
+                          isParallel && "ml-3 border-l-2 border-violet-500/20 pl-2",
                         )}>
                           {isActive ? (
                             <Loader2 className="h-3 w-3 text-cyan-400 animate-spin shrink-0" />
@@ -311,10 +319,23 @@ export function AgentModePanel({ run, taskQueue, pendingApproval, onCancel, onCa
                             "text-[10px] flex-1",
                             isActive ? "text-white/60" : isDone ? "text-white/30" : "text-white/15"
                           )}>
-                            {meta.label}
+                            {step.label || meta.label}
                           </span>
-                          {hasSnapshot && (isDone || isError) && (
-                            <span className="text-[7px] text-white/10 font-mono">📸</span>
+                          {/* Token count */}
+                          {step.tokensUsed && step.tokensUsed > 0 && (
+                            <span className="text-[7px] text-white/15 font-mono flex items-center gap-0.5">
+                              <Coins className="h-2 w-2" />{formatTokens(step.tokensUsed)}
+                            </span>
+                          )}
+                          {/* Rollback button */}
+                          {hasSnapshot && (isDone || isError) && onRollbackToStep && (
+                            <button
+                              onClick={() => onRollbackToStep(step.id)}
+                              className="opacity-0 group-hover/step:opacity-100 p-0.5 text-white/15 hover:text-amber-400 transition-all"
+                              title="Revert to this step"
+                            >
+                              <Undo2 className="h-2.5 w-2.5" />
+                            </button>
                           )}
                           {(isDone || isActive) && (
                             <span className="text-[8px] text-white/15 font-mono tabular-nums">
@@ -326,6 +347,28 @@ export function AgentModePanel({ run, taskQueue, pendingApproval, onCancel, onCa
                     })}
                   </div>
                 )}
+
+                {/* Streaming preview for active step */}
+                {isRunning && activeStep && streamingContent && (
+                  <div className="rounded bg-white/[0.02] border border-white/[0.04] p-1.5 max-h-20 overflow-hidden">
+                    <span className="text-[8px] text-white/20 uppercase tracking-wider block mb-1">Live output</span>
+                    <pre className="text-[8px] text-white/25 font-mono whitespace-pre-wrap leading-relaxed overflow-hidden">
+                      {streamingContent.slice(-300)}
+                    </pre>
+                  </div>
+                )}
+
+                {/* Total token summary */}
+                {allDone && run && (() => {
+                  const totalTokens = run.steps.reduce((sum, s) => sum + (s.tokensUsed || 0), 0);
+                  if (totalTokens === 0) return null;
+                  return (
+                    <div className="flex items-center gap-1.5 text-[8px] text-white/20 bg-white/[0.02] rounded px-2 py-1">
+                      <Coins className="h-2.5 w-2.5" />
+                      <span>Total: {formatTokens(totalTokens)} tokens</span>
+                    </div>
+                  );
+                })()}
 
                 {/* Plan summary */}
                 {activeTask?.run?.planSummary && (

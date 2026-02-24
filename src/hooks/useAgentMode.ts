@@ -3,6 +3,7 @@ import type { ProjectFile } from './useProjectFileSystem';
 import { toast } from 'sonner';
 import { useAgentWebResearch } from './useAgentWebResearch';
 import { useAgentBuildVerifier } from './useAgentBuildVerifier';
+import { useAgentTools, parseToolCalls, type ToolCall } from './useAgentTools';
 
 export type AgentStep = {
   id: string;
@@ -166,6 +167,7 @@ export function useAgentMode() {
   // Integration hooks
   const { detectResearchNeeded, executeResearch, buildResearchContext } = useAgentWebResearch();
   const { verifyBuild } = useAgentBuildVerifier();
+  const { executeToolBatch, formatToolResults } = useAgentTools();
 
   useEffect(() => {
     persistTasks(taskQueue);
@@ -397,9 +399,39 @@ export function useAgentMode() {
       updateStep(execStepId, { status: 'done', detail: 'Code generated', completedAt: Date.now() });
       completedStepLabels.push('Code generation complete');
 
-      // ─── Research: scan AI response for [SEARCH: ...] markers ───
+      // ─── Tool Call Dispatch: parse and execute structured tool calls ───
       const lastAssistantMsg = document.querySelector('[data-last-assistant]')?.textContent || '';
-      const researchQueries = detectResearchNeeded(lastAssistantMsg);
+      const toolCalls = parseToolCalls(lastAssistantMsg);
+      if (toolCalls.length > 0 && !controller.signal.aborted) {
+        const toolStepId = crypto.randomUUID();
+        setCurrentRun(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            steps: [
+              ...prev.steps,
+              { id: toolStepId, type: 'tool' as const, label: `Executing ${toolCalls.length} tool call(s)`, status: 'running' as const, startedAt: Date.now() },
+            ],
+          };
+        });
+
+        const toolResults = await executeToolBatch(toolCalls, currentFiles);
+        const toolContext = formatToolResults(toolResults);
+
+        updateStep(toolStepId, {
+          status: 'done',
+          detail: `${toolResults.filter(r => r.success).length}/${toolResults.length} succeeded`,
+          completedAt: Date.now(),
+        });
+
+        // Re-send with tool results so the AI can continue
+        const toolPrompt = `${task.prompt}\n\n${toolContext}`;
+        await sendMessage(toolPrompt, currentFiles, ...extraArgs);
+        completedStepLabels.push('Tool calls executed');
+      }
+      // ─── Research: scan AI response for [SEARCH: ...] markers ───
+      const assistantTextForResearch = document.querySelector('[data-last-assistant]')?.textContent || '';
+      const researchQueries = detectResearchNeeded(assistantTextForResearch);
       if (researchQueries.length > 0 && !controller.signal.aborted) {
         const researchStepId = crypto.randomUUID();
         setCurrentRun(prev => {
@@ -577,7 +609,7 @@ export function useAgentMode() {
       abortRef.current = null;
       isProcessingRef.current = false;
     }
-  }, [updateStep, completeRun, waitForPreviewErrors, emitNotification, rollbackToSnapshot, detectResearchNeeded, executeResearch, buildResearchContext, verifyBuild]);
+  }, [updateStep, completeRun, waitForPreviewErrors, emitNotification, rollbackToSnapshot, detectResearchNeeded, executeResearch, buildResearchContext, verifyBuild, executeToolBatch, formatToolResults]);
 
   const enqueueTask = useCallback((prompt: string, imageDataUrls?: string[] | null): AgentTask => {
     const task: AgentTask = {
@@ -667,5 +699,6 @@ export function useAgentMode() {
     reorderQueue,
     executeAgentTask,
     getNextQueuedTask,
+    rollbackToSnapshot,
   };
 }
