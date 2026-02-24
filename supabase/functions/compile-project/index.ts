@@ -159,6 +159,9 @@ function parseJSXAttrs(attrs: string): string {
   return "null";
 }
 
+// Track whether any file fell back to regex (needs Babel at runtime)
+let anyFileFellBackToRegex = false;
+
 // ── Unified transform function ──
 async function transformFile(code: string, filePath: string): Promise<string> {
   if (esbuildReady && esbuildMod) {
@@ -166,7 +169,10 @@ async function transformFile(code: string, filePath: string): Promise<string> {
       return await transformWithEsbuild(code, filePath);
     } catch (err: any) {
       console.warn(`[esbuild] Transform failed for ${filePath}, using regex:`, err.message);
+      anyFileFellBackToRegex = true;
     }
+  } else {
+    anyFileFellBackToRegex = true;
   }
   return transformWithRegex(code, filePath);
 }
@@ -548,8 +554,8 @@ async function compileProject(files: ProjectFile[], options?: CompileOptions): P
 
   // Try esbuild, fall back to regex
   const useEsbuild = await ensureEsbuild();
-  // Track whether we need Babel at runtime (regex fallback can't fully transform JSX)
-  const needsBabelRuntime = !useEsbuild;
+  // Reset per-compilation tracking
+  anyFileFellBackToRegex = false;
   if (!useEsbuild) {
     console.warn("[compile-project] Using regex fallback compiler — will include Babel for JSX");
   }
@@ -592,6 +598,12 @@ async function compileProject(files: ProjectFile[], options?: CompileOptions): P
     } catch (err: any) {
       errors.push(`Rewrite error in ${file.path}: ${err.message}`);
     }
+  }
+
+  // Determine if Babel is needed at runtime (esbuild init failed OR any file fell back to regex)
+  const needsBabelRuntime = !useEsbuild || anyFileFellBackToRegex;
+  if (needsBabelRuntime && useEsbuild) {
+    console.warn("[compile-project] Some files fell back to regex — including Babel for runtime JSX");
   }
 
   const usesReactRouter = reactFiles.some((f) => /from\s+['"]react-router-dom['"]/.test(f.content));
