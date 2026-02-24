@@ -1,60 +1,67 @@
 
 
-# Fix: AI Uses Text Placeholders Instead of Uploaded Images
+# Fix: Make Uploaded Images Work Flawlessly in App Builder
 
-## Problem
+## Problem Identified
 
-When you upload a logo image and ask the AI to use it, the generated site shows text like "Glenn's Body Shop Logo" instead of the actual image. This happens because:
+There's a **critical data stripping bug** in the client-side message sanitization pipeline. Before messages are sent to the edge function, ALL base64 data URLs longer than 10KB are stripped and replaced with placeholders -- including the ones the AI needs to embed as logos.
 
-1. **Image size cap is too small**: The system caps embeddable data URLs at 50,000 characters (~37KB). Most uploaded photos exceed this, so the AI is told to "use a placeholder" instead.
-2. **The image needs to be compressed before sending**: The project already has an image optimization pipeline (`imageOptimization.ts`) but it's not being used for chat-uploaded images.
+**The kill chain:**
+1. User uploads logo image
+2. Image is compressed to 200px wide, 0.5 quality (good)
+3. Data URL is injected into ASSET PRIORITY and EMBEDDABLE DATA URL messages (good)
+4. **BUG**: `sanitizedApiMessages` at line 1399 strips ALL data URLs >10KB -- including the asset messages (bad)
+5. AI receives `[image-data-url-stripped-for-transport]` instead of the actual data URL
+6. AI can "see" the image via the vision `image_url` block, but cannot extract the raw string to put in `<img src="...">`
+7. AI falls back to text like "Glenn's Body Shop Logo"
 
 ## Solution
 
-### 1. Compress uploaded images before sending to the AI
+### Change 1: Exempt asset messages from client-side stripping (`useAIAppBuilder.ts`)
 
-Before the image data URLs reach the AI, run them through the existing `compressImage` + `convertToWebP` pipeline to shrink them below the embed cap. This way the AI always gets a usable data URL it can embed directly.
+Update the `sanitizedApiMessages` logic (around line 1399) to skip stripping on messages that contain `ASSET PRIORITY` or `EMBEDDABLE DATA URL`. These messages exist specifically to give the AI the raw data URL string -- stripping them defeats the purpose.
 
-**File: `src/hooks/useAIAppBuilder.ts`**
-- Import `optimizeImage` from `@/utils/imageOptimization`
-- After `effectiveImageDataUrls` is computed (around line 992), add a compression step that processes each image:
-  - Downscale to max 400px wide (logos don't need full resolution)
-  - Convert to WebP at 0.7 quality
-  - This typically reduces a 200KB+ image to under 15KB
-- Replace the original data URLs with the compressed versions
+- For **string content** messages: check if the string contains `ASSET PRIORITY` before applying the regex replacement
+- For **array content** messages: check each text block for `EMBEDDABLE DATA URL` or `ASSET PRIORITY` before stripping
 
-### 2. Increase the embed cap as a safety net
+### Change 2: Increase image compression quality (`useAIAppBuilder.ts`)
 
-**File: `src/hooks/useAIAppBuilder.ts`**
-- Raise `MAX_DATA_URL_SIZE` from 50,000 to 150,000 characters (~112KB) to handle cases where compression still produces larger outputs
+The current 200px/0.5 quality settings produce very low quality logos. Increase to:
+- `maxWidth: 400` (enough for navbar/footer logos at 2x resolution)
+- `quality: 0.7` (reasonable balance between size and quality)
 
-### 3. Remove the "too large" placeholder fallback for logo intents
+This keeps images under the 500KB cap while looking sharp.
 
-**File: `src/hooks/useAIAppBuilder.ts`**
-- When `isLogoIntent` is true, always include the data URL regardless of size (since the user explicitly asked to use this image)
-- Only fall back to the placeholder message for non-logo large images
+### Change 3: Strengthen edge function asset protection (`ai-app-builder/index.ts`)
 
-### 4. Add ASSET PRIORITY instructions outside the scraping flow
-
-Currently, the explicit "do NOT use text placeholder" instruction only fires when a URL clone is also detected. Move a similar instruction to fire anytime images are attached with logo intent, even without scraping.
-
-**File: `src/hooks/useAIAppBuilder.ts`**
-- After the URL clone block (after line 1052), add a new block that checks if `effectiveImageDataUrls?.length && isLogoIntent` (outside the clone flow) and injects the same ASSET PRIORITY system message
-
----
-
-## About the Droplet Deployment
-
-The "Permission denied (publickey)" error means your SSH key isn't authorized on the vite-sandbox droplet (159.203.128.171). You'll need to either:
-- Copy your SSH public key to that server: `ssh-copy-id root@159.203.128.171`
-- Or use password auth: `scp -o PreferredAuthentications=password vite-sandbox/server.js root@159.203.128.171:/opt/vite-sandbox/server.js`
-
-This is a server access issue separate from the code changes above.
+In the `trimMessagesToFit` function, the `isAssetMessage` helper only checks string content, but ASSET PRIORITY messages with multimodal (array) content would be missed. Update to also check array content blocks.
 
 ## Technical Details
 
-**Files to modify:**
-- `src/hooks/useAIAppBuilder.ts` — Image compression + embed logic
+```text
+File: src/hooks/useAIAppBuilder.ts
+Lines ~1399-1421 (sanitizedApiMessages block)
 
-**No new dependencies needed** — the existing `imageOptimization.ts` utility handles compression and WebP conversion.
+Before:
+  - Strips ALL data URLs >10KB indiscriminately
+  
+After:
+  - String messages: skip if contains "ASSET PRIORITY"
+  - Array text blocks: skip if contains "EMBEDDABLE DATA URL" or "ASSET PRIORITY"
+  - image_url blocks: keep the 500KB cap (unchanged)
+
+File: src/hooks/useAIAppBuilder.ts  
+Line ~999 (image optimization)
+
+Before: maxWidth: 200, quality: 0.5
+After:  maxWidth: 400, quality: 0.7
+
+File: supabase/functions/ai-app-builder/index.ts
+Lines ~363-366 (isAssetMessage helper)
+
+Before: Only checks string content
+After:  Also checks array content blocks for asset markers
+```
+
+These three changes ensure the complete pipeline preserves image data URLs end-to-end: upload, compress, inject, transport, and deliver to the AI model.
 
