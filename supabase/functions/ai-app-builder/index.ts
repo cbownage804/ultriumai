@@ -36,9 +36,11 @@ Only output the CHANGED portions using unified diff hunks:
 
 Use ===FILE: path=== ONLY for new files or complete rewrites. This minimizes token usage and preserves user customizations.
 
-ASSET HANDLING:
-When the user uploads images via chat, they are available as data URLs in the conversation context.
-Reference them in code using the exact data URL provided. For production, suggest uploading to Supabase Storage.
+ASSET HANDLING (CRITICAL):
+When the user uploads images via chat, they appear as data URLs in text blocks labeled [EMBEDDABLE DATA URL] or [ASSET PRIORITY].
+You MUST use the EXACT data URL string from those blocks as the <img src="..."> value.
+NEVER replace an uploaded image with a text placeholder like "Company Logo" — always use the data URL in an <img> tag.
+If you see a data URL starting with "data:image/...", embed it directly: <img src="data:image/..." alt="Logo" />.
 
 AI-INITIATED IMAGE GENERATION:
 When the user's request requires images (logos, hero backgrounds, illustrations, product photos, icons, etc.),
@@ -342,7 +344,7 @@ function summarizeMessage(msg: any): string {
     return firstLine.slice(0, 150);
   }
   // User messages: keep more context
-  return content.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]{100,}/g, '[image]').slice(0, 300);
+  return content.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]{100,}/g, '[image]').slice(0, 500);
 }
 
 /** Server-side context trimming with intelligent summarization (Lovable-grade) */
@@ -409,8 +411,12 @@ function trimMessagesToFit(messages: any[], maxChars: number): any[] {
         if (block.type === 'text' && block.text?.length > 200000) {
           return { ...block, text: block.text.slice(0, 200000) + '\n[Truncated]' };
         }
+        // Strip large data URLs from text blocks — but NEVER from embeddable asset blocks
         if (block.type === 'text' && block.text) {
-          return { ...block, text: block.text.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]{10000,}/g, '[image data stripped server-side]') };
+          const isAssetBlock = /EMBEDDABLE DATA URL|ASSET PRIORITY/i.test(block.text);
+          if (!isAssetBlock) {
+            return { ...block, text: block.text.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]{10000,}/g, '[image data stripped server-side]') };
+          }
         }
         return block;
       });
