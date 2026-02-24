@@ -1,125 +1,123 @@
 
 
-# Wiring the Missing Integration Layer
+# Remaining Parity Gaps: What's Still Needed
 
-All five Phase features (terminal exec, web research, build verification, diff review, atomic apply) have their **standalone hooks and components built** but are **not connected** into the actual agent loop or workspace. This plan focuses on wiring everything together and adding the one remaining feature: conversation forking.
+After auditing the full codebase against OpenAI Codex and Claude Code, here are the features still missing to make this the definitive best-in-class AI builder.
 
-## Current State
+## Gap 1: Parallel Task Execution (HIGH)
 
-| Feature | Hook/Component | Wired into Agent? |
-|---------|---------------|-------------------|
-| Real Terminal | `terminal-exec` edge fn + `TerminalEmulator.tsx` | Yes (working) |
-| Web Research | `useAgentWebResearch.ts` | No -- never imported or called |
-| Build Verification | `useAgentBuildVerifier.ts` | No -- never imported or called |
-| Atomic Multi-File Apply | `useAtomicFileApply.ts` | No -- never imported or called |
-| Diff Review Modal | `AgentDiffReviewModal.tsx` | No -- never rendered |
-| Conversation Forking | `ForkingPanel.tsx` (project forking only) | No conversation-level forking exists |
+**What Codex/Claude do**: Execute multiple independent subtasks concurrently (e.g., create 3 components simultaneously).
 
-## Changes Required
+**Current state**: `useAgentMode.ts` processes tasks sequentially -- `getNextQueuedTask()` picks one at a time, `isAnyRunning` blocks the queue.
 
-### 1. Wire Web Research into Agent Loop
-**File: `src/hooks/useAgentMode.ts`**
+**Fix**: When the agent plan identifies independent steps (e.g., "create Header", "create Footer", "create Sidebar"), fork them into parallel `sendMessage` calls and merge results. Add a `parallel` step type.
 
-- Import `useAgentWebResearch`
-- After the Execute step completes (line ~383), scan the AI response for `[SEARCH: ...]` markers using `detectResearchNeeded()`
-- If markers are found, add a dynamic `research` step to the run
-- Call `executeResearch()` for each query, build enriched context via `buildResearchContext()`
-- Re-send the prompt with injected research context, then continue to Verify
+**Files to change**:
+- `src/hooks/useAgentMode.ts` -- add parallel execution logic with `Promise.allSettled`
+- `src/components/ai-builder/AgentModePanel.tsx` -- show parallel steps side-by-side
 
-### 2. Wire Build Verification into Agent Loop
-**File: `src/hooks/useAgentMode.ts`**
+---
 
-- Import `useAgentBuildVerifier`
-- After the Verify step's `waitForPreviewErrors()` call (line ~398), also run `verifyBuild()` against modified files
-- Merge esbuild compilation errors with preview runtime errors
-- Feed combined errors into the Fix step if any exist
-- Add a `compile` step to the run's step list when compilation runs
+## Gap 2: Tool/Function Calling (MCP-style) (HIGH)
 
-### 3. Wire Atomic File Apply into Workspace
-**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
+**What Codex/Claude do**: The AI can call structured tools (read file, write file, run command, search) rather than relying on text markers like `[SEARCH: ...]` or `===FILE:`.
 
-- Import `useAtomicFileApply`
-- In `handleBgComplete`, when processing batched `===FILE:` and `===EDIT:` blocks, use `applyBatch()` instead of sequential `upsertFile()` calls
-- This ensures a single undo snapshot covers all files and enables rollback on partial failure
+**Current state**: The system uses regex parsing of text markers. No structured tool/function calling exists.
 
-### 4. Wire Diff Review Modal into Agent Flow
-**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
+**Fix**: Add a tool-calling layer where the AI receives a tools schema (read_file, write_file, run_terminal, web_search, list_files) and returns structured `tool_call` JSON. The agent loop dispatches each call and feeds results back.
 
-- Import and render `AgentDiffReviewModal`
-- Add state: `agentDiffChanges` and `showAgentDiffReview`
-- Before the agent's execute step applies file changes, populate `agentDiffChanges` with before/after content for each file
-- Show the modal, wait for user selection
-- Only apply the files the user selected via checkboxes
+**Files to change**:
+- `src/hooks/useAgentMode.ts` -- add tool dispatch loop
+- New file: `src/hooks/useAgentTools.ts` -- tool definitions and executor
+- Update the system prompt in `useAIAppBuilder.ts` to include tool schemas
 
-### 5. Add Conversation Forking
-**File: `src/hooks/useAIAppBuilder.ts`**
+---
 
-- Add a `forkConversation()` function that:
-  - Snapshots current `messages` array and current `project.files`
-  - Stores them in a `conversationForks` state array
-  - Allows the user to switch between forks (restorable branches)
+## Gap 3: Streaming Agent Steps (MEDIUM)
 
-**File: `src/components/ai-builder/BuilderChatPanel.tsx`**
+**What Codex/Claude do**: Show real-time token streaming within each agent step, so users see code appearing as it's generated.
 
-- Add a "Fork Conversation" button in the chat header (next to existing controls)
-- Display a small fork indicator showing how many forks exist
-- Add a dropdown to switch between conversation branches
+**Current state**: The agent uses `sendMessage()` which triggers a background Edge Function job. The chat panel shows streaming text, but the **AgentModePanel** step cards only show "running" -> "done" with no intermediate progress.
 
-### 6. Connect Everything in the Workspace Orchestrator
-**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
+**Fix**: Pipe the streaming content ref into the agent step UI so each step card shows a live code preview or progress indicator while generating.
 
-- Initialize `useAgentWebResearch()`, `useAgentBuildVerifier()`, `useAtomicFileApply()`
-- Pass research/verify/atomic callbacks into the `executeAgentTask` call
-- Render `AgentDiffReviewModal` in the JSX tree with proper state bindings
+**Files to change**:
+- `src/components/ai-builder/AgentModePanel.tsx` -- add streaming preview to step cards
+- Wire `streamingContentRef` from `useAIAppBuilder` into agent step rendering
 
-## Technical Details
+---
 
-### Research Integration Flow
-```text
-Agent Execute step completes
-  -> Scan response for [SEARCH: query] markers
-  -> If found: add "research" step, call firecrawl-scrape
-  -> Inject results as context, re-prompt AI
-  -> Continue to Verify
-```
+## Gap 4: Per-Step Rollback UI (MEDIUM)
 
-### Build Verification Flow
-```text
-Agent Verify step starts
-  -> Run waitForPreviewErrors() (runtime errors)
-  -> Run verifyBuild() via esbuild-wasm (compile errors)
-  -> Merge both error lists
-  -> If errors: proceed to Fix step with combined context
-```
+**What Codex/Claude do**: Users can roll back to any specific step in the agent run, not just undo the entire operation.
 
-### Diff Review Flow
-```text
-Agent Execute produces file changes
-  -> Compute diffs (old vs new for each file)
-  -> Show AgentDiffReviewModal
-  -> User selects/deselects files
-  -> Only apply selected files via applyBatch()
-```
+**Current state**: `preSnapshot` is stored on each step, and `rollbackToSnapshot` exists, but there's **no UI** to trigger it. Users can only undo via the global undo stack.
 
-### Conversation Fork Data Model
-```text
-ConversationFork {
-  id: string
-  label: string
-  messages: Message[]
-  filesSnapshot: ProjectFile[]
-  createdAt: Date
-}
-```
+**Fix**: Add a "Revert to this step" button on each completed step in `AgentModePanel`. When clicked, restore `preSnapshot` files.
 
-## File Summary
+**Files to change**:
+- `src/components/ai-builder/AgentModePanel.tsx` -- add rollback button per step
+- Wire the `rollbackToSnapshot` callback through the workspace
 
-| File | Action |
-|------|--------|
-| `src/hooks/useAgentMode.ts` | Import and call research + build verifier hooks |
-| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | Initialize hooks, render diff modal, wire atomic apply |
-| `src/hooks/useAIAppBuilder.ts` | Add `forkConversation` and `switchFork` functions |
-| `src/components/ai-builder/BuilderChatPanel.tsx` | Add fork button + fork switcher UI |
+---
 
-No new files needed. No new dependencies. All changes build on existing, tested hooks and components.
+## Gap 5: Agent Memory / Learning Across Sessions (MEDIUM)
+
+**What Codex/Claude do**: Remember user preferences, coding patterns, and project conventions across conversations (CLAUDE.md, project memory).
+
+**Current state**: `usePromptMemory` exists but only stores prompt-level memory within a session. `useErrorPatternLearning` tracks error patterns. Neither persists long-term project conventions.
+
+**Fix**: Add a `PROJECT_MEMORY.md` auto-generated file that the agent reads on every run. It accumulates: preferred libraries, coding style decisions, architecture patterns, common errors and fixes.
+
+**Files to change**:
+- New file: `src/hooks/useAgentMemory.ts` -- persistent project memory manager
+- `src/hooks/useAgentMode.ts` -- inject project memory into system prompt
+- `src/components/ai-builder/KnowledgePanel.tsx` -- add "Agent Memory" tab for user editing
+
+---
+
+## Gap 6: Cost/Token Transparency Per Agent Run (LOW)
+
+**What Codex/Claude do**: Show token usage and estimated cost for each operation.
+
+**Current state**: `useContextBudget` tracks percentage usage. `TokenUsageIndicator.tsx` exists. But there's no per-run breakdown showing "Plan: 2K tokens, Execute: 15K tokens, Fix: 3K tokens".
+
+**Fix**: Track tokens consumed per step and display a cost breakdown in the agent run summary.
+
+**Files to change**:
+- `src/hooks/useAgentMode.ts` -- add `tokensUsed` to `AgentStep` type
+- `src/components/ai-builder/AgentModePanel.tsx` -- show token count per step
+
+---
+
+## Gap 7: Interactive File Explorer in Agent Context (LOW)
+
+**What Codex/Claude do**: The AI can autonomously read any file it needs to understand context, rather than receiving all files upfront.
+
+**Current state**: The agent sends the entire file tree as text in the prompt. For large projects, this wastes context and may miss files excluded by truncation.
+
+**Fix**: Instead of dumping all files, give the agent a `read_file` tool (ties into Gap 2). The AI requests specific files as needed, keeping context lean and focused.
+
+**Files to change**: Same as Gap 2 (tool-calling infrastructure)
+
+## Summary
+
+| Gap | Priority | Effort | Impact |
+|-----|----------|--------|--------|
+| Parallel task execution | HIGH | Medium | Faster builds, professional feel |
+| Tool/function calling (MCP) | HIGH | Large | Dramatically better accuracy |
+| Streaming agent steps | MEDIUM | Small | Better UX feedback |
+| Per-step rollback UI | MEDIUM | Small | User control and confidence |
+| Agent memory across sessions | MEDIUM | Medium | Smarter builds over time |
+| Token transparency per run | LOW | Small | Power user feature |
+| Interactive file explorer | LOW | N/A (part of tool calling) | Context efficiency |
+
+## Recommended Order
+
+1. **Tool/function calling** -- this is the single biggest architectural upgrade; it replaces fragile regex parsing with structured tool dispatch and enables both interactive file reading and web research in a unified way
+2. **Parallel task execution** -- immediate performance win
+3. **Per-step rollback UI** -- already built in the backend, just needs UI buttons
+4. **Streaming agent steps** -- quick UX polish
+5. **Agent memory** -- builds long-term value
+6. **Token transparency** -- finishing touch
 
