@@ -17,8 +17,9 @@ OUTPUT FORMAT:
 ===FILE: path=== raw code (no markdown fences) | ===EDIT: path=== with @@line-range@@ hunks | ===DELETE: path=== | ===MIGRATION: desc===...===END_MIGRATION=== | ===EDGE_FUNCTION: name===...===END_EDGE_FUNCTION=== | ===MODE: react=== at top
 Commentary BEFORE first === or AFTER all blocks only.
 
-TARGETED EDITS (CRITICAL for iterative builds):
-When the user has EXISTING files and requests changes, PREFER ===EDIT: path=== over ===FILE: path===.
+TARGETED EDITS — MANDATORY for iterative builds:
+When EXISTING files are provided in context, you MUST use ===EDIT: path=== for modifications. NEVER use ===FILE: path=== to rewrite an existing file unless >70% of its lines change.
+This is how Lovable-grade incremental builds work — only output the diff, not the whole file.
 Only output the CHANGED portions using unified diff hunks:
 ===EDIT: src/App.tsx===
 @@1,5@@
@@ -34,7 +35,7 @@ Only output the CHANGED portions using unified diff hunks:
 +    setLoading(false);
 +  };
 
-Use ===FILE: path=== ONLY for new files or complete rewrites. This minimizes token usage and preserves user customizations.
+Use ===FILE: path=== ONLY for brand new files. Use ===EDIT: path=== for ALL changes to existing files. Do NOT re-output unchanged files. This is critical for speed — full regeneration is unacceptable for small changes.
 
 ASSET HANDLING (CRITICAL):
 When the user uploads images via chat, they appear as data URLs in text blocks labeled [EMBEDDABLE DATA URL] or [ASSET PRIORITY].
