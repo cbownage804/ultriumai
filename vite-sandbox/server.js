@@ -66,15 +66,23 @@ app.post('/compile', async (req, res) => {
     execSync(`cp -r "${TEMPLATE_DIR}" "${buildDir}"`, { timeout: 5000 });
 
     // 2. Write user files into the build directory
+    //    Files already under src/ (e.g. "src/App.tsx") go as-is.
+    //    Root-level files like "index.html" go to the build root.
+    //    All other files default to src/ subdirectory.
     for (const file of files) {
-      const filePath = path.join(buildDir, 'src', file.path);
+      let filePath;
+      if (file.path === 'index.html' || file.path.startsWith('src/') || file.path.startsWith('public/')) {
+        filePath = path.join(buildDir, file.path);
+      } else {
+        filePath = path.join(buildDir, 'src', file.path);
+      }
       const dir = path.dirname(filePath);
       fs.mkdirSync(dir, { recursive: true });
       fs.writeFileSync(filePath, file.content, 'utf-8');
     }
 
     // 3. Write index.html if not provided
-    const hasIndexHtml = files.some(f => f.path === 'index.html' || f.path === '../index.html');
+    const hasIndexHtml = files.some(f => f.path === 'index.html') || fs.existsSync(path.join(buildDir, 'index.html'));
     if (!hasIndexHtml) {
       // Generate index.html pointing to main.tsx or App.tsx
       const entryFile = files.find(f => /^(src\/)?main\.(tsx?|jsx?)$/.test(f.path))
