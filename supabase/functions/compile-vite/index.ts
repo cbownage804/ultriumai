@@ -43,18 +43,15 @@ serve(async (req) => {
     // Auto-inject index.html if missing — Vite requires it as entry point
     const hasIndexHtml = files.some((f: any) => f.path === "index.html");
     if (!hasIndexHtml) {
-      // Determine the main entry file
       const mainEntry = files.find((f: any) =>
         f.path === "src/main.tsx" || f.path === "src/main.ts"
       );
       const entryPath = mainEntry ? `/${mainEntry.path}` : "/src/App.tsx";
       
-      // Check if there's a CSS file to include
       const cssFile = files.find((f: any) =>
         f.path === "src/index.css" || f.path === "src/styles.css" || f.path === "src/App.css"
       );
 
-      // If no main entry exists, create one that imports the App component
       if (!mainEntry) {
         const hasApp = files.some((f: any) => f.path === "src/App.tsx" || f.path === "src/App.ts");
         if (hasApp) {
@@ -72,12 +69,51 @@ serve(async (req) => {
       console.log(`[compile-vite] Auto-injected index.html + ${!mainEntry ? 'main.tsx' : 'no extra entry'}`);
     }
 
+    // Detect imports to request dynamic npm install on the sandbox
+    const detectedPackages = new Set<string>();
+    for (const f of files) {
+      if (typeof f.content !== 'string') continue;
+      const importRegex = /(?:import\s+.*?\s+from\s+['"])([^./][^'"]*?)(?:['"])/g;
+      const requireRegex = /(?:require\s*\(\s*['"])([^./][^'"]*?)(?:['"])/g;
+      let m;
+      while ((m = importRegex.exec(f.content)) !== null) {
+        const pkg = m[1].startsWith('@') ? m[1].split('/').slice(0, 2).join('/') : m[1].split('/')[0];
+        detectedPackages.add(pkg);
+      }
+      while ((m = requireRegex.exec(f.content)) !== null) {
+        const pkg = m[1].startsWith('@') ? m[1].split('/').slice(0, 2).join('/') : m[1].split('/')[0];
+        detectedPackages.add(pkg);
+      }
+    }
+    // Filter out built-in/known packages that are in the template
+    const TEMPLATE_PACKAGES = new Set([
+      'react', 'react-dom', 'react-router-dom', 'lucide-react', 'framer-motion',
+      'recharts', 'date-fns', 'clsx', 'tailwind-merge', 'class-variance-authority',
+      'zustand', 'zod', 'uuid', '@radix-ui/react-slot', '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu', '@radix-ui/react-tooltip', '@radix-ui/react-popover',
+      '@radix-ui/react-select', '@radix-ui/react-checkbox', '@radix-ui/react-switch',
+      '@radix-ui/react-tabs', '@radix-ui/react-avatar', '@radix-ui/react-label',
+      '@radix-ui/react-separator', '@radix-ui/react-scroll-area', '@radix-ui/react-toast',
+      '@radix-ui/react-accordion', '@radix-ui/react-collapsible', '@radix-ui/react-progress',
+      '@radix-ui/react-slider', '@radix-ui/react-radio-group', '@radix-ui/react-toggle',
+      '@radix-ui/react-toggle-group', '@radix-ui/react-hover-card', '@radix-ui/react-context-menu',
+      '@radix-ui/react-menubar', '@radix-ui/react-navigation-menu', '@radix-ui/react-alert-dialog',
+      '@radix-ui/react-aspect-ratio', 'cmdk', 'sonner', 'tailwindcss-animate',
+      'embla-carousel-react', 'react-day-picker', 'input-otp', 'vaul',
+      'react-hook-form', '@hookform/resolvers', 'next-themes',
+      '@supabase/supabase-js', '@tanstack/react-query',
+    ]);
+    const extraPackages = [...detectedPackages].filter(p => !TEMPLATE_PACKAGES.has(p));
+    if (extraPackages.length > 0) {
+      console.log(`[compile-vite] Detected ${extraPackages.length} extra packages: ${extraPackages.join(', ')}`);
+    }
+
     console.log(`[compile-vite] Forwarding ${files.length} files to Vite sandbox at ${SANDBOX_URL}`);
     const t0 = Date.now();
 
-    // Forward to Droplet with 35s timeout (Droplet has 30s internal timeout)
+    // Forward to Droplet with 45s timeout (allow extra time for npm install)
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 35_000);
+    const timeout = setTimeout(() => controller.abort(), extraPackages.length > 0 ? 60_000 : 35_000);
 
     const response = await fetch(`${SANDBOX_URL}/compile`, {
       method: "POST",
@@ -85,7 +121,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
         "x-sandbox-token": SANDBOX_TOKEN,
       },
-      body: JSON.stringify({ files, options }),
+      body: JSON.stringify({ files, options, installPackages: extraPackages }),
       signal: controller.signal,
     });
 

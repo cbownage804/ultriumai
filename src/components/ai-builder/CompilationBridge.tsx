@@ -6,6 +6,7 @@ import type { SupabaseConfig, StripeConfig, ServiceKey, EnvVar } from './Project
 import type { CDNPackage } from './PackageManager';
 import type { LinkedGPTConfig } from './GPTConnectorPanel';
 import { useLivePreviewSync } from '@/hooks/useLivePreviewSync';
+import type { ProjectAsset } from './AssetManager';
 
 const COMPILE_TIMEOUT_MS = 30_000;
 const COMPILE_SAFETY_TIMEOUT_MS = 45_000; // Hard safety net — if isCompiling stays true longer, force reset
@@ -33,6 +34,7 @@ interface CompilationBridgeProps {
   skipNextCompileRef?: React.MutableRefObject<boolean>;
   externalStableHTMLRef?: React.RefObject<string | null>;
   onForceCompile?: (fn: () => void) => void;
+  assets?: ProjectAsset[];
 }
 
 export const ERROR_FALLBACK_HTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Compilation Error</title><style>*{margin:0;padding:0;box-sizing:border-box}body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0a0a14;color:#fff;font-family:system-ui,sans-serif}.card{text-align:center;max-width:440px;padding:2rem}h1{font-size:1.5rem;margin-bottom:1rem;color:#f87171}p{color:#ffffff90;line-height:1.6;margin-bottom:0.5rem}code{background:#1e1e2e;padding:2px 6px;border-radius:4px;font-size:0.85em}</style></head><body><div class="card"><h1>⚠️ Compilation Error</h1><p>Your project files were generated but could not be compiled into a preview.</p><p>Check that your project has an <code>index.html</code> file and try regenerating.</p></div></body></html>`;
@@ -67,6 +69,7 @@ export function CompilationBridge({
   skipNextCompileRef,
   externalStableHTMLRef,
   onForceCompile,
+  assets = [],
 }: CompilationBridgeProps) {
   // ── Worker-based React Compiler (off main thread) ──
   const { compileReactProject } = useWorkerCompiler();
@@ -188,8 +191,23 @@ export function CompilationBridge({
 
     // Reset flag after use
     isIncrementalEditRef.current = false;
+
+    // Inject uploaded assets into the compiled HTML so images render in preview
+    if (result && assets.length > 0) {
+      const assetScript = assets.map(a => 
+        `window.__ASSETS__=window.__ASSETS__||{};window.__ASSETS__[${JSON.stringify(a.name)}]=${JSON.stringify(a.dataUrl)};`
+      ).join('');
+      // Also inject CSS custom properties for each asset
+      const assetCSS = assets
+        .filter(a => a.type.startsWith('image/'))
+        .map(a => `--asset-${a.name.replace(/[^a-zA-Z0-9]/g, '-')}:url(${a.dataUrl});`)
+        .join('');
+      const injection = `<script>${assetScript}</script>${assetCSS ? `<style>:root{${assetCSS}}</style>` : ''}`;
+      result = result.replace('</head>', `${injection}</head>`);
+    }
+
     return result;
-  }, [isReactProject, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, linkedGPT]);
+  }, [isReactProject, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, linkedGPT, assets]);
 
   // ── Reset stableHTML when a new generation starts ──
   const prevIsGeneratingRef = useRef(false);
