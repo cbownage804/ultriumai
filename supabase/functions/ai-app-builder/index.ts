@@ -536,7 +536,11 @@ TRANSITION CUE: When the plan feels solid, say something like:
 "I think we've got a solid plan! Switch to **Build** mode and I'll generate everything we discussed."
 
 SETUP AWARENESS: If the discussed features need backend services, mention it naturally:
-"You'll want Supabase connected before we build — we'll need it for [auth/database/etc]."`;
+"You'll want Supabase connected before we build — we'll need it for [auth/database/etc]."
+
+CAPABILITIES:
+- The system can automatically scrape website content from URLs the user mentions. Do NOT tell users you can't browse websites. Instead, acknowledge the URL and plan to use its content. The scraping happens automatically when building.
+- If the user mentions a website URL or domain name, acknowledge it and incorporate it into your plan.`;
 
     let systemPrompt = mode === 'discuss' ? DISCUSS_SYSTEM_PROMPT : BASE_SYSTEM_PROMPT;
     console.log(`[${requestId}] System prompt (base): ${systemPrompt.length} chars`);
