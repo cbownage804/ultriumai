@@ -108,7 +108,13 @@ serve(async (req) => {
       console.log(`[compile-vite] Detected ${extraPackages.length} extra packages: ${extraPackages.join(', ')}`);
     }
 
-    console.log(`[compile-vite] Forwarding ${files.length} files to Vite sandbox at ${SANDBOX_URL}`);
+    // Ensure index.html is first in the array so the sandbox writes it to the build root
+    const sortedFiles = [
+      ...files.filter((f: any) => f.path === 'index.html'),
+      ...files.filter((f: any) => f.path !== 'index.html'),
+    ];
+
+    console.log(`[compile-vite] Forwarding ${sortedFiles.length} files to Vite sandbox at ${SANDBOX_URL}`);
     const t0 = Date.now();
 
     // Forward to Droplet with shorter timeout for fast fallback
@@ -121,7 +127,13 @@ serve(async (req) => {
         "Content-Type": "application/json",
         "x-sandbox-token": SANDBOX_TOKEN,
       },
-      body: JSON.stringify({ files, options, installPackages: extraPackages }),
+      body: JSON.stringify({
+        files: sortedFiles,
+        options,
+        installPackages: extraPackages,
+        // Tell sandbox explicitly where the entry is
+        entryFile: "index.html",
+      }),
       signal: controller.signal,
     });
 
