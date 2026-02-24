@@ -996,7 +996,7 @@ export function useAIAppBuilder() {
       try {
         const { optimizeImage: optimizeImg } = await import('@/utils/imageOptimization');
         const compressed = await Promise.all(
-          effectiveImageDataUrls.map(url => optimizeImg(url, { maxWidth: 200, quality: 0.5, tryWebP: true }))
+          effectiveImageDataUrls.map(url => optimizeImg(url, { maxWidth: 400, quality: 0.7, tryWebP: true }))
         );
         effectiveImageDataUrls = compressed.map(r => r.dataUrl);
       } catch (compErr) {
@@ -1396,8 +1396,11 @@ export function useAIAppBuilder() {
       // Strip large base64 data URLs from messages before sending to edge function
       // to prevent payload size issues. The AI gateway receives them via the nested
       // ai-app-builder call which re-serializes from the stored job data.
+      const isAssetContent = (text: string) => /ASSET PRIORITY|EMBEDDABLE DATA URL/i.test(text);
       const sanitizedApiMessages = apiMessages.map((msg: any) => {
         if (typeof msg.content === 'string') {
+          // Never strip asset messages — they carry the data URL the AI must embed
+          if (isAssetContent(msg.content)) return msg;
           // Replace inline base64 data URLs >10KB with placeholder
           return { ...msg, content: msg.content.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]{10000,}/g, '[image-data-url-stripped-for-transport]') };
         }
@@ -1409,6 +1412,8 @@ export function useAIAppBuilder() {
               if (block.type === 'image_url' && block.image_url?.url?.length > 500000) {
                 return { ...block, image_url: { ...block.image_url, url: block.image_url.url.slice(0, 500000) } };
               }
+              // Never strip text blocks that contain asset markers
+              if (block.type === 'text' && isAssetContent(block.text || '')) return block;
               // Strip large data URLs from text blocks (they're duplicated in image_url blocks anyway)
               if (block.type === 'text' && block.text?.length > 10000) {
                 return { ...block, text: block.text.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]{10000,}/g, '[image-visible-in-image_url-block]') };
