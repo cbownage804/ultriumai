@@ -954,7 +954,11 @@ export function BuilderChatPanel({
     const isCompleted = hasFiles || fileNames.length > 0;
     const isThinkingCollapsed = thinkingCollapsed[msg.id] ?? true;
     const isChatMode = msg.mode === 'discuss';
-    const showApproveButton = !isStreaming && isChatMode && hasPlanSignals(msg.content);
+    // Only show approve button on the LAST assistant message, and only if no user message follows it
+    const msgIndex = filteredMessages.indexOf(msg);
+    const hasSubsequentUserMessage = msgIndex >= 0 && filteredMessages.slice(msgIndex + 1).some(m => m.role === 'user');
+    const isLastAssistantWithPlan = !hasSubsequentUserMessage;
+    const showApproveButton = !isStreaming && isChatMode && hasPlanSignals(msg.content) && isLastAssistantWithPlan;
 
     // Clean display text — strip plan step duplicates (numbered, checkbox, bullet patterns)
     const planSteps = msg.planSteps || (text ? extractPlanSteps(text, isStreaming, !!hasFiles) : null);
