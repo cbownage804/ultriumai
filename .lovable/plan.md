@@ -1,141 +1,102 @@
 
 
-# True Parity Plan: Match Lovable's Builder Experience
+# Feature Gap Analysis: Your App Builder vs OpenAI Codex & Claude Code
 
-## Problem Summary
+## What You Already Have (Parity Achieved)
 
-Your App Builder has a recurring "Compiling preview..." infinite loop caused by **two competing compilation paths** in `CompilationBridge.tsx` that race against each other. Additionally, the UX during generation doesn't match Lovable's polished experience shown in your screenshots.
+| Feature | OpenAI Codex | Claude Code | Your Builder |
+|---------|-------------|-------------|--------------|
+| Multi-step agentic loop (plan/execute/verify/fix) | Yes | Yes | Yes (`useAgentMode.ts`) |
+| Plan approval before execution | Yes | Yes | Yes (`AgentModePanel.tsx`) |
+| File creation and modification | Yes | Yes | Yes (===FILE: / ===EDIT: blocks) |
+| Diff-based editing | Yes | Yes | Yes (unified diff hunks) |
+| Cross-step context accumulation | Yes | Yes | Yes (`buildCrossStepContext`) |
+| GitHub push/pull integration | Yes | Yes | Yes (`GitHubPanel.tsx`) |
+| Image/screenshot understanding | Yes | Yes | Yes (vision intent detection) |
+| Knowledge base / file reading | Yes | Yes | Yes (`KnowledgePanel.tsx`) |
+| In-browser test runner | Yes | Yes | Yes (`InBrowserTestRunner.tsx`) |
+| Live preview | -- | -- | Yes (unique advantage) |
+| Database migrations | -- | -- | Yes (unique advantage) |
+| Edge function deployment | -- | -- | Yes (unique advantage) |
 
-## Part 1: Fix the Compilation Loop (Critical)
+## What's Missing
 
-### Root Cause
+### 1. Real Sandboxed Terminal (HIGH PRIORITY)
+**Codex**: Runs in a real Docker sandbox with `bash`, `npm install`, `npm test`, `git` commands.
+**Claude Code**: Full terminal access with command execution in the user's environment.
+**Your Builder**: `TerminalEmulator.tsx` is a **simulated** terminal -- it has hardcoded responses for `ls`, `cat`, `echo` etc. It cannot actually run commands.
 
-`CompilationBridge.tsx` has TWO compilation triggers that fight:
-1. **Generation-ending effect** (line 146-186): Sets locks, waits 100ms, calls `compileNowRef()`
-2. **Main useEffect** (line 284-537): Watches `filesDigest` + `isGenerating`, does 500ms debounced compile
+**Solution**: Create a `terminal-exec` Edge Function that receives a command string, executes it in a Deno subprocess (limited to safe commands like `npm test`, `npx`, `node --eval`), and streams stdout/stderr back. Wire the existing `TerminalEmulator.tsx` to call this function instead of using fake responses.
 
-When generation ends, BOTH fire because their shared dependencies (`isGenerating`, `filesDigest`) change simultaneously. The locking mechanism (`compilationLockRef`, `compilationAttemptedRef`, `prevFilesDigestRef`) tries to coordinate them but frequently fails due to React batching and timer ordering.
+### 2. Multi-File Parallel Editing in a Single Pass (MEDIUM)
+**Codex**: Applies changes to multiple files atomically in one step.
+**Claude Code**: Edits multiple files in parallel with rollback.
+**Your Builder**: The agent processes files sequentially through background jobs. There's no explicit parallel multi-file apply.
 
-### Solution: Single Compilation Path
+**Solution**: Enhance `useAgentMode` to batch all ===FILE: and ===EDIT: blocks from a single AI response and apply them as one atomic operation, with a single undo snapshot covering all files.
 
-Replace both paths with ONE simple trigger:
+### 3. Autonomous Web Browsing & Research (MEDIUM)
+**Codex**: Can browse the web, read docs, and incorporate findings into code.
+**Claude Code**: Can search the web for API docs and examples.
+**Your Builder**: Has `web-search` intent detection in `SupabaseConversational.tsx` but no actual implementation that fetches and injects web content into the AI context.
 
-- **Remove** the generation-ending direct compile (the 100ms timer path)
-- **Remove** all lock/attempted/digest coordination refs
-- **Simplify** the main effect to: "When `isGenerating` transitions false and files exist, compile after 150ms"
-- Use a single `compilationInFlightRef` boolean (set synchronously in the effect, cleared in finally block) to prevent double-entry
+**Solution**: Wire the existing `firecrawl-scrape` and `ai-web-browser` Edge Functions into the agent loop. When the AI detects it needs external information, it calls these functions and injects the results as context before generating code.
 
-### Technical Changes
+### 4. Linting / Static Analysis Integration (LOW-MEDIUM)
+**Codex**: Runs ESLint/TypeScript compiler in the sandbox to catch errors.
+**Claude Code**: Uses `tsc --noEmit` and linters to verify code.
+**Your Builder**: Has `CustomLintingPanel.tsx` but it's a UI panel, not integrated into the agent verify step.
 
-**File: `src/components/ai-builder/CompilationBridge.tsx`**
+**Solution**: In the agent's "verify" step, run the TypeScript compiler (via `esbuild-wasm` already installed) against the modified files. Feed any errors back into the "fix" step automatically.
 
-- Remove `compilationLockRef`, `compilationAttemptedRef`, `prevFilesDigestRef`, `immediateCompileNeededRef`, `justSyncedFromExternalRef`, `compilationCleanupRef`
-- Replace the generation start/end effect (lines 137-189) with a simple reset on generation start
-- Replace the main effect (lines 284-537) with a clean single-path compiler:
+### 5. Git Diff Preview Before Apply (LOW)
+**Codex**: Shows a unified diff of all proposed changes before applying.
+**Claude Code**: Shows diffs inline with accept/reject per file.
+**Your Builder**: Has `CodeDiffViewer.tsx` and `SplitDiffPanel.tsx` but they aren't wired into the agent approval flow.
 
-```text
-useEffect:
-  if isGenerating or files.length === 0 -> return
-  if stableHTMLRef.current -> check for hot-patch, return
-  if compilationInFlightRef.current -> return (already compiling)
-  
-  // Single 150ms debounce, then compile
-  timer = setTimeout(() => {
-    compilationInFlightRef.current = true
-    onCompilingChange(true)
-    try {
-      result = await compile(files)
-      setStableHTML(result || ERROR_FALLBACK)
-    } finally {
-      compilationInFlightRef.current = false
-      onCompilingChange(false)
-    }
-  }, 150)
-  
-  return () => clearTimeout(timer) // only cancel debounce, not in-flight
-```
+**Solution**: When the agent plan is approved, show a full diff preview of all proposed changes using `CodeDiffViewer` before the actual file writes. Add per-file accept/reject toggles.
 
-- Keep the external sync logic (if `externalStableHTMLRef` has a value, use it immediately)
-- Keep hot-patch logic for CSS-only changes during manual edits
+### 6. Conversation Forking / Branching (LOW)
+**Codex**: Can branch conversations to try different approaches.
+**Claude Code**: Supports conversation checkpoints.
+**Your Builder**: Has `BranchManager.tsx` for code branches but not for conversation branches.
 
----
+**Solution**: Add a "Fork conversation" button that snapshots the current message history + file state, allowing the user to try an alternative approach and switch back if needed.
 
-## Part 2: Lovable-Style "Getting Ready" Feature Carousel
+## Implementation Plan
 
-In Lovable's screenshots, while the AI is generating, the right-side preview shows a **rotating carousel of feature cards** (Edit visually, Revert and edit messages, Ecommerce included, Measure performance, Custom rules, Lovable Cloud, Publish your project) with screenshots and descriptions.
+### Phase 1 -- Real Terminal Execution (Highest impact)
+1. Create `supabase/functions/terminal-exec/index.ts` -- accepts a command string, whitelist of safe commands (`node`, `npx`, `deno`, `echo`, `cat`, `ls`), executes via `Deno.Command`, streams stdout/stderr as SSE
+2. Update `TerminalEmulator.tsx` to call the edge function for any command not in the local simulation list
+3. Add a safety layer: command whitelist, max execution time (30s), output size cap (100KB)
 
-### Technical Changes
+### Phase 2 -- Agent Web Research Loop
+1. Add a new agent step type: `research`
+2. When the AI response contains `[SEARCH: query]` markers, intercept and call `firecrawl-scrape` or `ai-web-browser`
+3. Inject scraped content as context and re-prompt the AI with the enriched context
+4. Display a "Researching..." card in the chat UI (similar to existing `ScrapingCards`)
 
-**File: `src/components/ai-builder/SkeletonPreview.tsx`**
+### Phase 3 -- Build Verification with Real Compilation
+1. In the agent "verify" step, run `esbuild.build()` (already available via `esbuild-wasm`) against all modified `.ts`/`.tsx` files
+2. Capture any TypeScript/syntax errors
+3. If errors found, automatically transition to the "fix" step with the error messages as context
+4. Show a compilation status badge in `AgentModePanel`
 
-Replace the static shimmer skeleton with a feature carousel:
+### Phase 4 -- Diff Preview in Agent Flow
+1. Before applying file changes in the agent execute step, generate unified diffs for all files
+2. Show them in a modal using the existing `CodeDiffViewer` component
+3. Add per-file checkboxes to accept/reject individual changes
+4. Only apply accepted changes
 
-- Auto-rotating cards (every 4 seconds) with smooth transitions
-- Each card shows: a screenshot/illustration, a title, and a one-line description
-- Cards highlight your platform's features:
-  - "Edit visually" - Click to edit directly or describe changes
-  - "Revert and edit messages" - Go back to any point in history
-  - "Full-stack included" - Data, hosting, auth, AI included
-  - "Publish your project" - Instantly publish to your domain
-  - "Measure performance" - Track visitors, views, and trends
-- "Getting ready..." spinner at the top center
-- Dark background matching the current theme
+### Phase 5 -- Atomic Multi-File Apply
+1. Collect all ===FILE: and ===EDIT: blocks from a single AI response into a batch
+2. Take one undo snapshot before applying any changes
+3. Apply all changes in a single React state update
+4. If any file fails to apply (e.g., bad diff), roll back all changes in the batch
 
----
+## Technical Notes
 
-## Part 3: Progress Steps in Chat (DONE / WORKING / NEXT)
-
-Lovable shows build progress as a checklist in the chat with status indicators:
-- Green check = DONE
-- Spinning loader = WORKING  
-- Empty circle = NEXT
-
-### Technical Changes
-
-**File: `src/components/ai-builder/BuilderChatPanel.tsx`**
-
-Add a `BuildProgressCard` component that renders when the AI's response includes progress markers. The edge function already sends progress phases via the streaming content - parse `[PROGRESS]` markers or use the existing `phase` detection to show steps like:
-- Set up design system
-- Build homepage sections
-- Add interactivity
-
-**File: `src/hooks/useBackgroundGeneration.ts`** (or the edge function prompt)
-
-Update the system prompt to emit structured progress markers that the chat can parse and display as the checklist UI.
-
----
-
-## Part 4: Scraping Preview Card in Chat
-
-When the AI scrapes a website (clone/replicate intent), Lovable shows an expandable card with:
-- "Reading" / "Fetching [url]" header
-- A screenshot or preview of the scraped site
-- Description like "Gathering content and branding details now"
-
-### Technical Changes
-
-**File: `src/components/ai-builder/BuilderChatPanel.tsx`**
-
-Add a `ScrapingCard` component that appears when the `firecrawl-scrape` response returns branding/screenshot data. Parse the assistant message for scraping activity markers and display:
-- Collapsible card with the site URL
-- Screenshot from the scrape response (if `formats: ['screenshot']` was used)
-- Status text ("Gathering content and branding details")
-
----
-
-## Implementation Order
-
-1. **Part 1 first** - Fix the compilation loop (this is the blocker)
-2. **Part 2** - Feature carousel (visual polish, quick win)
-3. **Part 3** - Progress steps in chat
-4. **Part 4** - Scraping preview card
-
-## Summary of Files Changed
-
-| File | Change |
-|------|--------|
-| `CompilationBridge.tsx` | Rewrite to single compilation path |
-| `SkeletonPreview.tsx` | Replace with Lovable-style feature carousel |
-| `BuilderChatPanel.tsx` | Add BuildProgressCard + ScrapingCard components |
-| `GeneratingOverlay.tsx` | Minor: change "Generating..." to "Getting ready..." |
-
+- The terminal execution Edge Function must be carefully sandboxed. Deno's `Deno.Command` API supports this, but we should restrict to a whitelist of executables and set resource limits.
+- Web research integration reuses existing `firecrawl-scrape` (already deployed) and `ai-web-browser` (already deployed) Edge Functions, so no new infrastructure is needed.
+- The `esbuild-wasm` package is already installed as a dependency, so compilation verification requires no new packages.
+- All changes are additive -- nothing breaks existing functionality.
