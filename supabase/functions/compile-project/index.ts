@@ -548,8 +548,10 @@ async function compileProject(files: ProjectFile[], options?: CompileOptions): P
 
   // Try esbuild, fall back to regex
   const useEsbuild = await ensureEsbuild();
+  // Track whether we need Babel at runtime (regex fallback can't fully transform JSX)
+  const needsBabelRuntime = !useEsbuild;
   if (!useEsbuild) {
-    console.warn("[compile-project] Using regex fallback compiler");
+    console.warn("[compile-project] Using regex fallback compiler — will include Babel for JSX");
   }
 
   const reactFiles = files
@@ -779,6 +781,8 @@ window.ENV = ${JSON.stringify(envObj)};
     const { createRoot, createPortal } = ReactDOM;
   </script>
 
+  ${needsBabelRuntime ? `<script src="https://unpkg.com/@babel/standalone@7.26.5/babel.min.js"></script>` : ""}
+
   <script>
   document.getElementById('root').innerHTML =
     '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui;color:#888">' +
@@ -811,7 +815,6 @@ window.ENV = ${JSON.stringify(envObj)};
         console.warn('[Import] ' + __pkgErrors.length + ' package(s) failed:', __pkgErrors.join(', '));
       }
 
-      // All code compiled server-side — no Babel needed
       var code = ${JSON.stringify(`
     var { useState, useEffect, useCallback, useMemo, useRef, useContext, createContext, memo, forwardRef, Fragment, useReducer, useLayoutEffect, useId, useSyncExternalStore, useTransition, useDeferredValue, useInsertionEffect, Suspense, lazy, StrictMode } = React;
     var { createRoot, createPortal, flushSync } = ReactDOM;
@@ -821,7 +824,21 @@ window.ENV = ${JSON.stringify(envObj)};
 
     ${mountScript}
       `)};
-      new Function(code)();
+      ${needsBabelRuntime ? `
+      // Regex fallback couldn't fully transform JSX — use Babel at runtime
+      if (typeof Babel !== 'undefined') {
+        var transformed = Babel.transform(code, {
+          presets: ['react', ['typescript', { isTSX: true, allExtensions: true }]],
+          filename: 'app.tsx',
+          sourceType: 'script',
+        });
+        new Function(transformed.code)();
+      } else {
+        console.error('[Runtime] Babel not loaded for JSX transformation');
+        new Function(code)();
+      }` : `
+      // All code compiled server-side — no Babel needed
+      new Function(code)();`}
       __iifeDone = true;
     } catch(e) {
       __iifeDone = true;
