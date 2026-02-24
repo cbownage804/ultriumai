@@ -1487,6 +1487,7 @@ export function AIAppBuilderWorkspace() {
     if (isNewProjectRef.current) {
       // Clear all storage synchronously
       clearDraft();
+      try { localStorage.removeItem('ai-builder-compiled-html'); } catch {}
       // Reset React state to empty so auto-save/flush don't re-persist old data
       setFiles([]);
       setMessages([]);
@@ -2252,7 +2253,7 @@ export function AIAppBuilderWorkspace() {
     setConfirmAction({
       title: 'Clear chat & project?',
       description: 'This will remove all messages, generated files, and reset the project to a blank state. This cannot be undone.',
-      onConfirm: () => { clearChat(); resetProject(); setStableHTML(null); },
+      onConfirm: () => { clearChat(); resetProject(); setStableHTML(null); try { localStorage.removeItem(COMPILED_CACHE_KEY); } catch {} },
     });
   };
 
@@ -2444,13 +2445,27 @@ export function AIAppBuilderWorkspace() {
   }, [project.files, upsertFile, deleteFile]);
 
   // ── Compilation is now isolated in CompilationBridge (fixes React Error #310) ──
-  const [stableHTML, setStableHTML] = useState<string | null>(null);
-  const stableHTMLRef = useRef<string | null>(null);
+  // Restore cached compiled HTML from localStorage for instant preview on reload
+  const COMPILED_CACHE_KEY = 'ai-builder-compiled-html';
+  const [stableHTML, setStableHTML] = useState<string | null>(() => {
+    try {
+      const cached = localStorage.getItem(COMPILED_CACHE_KEY);
+      if (cached) return cached;
+    } catch { /* */ }
+    return null;
+  });
+  const stableHTMLRef = useRef<string | null>(stableHTML);
   const skipNextCompileRef = useRef(false);
   const handleStableHTML = useCallback((html: string | null) => {
     const changed = html !== stableHTMLRef.current;
     stableHTMLRef.current = html;
     setStableHTML(html);
+    // Cache to localStorage for instant restore on reload
+    try {
+      if (html) {
+        localStorage.setItem(COMPILED_CACHE_KEY, html);
+      }
+    } catch { /* quota exceeded — non-critical */ }
     // Force iframe remount when new compiled HTML arrives (browsers don't reliably re-render srcDoc changes)
     if (html && changed) {
       setPreviewRefreshKey(k => k + 1);
