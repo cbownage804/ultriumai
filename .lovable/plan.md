@@ -1,38 +1,53 @@
 
+## Fix: Preview Placeholder Flashing After Build Completes
 
-## Fix: Duplicate "Approve & Build" Buttons + AI Scraping Awareness
+### Problem
+After a build finishes generating code, the preview panel briefly flashes the "Live Preview / Describe what you want to build" placeholder instead of keeping the loading skeleton visible until the compiled HTML is ready.
 
-### Problem 1: Duplicate "Approve & Build" Buttons
-The `showApproveButton` condition triggers on **every** assistant message that has plan signals (e.g., "i'll create", "we'll need", "here's how"). When the user clicks "Approve & Build", it sends a new message containing the original plan text, which triggers another AI response -- also containing plan signals. This creates a cascading chain of duplicate action bars across multiple messages.
+This happens because of a timing gap in the rendering logic:
 
-### Problem 2: AI Claims It Can't Browse Websites
-The scraping infrastructure (`firecrawl-scrape`, `detectURLCloneIntent`) already exists and works. However, when in "discuss" mode, the AI's system prompt doesn't mention this capability, so the AI defaults to saying "I can't browse websites". The `detectURLCloneIntent` function actually matches "grab" via the `data` signal word and `glennsbodyshop.net` via the bare domain pattern -- but only in **build** mode where the scraping is invoked.
+```text
+Generation ends --> isGenerating = false
+                    stableHTML = null (cleared at build start)
+                    isCompiling = not yet true (CompilationBridge hasn't started)
+                    
+Result: falls through to empty placeholder instead of skeleton
+```
 
-### Fix Plan
+The condition in `BuilderPreviewPanel.tsx` (line 608-651) is:
+- `html` exists --> show iframe
+- `isGenerating || isCompiling` --> show SkeletonPreview
+- else --> show "Live Preview" placeholder
 
-**File 1: `src/components/ai-builder/BuilderChatPanel.tsx`**
-- Change `showApproveButton` to only appear on the **last** assistant message in the conversation, not on every message with plan signals
-- Add a guard: if any subsequent user message exists after this assistant message, hide the button (the plan was already acted on)
+During the gap between generation ending and compilation starting, none of the first two conditions are true, so the placeholder appears.
 
-**File 2: `supabase/functions/ai-app-builder/index.ts`**  
-- Add a line to the `DISCUSS_SYSTEM_PROMPT` telling the AI it has web scraping capability: when a user mentions a URL or domain, the system will automatically scrape it. The AI should NOT say it can't browse -- instead, it should acknowledge the URL and proceed with planning, knowing the content will be scraped automatically in build mode
-- Add: "If the user mentions a website URL, acknowledge it and incorporate it into your plan. The system can automatically scrape website content when building."
+### Solution
+
+Two changes to eliminate the flash:
+
+**1. `BuilderPreviewPanel.tsx` - Add `hasFiles` awareness to prevent placeholder when files exist**
+
+Pass a new `hasProjectFiles` prop (derived from `projectFiles.length > 0`). When files exist but `html` is null and we're not generating/compiling, show the SkeletonPreview (in compiling mode) instead of the empty placeholder. The placeholder should only appear when there are truly no files (fresh project).
+
+Updated condition:
+```
+html ? <iframe>
+  : (isGenerating || isCompiling || (hasProjectFiles && !html)) ? <SkeletonPreview>
+  : <placeholder>
+```
+
+This way, if files exist but HTML hasn't been compiled yet, the skeleton stays visible with "Compiling preview..." text.
+
+**2. `AIAppBuilderWorkspace.tsx` - Keep previous HTML visible during recompilation**
+
+Instead of clearing `stableHTML` to `null` at the start of `handleBgComplete`, preserve the old compiled HTML so the previous preview stays visible while the new build compiles. Only clear it if this is the very first build (no previous HTML exists). The CompilationBridge already handles replacing it with new content when compilation finishes.
 
 ### Technical Details
 
-**Approve button deduplication logic:**
-```
-// Only show on the LAST assistant message, and only if no user message follows it
-const isLastAssistant = index === displayMessages.length - 1 
-  || !displayMessages.slice(index + 1).some(m => m.role === 'user');
-const showApproveButton = !isStreaming && isChatMode && hasPlanSignals(msg.content) && isLastAssistant;
-```
+**File 1: `src/components/ai-builder/BuilderPreviewPanel.tsx`**
+- Line 607-651: Change the ternary so that when `projectFiles?.length > 0` and `html` is null, it shows `SkeletonPreview` with `isCompiling={true}` instead of the empty placeholder
+- This is a one-line condition change
 
-**System prompt addition (discuss mode):**
-```
-CAPABILITIES:
-- The system can automatically scrape website content from URLs the user mentions. 
-  Do NOT tell users you can't browse websites. Instead, acknowledge the URL and plan 
-  to use its content. The scraping happens automatically when building.
-```
-
+**File 2: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
+- Lines 319-321: Only clear `stableHTML` to null if there's no existing compiled HTML. If the user is rebuilding, keep the old preview visible during compilation rather than showing a blank state
+- Change from unconditional `setStableHTML(null)` to conditional: only clear if no previous HTML exists
