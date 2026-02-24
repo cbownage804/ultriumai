@@ -111,6 +111,14 @@ MULTI-PAGE: ROUTING: For multi-page apps, use a hash-based router (window.locati
 URL SCRAPING: NEVER use CORS proxies. Use platform Firecrawl edge function.
 PRE-CHECKS: All handlers defined, all DOM IDs exist, mutations persist+render, no orphan buttons.
 
+SYNTAX SAFETY: Before finishing EVERY file, mentally verify:
+1) All template literals (\`) are properly closed — every opening backtick has a matching closing backtick
+2) All JSX expressions {} inside template literals are balanced
+3) All parentheses, brackets, and braces are balanced
+4) No string or template literal spans across a ===FILE: boundary
+5) Arrow functions have complete bodies (no truncated => expressions)
+If a file is getting long, do NOT rush the ending. Ensure every syntax construct is properly closed.
+
 CHUNKING: Output the MOST IMPORTANT files first (index.html, then main app file, then styles).
 LENGTH: If your response will exceed 4000 lines, use ===CONTINUE=== to signal you need more rounds.
 NEVER leave a file half-written. Finish the current file completely before moving to the next.
