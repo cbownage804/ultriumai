@@ -1,79 +1,92 @@
 
-# Fix: Chat Mode Routing and Preview Behavior
 
-## Problems Identified
+# Fix: Ensure Preview Auto-Updates After Build Completes
 
-### Problem 1: Chat mode goes through the heavy build pipeline
-When the user is in Chat mode (1cr), every message still routes through:
-- `sendMessage()` in `useAIAppBuilder.ts`
-- Edge function `ai-builder-background` (creates a DB job row, polls, streams)
-- Edge function `ai-app-builder` (which does use the correct discuss prompt, but the entire pipeline is overkill)
-- Compilation bridge triggers after generation completes (trying to compile nothing)
+## Root Cause
 
-This is massively wasteful — a simple chat response should NOT create background jobs, poll databases, or trigger compilation. It should call a lightweight chat endpoint directly.
+There is a race condition in `handleBgComplete` that can cause the preview to not update after a build:
 
-### Problem 2: Preview shows placeholder after chat responses
-After a discuss-mode response completes, `handleBgComplete` fires and the compilation bridge triggers. Since no files were generated, the preview shows the default "Live Preview / Describe what you want to build" placeholder. This is confusing.
+1. **Stale discuss-mode guard**: `handleBgComplete` checks `messages[messages.length - 1]?.mode === 'discuss'` to skip compilation for chat responses. But `handleBgComplete` is a `useCallback` that captures the `messages` array from its closure. If the user previously sent a chat (discuss) message and then triggers a build, the callback may still see the old discuss message as the last message — causing it to skip the entire build pipeline and return early without merging files or triggering compilation.
 
-### Problem 3: Auto-escalation regex is too aggressive
-The `shouldAutoEscalate` function's `integrationSignals` pattern matches common words like "add", "api", "auth", "database" which appear in casual conversation. Even benign follow-up messages can get escalated to Agent mode. The word "add" alone on line 1680 (`add.*and.*and`) combined with integration signals makes casual conversation trigger build mode.
+2. **Double `stableHTML` ref confusion**: The workspace has its own `stableHTMLRef`, and `CompilationBridge` has a separate internal `stableHTMLRef`. When `handleBgComplete` clears the workspace's ref (`stableHTMLRef.current = null`), the Bridge's internal ref is not directly linked. The Bridge resets its own refs only when `isGenerating` transitions false-to-true (generation START), so if the transition is missed or the Bridge already has stale HTML, it may skip recompilation.
 
-### Problem 4: Browser freeze
-The workspace initializes 100+ hooks, and every chat message triggers the full build pipeline (version snapshots, file context scoring, import graph computation, token budget calculations) — even when no code generation is needed. This causes the browser to freeze, especially when Lovable is running in the same tab.
+3. **Self-contained HTML shortcut may mask issues**: For vanilla HTML projects, `handleBgComplete` sets `stableHTML` directly (line 486), but then `isGeneratingOverride` clears and CompilationBridge's effect fires, potentially overwriting or competing with the already-set preview.
 
 ## Solution
 
-### 1. Add a lightweight chat path in `handleSend`
+### 1. Fix the discuss-mode guard (Critical)
 **File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
 
-When mode is `discuss` (and auto-escalation does NOT trigger), skip the full `sendMessage()` pipeline entirely. Instead:
-- Call `vanguard-general-chat` edge function directly (already exists, lightweight, no background jobs)
-- Append the response as a message with `mode: 'discuss'`
-- Skip all file context computation, version snapshots, compilation, and preview updates
-- This reduces a discuss-mode message from ~15 operations to 1 API call
+Replace the fragile `messages[last].mode === 'discuss'` check with a more reliable approach:
+- Check the `job.output_content` itself for file markers (`===FILE:`, `===EDIT:`) — if none exist and the content looks like a chat response, skip compilation
+- This eliminates dependency on stale `messages` state entirely
+- Remove `messages` from the `handleBgComplete` dependency array (it's only used for this check and for appending — the append uses `setMessages(prev => ...)` which doesn't need closure state)
 
-### 2. Suppress compilation after discuss-mode responses
+### 2. Force CompilationBridge recompile after file merge
 **File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
 
-In the compilation bridge / `handleBgComplete` flow:
-- Check if the last message has `mode: 'discuss'`
-- If so, skip compilation entirely — no files changed, no preview update needed
-- Keep the existing preview state unchanged (show whatever was last built, or the placeholder if nothing was built yet)
+After `setFiles(mergedFiles)` in `handleBgComplete`, call `forceCompileRef.current?.()` as a safety net. This ensures the Bridge's internal state is reset and a fresh compilation is triggered, even if the `filesDigest` effect doesn't fire due to timing.
 
-### 3. Tighten auto-escalation signals
+### 3. Auto-switch to preview tab after build completes
 **File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
 
-Make `shouldAutoEscalate` much more conservative:
-- Require at least 2 signal matches before escalating (currently 1 is enough)
-- Remove overly broad terms from `integrationSignals` (like standalone "api" or "add")
-- Add a minimum input length threshold (e.g. 50 chars) — short questions should never escalate
-- Respect the user's explicit mode choice more strongly
-
-### 4. Skip heavy context computation in discuss mode
-**File: `src/hooks/useAIAppBuilder.ts`**
-
-In `sendMessage`, when `effectiveMode === 'discuss'`:
-- Skip `buildFileContext()` (the expensive file scoring, import graph, manifest building)
-- Skip version snapshot creation
-- Skip `setPreviousFiles` / `setLatestFiles`
-- This eliminates the main-thread computation that causes freezing
+When `handleBgComplete` successfully merges files, automatically switch the right panel to the preview tab if it isn't already showing. This ensures the user sees the result immediately. For mobile, also switch `mobileTab` to `'preview'`.
 
 ## Technical Details
 
-### Lightweight Chat Path (new flow)
-```text
-User types in Chat mode
-  -> handleSend detects mode === 'discuss' && !shouldAutoEscalate
-  -> Calls supabase.functions.invoke('vanguard-general-chat')
-     with conversationHistory from messages
-  -> Appends response as assistant message with mode: 'discuss'
-  -> No compilation, no preview update, no background job
-  -> Response time: ~1-2s instead of ~10-15s
+### Change 1: Robust discuss-mode detection
+
+```typescript
+// BEFORE (fragile — depends on stale `messages` closure):
+const lastMsg = messages[messages.length - 1];
+if (lastMsg?.mode === 'discuss') {
+  setIsGeneratingOverride(false);
+  return;
+}
+
+// AFTER (checks actual output content — no closure dependency):
+const hasFileMarkers = /===FILE:|===EDIT:|```[\w]*\n/.test(job.output_content);
+const isShortChatResponse = job.output_content.length < 2000 && !hasFileMarkers;
+if (isShortChatResponse && !job.output_content.includes('<!DOCTYPE')) {
+  console.info('[handleBgComplete] No file markers detected — treating as chat response');
+  setIsGeneratingOverride(false);
+  return;
+}
 ```
 
-### File Changes Summary
+### Change 2: Force recompile safety net
+
+```typescript
+// After setFiles(mergedFiles) and all file operations:
+setFiles(mergedFiles);
+latestFilesRef.current = mergedFiles;
+
+// Force CompilationBridge to recompile (safety net for timing races)
+setTimeout(() => {
+  if (!stableHTMLRef.current) {
+    forceCompileRef.current?.();
+  }
+}, 300);
+```
+
+### Change 3: Auto-switch to preview
+
+```typescript
+// After successful file merge, switch to preview tab
+if (rightTab !== 'preview' && rightTab !== 'split') {
+  setRightTab('preview');
+}
+if (isMobile) {
+  setMobileTab('preview');
+}
+```
+
+### Dependency array cleanup
+
+Remove `messages` from `handleBgComplete`'s dependency array since it's no longer read from the closure (the append already uses `setMessages(prev => ...)`).
+
+## Files to Change
 
 | File | Change |
 |------|--------|
-| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | Add lightweight chat path in `handleSend`; tighten `shouldAutoEscalate` regex; skip compilation for discuss-mode |
-| `src/hooks/useAIAppBuilder.ts` | Skip heavy file context computation when mode is discuss |
+| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | Fix discuss-mode guard, add forceCompile safety net, auto-switch to preview, clean up deps |
