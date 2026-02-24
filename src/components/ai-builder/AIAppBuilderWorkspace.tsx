@@ -456,10 +456,10 @@ export function AIAppBuilderWorkspace() {
       // with fallback to esbuild edge function. A separate 5s safety net already exists at mount.
       setTimeout(() => {
         if (!stableHTMLRef.current) {
-          console.warn('[handleBgComplete] Safety net: stableHTML still null 10s after merge — forcing compile');
+          console.warn('[handleBgComplete] Safety net: stableHTML still null 20s after merge — forcing compile');
           forceCompileRef.current?.();
         }
-      }, 10_000);
+      }, 20_000);
 
       // Auto-switch to preview tab so user sees the result immediately
       if (rightTabRef.current !== 'preview' && rightTabRef.current !== 'split') {
@@ -2486,10 +2486,10 @@ export function AIAppBuilderWorkspace() {
     if (prevGenForFallbackRef.current && !isGenerating && project.files.length > 0) {
       const timer = setTimeout(() => {
         if (!stableHTMLRef.current && project.files.length > 0) {
-          console.warn('[Workspace] Safety net: stableHTML still null 5s after generation — forcing compile');
+          console.warn('[Workspace] Safety net: stableHTML still null 15s after generation — forcing compile');
           forceCompileRef.current?.();
         }
-      }, 5000);
+      }, 15_000);
       prevGenForFallbackRef.current = isGenerating;
       return () => clearTimeout(timer);
     }

@@ -111,9 +111,9 @@ serve(async (req) => {
     console.log(`[compile-vite] Forwarding ${files.length} files to Vite sandbox at ${SANDBOX_URL}`);
     const t0 = Date.now();
 
-    // Forward to Droplet with 45s timeout (allow extra time for npm install)
+    // Forward to Droplet with shorter timeout for fast fallback
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), extraPackages.length > 0 ? 60_000 : 35_000);
+    const timeout = setTimeout(() => controller.abort(), extraPackages.length > 0 ? 30_000 : 15_000);
 
     const response = await fetch(`${SANDBOX_URL}/compile`, {
       method: "POST",
