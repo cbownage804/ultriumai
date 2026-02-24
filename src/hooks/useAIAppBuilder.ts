@@ -839,6 +839,61 @@ export function useAIAppBuilder() {
     // Phase 47: In discuss mode, block code output by passing mode to parser
     // (handled in finalizeStream where parseMultiFileOutput is called)
 
+    // ── Discuss mode shortcut: skip all heavy context computation ──
+    // When in discuss mode, we don't need file context, version snapshots, or
+    // import graph analysis. This prevents main-thread freezing from 100+ hooks.
+    if (effectiveMode === 'discuss') {
+      // Minimal path: just send the message with conversation history, no file context
+      const userMsg: BuilderMessage = {
+        id: crypto.randomUUID(),
+        role: 'user',
+        content: input,
+        timestamp: new Date(),
+        mode: 'discuss',
+      };
+      setMessages(prev => [...prev, userMsg]);
+      setIsGenerating(true);
+      setThinkingPhase('analyzing');
+
+      const chatMessages: { role: string; content: string }[] = [];
+      if (knowledgeContext) {
+        chatMessages.push({ role: 'system', content: knowledgeContext });
+      }
+      const recentHistory = messagesRef.current.slice(-20).map(m => ({
+        role: m.role,
+        content: m.role === 'assistant' ? m.content.slice(0, 500) : m.content.slice(0, 2000),
+      }));
+      chatMessages.push(...recentHistory);
+      chatMessages.push({ role: 'user', content: input });
+
+      try {
+        const { data, error } = await supabase.functions.invoke('vanguard-general-chat', {
+          body: { messages: chatMessages, stream: false },
+        });
+        if (error) throw error;
+        const responseContent = data?.response || 'I couldn\'t generate a response.';
+        setMessages(prev => [...prev, {
+          id: crypto.randomUUID(),
+          role: 'assistant' as const,
+          content: responseContent,
+          timestamp: new Date(),
+          mode: 'discuss',
+        }]);
+      } catch (err: any) {
+        setMessages(prev => [...prev, {
+          id: crypto.randomUUID(),
+          role: 'assistant' as const,
+          content: `⚠️ ${err.message || 'Chat error'}`,
+          timestamp: new Date(),
+          mode: 'discuss',
+        }]);
+      } finally {
+        setIsGenerating(false);
+        setThinkingPhase(null);
+      }
+      return;
+    }
+
     // Save previous files for diff view
     if (currentFiles.length > 0) {
       setPreviousFiles([...currentFiles]);
