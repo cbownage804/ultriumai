@@ -499,13 +499,15 @@ export function AIAppBuilderWorkspace() {
       // both handleBgComplete and CompilationBridge would compile simultaneously.
       console.info('[handleBgComplete] Files merged (%d files), deferring compilation to CompilationBridge', mergedFiles.length);
 
-      // Force CompilationBridge to recompile (safety net for timing races)
+      // Safety net: if CompilationBridge hasn't produced HTML after 10s, force a recompile.
+      // This is intentionally long because compilation includes Vite sandbox (up to 35s timeout)
+      // with fallback to esbuild edge function. A separate 5s safety net already exists at mount.
       setTimeout(() => {
         if (!stableHTMLRef.current) {
-          console.warn('[handleBgComplete] Safety net: stableHTML still null 300ms after merge — forcing compile');
+          console.warn('[handleBgComplete] Safety net: stableHTML still null 10s after merge — forcing compile');
           forceCompileRef.current?.();
         }
-      }, 300);
+      }, 10_000);
 
       // Auto-switch to preview tab so user sees the result immediately
       if (rightTabRef.current !== 'preview' && rightTabRef.current !== 'split') {
