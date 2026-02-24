@@ -87,13 +87,13 @@ function validateJS(file: ProjectFile, issues: ValidationIssue[]) {
   // Bracket balance
   const brackets: Record<string, number> = { '{': 0, '(': 0, '[': 0 };
   const closers: Record<string, string> = { '}': '{', ')': '(', ']': '[' };
-  // Strip strings and comments for accurate bracket counting
+  // Strip strings, comments, and template literals for accurate bracket counting
   const stripped = content
     .replace(/\/\/.*$/gm, '')
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/'(?:[^'\\]|\\.)*'/g, '""')
     .replace(/"(?:[^"\\]|\\.)*"/g, '""')
-    .replace(/`(?:[^`\\]|\\.)*`/g, '""');
+    .replace(/`(?:[^`\\]|\\.)*`/gs, '""'); // 's' flag for multiline template literals
 
   for (const char of stripped) {
     if (char in brackets) brackets[char]++;
@@ -108,6 +108,14 @@ function validateJS(file: ProjectFile, issues: ValidationIssue[]) {
   }
   if (brackets['['] !== 0) {
     issues.push({ file: file.path, severity: 'warning', message: `Unbalanced square brackets: ${brackets['[']} unclosed` });
+  }
+
+  // Unterminated template literals (backtick count should be even after stripping comments)
+  const commentStripped = content.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/'(?:[^'\\]|\\.)*'/g, '').replace(/"(?:[^"\\]|\\.)*"/g, '');
+  const backtickCount = (commentStripped.match(/`/g) || []).length;
+  if (backtickCount % 2 !== 0) {
+    issues.push({ file: file.path, severity: 'error', message: 'Unterminated template literal (odd number of backticks)', suggestion: 'Check for a missing closing backtick in template strings' });
   }
 
   // Duplicate function/const declarations

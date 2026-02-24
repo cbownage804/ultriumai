@@ -297,6 +297,7 @@ export function AIAppBuilderWorkspace() {
   const setRightTabRef = useRef<(tab: 'preview' | 'code' | 'split') => void>(() => {});
   const isMobileRef = useRef(false);
   const setMobileTabRef = useRef<(tab: 'chat' | 'preview' | 'editor') => void>(() => {});
+  const outputValidationRef = useRef<ReturnType<typeof useOutputValidation>>({ validate: () => ({ isValid: true, issues: [], score: 100 }) });
 
 
   // Background generation: server-side builds that survive tab close
@@ -482,6 +483,12 @@ export function AIAppBuilderWorkspace() {
       );
 
       dedupeToast('success', `Build complete — ${totalChanges} files updated`, { duration: 5000 });
+
+      // Post-generation syntax validation: catch obvious issues before preview
+      const validationResult = outputValidationRef.current.validate(mergedFiles);
+      if (!validationResult.isValid) {
+        console.warn('[handleBgComplete] Validation found errors:', validationResult.issues.filter(i => i.severity === 'error'));
+      }
     }
     const finalFiles = mergedFiles;
     setMessages(prev => {
@@ -790,6 +797,7 @@ export function AIAppBuilderWorkspace() {
   linkedGPTRef.current = linkedGPT;
   const buildAnalytics = useBuildAnalytics();
   const outputValidation = useOutputValidation();
+  outputValidationRef.current = outputValidation;
   const [changelogEntries, setChangelogEntries] = useState<ChangelogEntry[]>([]);
   const [netlifyToken, setNetlifyToken] = useState<string | null>(null);
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
