@@ -478,13 +478,13 @@ export const AIStudioDashboardHub = () => {
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {recentProjects.map((p, i) => (
-              <motion.button
+              <motion.div
                 key={p.id}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
                 onClick={() => navigate(`/ai-studio/app-builder?project=${p.id}`)}
-                className="text-left rounded-xl border border-border/50 bg-card/60 hover:border-violet-500/30 hover:bg-card/80 transition-all group overflow-hidden"
+                className="text-left rounded-xl border border-border/50 bg-card/60 hover:border-violet-500/30 hover:bg-card/80 transition-all group overflow-hidden cursor-pointer"
               >
                 <div className="w-full aspect-[16/10] bg-muted/20 relative overflow-hidden">
                   {p.thumbnail_url ? (
@@ -522,16 +522,16 @@ export const AIStudioDashboardHub = () => {
                   <p className="font-medium text-sm truncate text-foreground">{p.name}</p>
                   <p className="text-xs text-muted-foreground mt-1"><Clock className="inline h-3 w-3 mr-1" />{formatTimeAgo(p.updated_at)}</p>
                 </div>
-              </motion.button>
+              </motion.div>
             ))}
             {recentGPTs.map((g, i) => (
-              <motion.button
+              <motion.div
                 key={g.id}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: (recentProjects.length + i) * 0.05 }}
                 onClick={() => navigate(`/ai-studio/gpt-builder/${g.id}`)}
-                className="text-left rounded-xl border border-border/50 bg-card/60 hover:border-primary/30 hover:bg-card/80 transition-all group overflow-hidden"
+                className="text-left rounded-xl border border-border/50 bg-card/60 hover:border-primary/30 hover:bg-card/80 transition-all group overflow-hidden cursor-pointer"
               >
                 <div className="w-full aspect-[16/10] bg-muted/20 relative overflow-hidden flex items-center justify-center bg-gradient-to-br from-primary/10 to-muted/10">
                   {g.logo_url ? (
@@ -569,7 +569,7 @@ export const AIStudioDashboardHub = () => {
                   <p className="font-medium text-sm truncate text-foreground">{g.name}</p>
                   <p className="text-xs text-muted-foreground mt-1"><Clock className="inline h-3 w-3 mr-1" />{formatTimeAgo(g.updated_at)}</p>
                 </div>
-              </motion.button>
+              </motion.div>
             ))}
           </div>
         </motion.section>
