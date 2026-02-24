@@ -319,6 +319,75 @@ export function AIAppBuilderWorkspace() {
           console.warn(`[Build] ⚠️ Edit target ${edit.path} not found in project files`);
         }
       }
+
+      // AI-initiated image generation: resolve [GENERATE_IMAGE: prompt] markers in code
+      const imageMarkerRegex = /\[GENERATE_IMAGE:\s*(.+?)\]/g;
+      const filesWithMarkers = mergedFiles.filter(f => imageMarkerRegex.test(f.content));
+      if (filesWithMarkers.length > 0) {
+        console.info(`[Build] 🖼️ Found image markers in ${filesWithMarkers.length} files — resolving...`);
+        for (const file of filesWithMarkers) {
+          const markers: { full: string; prompt: string }[] = [];
+          let m: RegExpExecArray | null;
+          const re = /\[GENERATE_IMAGE:\s*(.+?)\]/g;
+          while ((m = re.exec(file.content)) !== null) {
+            markers.push({ full: m[0], prompt: m[1] });
+          }
+          for (const marker of markers.slice(0, 3)) { // Cap at 3 images per file
+            try {
+              const { data, error } = await supabase.functions.invoke('image-generation', {
+                body: { prompt: marker.prompt, quality: 'medium' }
+              });
+              if (!error && data?.image) {
+                const idx = mergedFiles.findIndex(f => f.path === file.path);
+                if (idx >= 0) {
+                  mergedFiles[idx] = {
+                    ...mergedFiles[idx],
+                    content: mergedFiles[idx].content.replace(marker.full, data.image)
+                  };
+                  console.info(`[Build] 🖼️ Resolved image marker: "${marker.prompt.slice(0, 50)}..."`);
+                }
+              }
+            } catch (imgErr) {
+              console.warn(`[Build] Image generation failed for marker:`, imgErr);
+            }
+          }
+        }
+      }
+
+      // Also resolve [GENERATE_VIDEO_BG: prompt] markers
+      const videoMarkerRegex = /\[GENERATE_VIDEO_BG:\s*(.+?)\]/g;
+      const filesWithVideoMarkers = mergedFiles.filter(f => videoMarkerRegex.test(f.content));
+      if (filesWithVideoMarkers.length > 0) {
+        console.info(`[Build] 🎬 Found video markers in ${filesWithVideoMarkers.length} files — resolving...`);
+        for (const file of filesWithVideoMarkers) {
+          const markers: { full: string; prompt: string }[] = [];
+          let m: RegExpExecArray | null;
+          const re = /\[GENERATE_VIDEO_BG:\s*(.+?)\]/g;
+          while ((m = re.exec(file.content)) !== null) {
+            markers.push({ full: m[0], prompt: m[1] });
+          }
+          for (const marker of markers.slice(0, 2)) {
+            try {
+              const { data, error } = await supabase.functions.invoke('video-generation', {
+                body: { prompt: marker.prompt }
+              });
+              if (!error && (data?.video || data?.poster)) {
+                const idx = mergedFiles.findIndex(f => f.path === file.path);
+                if (idx >= 0) {
+                  mergedFiles[idx] = {
+                    ...mergedFiles[idx],
+                    content: mergedFiles[idx].content.replace(marker.full, data.video || data.poster)
+                  };
+                  console.info(`[Build] 🎬 Resolved video marker: "${marker.prompt.slice(0, 50)}..."`);
+                }
+              }
+            } catch (vidErr) {
+              console.warn(`[Build] Video generation failed for marker:`, vidErr);
+            }
+          }
+        }
+      }
+
       setFiles(mergedFiles);
       // Synchronously update refs so visibilitychange handler always has latest files
       latestFilesRef.current = mergedFiles;

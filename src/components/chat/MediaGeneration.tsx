@@ -84,12 +84,29 @@ const MediaGeneration = ({ onMediaGenerated, disabled }: MediaGenerationProps) =
     }
 
     try {
+      // Deduct credits before generating
+      const credited = await deductCredits(CREDIT_RATES.IMAGE_GENERATION, 'Video generation');
+      if (!credited) return;
+
       setIsGeneratingVideo(true);
       
-      // For now, show a message that video generation is coming soon
+      const { data, error } = await supabase.functions.invoke('video-generation', {
+        body: {
+          prompt: prompt.trim(),
+          duration: 5,
+          style: 'realistic'
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Failed to generate video');
+      }
+
+      onMediaGenerated(data.video || data.poster, 'video', prompt);
+      setPrompt(""); 
       toast({
-        title: "Video generation",
-        description: "Veo 3 video generation will be available soon. Stay tuned!",
+        title: "Video generated",
+        description: "Your video background has been sent to the chat",
       });
       
     } catch (error) {
@@ -176,35 +193,50 @@ const MediaGeneration = ({ onMediaGenerated, disabled }: MediaGenerationProps) =
         <div className="space-y-3">
           <h3 className="font-medium flex items-center gap-2">
             <Video className="w-4 h-4" />
-            Video Generation (Coming Soon)
+            Video Generation
           </h3>
           
-          <div className="space-y-2 opacity-60">
+          <div className="space-y-2">
             <Label>Duration</Label>
-            <Select disabled>
+            <Select value="5" disabled>
               <SelectTrigger>
                 <SelectValue placeholder="5 seconds" />
               </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5 seconds</SelectItem>
+              </SelectContent>
             </Select>
           </div>
 
-          <div className="space-y-2 opacity-60">
+          <div className="space-y-2">
             <Label>Style</Label>
-            <Select disabled>
+            <Select value="realistic" disabled>
               <SelectTrigger>
                 <SelectValue placeholder="Realistic" />
               </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="realistic">Realistic</SelectItem>
+              </SelectContent>
             </Select>
           </div>
 
           <Button
             onClick={generateVideo}
-            disabled={true}
+            disabled={disabled || isGeneratingImage || isGeneratingVideo || !prompt.trim()}
             className="w-full"
             variant="outline"
           >
-            <Video className="w-4 h-4 mr-2" />
-            Generate Video (Soon)
+            {isGeneratingVideo ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Video className="w-4 h-4 mr-2" />
+                Generate Video Background
+              </>
+            )}
           </Button>
         </div>
       </div>
