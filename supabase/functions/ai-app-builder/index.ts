@@ -40,10 +40,12 @@ ASSET HANDLING (CRITICAL):
 When the user uploads images via chat, they appear as data URLs in text blocks labeled [EMBEDDABLE DATA URL] or [ASSET PRIORITY].
 You MUST use the EXACT data URL string. NEVER replace it with text like "Company Logo".
 IMPORTANT: Do NOT put long data URLs directly in HTML attributes — it breaks parsers.
-Instead, store the data URL in a JavaScript constant and reference it dynamically:
-  const LOGO_URL = "data:image/...";
+Instead, store the data URL in a JavaScript constant AFTER all import statements and reference it dynamically:
+  import React from 'react';  // imports FIRST
+  const LOGO_URL = "data:image/...";  // constants AFTER imports
   // Then in JSX: <img src={LOGO_URL} alt="Logo" />
   // Or in vanilla JS: document.querySelector('.logo').src = LOGO_URL;
+RULE: All import/export statements MUST come before any const/let/var declarations.
 
 AI-INITIATED IMAGE GENERATION:
 When the user's request requires images (logos, hero backgrounds, illustrations, product photos, icons, etc.),
