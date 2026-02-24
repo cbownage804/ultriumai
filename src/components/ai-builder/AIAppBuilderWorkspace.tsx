@@ -342,7 +342,16 @@ export function AIAppBuilderWorkspace() {
             console.warn(`[Build] ❌ Hunk patch failed for ${edit.path} — file content may have diverged from expected line numbers`);
           }
         } else {
-          console.warn(`[Build] ⚠️ Edit target ${edit.path} not found in project files`);
+          // File doesn't exist yet — reconstruct from hunk newLines (AI used EDIT instead of FILE for new files)
+          const reconstructed = edit.hunks.map(h => h.newLines.join('\n')).join('\n');
+          if (reconstructed.trim()) {
+            console.info(`[Build] 🆕 Edit target ${edit.path} not found — creating from ${edit.hunks.length} hunks`);
+            const ext = edit.path.split('.').pop() || '';
+            const langMap: Record<string, string> = { ts: 'typescript', tsx: 'typescriptreact', js: 'javascript', jsx: 'javascriptreact', css: 'css', html: 'html', json: 'json', md: 'markdown', svg: 'xml' };
+            mergedFiles.push({ path: edit.path, content: reconstructed, language: langMap[ext] || ext });
+          } else {
+            console.warn(`[Build] ⚠️ Edit target ${edit.path} not found and hunks are empty — skipping`);
+          }
         }
       }
 
