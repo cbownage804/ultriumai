@@ -268,11 +268,12 @@ export function useWorkerCompiler() {
     }
 
     // 1. Try Vite Sandbox (true Vite on Droplet — Lovable parity)
+    // Short timeout (10s) so fallback is fast when sandbox is down
     try {
       const result = await Promise.race([
         compileViaViteSandbox(files, options),
         new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Vite sandbox timeout (35s)')), 35_000)
+          setTimeout(() => reject(new Error('Vite sandbox timeout (10s)')), 10_000)
         ),
       ]);
       return result;
@@ -285,7 +286,7 @@ export function useWorkerCompiler() {
       const result = await Promise.race([
         compileViaEdgeFunction(files, options),
         new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Server compilation timeout (25s)')), 25_000)
+          setTimeout(() => reject(new Error('Server compilation timeout (15s)')), 15_000)
         ),
       ]);
       return result;
