@@ -299,7 +299,7 @@ export function CompilationBridge({
         compilationInFlightRef.current = false;
         onCompilingChangeRef.current?.(false);
       }
-    }, 150);
+    }, debounceMs);
 
     return () => clearTimeout(timer);
   }, [filesDigest, isGenerating, supabaseConfig, stripeConfig, isReactProject, setStableHTML, runCompile]);
