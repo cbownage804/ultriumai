@@ -414,64 +414,7 @@ export function AIAppBuilderWorkspace() {
         }
       }
 
-      // ── Threshold-based diff review: show modal for 3+ file changes ──
-      const totalChangedFiles = parsedFiles.length + edits.length;
-      if (totalChangedFiles >= 3 && diffResolverRef) {
-        const changes: FileChange[] = [];
-        for (const newFile of parsedFiles) {
-          const oldFile = project.files.find(f => f.path === newFile.path);
-          changes.push({
-            path: newFile.path,
-            oldContent: oldFile?.content || '',
-            newContent: newFile.content,
-            isNew: !oldFile,
-          });
-        }
-        for (const edit of edits) {
-          const oldFile = project.files.find(f => f.path === edit.path);
-          const newFile = mergedFiles.find(f => f.path === edit.path);
-          if (oldFile && newFile) {
-            changes.push({
-              path: edit.path,
-              oldContent: oldFile.content,
-              newContent: newFile.content,
-              isNew: false,
-            });
-          }
-        }
-
-        if (changes.length >= 3) {
-          setAgentDiffChanges(changes);
-          setShowAgentDiffReview(true);
-
-          // Wait for user selection
-          const selectedPaths = await new Promise<string[] | null>((resolve) => {
-            diffResolverRef.current = resolve;
-          });
-          diffResolverRef.current = null;
-
-          if (selectedPaths === null) {
-            // User rejected all — don't apply
-            console.info('[handleBgComplete] User rejected all changes');
-            return;
-          }
-
-          // Filter to only selected files
-          const rejectedPaths = new Set(
-            changes.filter(c => !selectedPaths.includes(c.path)).map(c => c.path)
-          );
-          if (rejectedPaths.size > 0) {
-            mergedFiles = mergedFiles.map(f => {
-              if (rejectedPaths.has(f.path)) {
-                const original = project.files.find(o => o.path === f.path);
-                return original || f;
-              }
-              return f;
-            });
-            console.info(`[handleBgComplete] User deselected ${rejectedPaths.size} files`);
-          }
-        }
-      }
+      // Diff review removed — always auto-apply all changes immediately
 
       setFiles(mergedFiles);
       // Synchronously update refs so visibilitychange handler always has latest files
