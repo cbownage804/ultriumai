@@ -385,6 +385,8 @@ export function BuilderChatPanel({
 }: BuilderChatPanelProps) {
   const [input, setInput] = useState('');
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [imageResizes, setImageResizes] = useState<Record<number, number>>({}); // index → max width px
+  const [isDragOver, setIsDragOver] = useState(false);
   
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [plusMenuOpen, setPlusMenuOpen] = useState(false);
@@ -463,11 +465,47 @@ export function BuilderChatPanel({
     }
   }, [displayMessages, thinkingPhase]);
 
-  const handleSend = () => {
+  // Resize an image data URL to a target max width
+  const resizeImageDataUrl = useCallback((dataUrl: string, maxWidth: number): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new window.Image();
+      img.onload = () => {
+        if (img.width <= maxWidth) { resolve(dataUrl); return; }
+        const ratio = maxWidth / img.width;
+        const w = Math.round(img.width * ratio);
+        const h = Math.round(img.height * ratio);
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { resolve(dataUrl); return; }
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  }, []);
+
+  const handleSend = async () => {
     if (!input.trim() || isGenerating) return;
-    onSend(input.trim(), imagePreviews.length > 0 ? imagePreviews : null);
+    // Apply any pending resizes before sending
+    let finalImages: string[] | null = null;
+    if (imagePreviews.length > 0) {
+      finalImages = await Promise.all(
+        imagePreviews.map((img, i) => {
+          const targetWidth = imageResizes[i];
+          if (targetWidth && targetWidth < 1200) {
+            return resizeImageDataUrl(img, targetWidth);
+          }
+          return Promise.resolve(img);
+        })
+      );
+    }
+    onSend(input.trim(), finalImages);
     setInput('');
     setImagePreviews([]);
+    setImageResizes({});
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
   };
 
@@ -1416,8 +1454,69 @@ export function BuilderChatPanel({
     );
   };
 
+  const handleChatDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.types.includes('Files')) setIsDragOver(true);
+  }, []);
+
+  const handleChatDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  }, []);
+
+  const handleChatDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    const files = e.dataTransfer.files;
+    if (!files || files.length === 0) return;
+    Array.from(files).forEach(async (file) => {
+      if (!file.type.startsWith('image/')) {
+        toast.error(`Only images can be dropped here`);
+        return;
+      }
+      try {
+        if (file.type === 'image/svg+xml') {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            setImagePreviews(prev => {
+              if (prev.length >= MAX_IMAGE_COUNT) { toast.error(`Max ${MAX_IMAGE_COUNT} images`); return prev; }
+              return [...prev, ev.target?.result as string];
+            });
+          };
+          reader.readAsDataURL(file);
+          return;
+        }
+        const compressed = await compressImage(file);
+        setImagePreviews(prev => {
+          if (prev.length >= MAX_IMAGE_COUNT) { toast.error(`Max ${MAX_IMAGE_COUNT} images`); return prev; }
+          return [...prev, compressed];
+        });
+      } catch (err: any) {
+        toast.error(err?.message || `Failed to process ${file.name}`);
+      }
+    });
+  }, [compressImage]);
+
   return (
-    <div className="flex flex-col h-full bg-[#0a0a0f]">
+    <div
+      className={cn("flex flex-col h-full bg-[#0a0a0f] relative", isDragOver && "ring-2 ring-inset ring-cyan-500/40")}
+      onDragOver={handleChatDragOver}
+      onDragLeave={handleChatDragLeave}
+      onDrop={handleChatDrop}
+    >
+      {/* Drop overlay */}
+      {isDragOver && (
+        <div className="absolute inset-0 z-50 bg-cyan-500/[0.06] backdrop-blur-sm flex items-center justify-center pointer-events-none">
+          <div className="flex flex-col items-center gap-2 px-6 py-4 rounded-xl border-2 border-dashed border-cyan-500/40 bg-[#0a0a0f]/80">
+            <Paperclip className="h-8 w-8 text-cyan-400" />
+            <span className="text-sm font-medium text-cyan-300">Drop images here</span>
+            <span className="text-xs text-white/30">Images will be attached to your message</span>
+          </div>
+        </div>
+      )}
       {/* No visible header — Lovable style */}
 
       {/* Messages */}
@@ -1585,20 +1684,44 @@ export function BuilderChatPanel({
         </div>
       </ScrollArea>
 
-      {/* Image previews */}
+      {/* Image previews with resize controls */}
       {imagePreviews.length > 0 && (
-        <div className="px-3 pt-2 shrink-0 flex flex-wrap gap-2">
-          {imagePreviews.map((img, i) => (
-            <div key={i} className="relative inline-block group">
-              <img src={img} alt={`Upload preview ${i + 1}`} className="h-16 rounded-lg border border-white/10" />
-              <button
-                onClick={() => setImagePreviews(prev => prev.filter((_, idx) => idx !== i))}
-                className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-500 transition-all"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </div>
-          ))}
+        <div className="px-3 pt-2 shrink-0 space-y-2">
+          <div className="flex flex-wrap gap-2">
+            {imagePreviews.map((img, i) => (
+              <div key={i} className="relative inline-block group">
+                <img src={img} alt={`Upload preview ${i + 1}`} className="h-16 rounded-lg border border-white/10" />
+                <button
+                  onClick={() => {
+                    setImagePreviews(prev => prev.filter((_, idx) => idx !== i));
+                    setImageResizes(prev => { const n = { ...prev }; delete n[i]; return n; });
+                  }}
+                  className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-500 transition-all"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+          {/* Resize slider */}
+          <div className="flex items-center gap-2 px-1">
+            <span className="text-[10px] text-white/30 shrink-0">Resize:</span>
+            <input
+              type="range"
+              min={100}
+              max={1200}
+              step={50}
+              value={imageResizes[0] ?? 1200}
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                const resizes: Record<number, number> = {};
+                imagePreviews.forEach((_, i) => { resizes[i] = val; });
+                setImageResizes(resizes);
+              }}
+              className="flex-1 h-1 accent-cyan-500 cursor-pointer"
+            />
+            <span className="text-[10px] text-white/40 font-mono w-12 text-right">{imageResizes[0] ?? 1200}px</span>
+          </div>
         </div>
       )}
 
