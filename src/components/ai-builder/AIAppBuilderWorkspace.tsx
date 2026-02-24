@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef, Suspense, useMemo } from 'rea
 import { useAIAppBuilder } from '@/hooks/useAIAppBuilder';
 import { useProjectFileSystem, type ProjectFile } from '@/hooks/useProjectFileSystem';
 import { useAgentMode } from '@/hooks/useAgentMode';
+import { useAgentMemory } from '@/hooks/useAgentMemory';
 import { useAutoErrorRecovery } from '@/hooks/useAutoErrorRecovery';
 import type { RemoteCursor } from './CodeEditor';
 import { supabase } from '@/integrations/supabase/client';
@@ -269,7 +270,9 @@ export function AIAppBuilderWorkspace() {
     reorderQueue: reorderAgentQueue,
     respondToPlan: respondToAgentPlan,
     executeAgentTask, getNextQueuedTask, isAnyRunning: isAgentRunning,
+    rollbackToSnapshot,
   } = useAgentMode();
+  const agentMemory = useAgentMemory();
   const autoRecovery = useAutoErrorRecovery();
   const { applyBatch } = useAtomicFileApply();
 
@@ -2696,7 +2699,7 @@ export function AIAppBuilderWorkspace() {
                   <PanelLeftClose className="h-3.5 w-3.5" />
                 </button>
                 {/* Agent mode step tracker */}
-                <AgentModePanel run={agentRun} taskQueue={agentTaskQueue} pendingApproval={agentPendingApproval} onCancel={cancelAgent} onCancelTask={cancelAgentTask} onRetryTask={retryAgentTask} onClearCompleted={clearAgentCompleted} onReorderQueue={reorderAgentQueue} onApprovePlan={() => respondToAgentPlan(true)} onRejectPlan={() => respondToAgentPlan(false)} />
+                <AgentModePanel run={agentRun} taskQueue={agentTaskQueue} pendingApproval={agentPendingApproval} onCancel={cancelAgent} onCancelTask={cancelAgentTask} onRetryTask={retryAgentTask} onClearCompleted={clearAgentCompleted} onReorderQueue={reorderAgentQueue} onApprovePlan={() => respondToAgentPlan(true)} onRejectPlan={() => respondToAgentPlan(false)} onRollbackToStep={(stepId) => { const step = agentRun?.steps.find(s => s.id === stepId); if (step?.preSnapshot) { rollbackToSnapshot(step.preSnapshot, (snapshotFiles) => setFiles(snapshotFiles)); } }} streamingContent={streamingContentRef?.current || undefined} />
                 {phasePlanner.activePlan && (
                   <div data-phase-planner>
                     <PhasePlannerPanel
@@ -2779,7 +2782,7 @@ export function AIAppBuilderWorkspace() {
                 <SafePanel show={!!panels.showDatabase || !!panels.showAuth || !!panels.showKnowledge || !!panels.showStorage || !!panels.showEdgeFunctions} name="Database Tools">
                   <DatabasePanel open={!!panels.showDatabase} onClose={() => setShowDatabase(false)} supabaseConfig={supabaseConfig} />
                   <AuthConfigPanel open={!!panels.showAuth} onClose={() => setShowAuth(false)} supabaseConfig={supabaseConfig} onGenerateAuthPages={handleGenerateAuthPages} />
-                  <KnowledgePanel open={!!panels.showKnowledge} onClose={() => setShowKnowledge(false)} knowledge={knowledge} onKnowledgeChange={setKnowledge} />
+                  <KnowledgePanel open={!!panels.showKnowledge} onClose={() => setShowKnowledge(false)} knowledge={knowledge} onKnowledgeChange={setKnowledge} agentMemory={agentMemory.memory} onAgentMemoryUpdate={agentMemory.updateMemoryMarkdown} onAgentMemoryClear={agentMemory.clearMemory} />
                   <StorageBrowser open={!!panels.showStorage} onClose={() => setShowStorage(false)} supabaseConfig={supabaseConfig} />
                   <EdgeFunctionEditor open={!!panels.showEdgeFunctions} onClose={() => setShowEdgeFunctions(false)} onCreateFunction={handleCreateEdgeFunction} functions={edgeFunctions} onSelectFunction={(name) => { setActiveFile(`functions/${name}/index.ts`); setRightTab('code'); }} onDeleteFunction={handleDeleteEdgeFunction} />
                 </SafePanel>
