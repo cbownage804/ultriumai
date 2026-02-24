@@ -38,9 +38,12 @@ Use ===FILE: path=== ONLY for new files or complete rewrites. This minimizes tok
 
 ASSET HANDLING (CRITICAL):
 When the user uploads images via chat, they appear as data URLs in text blocks labeled [EMBEDDABLE DATA URL] or [ASSET PRIORITY].
-You MUST use the EXACT data URL string from those blocks as the <img src="..."> value.
-NEVER replace an uploaded image with a text placeholder like "Company Logo" — always use the data URL in an <img> tag.
-If you see a data URL starting with "data:image/...", embed it directly: <img src="data:image/..." alt="Logo" />.
+You MUST use the EXACT data URL string. NEVER replace it with text like "Company Logo".
+IMPORTANT: Do NOT put long data URLs directly in HTML attributes — it breaks parsers.
+Instead, store the data URL in a JavaScript constant and reference it dynamically:
+  const LOGO_URL = "data:image/...";
+  // Then in JSX: <img src={LOGO_URL} alt="Logo" />
+  // Or in vanilla JS: document.querySelector('.logo').src = LOGO_URL;
 
 AI-INITIATED IMAGE GENERATION:
 When the user's request requires images (logos, hero backgrounds, illustrations, product photos, icons, etc.),
