@@ -1685,21 +1685,10 @@ export function BuilderChatPanel({
                           <img key={i} src={url} alt={`Reference ${i + 1}`} className="rounded-lg max-h-32 mb-2 mr-2 border border-white/10 inline-block" />
                         ))}
                         <p className="whitespace-pre-wrap text-[13px]">{getCleanUserContent(msg.content)}</p>
-                        {/* Retry button — resend the same message + attachments */}
-                        {!isGenerating && (
-                          <button
-                            onClick={() => onSend(msg.content, msg.imageUrls || (msg.imageUrl ? [msg.imageUrl] : null))}
-                            className="absolute -bottom-5 right-0 opacity-0 group-hover/user-msg:opacity-100 transition-opacity flex items-center gap-1 text-[10px] text-white/30 hover:text-white/60"
-                            title="Retry this message"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
-                            Retry
-                          </button>
-                        )}
                       </div>
                     )}
                   </div>
-                  {/* Timestamp + mode badge — show on hover */}
+                  {/* Timestamp + mode badge + retry — show on hover */}
                   <div className={cn(
                     "flex items-center gap-1.5 text-[9px] text-white/15 mt-1 opacity-0 group-hover/msg:opacity-100 transition-opacity",
                     msg.role === 'user' ? 'justify-end' : 'justify-start'
@@ -1715,6 +1704,16 @@ export function BuilderChatPanel({
                       )}>
                         {msg.mode === 'discuss' ? 'Chat' : 'Build'}
                       </span>
+                    )}
+                    {msg.role === 'user' && !isGenerating && (
+                      <button
+                        onClick={() => onSend(msg.content, msg.imageUrls || (msg.imageUrl ? [msg.imageUrl] : null))}
+                        className="flex items-center gap-0.5 text-white/25 hover:text-white/60 transition-colors ml-1"
+                        title="Retry this message"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+                        Retry
+                      </button>
                     )}
                   </div>
                 </div>
