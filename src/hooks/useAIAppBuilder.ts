@@ -1333,6 +1333,9 @@ export function useAIAppBuilder() {
       for (let i = apiMessages.length - 2; i >= 2; i--) {
         if (totalChars <= PHASE1_LIMIT) break;
         if (apiMessages[i].role === 'system') {
+          // Never drop asset priority messages — they contain embeddable data URLs
+          const content = typeof apiMessages[i].content === 'string' ? apiMessages[i].content as string : '';
+          if (/ASSET PRIORITY/i.test(content)) continue;
           totalChars -= estimateChars(apiMessages[i]);
           apiMessages.splice(i, 1);
         }
@@ -1370,7 +1373,12 @@ export function useAIAppBuilder() {
       if (Array.isArray(lastMsg.content)) {
         lastMsg.content = lastMsg.content.map((block: any) => {
           if (block.type === 'text' && block.text?.length > 300000) {
-            return { ...block, text: block.text.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]{5000,}/g, '[image data omitted for budget]').slice(0, 300000) };
+            // Never strip data URLs from embeddable asset blocks — the AI needs these exact strings
+            const isAssetBlock = /EMBEDDABLE DATA URL|ASSET PRIORITY/i.test(block.text);
+            const trimmed = isAssetBlock
+              ? block.text
+              : block.text.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]{5000,}/g, '[image data omitted for budget]');
+            return { ...block, text: trimmed.slice(0, isAssetBlock ? 500000 : 300000) };
           }
           return block;
         });
