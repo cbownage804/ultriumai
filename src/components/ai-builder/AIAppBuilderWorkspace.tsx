@@ -22,6 +22,7 @@ import { AgentDiffReviewModal, type FileChange } from './AgentDiffReviewModal';
 import { parseMultiFileOutput, applyHunkPatch, generateSuggestions, type BuilderMessage } from '@/hooks/useAIAppBuilder';
 import { usePreviewHosting } from '@/hooks/usePreviewHosting';
 import { usePreviewCapture } from '@/hooks/usePreviewCapture';
+import { generateProjectName } from '@/utils/generateProjectName';
 import type { SupabaseConfig, GithubConfig, StripeConfig, VercelConfig, ServiceKey, EnvVar } from './ProjectSettings';
 import type { KnowledgeConfig } from './KnowledgePanel';
 import type { CodeSuggestion } from './AICodeIntelligence';
@@ -1249,62 +1250,21 @@ export function AIAppBuilderWorkspace() {
         promptLength: lastMsg?.content?.length || 0,
       });
 
-      // Auto-name project on first successful build
+      // Auto-name project on first successful build (Lovable-style: adjective-noun-hex)
       if (!hasAutoNamed.current && project.name === 'Untitled Project') {
-        // Find the first real user message (skip internal planning/system prompts)
-        const firstUserMsg = messages.find(m => {
-          if (m.role !== 'user') return false;
-          const c = m.content;
-          if (c.includes('PLANNING MODE') || c.includes('Return ONLY valid JSON') ||
-              c.includes('return a structured plan as JSON') || c.includes('filesToCreate') ||
-              c.includes('filesToModify') || c.includes('Analyze the user') ||
-              c.includes('[PLANNING') || c.includes('Do Not Generate') ||
-              (c.includes('"approach"') && c.includes('"steps"'))) {
-            return false;
-          }
-          return true;
-        });
-        if (firstUserMsg) {
-          const prompt = firstUserMsg.content
-            .replace(/\[Currently viewing:.*?\]\n?/g, '')
-            .replace(/\[Auto-detected relevant files:.*?\]\n?/g, '')
-            .replace(/\[.*?(?:planning|mode|do not generate).*?\]\s*/gi, '')
-            .replace(/^\s*\[.*?\]\s*/g, '')
-            .trim();
-          
-          // Strip common prompt prefixes to extract the subject
-          const cleaned = prompt
-            .replace(/^(please\s+)?(can you\s+)?(help me\s+)?(create|build|make|design|generate|develop|code|write)\s+(me\s+)?(a|an|the)?\s*/i, '')
-            .replace(/\s+(app|application|website|site|page|tool|platform|system|dashboard|portal)\s*$/i, (match) => match)
-            .trim();
-          
-          // Take first meaningful chunk (up to 35 chars, break at word boundary)
-          const subject = cleaned.length <= 35
-            ? cleaned
-            : cleaned.slice(0, 35).replace(/\s+\S*$/, '').trim();
-          
-          // Title case each word
-          const projectName = subject
-            .split(/\s+/)
-            .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-            .join(' ');
-          
-          if (projectName.length >= 3) {
-            renameProject(projectName);
-            hasAutoNamed.current = true;
-            // Persist auto-generated name to database
-            if (currentProjectId) {
-              supabase.from('builder_projects')
-                .update({ name: projectName } as any)
-                .eq('id', currentProjectId)
-                .then(() => console.log('Project auto-named:', projectName));
-            }
-          }
+        const projectName = generateProjectName();
+        renameProject(projectName);
+        hasAutoNamed.current = true;
+        if (currentProjectId) {
+          supabase.from('builder_projects')
+            .update({ name: projectName } as any)
+            .eq('id', currentProjectId)
+            .then(() => console.log('Project auto-named:', projectName));
         }
       }
     }
     prevIsGeneratingRef.current = isGenerating;
-  }, [isGenerating, latestFiles.length, messages, project.name, renameProject, currentProjectId]);
+  }, [isGenerating, latestFiles.length, project.name, renameProject, currentProjectId]);
 
   // Issue 8 fix: streamingFilePath as ref to avoid workspace re-renders
   const streamingFilePathRef = useRef<string | null>(null);
