@@ -1,92 +1,38 @@
 
 
-# Fix: Ensure Preview Auto-Updates After Build Completes
+## Fix: Duplicate "Approve & Build" Buttons + AI Scraping Awareness
 
-## Root Cause
+### Problem 1: Duplicate "Approve & Build" Buttons
+The `showApproveButton` condition triggers on **every** assistant message that has plan signals (e.g., "i'll create", "we'll need", "here's how"). When the user clicks "Approve & Build", it sends a new message containing the original plan text, which triggers another AI response -- also containing plan signals. This creates a cascading chain of duplicate action bars across multiple messages.
 
-There is a race condition in `handleBgComplete` that can cause the preview to not update after a build:
+### Problem 2: AI Claims It Can't Browse Websites
+The scraping infrastructure (`firecrawl-scrape`, `detectURLCloneIntent`) already exists and works. However, when in "discuss" mode, the AI's system prompt doesn't mention this capability, so the AI defaults to saying "I can't browse websites". The `detectURLCloneIntent` function actually matches "grab" via the `data` signal word and `glennsbodyshop.net` via the bare domain pattern -- but only in **build** mode where the scraping is invoked.
 
-1. **Stale discuss-mode guard**: `handleBgComplete` checks `messages[messages.length - 1]?.mode === 'discuss'` to skip compilation for chat responses. But `handleBgComplete` is a `useCallback` that captures the `messages` array from its closure. If the user previously sent a chat (discuss) message and then triggers a build, the callback may still see the old discuss message as the last message — causing it to skip the entire build pipeline and return early without merging files or triggering compilation.
+### Fix Plan
 
-2. **Double `stableHTML` ref confusion**: The workspace has its own `stableHTMLRef`, and `CompilationBridge` has a separate internal `stableHTMLRef`. When `handleBgComplete` clears the workspace's ref (`stableHTMLRef.current = null`), the Bridge's internal ref is not directly linked. The Bridge resets its own refs only when `isGenerating` transitions false-to-true (generation START), so if the transition is missed or the Bridge already has stale HTML, it may skip recompilation.
+**File 1: `src/components/ai-builder/BuilderChatPanel.tsx`**
+- Change `showApproveButton` to only appear on the **last** assistant message in the conversation, not on every message with plan signals
+- Add a guard: if any subsequent user message exists after this assistant message, hide the button (the plan was already acted on)
 
-3. **Self-contained HTML shortcut may mask issues**: For vanilla HTML projects, `handleBgComplete` sets `stableHTML` directly (line 486), but then `isGeneratingOverride` clears and CompilationBridge's effect fires, potentially overwriting or competing with the already-set preview.
+**File 2: `supabase/functions/ai-app-builder/index.ts`**  
+- Add a line to the `DISCUSS_SYSTEM_PROMPT` telling the AI it has web scraping capability: when a user mentions a URL or domain, the system will automatically scrape it. The AI should NOT say it can't browse -- instead, it should acknowledge the URL and proceed with planning, knowing the content will be scraped automatically in build mode
+- Add: "If the user mentions a website URL, acknowledge it and incorporate it into your plan. The system can automatically scrape website content when building."
 
-## Solution
+### Technical Details
 
-### 1. Fix the discuss-mode guard (Critical)
-**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
-
-Replace the fragile `messages[last].mode === 'discuss'` check with a more reliable approach:
-- Check the `job.output_content` itself for file markers (`===FILE:`, `===EDIT:`) — if none exist and the content looks like a chat response, skip compilation
-- This eliminates dependency on stale `messages` state entirely
-- Remove `messages` from the `handleBgComplete` dependency array (it's only used for this check and for appending — the append uses `setMessages(prev => ...)` which doesn't need closure state)
-
-### 2. Force CompilationBridge recompile after file merge
-**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
-
-After `setFiles(mergedFiles)` in `handleBgComplete`, call `forceCompileRef.current?.()` as a safety net. This ensures the Bridge's internal state is reset and a fresh compilation is triggered, even if the `filesDigest` effect doesn't fire due to timing.
-
-### 3. Auto-switch to preview tab after build completes
-**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
-
-When `handleBgComplete` successfully merges files, automatically switch the right panel to the preview tab if it isn't already showing. This ensures the user sees the result immediately. For mobile, also switch `mobileTab` to `'preview'`.
-
-## Technical Details
-
-### Change 1: Robust discuss-mode detection
-
-```typescript
-// BEFORE (fragile — depends on stale `messages` closure):
-const lastMsg = messages[messages.length - 1];
-if (lastMsg?.mode === 'discuss') {
-  setIsGeneratingOverride(false);
-  return;
-}
-
-// AFTER (checks actual output content — no closure dependency):
-const hasFileMarkers = /===FILE:|===EDIT:|```[\w]*\n/.test(job.output_content);
-const isShortChatResponse = job.output_content.length < 2000 && !hasFileMarkers;
-if (isShortChatResponse && !job.output_content.includes('<!DOCTYPE')) {
-  console.info('[handleBgComplete] No file markers detected — treating as chat response');
-  setIsGeneratingOverride(false);
-  return;
-}
+**Approve button deduplication logic:**
+```
+// Only show on the LAST assistant message, and only if no user message follows it
+const isLastAssistant = index === displayMessages.length - 1 
+  || !displayMessages.slice(index + 1).some(m => m.role === 'user');
+const showApproveButton = !isStreaming && isChatMode && hasPlanSignals(msg.content) && isLastAssistant;
 ```
 
-### Change 2: Force recompile safety net
-
-```typescript
-// After setFiles(mergedFiles) and all file operations:
-setFiles(mergedFiles);
-latestFilesRef.current = mergedFiles;
-
-// Force CompilationBridge to recompile (safety net for timing races)
-setTimeout(() => {
-  if (!stableHTMLRef.current) {
-    forceCompileRef.current?.();
-  }
-}, 300);
+**System prompt addition (discuss mode):**
+```
+CAPABILITIES:
+- The system can automatically scrape website content from URLs the user mentions. 
+  Do NOT tell users you can't browse websites. Instead, acknowledge the URL and plan 
+  to use its content. The scraping happens automatically when building.
 ```
 
-### Change 3: Auto-switch to preview
-
-```typescript
-// After successful file merge, switch to preview tab
-if (rightTab !== 'preview' && rightTab !== 'split') {
-  setRightTab('preview');
-}
-if (isMobile) {
-  setMobileTab('preview');
-}
-```
-
-### Dependency array cleanup
-
-Remove `messages` from `handleBgComplete`'s dependency array since it's no longer read from the closure (the append already uses `setMessages(prev => ...)`).
-
-## Files to Change
-
-| File | Change |
-|------|--------|
-| `src/components/ai-builder/AIAppBuilderWorkspace.tsx` | Fix discuss-mode guard, add forceCompile safety net, auto-switch to preview, clean up deps |
