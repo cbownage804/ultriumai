@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Captures a screenshot of compiled HTML and uploads it as a project thumbnail.
- * Uses a blob URL iframe approach for reliable same-origin rendering + html2canvas.
+ * Uses an offscreen iframe for reliable same-origin rendering + html2canvas.
  */
 export function usePreviewCapture() {
   const captureInProgress = useRef(false);
@@ -20,37 +20,28 @@ export function usePreviewCapture() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
-      // Create an offscreen container div to render HTML
-      const container = document.createElement('div');
-      container.style.cssText = 'position:fixed;left:-9999px;top:0;width:1280px;height:800px;overflow:hidden;z-index:-1;';
-      document.body.appendChild(container);
+      // Create an offscreen iframe for isolated rendering
+      const iframe = document.createElement('iframe');
+      iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:1280px;height:800px;border:none;z-index:-1;opacity:0;pointer-events:none;';
+      iframe.sandbox.add('allow-same-origin');
+      document.body.appendChild(iframe);
 
-      // Use a shadow DOM to isolate styles
-      const shadow = container.attachShadow({ mode: 'open' });
-      
-      // Parse and inject HTML content
-      const parser = new DOMParser();
-      const parsed = parser.parseFromString(compiledHtml, 'text/html');
-      
-      // Create a wrapper div inside shadow DOM
-      const wrapper = document.createElement('div');
-      wrapper.style.cssText = 'width:1280px;height:800px;overflow:hidden;background:#0a0a0a;';
-      
-      // Copy styles from parsed HTML
-      const styles = parsed.querySelectorAll('style, link[rel="stylesheet"]');
-      styles.forEach(s => {
-        shadow.appendChild(s.cloneNode(true));
-      });
-      
-      // Copy body content
-      wrapper.innerHTML = parsed.body.innerHTML;
-      shadow.appendChild(wrapper);
+      // Write compiled HTML into iframe
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!iframeDoc) {
+        document.body.removeChild(iframe);
+        return null;
+      }
 
-      // Wait for content to render
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      iframeDoc.open();
+      iframeDoc.write(compiledHtml);
+      iframeDoc.close();
 
-      // Capture with html2canvas
-      const canvas = await html2canvas(wrapper, {
+      // Wait for content to render (images, fonts, styles)
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      // Capture with html2canvas from the iframe body
+      const canvas = await html2canvas(iframeDoc.body, {
         width: 1280,
         height: 800,
         scale: 0.5,
@@ -58,9 +49,11 @@ export function usePreviewCapture() {
         allowTaint: true,
         backgroundColor: '#0a0a0a',
         logging: false,
+        windowWidth: 1280,
+        windowHeight: 800,
       });
 
-      document.body.removeChild(container);
+      document.body.removeChild(iframe);
 
       // Convert to blob
       const blob = await new Promise<Blob | null>(resolve =>
