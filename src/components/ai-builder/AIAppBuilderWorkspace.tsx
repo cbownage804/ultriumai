@@ -2411,6 +2411,7 @@ export function AIAppBuilderWorkspace() {
           skipNextCompileRef={skipNextCompileRef}
           externalStableHTMLRef={stableHTMLRef}
           onForceCompile={handleForceCompile}
+          assets={assets}
         />
       </PanelErrorBoundary>
       <WelcomeOverlay onQuickStart={(prompt) => handleSend(prompt)} />
