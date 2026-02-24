@@ -289,6 +289,8 @@ export function AIAppBuilderWorkspace() {
   const saveDraftImmediateRef = useRef<(name: string, files: ProjectFile[], messages: any[]) => void>(() => {});
   const latestFilesRef = useRef<ProjectFile[]>(project.files);
   latestFilesRef.current = project.files;
+  const latestMessagesRef = useRef<any[]>(messages);
+  latestMessagesRef.current = messages;
 
   // Refs for UI state needed inside handleBgComplete (declared before callback, assigned later)
   const rightTabRef = useRef<'preview' | 'code' | 'split'>('preview');
@@ -431,7 +433,7 @@ export function AIAppBuilderWorkspace() {
       // Synchronously update refs so visibilitychange handler always has latest files
       latestFilesRef.current = mergedFiles;
       // Immediately persist so tab-switch can't lose data
-      saveDraftImmediateRef.current(project.name, mergedFiles, []);
+      saveDraftImmediateRef.current(project.name, mergedFiles, latestMessagesRef.current);
 
       // Self-contained HTML shortcut — for vanilla HTML with a generated or patched index.html
       const hasReactFiles = mergedFiles.some(f => /\.(tsx|jsx)$/.test(f.path));
