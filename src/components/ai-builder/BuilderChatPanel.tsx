@@ -802,8 +802,8 @@ export function BuilderChatPanel({
     return null;
   };
 
-  // Plan signal detection for "Approve & Build" button
-  const PLAN_SIGNALS = ['here\'s what i\'d recommend', 'here\'s the plan', 'i\'d suggest', 'let me outline', 'for v1', 'here are the steps', 'the architecture', 'ready to', 'here\'s my recommendation', 'i recommend', 'plan:', 'approach:', 'implementation plan'];
+  // Plan signal detection for "Approve & Build" button — broadened to catch more plan-like responses
+  const PLAN_SIGNALS = ['here\'s what i\'d recommend', 'here\'s the plan', 'i\'d suggest', 'let me outline', 'for v1', 'here are the steps', 'the architecture', 'ready to', 'here\'s my recommendation', 'i recommend', 'plan:', 'approach:', 'implementation plan', 'step 1:', 'step 2:', 'let\'s break', 'let me break', 'here\'s how', 'i\'ll start by', 'first, i\'ll', 'here\'s my approach', 'i\'ll create', 'i\'ll build', 'let\'s start with', 'we can build', 'we\'ll need', 'the plan is'];
   const hasPlanSignals = (content: string) => {
     const lower = content.toLowerCase();
     return PLAN_SIGNALS.some(signal => lower.includes(signal));
@@ -1390,21 +1390,47 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Approve & Build — plan-to-build handoff */}
+        {/* Lovable-style plan action bar — Approve, Edit, or Override */}
         {showApproveButton && (
           <motion.div
-            initial={{ opacity: 0, y: 4 }}
+            initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            className="pt-1"
+            transition={{ duration: 0.3, delay: 0.1 }}
+            className="pt-2 space-y-2"
           >
+            {/* Primary: Approve & Build */}
             <button
               onClick={() => handleApproveAndBuild(msg)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-teal-500/20 to-cyan-500/15 border border-teal-500/30 text-teal-300 hover:from-teal-500/30 hover:to-cyan-500/25 hover:border-teal-500/50 transition-all text-sm font-medium group/approve"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-teal-500/20 to-cyan-500/15 border border-teal-500/30 text-teal-300 hover:from-teal-500/30 hover:to-cyan-500/25 hover:border-teal-500/50 transition-all text-sm font-medium group/approve"
             >
               <Rocket className="h-4 w-4 group-hover/approve:animate-bounce" />
               Approve & Build
               <span className="text-[10px] text-teal-400/60 ml-1">3cr</span>
             </button>
+            {/* Secondary actions row */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  const refinementPrompt = `I'd like to adjust the plan. Let me provide more details about what I want:`;
+                  setInput(refinementPrompt);
+                  setTimeout(() => textareaRef.current?.focus(), 50);
+                }}
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.08] text-white/50 hover:text-white/80 hover:bg-white/[0.08] hover:border-white/[0.15] transition-all text-[12px] font-medium"
+              >
+                <Pencil className="h-3 w-3" />
+                Edit approach
+              </button>
+              <button
+                onClick={() => {
+                  setInput('');
+                  setTimeout(() => textareaRef.current?.focus(), 50);
+                }}
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.08] text-white/50 hover:text-white/80 hover:bg-white/[0.08] hover:border-white/[0.15] transition-all text-[12px] font-medium"
+              >
+                <Sparkles className="h-3 w-3" />
+                New prompt
+              </button>
+            </div>
           </motion.div>
         )}
 
@@ -1527,7 +1553,7 @@ export function BuilderChatPanel({
       {/* No visible header — Lovable style */}
 
       {/* Messages */}
-      <ScrollArea className="flex-1" ref={scrollRef}>
+      <ScrollArea className="flex-1 min-h-0 overflow-hidden" ref={scrollRef}>
         <div className="p-4 space-y-4">
           {displayMessages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full min-h-[400px] space-y-8 relative">
