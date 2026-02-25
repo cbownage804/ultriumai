@@ -1085,8 +1085,12 @@ export function useAIAppBuilder() {
         content = content.replace(/===FILE:[\s\S]*?(?====FILE:|$)/g, '[file content omitted]').slice(0, 500);
       } else {
         // Strip base64 data URLs from old user messages (these are huge)
-        content = content.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]{100,}/g, '[image data omitted]');
-        content = content.slice(0, 2000);
+        // BUT: preserve data URLs in messages that contain asset markers (logo embeds)
+        const isAssetMsg = /ASSET PRIORITY|EMBEDDABLE DATA URL|use.*as.*logo|nav\s*bar\s*logo/i.test(content);
+        if (!isAssetMsg) {
+          content = content.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]{100,}/g, '[image data omitted]');
+        }
+        content = content.slice(0, isAssetMsg ? 200000 : 2000);
       }
       apiMessages.push({ role: m.role, content });
     }
