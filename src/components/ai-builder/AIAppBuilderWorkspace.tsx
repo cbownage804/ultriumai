@@ -1273,18 +1273,7 @@ export function AIAppBuilderWorkspace() {
         promptLength: lastMsg?.content?.length || 0,
       });
 
-      // Auto-name project on first successful build (Lovable-style: adjective-noun-hex)
-      if (!hasAutoNamed.current && project.name === 'Untitled Project') {
-        const projectName = generateProjectName();
-        renameProject(projectName);
-        hasAutoNamed.current = true;
-        if (currentProjectId) {
-          supabase.from('builder_projects')
-            .update({ name: projectName } as any)
-            .eq('id', currentProjectId)
-            .then(() => console.log('Project auto-named:', projectName));
-        }
-      }
+      // Auto-naming moved to post-generation save effect to avoid race condition
     }
     prevIsGeneratingRef.current = isGenerating;
   }, [isGenerating, latestFiles.length, project.name, renameProject, currentProjectId]);
@@ -1327,12 +1316,31 @@ export function AIAppBuilderWorkspace() {
       postGenTimestampRef.current = Date.now();
       // Allow draft persistence now that user has generated content
       isNewProjectRef.current = false;
+
+      // Auto-name project on first successful build (Lovable-style: adjective-noun-hex)
+      let saveName = project.name;
+      if (!hasAutoNamed.current && project.name === 'Untitled Project' && project.files.length > 0) {
+        saveName = generateProjectName();
+        renameProject(saveName);
+        hasAutoNamed.current = true;
+      }
+
       // Immediately save to cloud when generation finishes so project appears in recents
       if (project.files.length > 0) {
-        saveProject(project.name, project.files, undefined, undefined, messages, { versions });
+        saveProject(saveName, project.files, undefined, undefined, messages, { versions })
+          .then((projectId) => {
+            // Capture thumbnail after save ensures projectId exists
+            if (projectId) {
+              setTimeout(() => {
+                const html = compiledForHostingRef.current || stableHTMLRef.current;
+                if (html) {
+                  captureAndUpload(html, projectId).catch(() => {});
+                }
+              }, 4000);
+            }
+          });
         // Force immediate localStorage draft save so tab-switch doesn't lose data
-        // (the debounced saveDraft won't fire for ~2.5s which creates a data-loss window)
-        saveDraftImmediate(project.name, project.files, messages);
+        saveDraftImmediate(saveName, project.files, messages);
       }
     }
   }, [isGenerating]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -1519,6 +1527,10 @@ export function AIAppBuilderWorkspace() {
       if (loaded) {
         setFiles((loaded.files as any[]) || []);
         renameProject(loaded.name);
+        // If the loaded project already has a real name, skip auto-naming
+        if (loaded.name && loaded.name !== 'Untitled Project') {
+          hasAutoNamed.current = true;
+        }
         if (loaded.published_url) setPublishedUrl(loaded.published_url);
         if (loaded.settings?.chatMessages) {
           setMessages(loaded.settings.chatMessages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
