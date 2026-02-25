@@ -1095,6 +1095,28 @@ export function useAIAppBuilder() {
       apiMessages.push({ role: m.role, content });
     }
 
+    // ── Auto-detect existing logo/image assets in project files ──
+    // When the user doesn't attach an image but the project already has embedded
+    // data URL logos (from a prior build), re-inject them as an ASSET PRIORITY
+    // message so the AI doesn't drop them during edits/rewrites.
+    if (!effectiveImageDataUrls?.length && currentFiles.length > 0) {
+      const dataUrlPattern = /(?:const\s+\w*(?:LOGO|logo|Logo|BRAND|brand|Brand|ICON|icon|Icon|IMG|img|IMAGE|image)\w*\s*=\s*["']|src\s*=\s*["'{]?\s*["']?)(data:image\/[^;]+;base64,[A-Za-z0-9+/=]{200,})/g;
+      const existingAssetUrls: string[] = [];
+      for (const f of currentFiles) {
+        let match: RegExpExecArray | null;
+        while ((match = dataUrlPattern.exec(f.content)) !== null) {
+          if (match[1].length < 500_000) { // skip if too large
+            existingAssetUrls.push(match[1]);
+          }
+        }
+      }
+      if (existingAssetUrls.length > 0) {
+        const uniqueUrls = [...new Set(existingAssetUrls)];
+        const logoUrls = uniqueUrls.map((url, i) => `EXISTING_LOGO_${i + 1}_DATA_URL: ${url}`).join('\n');
+        apiMessages.push({ role: 'system', content: `[ASSET PRIORITY — PRESERVE EXISTING LOGOS]\nThe project already contains ${uniqueUrls.length} embedded logo image(s) from a previous build.\n\nYou MUST preserve these exact data URLs when editing files. Do NOT replace them with text placeholders.\nDo NOT remove, truncate, or modify these data URLs.\nIf you rewrite a file that contains one of these, keep the exact same data URL.\n\n${logoUrls}` });
+      }
+    }
+
     // ── Payload budget constants ──
     const MAX_PAYLOAD_CHARS = 2_500_000; // Safe limit accounting for ~400K server-side system prompt
 
