@@ -97,9 +97,19 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
       const iframeRect = iframe.getBoundingClientRect();
       const elRect = el.getBoundingClientRect();
 
-      // Capture element context for AI edits
-      const outerHTML = el.outerHTML.slice(0, 500);
-      const parentHTML = el.parentElement?.innerHTML.slice(0, 1000) || '';
+      // Capture element context for AI edits — strip visual edit classes
+      const cleanEl = el.cloneNode(true) as HTMLElement;
+      cleanEl.classList.remove('__ve-hover', '__ve-selected');
+      if (cleanEl.className === '') cleanEl.removeAttribute('class');
+      const outerHTML = cleanEl.outerHTML.slice(0, 500);
+      const parentClone = el.parentElement?.cloneNode(true) as HTMLElement | null;
+      if (parentClone) {
+        parentClone.querySelectorAll('.__ve-hover, .__ve-selected').forEach(c => {
+          c.classList.remove('__ve-hover', '__ve-selected');
+          if ((c as HTMLElement).className === '') c.removeAttribute('class');
+        });
+      }
+      const parentHTML = parentClone?.innerHTML.slice(0, 1000) || '';
       
       setSelectedElement({
         tagName: el.tagName.toLowerCase(),

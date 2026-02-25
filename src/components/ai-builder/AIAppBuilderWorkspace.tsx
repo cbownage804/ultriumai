@@ -2044,7 +2044,15 @@ export function AIAppBuilderWorkspace() {
   }, [upsertFile]);
 
   const handleAIEditRequest = useCallback((selector: string, elementContext: string, prompt: string) => {
-    sendMessage(`The user selected an element in the preview and wants you to edit it.\n\nElement selector: ${selector}\nElement HTML:\n${elementContext}\n\nUser request: "${prompt}"\n\nPlease update the relevant file(s) to apply this change.`, project.files, supabaseConfig, stripeConfig, serviceKeys);
+    // Include relevant source files so the AI can find the actual code to edit
+    const sourceContext = project.files
+      .filter(f => /\.(tsx?|jsx?|html?)$/.test(f.path))
+      .map(f => `--- ${f.path} ---\n${f.content}`)
+      .join('\n\n');
+    sendMessage(
+      `The user selected an element in the preview and wants you to edit it.\n\nElement selector: ${selector}\nElement HTML:\n${elementContext}\n\nUser request: "${prompt}"\n\nHere are the current source files for reference:\n${sourceContext}\n\nPlease update the relevant file(s) to apply this change. Output the full updated file(s).`,
+      project.files, supabaseConfig, stripeConfig, serviceKeys
+    );
   }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys]);
 
   // Persist visual edits (text/color) to project source files
