@@ -1096,18 +1096,27 @@ export function useAIAppBuilder() {
     }
 
     // ── Auto-detect existing logo/image assets in project files ──
-    // When the user doesn't attach an image but the project already has embedded
-    // data URL logos (from a prior build), re-inject them as an ASSET PRIORITY
-    // message so the AI doesn't drop them during edits/rewrites.
+    // Use fast string indexOf instead of regex to avoid catastrophic backtracking
     if (!effectiveImageDataUrls?.length && currentFiles.length > 0) {
-      const dataUrlPattern = /(?:const\s+\w*(?:LOGO|logo|Logo|BRAND|brand|Brand|ICON|icon|Icon|IMG|img|IMAGE|image)\w*\s*=\s*["']|src\s*=\s*["'{]?\s*["']?)(data:image\/[^;]+;base64,[A-Za-z0-9+/=]{200,})/g;
       const existingAssetUrls: string[] = [];
+      const DATA_PREFIX = 'data:image/';
+      const BASE64_MARKER = ';base64,';
       for (const f of currentFiles) {
-        let match: RegExpExecArray | null;
-        while ((match = dataUrlPattern.exec(f.content)) !== null) {
-          if (match[1].length < 500_000) { // skip if too large
-            existingAssetUrls.push(match[1]);
+        let searchFrom = 0;
+        while (searchFrom < f.content.length) {
+          const idx = f.content.indexOf(DATA_PREFIX, searchFrom);
+          if (idx === -1) break;
+          const b64Idx = f.content.indexOf(BASE64_MARKER, idx);
+          if (b64Idx === -1 || b64Idx - idx > 30) { searchFrom = idx + 11; continue; }
+          const dataStart = b64Idx + BASE64_MARKER.length;
+          // Find the end of the base64 string (stop at quote, backtick, whitespace, or closing paren)
+          let dataEnd = dataStart;
+          while (dataEnd < f.content.length && /[A-Za-z0-9+/=]/.test(f.content[dataEnd])) dataEnd++;
+          const urlLen = dataEnd - idx;
+          if (urlLen > 200 && urlLen < 500_000) {
+            existingAssetUrls.push(f.content.slice(idx, dataEnd));
           }
+          searchFrom = dataEnd;
         }
       }
       if (existingAssetUrls.length > 0) {
