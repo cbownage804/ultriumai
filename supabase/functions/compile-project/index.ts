@@ -827,8 +827,10 @@ window.ENV = ${JSON.stringify(envObj)};
         console.warn('[Import] ' + __pkgErrors.length + ' package(s) failed:', __pkgErrors.join(', '));
       }
 
-      var code = ${JSON.stringify(`
-    var { useState, useEffect, useCallback, useMemo, useRef, useContext, createContext, memo, forwardRef, Fragment, useReducer, useLayoutEffect, useId, useSyncExternalStore, useTransition, useDeferredValue, useInsertionEffect, Suspense, lazy, StrictMode } = React;
+      // Build the code string, then JSON.stringify it.
+      // CRITICAL: Escape </script> sequences that would prematurely close the <script> tag in HTML.
+      var __codeRaw = ${JSON.stringify(
+        `var { useState, useEffect, useCallback, useMemo, useRef, useContext, createContext, memo, forwardRef, Fragment, useReducer, useLayoutEffect, useId, useSyncExternalStore, useTransition, useDeferredValue, useInsertionEffect, Suspense, lazy, StrictMode } = React;
     var { createRoot, createPortal, flushSync } = ReactDOM;
     ${options?.supabaseConfig ? `var supabase = window.__supabaseClient;` : ""}
 
@@ -836,6 +838,7 @@ window.ENV = ${JSON.stringify(envObj)};
 
     ${mountScript}
       `)};
+      var code = __codeRaw.replace(/<\\/script>/gi, '<\\/scr" + "ipt>');
       ${needsBabelRuntime ? `
       // Regex fallback couldn't fully transform JSX — use Babel at runtime
       if (typeof Babel !== 'undefined') {

@@ -1911,6 +1911,11 @@ export function AIAppBuilderWorkspace() {
         error.message?.includes('esm.sh') ||
         error.message?.includes('Failed to load lucide-react') ||
         error.message?.includes('Failed to load framer-motion')) return;
+    // Phase 99: Skip auto-fix for compilation pipeline errors (source is srcdoc, not user code)
+    if (error.source?.includes('about:srcdoc') || error.source?.includes('srcdoc')) return;
+    // Skip edge function / sandbox infrastructure errors
+    if (error.message?.includes('spawnSync') || error.message?.includes('ETIMEDOUT') ||
+        error.message?.includes('Edge function returned')) return;
     // Skip during generation or compilation
     if (isGenerating || isCompiling) return;
     // In-flight guard: skip if a fix generation is already pending
