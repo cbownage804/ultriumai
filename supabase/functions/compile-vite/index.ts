@@ -143,9 +143,10 @@ serve(async (req) => {
 
     if (!response.ok) {
       console.error(`[compile-vite] Sandbox error (${response.status}):`, result.error);
+      // Always return 503 (not the sandbox's raw status) so the client cleanly falls back
       return new Response(
         JSON.stringify({ error: result.error, fallback: true }),
-        { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
