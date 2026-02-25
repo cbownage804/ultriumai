@@ -1085,45 +1085,10 @@ export function useAIAppBuilder() {
         content = content.replace(/===FILE:[\s\S]*?(?====FILE:|$)/g, '[file content omitted]').slice(0, 500);
       } else {
         // Strip base64 data URLs from old user messages (these are huge)
-        // BUT: preserve data URLs in messages that contain asset markers (logo embeds)
-        const isAssetMsg = /ASSET PRIORITY|EMBEDDABLE DATA URL|use.*as.*logo|nav\s*bar\s*logo/i.test(content);
-        if (!isAssetMsg) {
-          content = content.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]{100,}/g, '[image data omitted]');
-        }
-        content = content.slice(0, isAssetMsg ? 200000 : 2000);
+        content = content.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]{100,}/g, '[image data omitted]');
+        content = content.slice(0, 2000);
       }
       apiMessages.push({ role: m.role, content });
-    }
-
-    // ── Auto-detect existing logo/image assets in project files ──
-    // Use fast string indexOf instead of regex to avoid catastrophic backtracking
-    if (!effectiveImageDataUrls?.length && currentFiles.length > 0) {
-      const existingAssetUrls: string[] = [];
-      const DATA_PREFIX = 'data:image/';
-      const BASE64_MARKER = ';base64,';
-      for (const f of currentFiles) {
-        let searchFrom = 0;
-        while (searchFrom < f.content.length) {
-          const idx = f.content.indexOf(DATA_PREFIX, searchFrom);
-          if (idx === -1) break;
-          const b64Idx = f.content.indexOf(BASE64_MARKER, idx);
-          if (b64Idx === -1 || b64Idx - idx > 30) { searchFrom = idx + 11; continue; }
-          const dataStart = b64Idx + BASE64_MARKER.length;
-          // Find the end of the base64 string (stop at quote, backtick, whitespace, or closing paren)
-          let dataEnd = dataStart;
-          while (dataEnd < f.content.length && /[A-Za-z0-9+/=]/.test(f.content[dataEnd])) dataEnd++;
-          const urlLen = dataEnd - idx;
-          if (urlLen > 200 && urlLen < 500_000) {
-            existingAssetUrls.push(f.content.slice(idx, dataEnd));
-          }
-          searchFrom = dataEnd;
-        }
-      }
-      if (existingAssetUrls.length > 0) {
-        const uniqueUrls = [...new Set(existingAssetUrls)];
-        const logoUrls = uniqueUrls.map((url, i) => `EXISTING_LOGO_${i + 1}_DATA_URL: ${url}`).join('\n');
-        apiMessages.push({ role: 'system', content: `[ASSET PRIORITY — PRESERVE EXISTING LOGOS]\nThe project already contains ${uniqueUrls.length} embedded logo image(s) from a previous build.\n\nYou MUST preserve these exact data URLs when editing files. Do NOT replace them with text placeholders.\nDo NOT remove, truncate, or modify these data URLs.\nIf you rewrite a file that contains one of these, keep the exact same data URL.\n\n${logoUrls}` });
-      }
     }
 
     // ── Payload budget constants ──
