@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import previewBgNeon from '@/assets/preview-bg-neon.jpg';
+import { VisualEditOverlay } from './VisualEditOverlay';
 interface PreviewError {
   id: string;
   message: string;
@@ -590,6 +591,17 @@ window.addEventListener('message', function(e) {
             {/* Right toolbar — responsive only */}
             <div className="flex items-center gap-0.5">
               <ResponsivePreviewBar active={viewportMode} onChange={setViewportMode} />
+              {/* Visual Edit toggle */}
+              <VisualEditOverlay
+                isActive={!!externalVisualEdit}
+                onToggle={() => externalToggleVisualEdit?.()}
+                onEditApply={(selector, property, value, meta) => {
+                  onVisualEdit?.(selector, property, value);
+                }}
+                onAIEditRequest={onAIEditRequest}
+                iframeRef={iframeRef as React.RefObject<HTMLIFrameElement | null>}
+                isProcessingAIEdit={isProcessingAIEdit}
+              />
             </div>
 
             {/* Streaming indicator */}
