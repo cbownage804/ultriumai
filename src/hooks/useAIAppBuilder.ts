@@ -1095,30 +1095,34 @@ export function useAIAppBuilder() {
       apiMessages.push({ role: m.role, content });
     }
 
-     // ── Auto-detect existing logo/image assets in project files ──
-     // Fast detection: just check if any file contains a data URL, then extract a short fingerprint
-     if (!effectiveImageDataUrls?.length && currentFiles.length > 0) {
-       const existingAssetUrls: string[] = [];
-       const DATA_PREFIX = 'data:image/';
-       for (const f of currentFiles) {
-         // Quick check before scanning
-         if (!f.content.includes(DATA_PREFIX)) continue;
-         // Only extract the first 300 chars of each data URL (enough for the AI to recognize it)
-         let searchFrom = 0;
-         while (searchFrom < f.content.length && existingAssetUrls.length < 5) {
-           const idx = f.content.indexOf(DATA_PREFIX, searchFrom);
-           if (idx === -1) break;
-           // Grab up to 300 chars as a preview — don't scan the whole base64
-           const preview = f.content.slice(idx, idx + 300);
-           if (preview.includes(';base64,')) {
-             existingAssetUrls.push('[data URL in ' + f.path + ']');
-           }
-           searchFrom = idx + 300;
-         }
-       }
-       if (existingAssetUrls.length > 0) {
-         const fileList = [...new Set(existingAssetUrls)].join(', ');
-         apiMessages.push({ role: 'system', content: `[ASSET PRIORITY — PRESERVE EXISTING LOGOS]\nThe project already contains embedded logo/image data URLs in these files: ${fileList}.\n\nYou MUST preserve these exact data URLs when editing files. Do NOT replace them with text placeholders.\nDo NOT remove, truncate, or modify these data URLs.\nIf you rewrite a file that contains one of these, keep the exact same data URL.` });
+    // ── Auto-detect existing logo/image assets in project files ──
+    // Use fast string indexOf instead of regex to avoid catastrophic backtracking
+    if (!effectiveImageDataUrls?.length && currentFiles.length > 0) {
+      const existingAssetUrls: string[] = [];
+      const DATA_PREFIX = 'data:image/';
+      const BASE64_MARKER = ';base64,';
+      for (const f of currentFiles) {
+        let searchFrom = 0;
+        while (searchFrom < f.content.length) {
+          const idx = f.content.indexOf(DATA_PREFIX, searchFrom);
+          if (idx === -1) break;
+          const b64Idx = f.content.indexOf(BASE64_MARKER, idx);
+          if (b64Idx === -1 || b64Idx - idx > 30) { searchFrom = idx + 11; continue; }
+          const dataStart = b64Idx + BASE64_MARKER.length;
+          // Find the end of the base64 string (stop at quote, backtick, whitespace, or closing paren)
+          let dataEnd = dataStart;
+          while (dataEnd < f.content.length && /[A-Za-z0-9+/=]/.test(f.content[dataEnd])) dataEnd++;
+          const urlLen = dataEnd - idx;
+          if (urlLen > 200 && urlLen < 500_000) {
+            existingAssetUrls.push(f.content.slice(idx, dataEnd));
+          }
+          searchFrom = dataEnd;
+        }
+      }
+      if (existingAssetUrls.length > 0) {
+        const uniqueUrls = [...new Set(existingAssetUrls)];
+        const logoUrls = uniqueUrls.map((url, i) => `EXISTING_LOGO_${i + 1}_DATA_URL: ${url}`).join('\n');
+        apiMessages.push({ role: 'system', content: `[ASSET PRIORITY — PRESERVE EXISTING LOGOS]\nThe project already contains ${uniqueUrls.length} embedded logo image(s) from a previous build.\n\nYou MUST preserve these exact data URLs when editing files. Do NOT replace them with text placeholders.\nDo NOT remove, truncate, or modify these data URLs.\nIf you rewrite a file that contains one of these, keep the exact same data URL.\n\n${logoUrls}` });
       }
     }
 

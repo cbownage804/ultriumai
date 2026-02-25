@@ -430,49 +430,7 @@ export function AIAppBuilderWorkspace() {
         }
       }
 
-      // ── Pre-apply validation & auto-fix ──
-      // Validate BEFORE setting files to prevent broken previews
-      const preValidation = outputValidationRef.current.validate(mergedFiles);
-      if (!preValidation.isValid) {
-        const errors = preValidation.issues.filter(i => i.severity === 'error');
-        console.warn('[handleBgComplete] Pre-apply validation errors:', errors);
-
-        // Auto-fix: strip AI commentary from files
-        for (const issue of errors) {
-          if (issue.message.includes('commentary')) {
-            const idx = mergedFiles.findIndex(f => f.path === issue.file);
-            if (idx >= 0) {
-              const lines = mergedFiles[idx].content.split('\n');
-              // Strip leading AI prose (Sure, Here's, etc.)
-              let startCut = 0;
-              for (let i = 0; i < Math.min(5, lines.length); i++) {
-                if (/^(?:Sure|Here(?:'s| is)|I(?:'ve| have)|Let me|This (?:code|will|should)|```)/i.test(lines[i].trim())) {
-                  startCut = i + 1;
-                } else if (lines[i].trim()) break;
-              }
-              // Strip trailing AI prose
-              let endCut = lines.length;
-              for (let i = lines.length - 1; i >= Math.max(0, lines.length - 10); i--) {
-                if (/^(?:Sure|Here(?:'s| is)|I(?:'ve| have)|Let me|This (?:code|will|should)|Enjoy|Great|Perfect|Done!|```)/i.test(lines[i].trim())) {
-                  endCut = i;
-                } else if (lines[i].trim()) break;
-              }
-              // Strip markdown code fences
-              let cleaned = lines.slice(startCut, endCut).join('\n');
-              cleaned = cleaned.replace(/^```(?:typescript|javascript|tsx|jsx|html|css)?\n?/gm, '').replace(/```\s*$/gm, '');
-              mergedFiles[idx] = { ...mergedFiles[idx], content: cleaned.trim() };
-              console.info(`[handleBgComplete] Auto-fixed AI commentary in ${issue.file}`);
-            }
-          }
-        }
-
-        // For critical syntax errors (unbalanced braces), warn user but still apply
-        // so they can see and manually fix in the editor
-        const syntaxErrors = errors.filter(e => e.message.includes('Unbalanced') || e.message.includes('truncated'));
-        if (syntaxErrors.length > 0) {
-          dedupeToast('info', `Build has syntax issues: ${syntaxErrors.map(e => e.message).join('; ')}. Check the code editor.`, { duration: 8000 });
-        }
-      }
+      // Diff review removed — always auto-apply all changes immediately
 
       setFiles(mergedFiles);
       // Open all newly generated/edited files as tabs
@@ -537,6 +495,12 @@ export function AIAppBuilderWorkspace() {
       );
 
       dedupeToast('success', `Build complete — ${totalChanges} files updated`, { duration: 5000 });
+
+      // Post-generation syntax validation: catch obvious issues before preview
+      const validationResult = outputValidationRef.current.validate(mergedFiles);
+      if (!validationResult.isValid) {
+        console.warn('[handleBgComplete] Validation found errors:', validationResult.issues.filter(i => i.severity === 'error'));
+      }
     }
     const finalFiles = mergedFiles;
     setMessages(prev => {
