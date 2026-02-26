@@ -1,67 +1,150 @@
 
 
-# Fix: Make Uploaded Images Work Flawlessly in App Builder
+## Plan: Fail-Closed Preview Pipeline + Circuit Breaker
 
-## Problem Identified
+Five tasks implementing strict parsing, preview gating, circuit breaker, and prompt hardening to eliminate tab freezes.
 
-There's a **critical data stripping bug** in the client-side message sanitization pipeline. Before messages are sent to the edge function, ALL base64 data URLs longer than 10KB are stripped and replaced with placeholders -- including the ones the AI needs to embed as logos.
+---
 
-**The kill chain:**
-1. User uploads logo image
-2. Image is compressed to 200px wide, 0.5 quality (good)
-3. Data URL is injected into ASSET PRIORITY and EMBEDDABLE DATA URL messages (good)
-4. **BUG**: `sanitizedApiMessages` at line 1399 strips ALL data URLs >10KB -- including the asset messages (bad)
-5. AI receives `[image-data-url-stripped-for-transport]` instead of the actual data URL
-6. AI can "see" the image via the vision `image_url` block, but cannot extract the raw string to put in `<img src="...">`
-7. AI falls back to text like "Glenn's Body Shop Logo"
+### Task 1: Strict state-machine parser in `useAIAppBuilder.ts`
 
-## Solution
+**File: `src/hooks/useAIAppBuilder.ts` (lines 539–682)**
 
-### Change 1: Exempt asset messages from client-side stripping (`useAIAppBuilder.ts`)
+Replace the main file-parsing loop and post-processing with a strict state machine. Keep pre-parse logic (migrations, edge functions, mode, edits, deletions) unchanged.
 
-Update the `sanitizedApiMessages` logic (around line 1399) to skip stripping on messages that contain `ASSET PRIORITY` or `EMBEDDABLE DATA URL`. These messages exist specifically to give the AI the raw data URL string -- stripping them defeats the purpose.
+**Changes:**
+- Add `const END_RE = /^===END===\s*$/;` constant
+- Replace the `for (const line of lines)` loop (lines 593–645) with strict state machine:
+  - Only collect content between `===FILE:` delimiters
+  - `===END===` flushes current file + breaks loop (stream complete)
+  - Content outside any file block goes into `ignored[]` array (returned alongside files)
+  - Remove `isConversationalLine` from file loop (keep function exported for edit block parsing)
+  - Remove `blankLineStreak` prose-detection logic
+- Replace `flush()` (lines 571–591): use `stripOuterMarkdownFenceOnly()` instead of aggressive per-line fence stripping — only strip if a single outer fence wraps the entire file content
+- Remove post-process trailing prose loop (lines 652–671)
+- **Incomplete flag**: mark last open file `incomplete: true` ONLY when stream ends inside a file block AND `===END===` was not seen. Files closed by a subsequent `===FILE:` delimiter are NOT incomplete.
+- Keep the HTML fallback (lines 673–680) for backward compat
+- Return `ignored` in result object
 
-- For **string content** messages: check if the string contains `ASSET PRIORITY` before applying the regex replacement
-- For **array content** messages: check each text block for `EMBEDDABLE DATA URL` or `ASSET PRIORITY` before stripping
+**File: `src/hooks/useProjectFileSystem.ts` (line 4–8)**
 
-### Change 2: Increase image compression quality (`useAIAppBuilder.ts`)
+Add `incomplete?: boolean` to `ProjectFile` interface. This is transient (in-memory only) — ensure it doesn't affect localStorage persistence or any serialization.
 
-The current 200px/0.5 quality settings produce very low quality logos. Increase to:
-- `maxWidth: 400` (enough for navbar/footer logos at 2x resolution)
-- `quality: 0.7` (reasonable balance between size and quality)
+### Task 2: Update parser tests
 
-This keeps images under the 500KB cap while looking sharp.
+**File: `src/hooks/__tests__/parseMultiFileOutput.test.ts`**
 
-### Change 3: Strengthen edge function asset protection (`ai-app-builder/index.ts`)
+- Update `parseFiles` helper to match strict behavior (no `isConversationalLine` in file loop)
+- Update "strips conversational prose after 2+ blank lines" test — prose inside file blocks is now kept
+- Add tests:
+  - `===END===` prevents `incomplete` flag on last file
+  - Without `===END===`, last file is `incomplete: true`
+  - Content after `===END===` is ignored (not in `ignored[]` either — parsing stops)
+  - File closed by next `===FILE:` is NOT incomplete
+  - Outer markdown fence stripping (single wrapping fence removed; inner fences preserved)
+  - `ignored[]` contains pre-file-block text
 
-In the `trimMessagesToFit` function, the `isAssetMessage` helper only checks string content, but ASSET PRIORITY messages with multimodal (array) content would be missed. Update to also check array content blocks.
+### Task 3: Fail-closed preview gating in CompilationBridge
 
-## Technical Details
+**File: `src/components/ai-builder/CompilationBridge.tsx` (lines 302–329)**
 
-```text
-File: src/hooks/useAIAppBuilder.ts
-Lines ~1399-1421 (sanitizedApiMessages block)
+After `runCompile()` returns result (line 316), add a validation gate before setting stableHTML:
 
-Before:
-  - Strips ALL data URLs >10KB indiscriminately
-  
-After:
-  - String messages: skip if contains "ASSET PRIORITY"
-  - Array text blocks: skip if contains "EMBEDDABLE DATA URL" or "ASSET PRIORITY"
-  - image_url blocks: keep the 500KB cap (unchanged)
+1. Snapshot files into a local const BEFORE compiling: `const filesToCompile = filesRef.current.map(f => ({...f}))`
+2. Pass same snapshot to both `runCompile()` and validation
+3. Import and call `useOutputValidation().validate(filesToCompile)`
+4. Check `filesToCompile.some(f => (f as any).incomplete)`
+5. **Gate conditions** — if validation has errors OR incomplete files exist:
+   - Do NOT call `setStableHTML` or `setLiveCompiledHTML`
+   - Keep previous LKG preview
+   - `window.postMessage({ type: '__BUILD_GATED__', payload: { reason, errors } }, '*')`
+   - Log gated reason
+6. `ignored[]` is NOT a gate — only warn if it contains >200 non-whitespace chars
+7. Only proceed to `setStableHTML(result)` if gate passes
 
-File: src/hooks/useAIAppBuilder.ts  
-Line ~999 (image optimization)
+**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
 
-Before: maxWidth: 200, quality: 0.5
-After:  maxWidth: 400, quality: 0.7
+- Add `useState<boolean>` for `buildGated`
+- Add `useEffect` listener for `__BUILD_GATED__` messages → set `buildGated = true`
+- Clear `buildGated` when `__PREVIEW_READY__` or `__SOFT_RELOAD__` arrives
+- Show "Build failed — fixing…" text in GeneratingOverlay or small banner when gated
 
-File: supabase/functions/ai-app-builder/index.ts
-Lines ~363-366 (isAssetMessage helper)
+### Task 4: Circuit breaker + session guard in BuilderPreviewPanel
 
-Before: Only checks string content
-After:  Also checks array content blocks for asset markers
+**File: `src/components/ai-builder/BuilderPreviewPanel.tsx` (lines 336–383)**
+
+Replace the rate limiter with a full circuit breaker:
+
+1. **Circuit breaker**: `errorTimestampsRef = useRef<number[]>([])`, `breakerOpenRef = useRef(false)`
+   - Trip if >30 errors of types `__PREVIEW_ERROR__` or `__PREVIEW_CRITICAL_ERROR__` within 2 seconds
+   - Do NOT trip on benign messages (ready/reload/heartbeat)
+   - When tripped: replace `iframe.srcdoc` with static crash page HTML (no scripts), detach listener for 5s cooldown
+   - After cooldown: reattach listener, restore previous stableHTML, reset timestamps
+
+2. **Session guard**:
+   - `sessionIdRef = useRef<string>("")` — generate new random ID whenever new HTML is set on iframe
+   - Helper `injectSessionId(html, id)` — inject `<meta name="preview-session" content="...">` into `<head>`
+   - Helper `newSessionId()` — `Math.random().toString(36).slice(2) + Date.now().toString(36)`
+   - Message handler ignores messages where `data.previewSessionId` exists but doesn't match `sessionIdRef.current`
+   - Messages WITHOUT `previewSessionId` are ignored once session guard is active (prevents zombie iframes)
+
+3. Update the `useEffect` that sets `html` on iframe (line 385) to always generate + inject session ID
+
+### Task 5: Prompt hardening — enforce `===END===`
+
+**File: `supabase/functions/ai-app-builder/index.ts` (line 17–18)**
+
+Add to `BASE_SYSTEM_PROMPT` OUTPUT FORMAT section:
+```
+Finish ALL file output with ===END=== on its own line. No prose after ===END===.
 ```
 
-These three changes ensure the complete pipeline preserves image data URLs end-to-end: upload, compress, inject, transport, and deliver to the AI model.
+**File: `supabase/functions/ai-builder-background/index.ts` (line 557)**
+
+Update continuation prompt to include:
+```
+When you have output all remaining files, end with ===END=== on its own line.
+```
+
+---
+
+### Technical Details
+
+**Strict parser state machine:**
+```text
+for each line:
+  if ===END===     → flush current file (NOT incomplete), break
+  if ===EDIT:===   → flush, enter edit-skip mode
+  if ===DELETE:=== → flush, record deletion
+  if ===FILE:===   → flush current (NOT incomplete — closed by delimiter), start new
+  if in edit block → skip
+  if in file block → append to content
+  if outside       → add to ignored[]
+
+After loop:
+  if current file open AND no ===END=== seen → mark incomplete: true
+```
+
+**Circuit breaker states:**
+```text
+CLOSED  → errors < 30 in 2s window → pass through
+OPEN    → replace srcdoc with crash page, detach listener
+RECOVER → after 5s cooldown, reattach, restore LKG, reset
+```
+
+**Preview gating flow:**
+```text
+filesToCompile = snapshot(filesRef.current)
+result = await runCompile(filesToCompile)
+validation = validate(filesToCompile)
+hasIncomplete = filesToCompile.some(f => f.incomplete)
+
+if (validation.errors.length > 0 || hasIncomplete):
+  keep LKG preview
+  postMessage(__BUILD_GATED__)
+  trigger auto-fix
+else:
+  setStableHTML(result)
+  postMessage(__PREVIEW_READY__)
+```
 
