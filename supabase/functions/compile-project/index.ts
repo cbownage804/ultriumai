@@ -837,8 +837,8 @@ window.ENV = ${JSON.stringify(envObj)};
     ${transpiledChunks.join("\n\n")}
 
     ${mountScript}
-      `)};
-      var code = __codeRaw.replace(/<\\/script>/gi, '<\\/scr" + "ipt>');
+      `).replace(/<\/script>/gi, "<\\/script>")};
+      var code = __codeRaw;
       ${needsBabelRuntime ? `
       // Regex fallback couldn't fully transform JSX — use Babel at runtime
       if (typeof Babel !== 'undefined') {
