@@ -394,7 +394,7 @@ function isConversationalLine(line: string): boolean {
 
   // Common AI conversational markers that shouldn't be in code
   const markers = [
-    /^(what'?s (next|changed|new|different|updated)|would you like|let me know|here'?s what|i('?ve| have)|shall i|want me to|feel free|happy to|hope this|this (should|will|creates?|adds?|implements?|includes?|features?|is a)|i (created|added|built|implemented|updated|fixed|modified|made|changed|replaced|removed|redesigned))/i,
+    /^(what'?s (next|changed|new|different|updated)|would you like|let me know|here'?s what|i('?ve| have)|shall i|want me to|feel free|happy to|hope this|this (should|will|creates?|adds?|implements?|includes?|features?|provides?|is a)|i (created|added|built|implemented|updated|fixed|modified|made|changed|replaced|removed|redesigned))/i,
     /^(#{1,4}\s)/,            // Any markdown heading (# ## ### ####)
     /^(🎉|👋|✅|🚀|💡|📝|🔧|⚡|🎨|🔥|💪|👆|👇|📌|🏗|✨|💫|🌟|⭐|🛠|📦|🧩|🔄|🔑|📋|🎯)/,
     /^(Great|Perfect|Done|Now |Next |The app|Your app|I've |Here are|Here is|Let me|I can|This (update|change|version|adds|creates|implements|gives|provides|includes|features|is a|should)|That'?s |These |Those |Note:|Notice|Enjoy|Congrats|Awesome|Excellent|Wonderful|Looks like|As you can see|You'?ll |We'?ve |The (new|updated|modified|redesigned|improved))/,
