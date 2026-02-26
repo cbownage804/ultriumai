@@ -332,9 +332,21 @@ window.addEventListener('message', function(e) {
   }, [html, isGenerating, iframeRef, isCompiling]);
 
   // Listen for error messages from iframe (including critical errors from error boundary)
+  // Rate-limited to prevent UI freezes from broken iframes flooding messages
+  const errorRateRef = useRef({ count: 0, windowStart: 0 });
+  const ERROR_RATE_LIMIT = 10; // max errors per second
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data?.type === '__PREVIEW_ERROR__' || e.data?.type === '__PREVIEW_CRITICAL_ERROR__') {
+        // Rate limit: drop messages if we've received too many this second
+        const now = Date.now();
+        if (now - errorRateRef.current.windowStart > 1000) {
+          errorRateRef.current = { count: 1, windowStart: now };
+        } else {
+          errorRateRef.current.count++;
+          if (errorRateRef.current.count > ERROR_RATE_LIMIT) return;
+        }
+
         // Phase 7: Classify errors — only uncaught exceptions and syntax errors are critical
         const isForcedCritical = e.data?.type === '__PREVIEW_CRITICAL_ERROR__';
         const msg = e.data.message || '';
