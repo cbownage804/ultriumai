@@ -18,14 +18,17 @@ function isConversationalLine(line: string): boolean {
   if (/^(import |export |const |let |var |function |class |return |if |else |for |while |switch |case |try |catch |throw |new |type |interface |enum |async |await |from |default |module |require|<!DOCTYPE|<\?xml)/.test(trimmed)) return false;
 
   const markers = [
-    /^(what'?s (next|changed)|would you like|let me know|here'?s what|i('?ve| have)|shall i|want me to|feel free|happy to|hope this|this (should|will|creates?|adds?|implements?))/i,
+    /^(what'?s (next|changed)|would you like|let me know|here'?s what|i('?ve| have)|shall i|want me to|feel free|happy to|hope this|this (should|will|creates?|adds?|implements?|includes?|features?|provides?|is a))/i,
     /^(#{1,4}\s)/,
     /^(🎉|👋|✅|🚀|💡|📝)/,
-    /^(Great|Perfect|Done|Now |Next |The app|Your app|I've |Here are|Here is|Let me|I can|This (update|change|version|adds))/,
+    /^(Great|Perfect|Done|Now |Next |The app|Your app|I've |Here are|Here is|Let me|I can|This (update|change|version|adds|creates|implements|gives|provides|includes|features|is a|should))/,
     /^\*\*[\w\s]+\*\*[.:]/,
     /^```[\w]*\s*$/,
     /^I\s[a-z]/,
     /^\d+\s+(new|component|file|change)/i,
+    /^\d+\.\s+\*\*[A-Z]/,     // Numbered bold list items
+    /^[-•]\s+\*\*[A-Z]/,      // Bullet bold list items
+    /^[-•]\s+[A-Z][a-z].*[:.]\s*$/,  // Bullet prose items
     /^\[.+\]\(.+\)/,
     /^[A-Z][a-z]+ly,?\s/,
   ];
