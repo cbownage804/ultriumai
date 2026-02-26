@@ -572,7 +572,11 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
     if (currentPath) {
       // Phase 24: Normalize path
       currentPath = normalizePath(currentPath);
-      const content = currentLines.join('\n').trim();
+      let content = currentLines.join('\n').trim();
+      // Strip markdown code fences that AI sometimes leaks into file content
+      content = content.replace(/^```(?:typescript|javascript|tsx|jsx|html|css|json|scss|xml|markdown)?\s*\n?/gm, '');
+      content = content.replace(/\n?```\s*$/gm, '');
+      content = content.trim();
       if (content) {
         const ext = currentPath.split('.').pop()?.toLowerCase() || '';
         // Phase 27: Added less and sass language mappings
