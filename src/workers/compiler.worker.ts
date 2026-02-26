@@ -481,7 +481,10 @@ async function compileReactProject(
   for (let i = 0; i < sorted.length; i++) {
     try {
       const result = await transpileFile(sorted[i], moduleMap, useEsbuild);
-      transpiledChunks.push(result.code);
+      // Escape </script> in transpiled code to prevent HTML parser from prematurely
+      // closing the <script> block when embedded in the srcdoc HTML
+      const safeCode = result.code.replace(/<\/script>/gi, '<\\/script>');
+      transpiledChunks.push(safeCode);
       for (const pkg of result.externalPackages) allExternalPackages.add(pkg);
     } catch (err: any) {
       errors.push(`Transpile error in ${sorted[i].path}: ${err.message}`);
