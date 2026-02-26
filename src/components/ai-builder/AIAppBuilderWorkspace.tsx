@@ -2510,6 +2510,7 @@ export function AIAppBuilderWorkspace() {
       const timer = setTimeout(() => {
         if (!stableHTMLRef.current && project.files.length > 0) {
           console.warn('[Workspace] Safety net: stableHTML still null 15s after generation — forcing compile');
+          setIsCompiling(false); // Force-clear loading state to prevent infinite spinner
           forceCompileRef.current?.();
         }
       }, 15_000);
