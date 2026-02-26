@@ -354,9 +354,11 @@ if (typeof console !== 'undefined') {
     }
 
     if (jsFiles.length > 0) {
-      const jsContent = jsBundler
+      let jsContent = jsBundler
         ? jsBundler(jsFiles)
         : jsFiles.map(f => `/* ${f.path} */\n${f.content}`).join('\n\n');
+      // Escape </script> in JS content to prevent HTML parser from closing the tag prematurely
+      jsContent = jsContent.replace(/<\/script>/gi, '<\\/script>');
       const jsInject = `<script>${jsContent}</script>`;
       if (compiled.includes('</body>')) {
         compiled = compiled.replace('</body>', `${jsInject}\n</body>`);
