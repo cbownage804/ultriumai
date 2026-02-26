@@ -218,6 +218,7 @@ export function CompilationBridge({
       setLiveCompiledHTML(null);
       compilationInFlightRef.current = false;
       prevFilesDigestRef.current = '';
+      prevDigestRef.current = ''; // Reset memo cache so filesDigest recalculates on generation end
       // Safety: force-clear isCompiling in case it was stuck from previous cycle
       onCompilingChangeRef.current?.(false);
     }
