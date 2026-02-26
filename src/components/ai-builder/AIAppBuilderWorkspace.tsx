@@ -298,6 +298,7 @@ export function AIAppBuilderWorkspace() {
   const isMobileRef = useRef(false);
   const setMobileTabRef = useRef<(tab: 'chat' | 'preview' | 'editor') => void>(() => {});
   const outputValidationRef = useRef<ReturnType<typeof useOutputValidation>>({ validate: () => ({ isValid: true, issues: [], score: 100 }) });
+  const pendingValidationFixRef = useRef<{ errorSummary: string; files: ProjectFile[] } | null>(null);
   const setActiveFileRef = useRef(setActiveFile);
   setActiveFileRef.current = setActiveFile;
 
@@ -499,7 +500,20 @@ export function AIAppBuilderWorkspace() {
       // Post-generation syntax validation: catch obvious issues before preview
       const validationResult = outputValidationRef.current.validate(mergedFiles);
       if (!validationResult.isValid) {
-        console.warn('[handleBgComplete] Validation found errors:', validationResult.issues.filter(i => i.severity === 'error'));
+        const errors = validationResult.issues.filter(i => i.severity === 'error');
+        console.warn('[handleBgComplete] Validation found errors:', errors);
+        
+        // Schedule an auto-fix build for syntax errors detected post-generation
+        if (errors.length > 0 && totalFixAttemptsRef.current < 3) {
+          totalFixAttemptsRef.current++;
+          const errorSummary = errors.map(e => `${e.file}: ${e.message}`).join('\n');
+          // Store pending fix in ref — a useEffect will pick it up and call sendMessage
+          // (avoids referencing variables declared later in the component)
+          pendingValidationFixRef.current = {
+            errorSummary,
+            files: mergedFiles,
+          };
+        }
       }
     }
     const finalFiles = mergedFiles;
@@ -1898,6 +1912,25 @@ export function AIAppBuilderWorkspace() {
     }
     prevIsCompilingRef.current = isCompiling;
   }, [isCompiling]);
+
+  // Process pending validation fix (scheduled in handleBgComplete, executed here where sendMessage is available)
+  useEffect(() => {
+    if (!isGenerating && !isCompiling && pendingValidationFixRef.current) {
+      const { errorSummary, files } = pendingValidationFixRef.current;
+      pendingValidationFixRef.current = null;
+      const timer = setTimeout(() => {
+        console.info('[Workspace] Triggering auto-fix for post-build validation errors');
+        const diagCtx = buildErrorDiagnosisContext(
+          { message: `Post-build validation failed:\n${errorSummary}` },
+          files,
+          undefined,
+          undefined,
+        );
+        sendMessage(diagCtx, files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [isGenerating, isCompiling, sendMessage, supabaseConfig, stripeConfig, serviceKeys, selectedModel]);
 
   // Auto-fix pipeline: uses Phase 47 useAutoFixLoop + hot recovery
   const handleAutoFixError = useCallback((error: import('./ErrorConsole').PreviewError) => {
