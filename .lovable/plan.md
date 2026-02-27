@@ -1,66 +1,118 @@
 
 
-## Plan: Add compile run-ID guard and early validation gate
+## Plan: Fix App Builder Preview Reliability
 
-### Task 1: Compile run-ID guard in CompilationBridge
+Three files, six targeted edits. No changes to site shell.
 
-**File: `src/components/ai-builder/CompilationBridge.tsx`**
+---
 
-Add a monotonically incrementing `compileRunIdRef` to prevent stale compilations from applying their results:
-
-- Add `const compileRunIdRef = useRef(0);` alongside `compilationInFlightRef` (line 131)
-- At compile start (line 285, inside the debounce timer callback), increment: `const thisRunId = ++compileRunIdRef.current;`
-- After `runCompile()` resolves (line 316), guard: `if (thisRunId !== compileRunIdRef.current) { console.info('[CompilationBridge] Stale compile run', thisRunId, '— discarding'); return; }`
-- In the safety timeout (line 290-300), when it fires: set `compileRunIdRef.current++` to invalidate any in-flight promise, then apply `ERROR_FALLBACK_HTML` or keep LKG if `stableHTMLRef.current` exists
-- In the generation-start reset effect (line 214-226), reset `compileRunIdRef.current = 0`
-- In `forceCompile` (line 376-384), increment `compileRunIdRef.current++` to invalidate any in-flight run
-
-This ensures only the **latest** compile run can call `setStableHTML`. Race conditions between timeout and late-arriving results are eliminated deterministically.
-
-### Task 2: Early validation gate — skip compile if syntax errors
+### Task 1: CompilationBridge hardening
 
 **File: `src/components/ai-builder/CompilationBridge.tsx`**
 
-Add a validation check before entering the compile pipeline. Currently validation only runs post-generation in `handleBgComplete` (AIAppBuilderWorkspace.tsx:501) — but that happens **after** files are set, and CompilationBridge still attempts to compile broken files.
+**1A) Increase timeouts (lines 11-12)**
+```
+COMPILE_TIMEOUT_MS = 40_000
+COMPILE_SAFETY_TIMEOUT_MS = 50_000
+```
 
-Changes:
-- Import `useOutputValidation` at top of file
-- Add `const { validate } = useOutputValidation();` in the component body (or accept it as a prop — prop is cleaner since AIAppBuilderWorkspace already instantiates it)
-- **Prop approach**: Add `validateFiles?: (files: ProjectFile[]) => { isValid: boolean; issues: { severity: string; message: string; file: string }[] }` to `CompilationBridgeProps`
-- In the debounce timer callback (line 280), **before** `compilationInFlightRef.current = true`:
-  ```typescript
-  // Early validation gate — don't waste compile resources on broken files
-  const currentFiles = filesRef.current;
-  if (props.validateFiles) {
-    const vResult = props.validateFiles(currentFiles);
-    const syntaxErrors = vResult.issues.filter(i => i.severity === 'error');
-    if (syntaxErrors.length > 0) {
-      console.warn('[CompilationBridge] VALIDATION GATE: skipping compile —', syntaxErrors.length, 'errors');
-      window.postMessage({
-        type: '__BUILD_GATED__',
-        payload: {
-          reason: 'syntax_errors',
-          errors: syntaxErrors.map(e => `${e.file}: ${e.message}`),
-        },
-        source: 'compilation-bridge',
-      }, '*');
-      // Don't set isCompiling, don't run sandbox/edge/worker
-      return;
-    }
-  }
-  ```
-- This posts `__BUILD_GATED__` which the existing auto-fix listener in AIAppBuilderWorkspace can handle — the `pendingValidationFixRef` mechanism already triggers auto-fix for syntax errors
+**1B) Add VALIDATING_FALLBACK_HTML (after line 41, after ERROR_FALLBACK_HTML)**
+
+New constant with spinner + "Validating generated code…" message per the user's spec.
+
+**1C) Fix validation gate (lines 290-311)**
+
+Current code at line 306-309 sets `ERROR_FALLBACK_HTML` unconditionally when gated. Replace with:
+```typescript
+window.postMessage({ type: '__BUILD_GATED__', ... }, '*');
+onCompilingChangeRef.current?.(false);
+compilationInFlightRef.current = false;
+
+if (stableHTMLRef.current) {
+  // Preserve LKG — don't overwrite
+  return;
+}
+// No LKG: show validating placeholder (never leave stableHTML null)
+setStableHTML(VALIDATING_FALLBACK_HTML);
+return;
+```
+
+**1D) Add timing logs (lines 319, 346-348, 322-334, 384, 394)**
+
+Add `performance.now()` timestamps at:
+- Compile start (line 319): `const t0 = performance.now(); console.info('[CompilationBridge] compile start', { runId: thisRunId, t0 });`
+- After `runCompile()` resolves (line 348): `console.info('[CompilationBridge] compile resolved', { runId: thisRunId, ms: Math.round(performance.now() - t0) });`
+- When `setStableHTML` is called (line 384): `console.info('[CompilationBridge] setStableHTML applied', { runId: thisRunId, ms: Math.round(performance.now() - t0) });`
+- When safety timeout fires (line 324): `console.warn('[CompilationBridge] safety timeout', { runId: thisRunId, ms: Math.round(performance.now() - t0) });`
+
+Note: `t0` needs to be declared outside the safety timeout. Will use a ref or declare `t0` at the scope where `thisRunId` is declared (line 315), which is the same `setTimeout` callback scope — both the safety timeout and the `try` block share this scope, so `t0` is accessible.
+
+---
+
+### Task 2: Workspace — guard forceCompile safety nets
 
 **File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
 
-- Pass `validateFiles={outputValidation.validate}` as a prop to `<CompilationBridge>` where it's rendered (search for `<CompilationBridge`)
+**2A) Guard 20s safety net (line 476)**
+```diff
+- if (!stableHTMLRef.current) {
++ if (!stableHTMLRef.current && !pendingValidationFixRef.current) {
+```
+
+**2B) Guard 15s safety net (line 2544)**
+```diff
+- if (!stableHTMLRef.current && project.files.length > 0) {
++ if (!stableHTMLRef.current && project.files.length > 0 && !pendingValidationFixRef.current) {
+```
+
+---
+
+### Task 3: Workspace — auto-fix watchdog
+
+**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
+
+In the pending validation fix effect (line 1917-1933), add a 25s watchdog. When `pendingValidationFixRef.current` is set (line 512), start a timeout:
+
+```typescript
+// Inside handleBgComplete, right after line 515:
+const watchdog = setTimeout(() => {
+  if (pendingValidationFixRef.current) {
+    console.warn('[Workspace] Auto-fix watchdog: 25s elapsed, clearing pending fix');
+    pendingValidationFixRef.current = null;
+    forceCompileRef.current?.();
+  }
+}, 25_000);
+```
+
+The watchdog is fire-and-forget (no cleanup needed — it only reads/writes refs). It runs once and either finds the ref already cleared (no-op) or clears it and forces one compile.
+
+---
+
+### Task 4: Preview panel — guard empty srcdoc
+
+**File: `src/components/ai-builder/BuilderPreviewPanel.tsx`**
+
+In the effect at line 507-517 that sets `iframeRef.current.srcdoc`, add early return:
+
+```diff
+  useEffect(() => {
++   if (!html) return;
+    setErrors([]); setCurrentUrl('/'); ...
+```
+
+This ensures the skeleton/placeholder renders when `html` is null instead of a blank iframe.
+
+---
 
 ### Summary
 
-| Guard | What it prevents |
-|-------|-----------------|
-| `compileRunIdRef` | Stale compile results overwriting newer ones; timeout vs late result race |
-| Early validation gate | Wasting 30s on sandbox/edge/worker for files with obvious syntax errors |
-
-Two files edited. No new dependencies. Both guards are cheap (ref increment, regex-based validation) and fire before any network/worker calls.
+| Edit | File | Lines | Effect |
+|------|------|-------|--------|
+| Timeouts 40s/50s | CompilationBridge | 11-12 | No more outer timeout racing internal chain |
+| VALIDATING_FALLBACK_HTML | CompilationBridge | after 41 | Friendly placeholder during auto-fix |
+| Gate preserves LKG | CompilationBridge | 290-311 | No blank preview during syntax fix |
+| Timing logs | CompilationBridge | 315-395 | Diagnostic visibility |
+| Guard forceCompile ×2 | Workspace | 476, 2544 | No forceCompile loop during auto-fix |
+| Watchdog 25s | Workspace | near 515 | No indefinite "Validating…" state |
+| Guard empty srcdoc | PreviewPanel | 507 | No blank iframe flash |
 
