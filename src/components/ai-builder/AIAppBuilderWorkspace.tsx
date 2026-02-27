@@ -2528,7 +2528,8 @@ export function AIAppBuilderWorkspace() {
     setStableHTML(html);
     // Cache to localStorage for instant restore on reload
     try {
-      if (html) {
+      const isFallback = html?.includes('name="ai-builder-fallback"') ?? false;
+      if (html && !isFallback) {
         localStorage.setItem(COMPILED_CACHE_KEY, html);
       }
     } catch { /* quota exceeded — non-critical */ }
