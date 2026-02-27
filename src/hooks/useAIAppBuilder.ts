@@ -1000,6 +1000,16 @@ export function useAIAppBuilder() {
       }
     }
 
+    // ── Safe Output Contract ──
+    systemParts.push(`[SAFE OUTPUT CONTRACT — MANDATORY]
+- NEVER generate inline <svg> markup in JSX/TSX files. Use lucide-react icons instead: import { IconName } from 'lucide-react';
+- If the user asks for icons, use lucide-react by default.
+- NEVER output extremely long single-line JSX. Format JSX with line breaks.
+- Always wrap JSX returns in parentheses: return ( <div>...</div> );
+- Ensure all JSX tags are properly closed and self-closing where required (<img />, <br />, <input />).
+- Do not introduce new npm dependencies unless the user explicitly asks for them.
+- All imports must precede variable declarations — no import statements after code.`);
+
     // Merge into a single system message, capped at 20K chars
     if (systemParts.length > 0) {
       const consolidated = systemParts.join('\n\n---\n\n').slice(0, 20_000);

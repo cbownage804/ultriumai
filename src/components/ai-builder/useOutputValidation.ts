@@ -250,3 +250,131 @@ function resolveRelativeImport(fromPath: string, importPath: string): string {
 
   return fromDir.join('/');
 }
+
+/**
+ * Deterministic pre-validation sanitizer for staged builder files.
+ * Strips inline SVG and normalizes obvious JSX breakage BEFORE validation runs.
+ * Only operates on .tsx/.jsx files. Does not modify index.html or routing.
+ */
+export function sanitizeStagedFiles(files: ProjectFile[]): { files: ProjectFile[]; fixes: string[] } {
+  const fixes: string[] = [];
+
+  const SVG_TO_LUCIDE: Record<string, string> = {
+    check: 'Check', checkmark: 'Check', tick: 'Check',
+    arrow: 'ArrowRight', 'arrow-right': 'ArrowRight', 'arrow-left': 'ArrowLeft',
+    'arrow-up': 'ArrowUp', 'arrow-down': 'ArrowDown',
+    star: 'Star', stars: 'Star',
+    shield: 'Shield', 'shield-check': 'ShieldCheck',
+    zap: 'Zap', lightning: 'Zap', bolt: 'Zap',
+    layers: 'Layers', stack: 'Layers',
+    close: 'X', x: 'X', times: 'X',
+    menu: 'Menu', hamburger: 'Menu',
+    search: 'Search', magnify: 'Search',
+    home: 'Home', house: 'Home',
+    settings: 'Settings', gear: 'Settings', cog: 'Settings',
+    user: 'User', person: 'User', profile: 'User',
+    heart: 'Heart', like: 'Heart',
+    mail: 'Mail', email: 'Mail', envelope: 'Mail',
+    phone: 'Phone', call: 'Phone',
+    plus: 'Plus', add: 'Plus',
+    minus: 'Minus',
+    edit: 'Edit', pencil: 'Pencil',
+    trash: 'Trash2', delete: 'Trash2',
+    eye: 'Eye', view: 'Eye',
+    'eye-off': 'EyeOff', hide: 'EyeOff',
+    lock: 'Lock', unlock: 'Unlock',
+    calendar: 'Calendar', date: 'Calendar',
+    clock: 'Clock', time: 'Clock',
+    download: 'Download', upload: 'Upload',
+    link: 'Link', chain: 'Link',
+    globe: 'Globe', world: 'Globe', earth: 'Globe',
+    sun: 'Sun', moon: 'Moon',
+    bell: 'Bell', notification: 'Bell',
+    info: 'Info', warning: 'AlertTriangle', alert: 'AlertTriangle',
+    error: 'AlertCircle', danger: 'AlertCircle',
+  };
+
+  const sanitized = files.map(f => {
+    const ext = f.path.split('.').pop()?.toLowerCase() || '';
+    if (!['tsx', 'jsx'].includes(ext)) return f;
+
+    let content = f.content;
+    let changed = false;
+
+    // 1. Replace inline <svg>...</svg> blocks
+    const svgRegex = /<svg[\s\S]*?<\/svg>/gi;
+    const svgMatches = content.match(svgRegex);
+    if (svgMatches) {
+      const neededIcons = new Set<string>();
+
+      for (const svgBlock of svgMatches) {
+        let iconName: string | null = null;
+
+        const hintMatch = svgBlock.match(/(?:className|aria-label|name|title)=["']([^"']*?)["']/i);
+        const hint = hintMatch?.[1]?.toLowerCase().replace(/[^a-z-]/g, '') || '';
+
+        if (hint && SVG_TO_LUCIDE[hint]) {
+          iconName = SVG_TO_LUCIDE[hint];
+        } else {
+          const svgLower = svgBlock.toLowerCase();
+          for (const [keyword, lucideName] of Object.entries(SVG_TO_LUCIDE)) {
+            if (svgLower.includes(keyword)) {
+              iconName = lucideName;
+              break;
+            }
+          }
+        }
+
+        if (iconName) {
+          neededIcons.add(iconName);
+          content = content.replace(svgBlock, `<${iconName} />`);
+          fixes.push(`${f.path}: replaced inline SVG with <${iconName} />`);
+        } else {
+          content = content.replace(svgBlock, '<span aria-hidden="true" />');
+          fixes.push(`${f.path}: replaced unmapped inline SVG with placeholder`);
+        }
+        changed = true;
+      }
+
+      if (neededIcons.size > 0) {
+        const iconList = Array.from(neededIcons).join(', ');
+        const existingImport = content.match(/import\s*{([^}]*)}\s*from\s*['"]lucide-react['"]/);
+        if (existingImport) {
+          const existing = existingImport[1].split(',').map(s => s.trim()).filter(Boolean);
+          const merged = Array.from(new Set([...existing, ...neededIcons]));
+          content = content.replace(existingImport[0], `import { ${merged.join(', ')} } from 'lucide-react'`);
+        } else {
+          const lastImportIdx = content.lastIndexOf('\nimport ');
+          if (lastImportIdx >= 0) {
+            const insertAt = content.indexOf('\n', lastImportIdx + 1);
+            content = content.slice(0, insertAt) + `\nimport { ${iconList} } from 'lucide-react';` + content.slice(insertAt);
+          } else {
+            content = `import { ${iconList} } from 'lucide-react';\n` + content;
+          }
+        }
+      }
+    }
+
+    // 2. Remove orphaned SVG child tags outside <svg> context
+    if (!content.match(/<svg/i)) {
+      const orphanSvgTags = /<(?:path|circle|rect|line|polyline|polygon|ellipse|g)\s[^>]*\/?>/gi;
+      if (orphanSvgTags.test(content)) {
+        content = content.replace(/<(?:path|circle|rect|line|polyline|polygon|ellipse|g)\s[^>]*\/?>/gi, '');
+        fixes.push(`${f.path}: removed orphaned SVG child tags`);
+        changed = true;
+      }
+    }
+
+    // 3. Normalize "return <JSX>" to "return (<JSX>)" when missing parens
+    content = content.replace(/(\breturn)\s+(<[A-Z][a-zA-Z]*[\s/>])/g, (_match, ret, jsx) => {
+      fixes.push(`${f.path}: wrapped JSX return in parentheses`);
+      changed = true;
+      return `${ret} (\n    ${jsx}`;
+    });
+
+    if (!changed) return f;
+    return { ...f, content };
+  });
+
+  return { files: sanitized, fixes };
+}
