@@ -314,6 +314,18 @@ export function CompilationBridge({
         console.timeEnd('[liveCompiledHTML]');
 
         if (result) {
+          // ── Dev-client detection gate ──
+          const looksLikeViteDev = /\/@vite\/client|import\.meta\.hot\b|__vite_plugin_react_preamble_installed__/.test(result);
+          if (looksLikeViteDev) {
+            console.warn('[CompilationBridge] BUILD GATED: dev client detected in output');
+            window.postMessage({
+              type: '__BUILD_GATED__',
+              payload: { reason: 'dev_client_detected', errors: ['Compiled output contains Vite dev/HMR client'] },
+              source: 'compilation-bridge',
+            }, '*');
+            return; // Keep LKG
+          }
+
           // ── Fail-closed preview gate ──
           const filesToValidate = filesRef.current;
           const hasIncomplete = filesToValidate.some(f => (f as any).incomplete === true);
