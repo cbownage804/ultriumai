@@ -1,339 +1,250 @@
 
 
-## Plan: Transactional Build + Bounded Repair Reliability Layer
+## Plan: Safe Output Contract + Pre-Validation Sanitizer
 
-**Scope**: `AIAppBuilderWorkspace.tsx`, `BuilderPreviewPanel.tsx`, `CompilationBridge.tsx` (observability only). No App.tsx/main.tsx/routing.
+**Scope**: `useAIAppBuilder.ts`, `AIAppBuilderWorkspace.tsx`, `useOutputValidation.ts`. No App.tsx/main.tsx/routing.
 
 ---
 
-### Edit 1 — `AIAppBuilderWorkspace.tsx`
+### Edit 1 — `src/hooks/useAIAppBuilder.ts`: Inject Safe Output Contract into system prompt
 
-**A. Add refs/state** at line 301, after `pendingValidationFixRef`:
+At ~line 1003, after `systemParts` consolidation but before `apiMessages.push`, append a new system part:
 
 ```typescript
-const pendingFilesRef = useRef<ProjectFile[] | null>(null);
-const lastKnownGoodFilesRef = useRef<ProjectFile[]>([]);
-const repairAttemptRef = useRef(0);
-const repairInFlightRef = useRef(false);
-const repairJobIdRef = useRef<string | null>(null);
-const awaitingRepairJobStartRef = useRef(false);
-const [repairFailed, setRepairFailed] = useState(false);
-const [repairErrors, setRepairErrors] = useState<{file: string; message: string}[]>([]);
+// ── Safe Output Contract ──
+systemParts.push(`[SAFE OUTPUT CONTRACT — MANDATORY]
+- NEVER generate inline <svg> markup in JSX/TSX files. Use lucide-react icons instead: import { IconName } from 'lucide-react';
+- If the user asks for icons, use lucide-react by default.
+- NEVER output extremely long single-line JSX. Format JSX with line breaks.
+- Always wrap JSX returns in parentheses: return ( <div>...</div> );
+- Ensure all JSX tags are properly closed and self-closing where required (<img />, <br />, <input />).
+- Do not introduce new npm dependencies unless the user explicitly asks for them.
+- All imports must precede variable declarations — no import statements after code.`);
 ```
 
-**B. Add repair-job early-return branch in `handleBgComplete`** — at line 470, BEFORE the existing `validationFixInFlightRef` block and BEFORE the unconditional `setFiles(mergedFiles)` at line 436. This means we insert this block right after `mergedFiles` is fully constructed (after video marker resolution at ~line 432) but BEFORE any commit/persistence/tabs logic:
+Insert this at line 1002, right before the `if (systemParts.length > 0)` block at line 1004.
+
+---
+
+### Edit 2 — `src/components/ai-builder/useOutputValidation.ts`: Add `sanitizeStagedFiles` export
+
+Add a new exported function at the bottom of the file (before final `}`-less module end):
 
 ```typescript
-// ── Transactional: repair job completion (job-id guarded) ──
-if (repairInFlightRef.current && repairJobIdRef.current === job.id) {
-  repairInFlightRef.current = false;
-  repairJobIdRef.current = null;
-  awaitingRepairJobStartRef.current = false;
-  pendingFilesRef.current = mergedFiles;
+/**
+ * Deterministic pre-validation sanitizer for staged builder files.
+ * Strips inline SVG and normalizes obvious JSX breakage BEFORE validation runs.
+ * Only operates on .tsx/.jsx files. Does not modify index.html or routing.
+ */
+export function sanitizeStagedFiles(files: ProjectFile[]): { files: ProjectFile[]; fixes: string[] } {
+  const fixes: string[] = [];
   
-  const revalidation = outputValidationRef.current.validate(mergedFiles);
-  const errors = revalidation.issues.filter(i => i.severity === 'error');
+  // Common SVG icon name → lucide-react mapping
+  const SVG_TO_LUCIDE: Record<string, string> = {
+    check: 'Check', checkmark: 'Check', tick: 'Check',
+    arrow: 'ArrowRight', 'arrow-right': 'ArrowRight', 'arrow-left': 'ArrowLeft',
+    'arrow-up': 'ArrowUp', 'arrow-down': 'ArrowDown',
+    star: 'Star', stars: 'Star',
+    shield: 'Shield', 'shield-check': 'ShieldCheck',
+    zap: 'Zap', lightning: 'Zap', bolt: 'Zap',
+    layers: 'Layers', stack: 'Layers',
+    close: 'X', x: 'X', times: 'X',
+    menu: 'Menu', hamburger: 'Menu',
+    search: 'Search', magnify: 'Search',
+    home: 'Home', house: 'Home',
+    settings: 'Settings', gear: 'Settings', cog: 'Settings',
+    user: 'User', person: 'User', profile: 'User',
+    heart: 'Heart', like: 'Heart',
+    mail: 'Mail', email: 'Mail', envelope: 'Mail',
+    phone: 'Phone', call: 'Phone',
+    plus: 'Plus', add: 'Plus',
+    minus: 'Minus',
+    edit: 'Edit', pencil: 'Pencil',
+    trash: 'Trash2', delete: 'Trash2',
+    eye: 'Eye', view: 'Eye',
+    'eye-off': 'EyeOff', hide: 'EyeOff',
+    lock: 'Lock', unlock: 'Unlock',
+    calendar: 'Calendar', date: 'Calendar',
+    clock: 'Clock', time: 'Clock',
+    download: 'Download', upload: 'Upload',
+    link: 'Link', chain: 'Link',
+    globe: 'Globe', world: 'Globe', earth: 'Globe',
+    sun: 'Sun', moon: 'Moon',
+    bell: 'Bell', notification: 'Bell',
+    info: 'Info', warning: 'AlertTriangle', alert: 'AlertTriangle',
+    error: 'AlertCircle', danger: 'AlertCircle',
+  };
+
+  const sanitized = files.map(f => {
+    const ext = f.path.split('.').pop()?.toLowerCase() || '';
+    if (!['tsx', 'jsx'].includes(ext)) return f;
+    
+    let content = f.content;
+    let changed = false;
+    
+    // 1. Replace inline <svg>...</svg> blocks
+    const svgRegex = /<svg[\s\S]*?<\/svg>/gi;
+    const svgMatches = content.match(svgRegex);
+    if (svgMatches) {
+      const neededIcons = new Set<string>();
+      
+      for (const svgBlock of svgMatches) {
+        // Try to identify what icon this SVG represents
+        let iconName: string | null = null;
+        
+        // Check className, aria-label, or nearby context for icon hints
+        const hintMatch = svgBlock.match(/(?:className|aria-label|name|title)=["']([^"']*?)["']/i);
+        const hint = hintMatch?.[1]?.toLowerCase().replace(/[^a-z-]/g, '') || '';
+        
+        // Also check for common SVG path patterns
+        const hasCheckPath = /d=["'][^"']*[Ll]\s*[\d.-]+\s+[\d.-]+/.test(svgBlock) && svgBlock.length < 500;
+        
+        if (hint && SVG_TO_LUCIDE[hint]) {
+          iconName = SVG_TO_LUCIDE[hint];
+        } else {
+          // Try matching by SVG content keywords
+          const svgLower = svgBlock.toLowerCase();
+          for (const [keyword, lucideName] of Object.entries(SVG_TO_LUCIDE)) {
+            if (svgLower.includes(keyword)) {
+              iconName = lucideName;
+              break;
+            }
+          }
+        }
+        
+        if (iconName) {
+          neededIcons.add(iconName);
+          content = content.replace(svgBlock, `<${iconName} />`);
+          fixes.push(`${f.path}: replaced inline SVG with <${iconName} />`);
+        } else {
+          // No mapping found — replace with placeholder
+          content = content.replace(svgBlock, '<span aria-hidden="true" />');
+          fixes.push(`${f.path}: replaced unmapped inline SVG with placeholder`);
+        }
+        changed = true;
+      }
+      
+      // Add lucide-react import if needed
+      if (neededIcons.size > 0) {
+        const iconList = Array.from(neededIcons).join(', ');
+        const existingImport = content.match(/import\s*{([^}]*)}\s*from\s*['"]lucide-react['"]/);
+        if (existingImport) {
+          // Merge into existing import
+          const existing = existingImport[1].split(',').map(s => s.trim()).filter(Boolean);
+          const merged = Array.from(new Set([...existing, ...neededIcons]));
+          content = content.replace(existingImport[0], `import { ${merged.join(', ')} } from 'lucide-react'`);
+        } else {
+          // Add new import at top (after any existing imports)
+          const lastImportIdx = content.lastIndexOf('\nimport ');
+          if (lastImportIdx >= 0) {
+            const insertAt = content.indexOf('\n', lastImportIdx + 1);
+            content = content.slice(0, insertAt) + `\nimport { ${iconList} } from 'lucide-react';` + content.slice(insertAt);
+          } else {
+            content = `import { ${iconList} } from 'lucide-react';\n` + content;
+          }
+        }
+      }
+    }
+    
+    // 2. Remove orphaned <path>, <circle>, <rect>, <line>, <polyline>, <polygon> tags outside SVG
+    // These are usually leftover fragments that break JSX parsing
+    if (!content.match(/<svg/i)) {
+      const orphanSvgTags = /<(?:path|circle|rect|line|polyline|polygon|ellipse|g)\s[^>]*\/?>/gi;
+      if (orphanSvgTags.test(content)) {
+        content = content.replace(orphanSvgTags, '');
+        fixes.push(`${f.path}: removed orphaned SVG child tags`);
+        changed = true;
+      }
+    }
+    
+    // 3. Normalize "return <JSX>" to "return (<JSX>)" when missing parens
+    // Match: return <Tag  (no opening paren before <)
+    content = content.replace(/(\breturn)\s+(<[A-Z][a-zA-Z]*[\s/>])/g, (match, ret, jsx) => {
+      // Only fix if there's no opening paren already
+      fixes.push(`${f.path}: wrapped JSX return in parentheses`);
+      changed = true;
+      return `${ret} (\n    ${jsx}`;
+    });
+    
+    if (!changed) return f;
+    return { ...f, content };
+  });
   
-  if (errors.length === 0) {
-    // COMMIT repaired files
-    setFiles(mergedFiles);
-    pendingFilesRef.current = null;
-    setRepairFailed(false);
-    setRepairErrors([]);
-    latestFilesRef.current = mergedFiles;
-    saveDraftImmediateRef.current(project.name, mergedFiles, latestMessagesRef.current);
-    console.info('[handleBgComplete] Repair succeeded — committed');
-    setTimeout(() => forceCompileRef.current?.(), 200);
-  } else {
-    const errorSummary = errors.map(e => `${e.file}: ${e.message}`).join('\n');
-    pendingValidationFixRef.current = { errorSummary, files: mergedFiles };
-  }
-  
-  setIsGeneratingOverride(false);
-  return; // Do NOT run normal merge logic
+  return { files: sanitized, fixes };
 }
 ```
 
-**C. Replace the unconditional `setFiles(mergedFiles)` at line 436 with transactional staging.** Replace lines 436–540 (from `setFiles(mergedFiles)` through the end of the validation block) with:
+---
 
+### Edit 3 — `src/components/ai-builder/AIAppBuilderWorkspace.tsx`: Wire sanitizer before validation
+
+**A.** Import `sanitizeStagedFiles` from `useOutputValidation`:
+
+At line 70, change the import to:
 ```typescript
-// ── Transactional merge: snapshot LKG, stage, validate before commit ──
-lastKnownGoodFilesRef.current = [...project.files];
-pendingFilesRef.current = mergedFiles;
-repairAttemptRef.current = 0;
-setRepairFailed(false);
-setRepairErrors([]);
+import { useOutputValidation, sanitizeStagedFiles } from './useOutputValidation';
+```
+
+**B.** In `handleBgComplete` — call sanitizer BEFORE validation, in both the normal staging path (line 495) and the repair completion path (line 452):
+
+Normal staging path (~line 495, before `outputValidationRef.current.validate(mergedFiles)`):
+```typescript
+// ── Pre-validation sanitizer: deterministic SVG/JSX fixes ──
+const { files: sanitizedFiles, fixes: sanitizerFixes } = sanitizeStagedFiles(mergedFiles);
+if (sanitizerFixes.length > 0) {
+  console.info('[handleBgComplete] Sanitizer applied', sanitizerFixes.length, 'fixes:', sanitizerFixes.slice(0, 5));
+  mergedFiles = sanitizedFiles;
+  pendingFilesRef.current = mergedFiles;
+}
 
 const validationResult = outputValidationRef.current.validate(mergedFiles);
-const valErrors = validationResult.issues.filter(i => i.severity === 'error');
+```
 
-if (valErrors.length === 0) {
-  // COMMIT — validation passed
-  setFiles(mergedFiles);
-  pendingFilesRef.current = null;
-  
-  // Normal merge bookkeeping (tabs, persistence, snapshots, etc.)
-  const changedPaths = [...parsedFiles.map(f => f.path), ...edits.map(e => e.path)];
-  if (changedPaths.length > 0) {
-    const mainFile = changedPaths.find(p => /App\.(tsx|jsx)$/.test(p)) || changedPaths[0];
-    for (const p of changedPaths) { setActiveFileRef.current(p); }
-    if (mainFile) setActiveFileRef.current(mainFile);
-  }
-  latestFilesRef.current = mergedFiles;
-  saveDraftImmediateRef.current(project.name, mergedFiles, latestMessagesRef.current);
-  
-  // Self-contained HTML shortcut
-  const hasReactFiles = mergedFiles.some(f => /\.(tsx|jsx)$/.test(f.path));
-  const newIndexFile = parsedFiles.find(f => f.path === 'index.html');
-  const editedIndex = edits.some(e => e.path === 'index.html');
-  const indexFile = newIndexFile || (editedIndex ? mergedFiles.find(f => f.path === 'index.html') : null);
-  const hasLocalModuleScripts = /src=["']\.?\/(?:src|main|app|index)\b/i.test(indexFile?.content || '');
-  if (indexFile && !hasReactFiles && !hasLocalModuleScripts &&
-      indexFile.content.includes('<!DOCTYPE html') &&
-      indexFile.content.includes('</html>')) {
-    console.info('[handleBgComplete] Self-contained index.html detected — setting preview directly');
-    stableHTMLRef.current = indexFile.content;
-    setStableHTML(indexFile.content);
-    setPreviewRefreshKey(k => k + 1);
-  }
-
-  console.info('[handleBgComplete] Files merged & committed (%d files)', mergedFiles.length);
-  setTimeout(() => forceCompileRef.current?.(), 200);
-
-  // Safety net: if CompilationBridge hasn't produced HTML after 20s
-  setTimeout(() => {
-    if (!stableHTMLRef.current && !pendingValidationFixRef.current && !validationFixInFlightRef.current && !repairInFlightRef.current && !awaitingRepairJobStartRef.current) {
-      console.warn('[handleBgComplete] Safety net: stableHTML still null 20s after merge — forcing compile');
-      forceCompileRef.current?.();
-    }
-  }, 20_000);
-
-  // Auto-switch to preview
-  if (rightTabRef.current !== 'preview' && rightTabRef.current !== 'split') {
-    setRightTabRef.current('preview');
-  }
-  if (isMobileRef.current) { setMobileTabRef.current('preview'); }
-
-  // Post-build snapshot
-  const totalChanges = parsedFiles.length + edits.length;
-  addSnapshotRef.current(
-    `Build: ${totalChanges} files${edits.length ? ` (${edits.length} patched)` : ''}`,
-    mergedFiles, 'ai-generation'
-  );
-  dedupeToast('success', `Build complete — ${totalChanges} files updated`, { duration: 5000 });
-} else {
-  // DO NOT COMMIT — stage for repair
-  console.warn('[handleBgComplete] Validation errors in generated output — staging for repair', valErrors.length);
-  const errorSummary = valErrors.map(e => `${e.file}: ${e.message}`).join('\n');
-  pendingValidationFixRef.current = { errorSummary, files: mergedFiles };
-  
-  // Auto-fix watchdog: clear pending state after 25s
-  setTimeout(() => {
-    if (pendingValidationFixRef.current) {
-      console.warn('[Workspace] Auto-fix watchdog: 25s elapsed, clearing pending fix');
-      pendingValidationFixRef.current = null;
-      validationFixInFlightRef.current = false;
-      validationFixJobIdRef.current = null;
-      awaitingValidationFixJobStartRef.current = false;
-      repairInFlightRef.current = false;
-      repairJobIdRef.current = null;
-      awaitingRepairJobStartRef.current = false;
-      repairAttemptRef.current = 0;
-      pendingFilesRef.current = null;
-      forceCompileRef.current?.();
-    }
-  }, 25_000);
-  
-  // Still switch to preview and release generating state
-  if (rightTabRef.current !== 'preview' && rightTabRef.current !== 'split') {
-    setRightTabRef.current('preview');
-  }
-  if (isMobileRef.current) { setMobileTabRef.current('preview'); }
-  dedupeToast('info', 'Validating generated code — auto-repair in progress…', { duration: 3000 });
+Repair completion path (~line 452, before `outputValidationRef.current.validate(mergedFiles)`):
+```typescript
+// ── Pre-validation sanitizer for repair output ──
+const { files: sanitizedRepairFiles, fixes: repairSanitizerFixes } = sanitizeStagedFiles(mergedFiles);
+if (repairSanitizerFixes.length > 0) {
+  console.info('[handleBgComplete] Repair sanitizer applied', repairSanitizerFixes.length, 'fixes');
+  mergedFiles = sanitizedRepairFiles;
 }
+pendingFilesRef.current = mergedFiles;
+
+const revalidation = outputValidationRef.current.validate(mergedFiles);
 ```
 
-**D. Capture repair jobId in bg-job-started** — at line 668, after the existing `validationFix` capture:
+**C.** Update Repair Attempt #2 prompt (line 2058-2059) — replace the STRICTER RULES block:
 
 ```typescript
-if (awaitingRepairJobStartRef.current && jobId) {
-  repairJobIdRef.current = jobId;
-  awaitingRepairJobStartRef.current = false;
-  console.info('[Workspace] Captured repair jobId:', jobId);
-}
+const stricterPrompt = attempt === 2
+  ? '\n\nSTRICTER REPAIR RULES (attempt 2/2 — FINAL):\n- Remove ALL inline <svg>...</svg> markup and replace with lucide-react icon components (import { IconName } from "lucide-react")\n- Do NOT refactor or change code unrelated to the validation errors\n- Only modify the files listed in the error list above\n- Output must compile: no dangling JSX expressions, no unterminated strings, no malformed imports\n- Wrap all JSX returns in parentheses: return ( <div>...</div> )\n- Ensure all tags are self-closing where appropriate (<img />, <br />, <input />)'
+  : '';
 ```
 
-**E. Replace pending-validation-fix effect** (lines 1950–1970) with bounded repair pipeline:
+**D.** In the repair-exhausted terminal block (line 2038-2051), add observability logging:
 
+After `console.warn('[Workspace] Repair exhausted...')` at line 2050, add:
 ```typescript
-useEffect(() => {
-  if (!isGenerating && !isCompiling && pendingValidationFixRef.current && !repairInFlightRef.current) {
-    const { errorSummary, files } = pendingValidationFixRef.current;
-    const attempt = repairAttemptRef.current + 1;
-    
-    if (attempt > 2) {
-      // Terminal — repair exhausted
-      pendingValidationFixRef.current = null;
-      setRepairFailed(true);
-      setRepairErrors(
-        errorSummary.split('\n').slice(0, 3).map(line => {
-          const colonIdx = line.indexOf(': ');
-          return colonIdx >= 0
-            ? { file: line.slice(0, colonIdx), message: line.slice(colonIdx + 2) }
-            : { file: 'unknown', message: line };
-        })
-      );
-      console.warn('[Workspace] Repair exhausted after 2 attempts — showing RepairFailed panel');
-      return;
-    }
-    
-    repairAttemptRef.current = attempt;
-    pendingValidationFixRef.current = null;
-    
-    const timer = setTimeout(() => {
-      const stricterPrompt = attempt === 2
-        ? '\n\nSTRICTER RULES (attempt 2/2):\n- Replace ALL inline SVG with lucide-react icon imports\n- Wrap ALL JSX returns in parentheses\n- Ensure ALL tags are self-closing where appropriate\n- Remove any dangling expressions or invalid JSX'
-        : '';
-      
-      console.info(`[Workspace] Repair attempt ${attempt}/2 for validation errors`);
-      const diagCtx = buildErrorDiagnosisContext(
-        { message: `Post-build validation failed:\n${errorSummary}${stricterPrompt}` },
-        files, undefined, undefined,
-      );
-      
-      repairInFlightRef.current = true;
-      repairJobIdRef.current = null;
-      awaitingRepairJobStartRef.current = true;
-      sendMessage(diagCtx, files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
-    }, 1200);
-    return () => clearTimeout(timer);
-  }
-}, [isGenerating, isCompiling, sendMessage, supabaseConfig, stripeConfig, serviceKeys, selectedModel]);
-```
-
-**F. Update 15s safety net** (line 2582) — add `&& !repairInFlightRef.current && !awaitingRepairJobStartRef.current`:
-
-```typescript
-if (!stableHTMLRef.current && project.files.length > 0 && !pendingValidationFixRef.current && !validationFixInFlightRef.current && !repairInFlightRef.current && !awaitingRepairJobStartRef.current) {
-```
-
-**G. Clear repair refs on generation reset** (line 1935, after existing `awaitingValidationFixJobStartRef.current = false`):
-
-```typescript
-repairInFlightRef.current = false;
-repairJobIdRef.current = null;
-awaitingRepairJobStartRef.current = false;
-repairAttemptRef.current = 0;
-pendingFilesRef.current = null;
-```
-
-**H. Add callbacks** (after `handleSmartFixError` around line 1917):
-
-```typescript
-const handleRetryRepair = useCallback(() => {
-  repairAttemptRef.current = 0;
-  setRepairFailed(false);
-  setRepairErrors([]);
-  if (pendingFilesRef.current) {
-    const validation = outputValidationRef.current.validate(pendingFilesRef.current);
-    const errors = validation.issues.filter(i => i.severity === 'error');
-    if (errors.length > 0) {
-      const errorSummary = errors.map(e => `${e.file}: ${e.message}`).join('\n');
-      pendingValidationFixRef.current = { errorSummary, files: pendingFilesRef.current };
-    }
-  }
-}, []);
-
-const handleDiscardChanges = useCallback(() => {
-  setRepairFailed(false);
-  setRepairErrors([]);
-  pendingFilesRef.current = null;
-  repairAttemptRef.current = 0;
-  repairInFlightRef.current = false;
-  repairJobIdRef.current = null;
-  awaitingRepairJobStartRef.current = false;
-  if (lastKnownGoodFilesRef.current.length > 0) {
-    setFiles(lastKnownGoodFilesRef.current);
-  }
-  dedupeToast('info', 'Changes discarded — reverted to last working version');
-}, [setFiles]);
-```
-
-**I. Pass new props to all 4 `<BuilderPreviewPanel>` usages** (lines 2817, 3187, 3204, and any others) — append:
-
-```
-repairFailed={repairFailed} repairErrors={repairErrors} onRetryRepair={handleRetryRepair} onDiscardChanges={handleDiscardChanges}
+console.error('[Workspace] RepairFailed diagnostics', {
+  stagedFileCount: pendingFilesRef.current?.length ?? 0,
+  topErrors: errorSummary.split('\n').slice(0, 3),
+});
 ```
 
 ---
 
-### Edit 2 — `BuilderPreviewPanel.tsx`
+### Edit 4 — No changes to `CompilationBridge.tsx`
 
-**A. Add props** to `BuilderPreviewPanelProps` (line 25, after `refreshKey`):
-
-```typescript
-repairFailed?: boolean;
-repairErrors?: { file: string; message: string }[];
-onRetryRepair?: () => void;
-onDiscardChanges?: () => void;
-```
-
-**B. Destructure** in function signature (line 59) — add `, repairFailed, repairErrors, onRetryRepair, onDiscardChanges`.
-
-**C. Add CSP/analytics noise filter** in error handler (line 470, before `const isHostDevError`):
-
-```typescript
-const isCSPNoise = /Content Security Policy|connect-src|report-only|__csp_report/i.test(msg);
-const isAnalyticsNoise = /google-analytics|googletagmanager|gtag|fbevents|hotjar/i.test(msg);
-if (isCSPNoise || isAnalyticsNoise) return;
-```
-
-**D. Render RepairFailed overlay** — insert at line 811, after the closing `</div>` of the preview area but before the error overlay at line 813:
-
-```tsx
-{repairFailed && (
-  <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-    <div className="bg-[#1a1a2e] border border-red-500/30 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="h-2.5 w-2.5 rounded-full bg-red-400" />
-        <h3 className="text-base font-semibold text-red-300">Repair Failed</h3>
-      </div>
-      <p className="text-sm text-white/60 mb-4">
-        We couldn't automatically repair the generated code after 2 attempts.
-      </p>
-      {repairErrors && repairErrors.length > 0 && (
-        <div className="bg-black/40 rounded-lg p-3 mb-4 space-y-1.5 max-h-32 overflow-y-auto">
-          {repairErrors.slice(0, 3).map((err, i) => (
-            <div key={i} className="text-xs">
-              <span className="text-red-400 font-mono">{err.file}</span>
-              <span className="text-white/40 ml-1.5">{err.message}</span>
-            </div>
-          ))}
-        </div>
-      )}
-      <div className="flex gap-2">
-        <button onClick={onRetryRepair} className="flex-1 px-3 py-2 rounded-lg bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-medium transition-colors">
-          Retry repair
-        </button>
-        <button onClick={onDiscardChanges} className="flex-1 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white/70 text-xs font-medium transition-colors">
-          Discard changes
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-```
-
-Note: The outer `<div>` of the preview area (line 766) already has `relative` positioning, so `absolute inset-0` works correctly to layer above the iframe.
+Existing observability logs are sufficient.
 
 ---
 
-### Edit 3 — `CompilationBridge.tsx`
+### Summary
 
-No structural changes. Confirm existing observability logs are in place:
-- Line 300: `VALIDATION GATE` log with `errorCount` + first errors ✅
-- Line 337: `Starting compile` with trigger + runId ✅
-- Compile success log with `htmlLength` + `hasDoctype` (already present in the compile success branch) ✅
-
-No edits needed.
+| Layer | What it does |
+|---|---|
+| Safe Output Contract (system prompt) | Prevents AI from generating inline SVG in the first place |
+| Pre-validation sanitizer | Deterministically strips SVG + fixes JSX before validation runs |
+| Stricter repair #2 prompt | More surgical repair instructions — only fix listed files |
+| Observability | Log sanitizer fixes + repair failure diagnostics |
 
