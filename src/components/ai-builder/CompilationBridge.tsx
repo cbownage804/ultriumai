@@ -302,6 +302,11 @@ export function CompilationBridge({
             },
             source: 'compilation-bridge',
           }, '*');
+          // Set error fallback so stableHTML is non-null — prevents safety-net forceCompile loop
+          if (!stableHTMLRef.current) {
+            setStableHTML(ERROR_FALLBACK_HTML);
+            onCompilingChangeRef.current?.(false);
+          }
           return;
         }
       }
