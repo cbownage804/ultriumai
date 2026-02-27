@@ -44,24 +44,9 @@ export function useAgentWebResearch() {
         }
       }
 
-      // For non-URL queries, format as a documentation search
-      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query + ' documentation')}`;
-      const { data, error } = await supabase.functions.invoke('firecrawl-scrape', {
-        body: { url: searchUrl, options: { formats: ['markdown'], onlyMainContent: true } },
-      });
-
-      if (error || data?.success === false) {
-        console.warn('[research] Scrape failed for query:', query);
-        return null;
-      }
-
-      const content = data?.data?.markdown || data?.data?.content || '';
-      return {
-        query,
-        content: content.slice(0, 8000),
-        source: searchUrl,
-        timestamp: new Date(),
-      };
+      // For non-URL queries, Firecrawl cannot scrape search engines
+      console.warn('[research] Skipping non-URL query (Firecrawl cannot scrape search engines):', query);
+      return null;
     } catch (err) {
       console.error('[research] Error:', err);
       return null;

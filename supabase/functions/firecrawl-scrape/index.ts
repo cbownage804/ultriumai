@@ -33,6 +33,22 @@ Deno.serve(async (req) => {
       formattedUrl = `https://${formattedUrl}`;
     }
 
+    // Validate URL has a proper structure
+    try {
+      const parsed = new URL(formattedUrl);
+      if (!parsed.hostname || !parsed.hostname.includes('.')) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Invalid URL: must have a valid domain' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } catch {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid URL format' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.log('[firecrawl-scrape] Scraping URL:', formattedUrl);
 
     const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
