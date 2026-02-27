@@ -67,7 +67,7 @@ import { useBundleSizeTracking } from './useBundleSizeTracking';
 import { useDeleteButtonAutoPatcher } from './useDeleteButtonAutoPatcher';
 import { usePromptPhasePlanner } from './usePromptPhasePlanner';
 import { useBuilderQuestions } from './useBuilderQuestions';
-import { useOutputValidation } from './useOutputValidation';
+import { useOutputValidation, sanitizeStagedFiles } from './useOutputValidation';
 import { useBuildAnalytics } from '@/hooks/useBuildAnalytics';
 import { detectSupabaseIntents, buildSupabaseContext, buildErrorDiagnosisContext, analyzeConversationComplexity } from './SupabaseConversational';
 import { PANEL_REGISTRY } from './panelRegistry';
@@ -447,6 +447,12 @@ export function AIAppBuilderWorkspace() {
         repairInFlightRef.current = false;
         repairJobIdRef.current = null;
         awaitingRepairJobStartRef.current = false;
+        // ── Pre-validation sanitizer for repair output ──
+        const { files: sanitizedRepairFiles, fixes: repairSanitizerFixes } = sanitizeStagedFiles(mergedFiles);
+        if (repairSanitizerFixes.length > 0) {
+          console.info('[handleBgComplete] Repair sanitizer applied', repairSanitizerFixes.length, 'fixes');
+          mergedFiles = sanitizedRepairFiles;
+        }
         pendingFilesRef.current = mergedFiles;
 
         const revalidation = outputValidationRef.current.validate(mergedFiles);
@@ -491,6 +497,14 @@ export function AIAppBuilderWorkspace() {
       repairAttemptRef.current = 0;
       setRepairFailed(false);
       setRepairErrors([]);
+
+      // ── Pre-validation sanitizer: deterministic SVG/JSX fixes ──
+      const { files: sanitizedFiles, fixes: sanitizerFixes } = sanitizeStagedFiles(mergedFiles);
+      if (sanitizerFixes.length > 0) {
+        console.info('[handleBgComplete] Sanitizer applied', sanitizerFixes.length, 'fixes:', sanitizerFixes.slice(0, 5));
+        mergedFiles = sanitizedFiles;
+        pendingFilesRef.current = mergedFiles;
+      }
 
       const validationResult = outputValidationRef.current.validate(mergedFiles);
       const valErrors = validationResult.issues.filter(i => i.severity === 'error');
@@ -2048,6 +2062,10 @@ export function AIAppBuilderWorkspace() {
           })
         );
         console.warn('[Workspace] Repair exhausted after 2 attempts — showing RepairFailed panel');
+        console.error('[Workspace] RepairFailed diagnostics', {
+          stagedFileCount: pendingFilesRef.current?.length ?? 0,
+          topErrors: errorSummary.split('\n').slice(0, 3),
+        });
         return;
       }
 
@@ -2056,7 +2074,7 @@ export function AIAppBuilderWorkspace() {
 
       const timer = setTimeout(() => {
         const stricterPrompt = attempt === 2
-          ? '\n\nSTRICTER RULES (attempt 2/2):\n- Replace ALL inline SVG with lucide-react icon imports\n- Wrap ALL JSX returns in parentheses\n- Ensure ALL tags are self-closing where appropriate\n- Remove any dangling expressions or invalid JSX'
+          ? '\n\nSTRICTER REPAIR RULES (attempt 2/2 — FINAL):\n- Remove ALL inline <svg>...</svg> markup and replace with lucide-react icon components (import { IconName } from "lucide-react")\n- Do NOT refactor or change code unrelated to the validation errors\n- Only modify the files listed in the error list above\n- Output must compile: no dangling JSX expressions, no unterminated strings, no malformed imports\n- Wrap all JSX returns in parentheses: return ( <div>...</div> )\n- Ensure all tags are self-closing where appropriate (<img />, <br />, <input />)'
           : '';
 
         console.info(`[Workspace] Repair attempt ${attempt}/2 for validation errors`);
