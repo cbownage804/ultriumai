@@ -54,9 +54,14 @@ interface BuilderPreviewPanelProps {
   isCompiling?: boolean;
   /** Forces iframe remount (e.g. on tab return) without triggering recompilation */
   refreshKey?: number;
+  /** Transactional build: repair failed terminal state */
+  repairFailed?: boolean;
+  repairErrors?: { file: string; message: string }[];
+  onRetryRepair?: () => void;
+  onDiscardChanges?: () => void;
 }
 
-export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey }: BuilderPreviewPanelProps) {
+export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey, repairFailed, repairErrors, onRetryRepair, onDiscardChanges }: BuilderPreviewPanelProps) {
   const [internalViewportMode, setInternalViewportMode] = useState<ViewportMode>('desktop');
   const viewportMode = externalViewportMode ?? internalViewportMode;
   const setViewportMode = onExternalViewportChange ?? setInternalViewportMode;
@@ -468,6 +473,11 @@ window.addEventListener('message', function(e) {
         // Normal error handling (existing logic)
         const isForcedCritical = e.data?.type === '__PREVIEW_CRITICAL_ERROR__';
         const msg = e.data.message || '';
+        // Filter CSP Report-Only and analytics noise
+        const isCSPNoise = /Content Security Policy|connect-src|report-only|__csp_report/i.test(msg);
+        const isAnalyticsNoise = /google-analytics|googletagmanager|gtag|fbevents|hotjar/i.test(msg);
+        if (isCSPNoise || isAnalyticsNoise) return;
+
         const isHostDevError = /react.refresh|@react-refresh|preamble was not loaded|@vite\/client|vite\/hmr|devserver_websocket|__vite_|import\.meta\.hot|hmr.*connection|websocket.*vite/i.test(msg);
         if (isHostDevError) return;
         const isNetworkNoise = /Failed to load|ERR_BLOCKED|ERR_CONNECTION|favicon\.ico|404/i.test(msg);
@@ -809,6 +819,39 @@ window.addEventListener('message', function(e) {
           </div>
         )}
       </div>
+
+      {/* Transactional build: Repair Failed overlay */}
+      {repairFailed && (
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#1a1a2e] border border-red-500/30 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="h-2.5 w-2.5 rounded-full bg-red-400" />
+              <h3 className="text-base font-semibold text-red-300">Repair Failed</h3>
+            </div>
+            <p className="text-sm text-white/60 mb-4">
+              We couldn't automatically repair the generated code after 2 attempts.
+            </p>
+            {repairErrors && repairErrors.length > 0 && (
+              <div className="bg-black/40 rounded-lg p-3 mb-4 space-y-1.5 max-h-32 overflow-y-auto">
+                {repairErrors.slice(0, 3).map((err, i) => (
+                  <div key={i} className="text-xs">
+                    <span className="text-red-400 font-mono">{err.file}</span>
+                    <span className="text-white/40 ml-1.5">{err.message}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <button onClick={onRetryRepair} className="flex-1 px-3 py-2 rounded-lg bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-medium transition-colors">
+                Retry repair
+              </button>
+              <button onClick={onDiscardChanges} className="flex-1 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white/70 text-xs font-medium transition-colors">
+                Discard changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Lovable-style error overlay banner */}
       {errors.length > 0 && errors.some(e => e.type === 'error') && (

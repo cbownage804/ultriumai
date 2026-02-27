@@ -302,6 +302,15 @@ export function AIAppBuilderWorkspace() {
   const setActiveFileRef = useRef(setActiveFile);
   setActiveFileRef.current = setActiveFile;
 
+  // ── Transactional build + bounded repair refs ──
+  const pendingFilesRef = useRef<ProjectFile[] | null>(null);
+  const lastKnownGoodFilesRef = useRef<ProjectFile[]>([]);
+  const repairAttemptRef = useRef(0);
+  const repairInFlightRef = useRef(false);
+  const repairJobIdRef = useRef<string | null>(null);
+  const awaitingRepairJobStartRef = useRef(false);
+  const [repairFailed, setRepairFailed] = useState(false);
+  const [repairErrors, setRepairErrors] = useState<{file: string; message: string}[]>([]);
 
   // Background generation: server-side builds that survive tab close
   // Saves a snapshot before applying, enabling one-click rollback
@@ -433,110 +442,142 @@ export function AIAppBuilderWorkspace() {
 
       // Diff review removed — always auto-apply all changes immediately
 
-      setFiles(mergedFiles);
-      // Open all newly generated/edited files as tabs
-      const changedPaths = [...parsedFiles.map(f => f.path), ...edits.map(e => e.path)];
-      if (changedPaths.length > 0) {
-        const mainFile = changedPaths.find(p => /App\.(tsx|jsx)$/.test(p)) || changedPaths[0];
-        for (const p of changedPaths) {
-          setActiveFileRef.current(p);
+      // ── Transactional: repair job completion (job-id guarded) ──
+      if (repairInFlightRef.current && repairJobIdRef.current === job.id) {
+        repairInFlightRef.current = false;
+        repairJobIdRef.current = null;
+        awaitingRepairJobStartRef.current = false;
+        pendingFilesRef.current = mergedFiles;
+
+        const revalidation = outputValidationRef.current.validate(mergedFiles);
+        const repairErrors = revalidation.issues.filter(i => i.severity === 'error');
+
+        if (repairErrors.length === 0) {
+          // COMMIT repaired files
+          setFiles(mergedFiles);
+          pendingFilesRef.current = null;
+          setRepairFailed(false);
+          setRepairErrors([]);
+          latestFilesRef.current = mergedFiles;
+          saveDraftImmediateRef.current(project.name, mergedFiles, latestMessagesRef.current);
+          console.info('[handleBgComplete] Repair succeeded — committed');
+          setTimeout(() => forceCompileRef.current?.(), 200);
+        } else {
+          const errorSummary = repairErrors.map(e => `${e.file}: ${e.message}`).join('\n');
+          pendingValidationFixRef.current = { errorSummary, files: mergedFiles };
         }
-        // Set the main app file as active
-        if (mainFile) setActiveFileRef.current(mainFile);
-      }
-      // Synchronously update refs so visibilitychange handler always has latest files
-      latestFilesRef.current = mergedFiles;
-      // Immediately persist so tab-switch can't lose data
-      saveDraftImmediateRef.current(project.name, mergedFiles, latestMessagesRef.current);
 
-      // Self-contained HTML shortcut — for vanilla HTML with a generated or patched index.html
-      const hasReactFiles = mergedFiles.some(f => /\.(tsx|jsx)$/.test(f.path));
-      const newIndexFile = parsedFiles.find(f => f.path === 'index.html');
-      const editedIndex = edits.some(e => e.path === 'index.html');
-      const indexFile = newIndexFile || (editedIndex ? mergedFiles.find(f => f.path === 'index.html') : null);
-      const hasLocalModuleScripts = /src=["']\.?\/(?:src|main|app|index)\b/i.test(indexFile?.content || '');
-      if (indexFile && !hasReactFiles && !hasLocalModuleScripts &&
-          indexFile.content.includes('<!DOCTYPE html') &&
-          indexFile.content.includes('</html>')) {
-        console.info('[handleBgComplete] Self-contained index.html detected — setting preview directly');
-        stableHTMLRef.current = indexFile.content;
-        setStableHTML(indexFile.content);
-        setPreviewRefreshKey(k => k + 1);
-      }
-
-      // Compilation is NOT done here — CompilationBridge handles it when
-      // isGenerating flips to false. This eliminates the race condition where
-      // both handleBgComplete and CompilationBridge would compile simultaneously.
-      console.info('[handleBgComplete] Files merged (%d files), deferring compilation to CompilationBridge', mergedFiles.length);
-
-      if (validationFixInFlightRef.current && validationFixJobIdRef.current === job.id) {
-        console.info('[handleBgComplete] Auto-fix cycle completed — triggering compile', {
-          jobId: job.id,
-          captured: validationFixJobIdRef.current,
+        setIsGeneratingOverride(false);
+        // Still add assistant message for repair jobs
+        const repairFinalFiles = mergedFiles;
+        setMessages(prev => {
+          const suggestions = generateSuggestions(job.output_content!, mode, prev, repairFinalFiles);
+          return [...prev, {
+            id: crypto.randomUUID(),
+            role: 'assistant' as const,
+            content: job.output_content!,
+            timestamp: new Date(),
+            filesGenerated: parsedFiles.length + deletions.length,
+            suggestions,
+            mode,
+          }];
         });
-        validationFixInFlightRef.current = false;
-        validationFixJobIdRef.current = null;
-        awaitingValidationFixJobStartRef.current = false;
-        pendingValidationFixRef.current = null;
-        setTimeout(() => forceCompileRef.current?.(), 300);
+        return; // Do NOT run normal merge logic
       }
 
-      // Safety net: if CompilationBridge hasn't produced HTML after 10s, force a recompile.
-      // This is intentionally long because compilation includes Vite sandbox (up to 35s timeout)
-      // with fallback to esbuild edge function. A separate 5s safety net already exists at mount.
-      setTimeout(() => {
-        if (!stableHTMLRef.current && !pendingValidationFixRef.current && !validationFixInFlightRef.current) {
-          console.warn('[handleBgComplete] Safety net: stableHTML still null 20s after merge — forcing compile');
-          forceCompileRef.current?.();
-        }
-      }, 20_000);
+      // ── Transactional merge: snapshot LKG, stage, validate before commit ──
+      lastKnownGoodFilesRef.current = [...project.files];
+      pendingFilesRef.current = mergedFiles;
+      repairAttemptRef.current = 0;
+      setRepairFailed(false);
+      setRepairErrors([]);
 
-      // Auto-switch to preview tab so user sees the result immediately
-      if (rightTabRef.current !== 'preview' && rightTabRef.current !== 'split') {
-        setRightTabRef.current('preview');
-      }
-      if (isMobileRef.current) {
-        setMobileTabRef.current('preview');
-      }
-
-      // Post-build snapshot for history
-      const totalChanges = parsedFiles.length + edits.length;
-      addSnapshotRef.current(
-        `Build: ${totalChanges} files${edits.length ? ` (${edits.length} patched)` : ''}`,
-        mergedFiles,
-        'ai-generation'
-      );
-
-      dedupeToast('success', `Build complete — ${totalChanges} files updated`, { duration: 5000 });
-
-      // Post-generation syntax validation: catch obvious issues before preview
       const validationResult = outputValidationRef.current.validate(mergedFiles);
-      if (!validationResult.isValid) {
-        const errors = validationResult.issues.filter(i => i.severity === 'error');
-        console.warn('[handleBgComplete] Validation found errors:', errors);
-        
-        // Schedule an auto-fix build for syntax errors detected post-generation
-        if (errors.length > 0 && totalFixAttemptsRef.current < 3) {
-          totalFixAttemptsRef.current++;
-          const errorSummary = errors.map(e => `${e.file}: ${e.message}`).join('\n');
-          // Store pending fix in ref — a useEffect will pick it up and call sendMessage
-          // (avoids referencing variables declared later in the component)
-          pendingValidationFixRef.current = {
-            errorSummary,
-            files: mergedFiles,
-          };
-          // Auto-fix watchdog: clear pending state after 25s to prevent indefinite "Validating…"
-          setTimeout(() => {
-            if (pendingValidationFixRef.current) {
-              console.warn('[Workspace] Auto-fix watchdog: 25s elapsed, clearing pending fix');
-              pendingValidationFixRef.current = null;
-              validationFixInFlightRef.current = false;
-              validationFixJobIdRef.current = null;
-              awaitingValidationFixJobStartRef.current = false;
-              forceCompileRef.current?.();
-            }
-          }, 25_000);
+      const valErrors = validationResult.issues.filter(i => i.severity === 'error');
+
+      if (valErrors.length === 0) {
+        // COMMIT — validation passed
+        setFiles(mergedFiles);
+        pendingFilesRef.current = null;
+
+        // Normal merge bookkeeping (tabs, persistence, snapshots, etc.)
+        const changedPaths = [...parsedFiles.map(f => f.path), ...edits.map(e => e.path)];
+        if (changedPaths.length > 0) {
+          const mainFile = changedPaths.find(p => /App\.(tsx|jsx)$/.test(p)) || changedPaths[0];
+          for (const p of changedPaths) { setActiveFileRef.current(p); }
+          if (mainFile) setActiveFileRef.current(mainFile);
         }
+        latestFilesRef.current = mergedFiles;
+        saveDraftImmediateRef.current(project.name, mergedFiles, latestMessagesRef.current);
+
+        // Self-contained HTML shortcut
+        const hasReactFiles = mergedFiles.some(f => /\.(tsx|jsx)$/.test(f.path));
+        const newIndexFile = parsedFiles.find(f => f.path === 'index.html');
+        const editedIndex = edits.some(e => e.path === 'index.html');
+        const indexFile = newIndexFile || (editedIndex ? mergedFiles.find(f => f.path === 'index.html') : null);
+        const hasLocalModuleScripts = /src=["']\.?\/(?:src|main|app|index)\b/i.test(indexFile?.content || '');
+        if (indexFile && !hasReactFiles && !hasLocalModuleScripts &&
+            indexFile.content.includes('<!DOCTYPE html') &&
+            indexFile.content.includes('</html>')) {
+          console.info('[handleBgComplete] Self-contained index.html detected — setting preview directly');
+          stableHTMLRef.current = indexFile.content;
+          setStableHTML(indexFile.content);
+          setPreviewRefreshKey(k => k + 1);
+        }
+
+        console.info('[handleBgComplete] Files merged & committed (%d files)', mergedFiles.length);
+        setTimeout(() => forceCompileRef.current?.(), 200);
+
+        // Safety net: if CompilationBridge hasn't produced HTML after 20s
+        setTimeout(() => {
+          if (!stableHTMLRef.current && !pendingValidationFixRef.current && !validationFixInFlightRef.current && !repairInFlightRef.current && !awaitingRepairJobStartRef.current) {
+            console.warn('[handleBgComplete] Safety net: stableHTML still null 20s after merge — forcing compile');
+            forceCompileRef.current?.();
+          }
+        }, 20_000);
+
+        // Auto-switch to preview
+        if (rightTabRef.current !== 'preview' && rightTabRef.current !== 'split') {
+          setRightTabRef.current('preview');
+        }
+        if (isMobileRef.current) { setMobileTabRef.current('preview'); }
+
+        // Post-build snapshot
+        const totalChanges = parsedFiles.length + edits.length;
+        addSnapshotRef.current(
+          `Build: ${totalChanges} files${edits.length ? ` (${edits.length} patched)` : ''}`,
+          mergedFiles, 'ai-generation'
+        );
+        dedupeToast('success', `Build complete — ${totalChanges} files updated`, { duration: 5000 });
+      } else {
+        // DO NOT COMMIT — stage for repair
+        console.warn('[handleBgComplete] Validation errors in generated output — staging for repair', valErrors.length);
+        const errorSummary = valErrors.map(e => `${e.file}: ${e.message}`).join('\n');
+        pendingValidationFixRef.current = { errorSummary, files: mergedFiles };
+
+        // Auto-fix watchdog: clear pending state after 25s
+        setTimeout(() => {
+          if (pendingValidationFixRef.current) {
+            console.warn('[Workspace] Auto-fix watchdog: 25s elapsed, clearing pending fix');
+            pendingValidationFixRef.current = null;
+            validationFixInFlightRef.current = false;
+            validationFixJobIdRef.current = null;
+            awaitingValidationFixJobStartRef.current = false;
+            repairInFlightRef.current = false;
+            repairJobIdRef.current = null;
+            awaitingRepairJobStartRef.current = false;
+            repairAttemptRef.current = 0;
+            pendingFilesRef.current = null;
+            forceCompileRef.current?.();
+          }
+        }, 25_000);
+
+        // Still switch to preview and release generating state
+        if (rightTabRef.current !== 'preview' && rightTabRef.current !== 'split') {
+          setRightTabRef.current('preview');
+        }
+        if (isMobileRef.current) { setMobileTabRef.current('preview'); }
+        dedupeToast('info', 'Validating generated code — auto-repair in progress…', { duration: 3000 });
       }
     }
     const finalFiles = mergedFiles;
@@ -665,6 +706,11 @@ export function AIAppBuilderWorkspace() {
         validationFixJobIdRef.current = jobId;
         awaitingValidationFixJobStartRef.current = false;
         console.info('[Workspace] Captured validation fix jobId:', jobId);
+      }
+      if (awaitingRepairJobStartRef.current && jobId) {
+        repairJobIdRef.current = jobId;
+        awaitingRepairJobStartRef.current = false;
+        console.info('[Workspace] Captured repair jobId:', jobId);
       }
     };
     window.addEventListener('bg-job-started', handler);
@@ -1916,6 +1962,35 @@ export function AIAppBuilderWorkspace() {
     sendMessage(`${diagnosisContext}\n\nFix this error in my app. Here is the full context:\n\n${context}${retryContext}\n\nPlease fix the code and return the corrected file(s).`, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
   }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys, selectedModel, fixAttemptCount, lastFixError, getLastAIResponse]);
 
+  // ── Transactional build: retry/discard callbacks ──
+  const handleRetryRepair = useCallback(() => {
+    repairAttemptRef.current = 0;
+    setRepairFailed(false);
+    setRepairErrors([]);
+    if (pendingFilesRef.current) {
+      const validation = outputValidationRef.current.validate(pendingFilesRef.current);
+      const errors = validation.issues.filter(i => i.severity === 'error');
+      if (errors.length > 0) {
+        const errorSummary = errors.map(e => `${e.file}: ${e.message}`).join('\n');
+        pendingValidationFixRef.current = { errorSummary, files: pendingFilesRef.current };
+      }
+    }
+  }, []);
+
+  const handleDiscardChanges = useCallback(() => {
+    setRepairFailed(false);
+    setRepairErrors([]);
+    pendingFilesRef.current = null;
+    repairAttemptRef.current = 0;
+    repairInFlightRef.current = false;
+    repairJobIdRef.current = null;
+    awaitingRepairJobStartRef.current = false;
+    if (lastKnownGoodFilesRef.current.length > 0) {
+      setFiles(lastKnownGoodFilesRef.current);
+    }
+    dedupeToast('info', 'Changes discarded — reverted to last working version');
+  }, [setFiles]);
+
   // Track when generation ends for post-generation cooldown
   // Issue 17 fix: Removed duplicate smoke test (now only runs in latestFiles watcher above)
   const generationEndedAt = useRef<number>(0);
@@ -1936,6 +2011,12 @@ export function AIAppBuilderWorkspace() {
       validationFixInFlightRef.current = false;
       validationFixJobIdRef.current = null;
       awaitingValidationFixJobStartRef.current = false;
+      // Clear transactional repair state
+      repairInFlightRef.current = false;
+      repairJobIdRef.current = null;
+      awaitingRepairJobStartRef.current = false;
+      repairAttemptRef.current = 0;
+      pendingFilesRef.current = null;
     }
     prevIsGenerating.current = isGenerating;
   }, [isGenerating]);
@@ -1947,24 +2028,48 @@ export function AIAppBuilderWorkspace() {
     prevIsCompilingRef.current = isCompiling;
   }, [isCompiling]);
 
-  // Process pending validation fix (scheduled in handleBgComplete, executed here where sendMessage is available)
+  // ── Bounded repair pipeline (max 2 attempts) ──
+  // Replaces the old single-shot validation fix effect.
   useEffect(() => {
-    if (!isGenerating && !isCompiling && pendingValidationFixRef.current) {
+    if (!isGenerating && !isCompiling && pendingValidationFixRef.current && !repairInFlightRef.current) {
       const { errorSummary, files } = pendingValidationFixRef.current;
-      pendingValidationFixRef.current = null;
-      const timer = setTimeout(() => {
-        console.info('[Workspace] Triggering auto-fix for post-build validation errors');
-        const diagCtx = buildErrorDiagnosisContext(
-          { message: `Post-build validation failed:\n${errorSummary}` },
-          files,
-          undefined,
-          undefined,
+      const attempt = repairAttemptRef.current + 1;
+
+      if (attempt > 2) {
+        // Terminal — repair exhausted
+        pendingValidationFixRef.current = null;
+        setRepairFailed(true);
+        setRepairErrors(
+          errorSummary.split('\n').slice(0, 3).map(line => {
+            const colonIdx = line.indexOf(': ');
+            return colonIdx >= 0
+              ? { file: line.slice(0, colonIdx), message: line.slice(colonIdx + 2) }
+              : { file: 'unknown', message: line };
+          })
         );
-        validationFixInFlightRef.current = true;
-        validationFixJobIdRef.current = null;
-        awaitingValidationFixJobStartRef.current = true;
+        console.warn('[Workspace] Repair exhausted after 2 attempts — showing RepairFailed panel');
+        return;
+      }
+
+      repairAttemptRef.current = attempt;
+      pendingValidationFixRef.current = null;
+
+      const timer = setTimeout(() => {
+        const stricterPrompt = attempt === 2
+          ? '\n\nSTRICTER RULES (attempt 2/2):\n- Replace ALL inline SVG with lucide-react icon imports\n- Wrap ALL JSX returns in parentheses\n- Ensure ALL tags are self-closing where appropriate\n- Remove any dangling expressions or invalid JSX'
+          : '';
+
+        console.info(`[Workspace] Repair attempt ${attempt}/2 for validation errors`);
+        const diagCtx = buildErrorDiagnosisContext(
+          { message: `Post-build validation failed:\n${errorSummary}${stricterPrompt}` },
+          files, undefined, undefined,
+        );
+
+        repairInFlightRef.current = true;
+        repairJobIdRef.current = null;
+        awaitingRepairJobStartRef.current = true;
         sendMessage(diagCtx, files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
-      }, 1500);
+      }, 1200);
       return () => clearTimeout(timer);
     }
   }, [isGenerating, isCompiling, sendMessage, supabaseConfig, stripeConfig, serviceKeys, selectedModel]);
@@ -2579,7 +2684,7 @@ export function AIAppBuilderWorkspace() {
   useEffect(() => {
     if (prevGenForFallbackRef.current && !isGenerating && project.files.length > 0) {
       const timer = setTimeout(() => {
-        if (!stableHTMLRef.current && project.files.length > 0 && !pendingValidationFixRef.current && !validationFixInFlightRef.current) {
+        if (!stableHTMLRef.current && project.files.length > 0 && !pendingValidationFixRef.current && !validationFixInFlightRef.current && !repairInFlightRef.current && !awaitingRepairJobStartRef.current) {
           console.warn('[Workspace] Safety net: stableHTML still null 15s after generation — forcing compile');
           setIsCompiling(false); // Force-clear loading state to prevent infinite spinner
           forceCompileRef.current?.();
@@ -2814,7 +2919,7 @@ export function AIAppBuilderWorkspace() {
                 </div>
               ) : undefined} />
             ) : mobileTab === 'preview' ? (
-                <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl}>
+                <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl} repairFailed={repairFailed} repairErrors={repairErrors} onRetryRepair={handleRetryRepair} onDiscardChanges={handleDiscardChanges}>
                   <GeneratingOverlay isGenerating={isGenerating} isCompiling={isCompiling} phase={thinkingPhase} partialFilesRef={partialFilesRef} completedFileCountRef={completedFileCountRef} continuationRound={continuationRound} />
                 </BuilderPreviewPanel>
             ) : (
@@ -3184,7 +3289,7 @@ export function AIAppBuilderWorkspace() {
                               <ResizablePanelGroup direction="horizontal" className="h-full">
                                 <ResizablePanel defaultSize={50} minSize={30}>
                                   <div data-tour="preview" className="h-full">
-                                    <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl}>
+                                    <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl} repairFailed={repairFailed} repairErrors={repairErrors} onRetryRepair={handleRetryRepair} onDiscardChanges={handleDiscardChanges}>
                                       <GeneratingOverlay isGenerating={isGenerating} isCompiling={isCompiling} phase={thinkingPhase} partialFilesRef={partialFilesRef} completedFileCountRef={completedFileCountRef} continuationRound={continuationRound} />
                                     </BuilderPreviewPanel>
                                   </div>
@@ -3201,7 +3306,7 @@ export function AIAppBuilderWorkspace() {
                               </ResizablePanelGroup>
                             ) : rightTab === 'preview' || !hasFiles ? (
                               <div data-tour="preview" className="h-full">
-                                <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl}>
+                                <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl} repairFailed={repairFailed} repairErrors={repairErrors} onRetryRepair={handleRetryRepair} onDiscardChanges={handleDiscardChanges}>
                                   <GeneratingOverlay isGenerating={isGenerating} isCompiling={isCompiling} phase={thinkingPhase} partialFilesRef={partialFilesRef} completedFileCountRef={completedFileCountRef} continuationRound={continuationRound} />
                                 </BuilderPreviewPanel>
                               </div>
