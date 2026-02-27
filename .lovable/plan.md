@@ -1,84 +1,66 @@
 
 
-## Plan: Disable websocket devserver channel for srcdoc previews
+## Plan: Add compile run-ID guard and early validation gate
 
-### Root Cause
+### Task 1: Compile run-ID guard in CompilationBridge
 
-The `devserver_websocket_*` logs originate from the **host page's Vite dev server HMR client** (`/@vite/client`). Because the iframe uses `allow-same-origin`, it shares the parent's origin and inherits the Vite HMR websocket connection attempts. These fail repeatedly (different port/Cloudflare), spamming the console interceptor bridge which relays them as `__PREVIEW_ERROR__` to the parent.
+**File: `src/components/ai-builder/CompilationBridge.tsx`**
 
-The `usePreviewServiceWorker` hook registers a real Service Worker for "soft reload" HMR — but in srcdoc mode, the SW can't actually control the sandboxed iframe. It adds complexity without benefit for the current architecture.
+Add a monotonically incrementing `compileRunIdRef` to prevent stale compilations from applying their results:
 
-### Changes
+- Add `const compileRunIdRef = useRef(0);` alongside `compilationInFlightRef` (line 131)
+- At compile start (line 285, inside the debounce timer callback), increment: `const thisRunId = ++compileRunIdRef.current;`
+- After `runCompile()` resolves (line 316), guard: `if (thisRunId !== compileRunIdRef.current) { console.info('[CompilationBridge] Stale compile run', thisRunId, '— discarding'); return; }`
+- In the safety timeout (line 290-300), when it fires: set `compileRunIdRef.current++` to invalidate any in-flight promise, then apply `ERROR_FALLBACK_HTML` or keep LKG if `stableHTMLRef.current` exists
+- In the generation-start reset effect (line 214-226), reset `compileRunIdRef.current = 0`
+- In `forceCompile` (line 376-384), increment `compileRunIdRef.current++` to invalidate any in-flight run
 
----
+This ensures only the **latest** compile run can call `setStableHTML`. Race conditions between timeout and late-arriving results are eliminated deterministically.
 
-### Task 1: Disable Service Worker preview for srcdoc iframes
+### Task 2: Early validation gate — skip compile if syntax errors
 
-**File: `src/hooks/usePreviewServiceWorker.ts`**
+**File: `src/components/ai-builder/CompilationBridge.tsx`**
 
-Add an early-exit guard: if the preview is using srcdoc (not a real navigable URL), skip SW registration entirely. Return a no-op state:
+Add a validation check before entering the compile pipeline. Currently validation only runs post-generation in `handleBgComplete` (AIAppBuilderWorkspace.tsx:501) — but that happens **after** files are set, and CompilationBridge still attempts to compile broken files.
 
-- Add a parameter or detection: `useSrcdocMode?: boolean` (default `true` since all current previews use srcdoc)
-- When srcdoc mode is active: return `{ isReady: false, previewUrl: null, updatePreview: noop, refreshPreview: noop, version: 0, softReload: noop }`
-- This prevents the SW from registering, which eliminates one source of devserver websocket inheritance
-
-### Task 2: Simplify soft reload to full iframe srcdoc update
-
-**File: `src/components/ai-builder/BuilderPreviewPanel.tsx`**
-
-Since the SW is disabled for srcdoc previews, the `__SOFT_RELOAD__` handler (lines 248-261) needs to fall back to a full srcdoc update instead of SW-based reload:
-
-- Replace the SW soft reload logic with: re-set `iframe.srcdoc` to current `htmlWithErrorCapture` (with session ID injection)
-- This preserves CSS hot-patching (which works via `postMessage` → `__LIVE_PATCH__`, no websocket needed)
-- JS changes trigger a full srcdoc update instead of SW reload — slightly less smooth but completely stable
-
-### Task 3: Add websocket suppression to the injected preview bridge
-
-**File: `src/components/ai-builder/BuilderPreviewPanel.tsx` (lines 130-196, the injected bridge script)**
-
-Add a websocket constructor override in the injected bridge script that blocks HMR-related websocket connections from within the iframe:
-
-```javascript
-// Block Vite HMR websocket connections inherited from parent origin
-var OrigWebSocket = window.WebSocket;
-window.WebSocket = function(url, protocols) {
-  var urlStr = String(url || '');
-  if (/vite|hmr|__vite|hot-update|localhost:\d{4}/i.test(urlStr)) {
-    console.info('[Preview] Blocked inherited HMR websocket: ' + urlStr);
-    // Return a dummy that never connects
-    var dummy = { readyState: 3, send: function(){}, close: function(){}, 
-                  addEventListener: function(){}, removeEventListener: function(){},
-                  onopen: null, onclose: null, onerror: null, onmessage: null,
-                  CONNECTING: 0, OPEN: 1, CLOSING: 2, CLOSED: 3 };
-    return dummy;
+Changes:
+- Import `useOutputValidation` at top of file
+- Add `const { validate } = useOutputValidation();` in the component body (or accept it as a prop — prop is cleaner since AIAppBuilderWorkspace already instantiates it)
+- **Prop approach**: Add `validateFiles?: (files: ProjectFile[]) => { isValid: boolean; issues: { severity: string; message: string; file: string }[] }` to `CompilationBridgeProps`
+- In the debounce timer callback (line 280), **before** `compilationInFlightRef.current = true`:
+  ```typescript
+  // Early validation gate — don't waste compile resources on broken files
+  const currentFiles = filesRef.current;
+  if (props.validateFiles) {
+    const vResult = props.validateFiles(currentFiles);
+    const syntaxErrors = vResult.issues.filter(i => i.severity === 'error');
+    if (syntaxErrors.length > 0) {
+      console.warn('[CompilationBridge] VALIDATION GATE: skipping compile —', syntaxErrors.length, 'errors');
+      window.postMessage({
+        type: '__BUILD_GATED__',
+        payload: {
+          reason: 'syntax_errors',
+          errors: syntaxErrors.map(e => `${e.file}: ${e.message}`),
+        },
+        source: 'compilation-bridge',
+      }, '*');
+      // Don't set isCompiling, don't run sandbox/edge/worker
+      return;
+    }
   }
-  return new OrigWebSocket(url, protocols);
-};
-```
+  ```
+- This posts `__BUILD_GATED__` which the existing auto-fix listener in AIAppBuilderWorkspace can handle — the `pendingValidationFixRef` mechanism already triggers auto-fix for syntax errors
 
-This prevents any Vite dev client code that runs in the iframe context from establishing websocket connections, which is the direct fix for the `devserver_websocket_open/close/error` loop.
+**File: `src/components/ai-builder/AIAppBuilderWorkspace.tsx`**
 
-### Task 4: Add retry cap to any remaining websocket attempts
-
-**File: `src/components/ai-builder/BuilderPreviewPanel.tsx` (injected bridge)**
-
-In case the dummy websocket approach doesn't catch all paths (e.g., the dev client uses `EventSource` or raw `XMLHttpRequest` for polling), add a global retry tracker:
-
-- Track blocked connection attempts in a counter
-- After 5 blocked attempts, stop logging (prevent log spam)
-- This is defense-in-depth alongside Task 3
-
----
+- Pass `validateFiles={outputValidation.validate}` as a prop to `<CompilationBridge>` where it's rendered (search for `<CompilationBridge`)
 
 ### Summary
 
-| What | How |
-|------|-----|
-| Stop websocket spam | Block HMR websockets in iframe via constructor override (Task 3) |
-| Remove unnecessary SW | Disable `usePreviewServiceWorker` for srcdoc mode (Task 1) |
-| Keep CSS hot-patch | CSS patching uses `postMessage`, unaffected (no change needed) |
-| JS change reload | Falls back to full srcdoc update instead of SW reload (Task 2) |
-| Defense-in-depth | Retry cap on blocked attempts (Task 4) |
+| Guard | What it prevents |
+|-------|-----------------|
+| `compileRunIdRef` | Stale compile results overwriting newer ones; timeout vs late result race |
+| Early validation gate | Wasting 30s on sandbox/edge/worker for files with obvious syntax errors |
 
-Four focused edits across two files. CSS hot-patching continues working without websockets. JS changes use full srcdoc reload — stable and predictable.
+Two files edited. No new dependencies. Both guards are cheap (ref increment, regex-based validation) and fire before any network/worker calls.
 
