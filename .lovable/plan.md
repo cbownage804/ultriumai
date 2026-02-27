@@ -1,75 +1,53 @@
 
 
-## Plan: Harden Validation Fallback (4 edits, 2 files)
+## Plan: Non-Fatal Image Gen + Debug Logging (3 files, no shell changes)
 
-Scope: `CompilationBridge.tsx` and `AIAppBuilderWorkspace.tsx` only. No other files touched.
+### Edit 1 — image-generation/index.ts: Always 200 + fallback
 
----
+**A.** Add `FALLBACK_PNG` constant after `corsHeaders` (line 8).
 
-### Edit 1 — Sentinel marker in VALIDATING_FALLBACK_HTML
+**B.** Replace "no image" branch (lines 66-76): return `{ success: false, image: FALLBACK_PNG, isFallback: true }` with status 200.
 
-**File:** `src/components/ai-builder/CompilationBridge.tsx` — line 43
+**C.** Replace 429/402 error branches (lines 46-57): keep status codes but add `image: FALLBACK_PNG, isFallback: true`.
 
-Add `<meta name="ai-builder-fallback" content="validating" />` in the `<head>` after the viewport meta tag. The rest of the HTML stays identical.
+**D.** Replace catch block (lines 87-93): return 200 with fallback PNG instead of 500.
 
----
+### Edit 2 — CompilationBridge.tsx: Debug logs
 
-### Edit 2 — Render-only fallback (no stableHTMLRef, no onStableHTML)
-
-**File:** `src/components/ai-builder/CompilationBridge.tsx` — line 316
-
-```diff
-- setStableHTML(VALIDATING_FALLBACK_HTML);
-+ // Render-only: show fallback in iframe WITHOUT updating stableHTMLRef or calling onStableHTML
-+ setStableHTMLLocal(VALIDATING_FALLBACK_HTML);
-```
-
-`setStableHTMLLocal` (line 125) is the raw `useState` setter — it renders the spinner in the iframe but does NOT touch `stableHTMLRef.current` (stays `null`) and does NOT call `onStableHTML`. Safety nets continue to detect "no preview."
-
----
-
-### Edit 3 — forceCompileTrigger state
-
-**File:** `src/components/ai-builder/CompilationBridge.tsx`
-
-A. After line 142 (`liveCompiledHTML` state), add:
+**A.** After line 318 (`setStableHTMLLocal(VALIDATING_FALLBACK_HTML)`), add:
 ```typescript
-const [forceCompileTrigger, setForceCompileTrigger] = useState(0);
+console.info('[CompilationBridge] Showing validation fallback (render-only)', {
+  htmlLength: VALIDATING_FALLBACK_HTML.length,
+  stableHTMLRef: stableHTMLRef.current ? 'truthy' : 'null',
+});
 ```
 
-B. In `forceCompile` callback (line 435, after `setLiveCompiledHTML(null)`), add:
+**B.** After line 395 (`setStableHTML(result)`), add:
 ```typescript
-setForceCompileTrigger(c => c + 1);
+console.info('[CompilationBridge] Compile success', {
+  runId: thisRunId,
+  htmlLength: result?.length ?? 0,
+  first80: result?.slice(0, 80) ?? '',
+  hasDoctype: (result?.includes('<!') ?? false),
+});
 ```
 
-C. Add to compile effect deps (line 424):
-```diff
-- }, [filesDigest, isGenerating, supabaseConfig, stripeConfig, isReactProject, setStableHTML, runCompile]);
-+ }, [filesDigest, isGenerating, supabaseConfig, stripeConfig, isReactProject, setStableHTML, runCompile, forceCompileTrigger]);
+### Edit 3 — BuilderPreviewPanel.tsx: Debug log before srcdoc
+
+At line 514 (before `iframeRef.current.srcdoc = injectSessionId(html, sid)`), add:
+```typescript
+console.info('[PreviewPanel] Setting srcdoc', {
+  htmlLength: html?.length ?? 0,
+  hasDoctype: !!html && (html.includes('<!doctype') || html.includes('<!DOCTYPE')),
+  hasSessionMeta: !!html && html.includes('preview-session'),
+  sessionId: sid,
+});
 ```
 
----
+### Edit 4 — Deploy edge function
 
-### Edit 4 — Sentinel-based cache guard
+Deploy `image-generation` after Edit 1.
 
-**File:** `src/components/ai-builder/AIAppBuilderWorkspace.tsx` — lines 2529-2534
-
-```diff
-  try {
--   if (html) {
--     localStorage.setItem(COMPILED_CACHE_KEY, html);
--   }
-+   const isFallback = html?.includes('name="ai-builder-fallback"') ?? false;
-+   if (html && !isFallback) {
-+     localStorage.setItem(COMPILED_CACHE_KEY, html);
-+   }
-  } catch { /* quota exceeded — non-critical */ }
-```
-
----
-
-### Existing guards confirmed intact
-
-- 15s safety net (line 2552): already has `&& !pendingValidationFixRef.current` — no change needed.
-- 20s safety net: already guarded — no change needed.
+### Files NOT touched
+`App.tsx`, `main.tsx`, `index.html`, routing, layouts, non-builder pages.
 
