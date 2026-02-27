@@ -96,6 +96,7 @@ export function CompilationBridge({
   // PERF: Skip expensive hashing during generation — files change frequently via
   // streaming setFiles calls, but compilation is blocked anyway.
   const prevDigestRef = useRef('');
+  const forceCompileRequestedRef = useRef(false);
   const filesDigest = useMemo(() => {
     if (isGenerating || files.length === 0) return prevDigestRef.current || '';
     const digest = files.map(f => {
@@ -296,7 +297,10 @@ export function CompilationBridge({
         const vResult = validateFiles(currentFiles);
         const syntaxErrors = vResult.issues.filter(i => i.severity === 'error');
         if (syntaxErrors.length > 0) {
-          console.warn('[CompilationBridge] VALIDATION GATE: skipping compile —', syntaxErrors.length, 'errors');
+          console.warn('[CompilationBridge] VALIDATION GATE: skipping compile', {
+            errorCount: syntaxErrors.length,
+            errors: syntaxErrors.slice(0, 3).map(e => ({ file: e.file, message: e.message })),
+          });
           window.postMessage({
             type: '__BUILD_GATED__',
             payload: {
@@ -328,9 +332,15 @@ export function CompilationBridge({
       const thisRunId = ++compileRunIdRef.current;
       const t0 = performance.now();
 
+      const trigger = forceCompileRequestedRef.current ? 'forceCompile' : 'filesDigest';
+      forceCompileRequestedRef.current = false;
+      console.info('[CompilationBridge] Starting compile', {
+        runId: thisRunId,
+        trigger,
+        fileCount: filesRef.current.length,
+      });
       compilationInFlightRef.current = true;
       onCompilingChangeRef.current?.(true);
-      console.info('[CompilationBridge] compile start', { runId: thisRunId, t0 });
 
       // Safety net: force-reset isCompiling if compilation hangs
       safetyTimer = setTimeout(() => {
