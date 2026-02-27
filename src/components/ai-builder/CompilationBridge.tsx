@@ -304,10 +304,14 @@ export function CompilationBridge({
             },
             source: 'compilation-bridge',
           }, '*');
-          // Set error fallback so stableHTML is non-null — prevents safety-net forceCompile loop
-          if (!stableHTMLRef.current) {
-            setStableHTML(SYNTAX_GATE_FALLBACK_HTML);
-            onCompilingChangeRef.current?.(false);
+          // No LKG preview? Keep loading skeleton visible — safety-net timers
+          // are suppressed via pendingValidationFixRef while auto-fix runs.
+          // Only clear isCompiling when we already have an LKG preview to show.
+          if (stableHTMLRef.current) {
+            // LKG exists — keep showing previous preview, nothing to do
+          } else {
+            // No LKG — keep isCompiling true so skeleton stays visible
+            // Auto-fix pipeline will produce valid files → next compile succeeds
           }
           return;
         }
