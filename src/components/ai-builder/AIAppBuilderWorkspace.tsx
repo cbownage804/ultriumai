@@ -469,11 +469,23 @@ export function AIAppBuilderWorkspace() {
       // both handleBgComplete and CompilationBridge would compile simultaneously.
       console.info('[handleBgComplete] Files merged (%d files), deferring compilation to CompilationBridge', mergedFiles.length);
 
+      if (validationFixInFlightRef.current && validationFixJobIdRef.current === job.id) {
+        console.info('[handleBgComplete] Auto-fix cycle completed — triggering compile', {
+          jobId: job.id,
+          captured: validationFixJobIdRef.current,
+        });
+        validationFixInFlightRef.current = false;
+        validationFixJobIdRef.current = null;
+        awaitingValidationFixJobStartRef.current = false;
+        pendingValidationFixRef.current = null;
+        setTimeout(() => forceCompileRef.current?.(), 300);
+      }
+
       // Safety net: if CompilationBridge hasn't produced HTML after 10s, force a recompile.
       // This is intentionally long because compilation includes Vite sandbox (up to 35s timeout)
       // with fallback to esbuild edge function. A separate 5s safety net already exists at mount.
       setTimeout(() => {
-        if (!stableHTMLRef.current && !pendingValidationFixRef.current) {
+        if (!stableHTMLRef.current && !pendingValidationFixRef.current && !validationFixInFlightRef.current) {
           console.warn('[handleBgComplete] Safety net: stableHTML still null 20s after merge — forcing compile');
           forceCompileRef.current?.();
         }
@@ -518,6 +530,9 @@ export function AIAppBuilderWorkspace() {
             if (pendingValidationFixRef.current) {
               console.warn('[Workspace] Auto-fix watchdog: 25s elapsed, clearing pending fix');
               pendingValidationFixRef.current = null;
+              validationFixInFlightRef.current = false;
+              validationFixJobIdRef.current = null;
+              awaitingValidationFixJobStartRef.current = false;
               forceCompileRef.current?.();
             }
           }, 25_000);
@@ -646,6 +661,11 @@ export function AIAppBuilderWorkspace() {
       const jobId = (e as CustomEvent).detail?.jobId;
       console.info('[Workspace] 📥 Received bg-job-started, calling startWatching for:', jobId);
       if (jobId) backgroundGen.startWatching?.(jobId);
+      if (awaitingValidationFixJobStartRef.current && jobId) {
+        validationFixJobIdRef.current = jobId;
+        awaitingValidationFixJobStartRef.current = false;
+        console.info('[Workspace] Captured validation fix jobId:', jobId);
+      }
     };
     window.addEventListener('bg-job-started', handler);
     return () => window.removeEventListener('bg-job-started', handler);
@@ -1905,11 +1925,17 @@ export function AIAppBuilderWorkspace() {
   // Global auto-fix circuit breaker: caps ALL fix attempts across error messages
   const totalFixAttemptsRef = useRef(0);
   const autoFixInFlightRef = useRef(false);
+  const validationFixInFlightRef = useRef(false);
+  const validationFixJobIdRef = useRef<string | null>(null);
+  const awaitingValidationFixJobStartRef = useRef(false);
   useEffect(() => {
     if (!isGenerating && prevIsGenerating.current) {
       generationEndedAt.current = Date.now();
       // Reset in-flight guard when generation completes
       autoFixInFlightRef.current = false;
+      validationFixInFlightRef.current = false;
+      validationFixJobIdRef.current = null;
+      awaitingValidationFixJobStartRef.current = false;
     }
     prevIsGenerating.current = isGenerating;
   }, [isGenerating]);
@@ -1934,6 +1960,9 @@ export function AIAppBuilderWorkspace() {
           undefined,
           undefined,
         );
+        validationFixInFlightRef.current = true;
+        validationFixJobIdRef.current = null;
+        awaitingValidationFixJobStartRef.current = true;
         sendMessage(diagCtx, files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
       }, 1500);
       return () => clearTimeout(timer);
@@ -2550,7 +2579,7 @@ export function AIAppBuilderWorkspace() {
   useEffect(() => {
     if (prevGenForFallbackRef.current && !isGenerating && project.files.length > 0) {
       const timer = setTimeout(() => {
-        if (!stableHTMLRef.current && project.files.length > 0 && !pendingValidationFixRef.current) {
+        if (!stableHTMLRef.current && project.files.length > 0 && !pendingValidationFixRef.current && !validationFixInFlightRef.current) {
           console.warn('[Workspace] Safety net: stableHTML still null 15s after generation — forcing compile');
           setIsCompiling(false); // Force-clear loading state to prevent infinite spinner
           forceCompileRef.current?.();
