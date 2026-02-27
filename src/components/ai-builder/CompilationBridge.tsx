@@ -35,6 +35,7 @@ interface CompilationBridgeProps {
   externalStableHTMLRef?: React.RefObject<string | null>;
   onForceCompile?: (fn: () => void) => void;
   assets?: ProjectAsset[];
+  validateFiles?: (files: ProjectFile[]) => { isValid: boolean; issues: { severity: string; message: string; file: string }[] };
 }
 
 export const ERROR_FALLBACK_HTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Compilation Error</title><style>*{margin:0;padding:0;box-sizing:border-box}body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0a0a14;color:#fff;font-family:system-ui,sans-serif}.card{text-align:center;max-width:440px;padding:2rem}h1{font-size:1.5rem;margin-bottom:1rem;color:#f87171}p{color:#ffffff90;line-height:1.6;margin-bottom:0.5rem}code{background:#1e1e2e;padding:2px 6px;border-radius:4px;font-size:0.85em}</style></head><body><div class="card"><h1>⚠️ Compilation Error</h1><p>Your project files were generated but could not be compiled into a preview.</p><p>Check that your project has an <code>index.html</code> file and try regenerating.</p></div></body></html>`;
@@ -70,6 +71,7 @@ export function CompilationBridge({
   externalStableHTMLRef,
   onForceCompile,
   assets = [],
+  validateFiles,
 }: CompilationBridgeProps) {
   // ── Worker-based React Compiler (off main thread) ──
   const { compileReactProject } = useWorkerCompiler();
@@ -129,6 +131,8 @@ export function CompilationBridge({
 
   // ── SINGLE in-flight guard — replaces all previous lock/attempted/digest refs ──
   const compilationInFlightRef = useRef(false);
+  // ── Compile run-ID guard — monotonically incrementing to prevent stale results ──
+  const compileRunIdRef = useRef(0);
   // Track whether the next compile is an incremental edit (not first generation)
   const isIncrementalEditRef = useRef(false);
 
@@ -217,6 +221,7 @@ export function CompilationBridge({
       stableHTMLRef.current = null;
       setLiveCompiledHTML(null);
       compilationInFlightRef.current = false;
+      compileRunIdRef.current = 0; // Reset run-ID guard
       prevFilesDigestRef.current = '';
       prevDigestRef.current = ''; // Reset memo cache so filesDigest recalculates on generation end
       // Safety: force-clear isCompiling in case it was stuck from previous cycle
@@ -282,14 +287,38 @@ export function CompilationBridge({
       if (compilationInFlightRef.current) return;
       if (stableHTMLRef.current && !softReloadPendingRef.current) return;
 
+      // ── Early validation gate — skip compile if syntax errors ──
+      if (validateFiles) {
+        const currentFiles = filesRef.current;
+        const vResult = validateFiles(currentFiles);
+        const syntaxErrors = vResult.issues.filter(i => i.severity === 'error');
+        if (syntaxErrors.length > 0) {
+          console.warn('[CompilationBridge] VALIDATION GATE: skipping compile —', syntaxErrors.length, 'errors');
+          window.postMessage({
+            type: '__BUILD_GATED__',
+            payload: {
+              reason: 'syntax_errors',
+              errors: syntaxErrors.map(e => `${e.file}: ${e.message}`),
+            },
+            source: 'compilation-bridge',
+          }, '*');
+          return;
+        }
+      }
+
+      // ── Compile run-ID guard — increment to tag this run ──
+      const thisRunId = ++compileRunIdRef.current;
+
       compilationInFlightRef.current = true;
       onCompilingChangeRef.current?.(true);
-      console.info('[CompilationBridge] Starting compilation');
+      console.info('[CompilationBridge] Starting compilation, runId:', thisRunId);
 
       // Safety net: force-reset isCompiling if compilation hangs
       safetyTimer = setTimeout(() => {
         if (compilationInFlightRef.current) {
-          console.warn('[CompilationBridge] Compilation safety timeout — force resetting');
+          console.warn('[CompilationBridge] Compilation safety timeout — force resetting, invalidating runId:', thisRunId);
+          // Invalidate any in-flight promise so late results are discarded
+          compileRunIdRef.current++;
           compilationInFlightRef.current = false;
           onCompilingChangeRef.current?.(false);
           if (!stableHTMLRef.current) {
@@ -312,6 +341,12 @@ export function CompilationBridge({
         console.time('[liveCompiledHTML]');
         const result = await runCompile();
         console.timeEnd('[liveCompiledHTML]');
+
+        // ── Stale run-ID check — discard if a newer compile was started ──
+        if (thisRunId !== compileRunIdRef.current) {
+          console.info('[CompilationBridge] Stale compile run', thisRunId, '— discarding (current:', compileRunIdRef.current, ')');
+          return;
+        }
 
         if (result) {
           // ── Dev-client detection gate ──
@@ -356,8 +391,11 @@ export function CompilationBridge({
         }
       } catch (err) {
         console.error('[CompilationBridge] Compilation crashed:', err);
-        setLiveCompiledHTML(ERROR_FALLBACK_HTML);
-        setStableHTML(ERROR_FALLBACK_HTML);
+        // Only apply fallback if this run is still current
+        if (thisRunId === compileRunIdRef.current) {
+          setLiveCompiledHTML(ERROR_FALLBACK_HTML);
+          setStableHTML(ERROR_FALLBACK_HTML);
+        }
       } finally {
         clearTimeout(safetyTimer);
         compilationInFlightRef.current = false;
@@ -374,7 +412,8 @@ export function CompilationBridge({
   // Expose forceCompile to parent
   useEffect(() => {
     onForceCompile?.(() => {
-      console.info('[CompilationBridge] forceCompile invoked');
+      console.info('[CompilationBridge] forceCompile invoked — invalidating in-flight run');
+      compileRunIdRef.current++; // Invalidate any in-flight compile
       compilationInFlightRef.current = false;
       stableHTMLRef.current = null;
       prevFilesDigestRef.current = '';

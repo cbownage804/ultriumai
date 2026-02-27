@@ -2688,6 +2688,7 @@ export function AIAppBuilderWorkspace() {
           externalStableHTMLRef={stableHTMLRef}
           onForceCompile={handleForceCompile}
           assets={assets}
+          validateFiles={outputValidation.validate}
         />
       </PanelErrorBoundary>
       <WelcomeOverlay onQuickStart={(prompt) => handleSend(prompt)} />
