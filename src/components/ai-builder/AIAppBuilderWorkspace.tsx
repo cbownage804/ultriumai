@@ -473,7 +473,7 @@ export function AIAppBuilderWorkspace() {
       // This is intentionally long because compilation includes Vite sandbox (up to 35s timeout)
       // with fallback to esbuild edge function. A separate 5s safety net already exists at mount.
       setTimeout(() => {
-        if (!stableHTMLRef.current && !pendingValidationFixRef.current) {
+        if (!stableHTMLRef.current) {
           console.warn('[handleBgComplete] Safety net: stableHTML still null 20s after merge — forcing compile');
           forceCompileRef.current?.();
         }
@@ -2541,7 +2541,7 @@ export function AIAppBuilderWorkspace() {
   useEffect(() => {
     if (prevGenForFallbackRef.current && !isGenerating && project.files.length > 0) {
       const timer = setTimeout(() => {
-        if (!stableHTMLRef.current && project.files.length > 0 && !pendingValidationFixRef.current) {
+        if (!stableHTMLRef.current && project.files.length > 0) {
           console.warn('[Workspace] Safety net: stableHTML still null 15s after generation — forcing compile');
           setIsCompiling(false); // Force-clear loading state to prevent infinite spinner
           forceCompileRef.current?.();
