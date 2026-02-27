@@ -309,6 +309,8 @@ export function AIAppBuilderWorkspace() {
   const repairInFlightRef = useRef(false);
   const repairJobIdRef = useRef<string | null>(null);
   const awaitingRepairJobStartRef = useRef(false);
+  // State-based trigger to force the repair effect to re-evaluate when pendingValidationFixRef is set
+  const [repairTrigger, setRepairTrigger] = useState(0);
   const [repairFailed, setRepairFailed] = useState(false);
   const [repairErrors, setRepairErrors] = useState<{file: string; message: string}[]>([]);
 
@@ -471,6 +473,7 @@ export function AIAppBuilderWorkspace() {
         } else {
           const errorSummary = repairErrors.map(e => `${e.file}: ${e.message}`).join('\n');
           pendingValidationFixRef.current = { errorSummary, files: mergedFiles };
+          setRepairTrigger(t => t + 1); // Force repair effect to re-evaluate
         }
 
         setIsGeneratingOverride(false);
@@ -568,11 +571,14 @@ export function AIAppBuilderWorkspace() {
         console.warn('[handleBgComplete] Validation errors in generated output — staging for repair', valErrors.length);
         const errorSummary = valErrors.map(e => `${e.file}: ${e.message}`).join('\n');
         pendingValidationFixRef.current = { errorSummary, files: mergedFiles };
+        setRepairTrigger(t => t + 1); // Force repair effect to re-evaluate
 
         // Auto-fix watchdog: clear pending state after 25s
-        setTimeout(() => {
+         setTimeout(() => {
           if (pendingValidationFixRef.current) {
-            console.warn('[Workspace] Auto-fix watchdog: 25s elapsed, clearing pending fix');
+            console.warn('[Workspace] Auto-fix watchdog: 25s elapsed, committing staged files as-is');
+            // Commit the staged files instead of silently discarding them
+            const stagedFiles = pendingValidationFixRef.current.files;
             pendingValidationFixRef.current = null;
             validationFixInFlightRef.current = false;
             validationFixJobIdRef.current = null;
@@ -581,7 +587,13 @@ export function AIAppBuilderWorkspace() {
             repairJobIdRef.current = null;
             awaitingRepairJobStartRef.current = false;
             repairAttemptRef.current = 0;
-            pendingFilesRef.current = null;
+            if (stagedFiles && stagedFiles.length > 0) {
+              setFiles(stagedFiles);
+              latestFilesRef.current = stagedFiles;
+              pendingFilesRef.current = null;
+            } else {
+              pendingFilesRef.current = null;
+            }
             forceCompileRef.current?.();
           }
         }, 25_000);
@@ -1987,6 +1999,7 @@ export function AIAppBuilderWorkspace() {
       if (errors.length > 0) {
         const errorSummary = errors.map(e => `${e.file}: ${e.message}`).join('\n');
         pendingValidationFixRef.current = { errorSummary, files: pendingFilesRef.current };
+        setRepairTrigger(t => t + 1); // Force repair effect to re-evaluate
       }
     }
   }, []);
@@ -2090,7 +2103,7 @@ export function AIAppBuilderWorkspace() {
       }, 1200);
       return () => clearTimeout(timer);
     }
-  }, [isGenerating, isCompiling, sendMessage, supabaseConfig, stripeConfig, serviceKeys, selectedModel]);
+  }, [isGenerating, isCompiling, repairTrigger, sendMessage, supabaseConfig, stripeConfig, serviceKeys, selectedModel]);
 
   // Auto-fix pipeline: uses Phase 47 useAutoFixLoop + hot recovery
   const handleAutoFixError = useCallback((error: import('./ErrorConsole').PreviewError) => {
