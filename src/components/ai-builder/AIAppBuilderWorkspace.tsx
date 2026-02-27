@@ -497,11 +497,34 @@ export function AIAppBuilderWorkspace() {
 
       dedupeToast('success', `Build complete — ${totalChanges} files updated`, { duration: 5000 });
 
+      // ── Post-generation base64 sanitizer ──
+      // Strip large inline base64 data URIs that cause truncation and syntax gate loops
+      const base64Regex = /data:image\/[^;]+;base64,[A-Za-z0-9+/=]{700,}/g;
+      for (let i = 0; i < mergedFiles.length; i++) {
+        if (base64Regex.test(mergedFiles[i].content)) {
+          const cleaned = mergedFiles[i].content.replace(base64Regex, (match) => {
+            const sizeKB = Math.round((match.length * 0.75) / 1024);
+            console.warn(`[Build] 🧹 Stripped ${sizeKB}KB base64 blob from ${mergedFiles[i].path}`);
+            buildLog.addEntry('warning', `🧹 Stripped ${sizeKB}KB inline base64 from ${mergedFiles[i].path} — use asset files instead`);
+            return `https://picsum.photos/seed/${encodeURIComponent(mergedFiles[i].path.replace(/[^a-z0-9]/gi, ''))}/800/600`;
+          });
+          mergedFiles[i] = { ...mergedFiles[i], content: cleaned };
+        }
+      }
+
       // Post-generation syntax validation: catch obvious issues before preview
       const validationResult = outputValidationRef.current.validate(mergedFiles);
       if (!validationResult.isValid) {
         const errors = validationResult.issues.filter(i => i.severity === 'error');
         console.warn('[handleBgComplete] Validation found errors:', errors);
+
+        // Surface exact errors in build log so user can see what's wrong
+        if (errors.length > 0) {
+          buildLog.addEntry('error', `⚠️ Syntax validation found ${errors.length} error(s):`);
+          errors.slice(0, 5).forEach(e => {
+            buildLog.addEntry('error', `  📄 ${e.file}: ${e.message}`);
+          });
+        }
         
         // Schedule an auto-fix build for syntax errors detected post-generation
         if (errors.length > 0 && totalFixAttemptsRef.current < 3) {
@@ -513,6 +536,7 @@ export function AIAppBuilderWorkspace() {
             errorSummary,
             files: mergedFiles,
           };
+          buildLog.addEntry('info', `🔧 Auto-fix attempt ${totalFixAttemptsRef.current}/3 scheduled`);
         }
       }
     }

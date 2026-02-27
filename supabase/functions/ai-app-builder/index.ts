@@ -128,6 +128,17 @@ SYNTAX SAFETY: Before finishing EVERY file, mentally verify:
 5) Arrow functions have complete bodies (no truncated => expressions)
 If a file is getting long, do NOT rush the ending. Ensure every syntax construct is properly closed.
 
+INLINE CONTENT LIMITS (CRITICAL — violating these causes build failures):
+1) NEVER inline base64 data:image/* blobs directly in source files. They cause truncation, patching failures, and syntax gate loops.
+   - If a generated/uploaded image is needed, store it as a separate asset file (e.g. assets/logo.png) and reference by path.
+   - If asset files aren't feasible, use a remote placeholder URL (e.g. https://picsum.photos/seed/NAME/800/600).
+   - Exception: tiny SVG data URIs under 500 chars are OK inline.
+2) Max inline string literal length: 20KB. If any single string constant exceeds 20KB, move it to a separate file and import/fetch it.
+3) NEVER output markdown commentary, diff markers, "Diagnosis / Fix approach" text, or ANY prose inside ===FILE: or ===EDIT: delimiters.
+   Only valid source code inside file blocks. Commentary goes BEFORE the first === delimiter only.
+4) No prose or text after ===END===.
+5) Every ===FILE: block must contain ONLY valid code for that file type. No markdown fences inside file blocks (the parser strips the outermost layer only).
+
 CHUNKING: Output the MOST IMPORTANT files first (index.html, then main app file, then styles).
 LENGTH: If your response will exceed 4000 lines, use ===CONTINUE=== to signal you need more rounds.
 NEVER leave a file half-written. Finish the current file completely before moving to the next.
