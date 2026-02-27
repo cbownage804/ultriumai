@@ -513,6 +513,12 @@ window.addEventListener('message', function(e) {
     if (iframeRef.current) {
       const sid = newSessionId();
       sessionIdRef.current = sid;
+      console.info('[PreviewPanel] Setting srcdoc', {
+        htmlLength: html?.length ?? 0,
+        hasDoctype: !!html && (html.includes('<!doctype') || html.includes('<!DOCTYPE')),
+        hasSessionMeta: !!html && html.includes('preview-session'),
+        sessionId: sid,
+      });
       iframeRef.current.srcdoc = injectSessionId(html, sid);
     }
   }, [html, newSessionId, injectSessionId]);

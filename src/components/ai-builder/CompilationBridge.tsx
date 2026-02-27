@@ -316,6 +316,10 @@ export function CompilationBridge({
           // No LKG: show validating placeholder so preview is never blank
           // Render-only: show fallback in iframe WITHOUT updating stableHTMLRef or calling onStableHTML
           setStableHTMLLocal(VALIDATING_FALLBACK_HTML);
+          console.info('[CompilationBridge] Showing validation fallback (render-only)', {
+            htmlLength: VALIDATING_FALLBACK_HTML.length,
+            stableHTMLRef: stableHTMLRef.current ? 'truthy' : 'null',
+          });
           return;
         }
       }
@@ -393,6 +397,12 @@ export function CompilationBridge({
             setLiveCompiledHTML(result);
             console.info('[CompilationBridge] setStableHTML applied', { runId: thisRunId, ms: Math.round(performance.now() - t0) });
             setStableHTML(result);
+            console.info('[CompilationBridge] Compile success', {
+              runId: thisRunId,
+              htmlLength: result?.length ?? 0,
+              first80: result?.slice(0, 80) ?? '',
+              hasDoctype: (result?.includes('<!') ?? false),
+            });
             liveSync.resetSnapshot(filesRef.current);
             if (softReloadPendingRef.current) {
               softReloadPendingRef.current = false;
