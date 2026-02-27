@@ -414,7 +414,7 @@ window.addEventListener('message', function(e) {
         // Normal error handling (existing logic)
         const isForcedCritical = e.data?.type === '__PREVIEW_CRITICAL_ERROR__';
         const msg = e.data.message || '';
-        const isHostDevError = /react.refresh|@react-refresh|preamble was not loaded/i.test(msg);
+        const isHostDevError = /react.refresh|@react-refresh|preamble was not loaded|@vite\/client|vite\/hmr|devserver_websocket|__vite_|import\.meta\.hot|hmr.*connection|websocket.*vite/i.test(msg);
         if (isHostDevError) return;
         const isNetworkNoise = /Failed to load|ERR_BLOCKED|ERR_CONNECTION|favicon\.ico|404/i.test(msg);
         const isSyntaxError = /SyntaxError|Unexpected token|Unterminated/i.test(msg);
