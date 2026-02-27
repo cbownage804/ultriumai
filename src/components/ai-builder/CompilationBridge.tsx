@@ -8,8 +8,8 @@ import type { LinkedGPTConfig } from './GPTConnectorPanel';
 import { useLivePreviewSync } from '@/hooks/useLivePreviewSync';
 import type { ProjectAsset } from './AssetManager';
 
-const COMPILE_TIMEOUT_MS = 30_000;
-const COMPILE_SAFETY_TIMEOUT_MS = 45_000; // Hard safety net — if isCompiling stays true longer, force reset
+const COMPILE_TIMEOUT_MS = 40_000;
+const COMPILE_SAFETY_TIMEOUT_MS = 50_000; // Hard safety net — if isCompiling stays true longer, force reset
 
 interface CompilationBridgeProps {
   files: ProjectFile[];
@@ -39,6 +39,8 @@ interface CompilationBridgeProps {
 }
 
 export const ERROR_FALLBACK_HTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Compilation Error</title><style>*{margin:0;padding:0;box-sizing:border-box}body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0a0a14;color:#fff;font-family:system-ui,sans-serif}.card{text-align:center;max-width:440px;padding:2rem}h1{font-size:1.5rem;margin-bottom:1rem;color:#f87171}p{color:#ffffff90;line-height:1.6;margin-bottom:0.5rem}code{background:#1e1e2e;padding:2px 6px;border-radius:4px;font-size:0.85em}</style></head><body><div class="card"><h1>⚠️ Compilation Error</h1><p>Your project files were generated but could not be compiled into a preview.</p><p>Check that your project has an <code>index.html</code> file and try regenerating.</p></div></body></html>`;
+
+export const VALIDATING_FALLBACK_HTML = `<!doctype html><html><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0" /><title>Validating…</title><style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0a0a14;color:#fff;font-family:system-ui,sans-serif}.card{max-width:520px;padding:24px;text-align:center}.spinner{width:22px;height:22px;border:2px solid #ffffff2a;border-top-color:#a78bfa;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}@keyframes spin{to{transform:rotate(360deg)}}h1{font-size:18px;margin:0 0 8px;color:#a78bfa}p{margin:0;color:#ffffff80;line-height:1.5}</style></head><body><div class="card"><div class="spinner"></div><h1>Validating generated code…</h1><p>Syntax issues were detected. We're preparing an automatic repair.</p></div></body></html>`;
 
 /**
  * CompilationBridge — isolated child component for all compilation hooks.
@@ -302,26 +304,32 @@ export function CompilationBridge({
             },
             source: 'compilation-bridge',
           }, '*');
-          // Set error fallback so stableHTML is non-null — prevents safety-net forceCompile loop
-          if (!stableHTMLRef.current) {
-            setStableHTML(ERROR_FALLBACK_HTML);
-            onCompilingChangeRef.current?.(false);
+          // IMPORTANT: stop "compiling" state immediately
+          onCompilingChangeRef.current?.(false);
+          compilationInFlightRef.current = false;
+
+          if (stableHTMLRef.current) {
+            // Preserve last-known-good preview — don't overwrite
+            return;
           }
+          // No LKG: show validating placeholder so preview is never blank
+          setStableHTML(VALIDATING_FALLBACK_HTML);
           return;
         }
       }
 
       // ── Compile run-ID guard — increment to tag this run ──
       const thisRunId = ++compileRunIdRef.current;
+      const t0 = performance.now();
 
       compilationInFlightRef.current = true;
       onCompilingChangeRef.current?.(true);
-      console.info('[CompilationBridge] Starting compilation, runId:', thisRunId);
+      console.info('[CompilationBridge] compile start', { runId: thisRunId, t0 });
 
       // Safety net: force-reset isCompiling if compilation hangs
       safetyTimer = setTimeout(() => {
         if (compilationInFlightRef.current) {
-          console.warn('[CompilationBridge] Compilation safety timeout — force resetting, invalidating runId:', thisRunId);
+          console.warn('[CompilationBridge] safety timeout', { runId: thisRunId, ms: Math.round(performance.now() - t0) });
           // Invalidate any in-flight promise so late results are discarded
           compileRunIdRef.current++;
           compilationInFlightRef.current = false;
@@ -343,9 +351,9 @@ export function CompilationBridge({
           return;
         }
 
-        console.time('[liveCompiledHTML]');
+        console.info('[CompilationBridge] compile tier start', { runId: thisRunId, ms: Math.round(performance.now() - t0) });
         const result = await runCompile();
-        console.timeEnd('[liveCompiledHTML]');
+        console.info('[CompilationBridge] compile resolved', { runId: thisRunId, ms: Math.round(performance.now() - t0) });
 
         // ── Stale run-ID check — discard if a newer compile was started ──
         if (thisRunId !== compileRunIdRef.current) {
@@ -381,6 +389,7 @@ export function CompilationBridge({
             // Keep previous LKG preview — do NOT set stableHTML
           } else {
             setLiveCompiledHTML(result);
+            console.info('[CompilationBridge] setStableHTML applied', { runId: thisRunId, ms: Math.round(performance.now() - t0) });
             setStableHTML(result);
             liveSync.resetSnapshot(filesRef.current);
             if (softReloadPendingRef.current) {

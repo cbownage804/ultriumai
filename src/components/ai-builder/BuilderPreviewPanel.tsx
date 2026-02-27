@@ -505,11 +505,12 @@ window.addEventListener('message', function(e) {
   }, [onAutoFixError, isGenerating, html, crashPageHtml, detachListener, attachListener, newSessionId, injectSessionId]);
 
   useEffect(() => { 
+    if (!html) return;
     setErrors([]); setCurrentUrl('/'); setUrlHistory(['/']); setHistoryIndex(0);
     // Phase 36: Reset scroll position on new build
     if (iframeRef.current?.contentWindow) iframeRef.current.contentWindow.scrollTo(0, 0);
     // Session guard: inject new session ID whenever HTML changes
-    if (iframeRef.current && html) {
+    if (iframeRef.current) {
       const sid = newSessionId();
       sessionIdRef.current = sid;
       iframeRef.current.srcdoc = injectSessionId(html, sid);
