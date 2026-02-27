@@ -1,6 +1,6 @@
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 Deno.serve(async (req) => {
@@ -37,14 +37,16 @@ Deno.serve(async (req) => {
     try {
       const parsed = new URL(formattedUrl);
       if (!parsed.hostname || !parsed.hostname.includes('.')) {
+        console.warn('[firecrawl-scrape] Invalid URL (no valid domain):', formattedUrl);
         return new Response(
           JSON.stringify({ success: false, error: 'Invalid URL: must have a valid domain' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-    } catch {
+    } catch (e) {
+      console.warn('[firecrawl-scrape] Invalid URL format:', formattedUrl, e);
       return new Response(
-        JSON.stringify({ success: false, error: 'Invalid URL format' }),
+        JSON.stringify({ success: false, error: `Invalid URL format: ${formattedUrl}` }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

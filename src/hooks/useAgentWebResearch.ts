@@ -26,7 +26,7 @@ export function useAgentWebResearch() {
   const executeResearch = useCallback(async (query: string): Promise<ResearchResult | null> => {
     try {
       // Try firecrawl-scrape for URL-like queries
-      const isUrl = /^https?:\/\//i.test(query) || /\.\w{2,}\//.test(query);
+      const isUrl = /^https?:\/\//i.test(query) || /^[a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z]{2,}/.test(query);
       
       if (isUrl) {
         const { data, error } = await supabase.functions.invoke('firecrawl-scrape', {
