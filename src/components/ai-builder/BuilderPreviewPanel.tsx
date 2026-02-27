@@ -97,6 +97,32 @@ export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFix
       ? html.replace(
           '</head>',
           `<script>
+// === WEBSOCKET SUPPRESSION: Block Vite HMR websockets inherited from parent origin ===
+var __wsBlockCount = 0;
+var OrigWebSocket = window.WebSocket;
+window.WebSocket = function(url, protocols) {
+  var urlStr = String(url || '');
+  if (/vite|hmr|__vite|hot-update|localhost:\d{4}/i.test(urlStr)) {
+    __wsBlockCount++;
+    if (__wsBlockCount <= 5) {
+      console.info('[Preview] Blocked inherited HMR websocket (' + __wsBlockCount + '/5): ' + urlStr);
+    }
+    var dummy = { readyState: 3, send: function(){}, close: function(){},
+                  addEventListener: function(){}, removeEventListener: function(){},
+                  dispatchEvent: function(){ return false; },
+                  onopen: null, onclose: null, onerror: null, onmessage: null,
+                  CONNECTING: 0, OPEN: 1, CLOSING: 2, CLOSED: 3,
+                  url: urlStr, protocol: '', extensions: '', bufferedAmount: 0, binaryType: 'blob' };
+    return dummy;
+  }
+  if (protocols !== undefined) return new OrigWebSocket(url, protocols);
+  return new OrigWebSocket(url);
+};
+window.WebSocket.prototype = OrigWebSocket.prototype;
+window.WebSocket.CONNECTING = 0;
+window.WebSocket.OPEN = 1;
+window.WebSocket.CLOSING = 2;
+window.WebSocket.CLOSED = 3;
 // === LIVE PREVIEW HOT-PATCH LISTENER ===
 window.addEventListener('message', function(e) {
   if (!e.data || e.data.type !== '__LIVE_PATCH__') return;
@@ -151,6 +177,32 @@ window.addEventListener('message', function(e) {
       : html.replace(
           '</head>',
           `<script>
+// === WEBSOCKET SUPPRESSION: Block Vite HMR websockets inherited from parent origin ===
+var __wsBlockCount = 0;
+var OrigWebSocket = window.WebSocket;
+window.WebSocket = function(url, protocols) {
+  var urlStr = String(url || '');
+  if (/vite|hmr|__vite|hot-update|localhost:\d{4}/i.test(urlStr)) {
+    __wsBlockCount++;
+    if (__wsBlockCount <= 5) {
+      console.info('[Preview] Blocked inherited HMR websocket (' + __wsBlockCount + '/5): ' + urlStr);
+    }
+    var dummy = { readyState: 3, send: function(){}, close: function(){},
+                  addEventListener: function(){}, removeEventListener: function(){},
+                  dispatchEvent: function(){ return false; },
+                  onopen: null, onclose: null, onerror: null, onmessage: null,
+                  CONNECTING: 0, OPEN: 1, CLOSING: 2, CLOSED: 3,
+                  url: urlStr, protocol: '', extensions: '', bufferedAmount: 0, binaryType: 'blob' };
+    return dummy;
+  }
+  if (protocols !== undefined) return new OrigWebSocket(url, protocols);
+  return new OrigWebSocket(url);
+};
+window.WebSocket.prototype = OrigWebSocket.prototype;
+window.WebSocket.CONNECTING = 0;
+window.WebSocket.OPEN = 1;
+window.WebSocket.CLOSING = 2;
+window.WebSocket.CLOSED = 3;
 window.addEventListener('error', function(e) {
   window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: e.message, source: e.filename, line: e.lineno, col: e.colno }, '*');
 });
@@ -245,20 +297,22 @@ window.addEventListener('message', function(e) {
   }, [swReady, htmlWithErrorCapture, updatePreview]);
 
   // Gap 5 HMR: Listen for soft reload signals from CompilationBridge
+  // SW is disabled for srcdoc — fall back to full srcdoc update (preserves CSS hot-patch)
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data?.type === '__SOFT_RELOAD__') {
-        if (swReady && htmlWithErrorCapture) {
-          console.info('[HMR] Soft reload: updating SW content and reloading iframe');
-          updatePreview(htmlWithErrorCapture, { softReload: true });
-          // Small delay to let SW store the new content before reload
-          setTimeout(() => swSoftReload(iframeRef as React.RefObject<HTMLIFrameElement | null>), 80);
+        if (htmlWithErrorCapture) {
+          console.info('[HMR] Soft reload: full srcdoc update (SW disabled for srcdoc)');
+          const iframe = (iframeRef as React.RefObject<HTMLIFrameElement | null>)?.current;
+          if (iframe) {
+            iframe.srcdoc = htmlWithErrorCapture;
+          }
         }
       }
     };
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, [swReady, htmlWithErrorCapture, updatePreview, swSoftReload, iframeRef]);
+  }, [htmlWithErrorCapture, iframeRef]);
 
   // ── Preview Health Monitor (Phase 1C) ──
   const healthCheckRef = useRef<NodeJS.Timeout | null>(null);
