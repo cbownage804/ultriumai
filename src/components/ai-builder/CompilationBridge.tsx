@@ -314,14 +314,29 @@ export function CompilationBridge({
         console.timeEnd('[liveCompiledHTML]');
 
         if (result) {
-          setLiveCompiledHTML(result);
-          setStableHTML(result);
-          liveSync.resetSnapshot(filesRef.current);
-          if (softReloadPendingRef.current) {
-            softReloadPendingRef.current = false;
-            window.postMessage({ type: '__SOFT_RELOAD__', source: 'compilation-bridge' }, '*');
+          // ── Fail-closed preview gate ──
+          const filesToValidate = filesRef.current;
+          const hasIncomplete = filesToValidate.some(f => (f as any).incomplete === true);
+
+          if (hasIncomplete) {
+            const reason = 'incomplete_files';
+            console.warn('[CompilationBridge] BUILD GATED:', reason);
+            window.postMessage({
+              type: '__BUILD_GATED__',
+              payload: { reason, errors: ['One or more files are incomplete (stream truncated)'] },
+              source: 'compilation-bridge',
+            }, '*');
+            // Keep previous LKG preview — do NOT set stableHTML
+          } else {
+            setLiveCompiledHTML(result);
+            setStableHTML(result);
+            liveSync.resetSnapshot(filesRef.current);
+            if (softReloadPendingRef.current) {
+              softReloadPendingRef.current = false;
+              window.postMessage({ type: '__SOFT_RELOAD__', source: 'compilation-bridge' }, '*');
+            }
+            window.postMessage({ type: '__PREVIEW_READY__', source: 'compilation-bridge' }, '*');
           }
-          window.postMessage({ type: '__PREVIEW_READY__', source: 'compilation-bridge' }, '*');
         } else {
           console.warn('[CompilationBridge] Compilation returned null — showing error fallback');
           setLiveCompiledHTML(ERROR_FALLBACK_HTML);

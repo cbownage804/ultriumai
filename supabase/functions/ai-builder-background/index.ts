@@ -554,7 +554,7 @@ async function runGenerationWithContinuation(
       const contMessages = [
         { role: "system", content: typeof originalSystem === "string" ? originalSystem.slice(0, 5000) : "" },
         { role: "assistant", content: `[Generated ${generatedPaths.length} files: ${generatedPaths.join(', ')}]` },
-        { role: "user", content: `[CONTINUE] Continue generating remaining files.${truncatedNote}\n\nCompleted: ${generatedPaths.join(', ')}\n\nOutput more files using ===FILE: path=== format. No explanations — ONLY code files.\nIf done, output ===FILE: README.md=== with a project description.\nIf more remain, end with ===CONTINUE===` },
+        { role: "user", content: `[CONTINUE] Continue generating remaining files.${truncatedNote}\n\nCompleted: ${generatedPaths.join(', ')}\n\nOutput more files using ===FILE: path=== format. No explanations — ONLY code files.\nWhen you have output all remaining files, end with ===END=== on its own line.\nIf more remain, end with ===CONTINUE===` },
       ];
 
       fullContent = fullContent.replace(/\n?===CONTINUE===\s*$/g, '');
