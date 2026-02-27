@@ -54,6 +54,11 @@ const MediaGeneration = ({ onMediaGenerated, disabled }: MediaGenerationProps) =
         throw new Error(error.message || 'Failed to generate image');
       }
 
+      if (!data?.image) {
+        toast({ title: "No image generated", description: "The model couldn't produce an image. Try a different prompt.", variant: "destructive" });
+        return;
+      }
+
       onMediaGenerated(data.image, 'image', prompt);
       setPrompt(""); // Clear the prompt after successful generation
       toast({

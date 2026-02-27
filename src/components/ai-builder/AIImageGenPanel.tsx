@@ -73,7 +73,8 @@ export function AIImageGenPanel({ open, onClose, onInsertAsAsset }: AIImageGenPa
 
       const rawImageUrl = data?.image;
       if (!rawImageUrl) {
-        throw new Error('No image returned from the AI. Try a different prompt.');
+        setError('The model did not return an image. Try a different prompt.');
+        return;
       }
 
       // Optimize the image client-side

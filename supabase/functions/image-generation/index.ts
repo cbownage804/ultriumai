@@ -64,13 +64,21 @@ serve(async (req) => {
     const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
     if (!imageUrl) {
-      console.error('No image in response:', JSON.stringify(data).slice(0, 500));
-      throw new Error('No image was generated. The AI model did not return an image.');
+      console.warn('No image in response (non-fatal):', JSON.stringify(data).slice(0, 500));
+      return new Response(JSON.stringify({
+        success: false,
+        image: null,
+        reason: 'model_returned_no_image',
+        prompt,
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     console.log('Image generated successfully via Lovable AI Gateway');
 
     return new Response(JSON.stringify({
+      success: true,
       image: imageUrl,
       prompt,
     }), {
