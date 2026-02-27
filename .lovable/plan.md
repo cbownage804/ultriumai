@@ -1,61 +1,84 @@
 
 
-## Diagnosis: "Loading preview" caused by Vite dev client artifacts
+## Plan: Disable websocket devserver channel for srcdoc previews
 
 ### Root Cause
 
-The iframe uses `sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox"` with `srcdoc`. Because `allow-same-origin` is set, the iframe shares the parent page's origin. This means the **host Lovable dev server's Vite HMR client** (`/@vite/client`, React Refresh preamble) can leak into or affect the iframe context.
+The `devserver_websocket_*` logs originate from the **host page's Vite dev server HMR client** (`/@vite/client`). Because the iframe uses `allow-same-origin`, it shares the parent's origin and inherits the Vite HMR websocket connection attempts. These fail repeatedly (different port/Cloudflare), spamming the console interceptor bridge which relays them as `__PREVIEW_ERROR__` to the parent.
 
-The `devserver_websocket_open/close/error` messages are from the **parent page's Vite dev server**, not from the compiled preview output. The sandbox server correctly runs `vite build --mode production` — no dev client is injected into the compiled HTML itself.
+The `usePreviewServiceWorker` hook registers a real Service Worker for "soft reload" HMR — but in srcdoc mode, the SW can't actually control the sandboxed iframe. It adds complexity without benefit for the current architecture.
 
-However, the `allow-same-origin` sandbox attribute means the iframe can access the parent's service workers and potentially inherit connection attempts. When the Vite HMR websocket fails (different port/host in production, Cloudflare blocking), the error loops through the console interceptor bridge (lines 174-184 in BuilderPreviewPanel), which relays ALL `console.error` to the parent as `__PREVIEW_ERROR__`, potentially triggering the auto-fix pipeline on non-actionable errors.
-
-### Fix: Two changes
+### Changes
 
 ---
 
-### Task 1: Filter out Vite dev/HMR noise from error bridge
+### Task 1: Disable Service Worker preview for srcdoc iframes
+
+**File: `src/hooks/usePreviewServiceWorker.ts`**
+
+Add an early-exit guard: if the preview is using srcdoc (not a real navigable URL), skip SW registration entirely. Return a no-op state:
+
+- Add a parameter or detection: `useSrcdocMode?: boolean` (default `true` since all current previews use srcdoc)
+- When srcdoc mode is active: return `{ isReady: false, previewUrl: null, updatePreview: noop, refreshPreview: noop, version: 0, softReload: noop }`
+- This prevents the SW from registering, which eliminates one source of devserver websocket inheritance
+
+### Task 2: Simplify soft reload to full iframe srcdoc update
 
 **File: `src/components/ai-builder/BuilderPreviewPanel.tsx`**
 
-In the message handler (line 417), the existing `isHostDevError` filter catches React Refresh preamble errors but misses Vite dev client websocket errors. Expand the filter:
+Since the SW is disabled for srcdoc previews, the `__SOFT_RELOAD__` handler (lines 248-261) needs to fall back to a full srcdoc update instead of SW-based reload:
 
-```typescript
-// Line 417 — expand this regex:
-const isHostDevError = /react.refresh|@react-refresh|preamble was not loaded|@vite\/client|vite\/hmr|devserver_websocket|__vite_|import\.meta\.hot|hmr.*connection|websocket.*vite/i.test(msg);
+- Replace the SW soft reload logic with: re-set `iframe.srcdoc` to current `htmlWithErrorCapture` (with session ID injection)
+- This preserves CSS hot-patching (which works via `postMessage` → `__LIVE_PATCH__`, no websocket needed)
+- JS changes trigger a full srcdoc update instead of SW reload — slightly less smooth but completely stable
+
+### Task 3: Add websocket suppression to the injected preview bridge
+
+**File: `src/components/ai-builder/BuilderPreviewPanel.tsx` (lines 130-196, the injected bridge script)**
+
+Add a websocket constructor override in the injected bridge script that blocks HMR-related websocket connections from within the iframe:
+
+```javascript
+// Block Vite HMR websocket connections inherited from parent origin
+var OrigWebSocket = window.WebSocket;
+window.WebSocket = function(url, protocols) {
+  var urlStr = String(url || '');
+  if (/vite|hmr|__vite|hot-update|localhost:\d{4}/i.test(urlStr)) {
+    console.info('[Preview] Blocked inherited HMR websocket: ' + urlStr);
+    // Return a dummy that never connects
+    var dummy = { readyState: 3, send: function(){}, close: function(){}, 
+                  addEventListener: function(){}, removeEventListener: function(){},
+                  onopen: null, onclose: null, onerror: null, onmessage: null,
+                  CONNECTING: 0, OPEN: 1, CLOSING: 2, CLOSED: 3 };
+    return dummy;
+  }
+  return new OrigWebSocket(url, protocols);
+};
 ```
 
-This ensures any Vite dev infrastructure noise is silently dropped before it can trigger auto-fix or circuit breaker.
+This prevents any Vite dev client code that runs in the iframe context from establishing websocket connections, which is the direct fix for the `devserver_websocket_open/close/error` loop.
 
-### Task 2: Add dev-client detection gate in CompilationBridge
+### Task 4: Add retry cap to any remaining websocket attempts
 
-**File: `src/components/ai-builder/CompilationBridge.tsx`**
+**File: `src/components/ai-builder/BuilderPreviewPanel.tsx` (injected bridge)**
 
-After `runCompile()` returns `result` (line 316), add a sanity check that the compiled HTML doesn't contain Vite dev client artifacts. This catches the edge case where the sandbox accidentally returns dev output:
+In case the dummy websocket approach doesn't catch all paths (e.g., the dev client uses `EventSource` or raw `XMLHttpRequest` for polling), add a global retry tracker:
 
-```typescript
-// After line 316, before the incomplete check:
-const looksLikeViteDev = /\/@vite\/client|import\.meta\.hot\b|__vite_plugin_react_preamble_installed__/.test(result);
-if (looksLikeViteDev) {
-  console.warn('[CompilationBridge] BUILD GATED: dev client detected in output');
-  window.postMessage({
-    type: '__BUILD_GATED__',
-    payload: { reason: 'dev_client_detected', errors: ['Compiled output contains Vite dev/HMR client'] },
-    source: 'compilation-bridge',
-  }, '*');
-  return; // Keep LKG
-}
-```
+- Track blocked connection attempts in a counter
+- After 5 blocked attempts, stop logging (prevent log spam)
+- This is defense-in-depth alongside Task 3
 
 ---
 
-### Why not remove `allow-same-origin`?
-
-The iframe needs `allow-same-origin` for Supabase client initialization, localStorage access, and service worker communication. Removing it would break preview functionality. The correct fix is filtering the noise.
-
 ### Summary
 
-Two surgical edits:
-1. Expand `isHostDevError` regex in BuilderPreviewPanel to catch Vite HMR/websocket noise
-2. Add dev-client detection gate in CompilationBridge as defense-in-depth
+| What | How |
+|------|-----|
+| Stop websocket spam | Block HMR websockets in iframe via constructor override (Task 3) |
+| Remove unnecessary SW | Disable `usePreviewServiceWorker` for srcdoc mode (Task 1) |
+| Keep CSS hot-patch | CSS patching uses `postMessage`, unaffected (no change needed) |
+| JS change reload | Falls back to full srcdoc update instead of SW reload (Task 2) |
+| Defense-in-depth | Retry cap on blocked attempts (Task 4) |
+
+Four focused edits across two files. CSS hot-patching continues working without websockets. JS changes use full srcdoc reload — stable and predictable.
 
