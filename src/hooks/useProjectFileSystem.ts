@@ -5,6 +5,8 @@ export interface ProjectFile {
   path: string;
   content: string;
   language: string;
+  /** Transient flag — set when the parser detects the file was still open at stream end without ===END===. Not persisted. */
+  incomplete?: boolean;
 }
 
 /** Phase 86: Binary asset storage for images/blobs */

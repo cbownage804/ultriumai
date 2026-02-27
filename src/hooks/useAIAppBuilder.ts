@@ -537,7 +537,7 @@ function parseEditBlocks(raw: string): EditBlock[] {
 }
 
 /** Parse the ===FILE: path===, ===EDIT: path===, ===DELETE: path===, ===MODE: react===, ===MIGRATION:, and ===EDGE_FUNCTION: blocks */
-export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; deletions: string[]; edits: EditBlock[]; isReactMode: boolean; migrations: import('@/components/ai-builder/MigrationApprovalCard').MigrationBlock[]; edgeFunctions: import('@/components/ai-builder/EdgeFunctionCard').EdgeFunctionBlock[] } {
+export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; deletions: string[]; edits: EditBlock[]; isReactMode: boolean; migrations: import('@/components/ai-builder/MigrationApprovalCard').MigrationBlock[]; edgeFunctions: import('@/components/ai-builder/EdgeFunctionCard').EdgeFunctionBlock[]; ignored: string[] } {
   // Phase 3: Normalize line endings (Windows \r\n → \n)
   const normalizedRaw = raw.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
@@ -557,119 +557,103 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
   const lines = cleanedRaw.split('\n');
   const files: ProjectFile[] = [];
   const deletions: string[] = [];
+  const ignored: string[] = [];
   let currentPath: string | null = null;
   let currentLines: string[] = [];
-  let blankLineStreak = 0;
   let inEditBlock = false;
+  let sawEnd = false;
+
+  const END_RE = /^===END===\s*$/;
 
   // Phase 24: Normalize file paths — strip leading ./ and /, collapse //
-  const normalizePath = (p: string): string => p.replace(/^\.\//, '').replace(/^\//, '').replace(/\/\//g, '/');
+  const normalizePath = (p: string): string => p.replace(/\\/g, '/').replace(/^(\.\.\/)+/g, '').replace(/^\.\//, '').replace(/^\//, '').replace(/\/\//g, '/').trim();
 
-  // Phase 47: Accept optional mode parameter to block code in discuss mode
-  // (caller passes mode; if 'discuss', we return empty files/edits)
-
-  const flush = () => {
-    if (currentPath) {
-      // Phase 24: Normalize path
-      currentPath = normalizePath(currentPath);
-      let content = currentLines.join('\n').trim();
-      // Strip markdown code fences that AI sometimes leaks into file content
-      content = content.replace(/^```(?:typescript|javascript|tsx|jsx|html|css|json|scss|xml|markdown)?\s*\n?/gm, '');
-      content = content.replace(/\n?```\s*$/gm, '');
-      content = content.trim();
-      if (content) {
-        const ext = currentPath.split('.').pop()?.toLowerCase() || '';
-        // Phase 27: Added less and sass language mappings
-        const langMap: Record<string, string> = {
-          html: 'html', htm: 'html', css: 'css', scss: 'scss', less: 'less', sass: 'scss',
-          js: 'javascript', jsx: 'javascript', ts: 'typescript', tsx: 'typescript',
-          json: 'json', md: 'markdown', mdx: 'markdown', svg: 'xml',
-        };
-        files.push({ path: currentPath, content, language: langMap[ext] || 'plaintext' });
-      }
-    }
+  /** Only strip if a single outer fence wraps the entire file content */
+  const stripOuterMarkdownFenceOnly = (content: string): string => {
+    const trimmed = content.trim();
+    const fenceMatch = trimmed.match(/^```[a-zA-Z0-9]*\n([\s\S]*?)\n```$/);
+    return fenceMatch ? fenceMatch[1].trimEnd() + '\n' : content;
   };
 
+  const flushCurrent = (isIncomplete: boolean) => {
+    if (!currentPath) return;
+    currentPath = normalizePath(currentPath);
+    let content = stripOuterMarkdownFenceOnly(currentLines.join('\n')).trim();
+    if (content) {
+      const ext = currentPath.split('.').pop()?.toLowerCase() || '';
+      const langMap: Record<string, string> = {
+        html: 'html', htm: 'html', css: 'css', scss: 'scss', less: 'less', sass: 'scss',
+        js: 'javascript', jsx: 'javascript', ts: 'typescript', tsx: 'typescript',
+        json: 'json', md: 'markdown', mdx: 'markdown', svg: 'xml',
+      };
+      const file: ProjectFile = { path: currentPath, content, language: langMap[ext] || 'plaintext' };
+      if (isIncomplete) file.incomplete = true;
+      files.push(file);
+    }
+    currentPath = null;
+    currentLines = [];
+  };
+
+  // ── Strict state-machine parser ──
   for (const line of lines) {
-    // Skip ===EDIT: blocks — they're handled separately by parseEditBlocks
+    // ===END=== → flush current file (NOT incomplete), stop parsing
+    if (END_RE.test(line)) {
+      sawEnd = true;
+      flushCurrent(false);
+      break;
+    }
+
+    // ===EDIT: blocks — handled separately by parseEditBlocks
     const editMatch = line.match(EDIT_DELIMITER);
     if (editMatch) {
-      flush();
-      currentPath = null;
-      currentLines = [];
-      blankLineStreak = 0;
+      flushCurrent(false);
       inEditBlock = true;
       continue;
     }
 
+    // ===DELETE: blocks
     const deleteMatch = line.match(DELETE_DELIMITER);
     if (deleteMatch) {
-      flush();
-      currentPath = null;
-      currentLines = [];
-      blankLineStreak = 0;
+      flushCurrent(false);
       inEditBlock = false;
       deletions.push(deleteMatch[1].trim());
       continue;
     }
+
+    // ===FILE: path=== — flush previous (NOT incomplete, closed by delimiter), start new
     const match = line.match(FILE_DELIMITER);
     if (match) {
-      flush();
+      flushCurrent(false);
       currentPath = match[1].trim();
       currentLines = [];
-      blankLineStreak = 0;
       inEditBlock = false;
-    } else if (inEditBlock) {
-      // Skip lines inside edit blocks — already parsed
       continue;
-    } else if (currentPath !== null) {
-      // Phase 21/26: Skip prose detection for non-code files (JSON, SVG, MD, MDX)
-      const currentExt = currentPath.split('.').pop()?.toLowerCase() || '';
-      const skipProseDetection = ['json', 'svg', 'md', 'mdx', 'yaml', 'yml', 'toml'].includes(currentExt);
+    }
 
-      // Phase 77: Track blank lines — require 2+ blank lines before checking for prose
-      // (1 blank line is common in CSS/JSX and shouldn't trigger cutoff)
-      if (!line.trim()) {
-        blankLineStreak++;
-        currentLines.push(line);
-      } else if (!skipProseDetection && blankLineStreak >= 2 && isConversationalLine(line)) {
-        // End of file content — AI started talking after 2+ blank lines
-        flush();
-        currentPath = null;
-        currentLines = [];
-        blankLineStreak = 0;
-      } else {
-        blankLineStreak = 0;
-        currentLines.push(line);
-      }
+    // Inside edit block — skip (already parsed)
+    if (inEditBlock) continue;
+
+    // Inside file block — append
+    if (currentPath !== null) {
+      currentLines.push(line);
+      continue;
+    }
+
+    // Outside any block — collect as ignored
+    if (line.trim()) {
+      ignored.push(line);
     }
   }
-  flush();
 
-  // Phase 24: Normalize deletion paths and edit paths
+  // If stream ended while a file was open and no ===END=== was seen, mark incomplete
+  if (currentPath !== null) {
+    flushCurrent(!sawEnd);
+  }
+
+  // Phase 24: Normalize deletion paths
   const normalizedDeletions = deletions.map(normalizePath);
 
-  // Post-process: strip trailing conversational prose from the last file
-  // Phase 21/26: Skip for non-code files
-  for (const file of files) {
-    const fileExt = file.path.split('.').pop()?.toLowerCase() || '';
-    if (['json', 'svg', 'md', 'mdx', 'yaml', 'yml', 'toml'].includes(fileExt)) continue;
-    const fileLines = file.content.split('\n');
-    let cutIndex = fileLines.length;
-    for (let i = fileLines.length - 1; i >= 0; i--) {
-      const line = fileLines[i].trim();
-      if (!line) { cutIndex = i; continue; }
-      if (isConversationalLine(fileLines[i])) {
-        cutIndex = i;
-      } else {
-        break;
-      }
-    }
-    if (cutIndex < fileLines.length) {
-      file.content = fileLines.slice(0, cutIndex).join('\n').trim();
-    }
-  }
-
+  // HTML fallback for backward compat
   if (files.length === 0 && normalizedDeletions.length === 0 && edits.length === 0) {
     const trimmed = raw.trim();
     const htmlMatch = trimmed.match(/```html\n?([\s\S]*?)```/);
@@ -679,7 +663,7 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
     }
   }
 
-  return { files, deletions: normalizedDeletions, edits, isReactMode, migrations, edgeFunctions };
+  return { files, deletions: normalizedDeletions, edits, isReactMode, migrations, edgeFunctions, ignored };
 }
 
 /** Generate contextual follow-up suggestions based on the response and conversation state */

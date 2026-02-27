@@ -15,7 +15,8 @@ AUTO-DETECT (silently): AUTH→signup/login/session/protected routes | DB→sche
 
 OUTPUT FORMAT:
 ===FILE: path=== raw code (no markdown fences) | ===EDIT: path=== with @@line-range@@ hunks | ===DELETE: path=== | ===MIGRATION: desc===...===END_MIGRATION=== | ===EDGE_FUNCTION: name===...===END_EDGE_FUNCTION=== | ===MODE: react=== at top
-Commentary BEFORE first === or AFTER all blocks only.
+Finish ALL file output with ===END=== on its own line. No prose after ===END===.
+Commentary BEFORE first === only.
 
 TARGETED EDITS — MANDATORY for iterative builds:
 When EXISTING files are provided in context, you MUST use ===EDIT: path=== for modifications. NEVER use ===FILE: path=== to rewrite an existing file unless >70% of its lines change.

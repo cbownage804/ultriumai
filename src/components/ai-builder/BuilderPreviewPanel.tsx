@@ -331,26 +331,89 @@ window.addEventListener('message', function(e) {
     };
   }, [html, isGenerating, iframeRef, isCompiling]);
 
-  // Listen for error messages from iframe (including critical errors from error boundary)
-  // Rate-limited to prevent UI freezes from broken iframes flooding messages
-  const errorRateRef = useRef({ count: 0, windowStart: 0 });
-  const ERROR_RATE_LIMIT = 10; // max errors per second
+  // ── Circuit breaker + session guard ──
+  const errorTimestampsRef = useRef<number[]>([]);
+  const breakerOpenRef = useRef(false);
+  const sessionIdRef = useRef<string>('');
+  const listenerAttachedRef = useRef(false);
+
+  const newSessionId = useCallback(() => Math.random().toString(36).slice(2) + Date.now().toString(36), []);
+
+  const injectSessionId = useCallback((htmlStr: string, sid: string): string => {
+    const meta = `<meta name="preview-session" content="${sid}">`;
+    if (htmlStr.includes('<head>')) return htmlStr.replace('<head>', `<head>${meta}`);
+    return `${meta}\n${htmlStr}`;
+  }, []);
+
+  const crashPageHtml = useCallback((message: string) => {
+    return `<!doctype html><html><head><meta charset="utf-8"></head><body style="font-family:system-ui;padding:24px;background:#111;color:#eee"><h2>⚠️ Preview crashed</h2><p>${message}</p><p style="color:#888">Reverting to last stable build…</p></body></html>`;
+  }, []);
+
+  // Store handler in ref so detach/attach work correctly
+  const handlerRef = useRef<((e: MessageEvent) => void) | null>(null);
+
+  const detachListener = useCallback(() => {
+    if (listenerAttachedRef.current && handlerRef.current) {
+      window.removeEventListener('message', handlerRef.current);
+      listenerAttachedRef.current = false;
+    }
+  }, []);
+
+  const attachListener = useCallback(() => {
+    if (!listenerAttachedRef.current && handlerRef.current) {
+      window.addEventListener('message', handlerRef.current);
+      listenerAttachedRef.current = true;
+    }
+  }, []);
+
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data?.type === '__PREVIEW_ERROR__' || e.data?.type === '__PREVIEW_CRITICAL_ERROR__') {
-        // Rate limit: drop messages if we've received too many this second
-        const now = Date.now();
-        if (now - errorRateRef.current.windowStart > 1000) {
-          errorRateRef.current = { count: 1, windowStart: now };
-        } else {
-          errorRateRef.current.count++;
-          if (errorRateRef.current.count > ERROR_RATE_LIMIT) return;
+        // Session guard: ignore messages from stale iframes
+        const msgSession = e.data?.previewSessionId;
+        if (sessionIdRef.current) {
+          // Once session guard is active, reject messages without session id or with wrong id
+          if (!msgSession || msgSession !== sessionIdRef.current) return;
         }
 
-        // Phase 7: Classify errors — only uncaught exceptions and syntax errors are critical
+        // Circuit breaker: track error timestamps
+        const now = Date.now();
+        const WINDOW_MS = 2000;
+        const TRIP_THRESHOLD = 30;
+        const arr = errorTimestampsRef.current;
+        arr.push(now);
+        while (arr.length && arr[0] < now - WINDOW_MS) arr.shift();
+
+        if (!breakerOpenRef.current && arr.length > TRIP_THRESHOLD) {
+          breakerOpenRef.current = true;
+          console.warn('[PreviewPanel] Circuit breaker TRIPPED — too many errors');
+
+          // Show crash page
+          if (iframeRef.current) {
+            iframeRef.current.srcdoc = crashPageHtml('Too many errors in a short time.');
+          }
+
+          // Detach for cooldown
+          detachListener();
+
+          setTimeout(() => {
+            breakerOpenRef.current = false;
+            errorTimestampsRef.current = [];
+            attachListener();
+            // Restore LKG
+            if (iframeRef.current && html) {
+              const sid = newSessionId();
+              sessionIdRef.current = sid;
+              iframeRef.current.srcdoc = injectSessionId(html, sid);
+            }
+          }, 5000);
+
+          return;
+        }
+
+        // Normal error handling (existing logic)
         const isForcedCritical = e.data?.type === '__PREVIEW_CRITICAL_ERROR__';
         const msg = e.data.message || '';
-        // Filter out host-level Vite dev server errors (not from the preview iframe)
         const isHostDevError = /react.refresh|@react-refresh|preamble was not loaded/i.test(msg);
         if (isHostDevError) return;
         const isNetworkNoise = /Failed to load|ERR_BLOCKED|ERR_CONNECTION|favicon\.ico|404/i.test(msg);
@@ -367,10 +430,8 @@ window.addEventListener('message', function(e) {
           type: e.data.isWarning ? 'warning' : 'error',
         };
         setErrors(prev => {
-          // Phase 34: Deduplicate errors by message within 2s window
           if (prev.some(p => p.message === msg && (Date.now() - p.timestamp.getTime()) < 2000)) return prev;
           const updated = [...prev.slice(-19), newError];
-          // Auto-fix pipeline: only notify for critical, non-warning errors
           if (!e.data.isWarning && isCritical && onAutoFixError && !isGenerating) {
             setTimeout(() => onAutoFixError(newError), 500);
           }
@@ -378,15 +439,28 @@ window.addEventListener('message', function(e) {
         });
       }
     };
+
+    handlerRef.current = handler;
     window.addEventListener('message', handler);
-    return () => window.removeEventListener('message', handler);
-  }, [onAutoFixError, isGenerating]);
+    listenerAttachedRef.current = true;
+
+    return () => {
+      window.removeEventListener('message', handler);
+      listenerAttachedRef.current = false;
+    };
+  }, [onAutoFixError, isGenerating, html, crashPageHtml, detachListener, attachListener, newSessionId, injectSessionId]);
 
   useEffect(() => { 
     setErrors([]); setCurrentUrl('/'); setUrlHistory(['/']); setHistoryIndex(0);
     // Phase 36: Reset scroll position on new build
     if (iframeRef.current?.contentWindow) iframeRef.current.contentWindow.scrollTo(0, 0);
-  }, [html]);
+    // Session guard: inject new session ID whenever HTML changes
+    if (iframeRef.current && html) {
+      const sid = newSessionId();
+      sessionIdRef.current = sid;
+      iframeRef.current.srcdoc = injectSessionId(html, sid);
+    }
+  }, [html, newSessionId, injectSessionId]);
 
   // Phase 2: Also clear stale errors when generation completes (isGenerating: true→false)
   const prevIsGeneratingRef = useRef(isGenerating);
