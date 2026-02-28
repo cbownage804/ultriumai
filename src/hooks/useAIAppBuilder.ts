@@ -441,6 +441,7 @@ export function applyHunkPatch(
 interface EditBlock {
   path: string;
   hunks: { startLine: number; endLine: number; newLines: string[] }[];
+  hasDiffArtifacts?: boolean;
 }
 
 function parseEditBlocks(raw: string): EditBlock[] {
@@ -452,31 +453,28 @@ function parseEditBlocks(raw: string): EditBlock[] {
   let currentHunkStart = 0;
   let currentHunkEnd = 0;
   let inHunk = false;
-  let isUnifiedFormat = false; // tracks if current hunk uses +/- prefixes
+  let hasDiffMarkers = false;
 
   const flushHunk = () => {
     if (inHunk && currentHunkStart > 0) {
-      let newLines = [...currentHunkLines];
-      if (isUnifiedFormat) {
-        // In unified diff, only keep '+' lines (new content) and context lines (no prefix)
-        // Strip the leading +/- character
-        newLines = currentHunkLines
-          .filter(l => !l.startsWith('-')) // remove deleted lines
-          .map(l => l.startsWith('+') ? l.slice(1) : l); // strip '+' prefix from additions
+      // Detect diff-style +/- prefixed lines
+      const diffLineCount = currentHunkLines.filter(l => /^[+-]/.test(l) && !/^[+-]{3}\s/.test(l)).length;
+      if (diffLineCount > 0 && diffLineCount >= currentHunkLines.length * 0.3) {
+        hasDiffMarkers = true;
       }
-      currentHunks.push({ startLine: currentHunkStart, endLine: currentHunkEnd, newLines });
+      currentHunks.push({ startLine: currentHunkStart, endLine: currentHunkEnd, newLines: [...currentHunkLines] });
     }
     currentHunkLines = [];
     inHunk = false;
-    isUnifiedFormat = false;
   };
 
   const flushEdit = () => {
     flushHunk();
     if (currentPath && currentHunks.length > 0) {
-      edits.push({ path: currentPath, hunks: [...currentHunks] });
+      edits.push({ path: currentPath, hunks: [...currentHunks], hasDiffArtifacts: hasDiffMarkers });
     }
     currentHunks = [];
+    hasDiffMarkers = false;
   };
 
   for (const line of lines) {
@@ -503,7 +501,6 @@ function parseEditBlocks(raw: string): EditBlock[] {
         currentHunkStart = parseInt(hunkMatch[1]);
         currentHunkEnd = parseInt(hunkMatch[2]);
         inHunk = true;
-        isUnifiedFormat = false;
         continue;
       }
 
@@ -515,7 +512,8 @@ function parseEditBlocks(raw: string): EditBlock[] {
         const oldCount = parseInt(unifiedMatch[2] || '1');
         currentHunkEnd = currentHunkStart + oldCount - 1;
         inHunk = true;
-        isUnifiedFormat = true;
+        // Unified diff headers are themselves a diff artifact signal
+        hasDiffMarkers = true;
         continue;
       }
 
