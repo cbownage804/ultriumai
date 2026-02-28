@@ -314,10 +314,54 @@ export function AIAppBuilderWorkspace() {
   const [repairFailed, setRepairFailed] = useState(false);
   const [repairErrors, setRepairErrors] = useState<{file: string; message: string}[]>([]);
 
+  // ── Lifecycle refs + helpers for deterministic job completion ──
+  const repairWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const repairActiveJobIdRef = useRef<string | null>(null);
+
+  const dispatchBgJobCompleted = useCallback((jobId: string, branch: string) => {
+    console.info('[Workspace] dispatch bg-job-completed', { jobId, branch });
+    window.dispatchEvent(new CustomEvent('bg-job-completed', { detail: { jobId, branch } }));
+  }, []);
+
+  const dispatchBgJobFailed = useCallback((jobId: string, reason: string, branch?: string) => {
+    console.info('[Workspace] dispatch bg-job-failed', { jobId, reason, branch });
+    window.dispatchEvent(new CustomEvent('bg-job-failed', { detail: { jobId, reason, branch } }));
+  }, []);
+
+  const clearRepairWatchdog = useCallback(() => {
+    if (repairWatchdogRef.current) {
+      console.info('[Workspace] Watchdog cancelled');
+      clearTimeout(repairWatchdogRef.current);
+      repairWatchdogRef.current = null;
+    }
+  }, []);
+
   // Background generation: server-side builds that survive tab close
   // Saves a snapshot before applying, enabling one-click rollback
   const handleBgComplete = useCallback(async (job: BackgroundJob) => {
-    if (!job.output_content) return;
+    let didDispatch = false;
+    let jobIdOverride: string | undefined;
+    const finalize = (branch: string, status: 'completed' | 'failed' = 'completed', reason?: string) => {
+      if (didDispatch) return;
+      didDispatch = true;
+      const targetId = jobIdOverride ?? job.id;
+      // Clear repair active ref to prevent double-dispatch from watchdog/exhaust
+      if (repairActiveJobIdRef.current === targetId) repairActiveJobIdRef.current = null;
+      if (status === 'failed') {
+        dispatchBgJobFailed(targetId, reason ?? branch, branch);
+      } else {
+        dispatchBgJobCompleted(targetId, branch);
+      }
+    };
+
+    try {
+
+    if (!job.output_content) {
+      setIsGeneratingOverride(false);
+      clearRepairWatchdog();
+      finalize('no-output');
+      return;
+    }
 
     // ── Suppress compilation for discuss-mode responses ──
     // Check actual output content for file markers instead of relying on stale `messages` closure.
@@ -326,6 +370,8 @@ export function AIAppBuilderWorkspace() {
     if (isShortChatResponse && !job.output_content.includes('<!DOCTYPE')) {
       console.info('[handleBgComplete] No file markers detected — treating as chat response');
       setIsGeneratingOverride(false);
+      clearRepairWatchdog();
+      finalize('short-chat');
       return;
     }
 
@@ -469,6 +515,7 @@ export function AIAppBuilderWorkspace() {
           latestFilesRef.current = mergedFiles;
           saveDraftImmediateRef.current(project.name, mergedFiles, latestMessagesRef.current);
           console.info('[handleBgComplete] Repair succeeded — committed');
+          clearRepairWatchdog();
           setTimeout(() => forceCompileRef.current?.(), 200);
         } else {
           const errorSummary = repairErrors.map(e => `${e.file}: ${e.message}`).join('\n');
@@ -477,6 +524,7 @@ export function AIAppBuilderWorkspace() {
         }
 
         setIsGeneratingOverride(false);
+        clearRepairWatchdog();
         // Still add assistant message for repair jobs
         const repairFinalFiles = mergedFiles;
         setMessages(prev => {
@@ -491,6 +539,9 @@ export function AIAppBuilderWorkspace() {
             mode,
           }];
         });
+        // Dispatch for the REPAIR job id so sendMessage()'s promise resolves
+        jobIdOverride = repairActiveJobIdRef.current ?? job.id;
+        finalize('repair');
         return; // Do NOT run normal merge logic
       }
 
@@ -573,12 +624,15 @@ export function AIAppBuilderWorkspace() {
         pendingValidationFixRef.current = { errorSummary, files: mergedFiles };
         setRepairTrigger(t => t + 1); // Force repair effect to re-evaluate
 
-        // Auto-fix watchdog: clear pending state after 25s
-         setTimeout(() => {
+        // Auto-fix watchdog: terminal state after 25s — do NOT commit invalid staged files
+        clearRepairWatchdog();
+        repairWatchdogRef.current = setTimeout(() => {
           if (pendingValidationFixRef.current) {
-            console.warn('[Workspace] Auto-fix watchdog: 25s elapsed, committing staged files as-is');
-            // Commit the staged files instead of silently discarding them
-            const stagedFiles = pendingValidationFixRef.current.files;
+            const pending = pendingValidationFixRef.current;
+            console.warn('[Workspace] Auto-fix watchdog fired (25s)', {
+              stagedFileCount: pending.files?.length ?? 0,
+              attempt: repairAttemptRef.current,
+            });
             pendingValidationFixRef.current = null;
             validationFixInFlightRef.current = false;
             validationFixJobIdRef.current = null;
@@ -587,15 +641,25 @@ export function AIAppBuilderWorkspace() {
             repairJobIdRef.current = null;
             awaitingRepairJobStartRef.current = false;
             repairAttemptRef.current = 0;
-            if (stagedFiles && stagedFiles.length > 0) {
-              setFiles(stagedFiles);
-              latestFilesRef.current = stagedFiles;
-              pendingFilesRef.current = null;
-            } else {
-              pendingFilesRef.current = null;
+            pendingFilesRef.current = null;
+            // Terminal state — keep LKG files, show Repair Failed UI
+            setRepairFailed(true);
+            setRepairErrors(
+              pending.errorSummary.split('\n').slice(0, 3).map(line => {
+                const colonIdx = line.indexOf(': ');
+                return colonIdx >= 0
+                  ? { file: line.slice(0, colonIdx), message: line.slice(colonIdx + 2) }
+                  : { file: 'unknown', message: line };
+              })
+            );
+            setIsGeneratingOverride(false);
+            // Resolve any pending sendMessage promise
+            if (repairActiveJobIdRef.current) {
+              dispatchBgJobFailed(repairActiveJobIdRef.current, 'repair-watchdog-timeout', 'watchdog');
+              repairActiveJobIdRef.current = null;
             }
-            forceCompileRef.current?.();
           }
+          repairWatchdogRef.current = null;
         }, 25_000);
 
         // Still switch to preview and release generating state
@@ -624,14 +688,17 @@ export function AIAppBuilderWorkspace() {
     // can take over. Compilation is a separate phase handled by isCompiling state.
     // Previously this was in compilePromise.finally() which could delay up to 30s if the
     // worker hung, leaving the user stuck at "Analyzing..." with a blank preview.
-    const jobId = job.id;
     setIsGeneratingOverride(false);
-    setTimeout(() => {
-      console.info('[Workspace] 📣 Dispatching bg-job-completed for jobId:', jobId);
-      window.dispatchEvent(new CustomEvent('bg-job-completed', { detail: { jobId } }));
-    }, 500);
+    clearRepairWatchdog();
+    finalize('normal');
 
-  }, [project.files, setFiles, setMessages]);
+    } catch (e) {
+      console.error('[handleBgComplete] Unhandled exception:', e);
+      setIsGeneratingOverride(false);
+      clearRepairWatchdog();
+      finalize('handleBgComplete-exception', 'failed', String(e));
+    }
+  }, [project.files, setFiles, setMessages, dispatchBgJobCompleted, dispatchBgJobFailed, clearRepairWatchdog]);
 
   // SSE streaming: update streaming ref only — NO setFiles during streaming.
   // partialFilesRef + StreamingCodeEditor handle live file display via polling.
@@ -735,6 +802,7 @@ export function AIAppBuilderWorkspace() {
       }
       if (awaitingRepairJobStartRef.current && jobId) {
         repairJobIdRef.current = jobId;
+        repairActiveJobIdRef.current = jobId;
         awaitingRepairJobStartRef.current = false;
         console.info('[Workspace] Captured repair jobId:', jobId);
       }
@@ -1990,6 +2058,7 @@ export function AIAppBuilderWorkspace() {
 
   // ── Transactional build: retry/discard callbacks ──
   const handleRetryRepair = useCallback(() => {
+    clearRepairWatchdog();
     repairAttemptRef.current = 0;
     setRepairFailed(false);
     setRepairErrors([]);
@@ -2005,6 +2074,8 @@ export function AIAppBuilderWorkspace() {
   }, []);
 
   const handleDiscardChanges = useCallback(() => {
+    clearRepairWatchdog();
+    repairActiveJobIdRef.current = null;
     setRepairFailed(false);
     setRepairErrors([]);
     pendingFilesRef.current = null;
@@ -2032,6 +2103,8 @@ export function AIAppBuilderWorkspace() {
   const awaitingValidationFixJobStartRef = useRef(false);
   useEffect(() => {
     if (!isGenerating && prevIsGenerating.current) {
+      clearRepairWatchdog();
+      repairActiveJobIdRef.current = null;
       generationEndedAt.current = Date.now();
       // Reset in-flight guard when generation completes
       autoFixInFlightRef.current = false;
@@ -2064,8 +2137,10 @@ export function AIAppBuilderWorkspace() {
 
       if (attempt > 2) {
         // Terminal — repair exhausted
+        clearRepairWatchdog();
         pendingValidationFixRef.current = null;
         setRepairFailed(true);
+        setIsGeneratingOverride(false);
         setRepairErrors(
           errorSummary.split('\n').slice(0, 3).map(line => {
             const colonIdx = line.indexOf(': ');
@@ -2075,10 +2150,11 @@ export function AIAppBuilderWorkspace() {
           })
         );
         console.warn('[Workspace] Repair exhausted after 2 attempts — showing RepairFailed panel');
-        console.error('[Workspace] RepairFailed diagnostics', {
-          stagedFileCount: pendingFilesRef.current?.length ?? 0,
-          topErrors: errorSummary.split('\n').slice(0, 3),
-        });
+        // Resolve any pending sendMessage promise
+        if (repairActiveJobIdRef.current) {
+          dispatchBgJobFailed(repairActiveJobIdRef.current, 'repair-exhausted', 'exhaust');
+          repairActiveJobIdRef.current = null;
+        }
         return;
       }
 
