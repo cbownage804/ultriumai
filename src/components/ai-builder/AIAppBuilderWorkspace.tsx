@@ -394,28 +394,49 @@ export function AIAppBuilderWorkspace() {
         if (existingIdx >= 0) mergedFiles[existingIdx] = newFile;
         else mergedFiles.push(newFile);
       }
-      // Apply diff-based edits (===EDIT: with @@ hunks)
-      // These are only applied HERE (not during streaming) to prevent double-patching corruption
-      for (const edit of edits) {
-        const fileIdx = mergedFiles.findIndex(f => f.path === edit.path);
-        if (fileIdx >= 0) {
-          const patched = applyHunkPatch(mergedFiles[fileIdx].content, edit.hunks);
-          if (patched !== null) {
-            console.info(`[Build] ✅ Patched ${edit.path}: ${edit.hunks.length} hunks applied`);
-            mergedFiles[fileIdx] = { ...mergedFiles[fileIdx], content: patched };
-          } else {
-            console.warn(`[Build] ❌ Hunk patch failed for ${edit.path} — file content may have diverged from expected line numbers`);
+      // Apply edits — reject any with diff-style artifacts (+/- prefixed lines)
+      const diffArtifactEdits = edits.filter(e => e.hasDiffArtifacts);
+      if (diffArtifactEdits.length > 0) {
+        console.warn(`[Build] ❌ Rejecting ${diffArtifactEdits.length} EDIT blocks with diff artifacts:`, diffArtifactEdits.map(e => e.path));
+        const affectedFiles = diffArtifactEdits.map(e => e.path).join(', ');
+        const errorSummary = `${affectedFiles}: Contains patch/diff format (+/- prefixed lines). Do not use unified diff or patch format. Always return complete file contents using ===FILE: delimiters.`;
+        pendingValidationFixRef.current = { errorSummary, files: mergedFiles };
+        setRepairTrigger(t => t + 1);
+        // Still process clean edits (non-diff)
+        const cleanEdits = edits.filter(e => !e.hasDiffArtifacts);
+        for (const edit of cleanEdits) {
+          const fileIdx = mergedFiles.findIndex(f => f.path === edit.path);
+          if (fileIdx >= 0) {
+            const patched = applyHunkPatch(mergedFiles[fileIdx].content, edit.hunks);
+            if (patched !== null) {
+              console.info(`[Build] ✅ Patched ${edit.path}: ${edit.hunks.length} hunks applied`);
+              mergedFiles[fileIdx] = { ...mergedFiles[fileIdx], content: patched };
+            }
           }
-        } else {
-          // File doesn't exist yet — reconstruct from hunk newLines (AI used EDIT instead of FILE for new files)
-          const reconstructed = edit.hunks.map(h => h.newLines.join('\n')).join('\n');
-          if (reconstructed.trim()) {
-            console.info(`[Build] 🆕 Edit target ${edit.path} not found — creating from ${edit.hunks.length} hunks`);
-            const ext = edit.path.split('.').pop() || '';
-            const langMap: Record<string, string> = { ts: 'typescript', tsx: 'typescriptreact', js: 'javascript', jsx: 'javascriptreact', css: 'css', html: 'html', json: 'json', md: 'markdown', svg: 'xml' };
-            mergedFiles.push({ path: edit.path, content: reconstructed, language: langMap[ext] || ext });
+        }
+      } else {
+        // All edits are clean — apply normally
+        for (const edit of edits) {
+          const fileIdx = mergedFiles.findIndex(f => f.path === edit.path);
+          if (fileIdx >= 0) {
+            const patched = applyHunkPatch(mergedFiles[fileIdx].content, edit.hunks);
+            if (patched !== null) {
+              console.info(`[Build] ✅ Patched ${edit.path}: ${edit.hunks.length} hunks applied`);
+              mergedFiles[fileIdx] = { ...mergedFiles[fileIdx], content: patched };
+            } else {
+              console.warn(`[Build] ❌ Hunk patch failed for ${edit.path} — file content may have diverged from expected line numbers`);
+            }
           } else {
-            console.warn(`[Build] ⚠️ Edit target ${edit.path} not found and hunks are empty — skipping`);
+            // File doesn't exist yet — reconstruct from hunk newLines
+            const reconstructed = edit.hunks.map(h => h.newLines.join('\n')).join('\n');
+            if (reconstructed.trim()) {
+              console.info(`[Build] 🆕 Edit target ${edit.path} not found — creating from ${edit.hunks.length} hunks`);
+              const ext = edit.path.split('.').pop() || '';
+              const langMap: Record<string, string> = { ts: 'typescript', tsx: 'typescriptreact', js: 'javascript', jsx: 'javascriptreact', css: 'css', html: 'html', json: 'json', md: 'markdown', svg: 'xml' };
+              mergedFiles.push({ path: edit.path, content: reconstructed, language: langMap[ext] || ext });
+            } else {
+              console.warn(`[Build] ⚠️ Edit target ${edit.path} not found and hunks are empty — skipping`);
+            }
           }
         }
       }
@@ -774,8 +795,12 @@ export function AIAppBuilderWorkspace() {
       if (existingIdx >= 0) mergedFiles[existingIdx] = newFile;
       else mergedFiles.push(newFile);
     }
-    // Apply edit hunks from restored build
+    // Apply edit hunks from restored build — skip any with diff artifacts
     for (const edit of edits) {
+      if (edit.hasDiffArtifacts) {
+        console.warn(`[Restore] Skipping edit with diff artifacts: ${edit.path}`);
+        continue;
+      }
       const fileIdx = mergedFiles.findIndex(f => f.path === edit.path);
       if (fileIdx >= 0) {
         const patched = applyHunkPatch(mergedFiles[fileIdx].content, edit.hunks);
