@@ -225,29 +225,152 @@ function dedupeToast(method: 'success' | 'error' | 'info', message: string, opts
 
 const PanelLoader = () => <div className="flex items-center justify-center h-full text-white/15 text-xs">Loading...</div>;
 
-/**
- * Entrypoint protection: validates that src/main.tsx exists and index.html
- * references it. Returns an error string if invalid, null if OK.
- */
-function validateEntrypoint(files: ProjectFile[]): string | null {
-  const mainFile = files.find(f => f.path === 'src/main.tsx');
-  const indexFile = files.find(f => f.path === 'index.html');
+// ── Canonical boot templates ──
+const CANONICAL_MAIN_TSX = `import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App";
+import "./index.css";
 
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+`;
+
+const CANONICAL_INDEX_HTML_BODY = `  <div id="root"></div>\n  <script type="module" src="/src/main.tsx"></script>`;
+
+/** Infrastructure files that must not be modified unless the user explicitly mentions them */
+const PROTECTED_INFRA_FILES = ['src/main.tsx', 'index.html', 'package.json', 'vite.config.ts', 'vite.config.js', 'tsconfig.json', 'tsconfig.app.json'];
+
+/**
+ * Boot Integrity Validation — ensures the app can mount.
+ * Returns { errors, autoFixed } where autoFixed is true if canonical templates were injected.
+ */
+function validateBootIntegrity(files: ProjectFile[]): { errors: string[]; repairedFiles: ProjectFile[] | null } {
+  const errors: string[] = [];
+  let needsRepair = false;
+  let repairedFiles = [...files];
+
+  // 1. src/main.tsx must exist
+  let mainFile = repairedFiles.find(f => f.path === 'src/main.tsx');
   if (!mainFile) {
-    return 'You removed or modified the application entrypoint. Restore src/main.tsx and ensure index.html loads it via <script type="module" src="/src/main.tsx"></script>.';
+    errors.push('Missing src/main.tsx — application entrypoint is required.');
+    // Auto-restore canonical main.tsx
+    repairedFiles.push({ path: 'src/main.tsx', content: CANONICAL_MAIN_TSX, language: 'typescript' });
+    mainFile = repairedFiles[repairedFiles.length - 1];
+    needsRepair = true;
+    console.warn('[BootIntegrity] Auto-restored missing src/main.tsx');
+  } else {
+    // Validate main.tsx mounts React into #root
+    const c = mainFile.content;
+    if (!/createRoot/.test(c)) {
+      errors.push('src/main.tsx does not call ReactDOM.createRoot — no React mount detected.');
+    }
+    if (!/import\s+.*App/.test(c) && !/from\s+["']\.\/App["']/.test(c)) {
+      errors.push('src/main.tsx does not import App component.');
+    }
+    if (!/import\s+["']\.\/index\.css["']/.test(c) && !/import\s+["']\.\/index\.css["']/.test(c.replace(/\s/g, ''))) {
+      // Soft warning — don't block on this
+    }
+
+    // If main.tsx is fundamentally broken (no createRoot AND no render), auto-restore
+    if (!/createRoot/.test(c) && !/\.render\s*\(/.test(c)) {
+      const idx = repairedFiles.findIndex(f => f.path === 'src/main.tsx');
+      repairedFiles[idx] = { ...mainFile, content: CANONICAL_MAIN_TSX };
+      needsRepair = true;
+      console.warn('[BootIntegrity] Auto-restored broken src/main.tsx (no mount detected)');
+    }
   }
 
-  if (indexFile) {
+  // 2. src/App.tsx must exist
+  const appFile = repairedFiles.find(f => f.path === 'src/App.tsx');
+  if (!appFile) {
+    errors.push('Missing src/App.tsx — root application component is required.');
+  }
+
+  // 3. index.html must exist and be valid
+  let indexFile = repairedFiles.find(f => f.path === 'index.html');
+  if (!indexFile) {
+    errors.push('Missing index.html — HTML shell is required.');
+  } else {
     const html = indexFile.content;
     if (!/<div\s+id\s*=\s*["']root["']\s*>/i.test(html)) {
-      return 'index.html is missing <div id="root"></div>. Restore the root mount point and ensure index.html loads src/main.tsx.';
+      errors.push('index.html missing <div id="root"></div> mount point.');
+      // Auto-repair: inject root div + script before </body>
+      const idx = repairedFiles.findIndex(f => f.path === 'index.html');
+      const repaired = html.replace(/<\/body>/i, `${CANONICAL_INDEX_HTML_BODY}\n</body>`);
+      repairedFiles[idx] = { ...indexFile, content: repaired };
+      needsRepair = true;
+      console.warn('[BootIntegrity] Auto-repaired index.html — injected #root div');
     }
-    if (!/src\s*=\s*["'][^"']*main\.tsx["']/i.test(html)) {
-      return 'index.html does not reference src/main.tsx. Ensure index.html contains <script type="module" src="/src/main.tsx"></script>.';
+    if (!/src\s*=\s*["'][^"']*main\.tsx["']/i.test(repairedFiles.find(f => f.path === 'index.html')!.content)) {
+      errors.push('index.html does not reference /src/main.tsx entrypoint.');
+      // Auto-repair: add script tag before </body>
+      const idx = repairedFiles.findIndex(f => f.path === 'index.html');
+      const current = repairedFiles[idx].content;
+      if (/<\/body>/i.test(current)) {
+        repairedFiles[idx] = { ...repairedFiles[idx], content: current.replace(/<\/body>/i, '  <script type="module" src="/src/main.tsx"></script>\n</body>') };
+        needsRepair = true;
+        console.warn('[BootIntegrity] Auto-repaired index.html — added main.tsx script reference');
+      }
     }
   }
 
-  return null;
+  return { errors, repairedFiles: needsRepair ? repairedFiles : null };
+}
+
+/** Check if the user's latest message explicitly mentions a protected file */
+function userExplicitlyMentionedFile(messages: { role: string; content: string }[], filePath: string): boolean {
+  // Find the last user message
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].role === 'user') {
+      const content = messages[i].content.toLowerCase();
+      const fileName = filePath.split('/').pop()?.toLowerCase() || '';
+      return content.includes(filePath.toLowerCase()) || content.includes(fileName);
+    }
+  }
+  return false;
+}
+
+/**
+ * Filter out AI edits/replacements to infrastructure files unless the user explicitly asked for them.
+ * Returns the filtered lists and logs any blocked files.
+ */
+function filterProtectedFiles(
+  parsedFiles: ProjectFile[],
+  edits: { path: string; [k: string]: any }[],
+  deletions: string[],
+  messages: { role: string; content: string }[],
+): { parsedFiles: ProjectFile[]; edits: typeof edits; deletions: string[]; blocked: string[] } {
+  const blocked: string[] = [];
+
+  const filteredParsed = parsedFiles.filter(f => {
+    if (PROTECTED_INFRA_FILES.includes(f.path) && !userExplicitlyMentionedFile(messages, f.path)) {
+      blocked.push(f.path);
+      return false;
+    }
+    return true;
+  });
+
+  const filteredEdits = edits.filter(e => {
+    if (PROTECTED_INFRA_FILES.includes(e.path) && !userExplicitlyMentionedFile(messages, e.path)) {
+      blocked.push(e.path);
+      return false;
+    }
+    return true;
+  });
+
+  // Always block deletion of infra files
+  const filteredDeletions = deletions.filter(d => {
+    if (PROTECTED_INFRA_FILES.includes(d)) {
+      blocked.push(d);
+      return false;
+    }
+    return true;
+  });
+
+  return { parsedFiles: filteredParsed, edits: filteredEdits, deletions: filteredDeletions, blocked };
 }
 
 export function AIAppBuilderWorkspace() {
@@ -409,12 +532,13 @@ export function AIAppBuilderWorkspace() {
       setStableHTML(null);
     }
 
-    const { files: parsedFiles, deletions, edits } = parseMultiFileOutput(job.output_content);
-    // (compilePromise removed — compilation is now handled solely by CompilationBridge)
-    // ── Entrypoint protection: block deletion of src/main.tsx ──
-    const safeDeletions = deletions.filter(d => d !== 'src/main.tsx');
-    if (deletions.length !== safeDeletions.length) {
-      console.warn('[Build] ⛔ Blocked deletion of src/main.tsx — entrypoint is protected');
+    const { files: rawParsedFiles, deletions: rawDeletions, edits: rawEdits } = parseMultiFileOutput(job.output_content);
+    // ── Infrastructure file protection: block edits to boot-critical files unless user explicitly mentioned them ──
+    const { parsedFiles, edits, deletions: safeDeletions, blocked } = filterProtectedFiles(
+      rawParsedFiles, rawEdits, rawDeletions, latestMessagesRef.current
+    );
+    if (blocked.length > 0) {
+      console.warn(`[Workspace] Blocked edit to protected infrastructure file(s): ${blocked.join(', ')}`);
     }
     let mergedFiles = [...project.files];
     if (parsedFiles.length > 0 || safeDeletions.length > 0 || edits.length > 0) {
@@ -557,11 +681,16 @@ export function AIAppBuilderWorkspace() {
         const revalidation = outputValidationRef.current.validate(mergedFiles);
         const repairErrors = revalidation.issues.filter(i => i.severity === 'error');
 
-        // Entrypoint protection on repaired files too
-        const repairEntrypointError = validateEntrypoint(mergedFiles);
-        if (repairEntrypointError) {
-          console.warn('[Build] ❌ Repair entrypoint validation failed:', repairEntrypointError);
-          const errorSummary = repairErrors.map(e => `${e.file}: ${e.message}`).join('\n') + '\n' + repairEntrypointError;
+        // Boot integrity check on repaired files
+        const repairBootCheck = validateBootIntegrity(mergedFiles);
+        if (repairBootCheck.repairedFiles) {
+          mergedFiles = repairBootCheck.repairedFiles;
+          pendingFilesRef.current = mergedFiles;
+          console.warn('[Build] Boot integrity auto-restored files during repair');
+        }
+        if (repairBootCheck.errors.length > 0 && !repairBootCheck.repairedFiles) {
+          console.warn('[Build] ❌ Repair boot integrity failed:', repairBootCheck.errors);
+          const errorSummary = repairErrors.map(e => `${e.file}: ${e.message}`).join('\n') + '\nBOOT-INTEGRITY REPAIR: ' + repairBootCheck.errors.join('; ');
           pendingValidationFixRef.current = { errorSummary, files: mergedFiles };
           setRepairTrigger(t => t + 1);
         } else if (repairErrors.length === 0) {
@@ -592,7 +721,7 @@ export function AIAppBuilderWorkspace() {
             role: 'assistant' as const,
             content: job.output_content!,
             timestamp: new Date(),
-            filesGenerated: parsedFiles.length + deletions.length,
+            filesGenerated: parsedFiles.length + safeDeletions.length,
             suggestions,
             mode,
           }];
@@ -603,23 +732,17 @@ export function AIAppBuilderWorkspace() {
         return; // Do NOT run normal merge logic
       }
 
-      // ── Entrypoint protection: ensure index.html + main.tsx are intact ──
-      const entrypointError = validateEntrypoint(mergedFiles);
-      if (entrypointError) {
-        console.warn('[Build] ❌ Entrypoint validation failed:', entrypointError);
-        pendingValidationFixRef.current = { errorSummary: entrypointError, files: mergedFiles };
+      // ── Boot Integrity: ensure app can mount (auto-restore + repair) ──
+      const bootCheck = validateBootIntegrity(mergedFiles);
+      if (bootCheck.repairedFiles) {
+        console.warn('[Build] Boot integrity auto-restored files:', bootCheck.errors);
+        mergedFiles = bootCheck.repairedFiles;
+      }
+      if (bootCheck.errors.length > 0) {
+        // Even after auto-restore, route through repair for any remaining issues
+        const bootErrorSummary = 'BOOT-INTEGRITY REPAIR: You MUST restore src/main.tsx and ensure index.html mounts /src/main.tsx into #root. Do not change routes. Do not remove #root. Errors: ' + bootCheck.errors.join('; ');
+        pendingValidationFixRef.current = { errorSummary: bootErrorSummary, files: mergedFiles };
         setRepairTrigger(t => t + 1);
-        // Restore LKG entrypoint files so we don't commit a broken state
-        const lkgMain = project.files.find(f => f.path === 'src/main.tsx');
-        const lkgIndex = project.files.find(f => f.path === 'index.html');
-        if (lkgMain) {
-          const idx = mergedFiles.findIndex(f => f.path === 'src/main.tsx');
-          if (idx >= 0) mergedFiles[idx] = lkgMain; else mergedFiles.push(lkgMain);
-        }
-        if (lkgIndex) {
-          const idx = mergedFiles.findIndex(f => f.path === 'index.html');
-          if (idx >= 0) mergedFiles[idx] = lkgIndex; else mergedFiles.push(lkgIndex);
-        }
       }
 
       // ── Transactional merge: snapshot LKG, stage, validate before commit ──
@@ -755,7 +878,7 @@ export function AIAppBuilderWorkspace() {
         role: 'assistant' as const,
         content: job.output_content!,
         timestamp: new Date(),
-        filesGenerated: parsedFiles.length + deletions.length,
+        filesGenerated: parsedFiles.length + safeDeletions.length,
         suggestions,
         mode,
       }];
@@ -2244,7 +2367,7 @@ export function AIAppBuilderWorkspace() {
 
       const timer = setTimeout(() => {
         const stricterPrompt = attempt === 2
-          ? '\n\nSTRICTER REPAIR RULES (attempt 2/2 — FINAL):\n- Remove ALL inline <svg>...</svg> markup and replace with lucide-react icon components (import { IconName } from "lucide-react")\n- Do NOT refactor or change code unrelated to the validation errors\n- Only modify the files listed in the error list above\n- Output must compile: no dangling JSX expressions, no unterminated strings, no malformed imports\n- Wrap all JSX returns in parentheses: return ( <div>...</div> )\n- Ensure all tags are self-closing where appropriate (<img />, <br />, <input />)'
+          ? '\n\nSTRICTER REPAIR RULES (attempt 2/2 — FINAL):\n- You MUST restore src/main.tsx and ensure index.html mounts /src/main.tsx into #root. Do not change routes. Do not remove #root.\n- Remove ALL inline <svg>...</svg> markup and replace with lucide-react icon components (import { IconName } from "lucide-react")\n- Do NOT refactor or change code unrelated to the validation errors\n- Only modify the files listed in the error list above\n- Output must compile: no dangling JSX expressions, no unterminated strings, no malformed imports\n- Wrap all JSX returns in parentheses: return ( <div>...</div> )\n- Ensure all tags are self-closing where appropriate (<img />, <br />, <input />)'
           : '';
 
         console.info(`[Workspace] Repair attempt ${attempt}/2 for validation errors`);
