@@ -225,6 +225,31 @@ function dedupeToast(method: 'success' | 'error' | 'info', message: string, opts
 
 const PanelLoader = () => <div className="flex items-center justify-center h-full text-white/15 text-xs">Loading...</div>;
 
+/**
+ * Entrypoint protection: validates that src/main.tsx exists and index.html
+ * references it. Returns an error string if invalid, null if OK.
+ */
+function validateEntrypoint(files: ProjectFile[]): string | null {
+  const mainFile = files.find(f => f.path === 'src/main.tsx');
+  const indexFile = files.find(f => f.path === 'index.html');
+
+  if (!mainFile) {
+    return 'You removed or modified the application entrypoint. Restore src/main.tsx and ensure index.html loads it via <script type="module" src="/src/main.tsx"></script>.';
+  }
+
+  if (indexFile) {
+    const html = indexFile.content;
+    if (!/<div\s+id\s*=\s*["']root["']\s*>/i.test(html)) {
+      return 'index.html is missing <div id="root"></div>. Restore the root mount point and ensure index.html loads src/main.tsx.';
+    }
+    if (!/src\s*=\s*["'][^"']*main\.tsx["']/i.test(html)) {
+      return 'index.html does not reference src/main.tsx. Ensure index.html contains <script type="module" src="/src/main.tsx"></script>.';
+    }
+  }
+
+  return null;
+}
+
 export function AIAppBuilderWorkspace() {
   const [searchParams] = useSearchParams();
   const {
@@ -386,9 +411,14 @@ export function AIAppBuilderWorkspace() {
 
     const { files: parsedFiles, deletions, edits } = parseMultiFileOutput(job.output_content);
     // (compilePromise removed — compilation is now handled solely by CompilationBridge)
+    // ── Entrypoint protection: block deletion of src/main.tsx ──
+    const safeDeletions = deletions.filter(d => d !== 'src/main.tsx');
+    if (deletions.length !== safeDeletions.length) {
+      console.warn('[Build] ⛔ Blocked deletion of src/main.tsx — entrypoint is protected');
+    }
     let mergedFiles = [...project.files];
-    if (parsedFiles.length > 0 || deletions.length > 0 || edits.length > 0) {
-      if (deletions.length > 0) mergedFiles = mergedFiles.filter(f => !deletions.includes(f.path));
+    if (parsedFiles.length > 0 || safeDeletions.length > 0 || edits.length > 0) {
+      if (safeDeletions.length > 0) mergedFiles = mergedFiles.filter(f => !safeDeletions.includes(f.path));
       for (const newFile of parsedFiles) {
         const existingIdx = mergedFiles.findIndex(f => f.path === newFile.path);
         if (existingIdx >= 0) mergedFiles[existingIdx] = newFile;
@@ -527,7 +557,14 @@ export function AIAppBuilderWorkspace() {
         const revalidation = outputValidationRef.current.validate(mergedFiles);
         const repairErrors = revalidation.issues.filter(i => i.severity === 'error');
 
-        if (repairErrors.length === 0) {
+        // Entrypoint protection on repaired files too
+        const repairEntrypointError = validateEntrypoint(mergedFiles);
+        if (repairEntrypointError) {
+          console.warn('[Build] ❌ Repair entrypoint validation failed:', repairEntrypointError);
+          const errorSummary = repairErrors.map(e => `${e.file}: ${e.message}`).join('\n') + '\n' + repairEntrypointError;
+          pendingValidationFixRef.current = { errorSummary, files: mergedFiles };
+          setRepairTrigger(t => t + 1);
+        } else if (repairErrors.length === 0) {
           // COMMIT repaired files
           setFiles(mergedFiles);
           pendingFilesRef.current = null;
@@ -564,6 +601,25 @@ export function AIAppBuilderWorkspace() {
         jobIdOverride = repairActiveJobIdRef.current ?? job.id;
         finalize('repair');
         return; // Do NOT run normal merge logic
+      }
+
+      // ── Entrypoint protection: ensure index.html + main.tsx are intact ──
+      const entrypointError = validateEntrypoint(mergedFiles);
+      if (entrypointError) {
+        console.warn('[Build] ❌ Entrypoint validation failed:', entrypointError);
+        pendingValidationFixRef.current = { errorSummary: entrypointError, files: mergedFiles };
+        setRepairTrigger(t => t + 1);
+        // Restore LKG entrypoint files so we don't commit a broken state
+        const lkgMain = project.files.find(f => f.path === 'src/main.tsx');
+        const lkgIndex = project.files.find(f => f.path === 'index.html');
+        if (lkgMain) {
+          const idx = mergedFiles.findIndex(f => f.path === 'src/main.tsx');
+          if (idx >= 0) mergedFiles[idx] = lkgMain; else mergedFiles.push(lkgMain);
+        }
+        if (lkgIndex) {
+          const idx = mergedFiles.findIndex(f => f.path === 'index.html');
+          if (idx >= 0) mergedFiles[idx] = lkgIndex; else mergedFiles.push(lkgIndex);
+        }
       }
 
       // ── Transactional merge: snapshot LKG, stage, validate before commit ──
