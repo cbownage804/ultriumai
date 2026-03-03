@@ -21,9 +21,13 @@ import { SkeletonPreview } from './SkeletonPreview';
 import { CompilationProgress } from './CompilationProgress';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import { usePreviewServiceWorker } from '@/hooks/usePreviewServiceWorker';
+import { SandpackProvider, SandpackPreview, SandpackConsole } from '@codesandbox/sandpack-react';
 
 interface BuilderPreviewPanelProps {
   html: string | null;
+  previewFiles: Record<string, string>;
+  compileState?: 'idle' | 'compiling' | 'success' | 'error';
+  showConsole?: boolean;
   isGenerating: boolean;
   onFixError?: (errorMessage: string) => void;
   onSmartFixError?: (error: PreviewError, context: string) => void;
@@ -64,22 +68,19 @@ interface BuilderPreviewPanelProps {
   onRetryCompile?: () => void;
 }
 
-export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey, repairFailed, repairErrors, onRetryRepair, onDiscardChanges, compileError, onRetryCompile }: BuilderPreviewPanelProps) {
+export function BuilderPreviewPanel({ html, previewFiles, compileState = 'idle', showConsole = false, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey, repairFailed, repairErrors, onRetryRepair, onDiscardChanges, compileError, onRetryCompile }: BuilderPreviewPanelProps) {
   const [internalViewportMode, setInternalViewportMode] = useState<ViewportMode>('desktop');
   const viewportMode = externalViewportMode ?? internalViewportMode;
   const setViewportMode = onExternalViewportChange ?? setInternalViewportMode;
   const [iframeKey, setIframeKey] = useState(0);
 
-  // Force iframe re-render when compile transitions to 'success'
-  const prevCompileErrorRef = useRef(compileError);
+  // Force Sandpack remount on compile success transition
   useEffect(() => {
-    // Detect transition: had error (or was compiling) → now no error AND html exists
-    if (!compileError && prevCompileErrorRef.current && html) {
-      console.info('[PreviewPanel] Compile success transition — forcing iframe re-render');
+    if (compileState === 'success') {
+      console.info('[PreviewPanel] Compile success transition — forcing Sandpack re-render');
       setIframeKey(k => k + 1);
     }
-    prevCompileErrorRef.current = compileError;
-  }, [compileError, html]);
+  }, [compileState]);
   const [errors, setErrors] = useState<PreviewError[]>([]);
   const [currentUrl, setCurrentUrl] = useState('/');
   const [urlHistory, setUrlHistory] = useState<string[]>(['/']);
@@ -823,22 +824,35 @@ window.addEventListener('message', function(e) {
 
       {/* Preview */}
       <div className="flex-1 min-h-0 flex items-stretch justify-center">
-        {html ? (
+        {previewFiles && Object.keys(previewFiles).length > 0 ? (
           <div
-            className="h-full transition-all duration-300 mx-auto"
+            className="h-full transition-all duration-300 mx-auto w-full"
             style={{
               width: viewportWidth > 0 ? `${viewportWidth}px` : '100%',
               maxWidth: '100%',
             }}
           >
-            <iframe
-              ref={iframeRef}
+            <SandpackProvider
               key={`${iframeKey}-${refreshKey ?? 0}`}
-              srcDoc={htmlWithErrorCapture || undefined}
-              className="w-full h-full border-0 bg-white"
-              sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-              title="App Preview"
-            />
+              template="react-ts"
+              files={previewFiles}
+              customSetup={{ entry: '/index.html' }}
+            >
+              <div className="h-full flex flex-col bg-background">
+                <div className="flex-1 min-h-0">
+                  <SandpackPreview
+                    showNavigator={false}
+                    showOpenInCodeSandbox={false}
+                    style={{ height: '100%', border: '0' }}
+                  />
+                </div>
+                {showConsole ? (
+                  <div className="h-40 border-t border-border bg-background">
+                    <SandpackConsole style={{ height: '100%' }} resetOnPreviewRestart />
+                  </div>
+                ) : null}
+              </div>
+            </SandpackProvider>
           </div>
         ) : isGenerating || isCompiling ? (
           <SkeletonPreview
@@ -849,7 +863,6 @@ window.addEventListener('message', function(e) {
           />
         ) : (
           <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden">
-            {/* Neon background */}
             <img
               src={previewBgNeon}
               alt=""
