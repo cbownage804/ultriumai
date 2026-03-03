@@ -7,6 +7,7 @@ import type { CDNPackage } from './PackageManager';
 import type { LinkedGPTConfig } from './GPTConnectorPanel';
 import { useLivePreviewSync } from '@/hooks/useLivePreviewSync';
 import type { ProjectAsset } from './AssetManager';
+import { isPreviewValid, previewDebugSummary } from './previewValidation';
 
 const COMPILE_TIMEOUT_MS = 40_000;
 const COMPILE_SAFETY_TIMEOUT_MS = 50_000; // Hard safety net — if isCompiling stays true longer, force reset
@@ -350,10 +351,11 @@ export function CompilationBridge({
           compileRunIdRef.current++;
           compilationInFlightRef.current = false;
           onCompilingChangeRef.current?.(false);
-          if (!stableHTMLRef.current) {
+          if (!stableHTMLRef.current || !isPreviewValid(stableHTMLRef.current)) {
             setLiveCompiledHTML(ERROR_FALLBACK_HTML);
             setStableHTML(ERROR_FALLBACK_HTML);
           }
+          // else: LKG is valid, keep it
         }
       }, COMPILE_SAFETY_TIMEOUT_MS);
 
@@ -403,34 +405,46 @@ export function CompilationBridge({
               source: 'compilation-bridge',
             }, '*');
             // Keep previous LKG preview — do NOT set stableHTML
-          } else {
+          } else if (isPreviewValid(result)) {
+            // ── Preview Success Contract: only promote valid HTML ──
             setLiveCompiledHTML(result);
-            console.info('[CompilationBridge] setStableHTML applied', { runId: thisRunId, ms: Math.round(performance.now() - t0) });
-            setStableHTML(result);
-            console.info('[CompilationBridge] Compile success', {
+            console.info('[CompilationBridge] ✅ Preview valid — committing', {
               runId: thisRunId,
-              htmlLength: result?.length ?? 0,
-              first80: result?.slice(0, 80) ?? '',
-              hasDoctype: (result?.includes('<!') ?? false),
+              ms: Math.round(performance.now() - t0),
+              ...previewDebugSummary(result),
             });
+            setStableHTML(result);
             liveSync.resetSnapshot(filesRef.current);
             if (softReloadPendingRef.current) {
               softReloadPendingRef.current = false;
               window.postMessage({ type: '__SOFT_RELOAD__', source: 'compilation-bridge' }, '*');
             }
             window.postMessage({ type: '__PREVIEW_READY__', source: 'compilation-bridge' }, '*');
+          } else {
+            // Compiled but invalid HTML — keep LKG, do NOT update stableHTML
+            console.warn('[CompilationBridge] ❌ Compile produced invalid preview HTML — keeping LKG', previewDebugSummary(result));
+            // Do NOT set stableHTML or liveCompiledHTML — preserve whatever LKG is showing
           }
         } else {
-          console.warn('[CompilationBridge] Compilation returned null — showing error fallback');
-          setLiveCompiledHTML(ERROR_FALLBACK_HTML);
-          setStableHTML(ERROR_FALLBACK_HTML);
+          // Compilation returned null — keep LKG if we have one, otherwise show error
+          if (stableHTMLRef.current && isPreviewValid(stableHTMLRef.current)) {
+            console.warn('[CompilationBridge] Compilation returned null — preserving LKG preview');
+          } else {
+            console.warn('[CompilationBridge] Compilation returned null, no LKG — showing error fallback');
+            setLiveCompiledHTML(ERROR_FALLBACK_HTML);
+            setStableHTML(ERROR_FALLBACK_HTML);
+          }
         }
       } catch (err) {
         console.error('[CompilationBridge] Compilation crashed:', err);
-        // Only apply fallback if this run is still current
+        // Only apply fallback if this run is still current AND no LKG exists
         if (thisRunId === compileRunIdRef.current) {
-          setLiveCompiledHTML(ERROR_FALLBACK_HTML);
-          setStableHTML(ERROR_FALLBACK_HTML);
+          if (stableHTMLRef.current && isPreviewValid(stableHTMLRef.current)) {
+            console.warn('[CompilationBridge] Compile crashed — preserving LKG preview');
+          } else {
+            setLiveCompiledHTML(ERROR_FALLBACK_HTML);
+            setStableHTML(ERROR_FALLBACK_HTML);
+          }
         }
       } finally {
         clearTimeout(safetyTimer);

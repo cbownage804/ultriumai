@@ -49,6 +49,8 @@ interface BuilderChatPanelProps {
   onUpdateMessages?: (updater: (prev: BuilderMessage[]) => BuilderMessage[]) => void;
   /** Questions UI rendered above the input */
   questionsSlot?: React.ReactNode;
+  /** Whether the preview has valid compiled HTML and is truly ready */
+  isPreviewReady?: boolean;
   /** Ref-based streaming: content ref to avoid workspace re-renders */
   streamingContentRef?: MutableRefObject<string>;
   /** New conversation handler — clears messages but keeps files */
@@ -385,7 +387,7 @@ export function BuilderChatPanel({
   totalTokensUsed, previousFiles, latestFiles, contextBudget,
   onModeChange, onSend, onStop, onClear, onRestoreVersion, onOpenTemplates, onFixError,
   onToggleVisualEdit, isVisualEditActive, onSelectStarterTemplate,
-  supabaseConfig, onUpdateMessages, questionsSlot,
+  supabaseConfig, onUpdateMessages, questionsSlot, isPreviewReady,
   streamingContentRef, onNewConversation,
   onShowSettings, onShowHistory, onShowKnowledge, onShowGitHub,
   conversationForks, activeForkId, onForkConversation, onSwitchFork, onDeleteFork,
@@ -1149,9 +1151,11 @@ export function BuilderChatPanel({
                 "flex-1 text-center text-[12px] py-2.5 font-medium",
                 isStreaming
                   ? "text-cyan-400 bg-cyan-500/[0.06]"
-                  : "text-emerald-400/70 bg-emerald-500/[0.04]"
+                  : isPreviewReady
+                    ? "text-emerald-400/70 bg-emerald-500/[0.04]"
+                    : "text-amber-400/70 bg-amber-500/[0.04]"
               )}>
-                {isStreaming ? 'Loading preview...' : 'Preview ready'}
+                {isStreaming ? 'Loading preview...' : isPreviewReady ? 'Preview ready' : 'Compiling...'}
               </div>
             </div>
           </motion.div>
