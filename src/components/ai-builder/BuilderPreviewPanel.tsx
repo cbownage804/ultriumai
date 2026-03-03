@@ -69,6 +69,17 @@ export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFix
   const viewportMode = externalViewportMode ?? internalViewportMode;
   const setViewportMode = onExternalViewportChange ?? setInternalViewportMode;
   const [iframeKey, setIframeKey] = useState(0);
+
+  // Force iframe re-render when compile transitions to 'success'
+  const prevCompileErrorRef = useRef(compileError);
+  useEffect(() => {
+    // Detect transition: had error (or was compiling) → now no error AND html exists
+    if (!compileError && prevCompileErrorRef.current && html) {
+      console.info('[PreviewPanel] Compile success transition — forcing iframe re-render');
+      setIframeKey(k => k + 1);
+    }
+    prevCompileErrorRef.current = compileError;
+  }, [compileError, html]);
   const [errors, setErrors] = useState<PreviewError[]>([]);
   const [currentUrl, setCurrentUrl] = useState('/');
   const [urlHistory, setUrlHistory] = useState<string[]>(['/']);
@@ -100,9 +111,45 @@ export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFix
 
   // Phase 69: Skip double console injection when compiler already injected interceptors
   // Only inject hot-patch listener and navigation guards (no console/error interceptors)
-  const htmlWithErrorCapture = html ? (
-    html.includes('__builderInjected')
-      ? html.replace(
+  // Ensure html is always a full document — wrap if compiler returned JS-only or partial
+  const ensureFullDocument = useCallback((rawHtml: string): string => {
+    const trimmed = rawHtml.trim();
+    // Already a full document
+    if (/<!doctype|<html/i.test(trimmed)) return rawHtml;
+    // Looks like just JS code — wrap in full document
+    console.warn('[PreviewPanel] HTML missing doctype — wrapping as full document');
+    return `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      ${rawHtml}
+    </script>
+  </body>
+</html>`;
+  }, []);
+
+  const normalizedHtml = html ? ensureFullDocument(html) : null;
+
+  // Debug: log actual HTML length to diagnose blank previews
+  useEffect(() => {
+    console.info('[PreviewPanel] html prop updated:', {
+      htmlLength: html?.length ?? 0,
+      normalizedLength: normalizedHtml?.length ?? 0,
+      hasDoctype: normalizedHtml ? /<!doctype|<html/i.test(normalizedHtml) : false,
+      hasRoot: normalizedHtml ? /id\s*=\s*["']root["']/i.test(normalizedHtml) : false,
+      isCompiling,
+      compileError: compileError?.message ?? null,
+    });
+  }, [html, normalizedHtml, isCompiling, compileError]);
+
+  const htmlWithErrorCapture = normalizedHtml ? (
+    normalizedHtml.includes('__builderInjected')
+      ? normalizedHtml.replace(
           '</head>',
           `<script>
 // === WEBSOCKET SUPPRESSION: Block Vite HMR websockets inherited from parent origin ===
@@ -182,7 +229,7 @@ window.addEventListener('message', function(e) {
 </script>
 </head>`
         )
-      : html.replace(
+      : normalizedHtml.replace(
           '</head>',
           `<script>
 // === WEBSOCKET SUPPRESSION: Block Vite HMR websockets inherited from parent origin ===
@@ -518,7 +565,7 @@ window.addEventListener('message', function(e) {
   }, [onAutoFixError, isGenerating, html, crashPageHtml, detachListener, attachListener, newSessionId, injectSessionId]);
 
   useEffect(() => { 
-    if (!html) return;
+    if (!htmlWithErrorCapture) return;
     setErrors([]); setCurrentUrl('/'); setUrlHistory(['/']); setHistoryIndex(0);
     // Phase 36: Reset scroll position on new build
     if (iframeRef.current?.contentWindow) iframeRef.current.contentWindow.scrollTo(0, 0);
@@ -526,15 +573,14 @@ window.addEventListener('message', function(e) {
     if (iframeRef.current) {
       const sid = newSessionId();
       sessionIdRef.current = sid;
-      console.info('[PreviewPanel] Setting srcdoc', {
-        htmlLength: html?.length ?? 0,
-        hasDoctype: !!html && (html.includes('<!doctype') || html.includes('<!DOCTYPE')),
-        hasSessionMeta: !!html && html.includes('preview-session'),
+      console.info('[PreviewPanel] Setting srcdoc imperatively', {
+        htmlLength: htmlWithErrorCapture.length,
+        hasDoctype: /<!doctype|<html/i.test(htmlWithErrorCapture),
         sessionId: sid,
       });
-      iframeRef.current.srcdoc = injectSessionId(html, sid);
+      iframeRef.current.srcdoc = injectSessionId(htmlWithErrorCapture, sid);
     }
-  }, [html, newSessionId, injectSessionId]);
+  }, [htmlWithErrorCapture, newSessionId, injectSessionId]);
 
   // Phase 2: Also clear stale errors when generation completes (isGenerating: true→false)
   const prevIsGeneratingRef = useRef(isGenerating);
@@ -788,7 +834,7 @@ window.addEventListener('message', function(e) {
             <iframe
               ref={iframeRef}
               key={`${iframeKey}-${refreshKey ?? 0}`}
-              srcDoc={htmlWithErrorCapture || ''}
+              srcDoc={htmlWithErrorCapture || undefined}
               className="w-full h-full border-0 bg-white"
               sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox"
               title="App Preview"
