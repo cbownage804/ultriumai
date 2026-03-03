@@ -59,9 +59,12 @@ interface BuilderPreviewPanelProps {
   repairErrors?: { file: string; message: string }[];
   onRetryRepair?: () => void;
   onDiscardChanges?: () => void;
+  /** Compile error info from state machine */
+  compileError?: { message: string; errors: string[] } | null;
+  onRetryCompile?: () => void;
 }
 
-export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey, repairFailed, repairErrors, onRetryRepair, onDiscardChanges }: BuilderPreviewPanelProps) {
+export function BuilderPreviewPanel({ html, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey, repairFailed, repairErrors, onRetryRepair, onDiscardChanges, compileError, onRetryCompile }: BuilderPreviewPanelProps) {
   const [internalViewportMode, setInternalViewportMode] = useState<ViewportMode>('desktop');
   const viewportMode = externalViewportMode ?? internalViewportMode;
   const setViewportMode = onExternalViewportChange ?? setInternalViewportMode;
@@ -853,7 +856,31 @@ window.addEventListener('message', function(e) {
         </div>
       )}
 
-      {/* Lovable-style error overlay banner */}
+      {/* Compile error overlay — shown when compile state machine is in 'error' */}
+      {compileError && !repairFailed && !isGenerating && (
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-[#1a1a2e] border border-amber-500/30 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+              <h3 className="text-base font-semibold text-amber-300">Compile failed</h3>
+            </div>
+            <p className="text-sm text-white/60 mb-4">
+              {compileError.message}
+            </p>
+            {compileError.errors.length > 0 && (
+              <div className="bg-black/40 rounded-lg p-3 mb-4 space-y-1.5 max-h-32 overflow-y-auto">
+                {compileError.errors.slice(0, 3).map((err, i) => (
+                  <div key={i} className="text-xs text-red-300/80 font-mono">{err}</div>
+                ))}
+              </div>
+            )}
+            <button onClick={onRetryCompile} className="w-full px-3 py-2 rounded-lg bg-amber-600/80 hover:bg-amber-600 text-white text-xs font-medium transition-colors">
+              Retry compile
+            </button>
+          </div>
+        </div>
+      )}
+
       {errors.length > 0 && errors.some(e => e.type === 'error') && (
         <div className="relative z-20 animate-in fade-in slide-in-from-bottom-2 duration-300">
           <div className="bg-red-950/95 backdrop-blur-sm border-t border-red-500/30">

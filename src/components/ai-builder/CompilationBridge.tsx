@@ -9,8 +9,17 @@ import { useLivePreviewSync } from '@/hooks/useLivePreviewSync';
 import type { ProjectAsset } from './AssetManager';
 import { isPreviewValid, previewDebugSummary } from './previewValidation';
 
+/** Compile State Machine — single source of truth for compilation phase */
+export type CompileState = 'idle' | 'compiling' | 'success' | 'error';
+
+export interface CompileErrorInfo {
+  message: string;
+  errors: string[];
+}
+
 const COMPILE_TIMEOUT_MS = 40_000;
 const COMPILE_SAFETY_TIMEOUT_MS = 50_000; // Hard safety net — if isCompiling stays true longer, force reset
+const COMPILE_HARD_TIMEOUT_MS = 8_000; // Hard timeout per compile attempt — prevents infinite "Compiling…"
 
 interface CompilationBridgeProps {
   files: ProjectFile[];
@@ -32,6 +41,7 @@ interface CompilationBridgeProps {
   onStableHTML: (html: string | null) => void;
   onCompiledForHosting: (html: string | null) => void;
   onCompilingChange?: (compiling: boolean) => void;
+  onCompileStateChange?: (state: CompileState, error?: CompileErrorInfo) => void;
   skipNextCompileRef?: React.MutableRefObject<boolean>;
   externalStableHTMLRef?: React.RefObject<string | null>;
   onForceCompile?: (fn: () => void) => void;
@@ -70,6 +80,7 @@ export function CompilationBridge({
   onStableHTML,
   onCompiledForHosting,
   onCompilingChange,
+  onCompileStateChange,
   skipNextCompileRef,
   externalStableHTMLRef,
   onForceCompile,
@@ -88,6 +99,14 @@ export function CompilationBridge({
   bundleForBrowserRef.current = bundleForBrowser;
   const onCompilingChangeRef = useRef(onCompilingChange);
   onCompilingChangeRef.current = onCompilingChange;
+  const onCompileStateChangeRef = useRef(onCompileStateChange);
+  onCompileStateChangeRef.current = onCompileStateChange;
+
+  // Helper to transition compile state machine
+  const transitionCompileState = useCallback((state: CompileState, error?: CompileErrorInfo) => {
+    onCompilingChangeRef.current?.(state === 'compiling');
+    onCompileStateChangeRef.current?.(state, error);
+  }, []);
 
   // Store files in a ref so effects can read latest data without depending on the array reference
   const filesRef = useRef(files);
@@ -230,7 +249,7 @@ export function CompilationBridge({
       prevFilesDigestRef.current = '';
       prevDigestRef.current = ''; // Reset memo cache so filesDigest recalculates on generation end
       // Safety: force-clear isCompiling in case it was stuck from previous cycle
-      onCompilingChangeRef.current?.(false);
+      transitionCompileState('idle');
     }
     prevIsGeneratingRef.current = isGenerating;
   }, [isGenerating]);
@@ -311,7 +330,7 @@ export function CompilationBridge({
             source: 'compilation-bridge',
           }, '*');
           // IMPORTANT: stop "compiling" state immediately
-          onCompilingChangeRef.current?.(false);
+          transitionCompileState('error', { message: 'Syntax errors in source files', errors: syntaxErrors.map(e => `${e.file}: ${e.message}`) });
           compilationInFlightRef.current = false;
 
           if (stableHTMLRef.current) {
@@ -341,7 +360,7 @@ export function CompilationBridge({
         fileCount: filesRef.current.length,
       });
       compilationInFlightRef.current = true;
-      onCompilingChangeRef.current?.(true);
+      transitionCompileState('compiling');
 
       // Safety net: force-reset isCompiling if compilation hangs
       safetyTimer = setTimeout(() => {
@@ -350,7 +369,7 @@ export function CompilationBridge({
           // Invalidate any in-flight promise so late results are discarded
           compileRunIdRef.current++;
           compilationInFlightRef.current = false;
-          onCompilingChangeRef.current?.(false);
+          transitionCompileState('error', { message: 'Compile safety timeout exceeded', errors: ['Compilation took too long and was aborted'] });
           if (!stableHTMLRef.current || !isPreviewValid(stableHTMLRef.current)) {
             setLiveCompiledHTML(ERROR_FALLBACK_HTML);
             setStableHTML(ERROR_FALLBACK_HTML);
@@ -370,7 +389,14 @@ export function CompilationBridge({
         }
 
         console.info('[CompilationBridge] compile tier start', { runId: thisRunId, ms: Math.round(performance.now() - t0) });
-        const result = await runCompile();
+        
+        // ── Hard timeout: prevent infinite "Compiling…" ──
+        const result = await Promise.race([
+          runCompile(),
+          new Promise<null>((_, reject) =>
+            setTimeout(() => reject(new Error('Compile timeout — exceeded ' + COMPILE_HARD_TIMEOUT_MS + 'ms')), COMPILE_HARD_TIMEOUT_MS)
+          ),
+        ]);
         console.info('[CompilationBridge] compile resolved', { runId: thisRunId, ms: Math.round(performance.now() - t0) });
 
         // ── Stale run-ID check — discard if a newer compile was started ──
@@ -384,11 +410,7 @@ export function CompilationBridge({
           const looksLikeViteDev = /\/@vite\/client|import\.meta\.hot\b|__vite_plugin_react_preamble_installed__/.test(result);
           if (looksLikeViteDev) {
             console.warn('[CompilationBridge] BUILD GATED: dev client detected in output');
-            window.postMessage({
-              type: '__BUILD_GATED__',
-              payload: { reason: 'dev_client_detected', errors: ['Compiled output contains Vite dev/HMR client'] },
-              source: 'compilation-bridge',
-            }, '*');
+            transitionCompileState('error', { message: 'Dev client detected in output', errors: ['Compiled output contains Vite dev/HMR client'] });
             return; // Keep LKG
           }
 
@@ -397,14 +419,8 @@ export function CompilationBridge({
           const hasIncomplete = filesToValidate.some(f => (f as any).incomplete === true);
 
           if (hasIncomplete) {
-            const reason = 'incomplete_files';
-            console.warn('[CompilationBridge] BUILD GATED:', reason);
-            window.postMessage({
-              type: '__BUILD_GATED__',
-              payload: { reason, errors: ['One or more files are incomplete (stream truncated)'] },
-              source: 'compilation-bridge',
-            }, '*');
-            // Keep previous LKG preview — do NOT set stableHTML
+            console.warn('[CompilationBridge] BUILD GATED: incomplete_files');
+            transitionCompileState('error', { message: 'Incomplete files detected', errors: ['One or more files are incomplete (stream truncated)'] });
           } else if (isPreviewValid(result)) {
             // ── Preview Success Contract: only promote valid HTML ──
             setLiveCompiledHTML(result);
@@ -414,6 +430,7 @@ export function CompilationBridge({
               ...previewDebugSummary(result),
             });
             setStableHTML(result);
+            transitionCompileState('success');
             liveSync.resetSnapshot(filesRef.current);
             if (softReloadPendingRef.current) {
               softReloadPendingRef.current = false;
@@ -421,9 +438,14 @@ export function CompilationBridge({
             }
             window.postMessage({ type: '__PREVIEW_READY__', source: 'compilation-bridge' }, '*');
           } else {
-            // Compiled but invalid HTML — keep LKG, do NOT update stableHTML
+            // Compiled but invalid HTML — keep LKG, report error
             console.warn('[CompilationBridge] ❌ Compile produced invalid preview HTML — keeping LKG', previewDebugSummary(result));
-            // Do NOT set stableHTML or liveCompiledHTML — preserve whatever LKG is showing
+            const summary = previewDebugSummary(result);
+            const reasons: string[] = [];
+            if (!summary.hasDoctype) reasons.push('Missing <!DOCTYPE> or <html> tag');
+            if (!summary.hasRoot) reasons.push('Missing <div id="root"> mount point');
+            if (summary.isFallback) reasons.push('Output contains error/fallback sentinel');
+            transitionCompileState('error', { message: 'Invalid preview HTML', errors: reasons.length ? reasons : ['Compiled HTML failed validation'] });
           }
         } else {
           // Compilation returned null — keep LKG if we have one, otherwise show error
@@ -434,9 +456,11 @@ export function CompilationBridge({
             setLiveCompiledHTML(ERROR_FALLBACK_HTML);
             setStableHTML(ERROR_FALLBACK_HTML);
           }
+          transitionCompileState('error', { message: 'Compilation returned empty result', errors: ['Compiler produced no output'] });
         }
       } catch (err) {
-        console.error('[CompilationBridge] Compilation crashed:', err);
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.error('[CompilationBridge] Compilation crashed:', errMsg);
         // Only apply fallback if this run is still current AND no LKG exists
         if (thisRunId === compileRunIdRef.current) {
           if (stableHTMLRef.current && isPreviewValid(stableHTMLRef.current)) {
@@ -445,11 +469,12 @@ export function CompilationBridge({
             setLiveCompiledHTML(ERROR_FALLBACK_HTML);
             setStableHTML(ERROR_FALLBACK_HTML);
           }
+          transitionCompileState('error', { message: errMsg, errors: [errMsg] });
         }
       } finally {
         clearTimeout(safetyTimer);
         compilationInFlightRef.current = false;
-        onCompilingChangeRef.current?.(false);
+        // Note: state already transitioned in try/catch above — finally just ensures flag cleanup
       }
     }, debounceMs);
 
