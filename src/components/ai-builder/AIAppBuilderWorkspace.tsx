@@ -78,6 +78,7 @@ import { DesignViewPanel } from './DesignViewPanel';
 import { PanelErrorBoundary } from './PanelErrorBoundary';
 import { SafePanel } from './SafePanel';
 import { buildAuthTemplate } from './authTemplates';
+import { isPreviewValid as isPreviewValidFn, previewDebugSummary } from './previewValidation';
 import { BugReportModal } from '@/components/help/BugReportModal';
 import { usePluginRegistry } from '@/hooks/usePluginRegistry';
 import { useCollaborationEngine } from '@/hooks/useCollaborationEngine';
@@ -533,6 +534,12 @@ export function AIAppBuilderWorkspace() {
     }
 
     const { files: rawParsedFiles, deletions: rawDeletions, edits: rawEdits } = parseMultiFileOutput(job.output_content);
+    console.info('[handleBgComplete] 📦 Parsed output', {
+      stagedFiles: rawParsedFiles.length,
+      edits: rawEdits.length,
+      deletions: rawDeletions.length,
+      changedPaths: [...rawParsedFiles.map(f => f.path), ...rawEdits.map(e => e.path)],
+    });
     // ── Infrastructure file protection: block edits to boot-critical files unless user explicitly mentioned them ──
     const { parsedFiles, edits, deletions: safeDeletions, blocked } = filterProtectedFiles(
       rawParsedFiles, rawEdits, rawDeletions, latestMessagesRef.current
@@ -762,6 +769,11 @@ export function AIAppBuilderWorkspace() {
 
       const validationResult = outputValidationRef.current.validate(mergedFiles);
       const valErrors = validationResult.issues.filter(i => i.severity === 'error');
+      console.info('[handleBgComplete] 🔍 Validation result', {
+        isValid: validationResult.isValid,
+        errorCount: valErrors.length,
+        errors: valErrors.slice(0, 5).map(e => `${e.file}: ${e.message}`),
+      });
 
       if (valErrors.length === 0) {
         // COMMIT — validation passed
@@ -2967,14 +2979,21 @@ export function AIAppBuilderWorkspace() {
   });
   const stableHTMLRef = useRef<string | null>(stableHTML);
   const skipNextCompileRef = useRef(false);
+  // ── LKG HTML ref — only updated when preview is valid ──
+  const lastKnownGoodHTMLRef = useRef<string | null>(stableHTML && isPreviewValidFn(stableHTML) ? stableHTML : null);
   const handleStableHTML = useCallback((html: string | null) => {
     const changed = html !== stableHTMLRef.current;
     stableHTMLRef.current = html;
     setStableHTML(html);
-    // Cache to localStorage for instant restore on reload
+    // ── LKG update: only when preview is valid ──
+    if (html && isPreviewValidFn(html)) {
+      lastKnownGoodHTMLRef.current = html;
+      console.info('[Workspace] LKG updated', { htmlLength: html.length });
+    }
+    // Cache to localStorage for instant restore on reload — only valid HTML
     try {
       const isFallback = html?.includes('name="ai-builder-fallback"') ?? false;
-      if (html && !isFallback) {
+      if (html && !isFallback && isPreviewValidFn(html)) {
         localStorage.setItem(COMPILED_CACHE_KEY, html);
       }
     } catch { /* quota exceeded — non-critical */ }
@@ -3032,7 +3051,9 @@ export function AIAppBuilderWorkspace() {
     return () => document.removeEventListener('visibilitychange', handleVisible);
   }, []);
 
-  const compiledHTML = stableHTML;
+  // ── Preview Success Contract: compiledHTML uses LKG fallback; isPreviewReady derived from validity ──
+  const compiledHTML = stableHTML && isPreviewValidFn(stableHTML) ? stableHTML : lastKnownGoodHTMLRef.current;
+  const isPreviewReady = !!(compiledHTML && isPreviewValidFn(compiledHTML) && !isCompiling);
   const hasFiles = project.files.length > 0;
 
   // Mobile detection
@@ -3213,7 +3234,7 @@ export function AIAppBuilderWorkspace() {
         <div className="flex-1 overflow-hidden">
           {isMobile ? (
             mobileTab === 'chat' ? (
-              <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} contextBudget={contextBudget} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} onReview={() => { projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)); projectReview.setShowPanel(true); }} supabaseConfig={supabaseConfig} onUpdateMessages={setMessages} streamingContentRef={streamingContentRef} onNewConversation={handleNewConversation} onShowSettings={() => setShowSettingsModal(true)} onShowHistory={() => setShowVersionHistory(true)} onShowKnowledge={() => setShowKnowledge(true)} onShowGitHub={() => setShowGitHubPanel(true)} conversationForks={conversationForks} activeForkId={activeForkId} onForkConversation={forkConversation} onSwitchFork={switchFork} onDeleteFork={deleteFork} questionsSlot={builderQuestions.pending ? (
+              <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} contextBudget={contextBudget} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} onReview={() => { projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)); projectReview.setShowPanel(true); }} supabaseConfig={supabaseConfig} onUpdateMessages={setMessages} streamingContentRef={streamingContentRef} onNewConversation={handleNewConversation} onShowSettings={() => setShowSettingsModal(true)} onShowHistory={() => setShowVersionHistory(true)} onShowKnowledge={() => setShowKnowledge(true)} onShowGitHub={() => setShowGitHubPanel(true)} conversationForks={conversationForks} activeForkId={activeForkId} onForkConversation={forkConversation} onSwitchFork={switchFork} onDeleteFork={deleteFork} isPreviewReady={isPreviewReady} questionsSlot={builderQuestions.pending ? (
                 <div className="px-3 pt-2">
                   <QuestionsCard
                     questions={builderQuestions.pending.questions}
@@ -3285,7 +3306,7 @@ export function AIAppBuilderWorkspace() {
                 )}
                 <div className="flex-1 overflow-hidden flex flex-col">
                   <div className="flex-1 overflow-hidden">
-                    <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} contextBudget={contextBudget} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} onReview={() => { projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)); projectReview.setShowPanel(true); }} supabaseConfig={supabaseConfig} onUpdateMessages={setMessages} streamingContentRef={streamingContentRef} onNewConversation={handleNewConversation} onShowSettings={() => setShowSettingsModal(true)} onShowHistory={() => setShowVersionHistory(true)} onShowKnowledge={() => setShowKnowledge(true)} onShowGitHub={() => setShowGitHubPanel(true)} conversationForks={conversationForks} activeForkId={activeForkId} onForkConversation={forkConversation} onSwitchFork={switchFork} onDeleteFork={deleteFork} questionsSlot={builderQuestions.pending ? (
+                    <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} contextBudget={contextBudget} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} onReview={() => { projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)); projectReview.setShowPanel(true); }} supabaseConfig={supabaseConfig} onUpdateMessages={setMessages} streamingContentRef={streamingContentRef} onNewConversation={handleNewConversation} onShowSettings={() => setShowSettingsModal(true)} onShowHistory={() => setShowVersionHistory(true)} onShowKnowledge={() => setShowKnowledge(true)} onShowGitHub={() => setShowGitHubPanel(true)} conversationForks={conversationForks} activeForkId={activeForkId} onForkConversation={forkConversation} onSwitchFork={switchFork} onDeleteFork={deleteFork} isPreviewReady={isPreviewReady} questionsSlot={builderQuestions.pending ? (
                       <div className="px-3 pt-2">
                         <QuestionsCard
                           questions={builderQuestions.pending.questions}
