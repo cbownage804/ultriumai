@@ -39,6 +39,7 @@ import type { ChangelogEntry } from './ChangelogPanel';
 import type { CommandAction } from './EnhancedCommandPalette';
 import { useProjectBundler } from '@/hooks/useProjectBundler';
 import { CompilationBridge, ERROR_FALLBACK_HTML } from './CompilationBridge';
+import type { CompileState, CompileErrorInfo } from './CompilationBridge';
 import { detectReactProject } from '@/hooks/useReactCompiler';
 import { useWorkerCompiler } from '@/hooks/useWorkerCompiler';
 import { useASTBundler } from '@/hooks/useASTBundler';
@@ -1173,9 +1174,16 @@ export function AIAppBuilderWorkspace() {
   const [lastFixError, setLastFixError] = useState<string | null>(null);
   const MAX_FIX_ATTEMPTS = 3;
   const [isCompiling, setIsCompilingRaw] = useState(false);
+  const [compileState, setCompileStateRaw] = useState<CompileState>('idle');
+  const [compileError, setCompileError] = useState<CompileErrorInfo | null>(null);
   const setIsCompiling = useCallback((v: boolean) => {
     setIsCompilingRaw(v);
     setCompilationToastGate(v);
+  }, []);
+  const handleCompileStateChange = useCallback((state: CompileState, error?: CompileErrorInfo) => {
+    setCompileStateRaw(state);
+    setCompileError(state === 'error' && error ? error : null);
+    console.info('[Workspace] compileState →', state, error ? error.message : '');
   }, []);
   const [selectedModel, setSelectedModel] = useState('google/gemini-3-flash-preview');
   const [previewSlug, setPreviewSlug] = useState<string | null>(null);
@@ -2289,6 +2297,12 @@ export function AIAppBuilderWorkspace() {
     }
   }, []);
 
+  const handleRetryCompile = useCallback(() => {
+    setCompileStateRaw('idle');
+    setCompileError(null);
+    forceCompileRef.current?.();
+  }, []);
+
   const handleDiscardChanges = useCallback(() => {
     clearRepairWatchdog();
     repairActiveJobIdRef.current = null;
@@ -2979,8 +2993,9 @@ export function AIAppBuilderWorkspace() {
   });
   const stableHTMLRef = useRef<string | null>(stableHTML);
   const skipNextCompileRef = useRef(false);
-  // ── LKG HTML ref — only updated when preview is valid ──
-  const lastKnownGoodHTMLRef = useRef<string | null>(stableHTML && isPreviewValidFn(stableHTML) ? stableHTML : null);
+  // ── LKG HTML ref — only updated when preview is valid; NEVER empty ──
+  const MINIMAL_MOUNT_HTML = '<!DOCTYPE html><html><body><div id="root"></div></body></html>';
+  const lastKnownGoodHTMLRef = useRef<string>(stableHTML && isPreviewValidFn(stableHTML) ? stableHTML : MINIMAL_MOUNT_HTML);
   const handleStableHTML = useCallback((html: string | null) => {
     const changed = html !== stableHTMLRef.current;
     stableHTMLRef.current = html;
@@ -3051,9 +3066,9 @@ export function AIAppBuilderWorkspace() {
     return () => document.removeEventListener('visibilitychange', handleVisible);
   }, []);
 
-  // ── Preview Success Contract: compiledHTML uses LKG fallback; isPreviewReady derived from validity ──
+  // ── Preview Success Contract: compiledHTML uses LKG fallback; isPreviewReady derived strictly from compile state ──
   const compiledHTML = stableHTML && isPreviewValidFn(stableHTML) ? stableHTML : lastKnownGoodHTMLRef.current;
-  const isPreviewReady = !!(compiledHTML && isPreviewValidFn(compiledHTML) && !isCompiling);
+  const isPreviewReady = compileState === 'success' && !!(compiledHTML && isPreviewValidFn(compiledHTML));
   const hasFiles = project.files.length > 0;
 
   // Mobile detection
@@ -3159,6 +3174,7 @@ export function AIAppBuilderWorkspace() {
           onStableHTML={handleStableHTML}
           onCompiledForHosting={handleCompiledForHosting}
           onCompilingChange={setIsCompiling}
+          onCompileStateChange={handleCompileStateChange}
           skipNextCompileRef={skipNextCompileRef}
           externalStableHTMLRef={stableHTMLRef}
           onForceCompile={handleForceCompile}
@@ -3251,7 +3267,7 @@ export function AIAppBuilderWorkspace() {
                 </div>
               ) : undefined} />
             ) : mobileTab === 'preview' ? (
-                <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl} repairFailed={repairFailed} repairErrors={repairErrors} onRetryRepair={handleRetryRepair} onDiscardChanges={handleDiscardChanges}>
+                <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl} repairFailed={repairFailed} repairErrors={repairErrors} onRetryRepair={handleRetryRepair} onDiscardChanges={handleDiscardChanges} compileError={compileError} onRetryCompile={handleRetryCompile}>
                   <GeneratingOverlay isGenerating={isGenerating} isCompiling={isCompiling} phase={thinkingPhase} partialFilesRef={partialFilesRef} completedFileCountRef={completedFileCountRef} continuationRound={continuationRound} />
                 </BuilderPreviewPanel>
             ) : (
@@ -3621,7 +3637,7 @@ export function AIAppBuilderWorkspace() {
                               <ResizablePanelGroup direction="horizontal" className="h-full">
                                 <ResizablePanel defaultSize={50} minSize={30}>
                                   <div data-tour="preview" className="h-full">
-                                    <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl} repairFailed={repairFailed} repairErrors={repairErrors} onRetryRepair={handleRetryRepair} onDiscardChanges={handleDiscardChanges}>
+                                    <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl} repairFailed={repairFailed} repairErrors={repairErrors} onRetryRepair={handleRetryRepair} onDiscardChanges={handleDiscardChanges} compileError={compileError} onRetryCompile={handleRetryCompile}>
                                       <GeneratingOverlay isGenerating={isGenerating} isCompiling={isCompiling} phase={thinkingPhase} partialFilesRef={partialFilesRef} completedFileCountRef={completedFileCountRef} continuationRound={continuationRound} />
                                     </BuilderPreviewPanel>
                                   </div>
@@ -3638,7 +3654,7 @@ export function AIAppBuilderWorkspace() {
                               </ResizablePanelGroup>
                             ) : rightTab === 'preview' || !hasFiles ? (
                               <div data-tour="preview" className="h-full">
-                                <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl} repairFailed={repairFailed} repairErrors={repairErrors} onRetryRepair={handleRetryRepair} onDiscardChanges={handleDiscardChanges}>
+                                <BuilderPreviewPanel html={compiledHTML} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl} repairFailed={repairFailed} repairErrors={repairErrors} onRetryRepair={handleRetryRepair} onDiscardChanges={handleDiscardChanges} compileError={compileError} onRetryCompile={handleRetryCompile}>
                                   <GeneratingOverlay isGenerating={isGenerating} isCompiling={isCompiling} phase={thinkingPhase} partialFilesRef={partialFilesRef} completedFileCountRef={completedFileCountRef} continuationRound={continuationRound} />
                                 </BuilderPreviewPanel>
                               </div>
