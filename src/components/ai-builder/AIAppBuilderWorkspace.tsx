@@ -415,7 +415,16 @@ function userExplicitlyMentionedFile(messages: { role: string; content: string }
   // Find the last user message
   for (let i = messages.length - 1; i >= 0; i--) {
     if (messages[i].role === 'user') {
-      const content = messages[i].content.toLowerCase();
+      const raw = messages[i].content || '';
+      const marker = 'User request:';
+
+      // Some payloads include FILE_MANIFEST/context scaffolding in the "user" message.
+      // Only evaluate the actual natural-language request when present.
+      const effectiveContent = raw.includes(marker)
+        ? raw.slice(raw.lastIndexOf(marker) + marker.length)
+        : raw;
+
+      const content = effectiveContent.toLowerCase();
       const fileName = filePath.split('/').pop()?.toLowerCase() || '';
       return content.includes(filePath.toLowerCase()) || content.includes(fileName);
     }
