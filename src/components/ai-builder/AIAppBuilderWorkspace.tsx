@@ -461,11 +461,12 @@ function filterProtectedFiles(
   edits: { path: string; [k: string]: any }[],
   deletions: string[],
   messages: { role: string; content: string }[],
+  allowInfraEdits = false,
 ): { parsedFiles: ProjectFile[]; edits: typeof edits; deletions: string[]; blocked: string[] } {
   const blocked: string[] = [];
 
   const filteredParsed = parsedFiles.filter(f => {
-    if (PROTECTED_INFRA_FILES.includes(f.path) && !userExplicitlyMentionedFile(messages, f.path)) {
+    if (!allowInfraEdits && PROTECTED_INFRA_FILES.includes(f.path) && !userExplicitlyMentionedFile(messages, f.path)) {
       blocked.push(f.path);
       return false;
     }
@@ -473,7 +474,7 @@ function filterProtectedFiles(
   });
 
   const filteredEdits = edits.filter(e => {
-    if (PROTECTED_INFRA_FILES.includes(e.path) && !userExplicitlyMentionedFile(messages, e.path)) {
+    if (!allowInfraEdits && PROTECTED_INFRA_FILES.includes(e.path) && !userExplicitlyMentionedFile(messages, e.path)) {
       blocked.push(e.path);
       return false;
     }
@@ -660,7 +661,11 @@ export function AIAppBuilderWorkspace() {
     });
     // ── Infrastructure file protection: block edits to boot-critical files unless user explicitly mentioned them ──
     const { parsedFiles, edits, deletions: safeDeletions, blocked } = filterProtectedFiles(
-      rawParsedFiles, rawEdits, rawDeletions, latestMessagesRef.current
+      rawParsedFiles,
+      rawEdits,
+      rawDeletions,
+      latestMessagesRef.current,
+      repairInFlightRef.current,
     );
     if (blocked.length > 0) {
       console.warn(`[Workspace] Blocked edit to protected infrastructure file(s): ${blocked.join(', ')}`);
