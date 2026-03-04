@@ -264,12 +264,23 @@ const DEFAULT_SANDBOX_INDEX_HTML = `<!doctype html>
 const buildSandpackFileMap = (files: ProjectFile[]): SandpackFileMap => {
   const fileMap = new Map(files.map((file) => [file.path, file.content]));
 
-  return {
-    '/src/App.tsx': fileMap.get('src/App.tsx') ?? 'export default function App() { return <div>App Builder Preview</div>; }',
-    '/src/main.tsx': fileMap.get('src/main.tsx') ?? DEFAULT_SANDBOX_MAIN_TSX,
-    '/src/index.css': fileMap.get('src/index.css') ?? '',
-    '/index.html': fileMap.get('index.html') ?? DEFAULT_SANDBOX_INDEX_HTML,
+  // Start from golden defaults, overlay project files
+  const result: SandpackFileMap = {
+    '/src/App.tsx': fileMap.get('src/App.tsx') ?? GOLDEN_FILES['src/App.tsx'],
+    '/src/main.tsx': fileMap.get('src/main.tsx') ?? GOLDEN_FILES['src/main.tsx'],
+    '/src/index.css': fileMap.get('src/index.css') ?? GOLDEN_FILES['src/index.css'],
+    '/index.html': fileMap.get('index.html') ?? GOLDEN_FILES['index.html'],
   };
+
+  // Include any additional project files (components, utils, etc.)
+  for (const [path, content] of fileMap) {
+    const sandpackPath = path.startsWith('/') ? path : `/${path}`;
+    if (!result[sandpackPath]) {
+      result[sandpackPath] = content;
+    }
+  }
+
+  return result;
 };
 
 /** Infrastructure files that must not be modified unless the user explicitly mentions them */
