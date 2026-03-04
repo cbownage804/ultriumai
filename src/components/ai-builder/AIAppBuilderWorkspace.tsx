@@ -284,7 +284,7 @@ const buildSandpackFileMap = (files: ProjectFile[]): SandpackFileMap => {
 };
 
 /** Infrastructure files that must not be modified unless the user explicitly mentions them */
-const PROTECTED_INFRA_FILES = ['src/main.tsx', 'index.html', 'package.json', 'vite.config.ts', 'vite.config.js', 'tsconfig.json', 'tsconfig.app.json'];
+const PROTECTED_INFRA_FILES = PROTECTED_FILES;
 
 /**
  * Boot Integrity Validation — ensures the app can mount.
