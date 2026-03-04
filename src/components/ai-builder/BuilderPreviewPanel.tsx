@@ -66,9 +66,13 @@ interface BuilderPreviewPanelProps {
   /** Compile error info from state machine */
   compileError?: { message: string; errors: string[] } | null;
   onRetryCompile?: () => void;
+  /** Whether this is a brand-new project with no user-generated files */
+  isGoldenProject?: boolean;
+  /** Reset to golden template */
+  onResetToGolden?: () => void;
 }
 
-export function BuilderPreviewPanel({ html, previewFiles, compileState = 'idle', showConsole = false, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey, repairFailed, repairErrors, onRetryRepair, onDiscardChanges, compileError, onRetryCompile }: BuilderPreviewPanelProps) {
+export function BuilderPreviewPanel({ html, previewFiles, compileState = 'idle', showConsole = false, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey, repairFailed, repairErrors, onRetryRepair, onDiscardChanges, compileError, onRetryCompile, isGoldenProject, onResetToGolden }: BuilderPreviewPanelProps) {
   const [internalViewportMode, setInternalViewportMode] = useState<ViewportMode>('desktop');
   const viewportMode = externalViewportMode ?? internalViewportMode;
   const setViewportMode = onExternalViewportChange ?? setInternalViewportMode;
