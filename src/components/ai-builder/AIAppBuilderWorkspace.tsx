@@ -3073,19 +3073,21 @@ export function AIAppBuilderWorkspace() {
     }
   }, []);
 
-  // Keep Sandpack file-map transactional with compile success contract
+  // Keep Sandpack file-map in sync with project files directly.
+  // Sandpack handles its own bundling — no need to gate on external compile state.
   useEffect(() => {
-    const canCommitPreviewFiles = compileState === 'success' && !!stableHTML && isPreviewValidFn(stableHTML);
-    if (!canCommitPreviewFiles) return;
+    if (project.files.length === 0) return;
+    // Don't update while actively generating (files are partial)
+    if (isGenerating) return;
 
     const nextFiles = buildSandpackFileMap(project.files);
     setPreviewFiles(nextFiles);
     lastKnownGoodPreviewFilesRef.current = nextFiles;
-    console.info('[Workspace] LKG Sandpack files updated', {
+    console.info('[Workspace] Sandpack files updated', {
       fileCount: Object.keys(nextFiles).length,
       files: Object.keys(nextFiles),
     });
-  }, [compileState, stableHTML, project.files]);
+  }, [project.files, isGenerating]);
 
   // Phase 3: Lightweight safety net — if stableHTML is still null 5s after
   // generation ends and we have files, nudge CompilationBridge by toggling isCompiling.
@@ -3138,7 +3140,8 @@ export function AIAppBuilderWorkspace() {
   // ── Preview Success Contract: compiledHTML uses LKG fallback; isPreviewReady derived strictly from compile state ──
   const compiledHTML = stableHTML && isPreviewValidFn(stableHTML) ? stableHTML : lastKnownGoodHTMLRef.current;
   const isPreviewReady = compileState === 'success' && !!(compiledHTML && isPreviewValidFn(compiledHTML));
-  const previewFilesForRender = compileState === 'success' && stableHTML && isPreviewValidFn(stableHTML)
+  // Sandpack compiles internally — always use latest file map, fall back to LKG if empty
+  const previewFilesForRender = Object.keys(previewFiles).length > 0
     ? previewFiles
     : lastKnownGoodPreviewFilesRef.current;
   const hasFiles = project.files.length > 0;
