@@ -265,9 +265,13 @@ const buildSandpackFileMap = (files: ProjectFile[]): SandpackFileMap => {
   const fileMap = new Map(files.map((file) => [file.path, file.content]));
 
   // Start from golden defaults, overlay project files
+  // Strip @tailwind directives from CSS — the Tailwind CDN script handles class scanning automatically
+  const rawCss = fileMap.get('src/index.css') ?? GOLDEN_FILES['src/index.css'];
+  const strippedCss = rawCss.replace(/^@tailwind\s+[^;]+;\s*$/gm, '').trim();
+
   const result: SandpackFileMap = {
     '/src/App.tsx': fileMap.get('src/App.tsx') ?? GOLDEN_FILES['src/App.tsx'],
-    '/src/index.css': fileMap.get('src/index.css') ?? GOLDEN_FILES['src/index.css'],
+    '/src/index.css': strippedCss || GOLDEN_FILES['src/index.css'],
   };
 
   // Sandpack's react-ts template expects /src/index.tsx as entry.
@@ -275,18 +279,56 @@ const buildSandpackFileMap = (files: ProjectFile[]): SandpackFileMap => {
   const mainContent = fileMap.get('src/main.tsx') ?? GOLDEN_FILES['src/main.tsx'];
   result['/src/index.tsx'] = mainContent;
 
+  // Inject Tailwind CDN into the Sandpack index.html so utility classes work
+  result['/public/index.html'] = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>`;
+
   // Include any additional project files (components, utils, etc.)
   for (const [path, content] of fileMap) {
     const sandpackPath = path.startsWith('/') ? path : `/${path}`;
     // Skip files already mapped or infrastructure files Sandpack handles internally
     if (sandpackPath === '/src/main.tsx' || sandpackPath === '/index.html' || sandpackPath === '/package.json') continue;
-    if (!result[sandpackPath]) {
+    // Strip @tailwind directives from any additional CSS files too
+    if (sandpackPath.endsWith('.css') && !result[sandpackPath]) {
+      result[sandpackPath] = content.replace(/^@tailwind\s+[^;]+;\s*$/gm, '').trim() || content;
+    } else if (!result[sandpackPath]) {
       result[sandpackPath] = content;
     }
   }
 
   return result;
 };
+
+/** Extract dependencies from project package.json for Sandpack */
+function extractDependencies(files: ProjectFile[]): Record<string, string> {
+  const baseDeps: Record<string, string> = { react: "^18.3.1", "react-dom": "^18.3.1" };
+  const pkgFile = files.find(f => f.path === 'package.json');
+  if (!pkgFile) return baseDeps;
+  try {
+    const pkg = JSON.parse(pkgFile.content);
+    const deps = pkg.dependencies || {};
+    // Remove devDependencies-only packages and vite/typescript (Sandpack handles these)
+    const skipPkgs = ['vite', 'typescript', '@vitejs/plugin-react', '@types/react', '@types/react-dom'];
+    const merged = { ...baseDeps };
+    for (const [name, version] of Object.entries(deps)) {
+      if (!skipPkgs.includes(name) && typeof version === 'string') {
+        merged[name] = version;
+      }
+    }
+    return merged;
+  } catch {
+    return baseDeps;
+  }
+}
 
 /** Infrastructure files that must not be modified unless the user explicitly mentions them */
 const PROTECTED_INFRA_FILES = PROTECTED_FILES;

@@ -26,6 +26,8 @@ import { SandpackProvider, SandpackPreview, SandpackConsole } from '@codesandbox
 interface BuilderPreviewPanelProps {
   html: string | null;
   previewFiles: Record<string, string>;
+  /** Dependencies to pass to SandpackProvider customSetup */
+  previewDependencies?: Record<string, string>;
   compileState?: 'idle' | 'compiling' | 'success' | 'error';
   showConsole?: boolean;
   isGenerating: boolean;
