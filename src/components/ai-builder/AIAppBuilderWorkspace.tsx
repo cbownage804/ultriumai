@@ -3131,6 +3131,27 @@ export function AIAppBuilderWorkspace() {
     ? previewFiles
     : lastKnownGoodPreviewFilesRef.current;
   const hasFiles = project.files.length > 0;
+  const isNewProject = !hasUserGeneratedFiles(project.files);
+
+  // ── Initialize new projects with golden template files ──
+  useEffect(() => {
+    if (project.files.length === 0) {
+      console.info('[Workspace] No files — initializing with golden template');
+      const goldenFiles = getGoldenProjectFiles();
+      setFiles(goldenFiles);
+    }
+  }, []); // Only on mount
+
+  // ── Reset to Golden Template ──
+  const handleResetToGolden = useCallback(() => {
+    const goldenFiles = getGoldenProjectFiles();
+    pushUndo('Reset to golden template', project.files);
+    setFiles(goldenFiles);
+    setStableHTML(null);
+    stableHTMLRef.current = null;
+    try { localStorage.removeItem(COMPILED_CACHE_KEY); } catch {}
+    dedupeToast('success', 'Project reset to golden template');
+  }, [project.files, setFiles, pushUndo]);
 
   // Mobile detection
   const [isMobile, setIsMobile] = useState(false);
