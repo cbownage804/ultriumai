@@ -267,14 +267,19 @@ const buildSandpackFileMap = (files: ProjectFile[]): SandpackFileMap => {
   // Start from golden defaults, overlay project files
   const result: SandpackFileMap = {
     '/src/App.tsx': fileMap.get('src/App.tsx') ?? GOLDEN_FILES['src/App.tsx'],
-    '/src/main.tsx': fileMap.get('src/main.tsx') ?? GOLDEN_FILES['src/main.tsx'],
     '/src/index.css': fileMap.get('src/index.css') ?? GOLDEN_FILES['src/index.css'],
-    '/index.html': fileMap.get('index.html') ?? GOLDEN_FILES['index.html'],
   };
+
+  // Sandpack's react-ts template expects /src/index.tsx as entry.
+  // Map our src/main.tsx content into Sandpack's expected entry point.
+  const mainContent = fileMap.get('src/main.tsx') ?? GOLDEN_FILES['src/main.tsx'];
+  result['/src/index.tsx'] = mainContent;
 
   // Include any additional project files (components, utils, etc.)
   for (const [path, content] of fileMap) {
     const sandpackPath = path.startsWith('/') ? path : `/${path}`;
+    // Skip files already mapped or infrastructure files Sandpack handles internally
+    if (sandpackPath === '/src/main.tsx' || sandpackPath === '/index.html' || sandpackPath === '/package.json') continue;
     if (!result[sandpackPath]) {
       result[sandpackPath] = content;
     }
