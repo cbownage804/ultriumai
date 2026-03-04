@@ -3056,7 +3056,7 @@ export function AIAppBuilderWorkspace() {
   const [previewFiles, setPreviewFiles] = useState<SandpackFileMap>(() =>
     buildSandpackFileMap(project.files.length > 0 ? project.files : getGoldenProjectFiles())
   );
-  const lastKnownGoodPreviewFilesRef = useRef<SandpackFileMap>(() =>
+  const lastKnownGoodPreviewFilesRef = useRef<SandpackFileMap>(
     buildSandpackFileMap(project.files.length > 0 ? project.files : getGoldenProjectFiles())
   );
 
