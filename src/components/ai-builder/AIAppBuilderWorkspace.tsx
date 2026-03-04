@@ -936,6 +936,10 @@ export function AIAppBuilderWorkspace() {
         pendingValidationFixRef.current = { errorSummary, files: mergedFiles };
         setRepairTrigger(t => t + 1); // Force repair effect to re-evaluate
 
+        // Prevent stale "compiling" UI from blocking/obscuring repair flow
+        setIsCompiling(false);
+        setCompileStateRaw('idle');
+
         // Auto-fix watchdog: terminal state after 25s — do NOT commit invalid staged files
         clearRepairWatchdog();
         repairWatchdogRef.current = setTimeout(() => {
@@ -2460,7 +2464,7 @@ export function AIAppBuilderWorkspace() {
   // ── Bounded repair pipeline (max 2 attempts) ──
   // Replaces the old single-shot validation fix effect.
   useEffect(() => {
-    if (!isGenerating && !isCompiling && pendingValidationFixRef.current && !repairInFlightRef.current) {
+    if (!isGenerating && pendingValidationFixRef.current && !repairInFlightRef.current) {
       const { errorSummary, files } = pendingValidationFixRef.current;
       const attempt = repairAttemptRef.current + 1;
 
