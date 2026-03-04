@@ -78,13 +78,8 @@ export function BuilderPreviewPanel({ html, previewFiles, compileState = 'idle',
   const setViewportMode = onExternalViewportChange ?? setInternalViewportMode;
   const [iframeKey, setIframeKey] = useState(0);
 
-  // Force Sandpack remount on compile success transition
-  useEffect(() => {
-    if (compileState === 'success') {
-      console.info('[PreviewPanel] Compile success transition — forcing Sandpack re-render');
-      setIframeKey(k => k + 1);
-    }
-  }, [compileState]);
+  // Sandpack compiles internally — no need to remount on external compile state changes.
+  // Only remount on explicit refreshKey change (user-triggered refresh).
   const [errors, setErrors] = useState<PreviewError[]>([]);
   const [currentUrl, setCurrentUrl] = useState('/');
   const [urlHistory, setUrlHistory] = useState<string[]>(['/']);
@@ -402,44 +397,8 @@ window.addEventListener('message', function(e) {
       return;
     }
 
-    healthCheckRef.current = setInterval(() => {
-      // Pause health checks during compilation — iframe is expected blank
-      if (isCompiling) {
-        consecutiveFailsRef.current = 0;
-        return;
-      }
-      const iframe = (iframeRef as React.RefObject<HTMLIFrameElement>)?.current;
-      if (!iframe) return;
-
-      try {
-        const doc = iframe.contentDocument;
-        if (!doc) { consecutiveFailsRef.current++; return; }
-        const body = doc.body;
-        if (!body || body.innerHTML.trim().length < 10) {
-          consecutiveFailsRef.current++;
-        } else {
-          consecutiveFailsRef.current = 0;
-        }
-      } catch {
-        // Cross-origin — assume ok
-        consecutiveFailsRef.current = 0;
-      }
-
-      if (consecutiveFailsRef.current >= MAX_CONSECUTIVE_FAILS) {
-        consecutiveFailsRef.current = 0;
-        // Phase 8: Cap reloads to prevent infinite reload loops
-        if (reloadCountRef.current >= MAX_RELOADS_PER_CYCLE) return;
-        reloadCountRef.current++;
-        const now = Date.now();
-        if (now - lastHealthToastRef.current > 30000) {
-          lastHealthToastRef.current = now;
-          toast.error('Preview crashed — rolled back to last working version', { duration: 4000 });
-        }
-        // Force iframe reload
-        setIframeKey(k => k + 1);
-      }
-    }, HEALTH_CHECK_INTERVAL);
-
+    // Sandpack manages its own iframe — health checks on cross-origin iframes
+    // cause SecurityError. Disable periodic health checks; Sandpack handles errors internally.
     return () => {
       if (healthCheckRef.current) clearInterval(healthCheckRef.current);
     };
@@ -837,9 +796,15 @@ window.addEventListener('message', function(e) {
             }}
           >
             <SandpackProvider
-              key={`${iframeKey}-${refreshKey ?? 0}`}
+              key={`sp-${refreshKey ?? 0}`}
               template="react-ts"
               files={previewFiles}
+              customSetup={{
+                dependencies: {
+                  "react": "^18.3.1",
+                  "react-dom": "^18.3.1",
+                },
+              }}
               options={{ activeFile: '/src/App.tsx' }}
             >
               <div className="h-full flex flex-col bg-background">
