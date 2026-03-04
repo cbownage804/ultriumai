@@ -3131,7 +3131,7 @@ export function AIAppBuilderWorkspace() {
     ? previewFiles
     : lastKnownGoodPreviewFilesRef.current;
   const hasFiles = project.files.length > 0;
-  const isNewProject = !hasUserGeneratedFiles(project.files);
+  const isGoldenProject = !hasUserGeneratedFiles(project.files);
 
   // ── Initialize new projects with golden template files ──
   useEffect(() => {
