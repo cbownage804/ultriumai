@@ -3195,6 +3195,7 @@ export function AIAppBuilderWorkspace() {
   const previewFilesForRender = Object.keys(previewFiles).length > 0
     ? previewFiles
     : lastKnownGoodPreviewFilesRef.current;
+  const previewDependencies = useMemo(() => extractDependencies(project.files), [project.files]);
   const hasFiles = project.files.length > 0;
   const isGoldenProject = !hasUserGeneratedFiles(project.files);
 
