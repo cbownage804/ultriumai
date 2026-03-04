@@ -857,6 +857,19 @@ window.addEventListener('message', function(e) {
                 ) : null}
               </div>
             </SandpackProvider>
+
+            {/* Reset to Golden Template button — only when project has user-generated files */}
+            {!isGoldenProject && onResetToGolden && !isGenerating && !isCompiling && (
+              <div className="absolute bottom-3 right-3 z-20">
+                <button
+                  onClick={onResetToGolden}
+                  className="px-2.5 py-1.5 text-[10px] rounded-lg bg-white/[0.06] border border-white/[0.08] text-white/40 hover:text-white/70 hover:bg-white/[0.1] transition-all"
+                  title="Reset project to golden template"
+                >
+                  Reset to template
+                </button>
+              </div>
+            )}
           </div>
         ) : isGenerating || isCompiling ? (
           <SkeletonPreview
