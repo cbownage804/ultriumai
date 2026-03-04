@@ -66,9 +66,13 @@ interface BuilderPreviewPanelProps {
   /** Compile error info from state machine */
   compileError?: { message: string; errors: string[] } | null;
   onRetryCompile?: () => void;
+  /** Whether this is a brand-new project with no user-generated files */
+  isGoldenProject?: boolean;
+  /** Reset to golden template */
+  onResetToGolden?: () => void;
 }
 
-export function BuilderPreviewPanel({ html, previewFiles, compileState = 'idle', showConsole = false, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey, repairFailed, repairErrors, onRetryRepair, onDiscardChanges, compileError, onRetryCompile }: BuilderPreviewPanelProps) {
+export function BuilderPreviewPanel({ html, previewFiles, compileState = 'idle', showConsole = false, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey, repairFailed, repairErrors, onRetryRepair, onDiscardChanges, compileError, onRetryCompile, isGoldenProject, onResetToGolden }: BuilderPreviewPanelProps) {
   const [internalViewportMode, setInternalViewportMode] = useState<ViewportMode>('desktop');
   const viewportMode = externalViewportMode ?? internalViewportMode;
   const setViewportMode = onExternalViewportChange ?? setInternalViewportMode;
@@ -853,6 +857,19 @@ window.addEventListener('message', function(e) {
                 ) : null}
               </div>
             </SandpackProvider>
+
+            {/* Reset to Golden Template button — only when project has user-generated files */}
+            {!isGoldenProject && onResetToGolden && !isGenerating && !isCompiling && (
+              <div className="absolute bottom-3 right-3 z-20">
+                <button
+                  onClick={onResetToGolden}
+                  className="px-2.5 py-1.5 text-[10px] rounded-lg bg-white/[0.06] border border-white/[0.08] text-white/40 hover:text-white/70 hover:bg-white/[0.1] transition-all"
+                  title="Reset project to golden template"
+                >
+                  Reset to template
+                </button>
+              </div>
+            )}
           </div>
         ) : isGenerating || isCompiling ? (
           <SkeletonPreview
@@ -870,12 +887,15 @@ window.addEventListener('message', function(e) {
               aria-hidden="true"
             />
             <div className="absolute inset-0 bg-black/40" />
-            <div className="relative z-10 space-y-3 px-6">
+          <div className="relative z-10 space-y-4 px-6">
               <h3 className="font-semibold text-xl text-cyan-300/90 tracking-tight drop-shadow-[0_0_12px_rgba(6,182,212,0.3)]">
                 Live Preview
               </h3>
               <p className="text-sm text-white/40 max-w-[300px] mx-auto">
                 Describe what you want to build
+              </p>
+              <p className="text-xs text-white/25 max-w-[260px] mx-auto">
+                Pick a template on the left to start, or type a prompt in the chat.
               </p>
             </div>
           </div>

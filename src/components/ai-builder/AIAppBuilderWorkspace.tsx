@@ -80,6 +80,7 @@ import { PanelErrorBoundary } from './PanelErrorBoundary';
 import { SafePanel } from './SafePanel';
 import { buildAuthTemplate } from './authTemplates';
 import { isPreviewValid as isPreviewValidFn, previewDebugSummary } from './previewValidation';
+import { GOLDEN_FILES, getGoldenProjectFiles, PROTECTED_FILES, mergeOntoGolden, validateRequiredFiles, hasUserGeneratedFiles } from './goldenTemplate';
 import { BugReportModal } from '@/components/help/BugReportModal';
 import { usePluginRegistry } from '@/hooks/usePluginRegistry';
 import { useCollaborationEngine } from '@/hooks/useCollaborationEngine';
@@ -263,16 +264,27 @@ const DEFAULT_SANDBOX_INDEX_HTML = `<!doctype html>
 const buildSandpackFileMap = (files: ProjectFile[]): SandpackFileMap => {
   const fileMap = new Map(files.map((file) => [file.path, file.content]));
 
-  return {
-    '/src/App.tsx': fileMap.get('src/App.tsx') ?? 'export default function App() { return <div>App Builder Preview</div>; }',
-    '/src/main.tsx': fileMap.get('src/main.tsx') ?? DEFAULT_SANDBOX_MAIN_TSX,
-    '/src/index.css': fileMap.get('src/index.css') ?? '',
-    '/index.html': fileMap.get('index.html') ?? DEFAULT_SANDBOX_INDEX_HTML,
+  // Start from golden defaults, overlay project files
+  const result: SandpackFileMap = {
+    '/src/App.tsx': fileMap.get('src/App.tsx') ?? GOLDEN_FILES['src/App.tsx'],
+    '/src/main.tsx': fileMap.get('src/main.tsx') ?? GOLDEN_FILES['src/main.tsx'],
+    '/src/index.css': fileMap.get('src/index.css') ?? GOLDEN_FILES['src/index.css'],
+    '/index.html': fileMap.get('index.html') ?? GOLDEN_FILES['index.html'],
   };
+
+  // Include any additional project files (components, utils, etc.)
+  for (const [path, content] of fileMap) {
+    const sandpackPath = path.startsWith('/') ? path : `/${path}`;
+    if (!result[sandpackPath]) {
+      result[sandpackPath] = content;
+    }
+  }
+
+  return result;
 };
 
 /** Infrastructure files that must not be modified unless the user explicitly mentions them */
-const PROTECTED_INFRA_FILES = ['src/main.tsx', 'index.html', 'package.json', 'vite.config.ts', 'vite.config.js', 'tsconfig.json', 'tsconfig.app.json'];
+const PROTECTED_INFRA_FILES = PROTECTED_FILES;
 
 /**
  * Boot Integrity Validation — ensures the app can mount.
@@ -795,6 +807,17 @@ export function AIAppBuilderWorkspace() {
         console.info('[handleBgComplete] Sanitizer applied', sanitizerFixes.length, 'fixes:', sanitizerFixes.slice(0, 5));
         mergedFiles = sanitizedFiles;
         pendingFilesRef.current = mergedFiles;
+      }
+
+      // ── Golden template merge: ensure required boot files always exist ──
+      mergedFiles = mergeOntoGolden(mergedFiles);
+      pendingFilesRef.current = mergedFiles;
+
+      // ── Pre-commit boot-file validation ──
+      const bootValidation = validateRequiredFiles(mergedFiles);
+      if (!bootValidation.valid) {
+        console.warn('[handleBgComplete] Boot validation failed:', bootValidation.errors);
+        // Don't block — boot integrity auto-repair below will handle it
       }
 
       const validationResult = outputValidationRef.current.validate(mergedFiles);
@@ -3119,6 +3142,27 @@ export function AIAppBuilderWorkspace() {
     ? previewFiles
     : lastKnownGoodPreviewFilesRef.current;
   const hasFiles = project.files.length > 0;
+  const isGoldenProject = !hasUserGeneratedFiles(project.files);
+
+  // ── Initialize new projects with golden template files ──
+  useEffect(() => {
+    if (project.files.length === 0) {
+      console.info('[Workspace] No files — initializing with golden template');
+      const goldenFiles = getGoldenProjectFiles();
+      setFiles(goldenFiles);
+    }
+  }, []); // Only on mount
+
+  // ── Reset to Golden Template ──
+  const handleResetToGolden = useCallback(() => {
+    const goldenFiles = getGoldenProjectFiles();
+    pushUndo('Reset to golden template', project.files);
+    setFiles(goldenFiles);
+    setStableHTML(null);
+    stableHTMLRef.current = null;
+    try { localStorage.removeItem(COMPILED_CACHE_KEY); } catch {}
+    dedupeToast('success', 'Project reset to golden template');
+  }, [project.files, setFiles, pushUndo]);
 
   // Mobile detection
   const [isMobile, setIsMobile] = useState(false);
@@ -3316,7 +3360,7 @@ export function AIAppBuilderWorkspace() {
                 </div>
               ) : undefined} />
             ) : mobileTab === 'preview' ? (
-                <BuilderPreviewPanel html={compiledHTML} previewFiles={previewFilesForRender} compileState={compileState} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl} repairFailed={repairFailed} repairErrors={repairErrors} onRetryRepair={handleRetryRepair} onDiscardChanges={handleDiscardChanges} compileError={compileError} onRetryCompile={handleRetryCompile}>
+                <BuilderPreviewPanel html={compiledHTML} previewFiles={previewFilesForRender} compileState={compileState} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl} repairFailed={repairFailed} repairErrors={repairErrors} onRetryRepair={handleRetryRepair} onDiscardChanges={handleDiscardChanges} compileError={compileError} onRetryCompile={handleRetryCompile} isGoldenProject={isGoldenProject} onResetToGolden={handleResetToGolden}>
                   <GeneratingOverlay isGenerating={isGenerating} isCompiling={isCompiling} phase={thinkingPhase} partialFilesRef={partialFilesRef} completedFileCountRef={completedFileCountRef} continuationRound={continuationRound} />
                 </BuilderPreviewPanel>
             ) : (
@@ -3686,7 +3730,7 @@ export function AIAppBuilderWorkspace() {
                               <ResizablePanelGroup direction="horizontal" className="h-full">
                                 <ResizablePanel defaultSize={50} minSize={30}>
                                   <div data-tour="preview" className="h-full">
-                                    <BuilderPreviewPanel html={compiledHTML} previewFiles={previewFilesForRender} compileState={compileState} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl} repairFailed={repairFailed} repairErrors={repairErrors} onRetryRepair={handleRetryRepair} onDiscardChanges={handleDiscardChanges} compileError={compileError} onRetryCompile={handleRetryCompile}>
+                                    <BuilderPreviewPanel html={compiledHTML} previewFiles={previewFilesForRender} compileState={compileState} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl} repairFailed={repairFailed} repairErrors={repairErrors} onRetryRepair={handleRetryRepair} onDiscardChanges={handleDiscardChanges} compileError={compileError} onRetryCompile={handleRetryCompile} isGoldenProject={isGoldenProject} onResetToGolden={handleResetToGolden}>
                                       <GeneratingOverlay isGenerating={isGenerating} isCompiling={isCompiling} phase={thinkingPhase} partialFilesRef={partialFilesRef} completedFileCountRef={completedFileCountRef} continuationRound={continuationRound} />
                                     </BuilderPreviewPanel>
                                   </div>
@@ -3703,7 +3747,7 @@ export function AIAppBuilderWorkspace() {
                               </ResizablePanelGroup>
                             ) : rightTab === 'preview' || !hasFiles ? (
                               <div data-tour="preview" className="h-full">
-                                <BuilderPreviewPanel html={compiledHTML} previewFiles={previewFilesForRender} compileState={compileState} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl} repairFailed={repairFailed} repairErrors={repairErrors} onRetryRepair={handleRetryRepair} onDiscardChanges={handleDiscardChanges} compileError={compileError} onRetryCompile={handleRetryCompile}>
+                                <BuilderPreviewPanel html={compiledHTML} previewFiles={previewFilesForRender} compileState={compileState} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl} repairFailed={repairFailed} repairErrors={repairErrors} onRetryRepair={handleRetryRepair} onDiscardChanges={handleDiscardChanges} compileError={compileError} onRetryCompile={handleRetryCompile} isGoldenProject={isGoldenProject} onResetToGolden={handleResetToGolden}>
                                   <GeneratingOverlay isGenerating={isGenerating} isCompiling={isCompiling} phase={thinkingPhase} partialFilesRef={partialFilesRef} completedFileCountRef={completedFileCountRef} continuationRound={continuationRound} />
                                 </BuilderPreviewPanel>
                               </div>
@@ -3795,7 +3839,7 @@ export function AIAppBuilderWorkspace() {
           onOpenSupabaseConfig={() => { setShowSettingsModal(false); setTimeout(() => setShowSettingsPanel(true), 150); }}
           onOpenStripeConfig={() => { setShowSettingsModal(false); setTimeout(() => setShowSettingsPanel(true), 150); }}
           onOpenGithubConfig={() => { setShowSettingsModal(false); setTimeout(() => setShowSettingsPanel(true), 150); }}
-          onResetProject={() => { resetProject(); setStableHTML(null); }}
+          onResetProject={handleResetToGolden}
           onExportProject={() => { setShowSettingsModal(false); setTimeout(() => setShowExportGuide(true), 150); }}
           onOpenKnowledge={() => { setShowSettingsModal(false); setTimeout(() => setShowKnowledge(true), 150); }}
         />
