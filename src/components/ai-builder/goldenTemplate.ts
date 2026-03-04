@@ -99,6 +99,10 @@ export const PROTECTED_FILES = [
   'vite.config.js',
   'tsconfig.json',
   'tsconfig.app.json',
+  'tailwind.config.js',
+  'tailwind.config.ts',
+  'postcss.config.js',
+  'postcss.config.ts',
 ];
 
 /**
