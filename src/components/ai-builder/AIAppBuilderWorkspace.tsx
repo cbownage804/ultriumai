@@ -3053,8 +3053,12 @@ export function AIAppBuilderWorkspace() {
   // ── LKG HTML ref — only updated when preview is valid; NEVER empty ──
   const MINIMAL_MOUNT_HTML = '<!DOCTYPE html><html><body><div id="root"></div></body></html>';
   const lastKnownGoodHTMLRef = useRef<string>(stableHTML && isPreviewValidFn(stableHTML) ? stableHTML : MINIMAL_MOUNT_HTML);
-  const [previewFiles, setPreviewFiles] = useState<SandpackFileMap>(() => buildSandpackFileMap(project.files));
-  const lastKnownGoodPreviewFilesRef = useRef<SandpackFileMap>(previewFiles);
+  const [previewFiles, setPreviewFiles] = useState<SandpackFileMap>(() =>
+    buildSandpackFileMap(project.files.length > 0 ? project.files : getGoldenProjectFiles())
+  );
+  const lastKnownGoodPreviewFilesRef = useRef<SandpackFileMap>(() =>
+    buildSandpackFileMap(project.files.length > 0 ? project.files : getGoldenProjectFiles())
+  );
 
   const handleStableHTML = useCallback((html: string | null) => {
     const changed = html !== stableHTMLRef.current;

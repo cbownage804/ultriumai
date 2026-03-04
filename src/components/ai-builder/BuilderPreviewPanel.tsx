@@ -787,7 +787,7 @@ window.addEventListener('message', function(e) {
 
       {/* Preview */}
       <div className="flex-1 min-h-0 flex items-stretch justify-center">
-        {previewFiles && Object.keys(previewFiles).length > 0 ? (
+        {previewFiles && Object.keys(previewFiles).length > 0 && !isGoldenProject ? (
           <div
             className="h-full transition-all duration-300 mx-auto w-full"
             style={{
