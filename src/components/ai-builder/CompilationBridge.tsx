@@ -19,8 +19,8 @@ export interface CompileErrorInfo {
 
 const COMPILE_TIMEOUT_MS = 40_000;
 const COMPILE_SAFETY_TIMEOUT_MS = 50_000; // Hard safety net — if isCompiling stays true longer, force reset
-const COMPILE_HARD_TIMEOUT_MS = 8_000; // Hard timeout per compile attempt — prevents infinite "Compiling…"
-
+// Must be >= worker timeout path (30s) so we don't abort valid first-build compiles.
+const COMPILE_HARD_TIMEOUT_MS = COMPILE_TIMEOUT_MS;
 interface CompilationBridgeProps {
   files: ProjectFile[];
   isGenerating: boolean;
