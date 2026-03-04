@@ -313,11 +313,24 @@ export function sanitizeStagedFiles(files: ProjectFile[]): { files: ProjectFile[
   };
 
   const sanitized = files.map(f => {
-    const ext = f.path.split('.').pop()?.toLowerCase() || '';
-    if (!['tsx', 'jsx'].includes(ext)) return f;
-
     let content = f.content;
     let changed = false;
+
+    // Strip common stream-tail artifacts that can leak into the last file block.
+    const cleaned = content
+      .replace(/\n\s*===END===\s*$/i, '')
+      .replace(/\n\s*`{3,}\s*$/g, '')
+      .replace(/\n\s*={1,10}\s*$/g, '');
+    if (cleaned !== content) {
+      content = cleaned;
+      changed = true;
+      fixes.push(`${f.path}: removed trailing stream delimiter artifact`);
+    }
+
+    const ext = f.path.split('.').pop()?.toLowerCase() || '';
+    if (!['tsx', 'jsx'].includes(ext)) {
+      return changed ? { ...f, content } : f;
+    }
 
     // 1. Replace inline <svg>...</svg> blocks
     const svgRegex = /<svg[\s\S]*?<\/svg>/gi;
