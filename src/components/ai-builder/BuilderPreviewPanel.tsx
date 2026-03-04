@@ -840,7 +840,7 @@ window.addEventListener('message', function(e) {
               key={`${iframeKey}-${refreshKey ?? 0}`}
               template="react-ts"
               files={previewFiles}
-              customSetup={{ entry: '/index.html' }}
+              options={{ activeFile: '/src/App.tsx' }}
             >
               <div className="h-full flex flex-col bg-background">
                 <div className="flex-1 min-h-0">

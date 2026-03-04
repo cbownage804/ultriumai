@@ -267,14 +267,19 @@ const buildSandpackFileMap = (files: ProjectFile[]): SandpackFileMap => {
   // Start from golden defaults, overlay project files
   const result: SandpackFileMap = {
     '/src/App.tsx': fileMap.get('src/App.tsx') ?? GOLDEN_FILES['src/App.tsx'],
-    '/src/main.tsx': fileMap.get('src/main.tsx') ?? GOLDEN_FILES['src/main.tsx'],
     '/src/index.css': fileMap.get('src/index.css') ?? GOLDEN_FILES['src/index.css'],
-    '/index.html': fileMap.get('index.html') ?? GOLDEN_FILES['index.html'],
   };
+
+  // Sandpack's react-ts template expects /src/index.tsx as entry.
+  // Map our src/main.tsx content into Sandpack's expected entry point.
+  const mainContent = fileMap.get('src/main.tsx') ?? GOLDEN_FILES['src/main.tsx'];
+  result['/src/index.tsx'] = mainContent;
 
   // Include any additional project files (components, utils, etc.)
   for (const [path, content] of fileMap) {
     const sandpackPath = path.startsWith('/') ? path : `/${path}`;
+    // Skip files already mapped or infrastructure files Sandpack handles internally
+    if (sandpackPath === '/src/main.tsx' || sandpackPath === '/index.html' || sandpackPath === '/package.json') continue;
     if (!result[sandpackPath]) {
       result[sandpackPath] = content;
     }
@@ -3073,19 +3078,21 @@ export function AIAppBuilderWorkspace() {
     }
   }, []);
 
-  // Keep Sandpack file-map transactional with compile success contract
+  // Keep Sandpack file-map in sync with project files directly.
+  // Sandpack handles its own bundling — no need to gate on external compile state.
   useEffect(() => {
-    const canCommitPreviewFiles = compileState === 'success' && !!stableHTML && isPreviewValidFn(stableHTML);
-    if (!canCommitPreviewFiles) return;
+    if (project.files.length === 0) return;
+    // Don't update while actively generating (files are partial)
+    if (isGenerating) return;
 
     const nextFiles = buildSandpackFileMap(project.files);
     setPreviewFiles(nextFiles);
     lastKnownGoodPreviewFilesRef.current = nextFiles;
-    console.info('[Workspace] LKG Sandpack files updated', {
+    console.info('[Workspace] Sandpack files updated', {
       fileCount: Object.keys(nextFiles).length,
       files: Object.keys(nextFiles),
     });
-  }, [compileState, stableHTML, project.files]);
+  }, [project.files, isGenerating]);
 
   // Phase 3: Lightweight safety net — if stableHTML is still null 5s after
   // generation ends and we have files, nudge CompilationBridge by toggling isCompiling.
@@ -3138,7 +3145,8 @@ export function AIAppBuilderWorkspace() {
   // ── Preview Success Contract: compiledHTML uses LKG fallback; isPreviewReady derived strictly from compile state ──
   const compiledHTML = stableHTML && isPreviewValidFn(stableHTML) ? stableHTML : lastKnownGoodHTMLRef.current;
   const isPreviewReady = compileState === 'success' && !!(compiledHTML && isPreviewValidFn(compiledHTML));
-  const previewFilesForRender = compileState === 'success' && stableHTML && isPreviewValidFn(stableHTML)
+  // Sandpack compiles internally — always use latest file map, fall back to LKG if empty
+  const previewFilesForRender = Object.keys(previewFiles).length > 0
     ? previewFiles
     : lastKnownGoodPreviewFilesRef.current;
   const hasFiles = project.files.length > 0;
