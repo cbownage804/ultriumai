@@ -809,6 +809,17 @@ export function AIAppBuilderWorkspace() {
         pendingFilesRef.current = mergedFiles;
       }
 
+      // ── Golden template merge: ensure required boot files always exist ──
+      mergedFiles = mergeOntoGolden(mergedFiles);
+      pendingFilesRef.current = mergedFiles;
+
+      // ── Pre-commit boot-file validation ──
+      const bootValidation = validateRequiredFiles(mergedFiles);
+      if (!bootValidation.valid) {
+        console.warn('[handleBgComplete] Boot validation failed:', bootValidation.errors);
+        // Don't block — boot integrity auto-repair below will handle it
+      }
+
       const validationResult = outputValidationRef.current.validate(mergedFiles);
       const valErrors = validationResult.issues.filter(i => i.severity === 'error');
       console.info('[handleBgComplete] 🔍 Validation result', {
