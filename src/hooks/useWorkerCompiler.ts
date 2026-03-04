@@ -268,12 +268,12 @@ export function useWorkerCompiler() {
     }
 
     // 1. Try Vite Sandbox (true Vite on Droplet — Lovable parity)
-    // Short timeout (10s) so fallback is fast when sandbox is down
+    // Short timeout (8s) so fallback is fast when sandbox is down
     try {
       const result = await Promise.race([
         compileViaViteSandbox(files, options),
         new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Vite sandbox timeout (10s)')), 10_000)
+          setTimeout(() => reject(new Error('Vite sandbox timeout (8s)')), 8_000)
         ),
       ]);
       return result;
@@ -283,19 +283,34 @@ export function useWorkerCompiler() {
 
     // 2. Fall back to legacy esbuild edge function
     try {
+      console.info('[Compiler] Attempting compile-project edge function...');
       const result = await Promise.race([
         compileViaEdgeFunction(files, options),
         new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('Server compilation timeout (15s)')), 15_000)
         ),
       ]);
+      console.info('[Compiler] ✅ compile-project succeeded:', result.html?.length, 'chars');
       return result;
     } catch (serverErr: any) {
       console.warn('[Compiler] Legacy server compilation failed, falling back to worker:', serverErr.message);
     }
 
     // 3. Last resort: in-browser worker
-    return compileViaWorker(files, options);
+    try {
+      console.info('[Compiler] Attempting in-browser worker compilation...');
+      const result = await Promise.race([
+        compileViaWorker(files, options),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Worker compilation timeout (20s)')), 20_000)
+        ),
+      ]);
+      console.info('[Compiler] ✅ Worker compilation succeeded:', result.html?.length, 'chars');
+      return result;
+    } catch (workerErr: any) {
+      console.error('[Compiler] ❌ All compilation tiers failed. Last error:', workerErr.message);
+      throw workerErr;
+    }
   }, [compileViaWorker]);
 
   return { compileReactProject };
