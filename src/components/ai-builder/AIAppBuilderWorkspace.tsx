@@ -3839,7 +3839,7 @@ export function AIAppBuilderWorkspace() {
           onOpenSupabaseConfig={() => { setShowSettingsModal(false); setTimeout(() => setShowSettingsPanel(true), 150); }}
           onOpenStripeConfig={() => { setShowSettingsModal(false); setTimeout(() => setShowSettingsPanel(true), 150); }}
           onOpenGithubConfig={() => { setShowSettingsModal(false); setTimeout(() => setShowSettingsPanel(true), 150); }}
-          onResetProject={() => { resetProject(); setStableHTML(null); }}
+          onResetProject={handleResetToGolden}
           onExportProject={() => { setShowSettingsModal(false); setTimeout(() => setShowExportGuide(true), 150); }}
           onOpenKnowledge={() => { setShowSettingsModal(false); setTimeout(() => setShowKnowledge(true), 150); }}
         />
