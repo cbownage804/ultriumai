@@ -410,25 +410,45 @@ function validateBootIntegrity(files: ProjectFile[]): { errors: string[]; repair
   return { errors, repairedFiles: needsRepair ? repairedFiles : null };
 }
 
-/** Check if the user's latest message explicitly mentions a protected file */
+/** Check if the user's latest message explicitly requests changing a protected file */
 function userExplicitlyMentionedFile(messages: { role: string; content: string }[], filePath: string): boolean {
-  // Find the last user message
+  const fileName = filePath.split('/').pop()?.toLowerCase() || '';
+  const filePathLower = filePath.toLowerCase();
+
   for (let i = messages.length - 1; i >= 0; i--) {
-    if (messages[i].role === 'user') {
-      const raw = messages[i].content || '';
-      const marker = 'User request:';
+    if (messages[i].role !== 'user') continue;
 
-      // Some payloads include FILE_MANIFEST/context scaffolding in the "user" message.
-      // Only evaluate the actual natural-language request when present.
-      const effectiveContent = raw.includes(marker)
-        ? raw.slice(raw.lastIndexOf(marker) + marker.length)
-        : raw;
+    const raw = messages[i].content || '';
+    const marker = 'User request:';
 
-      const content = effectiveContent.toLowerCase();
-      const fileName = filePath.split('/').pop()?.toLowerCase() || '';
-      return content.includes(filePath.toLowerCase()) || content.includes(fileName);
-    }
+    // Extract only natural-language prompt when metadata wrappers are present
+    const effectiveContent = raw.includes(marker)
+      ? raw.slice(raw.lastIndexOf(marker) + marker.length)
+      : raw;
+
+    const lower = effectiveContent.toLowerCase();
+
+    // Guard against manifest/context payloads accidentally classified as user intent
+    const looksLikeScaffold =
+      lower.includes('file_manifest') ||
+      lower.includes('<project-files>') ||
+      lower.includes('</project-files>') ||
+      lower.includes('the user message is below');
+
+    if (looksLikeScaffold && !raw.includes(marker)) return false;
+
+    const mentionsFile = lower.includes(filePathLower) || lower.includes(fileName);
+    if (!mentionsFile) return false;
+
+    // Require explicit action intent to avoid passive/accidental mentions
+    const hasActionIntent = /\b(edit|modify|change|update|fix|rewrite|replace|configure|setup|set up|add|remove|delete)\b/.test(lower);
+    if (!hasActionIntent) return false;
+
+    // Respect explicit negation
+    const negatesChange = new RegExp(`(?:don't|do not|never)\\s+(?:edit|modify|change|update|touch)\\s+[^\\n]{0,80}(?:${fileName.replace('.', '\\.')})`).test(lower);
+    return !negatesChange;
   }
+
   return false;
 }
 
