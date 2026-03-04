@@ -24,6 +24,8 @@ export function useOutputValidation() {
     const issues: ValidationIssue[] = [];
 
     for (const file of files) {
+      if (shouldSkipValidationForFile(file.path)) continue;
+
       const ext = file.path.split('.').pop()?.toLowerCase() || '';
 
       // ── HTML validation ──
@@ -46,7 +48,7 @@ export function useOutputValidation() {
     }
 
     // Cross-file checks
-    validateImports(files, issues);
+    validateImports(files.filter(f => !shouldSkipValidationForFile(f.path)), issues);
 
     const errorCount = issues.filter(i => i.severity === 'error').length;
     const warningCount = issues.filter(i => i.severity === 'warning').length;
@@ -60,6 +62,22 @@ export function useOutputValidation() {
   }, []);
 
   return { validate };
+}
+
+const VALIDATION_SKIP_PATHS = new Set([
+  'tailwind.config.js',
+  'tailwind.config.ts',
+  'postcss.config.js',
+  'postcss.config.ts',
+  'vite.config.js',
+  'vite.config.ts',
+  'tsconfig.json',
+  'tsconfig.app.json',
+  'tsconfig.node.json',
+]);
+
+function shouldSkipValidationForFile(path: string): boolean {
+  return VALIDATION_SKIP_PATHS.has(path);
 }
 
 // ── HTML Checks ──
