@@ -870,12 +870,15 @@ window.addEventListener('message', function(e) {
               aria-hidden="true"
             />
             <div className="absolute inset-0 bg-black/40" />
-            <div className="relative z-10 space-y-3 px-6">
+          <div className="relative z-10 space-y-4 px-6">
               <h3 className="font-semibold text-xl text-cyan-300/90 tracking-tight drop-shadow-[0_0_12px_rgba(6,182,212,0.3)]">
                 Live Preview
               </h3>
               <p className="text-sm text-white/40 max-w-[300px] mx-auto">
                 Describe what you want to build
+              </p>
+              <p className="text-xs text-white/25 max-w-[260px] mx-auto">
+                Pick a template on the left to start, or type a prompt in the chat.
               </p>
             </div>
           </div>

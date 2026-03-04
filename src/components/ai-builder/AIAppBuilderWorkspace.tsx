@@ -80,6 +80,7 @@ import { PanelErrorBoundary } from './PanelErrorBoundary';
 import { SafePanel } from './SafePanel';
 import { buildAuthTemplate } from './authTemplates';
 import { isPreviewValid as isPreviewValidFn, previewDebugSummary } from './previewValidation';
+import { GOLDEN_FILES, getGoldenProjectFiles, PROTECTED_FILES, mergeOntoGolden, validateRequiredFiles, hasUserGeneratedFiles } from './goldenTemplate';
 import { BugReportModal } from '@/components/help/BugReportModal';
 import { usePluginRegistry } from '@/hooks/usePluginRegistry';
 import { useCollaborationEngine } from '@/hooks/useCollaborationEngine';
