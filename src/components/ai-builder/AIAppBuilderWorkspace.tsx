@@ -2450,18 +2450,25 @@ export function AIAppBuilderWorkspace() {
       generationEndedAt.current = Date.now();
       // Reset in-flight guard when generation completes
       autoFixInFlightRef.current = false;
-      validationFixInFlightRef.current = false;
-      validationFixJobIdRef.current = null;
-      awaitingValidationFixJobStartRef.current = false;
-      // Clear transactional repair state
-      repairInFlightRef.current = false;
-      repairJobIdRef.current = null;
-      awaitingRepairJobStartRef.current = false;
-      repairAttemptRef.current = 0;
-      pendingFilesRef.current = null;
+
+      // IMPORTANT: Preserve repair attempt state when a repair cycle is still pending,
+      // otherwise attempts get reset to 0 after every repair job and can loop forever.
+      const hasPendingRepairWork = !!pendingValidationFixRef.current || repairInFlightRef.current || awaitingRepairJobStartRef.current;
+
+      if (!hasPendingRepairWork) {
+        validationFixInFlightRef.current = false;
+        validationFixJobIdRef.current = null;
+        awaitingValidationFixJobStartRef.current = false;
+        // Clear transactional repair state only when no repair is pending
+        repairInFlightRef.current = false;
+        repairJobIdRef.current = null;
+        awaitingRepairJobStartRef.current = false;
+        repairAttemptRef.current = 0;
+        pendingFilesRef.current = null;
+      }
     }
     prevIsGenerating.current = isGenerating;
-  }, [isGenerating]);
+  }, [isGenerating, clearRepairWatchdog]);
   // Track when compilation ends for extended cooldown
   useEffect(() => {
     if (!isCompiling && prevIsCompilingRef.current) {
