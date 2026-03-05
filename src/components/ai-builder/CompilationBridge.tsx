@@ -245,7 +245,7 @@ export function CompilationBridge({
       stableHTMLRef.current = null;
       setLiveCompiledHTML(null);
       compilationInFlightRef.current = false;
-      compileRunIdRef.current = 0; // Reset run-ID guard
+      compileRunIdRef.current++; // Invalidate prior runs while keeping run-id monotonic (never reset to 0)
       prevFilesDigestRef.current = '';
       prevDigestRef.current = ''; // Reset memo cache so filesDigest recalculates on generation end
       // Safety: force-clear isCompiling in case it was stuck from previous cycle
