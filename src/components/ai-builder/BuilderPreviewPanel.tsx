@@ -381,17 +381,14 @@ window.addEventListener('message', function(e) {
     const handler = (e: MessageEvent) => {
       if (e.data?.type === '__SOFT_RELOAD__') {
         if (htmlWithErrorCapture) {
-          console.info('[HMR] Soft reload: full srcdoc update (SW disabled for srcdoc)');
-          const iframe = (iframeRef as React.RefObject<HTMLIFrameElement | null>)?.current;
-          if (iframe) {
-            iframe.srcdoc = htmlWithErrorCapture;
-          }
+          console.info('[HMR] Soft reload: remounting iframe via Blob URL');
+          setIframeKey(k => k + 1);
         }
       }
     };
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, [htmlWithErrorCapture, iframeRef]);
+  }, [htmlWithErrorCapture]);
 
   // ── Preview Health Monitor (Phase 1C) ──
   const healthCheckRef = useRef<NodeJS.Timeout | null>(null);
@@ -557,18 +554,12 @@ window.addEventListener('message', function(e) {
     setErrors([]); setCurrentUrl('/'); setUrlHistory(['/']); setHistoryIndex(0);
     // Phase 36: Reset scroll position on new build
     if (iframeRef.current?.contentWindow) iframeRef.current.contentWindow.scrollTo(0, 0);
-    // Session guard: inject new session ID whenever HTML changes
-    if (iframeRef.current) {
-      const sid = newSessionId();
-      sessionIdRef.current = sid;
-      console.info('[PreviewPanel] Setting srcdoc imperatively', {
-        htmlLength: htmlWithErrorCapture.length,
-        hasDoctype: /<!doctype|<html/i.test(htmlWithErrorCapture),
-        sessionId: sid,
-      });
-      iframeRef.current.srcdoc = injectSessionId(htmlWithErrorCapture, sid);
-    }
-  }, [htmlWithErrorCapture, newSessionId, injectSessionId]);
+    // Blob URL handles rendering — just log for diagnostics
+    console.info('[PreviewPanel] HTML updated for Blob URL rendering', {
+      htmlLength: htmlWithErrorCapture.length,
+      hasDoctype: /<!doctype|<html/i.test(htmlWithErrorCapture),
+    });
+  }, [htmlWithErrorCapture]);
 
   // Phase 2: Also clear stale errors when generation completes (isGenerating: true→false)
   const prevIsGeneratingRef = useRef(isGenerating);
