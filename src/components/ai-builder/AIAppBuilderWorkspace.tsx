@@ -687,10 +687,8 @@ export function AIAppBuilderWorkspace() {
       if (diffArtifactEdits.length > 0) {
         console.warn(`[Build] ❌ Rejecting ${diffArtifactEdits.length} EDIT blocks with diff artifacts:`, diffArtifactEdits.map(e => e.path));
         const affectedFiles = diffArtifactEdits.map(e => e.path).join(', ');
-        const errorSummary = `${affectedFiles}: Contains patch/diff format (+/- prefixed lines). Do not use unified diff or patch format. Always return complete file contents using ===FILE: delimiters.`;
-        pendingValidationFixRef.current = { errorSummary, files: mergedFiles };
-        setRepairTrigger(t => t + 1);
-        // Still process clean edits (non-diff)
+        console.warn(`[Build] Skipping artifacted edits for now (no auto-repair trigger): ${affectedFiles}`);
+        // Still process clean edits (non-diff). Final validation below decides whether repair is needed.
         const cleanEdits = edits.filter(e => !e.hasDiffArtifacts);
         for (const edit of cleanEdits) {
           const fileIdx = mergedFiles.findIndex(f => f.path === edit.path);
@@ -917,6 +915,12 @@ export function AIAppBuilderWorkspace() {
         // COMMIT — validation passed
         setFiles(mergedFiles);
         pendingFilesRef.current = null;
+        // Clear any stale repair intent (e.g. from skipped diff-artifact edits)
+        pendingValidationFixRef.current = null;
+        validationFixInFlightRef.current = false;
+        validationFixJobIdRef.current = null;
+        awaitingValidationFixJobStartRef.current = false;
+        repairAttemptRef.current = 0;
 
         // Normal merge bookkeeping (tabs, persistence, snapshots, etc.)
         const changedPaths = [...parsedFiles.map(f => f.path), ...edits.map(e => e.path)];
