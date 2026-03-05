@@ -797,7 +797,7 @@ window.addEventListener('message', function(e) {
               ref={iframeRef as React.RefObject<HTMLIFrameElement>}
               key={`iframe-${iframeKey}-${refreshKey ?? 0}`}
               title="App Preview"
-              srcdoc={htmlWithErrorCapture}
+              srcDoc={htmlWithErrorCapture}
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
               className="w-full h-full border-0 bg-white"
               style={{ colorScheme: 'light' }}
