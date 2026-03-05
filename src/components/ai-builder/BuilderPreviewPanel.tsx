@@ -69,7 +69,20 @@ interface BuilderPreviewPanelProps {
   /** Reset to golden template */
   onResetToGolden?: () => void;
 }
-// sanitizeScriptTags removed — Blob URL rendering avoids srcdoc parser issues entirely
+/**
+ * Escape </script> inside <script> blocks to prevent premature tag closure.
+ * This is needed even with Blob URLs — the browser HTML parser always treats
+ * </script> as the closing tag regardless of context.
+ */
+function sanitizeScriptContent(html: string): string {
+  return html.replace(/(<script[^>]*>)([\s\S]*?)(<\/script>)/gi,
+    (_match, open: string, body: string, close: string) => {
+      // Replace </script> inside script body with a safe split that the JS engine reunites
+      const safe = body.replace(/<\/script\b/gi, '<\\/script');
+      return open + safe + close;
+    }
+  );
+}
 
 export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole = false, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey, repairFailed, repairErrors, onRetryRepair, onDiscardChanges, compileError, onRetryCompile, isGoldenProject, onResetToGolden }: BuilderPreviewPanelProps) {
   const [internalViewportMode, setInternalViewportMode] = useState<ViewportMode>('desktop');
