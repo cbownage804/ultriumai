@@ -864,7 +864,9 @@ export function AIAppBuilderWorkspace() {
         }
 
         console.info('[handleBgComplete] Files merged & committed (%d files)', mergedFiles.length);
-        setTimeout(() => forceCompileRef.current?.(), 200);
+        // NOTE: Do NOT call forceCompile here — the filesDigest change already
+        // triggers the CompilationBridge compilation effect. Calling forceCompile
+        // at 200ms aborts the in-flight Vite request and causes blank previews.
 
         // Safety net: if CompilationBridge hasn't produced HTML after 20s
         setTimeout(() => {
