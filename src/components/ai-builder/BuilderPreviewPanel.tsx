@@ -364,7 +364,8 @@ window.addEventListener('message', function(e) {
       blobUrlRef.current = null;
     }
     if (!htmlWithInjections) return null;
-    const blob = new Blob([htmlWithInjections], { type: 'text/html;charset=utf-8' });
+    const sanitized = sanitizeScriptContent(htmlWithInjections);
+    const blob = new Blob([sanitized], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     blobUrlRef.current = url;
     return url;
