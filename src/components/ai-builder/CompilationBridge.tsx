@@ -88,7 +88,7 @@ export function CompilationBridge({
   validateFiles,
 }: CompilationBridgeProps) {
   // ── Worker-based React Compiler (off main thread) ──
-  const { compileReactProject } = useWorkerCompiler();
+  const { compileReactProject, abortCompilation } = useWorkerCompiler();
 
   // Stabilize function refs to prevent effect re-fires
   const compileReactProjectRef = useRef(compileReactProject);
@@ -242,6 +242,7 @@ export function CompilationBridge({
   useEffect(() => {
     if (isGenerating && !prevIsGeneratingRef.current) {
       // Generation STARTING — reset ALL internal state
+      abortCompilation(); // Cancel any in-flight network requests to free droplet concurrency
       stableHTMLRef.current = null;
       setLiveCompiledHTML(null);
       compilationInFlightRef.current = false;
@@ -488,6 +489,7 @@ export function CompilationBridge({
   useEffect(() => {
     onForceCompile?.(() => {
       console.info('[CompilationBridge] forceCompile invoked — invalidating in-flight run');
+      abortCompilation(); // Cancel in-flight network requests
       compileRunIdRef.current++; // Invalidate any in-flight compile
       compilationInFlightRef.current = false;
       stableHTMLRef.current = null;
