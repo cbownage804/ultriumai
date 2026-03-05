@@ -407,6 +407,9 @@ export function CompilationBridge({
         // ── Stale run-ID check — discard if a newer compile was started ──
         if (thisRunId !== compileRunIdRef.current) {
           console.info('[CompilationBridge] Stale compile run', thisRunId, '— discarding (current:', compileRunIdRef.current, ')');
+          // Reset compile state so it doesn't get stuck at 'compiling' forever
+          compilationInFlightRef.current = false;
+          transitionCompileState('idle');
           return;
         }
 
