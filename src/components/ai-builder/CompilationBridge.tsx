@@ -363,6 +363,8 @@ export function CompilationBridge({
         fileCount: filesRef.current.length,
       });
       compilationInFlightRef.current = true;
+      compiledDigestRef.current = filesDigest;
+      recompileNeededRef.current = false;
       transitionCompileState('compiling');
 
       // Safety net: force-reset isCompiling if compilation hangs
