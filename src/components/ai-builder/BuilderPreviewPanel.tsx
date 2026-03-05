@@ -70,18 +70,84 @@ interface BuilderPreviewPanelProps {
   onResetToGolden?: () => void;
 }
 /**
- * Escape </script> inside <script> blocks to prevent premature tag closure.
- * This is needed even with Blob URLs — the browser HTML parser always treats
- * </script> as the closing tag regardless of context.
+ * Externalize inline <script> bodies that contain `</script>` literals into
+ * separate Blob URLs.  This avoids the HTML parser prematurely closing the
+ * <script> tag when the bundled JS contains string literals like `</script>`.
+ *
+ * Uses indexOf-based scanning instead of regex to correctly identify the REAL
+ * closing tag (last `</script>` before the next `<script` opening or EOF).
  */
-function sanitizeScriptContent(html: string): string {
-  return html.replace(/(<script[^>]*>)([\s\S]*?)(<\/script>)/gi,
-    (_match, open: string, body: string, close: string) => {
-      // Replace </script> inside script body with a safe split that the JS engine reunites
-      const safe = body.replace(/<\/script\b/gi, '<\\/script');
-      return open + safe + close;
+function externalizeProblematicScripts(html: string): { html: string; jsBlobUrls: string[] } {
+  const jsBlobUrls: string[] = [];
+  const lower = html.toLowerCase();
+  let result = '';
+  let pos = 0;
+
+  while (pos < html.length) {
+    const scriptStart = lower.indexOf('<script', pos);
+    if (scriptStart === -1) {
+      result += html.slice(pos);
+      break;
     }
-  );
+
+    // Add everything before this <script
+    result += html.slice(pos, scriptStart);
+
+    const tagEnd = html.indexOf('>', scriptStart);
+    if (tagEnd === -1) { result += html.slice(scriptStart); break; }
+
+    const openTag = html.slice(scriptStart, tagEnd + 1);
+
+    // Skip <script src="..."> (external) or self-closing
+    if (/\bsrc\s*=/i.test(openTag) || openTag.endsWith('/>')) {
+      result += openTag;
+      pos = tagEnd + 1;
+      continue;
+    }
+
+    // Find the REAL closing </script> — last occurrence before next <script or EOF
+    const contentStart = tagEnd + 1;
+    const nextScriptOpen = lower.indexOf('<script', contentStart);
+    const searchEnd = nextScriptOpen !== -1 ? nextScriptOpen : html.length;
+    const segment = html.slice(contentStart, searchEnd);
+    const segLower = segment.toLowerCase();
+
+    let lastClosePos = -1;
+    let searchFrom = 0;
+    while (true) {
+      const idx = segLower.indexOf('</script>', searchFrom);
+      if (idx === -1) break;
+      lastClosePos = idx;
+      searchFrom = idx + 1;
+    }
+
+    if (lastClosePos === -1) {
+      // No closing tag — pass through as-is
+      result += openTag + segment;
+      pos = searchEnd;
+      continue;
+    }
+
+    const scriptBody = segment.slice(0, lastClosePos);
+    const afterClose = segment.slice(lastClosePos + '</script>'.length);
+
+    if (/<\/script/i.test(scriptBody)) {
+      // Problematic: externalize into a JS Blob URL
+      const jsBlob = new Blob([scriptBody], { type: 'text/javascript' });
+      const jsUrl = URL.createObjectURL(jsBlob);
+      jsBlobUrls.push(jsUrl);
+      const typeMatch = openTag.match(/type\s*=\s*["']([^"']+)["']/i);
+      const typeAttr = typeMatch ? ` type="${typeMatch[1]}"` : '';
+      result += `<script${typeAttr} src="${jsUrl}"></script>`;
+    } else {
+      result += openTag + scriptBody + '</script>';
+    }
+
+    result += afterClose;
+    pos = searchEnd;
+  }
+
+  return { html: result, jsBlobUrls };
 }
 
 export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole = false, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey, repairFailed, repairErrors, onRetryRepair, onDiscardChanges, compileError, onRetryCompile, isGoldenProject, onResetToGolden }: BuilderPreviewPanelProps) {
@@ -353,19 +419,25 @@ window.addEventListener('message', function(e) {
         )
   ) : null;
 
-  // === Blob URL rendering: avoids srcdoc </script> parser breakout ===
+  // === Blob URL rendering: externalize scripts to avoid </script> parser breakout ===
   const blobUrlRef = useRef<string | null>(null);
+  const jsBlobUrlsRef = useRef<string[]>([]);
   const htmlWithErrorCapture = htmlWithInjections; // alias for downstream refs
 
   const previewBlobUrl = useMemo(() => {
-    // Revoke previous blob
-    if (blobUrlRef.current) {
-      URL.revokeObjectURL(blobUrlRef.current);
-      blobUrlRef.current = null;
-    }
+    // Revoke previous blobs
+    if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+    jsBlobUrlsRef.current.forEach(u => URL.revokeObjectURL(u));
+    blobUrlRef.current = null;
+    jsBlobUrlsRef.current = [];
+
     if (!htmlWithInjections) return null;
-    const sanitized = sanitizeScriptContent(htmlWithInjections);
-    const blob = new Blob([sanitized], { type: 'text/html;charset=utf-8' });
+
+    // Externalize scripts that contain </script> literals into separate JS Blob URLs
+    const { html: safeHtml, jsBlobUrls } = externalizeProblematicScripts(htmlWithInjections);
+    jsBlobUrlsRef.current = jsBlobUrls;
+
+    const blob = new Blob([safeHtml], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     blobUrlRef.current = url;
     return url;
@@ -375,6 +447,7 @@ window.addEventListener('message', function(e) {
   useEffect(() => {
     return () => {
       if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+      jsBlobUrlsRef.current.forEach(u => URL.revokeObjectURL(u));
     };
   }, []);
 
