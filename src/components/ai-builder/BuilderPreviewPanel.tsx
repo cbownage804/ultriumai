@@ -113,9 +113,14 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
   const ensureFullDocument = useCallback((rawHtml: string): string => {
     const trimmed = rawHtml.trim();
     // Already a full document
-    if (/<!doctype|<html/i.test(trimmed)) return rawHtml;
+    if (/<!doctype|<html/i.test(trimmed)) {
+      // Still sanitize </script> inside inline <script> blocks to prevent parser breakout
+      return sanitizeScriptTags(rawHtml);
+    }
     // Looks like just JS code — wrap in full document
     console.warn('[PreviewPanel] HTML missing doctype — wrapping as full document');
+    // Escape </script> in the JS content so the browser parser doesn't close the tag early
+    const safeJs = rawHtml.replace(/<\/script>/gi, '<\\/script>');
     return `<!DOCTYPE html>
 <html>
   <head>
@@ -125,7 +130,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
   <body>
     <div id="root"></div>
     <script type="module">
-      ${rawHtml}
+      ${safeJs}
     </script>
   </body>
 </html>`;
