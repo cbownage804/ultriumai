@@ -379,10 +379,14 @@ function validateBootIntegrity(files: ProjectFile[]): { errors: string[]; repair
     errors.push('Missing src/App.tsx — root application component is required.');
   }
 
-  // 3. index.html must exist and be valid
+  // 3. index.html must exist and be valid — auto-inject canonical template if missing
   let indexFile = repairedFiles.find(f => f.path === 'index.html');
   if (!indexFile) {
-    errors.push('Missing index.html — HTML shell is required.');
+    const canonicalIndexHtml = `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8" />\n  <meta name="viewport" content="width=device-width, initial-scale=1.0" />\n  <title>App</title>\n</head>\n<body>\n  ${CANONICAL_INDEX_HTML_BODY}\n</body>\n</html>`;
+    repairedFiles.push({ path: 'index.html', content: canonicalIndexHtml, language: 'html' });
+    indexFile = repairedFiles[repairedFiles.length - 1];
+    needsRepair = true;
+    console.warn('[BootIntegrity] Auto-injected missing index.html');
   } else {
     const html = indexFile.content;
     if (!/<div\s+id\s*=\s*["']root["']\s*>/i.test(html)) {
