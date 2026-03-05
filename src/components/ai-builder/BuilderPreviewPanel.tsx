@@ -69,19 +69,7 @@ interface BuilderPreviewPanelProps {
   /** Reset to golden template */
   onResetToGolden?: () => void;
 }
-/**
- * Sanitize </script> literals inside inline <script> blocks to prevent
- * the HTML parser from closing the tag early (common in bundled React DOM).
- */
-function sanitizeScriptTags(html: string): string {
-  return html.replace(
-    /(<script[^>]*>)([\s\S]*?)(<\/script>)/gi,
-    (_match, open: string, content: string, close: string) => {
-      const safeContent = content.replace(/<\/script>/gi, '<\\/script>');
-      return open + safeContent + close;
-    }
-  );
-}
+// sanitizeScriptTags removed — Blob URL rendering avoids srcdoc parser issues entirely
 
 export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole = false, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey, repairFailed, repairErrors, onRetryRepair, onDiscardChanges, compileError, onRetryCompile, isGoldenProject, onResetToGolden }: BuilderPreviewPanelProps) {
   const [internalViewportMode, setInternalViewportMode] = useState<ViewportMode>('desktop');
@@ -127,13 +115,10 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
     const trimmed = rawHtml.trim();
     // Already a full document
     if (/<!doctype|<html/i.test(trimmed)) {
-      // Still sanitize </script> inside inline <script> blocks to prevent parser breakout
-      return sanitizeScriptTags(rawHtml);
+      return rawHtml;
     }
     // Looks like just JS code — wrap in full document
     console.warn('[PreviewPanel] HTML missing doctype — wrapping as full document');
-    // Escape </script> in the JS content so the browser parser doesn't close the tag early
-    const safeJs = rawHtml.replace(/<\/script>/gi, '<\\/script>');
     return `<!DOCTYPE html>
 <html>
   <head>
@@ -143,7 +128,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
   <body>
     <div id="root"></div>
     <script type="module">
-      ${safeJs}
+      ${rawHtml}
     </script>
   </body>
 </html>`;
@@ -163,7 +148,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
     });
   }, [html, normalizedHtml, isCompiling, compileError]);
 
-  const htmlWithErrorCapture = normalizedHtml ? (
+  const htmlWithInjections = normalizedHtml ? (
     normalizedHtml.includes('__builderInjected')
       ? normalizedHtml.replace(
           '</head>',
