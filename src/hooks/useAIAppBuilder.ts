@@ -516,8 +516,11 @@ function parseEditBlocks(raw: string): EditBlock[] {
         const oldCount = parseInt(unifiedMatch[2] || '1');
         currentHunkEnd = currentHunkStart + oldCount - 1;
         inHunk = true;
-        // Unified diff headers are themselves a diff artifact signal
-        hasDiffMarkers = true;
+      // Unified diff headers are themselves a diff artifact signal
+        // But skip for JSON files where diff-style content is normal
+        if (!currentPath?.endsWith('.json')) {
+          hasDiffMarkers = true;
+        }
         continue;
       }
 
