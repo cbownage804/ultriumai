@@ -67,10 +67,14 @@ async function compileViaViteSandbox(
     stripeConfig?: { publishableKey: string } | null;
     envVars?: { key: string; value: string }[];
     userPackages?: CDNPackageEntry[];
-  }
+  },
+  signal?: AbortSignal,
 ): Promise<WorkerCompilerResult> {
   const t0 = Date.now();
   console.info('[ViteSandbox] Calling compile-vite edge function with', files.length, 'files');
+
+  // Check if already aborted before starting
+  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
 
   const { data, error } = await supabase.functions.invoke('compile-vite', {
     body: {
@@ -83,6 +87,9 @@ async function compileViaViteSandbox(
       } : undefined,
     },
   });
+
+  // Check abort after network completes — discard stale results
+  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
 
   if (error) {
     throw new Error(`Vite sandbox error: ${error.message}`);
@@ -115,10 +122,13 @@ async function compileViaEdgeFunction(
     stripeConfig?: { publishableKey: string } | null;
     envVars?: { key: string; value: string }[];
     userPackages?: CDNPackageEntry[];
-  }
+  },
+  signal?: AbortSignal,
 ): Promise<WorkerCompilerResult> {
   const t0 = Date.now();
   console.info('[ServerCompiler] Calling compile-project edge function with', files.length, 'files');
+
+  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
 
   const { data, error } = await supabase.functions.invoke('compile-project', {
     body: {
@@ -131,6 +141,8 @@ async function compileViaEdgeFunction(
       } : undefined,
     },
   });
+
+  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
 
   if (error) {
     throw new Error(`Edge function error: ${error.message}`);
@@ -153,6 +165,8 @@ async function compileViaEdgeFunction(
 export function useWorkerCompiler() {
   const workerRef = useRef<Worker | null>(null);
   const pendingRef = useRef<Map<string, { resolve: (r: WorkerCompilerResult) => void; reject: (e: Error) => void }>>(new Map());
+  /** AbortController for the currently in-flight compile — aborted when a new compile starts */
+  const activeAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const worker = getSharedWorkerSafe();
@@ -192,6 +206,7 @@ export function useWorkerCompiler() {
         reject(new Error('Worker compiler unmounted'));
       }
       pendingRef.current.clear();
+      activeAbortRef.current?.abort();
       releaseSharedWorker();
       workerRef.current = null;
     };
@@ -233,12 +248,9 @@ export function useWorkerCompiler() {
   }, []);
 
   /**
-   * Primary compilation function:
-   * 1. Try server-side edge function (fast, reliable, Lovable parity)
-   * 2. Fall back to in-browser worker if edge function fails
-   *
-   * @param localOnly — If true, skip edge function and compile locally only.
-   *   Used for incremental edits where speed matters more than full server parity.
+   * Primary compilation function with AbortController to prevent zombie requests.
+   * Each new call aborts the prior in-flight compile so the Vite sandbox droplet
+   * doesn't accumulate stale connections and exhaust its concurrency cap (5).
    */
   const compileReactProject = useCallback(async (
     files: ProjectFile[],
@@ -251,6 +263,15 @@ export function useWorkerCompiler() {
       localOnly?: boolean;
     }
   ): Promise<WorkerCompilerResult> => {
+    // Abort any prior in-flight compilation to free droplet concurrency
+    if (activeAbortRef.current) {
+      console.info('[Compiler] Aborting prior in-flight compilation');
+      activeAbortRef.current.abort();
+    }
+    const ac = new AbortController();
+    activeAbortRef.current = ac;
+    const { signal } = ac;
+
     // For incremental edits, skip the network round-trip entirely
     if (options?.localOnly) {
       console.info('[Compiler] Local-only mode — skipping edge function for instant update');
@@ -262,6 +283,7 @@ export function useWorkerCompiler() {
           ),
         ]);
       } catch (workerErr: any) {
+        if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
         console.warn('[Compiler] Local compilation failed:', workerErr.message);
         // Fall through to server as last resort
       }
@@ -271,13 +293,14 @@ export function useWorkerCompiler() {
     // Short timeout (8s) so fallback is fast when sandbox is down
     try {
       const result = await Promise.race([
-        compileViaViteSandbox(files, options),
+        compileViaViteSandbox(files, options, signal),
         new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('Vite sandbox timeout (8s)')), 8_000)
         ),
       ]);
       return result;
     } catch (viteErr: any) {
+      if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
       console.warn('[Compiler] Vite sandbox failed, trying legacy server:', viteErr.message);
     }
 
@@ -285,7 +308,7 @@ export function useWorkerCompiler() {
     try {
       console.info('[Compiler] Attempting compile-project edge function...');
       const result = await Promise.race([
-        compileViaEdgeFunction(files, options),
+        compileViaEdgeFunction(files, options, signal),
         new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('Server compilation timeout (15s)')), 15_000)
         ),
@@ -293,6 +316,7 @@ export function useWorkerCompiler() {
       console.info('[Compiler] ✅ compile-project succeeded:', result.html?.length, 'chars');
       return result;
     } catch (serverErr: any) {
+      if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
       console.warn('[Compiler] Legacy server compilation failed, falling back to worker:', serverErr.message);
     }
 
@@ -313,5 +337,14 @@ export function useWorkerCompiler() {
     }
   }, [compileViaWorker]);
 
-  return { compileReactProject };
+  /** Abort any in-flight compilation (call when starting a new generation or force-compiling) */
+  const abortCompilation = useCallback(() => {
+    if (activeAbortRef.current) {
+      console.info('[Compiler] abortCompilation called — cancelling in-flight requests');
+      activeAbortRef.current.abort();
+      activeAbortRef.current = null;
+    }
+  }, []);
+
+  return { compileReactProject, abortCompilation };
 }
