@@ -17,9 +17,8 @@ export interface CompileErrorInfo {
   errors: string[];
 }
 
-const COMPILE_TIMEOUT_MS = 60_000; // Allow full 3-tier fallback (Vite 8s + Legacy 15s + Worker 20s) plus retries
-const COMPILE_SAFETY_TIMEOUT_MS = 70_000; // Hard safety net — if isCompiling stays true longer, force reset
-// Must be >= worker timeout path so we don't abort valid first-build compiles.
+const COMPILE_TIMEOUT_MS = 40_000; // Vite-only path (30s) + margin
+const COMPILE_SAFETY_TIMEOUT_MS = 50_000; // Hard safety net
 const COMPILE_HARD_TIMEOUT_MS = COMPILE_TIMEOUT_MS;
 interface CompilationBridgeProps {
   files: ProjectFile[];
@@ -171,47 +170,40 @@ export function CompilationBridge({
   // ── Core compile function ──
   const runCompile = useCallback(async () => {
     const currentFiles = filesRef.current;
-    const useLocalOnly = isIncrementalEditRef.current;
-    console.info('[CompilationBridge] runCompile — isReact:', isReactProject, 'files:', currentFiles.length, 'localOnly:', useLocalOnly);
+    console.info('[CompilationBridge] runCompile — isReact:', isReactProject, 'files:', currentFiles.length);
 
     let result: string | null = null;
 
-    if (isReactProject) {
-      try {
-        const timeout = useLocalOnly ? 15_000 : 45_000; // Must exceed 3-tier fallback chain (8s+15s+20s=43s)
-        const workerTimeout = new Promise<null>((resolve) =>
-          setTimeout(() => {
-            console.warn(`[CompilationBridge] Compilation timed out after ${timeout / 1000}s`);
-            resolve(null);
-          }, timeout)
-        );
-        const workerResult = compileReactProjectRef.current(currentFiles, {
-          supabaseConfig: supabaseConfig || undefined,
-          stripeConfig: stripeConfig || undefined,
-          envVars,
-          localOnly: useLocalOnly,
-        }).then(compiled => {
-          if (compiled.errors.length > 0) {
-            console.warn('[ReactCompiler] Warnings:', compiled.errors);
-          }
-          return compiled.html || null;
-        }).catch((err: Error) => {
-          console.warn('[ReactCompiler] Worker failed:', err.message);
-          return null;
-        });
+    // ── Always use Vite Sandbox — sole compilation path ──
+    try {
+      const BRIDGE_TIMEOUT = 35_000; // Slightly above Vite's 30s internal timeout
+      const workerTimeout = new Promise<null>((resolve) =>
+        setTimeout(() => {
+          console.warn(`[CompilationBridge] Compilation timed out after ${BRIDGE_TIMEOUT / 1000}s`);
+          resolve(null);
+        }, BRIDGE_TIMEOUT)
+      );
+      const workerResult = compileReactProjectRef.current(currentFiles, {
+        supabaseConfig: supabaseConfig || undefined,
+        stripeConfig: stripeConfig || undefined,
+        envVars,
+      }).then(compiled => {
+        if (compiled.errors.length > 0) {
+          console.warn('[ViteCompiler] Warnings:', compiled.errors);
+        }
+        return compiled.html || null;
+      }).catch((err: Error) => {
+        console.error('[ViteCompiler] Failed:', err.message);
+        return null;
+      });
 
-        result = await Promise.race([workerResult, workerTimeout]);
-      } catch {
-        result = null;
-      }
+      result = await Promise.race([workerResult, workerTimeout]);
+    } catch {
+      result = null;
+    }
 
-      // Vanilla fallback if worker failed
-      if (!result) {
-        try {
-          result = getCompiledHTMLRef.current(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowserRef.current, linkedGPT);
-        } catch { /* noop */ }
-      }
-    } else {
+    // For non-React projects (plain HTML), use vanilla bundler as they don't need Vite
+    if (!result && !isReactProject) {
       try {
         result = getCompiledHTMLRef.current(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowserRef.current, linkedGPT);
       } catch { result = null; }

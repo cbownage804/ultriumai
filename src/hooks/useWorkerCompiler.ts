@@ -248,7 +248,7 @@ export function useWorkerCompiler() {
   }, []);
 
   /**
-   * Primary compilation function with AbortController to prevent zombie requests.
+   * Primary compilation function — Vite Sandbox ONLY (no fallback tiers).
    * Each new call aborts the prior in-flight compile so the Vite sandbox droplet
    * doesn't accumulate stale connections and exhaust its concurrency cap (5).
    */
@@ -272,70 +272,27 @@ export function useWorkerCompiler() {
     activeAbortRef.current = ac;
     const { signal } = ac;
 
-    // For incremental edits, skip the network round-trip entirely
-    if (options?.localOnly) {
-      console.info('[Compiler] Local-only mode — skipping edge function for instant update');
-      try {
-        return await Promise.race([
-          compileViaWorker(files, options),
-          new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('Local compilation timeout (15s)')), 15_000)
-          ),
-        ]);
-      } catch (workerErr: any) {
-        if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
-        console.warn('[Compiler] Local compilation failed:', workerErr.message);
-        // Fall through to server as last resort
-      }
-    }
+    // ── Vite Sandbox — sole compilation path ──
+    // Generous timeout (30s) to handle cold starts and complex projects.
+    // No fallback tiers — if the sandbox fails, surface the error directly.
+    const VITE_TIMEOUT_MS = 30_000;
 
-    // 1. Try Vite Sandbox (true Vite on Droplet — Lovable parity)
-    // Short timeout (8s) so fallback is fast when sandbox is down
     try {
+      console.info('[Compiler] Compiling via Vite Sandbox (sole path)', { fileCount: files.length });
       const result = await Promise.race([
         compileViaViteSandbox(files, options, signal),
         new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Vite sandbox timeout (8s)')), 8_000)
+          setTimeout(() => reject(new Error(`Vite sandbox timeout (${VITE_TIMEOUT_MS / 1000}s)`)), VITE_TIMEOUT_MS)
         ),
       ]);
+      console.info('[Compiler] ✅ Vite Sandbox compiled:', result.html?.length, 'chars');
       return result;
-    } catch (viteErr: any) {
+    } catch (err: any) {
       if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
-      console.warn('[Compiler] Vite sandbox failed, trying legacy server:', viteErr.message);
+      console.error('[Compiler] ❌ Vite Sandbox failed:', err.message);
+      throw err;
     }
-
-    // 2. Fall back to legacy esbuild edge function
-    try {
-      console.info('[Compiler] Attempting compile-project edge function...');
-      const result = await Promise.race([
-        compileViaEdgeFunction(files, options, signal),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Server compilation timeout (15s)')), 15_000)
-        ),
-      ]);
-      console.info('[Compiler] ✅ compile-project succeeded:', result.html?.length, 'chars');
-      return result;
-    } catch (serverErr: any) {
-      if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
-      console.warn('[Compiler] Legacy server compilation failed, falling back to worker:', serverErr.message);
-    }
-
-    // 3. Last resort: in-browser worker
-    try {
-      console.info('[Compiler] Attempting in-browser worker compilation...');
-      const result = await Promise.race([
-        compileViaWorker(files, options),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Worker compilation timeout (20s)')), 20_000)
-        ),
-      ]);
-      console.info('[Compiler] ✅ Worker compilation succeeded:', result.html?.length, 'chars');
-      return result;
-    } catch (workerErr: any) {
-      console.error('[Compiler] ❌ All compilation tiers failed. Last error:', workerErr.message);
-      throw workerErr;
-    }
-  }, [compileViaWorker]);
+  }, []);
 
   /** Abort any in-flight compilation (call when starting a new generation or force-compiling) */
   const abortCompilation = useCallback(() => {
