@@ -157,6 +157,9 @@ export function CompilationBridge({
   const compileRunIdRef = useRef(0);
   // Track whether the next compile is an incremental edit (not first generation)
   const isIncrementalEditRef = useRef(false);
+  // Track the filesDigest at compile start — if it changed by the time compile finishes, retrigger
+  const compiledDigestRef = useRef<string>('');
+  const recompileNeededRef = useRef(false);
 
   // ── liveCompiledHTML (async, post-generation) ──
   const [liveCompiledHTML, setLiveCompiledHTML] = useState<string | null>(null);
@@ -298,7 +301,8 @@ export function CompilationBridge({
 
     // Already compiling? Skip.
     if (compilationInFlightRef.current) {
-      console.info('[CompilationBridge] Compilation already in flight, skipping');
+      console.info('[CompilationBridge] Compilation already in flight — marking recompile needed');
+      recompileNeededRef.current = true;
       return;
     }
 
@@ -359,6 +363,8 @@ export function CompilationBridge({
         fileCount: filesRef.current.length,
       });
       compilationInFlightRef.current = true;
+      compiledDigestRef.current = filesDigest;
+      recompileNeededRef.current = false;
       transitionCompileState('compiling');
 
       // Safety net: force-reset isCompiling if compilation hangs
@@ -482,7 +488,14 @@ export function CompilationBridge({
       } finally {
         clearTimeout(safetyTimer);
         compilationInFlightRef.current = false;
-        // Note: state already transitioned in try/catch above — finally just ensures flag cleanup
+        // If files changed during this compile, retrigger
+        if (recompileNeededRef.current) {
+          console.info('[CompilationBridge] Files changed during compile — retriggering');
+          recompileNeededRef.current = false;
+          stableHTMLRef.current = null;
+          prevFilesDigestRef.current = '';
+          setForceCompileTrigger(c => c + 1);
+        }
       }
     }, debounceMs);
 
