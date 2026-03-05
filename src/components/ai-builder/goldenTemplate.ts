@@ -94,7 +94,7 @@ export function getGoldenProjectFiles(): ProjectFile[] {
 export const PROTECTED_FILES = [
   'index.html',
   'src/main.tsx',
-  'package.json',
+  // package.json is intentionally NOT protected — AI needs to declare dependencies
   'vite.config.ts',
   'vite.config.js',
   'tsconfig.json',
