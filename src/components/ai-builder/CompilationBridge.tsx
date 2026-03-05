@@ -301,7 +301,8 @@ export function CompilationBridge({
 
     // Already compiling? Skip.
     if (compilationInFlightRef.current) {
-      console.info('[CompilationBridge] Compilation already in flight, skipping');
+      console.info('[CompilationBridge] Compilation already in flight — marking recompile needed');
+      recompileNeededRef.current = true;
       return;
     }
 
