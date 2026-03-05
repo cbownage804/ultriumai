@@ -178,7 +178,7 @@ export function CompilationBridge({
 
     if (isReactProject) {
       try {
-        const timeout = useLocalOnly ? 15_000 : 30_000;
+        const timeout = useLocalOnly ? 15_000 : 45_000; // Must exceed 3-tier fallback chain (8s+15s+20s=43s)
         const workerTimeout = new Promise<null>((resolve) =>
           setTimeout(() => {
             console.warn(`[CompilationBridge] Compilation timed out after ${timeout / 1000}s`);
