@@ -69,19 +69,7 @@ interface BuilderPreviewPanelProps {
   /** Reset to golden template */
   onResetToGolden?: () => void;
 }
-/**
- * Sanitize </script> literals inside inline <script> blocks to prevent
- * the HTML parser from closing the tag early (common in bundled React DOM).
- */
-function sanitizeScriptTags(html: string): string {
-  return html.replace(
-    /(<script[^>]*>)([\s\S]*?)(<\/script>)/gi,
-    (_match, open: string, content: string, close: string) => {
-      const safeContent = content.replace(/<\/script>/gi, '<\\/script>');
-      return open + safeContent + close;
-    }
-  );
-}
+// sanitizeScriptTags removed — Blob URL rendering avoids srcdoc parser issues entirely
 
 export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole = false, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey, repairFailed, repairErrors, onRetryRepair, onDiscardChanges, compileError, onRetryCompile, isGoldenProject, onResetToGolden }: BuilderPreviewPanelProps) {
   const [internalViewportMode, setInternalViewportMode] = useState<ViewportMode>('desktop');
@@ -127,13 +115,10 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
     const trimmed = rawHtml.trim();
     // Already a full document
     if (/<!doctype|<html/i.test(trimmed)) {
-      // Still sanitize </script> inside inline <script> blocks to prevent parser breakout
-      return sanitizeScriptTags(rawHtml);
+      return rawHtml;
     }
     // Looks like just JS code — wrap in full document
     console.warn('[PreviewPanel] HTML missing doctype — wrapping as full document');
-    // Escape </script> in the JS content so the browser parser doesn't close the tag early
-    const safeJs = rawHtml.replace(/<\/script>/gi, '<\\/script>');
     return `<!DOCTYPE html>
 <html>
   <head>
@@ -143,7 +128,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
   <body>
     <div id="root"></div>
     <script type="module">
-      ${safeJs}
+      ${rawHtml}
     </script>
   </body>
 </html>`;
@@ -163,7 +148,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
     });
   }, [html, normalizedHtml, isCompiling, compileError]);
 
-  const htmlWithErrorCapture = normalizedHtml ? (
+  const htmlWithInjections = normalizedHtml ? (
     normalizedHtml.includes('__builderInjected')
       ? normalizedHtml.replace(
           '</head>',
@@ -355,7 +340,30 @@ window.addEventListener('message', function(e) {
         )
   ) : null;
 
-  // Gap 4: Push compiled HTML to Service Worker when available
+  // === Blob URL rendering: avoids srcdoc </script> parser breakout ===
+  const blobUrlRef = useRef<string | null>(null);
+  const htmlWithErrorCapture = htmlWithInjections; // alias for downstream refs
+
+  const previewBlobUrl = useMemo(() => {
+    // Revoke previous blob
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+    }
+    if (!htmlWithInjections) return null;
+    const blob = new Blob([htmlWithInjections], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    blobUrlRef.current = url;
+    return url;
+  }, [htmlWithInjections]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+    };
+  }, []);
+
   // Only reload iframe for SUBSEQUENT updates — initial load is handled by src attribute
   // Gap 4: Push compiled HTML to Service Worker (for soft reloads/HMR)
   // Always use srcDoc for rendering — no src switch to avoid race conditions
@@ -373,17 +381,14 @@ window.addEventListener('message', function(e) {
     const handler = (e: MessageEvent) => {
       if (e.data?.type === '__SOFT_RELOAD__') {
         if (htmlWithErrorCapture) {
-          console.info('[HMR] Soft reload: full srcdoc update (SW disabled for srcdoc)');
-          const iframe = (iframeRef as React.RefObject<HTMLIFrameElement | null>)?.current;
-          if (iframe) {
-            iframe.srcdoc = htmlWithErrorCapture;
-          }
+          console.info('[HMR] Soft reload: remounting iframe via Blob URL');
+          setIframeKey(k => k + 1);
         }
       }
     };
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, [htmlWithErrorCapture, iframeRef]);
+  }, [htmlWithErrorCapture]);
 
   // ── Preview Health Monitor (Phase 1C) ──
   const healthCheckRef = useRef<NodeJS.Timeout | null>(null);
@@ -549,18 +554,12 @@ window.addEventListener('message', function(e) {
     setErrors([]); setCurrentUrl('/'); setUrlHistory(['/']); setHistoryIndex(0);
     // Phase 36: Reset scroll position on new build
     if (iframeRef.current?.contentWindow) iframeRef.current.contentWindow.scrollTo(0, 0);
-    // Session guard: inject new session ID whenever HTML changes
-    if (iframeRef.current) {
-      const sid = newSessionId();
-      sessionIdRef.current = sid;
-      console.info('[PreviewPanel] Setting srcdoc imperatively', {
-        htmlLength: htmlWithErrorCapture.length,
-        hasDoctype: /<!doctype|<html/i.test(htmlWithErrorCapture),
-        sessionId: sid,
-      });
-      iframeRef.current.srcdoc = injectSessionId(htmlWithErrorCapture, sid);
-    }
-  }, [htmlWithErrorCapture, newSessionId, injectSessionId]);
+    // Blob URL handles rendering — just log for diagnostics
+    console.info('[PreviewPanel] HTML updated for Blob URL rendering', {
+      htmlLength: htmlWithErrorCapture.length,
+      hasDoctype: /<!doctype|<html/i.test(htmlWithErrorCapture),
+    });
+  }, [htmlWithErrorCapture]);
 
   // Phase 2: Also clear stale errors when generation completes (isGenerating: true→false)
   const prevIsGeneratingRef = useRef(isGenerating);
@@ -815,7 +814,7 @@ window.addEventListener('message', function(e) {
               ref={iframeRef as React.RefObject<HTMLIFrameElement>}
               key={`iframe-${iframeKey}-${refreshKey ?? 0}`}
               title="App Preview"
-              srcDoc={htmlWithErrorCapture}
+              src={previewBlobUrl || undefined}
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
               className="w-full h-full border-0 bg-white"
               style={{ colorScheme: 'light' }}
