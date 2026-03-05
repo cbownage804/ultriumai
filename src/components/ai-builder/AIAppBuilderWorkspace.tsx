@@ -243,92 +243,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 
 const CANONICAL_INDEX_HTML_BODY = `  <div id="root"></div>\n  <script type="module" src="/src/main.tsx"></script>`;
 
-type SandpackFileMap = Record<string, string>;
 
-const DEFAULT_SANDBOX_MAIN_TSX = `import React from "react";
-import { createRoot } from "react-dom/client";
-import App from "./App";
-import "./index.css";
 
-createRoot(document.getElementById("root")!).render(<App />);
-`;
-
-const DEFAULT_SANDBOX_INDEX_HTML = `<!doctype html>
-<html>
-  <head><meta charset="UTF-8" /></head>
-  <body>
-    <div id="root"></div>
-  </body>
-</html>`;
-
-const buildSandpackFileMap = (files: ProjectFile[]): SandpackFileMap => {
-  const fileMap = new Map(files.map((file) => [file.path, file.content]));
-
-  // Start from golden defaults, overlay project files
-  // Strip @tailwind directives from CSS — the Tailwind CDN script handles class scanning automatically
-  const rawCss = fileMap.get('src/index.css') ?? GOLDEN_FILES['src/index.css'];
-  const strippedCss = rawCss.replace(/^@tailwind\s+[^;]+;\s*$/gm, '').trim();
-
-  const result: SandpackFileMap = {
-    '/src/App.tsx': fileMap.get('src/App.tsx') ?? GOLDEN_FILES['src/App.tsx'],
-    '/src/index.css': strippedCss || GOLDEN_FILES['src/index.css'],
-  };
-
-  // Sandpack's react-ts template expects /src/index.tsx as entry.
-  // Map our src/main.tsx content into Sandpack's expected entry point.
-  const mainContent = fileMap.get('src/main.tsx') ?? GOLDEN_FILES['src/main.tsx'];
-  result['/src/index.tsx'] = mainContent;
-
-  // Inject Tailwind CDN into the Sandpack index.html so utility classes work
-  result['/public/index.html'] = `<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://cdn.tailwindcss.com"></script>
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
-</html>`;
-
-  // Include any additional project files (components, utils, etc.)
-  for (const [path, content] of fileMap) {
-    const sandpackPath = path.startsWith('/') ? path : `/${path}`;
-    // Skip files already mapped or infrastructure files Sandpack handles internally
-    if (sandpackPath === '/src/main.tsx' || sandpackPath === '/index.html' || sandpackPath === '/package.json') continue;
-    // Strip @tailwind directives from any additional CSS files too
-    if (sandpackPath.endsWith('.css') && !result[sandpackPath]) {
-      result[sandpackPath] = content.replace(/^@tailwind\s+[^;]+;\s*$/gm, '').trim() || content;
-    } else if (!result[sandpackPath]) {
-      result[sandpackPath] = content;
-    }
-  }
-
-  return result;
-};
-
-/** Extract dependencies from project package.json for Sandpack */
-function extractDependencies(files: ProjectFile[]): Record<string, string> {
-  const baseDeps: Record<string, string> = { react: "^18.3.1", "react-dom": "^18.3.1" };
-  const pkgFile = files.find(f => f.path === 'package.json');
-  if (!pkgFile) return baseDeps;
-  try {
-    const pkg = JSON.parse(pkgFile.content);
-    const deps = pkg.dependencies || {};
-    // Remove devDependencies-only packages and vite/typescript (Sandpack handles these)
-    const skipPkgs = ['vite', 'typescript', '@vitejs/plugin-react', '@types/react', '@types/react-dom'];
-    const merged = { ...baseDeps };
-    for (const [name, version] of Object.entries(deps)) {
-      if (!skipPkgs.includes(name) && typeof version === 'string') {
-        merged[name] = version;
-      }
-    }
-    return merged;
-  } catch {
-    return baseDeps;
-  }
-}
 
 /** Infrastructure files that must not be modified unless the user explicitly mentions them */
 const PROTECTED_INFRA_FILES = PROTECTED_FILES;
@@ -3148,12 +3064,6 @@ export function AIAppBuilderWorkspace() {
   // ── LKG HTML ref — only updated when preview is valid; NEVER empty ──
   const MINIMAL_MOUNT_HTML = '<!DOCTYPE html><html><body><div id="root"></div></body></html>';
   const lastKnownGoodHTMLRef = useRef<string>(stableHTML && isPreviewValidFn(stableHTML) ? stableHTML : MINIMAL_MOUNT_HTML);
-  const [previewFiles, setPreviewFiles] = useState<SandpackFileMap>(() =>
-    buildSandpackFileMap(project.files.length > 0 ? project.files : getGoldenProjectFiles())
-  );
-  const lastKnownGoodPreviewFilesRef = useRef<SandpackFileMap>(
-    buildSandpackFileMap(project.files.length > 0 ? project.files : getGoldenProjectFiles())
-  );
 
   const handleStableHTML = useCallback((html: string | null) => {
     const changed = html !== stableHTMLRef.current;
@@ -3177,21 +3087,6 @@ export function AIAppBuilderWorkspace() {
     }
   }, []);
 
-  // Keep Sandpack file-map in sync with project files directly.
-  // Sandpack handles its own bundling — no need to gate on external compile state.
-  useEffect(() => {
-    if (project.files.length === 0) return;
-    // Don't update while actively generating (files are partial)
-    if (isGenerating) return;
-
-    const nextFiles = buildSandpackFileMap(project.files);
-    setPreviewFiles(nextFiles);
-    lastKnownGoodPreviewFilesRef.current = nextFiles;
-    console.info('[Workspace] Sandpack files updated', {
-      fileCount: Object.keys(nextFiles).length,
-      files: Object.keys(nextFiles),
-    });
-  }, [project.files, isGenerating]);
 
   // Phase 3: Lightweight safety net — if stableHTML is still null 5s after
   // generation ends and we have files, nudge CompilationBridge by toggling isCompiling.
@@ -3244,11 +3139,6 @@ export function AIAppBuilderWorkspace() {
   // ── Preview Success Contract: compiledHTML uses LKG fallback; isPreviewReady derived strictly from compile state ──
   const compiledHTML = stableHTML && isPreviewValidFn(stableHTML) ? stableHTML : lastKnownGoodHTMLRef.current;
   const isPreviewReady = compileState === 'success' && !!(compiledHTML && isPreviewValidFn(compiledHTML));
-  // Sandpack compiles internally — always use latest file map, fall back to LKG if empty
-  const previewFilesForRender = Object.keys(previewFiles).length > 0
-    ? previewFiles
-    : lastKnownGoodPreviewFilesRef.current;
-  const previewDependencies = useMemo(() => extractDependencies(project.files), [project.files]);
   const hasFiles = project.files.length > 0;
   const isGoldenProject = !hasUserGeneratedFiles(project.files);
 
@@ -3468,7 +3358,7 @@ export function AIAppBuilderWorkspace() {
                 </div>
               ) : undefined} />
             ) : mobileTab === 'preview' ? (
-                <BuilderPreviewPanel html={compiledHTML} previewFiles={previewFilesForRender} previewDependencies={previewDependencies} compileState={compileState} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl} repairFailed={repairFailed} repairErrors={repairErrors} onRetryRepair={handleRetryRepair} onDiscardChanges={handleDiscardChanges} compileError={compileError} onRetryCompile={handleRetryCompile} isGoldenProject={isGoldenProject} onResetToGolden={handleResetToGolden}>
+                <BuilderPreviewPanel html={compiledHTML} compileState={compileState} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl} repairFailed={repairFailed} repairErrors={repairErrors} onRetryRepair={handleRetryRepair} onDiscardChanges={handleDiscardChanges} compileError={compileError} onRetryCompile={handleRetryCompile} isGoldenProject={isGoldenProject} onResetToGolden={handleResetToGolden}>
                   <GeneratingOverlay isGenerating={isGenerating} isCompiling={isCompiling} phase={thinkingPhase} partialFilesRef={partialFilesRef} completedFileCountRef={completedFileCountRef} continuationRound={continuationRound} />
                 </BuilderPreviewPanel>
             ) : (
@@ -3838,7 +3728,7 @@ export function AIAppBuilderWorkspace() {
                               <ResizablePanelGroup direction="horizontal" className="h-full">
                                 <ResizablePanel defaultSize={50} minSize={30}>
                                   <div data-tour="preview" className="h-full">
-                                    <BuilderPreviewPanel html={compiledHTML} previewFiles={previewFilesForRender} previewDependencies={previewDependencies} compileState={compileState} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl} repairFailed={repairFailed} repairErrors={repairErrors} onRetryRepair={handleRetryRepair} onDiscardChanges={handleDiscardChanges} compileError={compileError} onRetryCompile={handleRetryCompile} isGoldenProject={isGoldenProject} onResetToGolden={handleResetToGolden}>
+                                    <BuilderPreviewPanel html={compiledHTML} compileState={compileState} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl} repairFailed={repairFailed} repairErrors={repairErrors} onRetryRepair={handleRetryRepair} onDiscardChanges={handleDiscardChanges} compileError={compileError} onRetryCompile={handleRetryCompile} isGoldenProject={isGoldenProject} onResetToGolden={handleResetToGolden}>
                                       <GeneratingOverlay isGenerating={isGenerating} isCompiling={isCompiling} phase={thinkingPhase} partialFilesRef={partialFilesRef} completedFileCountRef={completedFileCountRef} continuationRound={continuationRound} />
                                     </BuilderPreviewPanel>
                                   </div>
@@ -3855,7 +3745,7 @@ export function AIAppBuilderWorkspace() {
                               </ResizablePanelGroup>
                             ) : rightTab === 'preview' || !hasFiles ? (
                               <div data-tour="preview" className="h-full">
-                                <BuilderPreviewPanel html={compiledHTML} previewFiles={previewFilesForRender} previewDependencies={previewDependencies} compileState={compileState} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl} repairFailed={repairFailed} repairErrors={repairErrors} onRetryRepair={handleRetryRepair} onDiscardChanges={handleDiscardChanges} compileError={compileError} onRetryCompile={handleRetryCompile} isGoldenProject={isGoldenProject} onResetToGolden={handleResetToGolden}>
+                                <BuilderPreviewPanel html={compiledHTML} compileState={compileState} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl} repairFailed={repairFailed} repairErrors={repairErrors} onRetryRepair={handleRetryRepair} onDiscardChanges={handleDiscardChanges} compileError={compileError} onRetryCompile={handleRetryCompile} isGoldenProject={isGoldenProject} onResetToGolden={handleResetToGolden}>
                                   <GeneratingOverlay isGenerating={isGenerating} isCompiling={isCompiling} phase={thinkingPhase} partialFilesRef={partialFilesRef} completedFileCountRef={completedFileCountRef} continuationRound={continuationRound} />
                                 </BuilderPreviewPanel>
                               </div>

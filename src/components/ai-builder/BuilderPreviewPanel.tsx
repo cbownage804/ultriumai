@@ -21,13 +21,9 @@ import { SkeletonPreview } from './SkeletonPreview';
 import { CompilationProgress } from './CompilationProgress';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import { usePreviewServiceWorker } from '@/hooks/usePreviewServiceWorker';
-import { SandpackProvider, SandpackPreview, SandpackConsole } from '@codesandbox/sandpack-react';
 
 interface BuilderPreviewPanelProps {
   html: string | null;
-  previewFiles: Record<string, string>;
-  /** Dependencies to pass to SandpackProvider customSetup */
-  previewDependencies?: Record<string, string>;
   compileState?: 'idle' | 'compiling' | 'success' | 'error';
   showConsole?: boolean;
   isGenerating: boolean;
@@ -74,7 +70,7 @@ interface BuilderPreviewPanelProps {
   onResetToGolden?: () => void;
 }
 
-export function BuilderPreviewPanel({ html, previewFiles, previewDependencies, compileState = 'idle', showConsole = false, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey, repairFailed, repairErrors, onRetryRepair, onDiscardChanges, compileError, onRetryCompile, isGoldenProject, onResetToGolden }: BuilderPreviewPanelProps) {
+export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole = false, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey, repairFailed, repairErrors, onRetryRepair, onDiscardChanges, compileError, onRetryCompile, isGoldenProject, onResetToGolden }: BuilderPreviewPanelProps) {
   const [internalViewportMode, setInternalViewportMode] = useState<ViewportMode>('desktop');
   const viewportMode = externalViewportMode ?? internalViewportMode;
   const setViewportMode = onExternalViewportChange ?? setInternalViewportMode;
@@ -789,43 +785,24 @@ window.addEventListener('message', function(e) {
 
       {/* Preview */}
       <div className="flex-1 min-h-0 flex items-stretch justify-center">
-        {previewFiles && Object.keys(previewFiles).length > 0 && !isGoldenProject ? (
+        {htmlWithErrorCapture && !isGoldenProject ? (
           <div
-            className="h-full transition-all duration-300 mx-auto w-full"
+            className="h-full transition-all duration-300 mx-auto w-full relative"
             style={{
               width: viewportWidth > 0 ? `${viewportWidth}px` : '100%',
               maxWidth: '100%',
             }}
           >
-            <SandpackProvider
-              key={`sp-${refreshKey ?? 0}`}
-              template="react-ts"
-              files={previewFiles}
-              customSetup={{
-                dependencies: previewDependencies ?? {
-                  "react": "^18.3.1",
-                  "react-dom": "^18.3.1",
-                },
-              }}
-              options={{ activeFile: '/src/App.tsx' }}
-            >
-              <div className="h-full flex flex-col bg-background">
-                <div className="flex-1 min-h-0">
-                  <SandpackPreview
-                    showNavigator={false}
-                    showOpenInCodeSandbox={false}
-                    style={{ height: '100%', border: '0' }}
-                  />
-                </div>
-                {showConsole ? (
-                  <div className="h-40 border-t border-border bg-background">
-                    <SandpackConsole style={{ height: '100%' }} resetOnPreviewRestart />
-                  </div>
-                ) : null}
-              </div>
-            </SandpackProvider>
+            <iframe
+              ref={iframeRef as React.RefObject<HTMLIFrameElement>}
+              key={`iframe-${iframeKey}-${refreshKey ?? 0}`}
+              title="App Preview"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
+              className="w-full h-full border-0 bg-white"
+              style={{ colorScheme: 'light' }}
+            />
 
-            {/* Reset to Golden Template button — only when project has user-generated files */}
+            {/* Reset to Golden Template button */}
             {!isGoldenProject && onResetToGolden && !isGenerating && !isCompiling && (
               <div className="absolute bottom-3 right-3 z-20">
                 <button
