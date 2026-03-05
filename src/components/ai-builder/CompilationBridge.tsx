@@ -17,9 +17,9 @@ export interface CompileErrorInfo {
   errors: string[];
 }
 
-const COMPILE_TIMEOUT_MS = 40_000;
-const COMPILE_SAFETY_TIMEOUT_MS = 50_000; // Hard safety net — if isCompiling stays true longer, force reset
-// Must be >= worker timeout path (30s) so we don't abort valid first-build compiles.
+const COMPILE_TIMEOUT_MS = 60_000; // Allow full 3-tier fallback (Vite 8s + Legacy 15s + Worker 20s) plus retries
+const COMPILE_SAFETY_TIMEOUT_MS = 70_000; // Hard safety net — if isCompiling stays true longer, force reset
+// Must be >= worker timeout path so we don't abort valid first-build compiles.
 const COMPILE_HARD_TIMEOUT_MS = COMPILE_TIMEOUT_MS;
 interface CompilationBridgeProps {
   files: ProjectFile[];
