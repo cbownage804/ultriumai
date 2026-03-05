@@ -264,7 +264,13 @@ export function CompilationBridge({
     // Sync from external if handleBgComplete already compiled
     if (!stableHTMLRef.current && externalStableHTMLRef?.current) {
       console.info('[CompilationBridge] Syncing existing external preview');
-      setStableHTML(externalStableHTMLRef.current);
+      const externalHtml = externalStableHTMLRef.current;
+      setStableHTML(externalHtml);
+      transitionCompileState(isPreviewValid(externalHtml) ? 'success' : 'error',
+        isPreviewValid(externalHtml)
+          ? undefined
+          : { message: 'Invalid external preview HTML', errors: ['External compiled HTML failed preview validation'] }
+      );
       prevFilesDigestRef.current = filesDigest;
       return;
     }
@@ -385,7 +391,13 @@ export function CompilationBridge({
 
         // Bail if external arrived during debounce
         if (externalStableHTMLRef?.current && !stableHTMLRef.current) {
-          setStableHTML(externalStableHTMLRef.current);
+          const externalHtml = externalStableHTMLRef.current;
+          setStableHTML(externalHtml);
+          transitionCompileState(isPreviewValid(externalHtml) ? 'success' : 'error',
+            isPreviewValid(externalHtml)
+              ? undefined
+              : { message: 'Invalid external preview HTML', errors: ['External compiled HTML failed preview validation'] }
+          );
           return;
         }
 
