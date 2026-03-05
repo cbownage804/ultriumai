@@ -340,7 +340,30 @@ window.addEventListener('message', function(e) {
         )
   ) : null;
 
-  // Gap 4: Push compiled HTML to Service Worker when available
+  // === Blob URL rendering: avoids srcdoc </script> parser breakout ===
+  const blobUrlRef = useRef<string | null>(null);
+  const htmlWithErrorCapture = htmlWithInjections; // alias for downstream refs
+
+  const previewBlobUrl = useMemo(() => {
+    // Revoke previous blob
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+    }
+    if (!htmlWithInjections) return null;
+    const blob = new Blob([htmlWithInjections], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    blobUrlRef.current = url;
+    return url;
+  }, [htmlWithInjections]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+    };
+  }, []);
+
   // Only reload iframe for SUBSEQUENT updates — initial load is handled by src attribute
   // Gap 4: Push compiled HTML to Service Worker (for soft reloads/HMR)
   // Always use srcDoc for rendering — no src switch to avoid race conditions
@@ -800,7 +823,7 @@ window.addEventListener('message', function(e) {
               ref={iframeRef as React.RefObject<HTMLIFrameElement>}
               key={`iframe-${iframeKey}-${refreshKey ?? 0}`}
               title="App Preview"
-              srcDoc={htmlWithErrorCapture}
+              src={previewBlobUrl || undefined}
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
               className="w-full h-full border-0 bg-white"
               style={{ colorScheme: 'light' }}
