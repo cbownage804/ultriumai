@@ -488,7 +488,14 @@ export function CompilationBridge({
       } finally {
         clearTimeout(safetyTimer);
         compilationInFlightRef.current = false;
-        // Note: state already transitioned in try/catch above — finally just ensures flag cleanup
+        // If files changed during this compile, retrigger
+        if (recompileNeededRef.current) {
+          console.info('[CompilationBridge] Files changed during compile — retriggering');
+          recompileNeededRef.current = false;
+          stableHTMLRef.current = null;
+          prevFilesDigestRef.current = '';
+          setForceCompileTrigger(c => c + 1);
+        }
       }
     }, debounceMs);
 
