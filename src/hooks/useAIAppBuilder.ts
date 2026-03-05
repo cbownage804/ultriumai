@@ -457,10 +457,14 @@ function parseEditBlocks(raw: string): EditBlock[] {
 
   const flushHunk = () => {
     if (inHunk && currentHunkStart > 0) {
-      // Detect diff-style +/- prefixed lines
-      const diffLineCount = currentHunkLines.filter(l => /^[+-]/.test(l) && !/^[+-]{3}\s/.test(l)).length;
-      if (diffLineCount > 0 && diffLineCount >= currentHunkLines.length * 0.3) {
-        hasDiffMarkers = true;
+      // Detect diff-style +/- prefixed lines — but skip JSON-like files (package.json)
+      // where version strings like "+1.0.0" or lines starting with "-" are normal content
+      const isJsonFile = currentPath?.endsWith('.json');
+      if (!isJsonFile) {
+        const diffLineCount = currentHunkLines.filter(l => /^[+-]/.test(l) && !/^[+-]{3}\s/.test(l)).length;
+        if (diffLineCount > 0 && diffLineCount >= currentHunkLines.length * 0.3) {
+          hasDiffMarkers = true;
+        }
       }
       currentHunks.push({ startLine: currentHunkStart, endLine: currentHunkEnd, newLines: [...currentHunkLines] });
     }

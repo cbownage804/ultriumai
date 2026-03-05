@@ -94,15 +94,12 @@ export function getGoldenProjectFiles(): ProjectFile[] {
 export const PROTECTED_FILES = [
   'index.html',
   'src/main.tsx',
-  // package.json is intentionally NOT protected — AI needs to declare dependencies
+  // package.json, tailwind.config.*, postcss.config.* are intentionally NOT protected
+  // — AI needs to declare dependencies and configure tooling for generated apps
   'vite.config.ts',
   'vite.config.js',
   'tsconfig.json',
   'tsconfig.app.json',
-  'tailwind.config.js',
-  'tailwind.config.ts',
-  'postcss.config.js',
-  'postcss.config.ts',
 ];
 
 /**
