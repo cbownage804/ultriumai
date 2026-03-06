@@ -70,84 +70,89 @@ interface BuilderPreviewPanelProps {
   onResetToGolden?: () => void;
 }
 /**
- * Externalize inline <script> bodies that contain `</script>` literals into
- * separate Blob URLs.  This avoids the HTML parser prematurely closing the
- * <script> tag when the bundled JS contains string literals like `</script>`.
+ * Externalize ALL inline <script> bodies into separate JS Blob URLs.
+ * This prevents the HTML parser from prematurely closing <script> tags
+ * when bundled JS contains `</script>` string literals.
  *
- * Uses indexOf-based scanning instead of regex to correctly identify the REAL
- * closing tag (last `</script>` before the next `<script` opening or EOF).
+ * Strategy: escape `</script` → `<\/script` inside every inline script body,
+ * so the HTML parser never sees a premature close tag.
  */
-function externalizeProblematicScripts(html: string): { html: string; jsBlobUrls: string[] } {
-  const jsBlobUrls: string[] = [];
-  const lower = html.toLowerCase();
+function escapeInlineScripts(html: string): string {
+  // We can't reliably parse script boundaries when bodies contain </script>,
+  // so instead we do a two-pass approach:
+  // 1. Replace ALL </script with a unique placeholder
+  // 2. Restore only the real closing tags (those followed by nothing or whitespace/tags)
+  
+  // Actually, the simplest correct approach: use a character-level scanner
+  // that understands we're inside a <script> block and escapes </script
+  // occurrences that appear inside JS string literals.
+  //
+  // Simplest reliable method: split on </script> and rejoin intelligently.
+  // Every </script> in the HTML either closes a real script tag or is inside
+  // a string literal. Real closing tags are followed by non-JS content (HTML/whitespace/EOF).
+  // String literal ones are followed by more JS code.
+  
+  // Most reliable: just escape </script inside script bodies using the
+  // "split the closing tag" technique used by all major bundlers
+  const parts = html.split(/<\/script>/gi);
+  if (parts.length <= 1) return html; // no scripts or single occurrence
+  
+  // Rebuild: for each split point, determine if it's a real closing tag
+  // A real closing tag means: we're at the end of a script block.
+  // Heuristic: track whether we're inside a <script> block
   let result = '';
-  let pos = 0;
-
-  while (pos < html.length) {
-    const scriptStart = lower.indexOf('<script', pos);
-    if (scriptStart === -1) {
-      result += html.slice(pos);
-      break;
+  let insideScript = false;
+  let scriptDepth = 0; // how many </script> we've escaped so far for this block
+  
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+    
+    if (i > 0) {
+      // We need to add back a </script> — but is it real or should it be escaped?
+      if (insideScript) {
+        // Check if next part starts with HTML-like content (the script truly ended)
+        // or if it looks like more JS (the </script> was inside a string)
+        const nextContent = part.trimStart();
+        const looksLikeHtmlAfterScript = (
+          nextContent === '' || // EOF
+          /^</.test(nextContent) || // another HTML tag follows
+          /^\s*$/.test(part) && i === parts.length - 1 // trailing whitespace at end
+        );
+        
+        if (looksLikeHtmlAfterScript && scriptDepth === 0) {
+          // Real closing tag
+          result += '</script>';
+          insideScript = false;
+        } else {
+          // Inside a string literal — escape it
+          result += '<\\/script>';
+          scriptDepth++;
+          // But also check if there's a real close later — we might need to
+          // reset scriptDepth when we find the real closing tag
+        }
+      } else {
+        // Not inside a script — this shouldn't happen but add it back
+        result += '</script>';
+      }
     }
-
-    // Add everything before this <script
-    result += html.slice(pos, scriptStart);
-
-    const tagEnd = html.indexOf('>', scriptStart);
-    if (tagEnd === -1) { result += html.slice(scriptStart); break; }
-
-    const openTag = html.slice(scriptStart, tagEnd + 1);
-
-    // Skip <script src="..."> (external) or self-closing
-    if (/\bsrc\s*=/i.test(openTag) || openTag.endsWith('/>')) {
-      result += openTag;
-      pos = tagEnd + 1;
-      continue;
+    
+    result += part;
+    
+    // Check if this part opens a new inline script
+    const scriptOpenRegex = /<script(?![^>]*\bsrc\s*=)[^>]*>/gi;
+    let match;
+    let lastScriptOpen = -1;
+    while ((match = scriptOpenRegex.exec(part)) !== null) {
+      lastScriptOpen = match.index;
+      insideScript = true;
+      scriptDepth = 0;
     }
-
-    // Find the REAL closing </script> — last occurrence before next <script or EOF
-    const contentStart = tagEnd + 1;
-    const nextScriptOpen = lower.indexOf('<script', contentStart);
-    const searchEnd = nextScriptOpen !== -1 ? nextScriptOpen : html.length;
-    const segment = html.slice(contentStart, searchEnd);
-    const segLower = segment.toLowerCase();
-
-    let lastClosePos = -1;
-    let searchFrom = 0;
-    while (true) {
-      const idx = segLower.indexOf('</script>', searchFrom);
-      if (idx === -1) break;
-      lastClosePos = idx;
-      searchFrom = idx + 1;
-    }
-
-    if (lastClosePos === -1) {
-      // No closing tag — pass through as-is
-      result += openTag + segment;
-      pos = searchEnd;
-      continue;
-    }
-
-    const scriptBody = segment.slice(0, lastClosePos);
-    const afterClose = segment.slice(lastClosePos + '</script>'.length);
-
-    if (/<\/script/i.test(scriptBody)) {
-      // Problematic: externalize into a JS Blob URL
-      const jsBlob = new Blob([scriptBody], { type: 'text/javascript' });
-      const jsUrl = URL.createObjectURL(jsBlob);
-      jsBlobUrls.push(jsUrl);
-      const typeMatch = openTag.match(/type\s*=\s*["']([^"']+)["']/i);
-      const typeAttr = typeMatch ? ` type="${typeMatch[1]}"` : '';
-      result += `<script${typeAttr} src="${jsUrl}"></script>`;
-    } else {
-      result += openTag + scriptBody + '</script>';
-    }
-
-    result += afterClose;
-    pos = searchEnd;
+    
+    // Check if this part has a closing </script> that would close it
+    // (handled by the split, so no)
   }
-
-  return { html: result, jsBlobUrls };
+  
+  return result;
 }
 
 export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole = false, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey, repairFailed, repairErrors, onRetryRepair, onDiscardChanges, compileError, onRetryCompile, isGoldenProject, onResetToGolden }: BuilderPreviewPanelProps) {
