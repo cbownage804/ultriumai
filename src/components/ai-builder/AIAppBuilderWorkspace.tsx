@@ -896,9 +896,13 @@ export function AIAppBuilderWorkspace() {
         pendingValidationFixRef.current = { errorSummary, files: mergedFiles };
         setRepairTrigger(t => t + 1); // Force repair effect to re-evaluate
 
-        // Prevent stale "compiling" UI from blocking/obscuring repair flow
+        // Move preview to explicit error state while repair runs (prevents empty-state confusion)
         setIsCompiling(false);
-        setCompileStateRaw('idle');
+        setCompileStateRaw('error');
+        setCompileError({
+          message: 'Generated code failed validation — auto-fix in progress',
+          errors: valErrors.slice(0, 5).map(e => `${e.file}: ${e.message}`),
+        });
 
         // Auto-fix watchdog: terminal state after 25s — do NOT commit invalid staged files
         clearRepairWatchdog();
