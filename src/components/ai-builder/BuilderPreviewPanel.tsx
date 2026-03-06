@@ -708,8 +708,12 @@ window.addEventListener('message', function(e) {
     };
   }, [onAutoFixError, isGenerating, html, crashPageHtml, detachListener, attachListener, newSessionId, injectSessionId]);
 
-  useEffect(() => { 
-    if (!htmlWithErrorCapture) return;
+  useEffect(() => {
+    if (!htmlWithErrorCapture) {
+      // Clear stale runtime errors when preview HTML is absent (e.g. between failed repair attempts)
+      if (!isGenerating && !isCompiling) setErrors([]);
+      return;
+    }
     setErrors([]); setCurrentUrl('/'); setUrlHistory(['/']); setHistoryIndex(0);
     // Phase 36: Reset scroll position on new build
     if (iframeRef.current?.contentWindow) iframeRef.current.contentWindow.scrollTo(0, 0);
@@ -718,7 +722,7 @@ window.addEventListener('message', function(e) {
       htmlLength: htmlWithErrorCapture.length,
       hasDoctype: /<!doctype|<html/i.test(htmlWithErrorCapture),
     });
-  }, [htmlWithErrorCapture]);
+  }, [htmlWithErrorCapture, isGenerating, isCompiling]);
 
   // Phase 2: Also clear stale errors when generation completes (isGenerating: true→false)
   const prevIsGeneratingRef = useRef(isGenerating);
