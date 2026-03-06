@@ -70,83 +70,95 @@ interface BuilderPreviewPanelProps {
   onResetToGolden?: () => void;
 }
 /**
- * Externalize inline <script> bodies that contain `</script>` literals into
- * separate Blob URLs.  This avoids the HTML parser prematurely closing the
- * <script> tag when the bundled JS contains string literals like `</script>`.
+ * Externalize the main module script (Vite bundle) into a JS Blob URL.
+ * The bundled JS often contains `</script>` string literals which cause
+ * the HTML parser to prematurely close the script tag, displaying raw JS
+ * as text. By loading via Blob URL src, the JS is never inline in the HTML.
  *
- * Uses indexOf-based scanning instead of regex to correctly identify the REAL
- * closing tag (last `</script>` before the next `<script` opening or EOF).
+ * Strategy: Find `<script type="module">` (the Vite bundle), extract its
+ * full body (up to the last `</script>` in the document), and replace
+ * with `<script type="module" src="blob:..."></script>`.
  */
-function externalizeProblematicScripts(html: string): { html: string; jsBlobUrls: string[] } {
+function externalizeModuleScript(html: string): { html: string; jsBlobUrls: string[] } {
   const jsBlobUrls: string[] = [];
   const lower = html.toLowerCase();
-  let result = '';
-  let pos = 0;
-
-  while (pos < html.length) {
-    const scriptStart = lower.indexOf('<script', pos);
-    if (scriptStart === -1) {
-      result += html.slice(pos);
-      break;
-    }
-
-    // Add everything before this <script
-    result += html.slice(pos, scriptStart);
-
-    const tagEnd = html.indexOf('>', scriptStart);
-    if (tagEnd === -1) { result += html.slice(scriptStart); break; }
-
-    const openTag = html.slice(scriptStart, tagEnd + 1);
-
-    // Skip <script src="..."> (external) or self-closing
-    if (/\bsrc\s*=/i.test(openTag) || openTag.endsWith('/>')) {
-      result += openTag;
-      pos = tagEnd + 1;
-      continue;
-    }
-
-    // Find the REAL closing </script> — last occurrence before next <script or EOF
-    const contentStart = tagEnd + 1;
-    const nextScriptOpen = lower.indexOf('<script', contentStart);
-    const searchEnd = nextScriptOpen !== -1 ? nextScriptOpen : html.length;
-    const segment = html.slice(contentStart, searchEnd);
-    const segLower = segment.toLowerCase();
-
-    let lastClosePos = -1;
+  
+  // Find <script type="module"> (the main Vite bundle)
+  const modulePattern = /<script\b[^>]*\btype\s*=\s*["']module["'][^>]*>/gi;
+  let match: RegExpExecArray | null;
+  let result = html;
+  
+  // Process from last to first to preserve indices
+  const matches: { openStart: number; openEnd: number; openTag: string }[] = [];
+  while ((match = modulePattern.exec(html)) !== null) {
+    const openTag = match[0];
+    // Skip scripts that already have src
+    if (/\bsrc\s*=/i.test(openTag)) continue;
+    matches.push({
+      openStart: match.index,
+      openEnd: match.index + openTag.length,
+      openTag,
+    });
+  }
+  
+  // Process in reverse order to maintain string positions
+  for (let i = matches.length - 1; i >= 0; i--) {
+    const m = matches[i];
+    const afterOpen = result.slice(m.openEnd);
+    const afterOpenLower = afterOpen.toLowerCase();
+    
+    // Find the last </script> in the remaining document for this script
+    // This works because module scripts are typically the last/main script
+    let lastCloseIdx = -1;
     let searchFrom = 0;
     while (true) {
-      const idx = segLower.indexOf('</script>', searchFrom);
+      const idx = afterOpenLower.indexOf('</script>', searchFrom);
       if (idx === -1) break;
-      lastClosePos = idx;
+      lastCloseIdx = idx;
       searchFrom = idx + 1;
     }
-
-    if (lastClosePos === -1) {
-      // No closing tag — pass through as-is
-      result += openTag + segment;
-      pos = searchEnd;
-      continue;
+    
+    if (lastCloseIdx === -1) continue; // No closing tag found
+    
+    // But we need to be smarter: the real closing tag is the one that
+    // matches this opening tag. If there are other <script> tags after
+    // this one, we can't just use the last </script>.
+    // Instead, find the first </script> that is NOT inside a string literal.
+    // Simpler: find the next <script (opening) after our opening. The real
+    // closing must be before it.
+    const nextOpenIdx = afterOpenLower.indexOf('<script', 1); // skip self
+    const searchBound = nextOpenIdx !== -1 ? nextOpenIdx : afterOpen.length;
+    
+    // Find last </script> before the next <script opening
+    lastCloseIdx = -1;
+    searchFrom = 0;
+    const boundedLower = afterOpenLower.slice(0, searchBound);
+    while (true) {
+      const idx = boundedLower.indexOf('</script>', searchFrom);
+      if (idx === -1) break;
+      lastCloseIdx = idx;
+      searchFrom = idx + 1;
     }
-
-    const scriptBody = segment.slice(0, lastClosePos);
-    const afterClose = segment.slice(lastClosePos + '</script>'.length);
-
-    if (/<\/script/i.test(scriptBody)) {
-      // Problematic: externalize into a JS Blob URL
-      const jsBlob = new Blob([scriptBody], { type: 'text/javascript' });
-      const jsUrl = URL.createObjectURL(jsBlob);
-      jsBlobUrls.push(jsUrl);
-      const typeMatch = openTag.match(/type\s*=\s*["']([^"']+)["']/i);
-      const typeAttr = typeMatch ? ` type="${typeMatch[1]}"` : '';
-      result += `<script${typeAttr} src="${jsUrl}"></script>`;
-    } else {
-      result += openTag + scriptBody + '</script>';
-    }
-
-    result += afterClose;
-    pos = searchEnd;
+    
+    if (lastCloseIdx === -1) continue;
+    
+    const scriptBody = afterOpen.slice(0, lastCloseIdx);
+    
+    // Only externalize if the body actually contains </script (the problematic case)
+    if (!/<\/script/i.test(scriptBody)) continue;
+    
+    // Create a JS Blob URL for the script body
+    const jsBlob = new Blob([scriptBody], { type: 'text/javascript' });
+    const jsUrl = URL.createObjectURL(jsBlob);
+    jsBlobUrls.push(jsUrl);
+    
+    // Replace the inline script with an external one
+    const closeEnd = m.openEnd + lastCloseIdx + '</script>'.length;
+    result = result.slice(0, m.openStart) +
+      `<script type="module" src="${jsUrl}"></script>` +
+      result.slice(closeEnd);
   }
-
+  
   return { html: result, jsBlobUrls };
 }
 
@@ -419,7 +431,7 @@ window.addEventListener('message', function(e) {
         )
   ) : null;
 
-  // === Blob URL rendering: externalize scripts to avoid </script> parser breakout ===
+  // === Blob URL rendering: externalize module scripts to avoid </script> parser breakout ===
   const blobUrlRef = useRef<string | null>(null);
   const jsBlobUrlsRef = useRef<string[]>([]);
   const htmlWithErrorCapture = htmlWithInjections; // alias for downstream refs
@@ -433,8 +445,8 @@ window.addEventListener('message', function(e) {
 
     if (!htmlWithInjections) return null;
 
-    // Externalize scripts that contain </script> literals into separate JS Blob URLs
-    const { html: safeHtml, jsBlobUrls } = externalizeProblematicScripts(htmlWithInjections);
+    // Externalize module scripts containing </script> literals into JS Blob URLs
+    const { html: safeHtml, jsBlobUrls } = externalizeModuleScript(htmlWithInjections);
     jsBlobUrlsRef.current = jsBlobUrls;
 
     const blob = new Blob([safeHtml], { type: 'text/html;charset=utf-8' });
