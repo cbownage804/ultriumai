@@ -216,11 +216,47 @@ export function useProjectPersistence() {
 
   const deleteProject = useCallback(async (projectId: string) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Fetch name first so we can also clean preview/settings/domain rows tied to slug
+      const { data: existingProject } = await supabase
+        .from('builder_projects')
+        .select('name')
+        .eq('id', projectId)
+        .maybeSingle();
+
       const { error } = await supabase
         .from('builder_projects')
         .delete()
         .eq('id', projectId);
       if (error) throw error;
+
+      if (user && existingProject?.name) {
+        const slug = existingProject.name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '')
+          .slice(0, 30);
+
+        if (slug) {
+          const [{ error: livePreviewDeleteError }, { error: settingsDeleteError }, { error: domainsDeleteError }, { error: storageDeleteError }] = await Promise.all([
+            supabase.from('app_builder_live_previews').delete().eq('user_id', user.id).eq('project_slug', slug),
+            (supabase as any).from('app_builder_project_settings').delete().eq('user_id', user.id).eq('project_slug', slug),
+            (supabase as any).from('app_builder_domains').delete().eq('user_id', user.id).eq('project_slug', slug),
+            supabase.storage.from('published-apps').remove([
+              `${user.id}/previews/${slug}/index.html`,
+              `${user.id}/${slug}/index.html`,
+            ]),
+          ]);
+
+          if (livePreviewDeleteError) console.warn('Failed to delete live preview rows:', livePreviewDeleteError);
+          if (settingsDeleteError) console.warn('Failed to delete project settings rows:', settingsDeleteError);
+          if (domainsDeleteError) console.warn('Failed to delete project domains rows:', domainsDeleteError);
+          if (storageDeleteError) console.warn('Failed to delete preview storage files:', storageDeleteError);
+        }
+      }
+
+      try { localStorage.removeItem(`${DEPLOY_HISTORY_KEY}-${projectId}`); } catch { /* */ }
       setSavedProjects(prev => prev.filter(p => p.id !== projectId));
       if (currentProjectId === projectId) setCurrentProjectId(null);
       toast.success('Project deleted');
