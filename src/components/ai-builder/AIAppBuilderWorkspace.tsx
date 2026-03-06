@@ -1971,6 +1971,12 @@ export function AIAppBuilderWorkspace() {
       // Clear all storage synchronously
       clearDraft();
       try { localStorage.removeItem('ai-builder-compiled-html'); } catch {}
+      // Reset in-memory preview cache too
+      stableHTMLRef.current = null;
+      lastKnownGoodHTMLRef.current = null;
+      compiledForHostingRef.current = null;
+      setCompiledForHostingState(null);
+      setStableHTML(null);
       // Reset React state to empty so auto-save/flush don't re-persist old data
       setFiles([]);
       setMessages([]);
@@ -2866,7 +2872,7 @@ export function AIAppBuilderWorkspace() {
     setConfirmAction({
       title: 'Clear chat & project?',
       description: 'This will remove all messages, generated files, and reset the project to a blank state. This cannot be undone.',
-      onConfirm: () => { clearChat(); resetProject(); setStableHTML(null); try { localStorage.removeItem(COMPILED_CACHE_KEY); } catch {} },
+      onConfirm: () => { clearChat(); resetProject(); setStableHTML(null); stableHTMLRef.current = null; lastKnownGoodHTMLRef.current = null; compiledForHostingRef.current = null; setCompiledForHostingState(null); try { localStorage.removeItem(COMPILED_CACHE_KEY); } catch {} },
     });
   };
 
@@ -3071,7 +3077,7 @@ export function AIAppBuilderWorkspace() {
   const skipNextCompileRef = useRef(false);
   // ── LKG HTML ref — only updated when preview is valid; NEVER empty ──
   const MINIMAL_MOUNT_HTML = '<!DOCTYPE html><html><body><div id="root"></div></body></html>';
-  const lastKnownGoodHTMLRef = useRef<string>(stableHTML && isPreviewValidFn(stableHTML) ? stableHTML : MINIMAL_MOUNT_HTML);
+  const lastKnownGoodHTMLRef = useRef<string | null>(stableHTML && isPreviewValidFn(stableHTML) ? stableHTML : null);
 
   const handleStableHTML = useCallback((html: string | null) => {
     const changed = html !== stableHTMLRef.current;
@@ -3844,7 +3850,7 @@ export function AIAppBuilderWorkspace() {
           onToggleHideBadge={(v) => { setHideBadge(v); localStorage.setItem('builder-hide-badge', String(v)); }}
           soundEnabled={soundEnabled}
           onToggleSound={(v) => { setSoundEnabled(v); localStorage.setItem('builder-sound', String(v)); }}
-          onDeleteProject={() => { if (currentProjectId) { deleteProject(currentProjectId); resetProject(); setStableHTML(null); clearDraft(); idbPersistence.clearSession(); dedupeToast('success', 'Project deleted'); } }}
+          onDeleteProject={async () => { if (currentProjectId) { await deleteProject(currentProjectId); resetProject(); setStableHTML(null); stableHTMLRef.current = null; lastKnownGoodHTMLRef.current = null; compiledForHostingRef.current = null; setCompiledForHostingState(null); try { localStorage.removeItem(COMPILED_CACHE_KEY); } catch {} clearDraft(); await idbPersistence.clearSession(); } }}
           onOpenSupabaseConfig={() => { setShowSettingsModal(false); setTimeout(() => setShowSettingsPanel(true), 150); }}
           onOpenStripeConfig={() => { setShowSettingsModal(false); setTimeout(() => setShowSettingsPanel(true), 150); }}
           onOpenGithubConfig={() => { setShowSettingsModal(false); setTimeout(() => setShowSettingsPanel(true), 150); }}
