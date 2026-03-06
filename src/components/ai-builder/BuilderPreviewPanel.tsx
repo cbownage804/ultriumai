@@ -431,19 +431,23 @@ window.addEventListener('message', function(e) {
         )
   ) : null;
 
-  // === Blob URL rendering: externalize scripts to avoid </script> parser breakout ===
+  // === Blob URL rendering: externalize module scripts to avoid </script> parser breakout ===
   const blobUrlRef = useRef<string | null>(null);
+  const jsBlobUrlsRef = useRef<string[]>([]);
   const htmlWithErrorCapture = htmlWithInjections; // alias for downstream refs
 
   const previewBlobUrl = useMemo(() => {
-    // Revoke previous blob
+    // Revoke previous blobs
     if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+    jsBlobUrlsRef.current.forEach(u => URL.revokeObjectURL(u));
     blobUrlRef.current = null;
+    jsBlobUrlsRef.current = [];
 
     if (!htmlWithInjections) return null;
 
-    // Escape </script> literals inside inline script bodies to prevent parser breakout
-    const safeHtml = escapeInlineScripts(htmlWithInjections);
+    // Externalize module scripts containing </script> literals into JS Blob URLs
+    const { html: safeHtml, jsBlobUrls } = externalizeModuleScript(htmlWithInjections);
+    jsBlobUrlsRef.current = jsBlobUrls;
 
     const blob = new Blob([safeHtml], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -455,6 +459,7 @@ window.addEventListener('message', function(e) {
   useEffect(() => {
     return () => {
       if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+      jsBlobUrlsRef.current.forEach(u => URL.revokeObjectURL(u));
     };
   }, []);
 
