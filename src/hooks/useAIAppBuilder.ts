@@ -378,6 +378,8 @@ const DELETE_DELIMITER = /^===DELETE:\s*(.+?)===$/;
 const EDIT_DELIMITER = /^===EDIT:\s*(.+?)===$/;
 const HUNK_HEADER = /^@@\s*(\d+)-(\d+)\s*@@$/;
 const UNIFIED_HUNK_HEADER = /^@@\s*-(\d+)(?:,(\d+))?\s*\+(\d+)(?:,(\d+))?\s*@@/;
+// AI model format: @@oldStart,oldCount +newStart,newCount @@ (no leading -)
+const AI_HUNK_HEADER = /^@@\s*(\d+),(\d+)\s*\+(\d+),(\d+)\s*@@/;
 
 /** Detect conversational prose that should not be part of a code file */
 function isConversationalLine(line: string): boolean {
