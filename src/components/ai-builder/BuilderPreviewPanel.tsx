@@ -438,9 +438,8 @@ window.addEventListener('message', function(e) {
 
     if (!htmlWithInjections) return null;
 
-    // Externalize scripts that contain </script> literals into separate JS Blob URLs
-    const { html: safeHtml, jsBlobUrls } = externalizeProblematicScripts(htmlWithInjections);
-    jsBlobUrlsRef.current = jsBlobUrls;
+    // Escape </script> literals inside inline script bodies to prevent parser breakout
+    const safeHtml = escapeInlineScripts(htmlWithInjections);
 
     const blob = new Blob([safeHtml], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
