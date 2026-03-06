@@ -378,6 +378,8 @@ const DELETE_DELIMITER = /^===DELETE:\s*(.+?)===$/;
 const EDIT_DELIMITER = /^===EDIT:\s*(.+?)===$/;
 const HUNK_HEADER = /^@@\s*(\d+)-(\d+)\s*@@$/;
 const UNIFIED_HUNK_HEADER = /^@@\s*-(\d+)(?:,(\d+))?\s*\+(\d+)(?:,(\d+))?\s*@@/;
+// AI model format: @@oldStart,oldCount +newStart,newCount @@ (no leading -)
+const AI_HUNK_HEADER = /^@@\s*(\d+),(\d+)\s*\+(\d+),(\d+)\s*@@/;
 
 /** Detect conversational prose that should not be part of a code file */
 function isConversationalLine(line: string): boolean {
@@ -454,22 +456,55 @@ function parseEditBlocks(raw: string): EditBlock[] {
   let currentHunkEnd = 0;
   let inHunk = false;
   let hasDiffMarkers = false;
+  /** Whether the current hunk uses unified diff (+/- prefixed lines) */
+  let isUnifiedDiffHunk = false;
 
   const flushHunk = () => {
     if (inHunk && currentHunkStart > 0) {
-      // Detect diff-style +/- prefixed lines — but skip JSON-like files (package.json)
-      // where version strings like "+1.0.0" or lines starting with "-" are normal content
-      const isJsonFile = currentPath?.endsWith('.json');
-      if (!isJsonFile) {
-        const diffLineCount = currentHunkLines.filter(l => /^[+-]/.test(l) && !/^[+-]{3}\s/.test(l)).length;
-        if (diffLineCount > 0 && diffLineCount >= currentHunkLines.length * 0.3) {
-          hasDiffMarkers = true;
+      let finalLines = currentHunkLines;
+
+      // If this is a unified diff hunk, strip +/- prefixes properly:
+      // - Lines starting with '+' (not '+++') → new content (strip '+')
+      // - Lines starting with '-' (not '---') → removed content (skip)
+      // - Lines starting with ' ' → context (strip leading space)
+      // - Other lines → keep as-is (content)
+      if (isUnifiedDiffHunk) {
+        finalLines = [];
+        for (const l of currentHunkLines) {
+          if (/^-[^-]/.test(l) || (l === '-')) {
+            // Removed line — skip
+            continue;
+          } else if (/^\+[^+]/.test(l) || (l === '+')) {
+            // Added line — strip the '+' prefix
+            finalLines.push(l.slice(1));
+          } else if (l.startsWith('---') || l.startsWith('+++')) {
+            // Diff file headers — skip
+            continue;
+          } else if (l.startsWith(' ')) {
+            // Context line — strip leading space
+            finalLines.push(l.slice(1));
+          } else {
+            // No prefix — keep as-is
+            finalLines.push(l);
+          }
+        }
+        // Successfully parsed unified diff — NOT an artifact
+      } else {
+        // Non-unified hunk: detect diff-style +/- prefixed lines
+        const isJsonFile = currentPath?.endsWith('.json');
+        if (!isJsonFile) {
+          const diffLineCount = finalLines.filter(l => /^[+-]/.test(l) && !/^[+-]{3}\s/.test(l)).length;
+          if (diffLineCount > 0 && diffLineCount >= finalLines.length * 0.3) {
+            hasDiffMarkers = true;
+          }
         }
       }
-      currentHunks.push({ startLine: currentHunkStart, endLine: currentHunkEnd, newLines: [...currentHunkLines] });
+
+      currentHunks.push({ startLine: currentHunkStart, endLine: currentHunkEnd, newLines: [...finalLines] });
     }
     currentHunkLines = [];
     inHunk = false;
+    isUnifiedDiffHunk = false;
   };
 
   const flushEdit = () => {
@@ -505,6 +540,19 @@ function parseEditBlocks(raw: string): EditBlock[] {
         currentHunkStart = parseInt(hunkMatch[1]);
         currentHunkEnd = parseInt(hunkMatch[2]);
         inHunk = true;
+        isUnifiedDiffHunk = false;
+        continue;
+      }
+
+      // Try AI model format: @@oldStart,oldCount +newStart,newCount @@
+      const aiMatch = line.match(AI_HUNK_HEADER);
+      if (aiMatch) {
+        flushHunk();
+        currentHunkStart = parseInt(aiMatch[1]);
+        const oldCount = parseInt(aiMatch[2] || '1');
+        currentHunkEnd = currentHunkStart + oldCount - 1;
+        inHunk = true;
+        isUnifiedDiffHunk = true; // AI format uses +/- prefixed lines
         continue;
       }
 
@@ -516,11 +564,7 @@ function parseEditBlocks(raw: string): EditBlock[] {
         const oldCount = parseInt(unifiedMatch[2] || '1');
         currentHunkEnd = currentHunkStart + oldCount - 1;
         inHunk = true;
-      // Unified diff headers are themselves a diff artifact signal
-        // But skip for JSON files where diff-style content is normal
-        if (!currentPath?.endsWith('.json')) {
-          hasDiffMarkers = true;
-        }
+        isUnifiedDiffHunk = true; // Unified diffs use +/- prefixed lines
         continue;
       }
 
