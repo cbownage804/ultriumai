@@ -448,7 +448,6 @@ window.addEventListener('message', function(e) {
   useEffect(() => {
     return () => {
       if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
-      jsBlobUrlsRef.current.forEach(u => URL.revokeObjectURL(u));
     };
   }, []);
 
