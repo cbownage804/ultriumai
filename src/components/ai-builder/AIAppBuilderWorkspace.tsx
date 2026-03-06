@@ -870,8 +870,8 @@ export function AIAppBuilderWorkspace() {
 
         // Safety net: if CompilationBridge hasn't produced HTML after 20s
         setTimeout(() => {
-          if (!stableHTMLRef.current && !pendingValidationFixRef.current && !validationFixInFlightRef.current && !repairInFlightRef.current && !awaitingRepairJobStartRef.current) {
-            console.warn('[handleBgComplete] Safety net: stableHTML still null 20s after merge — forcing compile');
+          if (!stableHTMLRef.current && !pendingValidationFixRef.current && !validationFixInFlightRef.current && !repairInFlightRef.current && !awaitingRepairJobStartRef.current && !isCompilingRef.current && compileStateRef.current !== 'compiling') {
+            console.warn('[handleBgComplete] Safety net: stableHTML still null 20s after merge (and not compiling) — forcing compile');
             forceCompileRef.current?.();
           }
         }, 20_000);
@@ -1239,6 +1239,8 @@ export function AIAppBuilderWorkspace() {
   const [isCompiling, setIsCompilingRaw] = useState(false);
   const [compileState, setCompileStateRaw] = useState<CompileState>('idle');
   const [compileError, setCompileError] = useState<CompileErrorInfo | null>(null);
+  const isCompilingRef = useRef(false);
+  const compileStateRef = useRef<CompileState>('idle');
   const setIsCompiling = useCallback((v: boolean) => {
     setIsCompilingRaw(v);
     setCompilationToastGate(v);
@@ -1248,6 +1250,10 @@ export function AIAppBuilderWorkspace() {
     setCompileError(state === 'error' && error ? error : null);
     console.info('[Workspace] compileState →', state, error ? error.message : '');
   }, []);
+  useEffect(() => {
+    isCompilingRef.current = isCompiling;
+    compileStateRef.current = compileState;
+  }, [isCompiling, compileState]);
   const [selectedModel, setSelectedModel] = useState('google/gemini-3-flash-preview');
   const [previewSlug, setPreviewSlug] = useState<string | null>(null);
   const [pendingConflicts, setPendingConflicts] = useState<{ path: string; userContent: string; aiContent: string }[] | null>(null);
@@ -3101,9 +3107,8 @@ export function AIAppBuilderWorkspace() {
   useEffect(() => {
     if (prevGenForFallbackRef.current && !isGenerating && project.files.length > 0) {
       const timer = setTimeout(() => {
-        if (!stableHTMLRef.current && project.files.length > 0 && !pendingValidationFixRef.current && !validationFixInFlightRef.current && !repairInFlightRef.current && !awaitingRepairJobStartRef.current) {
-          console.warn('[Workspace] Safety net: stableHTML still null 15s after generation — forcing compile');
-          setIsCompiling(false); // Force-clear loading state to prevent infinite spinner
+        if (!stableHTMLRef.current && project.files.length > 0 && !pendingValidationFixRef.current && !validationFixInFlightRef.current && !repairInFlightRef.current && !awaitingRepairJobStartRef.current && !isCompilingRef.current && compileStateRef.current !== 'compiling') {
+          console.warn('[Workspace] Safety net: stableHTML still null 15s after generation (and not compiling) — forcing compile');
           forceCompileRef.current?.();
         }
       }, 15_000);
