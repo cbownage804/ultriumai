@@ -3144,7 +3144,11 @@ export function AIAppBuilderWorkspace() {
   }, []);
 
   // ── Preview Success Contract: compiledHTML uses LKG fallback; isPreviewReady derived strictly from compile state ──
-  const compiledHTML = stableHTML && isPreviewValidFn(stableHTML) ? stableHTML : lastKnownGoodHTMLRef.current;
+  // When compiling and stableHTML is null (no real preview yet), pass null to show SkeletonPreview
+  // instead of the blank MINIMAL_MOUNT_HTML fallback.
+  const compiledHTML = stableHTML && isPreviewValidFn(stableHTML)
+    ? stableHTML
+    : (compileState === 'compiling' || isCompiling ? null : lastKnownGoodHTMLRef.current);
   const isPreviewReady = compileState === 'success' && !!(compiledHTML && isPreviewValidFn(compiledHTML));
   const hasFiles = project.files.length > 0;
   const isGoldenProject = !hasUserGeneratedFiles(project.files);
