@@ -426,15 +426,12 @@ window.addEventListener('message', function(e) {
 
   // === Blob URL rendering: externalize scripts to avoid </script> parser breakout ===
   const blobUrlRef = useRef<string | null>(null);
-  const jsBlobUrlsRef = useRef<string[]>([]);
   const htmlWithErrorCapture = htmlWithInjections; // alias for downstream refs
 
   const previewBlobUrl = useMemo(() => {
-    // Revoke previous blobs
+    // Revoke previous blob
     if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
-    jsBlobUrlsRef.current.forEach(u => URL.revokeObjectURL(u));
     blobUrlRef.current = null;
-    jsBlobUrlsRef.current = [];
 
     if (!htmlWithInjections) return null;
 
