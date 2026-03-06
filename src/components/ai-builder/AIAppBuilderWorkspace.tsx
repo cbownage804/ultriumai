@@ -3156,9 +3156,11 @@ export function AIAppBuilderWorkspace() {
   // ── Preview Success Contract: compiledHTML uses LKG fallback; isPreviewReady derived strictly from compile state ──
   // Always show SOMETHING during recompilation: if stableHTML is null (e.g. during recompile
   // after file edits), fall back to lastKnownGoodHTML so the preview never goes blank white.
+  // On fresh builds with no LKG, pass through even invalid stableHTML (e.g. ERROR_FALLBACK_HTML)
+  // so the preview panel can at least render the error page instead of the empty placeholder.
   const compiledHTML = stableHTML && isPreviewValidFn(stableHTML)
     ? stableHTML
-    : lastKnownGoodHTMLRef.current;
+    : lastKnownGoodHTMLRef.current || stableHTML;
   const isPreviewReady = compileState === 'success' && !!(compiledHTML && isPreviewValidFn(compiledHTML));
   const hasFiles = project.files.length > 0;
   const isGoldenProject = !hasUserGeneratedFiles(project.files);
