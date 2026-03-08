@@ -576,6 +576,19 @@ export function AIAppBuilderWorkspace() {
       setStableHTML(null);
     }
 
+    // ── Stream integrity check ──
+    const integrity = getStreamIntegrity();
+    if (!integrity.hasEndMarker && hasFileMarkers) {
+      console.warn('[handleBgComplete] ⚠️ Stream may be truncated (no ===END=== marker)', {
+        totalFiles: integrity.totalFiles,
+        completedFiles: integrity.completedFiles,
+        truncatedFiles: integrity.truncatedFiles,
+      });
+    }
+    if (integrity.truncatedFiles.length > 0) {
+      console.warn('[handleBgComplete] 🔧 Truncated files detected:', integrity.truncatedFiles);
+    }
+
     const { files: rawParsedFiles, deletions: rawDeletions, edits: rawEdits } = parseMultiFileOutput(job.output_content);
     console.info('[handleBgComplete] 📦 Parsed output', {
       stagedFiles: rawParsedFiles.length,
