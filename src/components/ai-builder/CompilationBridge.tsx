@@ -346,6 +346,8 @@ export function CompilationBridge({
   // Also fires when filesDigest changes (manual edits after generation).
   useEffect(() => {
     if (isGenerating || filesRef.current.length === 0) return;
+    // Skip compilation for untouched golden projects
+    if (isGoldenProject) return;
 
     // Sync from external if handleBgComplete already compiled
     if (!stableHTMLRef.current && externalStableHTMLRef?.current) {
