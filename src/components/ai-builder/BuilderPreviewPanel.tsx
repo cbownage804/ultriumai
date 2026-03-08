@@ -1095,7 +1095,7 @@ window.addEventListener('message', function(e) {
       )}
 
       {/* Compile error overlay — shown when compile state machine is in 'error' */}
-      {compileError && !repairFailed && !isGenerating && !isGoldenProject && (
+      {compileError && !repairFailed && !isGenerating && (
         <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-[#1a1a2e] border border-amber-500/30 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
             <div className="flex items-center gap-2 mb-3">
