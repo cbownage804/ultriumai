@@ -130,7 +130,14 @@ serve(async (req) => {
       'typescript', '@types/react', '@types/react-dom',
     ]);
 
-    const extraPackages = [...detectedPackages].filter(p => !TEMPLATE_PACKAGES.has(p));
+    const NODE_BUILTIN_PACKAGES = new Set([
+      'assert', 'buffer', 'child_process', 'crypto', 'events', 'fs', 'http', 'https',
+      'net', 'os', 'path', 'stream', 'timers', 'tty', 'url', 'util', 'zlib'
+    ]);
+
+    const extraPackages = [...detectedPackages].filter(
+      p => !TEMPLATE_PACKAGES.has(p) && !NODE_BUILTIN_PACKAGES.has(p) && !p.startsWith('node:')
+    );
 
     // IMPORTANT:
     // The sandbox runs npm install with NODE_ENV=production when installPackages are present.
