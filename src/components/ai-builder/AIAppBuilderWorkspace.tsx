@@ -1972,7 +1972,7 @@ export function AIAppBuilderWorkspace() {
     // Intentionally stable deps — refs handle changing values
   }, [saveDraftImmediate, loadDraft, setFiles, renameProject, setMessages]);
 
-  // Capture ?new=true ONCE before stripping it from the URL
+  // Capture ?new=true ONCE before stripping it from the URL (declared early for recovery guards)
   const isNewProjectRef = useRef(searchParams.get('new') === 'true');
 
   // Strip ?new=true immediately on mount so tab recovery works on reload
