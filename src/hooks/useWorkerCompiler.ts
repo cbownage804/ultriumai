@@ -58,6 +58,37 @@ function getSharedWorkerSafe(): Worker {
   return getSharedWorker();
 }
 
+// ── Health check cache ──
+let lastHealthCheck: { ok: boolean; ts: number } | null = null;
+const HEALTH_CACHE_TTL_MS = 30_000;
+
+async function isSandboxHealthy(): Promise<boolean> {
+  // Return cached result if fresh
+  if (lastHealthCheck && Date.now() - lastHealthCheck.ts < HEALTH_CACHE_TTL_MS) {
+    return lastHealthCheck.ok;
+  }
+
+  try {
+    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+    // We can't ping the droplet directly (CORS), so we check via a lightweight edge function call
+    // Instead, we'll use the compile-vite health check by checking if the edge function is responsive
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+    
+    // Quick OPTIONS preflight to the edge function — just checks if Supabase functions are up
+    const url = `https://${projectId}.supabase.co/functions/v1/compile-vite`;
+    const res = await fetch(url, { method: 'OPTIONS', signal: controller.signal });
+    clearTimeout(timeout);
+    
+    const ok = res.ok || res.status === 204;
+    lastHealthCheck = { ok, ts: Date.now() };
+    return ok;
+  } catch {
+    lastHealthCheck = { ok: false, ts: Date.now() };
+    return false;
+  }
+}
+
 // ── Vite Sandbox compilation (true Vite on Droplet) ──
 async function compileViaViteSandbox(
   files: ProjectFile[],
