@@ -1,5 +1,9 @@
 /**
- * Vite Cloud Sandbox Server — Hardened v2
+ * Vite Cloud Sandbox Server — Hardened v3 (8GB / 4 vCPU)
+ * 
+ * Capacity: 20 concurrent builds, 15 queued, 8 warm dirs
+ * Memory guard: 6.5GB threshold (8GB droplet)
+ * Install concurrency: 3 simultaneous npm installs
  * 
  * Hardening:
  * - Warm build cache (pre-created build dirs)
@@ -10,8 +14,8 @@
  * - FIFO build queue when at capacity
  * - Better error extraction from Vite stderr
  * - Graceful shutdown with SIGTERM/SIGINT handlers
- * - Memory guard (503 when RSS > 1.5GB)
- * - Install concurrency limiter (1 at a time)
+ * - Memory guard (503 when RSS > 6.5GB)
+ * - Install concurrency limiter (3 at a time)
  * - Stale build dir cleanup (periodic)
  * - Request deduplication via payload hash
  */
@@ -29,13 +33,13 @@ const BUILDS_DIR = path.join(__dirname, 'builds');
 const WARM_DIR = path.join(__dirname, 'warm');
 const PORT = process.env.PORT || 3100;
 const AUTH_TOKEN = process.env.SANDBOX_AUTH_TOKEN || '';
-const MAX_CONCURRENT = parseInt(process.env.MAX_CONCURRENT || '10', 10);
+const MAX_CONCURRENT = parseInt(process.env.MAX_CONCURRENT || '20', 10);
 const BUILD_TIMEOUT_MS = parseInt(process.env.BUILD_TIMEOUT_MS || '30000', 10);
-const MAX_QUEUED = parseInt(process.env.MAX_QUEUED || '5', 10);
+const MAX_QUEUED = parseInt(process.env.MAX_QUEUED || '15', 10);
 const QUEUE_TIMEOUT_MS = parseInt(process.env.QUEUE_TIMEOUT_MS || '10000', 10);
 const INSTALL_TIMEOUT_MS = parseInt(process.env.INSTALL_TIMEOUT_MS || '15000', 10);
-const MEMORY_LIMIT_MB = parseInt(process.env.MEMORY_LIMIT_MB || '1500', 10);
-const WARM_POOL_SIZE = parseInt(process.env.WARM_POOL_SIZE || '3', 10);
+const MEMORY_LIMIT_MB = parseInt(process.env.MEMORY_LIMIT_MB || '6500', 10);
+const WARM_POOL_SIZE = parseInt(process.env.WARM_POOL_SIZE || '8', 10);
 const STALE_DIR_MAX_AGE_MS = 60_000;
 
 let activeBuildCount = 0;
@@ -44,14 +48,15 @@ let isShuttingDown = false;
 // ── Track active child processes for shutdown ──
 const activeChildProcesses = new Set();
 
-// ── Install concurrency limiter (1 at a time) ──
-let installInFlight = false;
+// ── Install concurrency limiter (3 at a time for 8GB RAM) ──
+let installInFlight = 0;
+const MAX_INSTALL_CONCURRENT = 3;
 const installQueue = [];
 
 function acquireInstallSlot() {
   return new Promise((resolve) => {
-    if (!installInFlight) {
-      installInFlight = true;
+    if (installInFlight < MAX_INSTALL_CONCURRENT) {
+      installInFlight++;
       resolve();
       return;
     }
@@ -60,9 +65,9 @@ function acquireInstallSlot() {
 }
 
 function releaseInstallSlot() {
-  installInFlight = false;
-  if (installQueue.length > 0) {
-    installInFlight = true;
+  installInFlight--;
+  if (installQueue.length > 0 && installInFlight < MAX_INSTALL_CONCURRENT) {
+    installInFlight++;
     const next = installQueue.shift();
     next();
   }
