@@ -415,6 +415,7 @@ function filterProtectedFiles(
 
 export function AIAppBuilderWorkspace() {
   const [searchParams] = useSearchParams();
+  const isNewProjectRef = useRef(searchParams.get('new') === 'true');
   const {
     messages, setMessages, isGenerating, latestFiles, previousFiles, mode, setMode, thinkingPhase, versions, setVersions,
     totalTokensUsed, contextBudget, continuationRound, sendMessage, stopGenerating, clearChat, restoreVersion, forwardErrorToChat,
@@ -1097,6 +1098,12 @@ export function AIAppBuilderWorkspace() {
 
   // ── Recover background jobs on mount and tab return ──
   useEffect(() => {
+    // Fresh sessions must never resurrect previous builds/jobs.
+    if (isNewProjectRef.current || isNewSessionPending()) {
+      console.info('[BG Recovery] Skipped — fresh new project session');
+      return;
+    }
+
     let cancelled = false;
 
     const recoverJobs = async () => {
@@ -1966,8 +1973,7 @@ export function AIAppBuilderWorkspace() {
     // Intentionally stable deps — refs handle changing values
   }, [saveDraftImmediate, loadDraft, setFiles, renameProject, setMessages]);
 
-  // Capture ?new=true ONCE before stripping it from the URL
-  const isNewProjectRef = useRef(searchParams.get('new') === 'true');
+  // Capture ?new=true once via isNewProjectRef above before stripping it from the URL
 
   // Strip ?new=true immediately on mount so tab recovery works on reload
   useEffect(() => {
