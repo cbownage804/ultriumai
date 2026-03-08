@@ -122,32 +122,16 @@ serve(async (req) => {
       'canvas-confetti', 'react-dropzone', 'react-markdown',
       'react-color', 'dompurify', 'qrcode', 'html2canvas', 'jspdf',
       '@hello-pangea/dnd',
-      // CSS/build tooling (should never be in import detection, but just in case)
+      // CSS/build tooling — these are in the template's node_modules already
       'tailwindcss', 'autoprefixer', 'postcss', '@tailwindcss/typography',
+      // Vite build toolchain — already in template devDependencies
+      'vite', '@vitejs/plugin-react',
+      // TypeScript
+      'typescript', '@types/react', '@types/react-dom',
     ]);
 
     const extraPackages = [...detectedPackages].filter(p => !TEMPLATE_PACKAGES.has(p));
-
-    // Ensure core Vite toolchain is present even if AI-generated package.json omits dev deps
-    const REQUIRED_BUILD_PACKAGES = ['vite', '@vitejs/plugin-react'];
-    const packageJsonFile = files.find((f: any) => f.path === 'package.json');
-    let missingBuildPackages = [...REQUIRED_BUILD_PACKAGES];
-
-    if (packageJsonFile?.content) {
-      try {
-        const pkg = JSON.parse(packageJsonFile.content);
-        const deps = new Set([
-          ...Object.keys(pkg?.dependencies || {}),
-          ...Object.keys(pkg?.devDependencies || {}),
-        ]);
-        missingBuildPackages = REQUIRED_BUILD_PACKAGES.filter((dep) => !deps.has(dep));
-      } catch {
-        // If package.json is malformed, force-install required toolchain packages
-        missingBuildPackages = [...REQUIRED_BUILD_PACKAGES];
-      }
-    }
-
-    const installPackages = Array.from(new Set([...missingBuildPackages, ...extraPackages]));
+    const installPackages = [...extraPackages];
 
     if (installPackages.length > 0) {
       console.log(`[compile-vite] Installing ${installPackages.length} packages: ${installPackages.join(', ')}`);
