@@ -313,7 +313,7 @@ export function CompilationBridge({
       } finally {
         streamingCompileInFlightRef.current = false;
       }
-    }, 3000);
+    }, 8000);
 
     return () => {
       if (streamingCompileTimerRef.current) {
@@ -321,7 +321,7 @@ export function CompilationBridge({
         streamingCompileTimerRef.current = null;
       }
     };
-  }, [isGenerating, supabaseConfig, stripeConfig, envVars, transitionCompileState, validateFiles]);
+  }, [isGenerating, isGoldenProject, supabaseConfig, stripeConfig, envVars, transitionCompileState, validateFiles]);
 
   // ── Reset stableHTML when a new generation starts ──
   const prevIsGeneratingRef = useRef(false);
