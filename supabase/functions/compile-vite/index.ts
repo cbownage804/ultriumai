@@ -13,6 +13,24 @@ const corsHeaders = {
  * - Edge-level retry with 2s delay on 503/timeout
  * - TEMPLATE_PACKAGES synced with setup-template.sh
  */
+function resolveRelativeImportPath(fromPath: string, importPath: string): string {
+  const fromDir = fromPath.includes("/") ? fromPath.slice(0, fromPath.lastIndexOf("/")) : "";
+  const raw = `${fromDir}/${importPath}`;
+  const parts = raw.split("/");
+  const normalized: string[] = [];
+
+  for (const part of parts) {
+    if (!part || part === ".") continue;
+    if (part === "..") {
+      normalized.pop();
+      continue;
+    }
+    normalized.push(part);
+  }
+
+  return normalized.join("/");
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });

@@ -228,12 +228,13 @@ export function CompilationBridge({
     // ── Always use Vite Sandbox — sole compilation path ──
     try {
       const BRIDGE_TIMEOUT = 35_000; // Slightly above Vite's 30s internal timeout
-      const workerTimeout = new Promise<null>((resolve) =>
-        setTimeout(() => {
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
+      const workerTimeout = new Promise<null>((resolve) => {
+        timeoutId = setTimeout(() => {
           console.warn(`[CompilationBridge] Compilation timed out after ${BRIDGE_TIMEOUT / 1000}s`);
           resolve(null);
-        }, BRIDGE_TIMEOUT)
-      );
+        }, BRIDGE_TIMEOUT);
+      });
       const workerResult = compileReactProjectRef.current(currentFiles, {
         supabaseConfig: supabaseConfig || undefined,
         stripeConfig: stripeConfig || undefined,
@@ -249,6 +250,7 @@ export function CompilationBridge({
       });
 
       result = await Promise.race([workerResult, workerTimeout]);
+      if (timeoutId) clearTimeout(timeoutId);
     } catch {
       result = null;
     }
