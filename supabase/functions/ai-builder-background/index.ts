@@ -299,13 +299,22 @@ const MAX_CONTINUATION_ROUNDS = 4;
 const TOTAL_BUILD_MAX_MS = 180_000;
 const STREAM_STALL_MS = 25_000;
 
+function isTransientStreamReadError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err);
+  return /error reading a body from connection|connection reset|broken pipe|stream closed/i.test(message);
+}
+
 async function streamAndAccumulate(
   response: Response,
   supabase: any,
   jobId: string,
   existingContent: string,
 ): Promise<{ content: string; bytesReceived: number; wasStalled: boolean }> {
-  const reader = response.body!.getReader();
+  if (!response.body) {
+    throw new Error("AI builder response body is empty");
+  }
+
+  const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let fullContent = existingContent;
   let textBuffer = "";
@@ -314,6 +323,29 @@ async function streamAndAccumulate(
   let lastProgressUpdate = 0;
   let wasStalled = false;
   let streamDone = false;
+
+  const consumeBufferedLines = () => {
+    let newlineIndex: number;
+    while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+      let line = textBuffer.slice(0, newlineIndex);
+      textBuffer = textBuffer.slice(newlineIndex + 1);
+      if (line.endsWith("\r")) line = line.slice(0, -1);
+      if (line.startsWith(":") || line.trim() === "") continue;
+      if (!line.startsWith("data: ")) continue;
+      const jsonStr = line.slice(6).trim();
+      if (jsonStr === "[DONE]") {
+        streamDone = true;
+        break;
+      }
+      try {
+        const parsed = JSON.parse(jsonStr);
+        const delta = parsed.choices?.[0]?.delta?.content;
+        if (delta) fullContent += delta;
+      } catch {
+        // Skip malformed chunks
+      }
+    }
+  };
 
   const stallChecker = setInterval(async () => {
     if (Date.now() - lastChunkTime > STREAM_STALL_MS && !streamDone) {
@@ -339,30 +371,29 @@ async function streamAndAccumulate(
         }
       }
 
-      const { done, value } = await reader.read();
+      let done: boolean;
+      let value: Uint8Array | undefined;
+      try {
+        const readResult = await reader.read();
+        done = readResult.done;
+        value = readResult.value;
+      } catch (err) {
+        if (isTransientStreamReadError(err)) {
+          console.warn(`[BG] Job ${jobId}: stream read dropped, preserving partial output and continuing`, err);
+          wasStalled = true;
+          streamDone = true;
+          break;
+        }
+        throw err;
+      }
+
       if (done) break;
+      if (!value) continue;
 
       bytesReceived += value.length;
       lastChunkTime = Date.now();
       textBuffer += decoder.decode(value, { stream: true });
-
-      let newlineIndex: number;
-      while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
-        let line = textBuffer.slice(0, newlineIndex);
-        textBuffer = textBuffer.slice(newlineIndex + 1);
-        if (line.endsWith("\r")) line = line.slice(0, -1);
-        if (line.startsWith(":") || line.trim() === "") continue;
-        if (!line.startsWith("data: ")) continue;
-        const jsonStr = line.slice(6).trim();
-        if (jsonStr === "[DONE]") { streamDone = true; break; }
-        try {
-          const parsed = JSON.parse(jsonStr);
-          const delta = parsed.choices?.[0]?.delta?.content;
-          if (delta) fullContent += delta;
-        } catch {
-          // Skip malformed chunks
-        }
-      }
+      consumeBufferedLines();
 
       // Update progress every ~5KB (more frequent for live streaming)
       if (bytesReceived - lastProgressUpdate > 5000) {
@@ -370,14 +401,18 @@ async function streamAndAccumulate(
         const progress = Math.min(90, Math.round((bytesReceived / 100000) * 100));
         await supabase
           .from("app_builder_jobs")
-          .update({ 
-            bytes_received: bytesReceived, 
+          .update({
+            bytes_received: bytesReceived,
             progress_percent: progress,
             output_content: fullContent,
           })
           .eq("id", jobId);
       }
     }
+
+    // Flush any trailing decoded content after stream end/interruption.
+    textBuffer += decoder.decode();
+    consumeBufferedLines();
   } finally {
     clearInterval(stallChecker);
   }
