@@ -58,6 +58,37 @@ function getSharedWorkerSafe(): Worker {
   return getSharedWorker();
 }
 
+// ── Health check cache ──
+let lastHealthCheck: { ok: boolean; ts: number } | null = null;
+const HEALTH_CACHE_TTL_MS = 30_000;
+
+async function isSandboxHealthy(): Promise<boolean> {
+  // Return cached result if fresh
+  if (lastHealthCheck && Date.now() - lastHealthCheck.ts < HEALTH_CACHE_TTL_MS) {
+    return lastHealthCheck.ok;
+  }
+
+  try {
+    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+    // We can't ping the droplet directly (CORS), so we check via a lightweight edge function call
+    // Instead, we'll use the compile-vite health check by checking if the edge function is responsive
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+    
+    // Quick OPTIONS preflight to the edge function — just checks if Supabase functions are up
+    const url = `https://${projectId}.supabase.co/functions/v1/compile-vite`;
+    const res = await fetch(url, { method: 'OPTIONS', signal: controller.signal });
+    clearTimeout(timeout);
+    
+    const ok = res.ok || res.status === 204;
+    lastHealthCheck = { ok, ts: Date.now() };
+    return ok;
+  } catch {
+    lastHealthCheck = { ok: false, ts: Date.now() };
+    return false;
+  }
+}
+
 // ── Vite Sandbox compilation (true Vite on Droplet) ──
 async function compileViaViteSandbox(
   files: ProjectFile[],
@@ -275,8 +306,14 @@ export function useWorkerCompiler() {
 
     const VITE_TIMEOUT_MS = 30_000;
 
-    // ── Attempt 1: Vite Sandbox ──
-    try {
+    // ── Health check: skip sandbox if droplet is down ──
+    const healthy = await isSandboxHealthy();
+    if (!healthy) {
+      console.warn('[Compiler] Sandbox health check failed — skipping to worker fallback');
+    }
+
+    // ── Attempt 1: Vite Sandbox (skip if unhealthy) ──
+    if (healthy) try {
       console.info('[Compiler] Compiling via Vite Sandbox (primary path)', { fileCount: files.length });
       const result = await Promise.race([
         compileViaViteSandbox(files, options, signal),

@@ -143,6 +143,24 @@ export function CompilationBridge({
   // Gap 5 HMR: track when a soft reload should be used instead of iframe remount
   const softReloadPendingRef = useRef(false);
 
+  // ── LKG sessionStorage persistence ──
+  const LKG_STORAGE_KEY = 'ai-builder-lkg-preview';
+  
+  // On mount: restore LKG from sessionStorage
+  useEffect(() => {
+    try {
+      const cached = sessionStorage.getItem(LKG_STORAGE_KEY);
+      if (cached && isPreviewValid(cached) && !stableHTMLRef.current) {
+        console.info('[CompilationBridge] Restored LKG from sessionStorage:', cached.length, 'chars');
+        setStableHTMLLocal(cached);
+        stableHTMLRef.current = cached;
+        onStableHTML(cached);
+        onCompileStateChangeRef.current?.('success');
+        onCompilingChangeRef.current?.(false);
+      }
+    } catch {}
+  }, []);
+
   // ── stableHTML state ──
   const [stableHTML, setStableHTMLLocal] = useState<string | null>(null);
   const stableHTMLRef = useRef<string | null>(null);
@@ -151,6 +169,13 @@ export function CompilationBridge({
     setStableHTMLLocal(html);
     stableHTMLRef.current = html;
     onStableHTML(html);
+    
+    // Persist to sessionStorage on success (skip fallback/error HTML)
+    if (html && isPreviewValid(html) && !html.includes('ai-builder-fallback')) {
+      try {
+        sessionStorage.setItem(LKG_STORAGE_KEY, html);
+      } catch {}
+    }
   }, [onStableHTML]);
 
   // ── SINGLE in-flight guard — replaces all previous lock/attempted/digest refs ──

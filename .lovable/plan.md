@@ -1,80 +1,48 @@
 
 
-## Additional Hardening Opportunities
+## The Problem
 
-After reviewing the full compilation pipeline (edge function → Vite Sandbox server → client fallback), here are the remaining failure points and fixes.
+The preview panel uses **Sandpack** (CodeSandbox's in-browser bundler) to render previews — not your Vite server. Here's what happens:
 
----
+1. Your Vite server compiles the project and returns HTML (works correctly)
+2. CompilationBridge receives the HTML and sets `stableHTML` / `compileState = 'success'`
+3. The workspace passes the Vite HTML as `html` prop and the raw files as `previewFiles` to `BuilderPreviewPanel`
+4. **BuilderPreviewPanel ignores the `html` prop entirely** and renders via `SandpackProvider` + `SandpackPreview` instead (line 792-826)
 
-### 1. Server: Warm build cache (avoid cold-start penalty)
+Sandpack is a separate in-browser bundler from CodeSandbox. It re-compiles everything client-side, which is slower, less reliable, and completely bypasses your Vite server.
 
-The sandbox creates a fresh build directory for every request. For repeat builds with the same dependencies, we can cache the symlinked template setup.
+## The Fix
 
-**`vite-sandbox/server.js`**:
-- Add a `/warm` endpoint that pre-creates 2-3 build directories with symlinked `node_modules` on startup, so the first requests skip filesystem setup entirely.
-- Add periodic cleanup of stale build dirs (older than 60s) via a `setInterval` to prevent disk exhaustion if cleanup fails in `finally`.
+Replace the Sandpack rendering path with a direct **srcdoc iframe** that uses the Vite-compiled HTML. The `html` prop (from CompilationBridge/Vite) becomes the single source of truth for the preview.
 
-### 2. Server: Graceful shutdown and process management
+### Changes to `src/components/ai-builder/BuilderPreviewPanel.tsx`
 
-Currently the server has no `SIGTERM` handler — if systemd restarts it, in-flight builds are orphaned.
+1. **Remove `SandpackProvider`/`SandpackPreview`/`SandpackConsole` imports and usage** — the entire block at lines 800-826 gets replaced with an iframe using `srcdoc={htmlWithErrorCapture}`.
 
-**`vite-sandbox/server.js`**:
-- Add `SIGTERM`/`SIGINT` handlers that stop accepting new requests, wait up to 10s for in-flight builds to finish, then exit.
-- Track all active child processes in a `Set` and `SIGKILL` them all on shutdown.
+2. **Simplify rendering logic** (line 792):
+   - If `htmlWithErrorCapture` exists (valid Vite output) → render the srcdoc iframe
+   - If generating/compiling → show `SkeletonPreview`
+   - Otherwise → show the "Live Preview" placeholder
 
-### 3. Server: Memory guard with automatic restart
+3. **Keep all existing iframe infrastructure** — the error capture injection, session IDs, hot-patching, navigation interception, health checks — all of that already exists in the component and works with srcdoc iframes. It's just not being reached because Sandpack takes priority.
 
-The 2GB droplet can OOM if multiple builds run `npm install` simultaneously (each spawns a full Node process).
+4. **Remove `previewFiles` and `previewDependencies` props** from the component interface since they're no longer needed.
 
-**`vite-sandbox/server.js`**:
-- Limit concurrent `installPackages` builds to 1 (queue the rest). Regular symlinked builds can still run at full concurrency since they're lightweight.
-- Add a `/health` memory check using `process.memoryUsage()` — return `503` if RSS exceeds 1.5GB so the client retries or falls back.
+### Changes to `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
 
-### 4. Edge function: Retry at the edge, not just the client
+1. **Remove `buildSandpackFileMap`**, `extractDependencies`, `previewFiles` state, `lastKnownGoodPreviewFilesRef`, and the `previewFilesForRender` computation — all Sandpack-specific infrastructure.
 
-The `compile-vite` edge function currently makes one attempt and returns 503/504 on failure. The client then retries, adding round-trip latency.
+2. **Remove `previewFiles` and `previewDependencies` from all `BuilderPreviewPanel` call sites** (mobile, split, preview-only layouts).
 
-**`supabase/functions/compile-vite/index.ts`**:
-- Add a single retry with 2s delay inside the edge function itself for 503/timeout responses from the droplet, before returning failure to the client. This saves a full client→edge→droplet round trip.
+3. **Keep the `isGoldenProject` check** for showing the placeholder vs the compiled preview.
 
-### 5. Edge function: Expand TEMPLATE_PACKAGES list
+### Resulting rendering flow
 
-The edge function's `TEMPLATE_PACKAGES` set is missing packages that are already in `setup-template.sh`'s `package.json` — like `axios`, `zustand`, `canvas-confetti`, `react-dropzone`, `react-markdown`, `react-color`, `dompurify`, `qrcode`, `html2canvas`, `jspdf`, `@hello-pangea/dnd`, `react-resizable-panels`, `@radix-ui/react-icons`, `uuid`, `@tailwindcss/typography`. Every missing entry triggers an unnecessary `npm install` on the droplet, adding 5-15s to the build.
+```text
+User prompt → AI generates files → CompilationBridge sends to Vite server
+→ Vite returns compiled HTML → stableHTML set → compileState = 'success'
+→ BuilderPreviewPanel receives html prop → renders in srcdoc iframe
+```
 
-**`supabase/functions/compile-vite/index.ts`**:
-- Sync the `TEMPLATE_PACKAGES` set to match the exact dependency list in `setup-template.sh`.
-
-### 6. Client: LKG (Last Known Good) persistence across page reloads
-
-If the user refreshes the page, the LKG preview is lost and must recompile from scratch.
-
-**`src/components/ai-builder/CompilationBridge.tsx`**:
-- On successful compile, persist `stableHTML` to `sessionStorage` keyed by a project hash.
-- On mount, check `sessionStorage` for a cached preview before triggering compilation.
-
-### 7. Client: Health-check ping before compile
-
-Currently the client blindly sends files to compile. If the droplet is down, it wastes 30s waiting for timeout.
-
-**`src/hooks/useWorkerCompiler.ts`**:
-- Before `compileViaViteSandbox`, do a fast `fetch(SANDBOX_URL + '/health')` with a 3s timeout. If it fails, skip straight to the worker fallback — saves 30s of dead waiting.
-- Cache health status for 30s so we don't ping on every compile.
-
-### 8. Server: Request deduplication
-
-If files haven't changed, the same compile request can hit the server multiple times (e.g., recompile-needed loop).
-
-**`vite-sandbox/server.js`**:
-- Hash the incoming files payload. If an identical build is already in-flight, return a promise to the same result instead of starting a duplicate build.
-
----
-
-### Summary of files to change
-
-| File | Changes |
-|------|---------|
-| `vite-sandbox/server.js` | Warm cache, graceful shutdown, memory guard, install concurrency limit, stale dir cleanup, request dedup |
-| `supabase/functions/compile-vite/index.ts` | Edge-level retry, sync TEMPLATE_PACKAGES with setup-template.sh |
-| `src/hooks/useWorkerCompiler.ts` | Health-check ping before compile |
-| `src/components/ai-builder/CompilationBridge.tsx` | LKG sessionStorage persistence |
+No Sandpack. No client-side re-bundling. One path: Vite server output → iframe.
 
