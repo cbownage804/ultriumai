@@ -3592,6 +3592,9 @@ export function AIAppBuilderWorkspace() {
                 <SafePanel show={!!panels.showBuildAnalytics} name="Build Analytics">
                   <BuildAnalyticsPanelLazy open={!!panels.showBuildAnalytics} onClose={() => setShowBuildAnalytics(false)} analytics={buildAnalytics.getAnalytics()} />
                 </SafePanel>
+                {panels.showBuildHealth && (
+                  <BuildHealthDashboardLazy onClose={() => panelSetters.showBuildHealth(false)} />
+                )}
                 <SafePanel show={!!panels.showChangelog} name="Changelog">
                   <ChangelogPanel open={!!panels.showChangelog} onClose={() => setShowChangelog(false)} entries={changelogEntries} />
                 </SafePanel>
