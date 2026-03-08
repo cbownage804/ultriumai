@@ -302,12 +302,13 @@ export function CompilationBridge({
         ]);
 
         if (result && isPreviewValid(result) && result !== lastStreamingHTMLRef.current) {
-          // Render-only update: do NOT promote to stableHTMLRef/LKG during generation.
-          // This prevents broken partial output from becoming the persistent preview.
           lastStreamingHTMLRef.current = result;
           console.info('[StreamingPreview] ✅ Intermediate preview ready (%d chars)', result.length);
           setStableHTMLLocal(result);
           transitionCompileState('success');
+        } else if (!result) {
+          streamingFailCountRef.current++;
+          console.warn('[StreamingPreview] Compile failed (%d/%d)', streamingFailCountRef.current, MAX_STREAMING_FAILURES);
         }
       } finally {
         streamingCompileInFlightRef.current = false;
