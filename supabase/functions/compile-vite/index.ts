@@ -127,8 +127,30 @@ serve(async (req) => {
     ]);
 
     const extraPackages = [...detectedPackages].filter(p => !TEMPLATE_PACKAGES.has(p));
-    if (extraPackages.length > 0) {
-      console.log(`[compile-vite] Detected ${extraPackages.length} extra packages: ${extraPackages.join(', ')}`);
+
+    // Ensure core Vite toolchain is present even if AI-generated package.json omits dev deps
+    const REQUIRED_BUILD_PACKAGES = ['vite', '@vitejs/plugin-react'];
+    const packageJsonFile = files.find((f: any) => f.path === 'package.json');
+    let missingBuildPackages = [...REQUIRED_BUILD_PACKAGES];
+
+    if (packageJsonFile?.content) {
+      try {
+        const pkg = JSON.parse(packageJsonFile.content);
+        const deps = new Set([
+          ...Object.keys(pkg?.dependencies || {}),
+          ...Object.keys(pkg?.devDependencies || {}),
+        ]);
+        missingBuildPackages = REQUIRED_BUILD_PACKAGES.filter((dep) => !deps.has(dep));
+      } catch {
+        // If package.json is malformed, force-install required toolchain packages
+        missingBuildPackages = [...REQUIRED_BUILD_PACKAGES];
+      }
+    }
+
+    const installPackages = Array.from(new Set([...missingBuildPackages, ...extraPackages]));
+
+    if (installPackages.length > 0) {
+      console.log(`[compile-vite] Installing ${installPackages.length} packages: ${installPackages.join(', ')}`);
     }
 
     // Sort files — index.html first
@@ -140,12 +162,12 @@ serve(async (req) => {
     const payload = JSON.stringify({
       files: sortedFiles,
       options,
-      installPackages: extraPackages,
+      installPackages,
       entryFile: "index.html",
     });
 
     // ── Attempt with edge-level retry ──
-    const timeoutMs = extraPackages.length > 0 ? 30_000 : 15_000;
+    const timeoutMs = installPackages.length > 0 ? 30_000 : 15_000;
 
     const attempt = async (): Promise<Response> => {
       const controller = new AbortController();
