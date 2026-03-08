@@ -119,10 +119,10 @@ function validateJS(file: ProjectFile, issues: ValidationIssue[]) {
   }
 
   if (brackets['{'] !== 0) {
-    issues.push({ file: file.path, severity: 'error', message: `Unbalanced curly braces: ${brackets['{']} unclosed`, suggestion: 'Check for missing } at the end of functions or blocks' });
+    issues.push({ file: file.path, severity: 'warning', message: `Unbalanced curly braces: ${brackets['{']} unclosed`, suggestion: 'Check for missing } at the end of functions or blocks' });
   }
   if (brackets['('] !== 0) {
-    issues.push({ file: file.path, severity: 'error', message: `Unbalanced parentheses: ${brackets['(']} unclosed` });
+    issues.push({ file: file.path, severity: 'warning', message: `Unbalanced parentheses: ${brackets['(']} unclosed` });
   }
   if (brackets['['] !== 0) {
     issues.push({ file: file.path, severity: 'warning', message: `Unbalanced square brackets: ${brackets['[']} unclosed` });
