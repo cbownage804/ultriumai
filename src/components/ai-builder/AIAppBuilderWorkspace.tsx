@@ -185,6 +185,7 @@ import {
   DatabasePanel, AuthConfigPanel, KnowledgePanel, StorageBrowser,
   EdgeFunctionEditor, PerformanceProfiler as PerformanceProfilerLazy,
   BuildAnalyticsPanel as BuildAnalyticsPanelLazy,
+  BuildHealthDashboard as BuildHealthDashboardLazy,
   SchemaDesigner as SchemaDesignerLazy,
   DesignSystemPanel as DesignSystemPanelLazy,
   CollaborationPanel as CollaborationPanelLazy,
