@@ -1097,6 +1097,12 @@ export function AIAppBuilderWorkspace() {
 
   // ── Recover background jobs on mount and tab return ──
   useEffect(() => {
+    // Fresh sessions must never resurrect previous builds/jobs.
+    if (isNewProjectRef.current || isNewSessionPending()) {
+      console.info('[BG Recovery] Skipped — fresh new project session');
+      return;
+    }
+
     let cancelled = false;
 
     const recoverJobs = async () => {
