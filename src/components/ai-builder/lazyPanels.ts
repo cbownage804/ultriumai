@@ -279,6 +279,7 @@ export const StorageBrowser = lz(() => import('./StorageBrowser'), 'StorageBrows
 export const EdgeFunctionEditor = lz(() => import('./EdgeFunctionEditor'), 'EdgeFunctionEditor');
 export const PerformanceProfiler = lz(() => import('./PerformanceProfiler'), 'PerformanceProfiler');
 export const BuildAnalyticsPanel = lz(() => import('./BuildAnalyticsPanel'), 'BuildAnalyticsPanel');
+export const BuildHealthDashboard = lz(() => import('./BuildHealthDashboard'), 'BuildHealthDashboard');
 export const SchemaDesigner = lz(() => import('./SchemaDesigner'), 'SchemaDesigner');
 export const DesignSystemPanel = lz(() => import('./DesignSystemPanel'), 'DesignSystemPanel');
 export const CollaborationPanel = lz(() => import('./CollaborationPanel'), 'CollaborationPanel');

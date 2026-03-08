@@ -1798,6 +1798,9 @@ export function useAIAppBuilder() {
     isStreamingPreview: streaming.isStreaming,
     completedFileCountRef: streaming.completedFileCountRef,
     parseIncremental: streaming.parseIncremental,
+    // Stream integrity for truncation detection
+    getStreamIntegrity: streaming.getIntegrity,
+    isStreamStalled: streaming.isStalled,
     // Ref-based streaming for chat panel (avoids workspace re-renders)
     streamingContentRef,
   };

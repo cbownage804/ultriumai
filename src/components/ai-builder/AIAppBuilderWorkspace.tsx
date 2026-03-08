@@ -185,6 +185,7 @@ import {
   DatabasePanel, AuthConfigPanel, KnowledgePanel, StorageBrowser,
   EdgeFunctionEditor, PerformanceProfiler as PerformanceProfilerLazy,
   BuildAnalyticsPanel as BuildAnalyticsPanelLazy,
+  BuildHealthDashboard as BuildHealthDashboardLazy,
   SchemaDesigner as SchemaDesignerLazy,
   DesignSystemPanel as DesignSystemPanelLazy,
   CollaborationPanel as CollaborationPanelLazy,
@@ -421,6 +422,7 @@ export function AIAppBuilderWorkspace() {
     totalTokensUsed, contextBudget, continuationRound, sendMessage, stopGenerating, clearChat, restoreVersion, forwardErrorToChat,
     partialFilesRef, isStreamingPreview, completedFileCountRef, parseIncremental,
     streamingContentRef,
+    getStreamIntegrity, isStreamStalled,
     conversationForks, activeForkId, forkConversation, switchFork, deleteFork,
   } = useAIAppBuilder();
 
@@ -572,6 +574,19 @@ export function AIAppBuilderWorkspace() {
     // Only clear HTML on first build — keep previous preview visible during recompilation
     if (!stableHTMLRef.current) {
       setStableHTML(null);
+    }
+
+    // ── Stream integrity check ──
+    const integrity = getStreamIntegrity();
+    if (!integrity.hasEndMarker && hasFileMarkers) {
+      console.warn('[handleBgComplete] ⚠️ Stream may be truncated (no ===END=== marker)', {
+        totalFiles: integrity.totalFiles,
+        completedFiles: integrity.completedFiles,
+        truncatedFiles: integrity.truncatedFiles,
+      });
+    }
+    if (integrity.truncatedFiles.length > 0) {
+      console.warn('[handleBgComplete] 🔧 Truncated files detected:', integrity.truncatedFiles);
     }
 
     const { files: rawParsedFiles, deletions: rawDeletions, edits: rawEdits } = parseMultiFileOutput(job.output_content);
@@ -3592,6 +3607,9 @@ export function AIAppBuilderWorkspace() {
                 <SafePanel show={!!panels.showBuildAnalytics} name="Build Analytics">
                   <BuildAnalyticsPanelLazy open={!!panels.showBuildAnalytics} onClose={() => setShowBuildAnalytics(false)} analytics={buildAnalytics.getAnalytics()} />
                 </SafePanel>
+                {panels.showBuildHealth && (
+                  <BuildHealthDashboardLazy onClose={() => panelSetters.showBuildHealth(false)} />
+                )}
                 <SafePanel show={!!panels.showChangelog} name="Changelog">
                   <ChangelogPanel open={!!panels.showChangelog} onClose={() => setShowChangelog(false)} entries={changelogEntries} />
                 </SafePanel>
