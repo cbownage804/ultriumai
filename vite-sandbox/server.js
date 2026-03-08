@@ -48,8 +48,9 @@ let isShuttingDown = false;
 // ── Track active child processes for shutdown ──
 const activeChildProcesses = new Set();
 
-// ── Install concurrency limiter (1 at a time) ──
-let installInFlight = false;
+// ── Install concurrency limiter (3 at a time for 8GB RAM) ──
+let installInFlight = 0;
+const MAX_INSTALL_CONCURRENT = 3;
 const installQueue = [];
 
 function acquireInstallSlot() {
