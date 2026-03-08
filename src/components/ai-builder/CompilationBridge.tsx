@@ -232,6 +232,78 @@ export function CompilationBridge({
     return result;
   }, [isReactProject, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, linkedGPT, assets]);
 
+  // ── Streaming preview: compile partial files during generation ──
+  // This gives the "building piece by piece" experience.
+  const streamingCompileTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastStreamingCompileCountRef = useRef(0);
+  const streamingCompileInFlightRef = useRef(false);
+
+  useEffect(() => {
+    if (!isGenerating) {
+      // Clean up when generation ends
+      if (streamingCompileTimerRef.current) {
+        clearInterval(streamingCompileTimerRef.current);
+        streamingCompileTimerRef.current = null;
+      }
+      lastStreamingCompileCountRef.current = 0;
+      streamingCompileInFlightRef.current = false;
+      return;
+    }
+
+    // Poll every 6s during generation to compile partial files
+    streamingCompileTimerRef.current = setInterval(async () => {
+      const partial = partialFilesRef.current;
+      const completedCount = completedFileCountRef.current;
+
+      // Need at least 2 completed files and a change since last compile
+      if (completedCount < 2 || completedCount === lastStreamingCompileCountRef.current) return;
+      if (streamingCompileInFlightRef.current) return;
+
+      // Must have a mountable app (main.tsx + App.tsx or index.html)
+      const hasMain = partial.some(f => f.path === 'src/main.tsx' || f.path === 'main.tsx');
+      const hasApp = partial.some(f => f.path === 'src/App.tsx' || f.path === 'App.tsx');
+      const hasIndex = partial.some(f => f.path === 'index.html');
+      if (!(hasIndex || (hasMain && hasApp))) return;
+
+      streamingCompileInFlightRef.current = true;
+      lastStreamingCompileCountRef.current = completedCount;
+
+      console.info('[StreamingPreview] Compiling %d partial files (%d completed)', partial.length, completedCount);
+      transitionCompileState('compiling');
+
+      try {
+        const result = await Promise.race([
+          compileReactProjectRef.current(partial, {
+            supabaseConfig: supabaseConfig || undefined,
+            stripeConfig: stripeConfig || undefined,
+            envVars,
+          }).then(r => r.html || null).catch(() => null),
+          new Promise<null>(r => setTimeout(() => r(null), 20_000)),
+        ]);
+
+        if (result && isPreviewValid(result)) {
+          console.info('[StreamingPreview] ✅ Intermediate preview ready (%d chars)', result.length);
+          setStableHTML(result);
+          transitionCompileState('success');
+        } else {
+          // Don't show error during streaming — just wait for more files
+          transitionCompileState('idle');
+        }
+      } catch {
+        transitionCompileState('idle');
+      } finally {
+        streamingCompileInFlightRef.current = false;
+      }
+    }, 6000);
+
+    return () => {
+      if (streamingCompileTimerRef.current) {
+        clearInterval(streamingCompileTimerRef.current);
+        streamingCompileTimerRef.current = null;
+      }
+    };
+  }, [isGenerating, supabaseConfig, stripeConfig, envVars, transitionCompileState, setStableHTML]);
+
   // ── Reset stableHTML when a new generation starts ──
   const prevIsGeneratingRef = useRef(false);
   useEffect(() => {
