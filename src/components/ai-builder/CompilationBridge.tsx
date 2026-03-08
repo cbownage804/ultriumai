@@ -204,12 +204,20 @@ export function CompilationBridge({
   // Track previous filesDigest for hot-patch detection
   const prevFilesDigestRef = useRef<string>('');
 
-  // ── Core compile function ──
+  // ── Core compile function (with auto-repair) ──
   const runCompile = useCallback(async () => {
-    const currentFiles = filesRef.current;
+    let currentFiles = filesRef.current;
     console.info('[CompilationBridge] runCompile — isReact:', isReactProject, 'files:', currentFiles.length);
 
+    // ── Auto-repair pass: fix common syntax issues before sending to Vite ──
+    const { files: repairedFiles, repairs } = autoRepairFiles(currentFiles);
+    if (repairs.length > 0) {
+      console.info('[CompilationBridge] Auto-repaired', repairs.length, 'issues:', repairs);
+      currentFiles = repairedFiles;
+    }
+
     let result: string | null = null;
+    const compileT0 = performance.now();
 
     // ── Always use Vite Sandbox — sole compilation path ──
     try {
