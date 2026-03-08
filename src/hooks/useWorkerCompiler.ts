@@ -306,8 +306,14 @@ export function useWorkerCompiler() {
 
     const VITE_TIMEOUT_MS = 30_000;
 
-    // ── Attempt 1: Vite Sandbox ──
-    try {
+    // ── Health check: skip sandbox if droplet is down ──
+    const healthy = await isSandboxHealthy();
+    if (!healthy) {
+      console.warn('[Compiler] Sandbox health check failed — skipping to worker fallback');
+    }
+
+    // ── Attempt 1: Vite Sandbox (skip if unhealthy) ──
+    if (healthy) try {
       console.info('[Compiler] Compiling via Vite Sandbox (primary path)', { fileCount: files.length });
       const result = await Promise.race([
         compileViaViteSandbox(files, options, signal),

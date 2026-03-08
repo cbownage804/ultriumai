@@ -9,10 +9,9 @@ const corsHeaders = {
 /**
  * compile-vite — Edge function bridge to the Vite Sandbox Droplet.
  * 
- * Receives the same payload as compile-project, forwards to the Droplet
- * running a real Vite build, and returns the compiled HTML.
- * 
- * Falls back gracefully if the Droplet is unreachable.
+ * Hardened v2:
+ * - Edge-level retry with 2s delay on 503/timeout
+ * - TEMPLATE_PACKAGES synced with setup-template.sh
  */
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -40,7 +39,7 @@ serve(async (req) => {
       );
     }
 
-    // Auto-inject index.html if missing — Vite requires it as entry point
+    // Auto-inject index.html if missing
     const hasIndexHtml = files.some((f: any) => f.path === "index.html");
     if (!hasIndexHtml) {
       const mainEntry = files.find((f: any) =>
@@ -85,72 +84,146 @@ serve(async (req) => {
         detectedPackages.add(pkg);
       }
     }
-    // Filter out built-in/known packages that are in the template
+
+    // ── TEMPLATE_PACKAGES — synced with setup-template.sh ──
     const TEMPLATE_PACKAGES = new Set([
-      'react', 'react-dom', 'react-router-dom', 'lucide-react', 'framer-motion',
-      'recharts', 'date-fns', 'clsx', 'tailwind-merge', 'class-variance-authority',
-      'zustand', 'zod', 'uuid', '@radix-ui/react-slot', '@radix-ui/react-dialog',
-      '@radix-ui/react-dropdown-menu', '@radix-ui/react-tooltip', '@radix-ui/react-popover',
-      '@radix-ui/react-select', '@radix-ui/react-checkbox', '@radix-ui/react-switch',
-      '@radix-ui/react-tabs', '@radix-ui/react-avatar', '@radix-ui/react-label',
-      '@radix-ui/react-separator', '@radix-ui/react-scroll-area', '@radix-ui/react-toast',
-      '@radix-ui/react-accordion', '@radix-ui/react-collapsible', '@radix-ui/react-progress',
-      '@radix-ui/react-slider', '@radix-ui/react-radio-group', '@radix-ui/react-toggle',
-      '@radix-ui/react-toggle-group', '@radix-ui/react-hover-card', '@radix-ui/react-context-menu',
-      '@radix-ui/react-menubar', '@radix-ui/react-navigation-menu', '@radix-ui/react-alert-dialog',
-      '@radix-ui/react-aspect-ratio', 'cmdk', 'sonner', 'tailwindcss-animate',
-      'embla-carousel-react', 'react-day-picker', 'input-otp', 'vaul',
-      'react-hook-form', '@hookform/resolvers', 'next-themes',
+      // Core React
+      'react', 'react-dom', 'react-router-dom',
+      // UI libraries
+      'lucide-react', 'framer-motion', 'recharts', 'date-fns',
+      // Utility
+      'clsx', 'tailwind-merge', 'class-variance-authority',
+      'zod', 'uuid', 'axios', 'zustand',
+      // Forms
+      'react-hook-form', '@hookform/resolvers',
+      // Supabase & data
       '@supabase/supabase-js', '@tanstack/react-query',
+      // Radix UI (all from template)
+      '@radix-ui/react-accordion', '@radix-ui/react-alert-dialog',
+      '@radix-ui/react-avatar', '@radix-ui/react-checkbox',
+      '@radix-ui/react-collapsible', '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu', '@radix-ui/react-hover-card',
+      '@radix-ui/react-label', '@radix-ui/react-popover',
+      '@radix-ui/react-progress', '@radix-ui/react-scroll-area',
+      '@radix-ui/react-select', '@radix-ui/react-separator',
+      '@radix-ui/react-slider', '@radix-ui/react-slot',
+      '@radix-ui/react-switch', '@radix-ui/react-tabs',
+      '@radix-ui/react-toast', '@radix-ui/react-toggle',
+      '@radix-ui/react-toggle-group', '@radix-ui/react-tooltip',
+      '@radix-ui/react-icons',
+      '@radix-ui/react-radio-group', '@radix-ui/react-context-menu',
+      '@radix-ui/react-menubar', '@radix-ui/react-navigation-menu',
+      '@radix-ui/react-aspect-ratio',
+      // shadcn ecosystem
+      'cmdk', 'sonner', 'tailwindcss-animate',
+      'embla-carousel-react', 'react-day-picker', 'input-otp', 'vaul',
+      'next-themes', 'react-resizable-panels',
+      // Additional packages in setup-template.sh
+      'canvas-confetti', 'react-dropzone', 'react-markdown',
+      'react-color', 'dompurify', 'qrcode', 'html2canvas', 'jspdf',
+      '@hello-pangea/dnd',
+      // CSS/build tooling (should never be in import detection, but just in case)
+      'tailwindcss', 'autoprefixer', 'postcss', '@tailwindcss/typography',
     ]);
+
     const extraPackages = [...detectedPackages].filter(p => !TEMPLATE_PACKAGES.has(p));
     if (extraPackages.length > 0) {
       console.log(`[compile-vite] Detected ${extraPackages.length} extra packages: ${extraPackages.join(', ')}`);
     }
 
-    // Ensure index.html is first in the array so the sandbox writes it to the build root
+    // Sort files — index.html first
     const sortedFiles = [
       ...files.filter((f: any) => f.path === 'index.html'),
       ...files.filter((f: any) => f.path !== 'index.html'),
     ];
 
-    console.log(`[compile-vite] Forwarding ${sortedFiles.length} files to Vite sandbox at ${SANDBOX_URL}`);
-    const t0 = Date.now();
-
-    // Forward to Droplet with shorter timeout for fast fallback
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), extraPackages.length > 0 ? 30_000 : 15_000);
-
-    const response = await fetch(`${SANDBOX_URL}/compile`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-sandbox-token": SANDBOX_TOKEN,
-      },
-      body: JSON.stringify({
-        files: sortedFiles,
-        options,
-        installPackages: extraPackages,
-        // Tell sandbox explicitly where the entry is
-        entryFile: "index.html",
-      }),
-      signal: controller.signal,
+    const payload = JSON.stringify({
+      files: sortedFiles,
+      options,
+      installPackages: extraPackages,
+      entryFile: "index.html",
     });
 
-    clearTimeout(timeout);
+    // ── Attempt with edge-level retry ──
+    const timeoutMs = extraPackages.length > 0 ? 30_000 : 15_000;
 
-    const result = await response.json();
+    const attempt = async (): Promise<Response> => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
-    if (!response.ok) {
-      console.error(`[compile-vite] Sandbox error (${response.status}):`, result.error);
-      // Always return 503 (not the sandbox's raw status) so the client cleanly falls back
+      try {
+        const response = await fetch(`${SANDBOX_URL}/compile`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-sandbox-token": SANDBOX_TOKEN,
+          },
+          body: payload,
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        return response;
+      } catch (err) {
+        clearTimeout(timeout);
+        throw err;
+      }
+    };
+
+    let response: Response;
+    let result: any;
+
+    try {
+      response = await attempt();
+      result = await response.json();
+    } catch (firstErr: any) {
+      const isRetryable = firstErr.name === "AbortError" || /fetch|network/i.test(firstErr.message);
+      if (!isRetryable) throw firstErr;
+
+      // ── Edge-level retry: wait 2s, try once more ──
+      console.log(`[compile-vite] First attempt failed (${firstErr.message}) — retrying in 2s`);
+      await new Promise(r => setTimeout(r, 2000));
+
+      try {
+        response = await attempt();
+        result = await response.json();
+      } catch (retryErr: any) {
+        console.error(`[compile-vite] Retry also failed: ${retryErr.message}`);
+        throw retryErr;
+      }
+    }
+
+    // If first attempt returned 503, retry once
+    if (!response!.ok && (response!.status === 503 || response!.status === 504)) {
+      console.log(`[compile-vite] Got ${response!.status} — retrying in 2s`);
+      await new Promise(r => setTimeout(r, 2000));
+      try {
+        const retryResponse = await attempt();
+        const retryResult = await retryResponse.json();
+        if (retryResponse.ok) {
+          console.log(`[compile-vite] Retry success: ${retryResult.html?.length || 0} chars`);
+          return new Response(
+            JSON.stringify(retryResult),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        // Use retry result even if failed (more recent state)
+        result = retryResult;
+        response = retryResponse;
+      } catch {
+        // Fall through with original result
+      }
+    }
+
+    if (!response!.ok) {
+      console.error(`[compile-vite] Sandbox error (${response!.status}):`, result?.error);
       return new Response(
-        JSON.stringify({ error: result.error, fallback: true }),
+        JSON.stringify({ error: result?.error || 'Unknown error', fallback: true }),
         { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`[compile-vite] Success: ${result.html?.length || 0} chars in ${Date.now() - t0}ms`);
+    const t0 = Date.now();
+    console.log(`[compile-vite] Success: ${result.html?.length || 0} chars`);
 
     return new Response(
       JSON.stringify(result),
