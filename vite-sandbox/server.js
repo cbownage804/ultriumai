@@ -457,12 +457,19 @@ async function executeBuild(files, options, installPackages, needsInstall, t0) {
 
     // 6. Write vite.config.ts
     const viteConfig = `
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
 import path from 'path';
 
-export default defineConfig({
-  plugins: [react()],
+let reactPlugins = [];
+try {
+  const mod = await import('@vitejs/plugin-react');
+  const react = mod?.default;
+  if (typeof react === 'function') reactPlugins = [react()];
+} catch {
+  // Keep build working even when plugin isn't installed in this sandbox snapshot.
+}
+
+export default {
+  plugins: reactPlugins,
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -478,7 +485,7 @@ export default defineConfig({
     assetsInlineLimit: 100_000_000,
     cssCodeSplit: false,
   },
-});
+};
 `;
     fs.writeFileSync(path.join(buildDir, 'vite.config.ts'), viteConfig, 'utf-8');
 
