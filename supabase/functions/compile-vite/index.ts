@@ -130,8 +130,24 @@ serve(async (req) => {
       'typescript', '@types/react', '@types/react-dom',
     ]);
 
-    const extraPackages = [...detectedPackages].filter(p => !TEMPLATE_PACKAGES.has(p));
-    const installPackages = [...extraPackages];
+    const NODE_BUILTIN_PACKAGES = new Set([
+      'assert', 'buffer', 'child_process', 'crypto', 'events', 'fs', 'http', 'https',
+      'net', 'os', 'path', 'stream', 'timers', 'tty', 'url', 'util', 'zlib'
+    ]);
+
+    const extraPackages = [...detectedPackages].filter(
+      p => !TEMPLATE_PACKAGES.has(p) && !NODE_BUILTIN_PACKAGES.has(p) && !p.startsWith('node:')
+    );
+
+    // IMPORTANT:
+    // The sandbox runs npm install with NODE_ENV=production when installPackages are present.
+    // That can prune template devDependencies (including vite + plugin-react), causing
+    // ERR_MODULE_NOT_FOUND when loading vite.config.ts.
+    // So whenever we need dynamic installs, explicitly include core build packages.
+    const REQUIRED_BUILD_PACKAGES = ['vite', '@vitejs/plugin-react'];
+    const installPackages = extraPackages.length > 0
+      ? [...new Set([...extraPackages, ...REQUIRED_BUILD_PACKAGES])]
+      : [];
 
     if (installPackages.length > 0) {
       console.log(`[compile-vite] Installing ${installPackages.length} packages: ${installPackages.join(', ')}`);

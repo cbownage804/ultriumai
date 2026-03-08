@@ -238,7 +238,7 @@ EOF
 # Install all dependencies (this is the slow part - only done once)
 echo "📦 Installing dependencies (this takes a few minutes)..."
 cd "$TEMPLATE_DIR"
-npm install --prefer-offline 2>&1
+npm install --prefer-offline --include=dev 2>&1
 
 echo ""
 echo "✅ Template ready at: $TEMPLATE_DIR"

@@ -37,7 +37,7 @@ const MAX_CONCURRENT = parseInt(process.env.MAX_CONCURRENT || '20', 10);
 const BUILD_TIMEOUT_MS = parseInt(process.env.BUILD_TIMEOUT_MS || '30000', 10);
 const MAX_QUEUED = parseInt(process.env.MAX_QUEUED || '15', 10);
 const QUEUE_TIMEOUT_MS = parseInt(process.env.QUEUE_TIMEOUT_MS || '10000', 10);
-const INSTALL_TIMEOUT_MS = parseInt(process.env.INSTALL_TIMEOUT_MS || '15000', 10);
+const INSTALL_TIMEOUT_MS = parseInt(process.env.INSTALL_TIMEOUT_MS || '45000', 10);
 const MEMORY_LIMIT_MB = parseInt(process.env.MEMORY_LIMIT_MB || '6500', 10);
 const WARM_POOL_SIZE = parseInt(process.env.WARM_POOL_SIZE || '8', 10);
 const STALE_DIR_MAX_AGE_MS = 60_000;
@@ -371,27 +371,31 @@ async function executeBuild(files, options, installPackages, needsInstall, t0) {
       const buildNodeModules = path.join(buildDir, 'node_modules');
 
       if (needsInstall) {
-        execSync(`cp -r "${templateNodeModules}" "${buildNodeModules}"`, { timeout: 15000 });
+        execSync(`cp -r "${templateNodeModules}" "${buildNodeModules}"`, {
+          timeout: Math.max(INSTALL_TIMEOUT_MS, 30_000),
+        });
       } else {
         fs.symlinkSync(templateNodeModules, buildNodeModules, 'junction');
       }
     }
 
-    // 2. Install additional packages if requested (concurrency-limited to 1)
+    // 2. Install additional packages if requested (concurrency-limited)
     if (needsInstall) {
       await acquireInstallSlot();
       try {
         const pkgList = installPackages.map(p => `"${p}"`).join(' ');
         console.log(`[${buildId}] Installing packages: ${pkgList}`);
-        execSync(`npm install --no-save ${pkgList}`, {
+        execSync(`npm install --no-save --include=dev ${pkgList}`, {
           cwd: buildDir,
           timeout: INSTALL_TIMEOUT_MS,
-          env: { ...process.env, NODE_ENV: 'production' },
+          env: { ...process.env },
           stdio: 'pipe',
         });
         console.log(`[${buildId}] Package install completed in ${Date.now() - t0}ms`);
       } catch (installErr) {
-        console.warn(`[${buildId}] Package install failed (continuing):`, installErr.message?.slice(0, 200));
+        const installMessage = installErr?.message?.slice(0, 500) || 'Unknown package install failure';
+        console.error(`[${buildId}] Package install failed: ${installMessage}`);
+        throw new Error(`Package installation failed: ${installMessage}`);
       } finally {
         releaseInstallSlot();
       }
