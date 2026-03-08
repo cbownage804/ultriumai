@@ -293,12 +293,13 @@ serve(async (req) => {
     const isTimeout = err.name === "AbortError";
     console.error(`[compile-vite] ${isTimeout ? "Timeout" : "Error"}:`, err.message);
 
+    // Always return 200 with fallback so client uses worker compiler
     return new Response(
       JSON.stringify({
         error: isTimeout ? "Vite sandbox timed out" : err.message,
         fallback: true,
       }),
-      { status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
