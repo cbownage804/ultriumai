@@ -389,6 +389,18 @@ export function useProjectPersistence() {
     hasUnsavedRef.current = true;
   }, []);
 
+  /**
+   * Reset active project identity/state for a truly fresh workspace session.
+   * Prevents accidental autosave into the previous project.
+   */
+  const resetCurrentProject = useCallback(() => {
+    setCurrentProjectId(null);
+    setLastSaved(null);
+    setDeployHistory([]);
+    setTabConflict(false);
+    hasUnsavedRef.current = false;
+  }, []);
+
   const scheduleAutoSave = useCallback((name: string, files: ProjectFile[], chatMessages?: any[], extraSettings?: Record<string, any>) => {
     hasUnsavedRef.current = true;
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
@@ -420,6 +432,7 @@ export function useProjectPersistence() {
     publishProject,
     rollbackToVersion,
     scheduleAutoSave,
+    resetCurrentProject,
     setCurrentProjectId,
     markUnsaved,
   };

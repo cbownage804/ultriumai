@@ -448,6 +448,7 @@ export function AIAppBuilderWorkspace() {
     loadProjects, saveProject, loadProject, deleteProject, publishProject,
     rollbackToVersion,
     scheduleAutoSave,
+    resetCurrentProject,
   } = useProjectPersistence();
   const {
     currentRun: agentRun,
@@ -1978,6 +1979,10 @@ export function AIAppBuilderWorkspace() {
   // Strip ?new=true immediately on mount so tab recovery works on reload
   useEffect(() => {
     if (isNewProjectRef.current) {
+      // Stop any stale watchers/jobs tied to the prior workspace instance
+      backgroundGen.resetState?.();
+      resetCurrentProject();
+
       // Clear all storage synchronously
       clearDraft();
       try { localStorage.removeItem('ai-builder-compiled-html'); } catch {}
