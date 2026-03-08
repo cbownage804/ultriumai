@@ -10,6 +10,7 @@ import type { ProjectAsset } from './AssetManager';
 import { isPreviewValid, previewDebugSummary } from './previewValidation';
 import { autoRepairFiles } from './autoRepairFiles';
 import { useCompileTelemetry, classifyFailure } from '@/hooks/useCompileTelemetry';
+import { useRuntimeErrorOverlay } from './useRuntimeErrorOverlay';
 
 /** Compile State Machine — single source of truth for compilation phase */
 export type CompileState = 'idle' | 'compiling' | 'success' | 'error';
