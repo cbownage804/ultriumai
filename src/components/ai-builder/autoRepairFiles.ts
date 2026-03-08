@@ -67,14 +67,50 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
     if (trimmed.length > 50) {
       const lastChar = trimmed[trimmed.length - 1];
       if ([',', ':', '=', '+', '&&', '||'].includes(lastChar)) {
-        // Remove the dangling character and close any open structures
         content = trimmed.slice(0, -1) + '\n';
         changed = true;
         repairs.push(`${f.path}: removed dangling "${lastChar}" (truncation artifact)`);
       }
     }
 
-    // ── 6. Remove duplicate imports ──
+    // ── 6. Fix unclosed JSX tags (self-closing correction) ──
+    if (['tsx', 'jsx'].includes(ext)) {
+      // Detect common unclosed void-like elements that should be self-closing
+      const unclosedVoidTags = content.match(/<(img|input|br|hr|meta|link)\b[^/>]*>/gi);
+      if (unclosedVoidTags) {
+        for (const tag of unclosedVoidTags) {
+          if (!tag.endsWith('/>')) {
+            const fixed = tag.slice(0, -1) + ' />';
+            content = content.replace(tag, fixed);
+            changed = true;
+            repairs.push(`${f.path}: self-closed void JSX element`);
+          }
+        }
+      }
+
+      // Fix className="" with class="" (common non-JSX habit)
+      if (/\bclass=/i.test(content) && !content.includes('className=')) {
+        content = content.replace(/\bclass=/g, 'className=');
+        changed = true;
+        repairs.push(`${f.path}: replaced class= with className=`);
+      }
+    }
+
+    // ── 7. Fix broken import paths (missing extension or ./) ──
+    if (['ts', 'tsx', 'js', 'jsx'].includes(ext)) {
+      // Fix imports from '@components/...' → '@/components/...'
+      const badAliasPattern = /from\s+['"]@(?!\/)([^'"]+)['"]/g;
+      let aliasMatch;
+      while ((aliasMatch = badAliasPattern.exec(content)) !== null) {
+        const badImport = aliasMatch[0];
+        const fixedImport = badImport.replace(/@(?!\/)/, '@/');
+        content = content.replace(badImport, fixedImport);
+        changed = true;
+        repairs.push(`${f.path}: fixed import alias @ → @/`);
+      }
+    }
+
+    // ── 8. Remove duplicate imports ──
     const importLines = new Map<string, number>();
     const lines = content.split('\n');
     const linesToRemove = new Set<number>();
