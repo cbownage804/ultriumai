@@ -23,6 +23,7 @@ const COMPILE_HARD_TIMEOUT_MS = COMPILE_TIMEOUT_MS;
 interface CompilationBridgeProps {
   files: ProjectFile[];
   isGenerating: boolean;
+  isGoldenProject?: boolean;
   supabaseConfig: SupabaseConfig | null;
   stripeConfig: StripeConfig | null;
   envVars: EnvVar[];
