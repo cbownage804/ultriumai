@@ -572,13 +572,55 @@ window.addEventListener('message', function(e) {
 
   // Periodic health check
   useEffect(() => {
-    if (!html || isGenerating) {
+    if (!html || isGenerating || isCompiling) {
       if (healthCheckRef.current) clearInterval(healthCheckRef.current);
+      consecutiveFailsRef.current = 0;
       return;
     }
 
-    // Sandpack manages its own iframe — health checks on cross-origin iframes
-    // cause SecurityError. Disable periodic health checks; Sandpack handles errors internally.
+    // White-screen recovery: periodically check if iframe has content
+    healthCheckRef.current = setInterval(() => {
+      const iframe = iframeRef.current;
+      if (!iframe || isCompiling || isGenerating) return;
+
+      try {
+        // Check if iframe has loaded — use contentWindow existence as proxy
+        // (contentDocument access throws on cross-origin Blob URLs)
+        if (!iframe.contentWindow) {
+          consecutiveFailsRef.current++;
+        } else {
+          // Try to postMessage and listen for response to verify iframe is responsive
+          consecutiveFailsRef.current = 0;
+          return;
+        }
+      } catch {
+        // SecurityError — iframe is cross-origin, assume it's alive
+        consecutiveFailsRef.current = 0;
+        return;
+      }
+
+      if (consecutiveFailsRef.current >= MAX_CONSECUTIVE_FAILS) {
+        // Cap reloads per compilation cycle
+        if (reloadCountRef.current >= MAX_RELOADS_PER_CYCLE) {
+          console.warn('[HealthCheck] Max reloads reached for this cycle — stopping');
+          if (healthCheckRef.current) clearInterval(healthCheckRef.current);
+          return;
+        }
+
+        console.warn('[HealthCheck] Iframe appears unresponsive — remounting');
+        consecutiveFailsRef.current = 0;
+        reloadCountRef.current++;
+        setIframeKey(k => k + 1);
+
+        // Show a non-intrusive toast (throttled)
+        const now = Date.now();
+        if (now - lastHealthToastRef.current > 10_000) {
+          lastHealthToastRef.current = now;
+          toast.info('Preview recovered from a blank state', { duration: 3000 });
+        }
+      }
+    }, HEALTH_CHECK_INTERVAL);
+
     return () => {
       if (healthCheckRef.current) clearInterval(healthCheckRef.current);
     };

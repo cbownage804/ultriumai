@@ -8,6 +8,8 @@ import type { LinkedGPTConfig } from './GPTConnectorPanel';
 import { useLivePreviewSync } from '@/hooks/useLivePreviewSync';
 import type { ProjectAsset } from './AssetManager';
 import { isPreviewValid, previewDebugSummary } from './previewValidation';
+import { autoRepairFiles } from './autoRepairFiles';
+import { useCompileTelemetry, classifyFailure } from '@/hooks/useCompileTelemetry';
 
 /** Compile State Machine — single source of truth for compilation phase */
 export type CompileState = 'idle' | 'compiling' | 'success' | 'error';
@@ -92,6 +94,11 @@ export function CompilationBridge({
   const { compileReactProject, abortCompilation } = useWorkerCompiler();
 
   // Stabilize function refs to prevent effect re-fires
+  // ── Compile telemetry ──
+  const { recordCompile } = useCompileTelemetry();
+  const recordCompileRef = useRef(recordCompile);
+  recordCompileRef.current = recordCompile;
+
   const compileReactProjectRef = useRef(compileReactProject);
   compileReactProjectRef.current = compileReactProject;
   const getCompiledHTMLRef = useRef(getCompiledHTML);
@@ -197,12 +204,20 @@ export function CompilationBridge({
   // Track previous filesDigest for hot-patch detection
   const prevFilesDigestRef = useRef<string>('');
 
-  // ── Core compile function ──
+  // ── Core compile function (with auto-repair) ──
   const runCompile = useCallback(async () => {
-    const currentFiles = filesRef.current;
+    let currentFiles = filesRef.current;
     console.info('[CompilationBridge] runCompile — isReact:', isReactProject, 'files:', currentFiles.length);
 
+    // ── Auto-repair pass: fix common syntax issues before sending to Vite ──
+    const { files: repairedFiles, repairs } = autoRepairFiles(currentFiles);
+    if (repairs.length > 0) {
+      console.info('[CompilationBridge] Auto-repaired', repairs.length, 'issues:', repairs);
+      currentFiles = repairedFiles;
+    }
+
     let result: string | null = null;
+    const compileT0 = performance.now();
 
     // ── Always use Vite Sandbox — sole compilation path ──
     try {
@@ -238,6 +253,18 @@ export function CompilationBridge({
         result = getCompiledHTMLRef.current(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowserRef.current, linkedGPT);
       } catch { result = null; }
     }
+
+    // ── Record compile telemetry ──
+    const compileDuration = Math.round(performance.now() - compileT0);
+    recordCompileRef.current({
+      tier: result ? 'vite' : 'worker',
+      success: !!result,
+      durationMs: compileDuration,
+      htmlLength: result?.length || 0,
+      fileCount: currentFiles.length,
+      errorMessage: result ? undefined : 'Compilation returned null',
+      failureReason: result ? undefined : 'unknown',
+    });
 
     // Reset flag after use
     isIncrementalEditRef.current = false;
