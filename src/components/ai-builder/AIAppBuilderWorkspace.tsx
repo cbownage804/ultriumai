@@ -3282,6 +3282,7 @@ export function AIAppBuilderWorkspace() {
         <CompilationBridge
           files={project.files}
           isGenerating={isGenerating || isGeneratingOverride}
+          isGoldenProject={isGoldenProject}
           supabaseConfig={supabaseConfig}
           stripeConfig={stripeConfig}
           envVars={envVars}
