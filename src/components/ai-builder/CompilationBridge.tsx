@@ -10,6 +10,7 @@ import type { ProjectAsset } from './AssetManager';
 import { isPreviewValid, previewDebugSummary } from './previewValidation';
 import { autoRepairFiles } from './autoRepairFiles';
 import { useCompileTelemetry, classifyFailure } from '@/hooks/useCompileTelemetry';
+import { useRuntimeErrorOverlay } from './useRuntimeErrorOverlay';
 
 /** Compile State Machine — single source of truth for compilation phase */
 export type CompileState = 'idle' | 'compiling' | 'success' | 'error';
@@ -92,6 +93,11 @@ export function CompilationBridge({
 }: CompilationBridgeProps) {
   // ── Worker-based React Compiler (off main thread) ──
   const { compileReactProject, abortCompilation } = useWorkerCompiler();
+
+  // ── Runtime error overlay ──
+  const { injectOverlay } = useRuntimeErrorOverlay();
+  const injectOverlayRef = useRef(injectOverlay);
+  injectOverlayRef.current = injectOverlay;
 
   // Stabilize function refs to prevent effect re-fires
   // ── Compile telemetry ──
@@ -281,6 +287,11 @@ export function CompilationBridge({
         .join('');
       const injection = `<script>${assetScript}</script>${assetCSS ? `<style>:root{${assetCSS}}</style>` : ''}`;
       result = result.replace('</head>', `${injection}</head>`);
+    }
+
+    // ── Inject runtime error overlay for friendly crash display ──
+    if (result) {
+      result = injectOverlayRef.current(result);
     }
 
     return result;
