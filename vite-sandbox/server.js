@@ -55,8 +55,8 @@ const installQueue = [];
 
 function acquireInstallSlot() {
   return new Promise((resolve) => {
-    if (!installInFlight) {
-      installInFlight = true;
+    if (installInFlight < MAX_INSTALL_CONCURRENT) {
+      installInFlight++;
       resolve();
       return;
     }
@@ -65,9 +65,9 @@ function acquireInstallSlot() {
 }
 
 function releaseInstallSlot() {
-  installInFlight = false;
-  if (installQueue.length > 0) {
-    installInFlight = true;
+  installInFlight--;
+  if (installQueue.length > 0 && installInFlight < MAX_INSTALL_CONCURRENT) {
+    installInFlight++;
     const next = installQueue.shift();
     next();
   }
