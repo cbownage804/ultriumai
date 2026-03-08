@@ -339,7 +339,23 @@ export function useWorkerCompiler() {
       }
     }
 
-    // ── Attempt 3: Worker fallback (reached when sandbox unhealthy OR all sandbox attempts failed) ──
+    // ── Attempt 3: Server-side edge compiler fallback ──
+    try {
+      console.info('[Compiler] Falling back to compile-project edge function');
+      const edgeResult = await Promise.race([
+        compileViaEdgeFunction(files, options, signal),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('compile-project fallback timeout (25s)')), 25_000)
+        ),
+      ]);
+      console.info('[Compiler] ✅ compile-project fallback compiled:', edgeResult.html?.length, 'chars');
+      return edgeResult;
+    } catch (edgeErr: any) {
+      if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
+      console.warn('[Compiler] compile-project fallback failed:', edgeErr.message);
+    }
+
+    // ── Attempt 4: Worker fallback (last resort) ──
     try {
       console.info('[Compiler] Falling back to Web Worker compiler');
       const workerResult = await Promise.race([

@@ -13,6 +13,24 @@ const corsHeaders = {
  * - Edge-level retry with 2s delay on 503/timeout
  * - TEMPLATE_PACKAGES synced with setup-template.sh
  */
+function resolveRelativeImportPath(fromPath: string, importPath: string): string {
+  const fromDir = fromPath.includes("/") ? fromPath.slice(0, fromPath.lastIndexOf("/")) : "";
+  const raw = `${fromDir}/${importPath}`;
+  const parts = raw.split("/");
+  const normalized: string[] = [];
+
+  for (const part of parts) {
+    if (!part || part === ".") continue;
+    if (part === "..") {
+      normalized.pop();
+      continue;
+    }
+    normalized.push(part);
+  }
+
+  return normalized.join("/");
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -37,6 +55,37 @@ serve(async (req) => {
         JSON.stringify({ error: "No files provided" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Auto-inject missing local CSS imports (common generated-project failure mode)
+    const existingPaths = new Set(files.map((f: any) => f.path));
+    const missingCssPaths = new Set<string>();
+
+    for (const f of files) {
+      if (!/\.(ts|tsx|js|jsx)$/.test(f.path) || typeof f.content !== 'string') continue;
+      const cssImportRegex = /import\s+(?:[^'";]+\s+from\s+)?['"]([^'"]+\.css(?:\?[^'"]*)?)['"]/g;
+      let match;
+      while ((match = cssImportRegex.exec(f.content)) !== null) {
+        const importPath = (match[1] || '').split('?')[0];
+        const resolvedPath = importPath.startsWith('.')
+          ? resolveRelativeImportPath(f.path, importPath)
+          : importPath.replace(/^\//, '');
+
+        if (resolvedPath && !existingPaths.has(resolvedPath)) {
+          missingCssPaths.add(resolvedPath);
+        }
+      }
+    }
+
+    if (missingCssPaths.size > 0) {
+      for (const missingPath of missingCssPaths) {
+        files.push({
+          path: missingPath,
+          content: `/* auto-injected placeholder for missing import: ${missingPath} */\n`,
+        });
+        existingPaths.add(missingPath);
+      }
+      console.log(`[compile-vite] Auto-injected ${missingCssPaths.size} missing CSS file(s): ${[...missingCssPaths].join(', ')}`);
     }
 
     // Auto-inject index.html if missing
