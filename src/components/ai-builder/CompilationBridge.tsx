@@ -289,6 +289,11 @@ export function CompilationBridge({
       result = result.replace('</head>', `${injection}</head>`);
     }
 
+    // ── Inject runtime error overlay for friendly crash display ──
+    if (result) {
+      result = injectOverlayRef.current(result);
+    }
+
     return result;
   }, [isReactProject, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, linkedGPT, assets]);
 
