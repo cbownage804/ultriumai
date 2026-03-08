@@ -415,6 +415,7 @@ function filterProtectedFiles(
 
 export function AIAppBuilderWorkspace() {
   const [searchParams] = useSearchParams();
+  const isNewProjectRef = useRef(searchParams.get('new') === 'true');
   const {
     messages, setMessages, isGenerating, latestFiles, previousFiles, mode, setMode, thinkingPhase, versions, setVersions,
     totalTokensUsed, contextBudget, continuationRound, sendMessage, stopGenerating, clearChat, restoreVersion, forwardErrorToChat,
