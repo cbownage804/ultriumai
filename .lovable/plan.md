@@ -1,48 +1,29 @@
 
 
-## The Problem
+## Problem
 
-The preview panel uses **Sandpack** (CodeSandbox's in-browser bundler) to render previews — not your Vite server. Here's what happens:
+The screenshots show a consistent failure pattern: AI generates a landing page, the **bracket-counting validator** in `useOutputValidation.ts` flags `App.tsx` with "Unbalanced curly braces" and "Unbalanced parentheses" errors, the repair pipeline runs twice and fails, and the preview never renders — stuck on "Building your app..." then showing "Repair Failed".
 
-1. Your Vite server compiles the project and returns HTML (works correctly)
-2. CompilationBridge receives the HTML and sets `stableHTML` / `compileState = 'success'`
-3. The workspace passes the Vite HTML as `html` prop and the raw files as `previewFiles` to `BuilderPreviewPanel`
-4. **BuilderPreviewPanel ignores the `html` prop entirely** and renders via `SandpackProvider` + `SandpackPreview` instead (line 792-826)
+The root cause is the **heuristic bracket counter** (lines 106-129 of `useOutputValidation.ts`). Its regex-based string/comment stripping is imperfect — it miscounts brackets in complex JSX containing nested template literals, regex patterns, or escaped characters. This produces **false positive errors** that block valid (or nearly-valid) code from ever reaching the Vite compiler.
 
-Sandpack is a separate in-browser bundler from CodeSandbox. It re-compiles everything client-side, which is slower, less reliable, and completely bypasses your Vite server.
+The Vite sandbox is the real source of truth for syntax correctness. The pre-commit validator should catch obvious issues but not block compilation on heuristic guesses.
 
-## The Fix
+## Plan
 
-Replace the Sandpack rendering path with a direct **srcdoc iframe** that uses the Vite-compiled HTML. The `html` prop (from CompilationBridge/Vite) becomes the single source of truth for the preview.
+### 1. Downgrade bracket imbalance from `error` to `warning`
 
-### Changes to `src/components/ai-builder/BuilderPreviewPanel.tsx`
+**File: `src/components/ai-builder/useOutputValidation.ts`**
 
-1. **Remove `SandpackProvider`/`SandpackPreview`/`SandpackConsole` imports and usage** — the entire block at lines 800-826 gets replaced with an iframe using `srcdoc={htmlWithErrorCapture}`.
+Change severity of bracket/parenthesis/bracket checks (lines 121-129) from `'error'` to `'warning'`. This lets the code proceed to Vite compilation, which will catch genuine syntax errors with proper error messages. The warnings still appear in logs for diagnostics.
 
-2. **Simplify rendering logic** (line 792):
-   - If `htmlWithErrorCapture` exists (valid Vite output) → render the srcdoc iframe
-   - If generating/compiling → show `SkeletonPreview`
-   - Otherwise → show the "Live Preview" placeholder
+### 2. Increase truncation tolerance
 
-3. **Keep all existing iframe infrastructure** — the error capture injection, session IDs, hot-patching, navigation interception, health checks — all of that already exists in the component and works with srcdoc iframes. It's just not being reached because Sandpack takes priority.
+The "file appears truncated" check (line 224) can also false-positive on valid JSX that ends with certain characters in edge cases. Add a minimum file-length threshold (e.g., only flag files under 200 chars or with multiple truncation signals).
 
-4. **Remove `previewFiles` and `previewDependencies` props** from the component interface since they're no longer needed.
+### 3. Result
 
-### Changes to `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
-
-1. **Remove `buildSandpackFileMap`**, `extractDependencies`, `previewFiles` state, `lastKnownGoodPreviewFilesRef`, and the `previewFilesForRender` computation — all Sandpack-specific infrastructure.
-
-2. **Remove `previewFiles` and `previewDependencies` from all `BuilderPreviewPanel` call sites** (mobile, split, preview-only layouts).
-
-3. **Keep the `isGoldenProject` check** for showing the placeholder vs the compiled preview.
-
-### Resulting rendering flow
-
-```text
-User prompt → AI generates files → CompilationBridge sends to Vite server
-→ Vite returns compiled HTML → stableHTML set → compileState = 'success'
-→ BuilderPreviewPanel receives html prop → renders in srcdoc iframe
-```
-
-No Sandpack. No client-side re-bundling. One path: Vite server output → iframe.
+- AI-generated code with minor bracket mismatches will proceed to Vite compilation instead of being blocked
+- Vite catches real syntax errors and provides accurate error messages
+- The repair pipeline still activates for genuine Vite compile failures
+- "Repair Failed" will only appear for truly broken code, not false positives
 
