@@ -130,12 +130,19 @@ EOF
 
 # Create default vite.config.ts
 cat > "$TEMPLATE_DIR/vite.config.ts" << 'EOF'
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
 import path from 'path';
 
-export default defineConfig({
-  plugins: [react()],
+let reactPlugins = [];
+try {
+  const mod = await import('@vitejs/plugin-react');
+  const react = mod?.default;
+  if (typeof react === 'function') reactPlugins = [react()];
+} catch {
+  // Keep config valid even if plugin isn't present yet.
+}
+
+export default {
+  plugins: reactPlugins,
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -146,7 +153,7 @@ export default defineConfig({
     assetsInlineLimit: 100_000_000,
     cssCodeSplit: false,
   },
-});
+};
 EOF
 
 # Create tailwind config
