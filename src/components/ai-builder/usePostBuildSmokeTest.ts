@@ -19,6 +19,17 @@ export interface SmokeWarning {
  * Post-build smoke test that validates generated code for common issues.
  * Runs automatically after every AI generation to catch bugs before the user sees them.
  */
+/** Resolve a relative import path against a directory */
+function resolveRelativePath(dir: string, rel: string): string {
+  const parts = dir ? dir.split('/') : [];
+  for (const segment of rel.split('/')) {
+    if (segment === '.' || segment === '') continue;
+    if (segment === '..') parts.pop();
+    else parts.push(segment);
+  }
+  return parts.join('/');
+}
+
 export function usePostBuildSmokeTest(
   addBuildLogEntry: (type: BuildLogEntry['type'], message: string) => void,
 ) {
