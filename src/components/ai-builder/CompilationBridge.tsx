@@ -94,6 +94,11 @@ export function CompilationBridge({
   // ── Worker-based React Compiler (off main thread) ──
   const { compileReactProject, abortCompilation } = useWorkerCompiler();
 
+  // ── Runtime error overlay ──
+  const { injectOverlay } = useRuntimeErrorOverlay();
+  const injectOverlayRef = useRef(injectOverlay);
+  injectOverlayRef.current = injectOverlay;
+
   // Stabilize function refs to prevent effect re-fires
   // ── Compile telemetry ──
   const { recordCompile } = useCompileTelemetry();
