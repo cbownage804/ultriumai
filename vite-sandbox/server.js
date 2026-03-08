@@ -29,13 +29,13 @@ const BUILDS_DIR = path.join(__dirname, 'builds');
 const WARM_DIR = path.join(__dirname, 'warm');
 const PORT = process.env.PORT || 3100;
 const AUTH_TOKEN = process.env.SANDBOX_AUTH_TOKEN || '';
-const MAX_CONCURRENT = parseInt(process.env.MAX_CONCURRENT || '10', 10);
+const MAX_CONCURRENT = parseInt(process.env.MAX_CONCURRENT || '20', 10);
 const BUILD_TIMEOUT_MS = parseInt(process.env.BUILD_TIMEOUT_MS || '30000', 10);
-const MAX_QUEUED = parseInt(process.env.MAX_QUEUED || '5', 10);
+const MAX_QUEUED = parseInt(process.env.MAX_QUEUED || '15', 10);
 const QUEUE_TIMEOUT_MS = parseInt(process.env.QUEUE_TIMEOUT_MS || '10000', 10);
 const INSTALL_TIMEOUT_MS = parseInt(process.env.INSTALL_TIMEOUT_MS || '15000', 10);
-const MEMORY_LIMIT_MB = parseInt(process.env.MEMORY_LIMIT_MB || '1500', 10);
-const WARM_POOL_SIZE = parseInt(process.env.WARM_POOL_SIZE || '3', 10);
+const MEMORY_LIMIT_MB = parseInt(process.env.MEMORY_LIMIT_MB || '6500', 10);
+const WARM_POOL_SIZE = parseInt(process.env.WARM_POOL_SIZE || '8', 10);
 const STALE_DIR_MAX_AGE_MS = 60_000;
 
 let activeBuildCount = 0;
