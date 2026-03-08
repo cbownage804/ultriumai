@@ -458,6 +458,10 @@ async function executeBuild(files, options, installPackages, needsInstall, t0) {
     // 6. Write vite.config.ts
     const viteConfig = `
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 let reactPlugins = [];
 try {
