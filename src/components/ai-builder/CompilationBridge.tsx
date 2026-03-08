@@ -233,10 +233,11 @@ export function CompilationBridge({
   }, [isReactProject, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, linkedGPT, assets]);
 
   // ── Streaming preview: compile partial files during generation ──
-  // This gives the "building piece by piece" experience.
+  // Shows progressive UI without promoting partial output to persistent LKG preview.
   const streamingCompileTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastStreamingCompileCountRef = useRef(0);
   const streamingCompileInFlightRef = useRef(false);
+  const lastStreamingHTMLRef = useRef('');
 
   useEffect(() => {
     if (!isGenerating) {
@@ -247,10 +248,11 @@ export function CompilationBridge({
       }
       lastStreamingCompileCountRef.current = 0;
       streamingCompileInFlightRef.current = false;
+      lastStreamingHTMLRef.current = '';
       return;
     }
 
-    // Poll every 6s during generation to compile partial files
+    // Poll every 3s during generation for more responsive piece-by-piece updates
     streamingCompileTimerRef.current = setInterval(async () => {
       const partial = partialFilesRef.current;
       const completedCount = completedFileCountRef.current;
@@ -265,11 +267,17 @@ export function CompilationBridge({
       const hasIndex = partial.some(f => f.path === 'index.html');
       if (!(hasIndex || (hasMain && hasApp))) return;
 
+      // Skip streaming compile if partial files are already known invalid
+      if (validateFiles) {
+        const vResult = validateFiles(partial);
+        const syntaxErrors = vResult.issues.filter(i => i.severity === 'error');
+        if (syntaxErrors.length > 0) return;
+      }
+
       streamingCompileInFlightRef.current = true;
       lastStreamingCompileCountRef.current = completedCount;
 
       console.info('[StreamingPreview] Compiling %d partial files (%d completed)', partial.length, completedCount);
-      transitionCompileState('compiling');
 
       try {
         const result = await Promise.race([
@@ -281,20 +289,18 @@ export function CompilationBridge({
           new Promise<null>(r => setTimeout(() => r(null), 20_000)),
         ]);
 
-        if (result && isPreviewValid(result)) {
+        if (result && isPreviewValid(result) && result !== lastStreamingHTMLRef.current) {
+          // Render-only update: do NOT promote to stableHTMLRef/LKG during generation.
+          // This prevents broken partial output from becoming the persistent preview.
+          lastStreamingHTMLRef.current = result;
           console.info('[StreamingPreview] ✅ Intermediate preview ready (%d chars)', result.length);
-          setStableHTML(result);
+          setStableHTMLLocal(result);
           transitionCompileState('success');
-        } else {
-          // Don't show error during streaming — just wait for more files
-          transitionCompileState('idle');
         }
-      } catch {
-        transitionCompileState('idle');
       } finally {
         streamingCompileInFlightRef.current = false;
       }
-    }, 6000);
+    }, 3000);
 
     return () => {
       if (streamingCompileTimerRef.current) {
@@ -302,7 +308,7 @@ export function CompilationBridge({
         streamingCompileTimerRef.current = null;
       }
     };
-  }, [isGenerating, supabaseConfig, stripeConfig, envVars, transitionCompileState, setStableHTML]);
+  }, [isGenerating, supabaseConfig, stripeConfig, envVars, transitionCompileState, validateFiles]);
 
   // ── Reset stableHTML when a new generation starts ──
   const prevIsGeneratingRef = useRef(false);
