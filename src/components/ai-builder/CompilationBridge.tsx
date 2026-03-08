@@ -94,6 +94,11 @@ export function CompilationBridge({
   const { compileReactProject, abortCompilation } = useWorkerCompiler();
 
   // Stabilize function refs to prevent effect re-fires
+  // ── Compile telemetry ──
+  const { recordCompile } = useCompileTelemetry();
+  const recordCompileRef = useRef(recordCompile);
+  recordCompileRef.current = recordCompile;
+
   const compileReactProjectRef = useRef(compileReactProject);
   compileReactProjectRef.current = compileReactProject;
   const getCompiledHTMLRef = useRef(getCompiledHTML);
