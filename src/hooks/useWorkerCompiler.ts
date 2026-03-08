@@ -312,6 +312,8 @@ export function useWorkerCompiler() {
       console.warn('[Compiler] Sandbox health check failed — skipping to worker fallback');
     }
 
+    let viteError: Error | null = null;
+
     // ── Attempt 1: Vite Sandbox (skip if unhealthy) ──
     if (healthy) try {
       console.info('[Compiler] Compiling via Vite Sandbox (primary path)', { fileCount: files.length });
@@ -325,6 +327,7 @@ export function useWorkerCompiler() {
       return result;
     } catch (err: any) {
       if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
+      viteError = err;
 
       const is503 = /503|busy|Queue|timeout/i.test(err.message);
       console.warn('[Compiler] Vite Sandbox failed:', err.message, is503 ? '(will retry once)' : '(falling back to worker)');
@@ -349,23 +352,22 @@ export function useWorkerCompiler() {
           console.warn('[Compiler] Vite Sandbox retry also failed:', retryErr.message);
         }
       }
+    }
 
-      // ── Attempt 3: Worker fallback ──
-      try {
-        console.info('[Compiler] Falling back to Web Worker compiler');
-        const workerResult = await Promise.race([
-          compileViaWorker(files, options),
-          new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('Worker fallback timeout (20s)')), 20_000)
-          ),
-        ]);
-        console.info('[Compiler] ✅ Worker fallback compiled:', workerResult.html?.length, 'chars (degraded)');
-        return workerResult;
-      } catch (workerErr: any) {
-        console.error('[Compiler] ❌ Worker fallback also failed:', workerErr.message);
-        // Throw the original Vite error as it's more informative
-        throw err;
-      }
+    // ── Attempt 3: Worker fallback (reached when sandbox unhealthy OR all sandbox attempts failed) ──
+    try {
+      console.info('[Compiler] Falling back to Web Worker compiler');
+      const workerResult = await Promise.race([
+        compileViaWorker(files, options),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Worker fallback timeout (20s)')), 20_000)
+        ),
+      ]);
+      console.info('[Compiler] ✅ Worker fallback compiled:', workerResult.html?.length, 'chars (degraded)');
+      return workerResult;
+    } catch (workerErr: any) {
+      console.error('[Compiler] ❌ Worker fallback also failed:', workerErr.message);
+      throw viteError || workerErr;
     }
   }, [compileViaWorker]);
 
