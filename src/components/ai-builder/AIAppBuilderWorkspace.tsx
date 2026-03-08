@@ -448,6 +448,7 @@ export function AIAppBuilderWorkspace() {
     loadProjects, saveProject, loadProject, deleteProject, publishProject,
     rollbackToVersion,
     scheduleAutoSave,
+    resetCurrentProject,
   } = useProjectPersistence();
   const {
     currentRun: agentRun,
