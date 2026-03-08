@@ -1,5 +1,9 @@
 /**
- * Vite Cloud Sandbox Server — Hardened v2
+ * Vite Cloud Sandbox Server — Hardened v3 (8GB / 4 vCPU)
+ * 
+ * Capacity: 20 concurrent builds, 15 queued, 8 warm dirs
+ * Memory guard: 6.5GB threshold (8GB droplet)
+ * Install concurrency: 3 simultaneous npm installs
  * 
  * Hardening:
  * - Warm build cache (pre-created build dirs)
@@ -10,8 +14,8 @@
  * - FIFO build queue when at capacity
  * - Better error extraction from Vite stderr
  * - Graceful shutdown with SIGTERM/SIGINT handlers
- * - Memory guard (503 when RSS > 1.5GB)
- * - Install concurrency limiter (1 at a time)
+ * - Memory guard (503 when RSS > 6.5GB)
+ * - Install concurrency limiter (3 at a time)
  * - Stale build dir cleanup (periodic)
  * - Request deduplication via payload hash
  */
