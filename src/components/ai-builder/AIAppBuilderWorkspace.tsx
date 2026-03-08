@@ -422,6 +422,7 @@ export function AIAppBuilderWorkspace() {
     totalTokensUsed, contextBudget, continuationRound, sendMessage, stopGenerating, clearChat, restoreVersion, forwardErrorToChat,
     partialFilesRef, isStreamingPreview, completedFileCountRef, parseIncremental,
     streamingContentRef,
+    getStreamIntegrity, isStreamStalled,
     conversationForks, activeForkId, forkConversation, switchFork, deleteFork,
   } = useAIAppBuilder();
 
