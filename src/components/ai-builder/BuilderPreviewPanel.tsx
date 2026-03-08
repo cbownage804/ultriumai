@@ -1038,7 +1038,7 @@ window.addEventListener('message', function(e) {
               </div>
             )}
           </div>
-        ) : isGenerating || (isCompiling && !isGoldenProject) ? (
+        ) : isGenerating || isCompiling ? (
           <SkeletonPreview
             projectFiles={projectFiles}
             completedFileCount={completedFileCount}
