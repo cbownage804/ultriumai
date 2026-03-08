@@ -1003,7 +1003,7 @@ window.addEventListener('message', function(e) {
             isGenerating={isGenerating}
             isCompiling={isCompiling}
           />
-        ) : compileState === 'error' && !isGoldenProject && compileError ? (
+        ) : compileState === 'error' && compileError ? (
           /* Compile error on fresh build with no preview — show error + retry instead of empty placeholder */
           <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden">
             <img
