@@ -86,6 +86,7 @@ export function CompilationBridge({
   onForceCompile,
   assets = [],
   validateFiles,
+  isGoldenProject = false,
 }: CompilationBridgeProps) {
   // ── Worker-based React Compiler (off main thread) ──
   const { compileReactProject, abortCompilation } = useWorkerCompiler();
