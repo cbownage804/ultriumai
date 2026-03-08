@@ -371,27 +371,31 @@ async function executeBuild(files, options, installPackages, needsInstall, t0) {
       const buildNodeModules = path.join(buildDir, 'node_modules');
 
       if (needsInstall) {
-        execSync(`cp -r "${templateNodeModules}" "${buildNodeModules}"`, { timeout: 15000 });
+        execSync(`cp -r "${templateNodeModules}" "${buildNodeModules}"`, {
+          timeout: Math.max(INSTALL_TIMEOUT_MS, 30_000),
+        });
       } else {
         fs.symlinkSync(templateNodeModules, buildNodeModules, 'junction');
       }
     }
 
-    // 2. Install additional packages if requested (concurrency-limited to 1)
+    // 2. Install additional packages if requested (concurrency-limited)
     if (needsInstall) {
       await acquireInstallSlot();
       try {
         const pkgList = installPackages.map(p => `"${p}"`).join(' ');
         console.log(`[${buildId}] Installing packages: ${pkgList}`);
-        execSync(`npm install --no-save ${pkgList}`, {
+        execSync(`npm install --no-save --include=dev ${pkgList}`, {
           cwd: buildDir,
           timeout: INSTALL_TIMEOUT_MS,
-          env: { ...process.env, NODE_ENV: 'production' },
+          env: { ...process.env },
           stdio: 'pipe',
         });
         console.log(`[${buildId}] Package install completed in ${Date.now() - t0}ms`);
       } catch (installErr) {
-        console.warn(`[${buildId}] Package install failed (continuing):`, installErr.message?.slice(0, 200));
+        const installMessage = installErr?.message?.slice(0, 500) || 'Unknown package install failure';
+        console.error(`[${buildId}] Package install failed: ${installMessage}`);
+        throw new Error(`Package installation failed: ${installMessage}`);
       } finally {
         releaseInstallSlot();
       }
