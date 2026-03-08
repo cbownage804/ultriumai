@@ -269,27 +269,15 @@ serve(async (req) => {
       const errText = result?.error || 'Unknown error';
       console.error(`[compile-vite] Sandbox error (${response!.status}):`, errText);
 
-      // Graceful degradation: return 200 fallback payload so client can immediately
-      // switch to worker compilation instead of surfacing a hard runtime error.
-      if (
-        typeof errText === 'string' &&
-        (errText.includes("Cannot find package 'vite'") ||
-          errText.includes('Cannot find package "vite"') ||
-          errText.includes("Cannot find package '@vitejs/plugin-react'") ||
-          errText.includes('Cannot find package "@vitejs/plugin-react"'))
-      ) {
-        return new Response(
-          JSON.stringify({
-            fallback: true,
-            error: 'Vite sandbox toolchain is unavailable on this instance; switched to worker fallback.',
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
+      // Graceful degradation: ALWAYS return 200 with fallback:true so the client
+      // can immediately switch to worker compilation instead of surfacing a hard
+      // runtime error (503/504). This covers both toolchain issues AND build errors.
       return new Response(
-        JSON.stringify({ error: errText, fallback: true }),
-        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+          error: errText,
+          fallback: true,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
