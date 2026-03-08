@@ -965,7 +965,7 @@ window.addEventListener('message', function(e) {
 
       {/* Preview */}
       <div className="flex-1 min-h-0 flex items-stretch justify-center">
-        {htmlWithErrorCapture && !isGoldenProject ? (
+        {htmlWithErrorCapture ? (
           <div
             className="h-full transition-all duration-300 mx-auto w-full relative"
             style={{
@@ -1003,7 +1003,7 @@ window.addEventListener('message', function(e) {
             isGenerating={isGenerating}
             isCompiling={isCompiling}
           />
-        ) : compileState === 'error' && !isGoldenProject && compileError ? (
+        ) : compileState === 'error' && compileError ? (
           /* Compile error on fresh build with no preview — show error + retry instead of empty placeholder */
           <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden">
             <img
@@ -1095,7 +1095,7 @@ window.addEventListener('message', function(e) {
       )}
 
       {/* Compile error overlay — shown when compile state machine is in 'error' */}
-      {compileError && !repairFailed && !isGenerating && !isGoldenProject && (
+      {compileError && !repairFailed && !isGenerating && (
         <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-[#1a1a2e] border border-amber-500/30 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
             <div className="flex items-center gap-2 mb-3">
