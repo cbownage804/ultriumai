@@ -437,6 +437,14 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
     }
   }, [startWatching]);
 
+  /** Reset local watcher/runtime state for a true fresh-session start */
+  const resetState = useCallback(() => {
+    cleanup();
+    setActiveJob(null);
+    setBuildQueue([]);
+    streamedContentRef.current = '';
+  }, [cleanup]);
+
   /** Get streamed content ref for incremental file parsing */
   const getStreamedContent = useCallback(() => streamedContentRef.current, []);
 
@@ -454,6 +462,7 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
     checkPendingJobs,
     startWatching,
     cleanup,
+    resetState,
     fetchBuildHistory,
     restoreFromBuild,
     getStreamedContent,
