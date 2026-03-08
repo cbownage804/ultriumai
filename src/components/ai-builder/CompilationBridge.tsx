@@ -254,6 +254,18 @@ export function CompilationBridge({
       } catch { result = null; }
     }
 
+    // ── Record compile telemetry ──
+    const compileDuration = Math.round(performance.now() - compileT0);
+    recordCompileRef.current({
+      tier: result ? 'vite' : 'worker',
+      success: !!result,
+      durationMs: compileDuration,
+      htmlLength: result?.length || 0,
+      fileCount: currentFiles.length,
+      errorMessage: result ? undefined : 'Compilation returned null',
+      failureReason: result ? undefined : 'unknown',
+    });
+
     // Reset flag after use
     isIncrementalEditRef.current = false;
 
