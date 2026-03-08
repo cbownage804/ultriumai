@@ -139,15 +139,9 @@ serve(async (req) => {
       p => !TEMPLATE_PACKAGES.has(p) && !NODE_BUILTIN_PACKAGES.has(p) && !p.startsWith('node:')
     );
 
-    // IMPORTANT:
-    // The sandbox runs npm install with NODE_ENV=production when installPackages are present.
-    // That can prune template devDependencies (including vite + plugin-react), causing
-    // ERR_MODULE_NOT_FOUND when loading vite.config.ts.
-    // So whenever we need dynamic installs, explicitly include core build packages.
+    // Base install set: only packages not present in template snapshot.
     const REQUIRED_BUILD_PACKAGES = ['vite', '@vitejs/plugin-react'];
-    const installPackages = extraPackages.length > 0
-      ? [...new Set([...extraPackages, ...REQUIRED_BUILD_PACKAGES])]
-      : [];
+    const installPackages = extraPackages;
 
     if (installPackages.length > 0) {
       console.log(`[compile-vite] Installing ${installPackages.length} packages: ${installPackages.join(', ')}`);
@@ -159,17 +153,17 @@ serve(async (req) => {
       ...files.filter((f: any) => f.path !== 'index.html'),
     ];
 
-    const payload = JSON.stringify({
+    const makePayload = (pkgs: string[]) => JSON.stringify({
       files: sortedFiles,
       options,
-      installPackages,
+      installPackages: pkgs,
       entryFile: "index.html",
     });
 
-    // ── Attempt with edge-level retry ──
-    const timeoutMs = installPackages.length > 0 ? 30_000 : 15_000;
+    const basePayload = makePayload(installPackages);
 
-    const attempt = async (): Promise<Response> => {
+    // ── Attempt with edge-level retry ──
+    const attempt = async (payload: string, timeoutMs: number): Promise<Response> => {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -195,7 +189,8 @@ serve(async (req) => {
     let result: any;
 
     try {
-      response = await attempt();
+      const baseTimeoutMs = installPackages.length > 0 ? 30_000 : 15_000;
+      response = await attempt(basePayload, baseTimeoutMs);
       result = await response.json();
     } catch (firstErr: any) {
       const isRetryable = firstErr.name === "AbortError" || /fetch|network/i.test(firstErr.message);
@@ -206,7 +201,8 @@ serve(async (req) => {
       await new Promise(r => setTimeout(r, 2000));
 
       try {
-        response = await attempt();
+        const baseTimeoutMs = installPackages.length > 0 ? 30_000 : 15_000;
+        response = await attempt(basePayload, baseTimeoutMs);
         result = await response.json();
       } catch (retryErr: any) {
         console.error(`[compile-vite] Retry also failed: ${retryErr.message}`);
@@ -219,7 +215,8 @@ serve(async (req) => {
       console.log(`[compile-vite] Got ${response!.status} — retrying in 2s`);
       await new Promise(r => setTimeout(r, 2000));
       try {
-        const retryResponse = await attempt();
+        const baseTimeoutMs = installPackages.length > 0 ? 30_000 : 15_000;
+        const retryResponse = await attempt(basePayload, baseTimeoutMs);
         const retryResult = await retryResponse.json();
         if (retryResponse.ok) {
           console.log(`[compile-vite] Retry success: ${retryResult.html?.length || 0} chars`);
@@ -233,6 +230,38 @@ serve(async (req) => {
         response = retryResponse;
       } catch {
         // Fall through with original result
+      }
+    }
+
+    // Self-heal path: if sandbox template is missing core Vite toolchain, force-install and retry once.
+    const missingCoreToolchain = typeof result?.error === 'string' && (
+      result.error.includes("Cannot find package 'vite'") ||
+      result.error.includes('Cannot find package "vite"') ||
+      result.error.includes("Cannot find package '@vitejs/plugin-react'") ||
+      result.error.includes('Cannot find package "@vitejs/plugin-react"')
+    );
+
+    if (!response!.ok && missingCoreToolchain) {
+      const forcedInstallPackages = [...new Set([...installPackages, ...REQUIRED_BUILD_PACKAGES])];
+      console.warn(`[compile-vite] Missing Vite toolchain detected; retrying with forced install: ${forcedInstallPackages.join(', ')}`);
+
+      try {
+        const recoveryPayload = makePayload(forcedInstallPackages);
+        const recoveryResponse = await attempt(recoveryPayload, 30_000);
+        const recoveryResult = await recoveryResponse.json();
+
+        if (recoveryResponse.ok) {
+          console.log(`[compile-vite] Recovery success: ${recoveryResult.html?.length || 0} chars`);
+          return new Response(
+            JSON.stringify(recoveryResult),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        response = recoveryResponse;
+        result = recoveryResult;
+      } catch (recoveryErr: any) {
+        console.error(`[compile-vite] Recovery attempt failed: ${recoveryErr.message}`);
       }
     }
 
