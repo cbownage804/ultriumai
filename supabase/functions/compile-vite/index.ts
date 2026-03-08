@@ -167,7 +167,7 @@ serve(async (req) => {
     });
 
     // ── Attempt with edge-level retry ──
-    const timeoutMs = extraPackages.length > 0 ? 30_000 : 15_000;
+    const timeoutMs = installPackages.length > 0 ? 30_000 : 15_000;
 
     const attempt = async (): Promise<Response> => {
       const controller = new AbortController();
