@@ -23,6 +23,7 @@ const COMPILE_HARD_TIMEOUT_MS = COMPILE_TIMEOUT_MS;
 interface CompilationBridgeProps {
   files: ProjectFile[];
   isGenerating: boolean;
+  isGoldenProject?: boolean;
   supabaseConfig: SupabaseConfig | null;
   stripeConfig: StripeConfig | null;
   envVars: EnvVar[];
@@ -85,6 +86,7 @@ export function CompilationBridge({
   onForceCompile,
   assets = [],
   validateFiles,
+  isGoldenProject = false,
 }: CompilationBridgeProps) {
   // ── Worker-based React Compiler (off main thread) ──
   const { compileReactProject, abortCompilation } = useWorkerCompiler();
@@ -239,6 +241,10 @@ export function CompilationBridge({
   const streamingCompileInFlightRef = useRef(false);
   const lastStreamingHTMLRef = useRef('');
 
+  // Track streaming compile failures to cap attempts
+  const streamingFailCountRef = useRef(0);
+  const MAX_STREAMING_FAILURES = 2;
+
   useEffect(() => {
     if (!isGenerating) {
       // Clean up when generation ends
@@ -249,17 +255,23 @@ export function CompilationBridge({
       lastStreamingCompileCountRef.current = 0;
       streamingCompileInFlightRef.current = false;
       lastStreamingHTMLRef.current = '';
+      streamingFailCountRef.current = 0;
       return;
     }
 
-    // Poll every 3s during generation for more responsive piece-by-piece updates
+    // Skip streaming compiles for golden (untouched) projects
+    if (isGoldenProject) return;
+
+    // Poll every 8s during generation to reduce droplet pressure
     streamingCompileTimerRef.current = setInterval(async () => {
       const partial = partialFilesRef.current;
       const completedCount = completedFileCountRef.current;
 
-      // Need at least 2 completed files and a change since last compile
-      if (completedCount < 2 || completedCount === lastStreamingCompileCountRef.current) return;
+      // Need at least 4 completed files and a change since last compile
+      if (completedCount < 4 || completedCount === lastStreamingCompileCountRef.current) return;
       if (streamingCompileInFlightRef.current) return;
+      // Stop polling after too many failures
+      if (streamingFailCountRef.current >= MAX_STREAMING_FAILURES) return;
 
       // Must have a mountable app (main.tsx + App.tsx or index.html)
       const hasMain = partial.some(f => f.path === 'src/main.tsx' || f.path === 'main.tsx');
@@ -290,17 +302,18 @@ export function CompilationBridge({
         ]);
 
         if (result && isPreviewValid(result) && result !== lastStreamingHTMLRef.current) {
-          // Render-only update: do NOT promote to stableHTMLRef/LKG during generation.
-          // This prevents broken partial output from becoming the persistent preview.
           lastStreamingHTMLRef.current = result;
           console.info('[StreamingPreview] ✅ Intermediate preview ready (%d chars)', result.length);
           setStableHTMLLocal(result);
           transitionCompileState('success');
+        } else if (!result) {
+          streamingFailCountRef.current++;
+          console.warn('[StreamingPreview] Compile failed (%d/%d)', streamingFailCountRef.current, MAX_STREAMING_FAILURES);
         }
       } finally {
         streamingCompileInFlightRef.current = false;
       }
-    }, 3000);
+    }, 8000);
 
     return () => {
       if (streamingCompileTimerRef.current) {
@@ -308,7 +321,7 @@ export function CompilationBridge({
         streamingCompileTimerRef.current = null;
       }
     };
-  }, [isGenerating, supabaseConfig, stripeConfig, envVars, transitionCompileState, validateFiles]);
+  }, [isGenerating, isGoldenProject, supabaseConfig, stripeConfig, envVars, transitionCompileState, validateFiles]);
 
   // ── Reset stableHTML when a new generation starts ──
   const prevIsGeneratingRef = useRef(false);
@@ -333,6 +346,8 @@ export function CompilationBridge({
   // Also fires when filesDigest changes (manual edits after generation).
   useEffect(() => {
     if (isGenerating || filesRef.current.length === 0) return;
+    // Skip compilation for untouched golden projects
+    if (isGoldenProject) return;
 
     // Sync from external if handleBgComplete already compiled
     if (!stableHTMLRef.current && externalStableHTMLRef?.current) {

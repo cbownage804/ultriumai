@@ -1,11 +1,10 @@
 /**
  * useWorkerCompiler — Hook that compiles projects via server-side Edge Function.
  * 
- * PRIMARY PATH: Calls the `compile-project` edge function for reliable,
- * server-side compilation (Lovable parity).
+ * PRIMARY PATH: Calls the `compile-vite` edge function → Vite Sandbox droplet.
  * 
- * FALLBACK: If the edge function fails (network error, timeout), falls back
- * to the in-browser Web Worker compiler.
+ * FALLBACK: If the Vite Sandbox fails (network error, timeout, 503), falls back
+ * to the in-browser Web Worker compiler for a degraded but functional preview.
  */
 
 import { useCallback, useEffect, useRef } from 'react';
@@ -248,9 +247,11 @@ export function useWorkerCompiler() {
   }, []);
 
   /**
-   * Primary compilation function — Vite Sandbox ONLY (no fallback tiers).
+   * Primary compilation function — Vite Sandbox with Worker fallback.
    * Each new call aborts the prior in-flight compile so the Vite sandbox droplet
-   * doesn't accumulate stale connections and exhaust its concurrency cap (5).
+   * doesn't accumulate stale connections and exhaust its concurrency cap.
+   * 
+   * Flow: Vite Sandbox → (retry on 503) → Worker fallback → throw
    */
   const compileReactProject = useCallback(async (
     files: ProjectFile[],
@@ -272,13 +273,11 @@ export function useWorkerCompiler() {
     activeAbortRef.current = ac;
     const { signal } = ac;
 
-    // ── Vite Sandbox — sole compilation path ──
-    // Generous timeout (30s) to handle cold starts and complex projects.
-    // No fallback tiers — if the sandbox fails, surface the error directly.
     const VITE_TIMEOUT_MS = 30_000;
 
+    // ── Attempt 1: Vite Sandbox ──
     try {
-      console.info('[Compiler] Compiling via Vite Sandbox (sole path)', { fileCount: files.length });
+      console.info('[Compiler] Compiling via Vite Sandbox (primary path)', { fileCount: files.length });
       const result = await Promise.race([
         compileViaViteSandbox(files, options, signal),
         new Promise<never>((_, reject) =>
@@ -289,10 +288,49 @@ export function useWorkerCompiler() {
       return result;
     } catch (err: any) {
       if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
-      console.error('[Compiler] ❌ Vite Sandbox failed:', err.message);
-      throw err;
+
+      const is503 = /503|busy|Queue|timeout/i.test(err.message);
+      console.warn('[Compiler] Vite Sandbox failed:', err.message, is503 ? '(will retry once)' : '(falling back to worker)');
+
+      // ── Attempt 2: Retry once after 3s on 503/timeout ──
+      if (is503) {
+        try {
+          await new Promise(r => setTimeout(r, 3000));
+          if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
+
+          console.info('[Compiler] Retrying Vite Sandbox after 503...');
+          const retryResult = await Promise.race([
+            compileViaViteSandbox(files, options, signal),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error('Vite sandbox retry timeout')), VITE_TIMEOUT_MS)
+            ),
+          ]);
+          console.info('[Compiler] ✅ Vite Sandbox retry succeeded:', retryResult.html?.length, 'chars');
+          return retryResult;
+        } catch (retryErr: any) {
+          if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
+          console.warn('[Compiler] Vite Sandbox retry also failed:', retryErr.message);
+        }
+      }
+
+      // ── Attempt 3: Worker fallback ──
+      try {
+        console.info('[Compiler] Falling back to Web Worker compiler');
+        const workerResult = await Promise.race([
+          compileViaWorker(files, options),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('Worker fallback timeout (20s)')), 20_000)
+          ),
+        ]);
+        console.info('[Compiler] ✅ Worker fallback compiled:', workerResult.html?.length, 'chars (degraded)');
+        return workerResult;
+      } catch (workerErr: any) {
+        console.error('[Compiler] ❌ Worker fallback also failed:', workerErr.message);
+        // Throw the original Vite error as it's more informative
+        throw err;
+      }
     }
-  }, []);
+  }, [compileViaWorker]);
 
   /** Abort any in-flight compilation (call when starting a new generation or force-compiling) */
   const abortCompilation = useCallback(() => {
