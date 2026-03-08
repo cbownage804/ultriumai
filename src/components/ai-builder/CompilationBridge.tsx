@@ -241,6 +241,10 @@ export function CompilationBridge({
   const streamingCompileInFlightRef = useRef(false);
   const lastStreamingHTMLRef = useRef('');
 
+  // Track streaming compile failures to cap attempts
+  const streamingFailCountRef = useRef(0);
+  const MAX_STREAMING_FAILURES = 2;
+
   useEffect(() => {
     if (!isGenerating) {
       // Clean up when generation ends
@@ -251,17 +255,23 @@ export function CompilationBridge({
       lastStreamingCompileCountRef.current = 0;
       streamingCompileInFlightRef.current = false;
       lastStreamingHTMLRef.current = '';
+      streamingFailCountRef.current = 0;
       return;
     }
 
-    // Poll every 3s during generation for more responsive piece-by-piece updates
+    // Skip streaming compiles for golden (untouched) projects
+    if (isGoldenProject) return;
+
+    // Poll every 8s during generation to reduce droplet pressure
     streamingCompileTimerRef.current = setInterval(async () => {
       const partial = partialFilesRef.current;
       const completedCount = completedFileCountRef.current;
 
-      // Need at least 2 completed files and a change since last compile
-      if (completedCount < 2 || completedCount === lastStreamingCompileCountRef.current) return;
+      // Need at least 4 completed files and a change since last compile
+      if (completedCount < 4 || completedCount === lastStreamingCompileCountRef.current) return;
       if (streamingCompileInFlightRef.current) return;
+      // Stop polling after too many failures
+      if (streamingFailCountRef.current >= MAX_STREAMING_FAILURES) return;
 
       // Must have a mountable app (main.tsx + App.tsx or index.html)
       const hasMain = partial.some(f => f.path === 'src/main.tsx' || f.path === 'main.tsx');
