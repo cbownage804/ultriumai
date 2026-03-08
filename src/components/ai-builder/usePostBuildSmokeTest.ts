@@ -143,6 +143,55 @@ export function usePostBuildSmokeTest(
       }
     }
 
+    // Cross-file import validation — detect imports referencing non-existent project files
+    const projectPaths = new Set(files.map(f => f.path));
+    for (const file of files) {
+      const ext = file.path.split('.').pop()?.toLowerCase() || '';
+      if (!['js', 'ts', 'jsx', 'tsx'].includes(ext)) continue;
+
+      // Match relative imports: from './Foo' or from '../components/Bar'
+      const relativeImports = [...file.content.matchAll(/from\s+['"](\.[^'"]+)['"]/g)];
+      for (const match of relativeImports) {
+        const importPath = match[1];
+        // Skip CSS/asset imports
+        if (/\.(css|scss|png|jpg|svg|json)$/.test(importPath)) continue;
+
+        // Resolve relative to file's directory
+        const fileDir = file.path.includes('/') ? file.path.replace(/\/[^/]+$/, '') : '';
+        const resolved = resolveRelativePath(fileDir, importPath);
+
+        // Check with common extensions
+        const extensions = ['', '.ts', '.tsx', '.js', '.jsx', '/index.ts', '/index.tsx', '/index.js'];
+        const found = extensions.some(ext => projectPaths.has(resolved + ext));
+        if (!found) {
+          warnings.push({
+            file: file.path,
+            message: `Import "${importPath}" does not match any project file`,
+            severity: 'warning',
+          });
+        }
+      }
+
+      // Match alias imports: from '@/components/Foo'
+      const aliasImports = [...file.content.matchAll(/from\s+['"]@\/([^'"]+)['"]/g)];
+      for (const match of aliasImports) {
+        const aliasPath = 'src/' + match[1];
+        if (/\.(css|scss|png|jpg|svg|json)$/.test(aliasPath)) continue;
+        const extensions = ['', '.ts', '.tsx', '.js', '.jsx', '/index.ts', '/index.tsx', '/index.js'];
+        const found = extensions.some(ext => projectPaths.has(aliasPath + ext));
+        if (!found) {
+          // Only warn if there are enough files to make this meaningful (>5)
+          if (files.length > 5) {
+            warnings.push({
+              file: file.path,
+              message: `Import "@/${match[1]}" does not match any project file`,
+              severity: 'warning',
+            });
+          }
+        }
+      }
+    }
+
     // Log results
     const total = warnings.length + errors.length;
     if (total === 0) {

@@ -81,6 +81,7 @@ export const PANEL_REGISTRY: PanelEntry[] = [
 
   // Build & Analytics
   { id: 'build-analytics', label: 'Build Analytics', icon: BarChart3, category: 'monitoring', keywords: ['analytics', 'builds', 'stats'], stateKey: 'showBuildAnalytics' },
+  { id: 'build-health', label: 'Build Health', icon: Activity, category: 'monitoring', keywords: ['health', 'compile', 'telemetry', 'success', 'failure'], stateKey: 'showBuildHealth' },
   { id: 'performance', label: 'Performance Profiler', icon: Gauge, category: 'monitoring', keywords: ['perf', 'lighthouse', 'speed'], stateKey: 'showPerformanceProfiler' },
   { id: 'design-system', label: 'Design System', icon: Palette, category: 'design', keywords: ['tokens', 'theme', 'colors'], stateKey: 'showDesignSystem' },
   { id: 'component-lib', label: 'Component Library', icon: Layers, category: 'design', keywords: ['components', 'ui', 'library'], stateKey: 'showComponentLib' },
