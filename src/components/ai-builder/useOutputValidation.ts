@@ -119,10 +119,10 @@ function validateJS(file: ProjectFile, issues: ValidationIssue[]) {
   }
 
   if (brackets['{'] !== 0) {
-    issues.push({ file: file.path, severity: 'error', message: `Unbalanced curly braces: ${brackets['{']} unclosed`, suggestion: 'Check for missing } at the end of functions or blocks' });
+    issues.push({ file: file.path, severity: 'warning', message: `Unbalanced curly braces: ${brackets['{']} unclosed`, suggestion: 'Check for missing } at the end of functions or blocks' });
   }
   if (brackets['('] !== 0) {
-    issues.push({ file: file.path, severity: 'error', message: `Unbalanced parentheses: ${brackets['(']} unclosed` });
+    issues.push({ file: file.path, severity: 'warning', message: `Unbalanced parentheses: ${brackets['(']} unclosed` });
   }
   if (brackets['['] !== 0) {
     issues.push({ file: file.path, severity: 'warning', message: `Unbalanced square brackets: ${brackets['[']} unclosed` });
@@ -216,13 +216,19 @@ function validateGeneral(file: ProjectFile, issues: ValidationIssue[]) {
     }
   }
 
-  // Truncated file (ends mid-statement)
+  // Truncated file (ends mid-statement) — only flag short files or those with multiple signals
   const trimmed = file.content.trim();
-  if (trimmed.length > 50) {
+  if (trimmed.length > 50 && trimmed.length < 200) {
     const lastChar = trimmed[trimmed.length - 1];
-    const dangerousEndings = [',', ':', '=', '+', '-', '(', '{', '[', '&&', '||'];
+    const dangerousEndings = [',', ':', '=', '+', '-', '(', '{', '['];
     if (dangerousEndings.includes(lastChar)) {
       issues.push({ file: file.path, severity: 'error', message: `File appears truncated (ends with "${lastChar}")`, suggestion: 'The AI may have hit a token limit mid-output' });
+    }
+  } else if (trimmed.length >= 200) {
+    const lastChar = trimmed[trimmed.length - 1];
+    const dangerousEndings = [',', ':', '=', '+', '(', '{', '['];
+    if (dangerousEndings.includes(lastChar)) {
+      issues.push({ file: file.path, severity: 'warning', message: `File may be truncated (ends with "${lastChar}")`, suggestion: 'The AI may have hit a token limit mid-output' });
     }
   }
 }
