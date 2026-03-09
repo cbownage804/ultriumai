@@ -209,10 +209,20 @@ async function transpileFile(file: ProjectFile, moduleMap: Map<string, ProjectFi
   const usedExternalPackages = new Set<string>();
   let code = file.content;
 
+  // Strip type-only imports and type prefixes from named imports
+  code = code.replace(/^import\s+type\s+\{[^}]*\}\s+from\s+['"][^'"]+['"];?\s*$/gm, '');
+  code = code.replace(/^import\s+type\s+\w+\s+from\s+['"][^'"]+['"];?\s*$/gm, '');
   code = code.replace(
     /import\s*\{([^}]*)\}/gs,
     (_match, names) => {
-      const cleaned = names.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+      const cleaned = names
+        .replace(/\n/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .split(',')
+        .map((n: string) => n.trim().replace(/^type\s+/, ''))
+        .filter((n: string) => n.length > 0)
+        .join(', ');
       return `import { ${cleaned} }`;
     }
   );
