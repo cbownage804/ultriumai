@@ -2972,6 +2972,14 @@ export function AIAppBuilderWorkspace() {
   // Auto-capture thumbnail after generation completes — use refs to avoid stale closure
   const wasGeneratingRef = useRef(false);
   useEffect(() => {
+    // Generation STARTING — clear LKG so stale golden template HTML doesn't mask compile failures
+    if (!wasGeneratingRef.current && isGenerating) {
+      console.info('[Workspace] Generation starting — clearing LKG to prevent stale preview');
+      lastKnownGoodHTMLRef.current = null;
+      stableHTMLRef.current = null;
+      setStableHTML(null);
+      try { localStorage.removeItem('ai-builder-compiled-html'); } catch {}
+    }
     if (wasGeneratingRef.current && !isGenerating && project.files.length > 0 && currentProjectId) {
       setTimeout(() => {
         const html = compiledForHostingRef.current || stableHTMLRef.current;

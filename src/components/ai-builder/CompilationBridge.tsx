@@ -395,13 +395,18 @@ export function CompilationBridge({
       // Generation STARTING — reset ALL internal state
       abortCompilation(); // Cancel any in-flight network requests to free droplet concurrency
       stableHTMLRef.current = null;
+      setStableHTMLLocal(null);
       setLiveCompiledHTML(null);
       compilationInFlightRef.current = false;
       compileRunIdRef.current++; // Invalidate prior runs while keeping run-id monotonic (never reset to 0)
       prevFilesDigestRef.current = '';
       prevDigestRef.current = ''; // Reset memo cache so filesDigest recalculates on generation end
+      // Clear sessionStorage LKG so stale golden template doesn't persist
+      try { sessionStorage.removeItem(LKG_STORAGE_KEY); } catch {}
       // Safety: force-clear isCompiling in case it was stuck from previous cycle
       transitionCompileState('idle');
+      // Notify parent immediately so preview panel clears
+      onStableHTML(null);
     }
     prevIsGeneratingRef.current = isGenerating;
   }, [isGenerating]);
