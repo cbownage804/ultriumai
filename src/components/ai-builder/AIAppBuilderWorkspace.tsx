@@ -2978,7 +2978,7 @@ export function AIAppBuilderWorkspace() {
       lastKnownGoodHTMLRef.current = null;
       stableHTMLRef.current = null;
       setStableHTML(null);
-      try { localStorage.removeItem(COMPILED_CACHE_KEY); } catch {}
+      try { localStorage.removeItem('ai-builder-compiled-html'); } catch {}
     }
     if (wasGeneratingRef.current && !isGenerating && project.files.length > 0 && currentProjectId) {
       setTimeout(() => {
