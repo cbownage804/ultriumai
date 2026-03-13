@@ -242,10 +242,10 @@ serve(async (req) => {
       response = await attempt(basePayload, baseTimeoutMs);
       result = await response.json();
     } catch (firstErr: any) {
+      // Single retry on network/timeout — no cascading
       const isRetryable = firstErr.name === "AbortError" || /fetch|network/i.test(firstErr.message);
       if (!isRetryable) throw firstErr;
 
-      // ── Edge-level retry: wait 2s, try once more ──
       console.log(`[compile-vite] First attempt failed (${firstErr.message}) — retrying in 2s`);
       await new Promise(r => setTimeout(r, 2000));
 
@@ -256,29 +256,6 @@ serve(async (req) => {
       } catch (retryErr: any) {
         console.error(`[compile-vite] Retry also failed: ${retryErr.message}`);
         throw retryErr;
-      }
-    }
-
-    // If first attempt returned 503, retry once
-    if (!response!.ok && (response!.status === 503 || response!.status === 504)) {
-      console.log(`[compile-vite] Got ${response!.status} — retrying in 2s`);
-      await new Promise(r => setTimeout(r, 2000));
-      try {
-        const baseTimeoutMs = installPackages.length > 0 ? 30_000 : 15_000;
-        const retryResponse = await attempt(basePayload, baseTimeoutMs);
-        const retryResult = await retryResponse.json();
-        if (retryResponse.ok) {
-          console.log(`[compile-vite] Retry success: ${retryResult.html?.length || 0} chars`);
-          return new Response(
-            JSON.stringify(retryResult),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-        // Use retry result even if failed (more recent state)
-        result = retryResult;
-        response = retryResponse;
-      } catch {
-        // Fall through with original result
       }
     }
 
