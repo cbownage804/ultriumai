@@ -482,6 +482,18 @@ export default {
   build: {
     outDir: 'dist',
     rollupOptions: {
+      onwarn(warning, warn) {
+        // Suppress unresolved import warnings — these happen when generated
+        // code references packages/assets not yet installed. We still produce
+        // valid output; the missing module just won't render.
+        if (warning.code === 'UNRESOLVED_IMPORT' ||
+            warning.code === 'MISSING_EXPORT' ||
+            warning.code === 'EMPTY_BUNDLE' ||
+            (warning.message && warning.message.includes('resolve'))) {
+          return;
+        }
+        warn(warning);
+      },
       output: {
         manualChunks: undefined,
       },
