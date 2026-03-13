@@ -127,7 +127,11 @@ function buildModuleMap(files: ProjectFile[]): Map<string, ProjectFile> {
 function stripTypeAnnotations(code: string): string {
   let result = code;
 
+  // 1. Remove type-only imports entirely
   result = result.replace(/^import\s+type\s+\{[^}]*\}\s+from\s+['"][^'"]+['"];?\s*$/gm, '');
+  result = result.replace(/^import\s+type\s+\w+\s+from\s+['"][^'"]+['"];?\s*$/gm, '');
+
+  // 2. Strip `type` prefix from mixed imports
   result = result.replace(/^(import\s+\{)([^}]+)(\}\s+from\s+['"][^'"]+['"];?\s*)$/gm, (_match, prefix, names, suffix) => {
     const filtered = names.split(',')
       .map((n: string) => n.trim())
@@ -136,6 +140,7 @@ function stripTypeAnnotations(code: string): string {
     return `${prefix} ${filtered.join(', ')} ${suffix}`;
   });
 
+  // 3. Strip interface, enum, and type alias blocks (brace-counted)
   const lines = result.split('\n');
   const outputLines: string[] = [];
   let stripping = false;
@@ -143,8 +148,9 @@ function stripTypeAnnotations(code: string): string {
 
   for (const line of lines) {
     if (!stripping) {
-      if (/^(?:export\s+)?(?:interface|enum)\s+\w+/.test(line.trim()) || 
-          /^(?:export\s+)?type\s+\w+\s*=\s*\{/.test(line.trim())) {
+      const trimmed = line.trim();
+      if (/^(?:export\s+)?(?:interface|enum)\s+\w+/.test(trimmed) || 
+          /^(?:export\s+)?type\s+\w+\s*(?:<[^>]*>)?\s*=\s*\{/.test(trimmed)) {
         stripping = true;
         braceDepth = 0;
         for (const ch of line) {
@@ -165,19 +171,28 @@ function stripTypeAnnotations(code: string): string {
   }
   result = outputLines.join('\n');
 
-  result = result.replace(/^(?:export\s+)?type\s+\w+\s*=\s*[^;{]+;/gm, '');
+  // 4. Strip single-line type aliases
+  result = result.replace(/^(?:export\s+)?type\s+\w+\s*(?:<[^>]*>)?\s*=\s*[^;{]+;/gm, '');
+
+  // 5. Strip return type annotations (before => or {)
   result = result.replace(
     /\)\s*:\s*[A-Za-z_][\w.]*(?:<(?:[^<>]|<(?:[^<>]|<[^<>]*>)*>)*>)?(?:\[\])?(?:\s*[|&]\s*[A-Za-z_][\w.]*(?:<(?:[^<>]|<[^<>]*>)*>)?(?:\[\])?)*(?=\s*(?:=>|\{))/g,
     ')'
   );
+
+  // 6. Strip React-specific type annotations
   result = result.replace(
     /:\s*React\.(?:FC|ReactNode|MouseEvent|ChangeEvent|FormEvent|CSSProperties|RefObject|Dispatch|SetStateAction|MutableRefObject|HTMLAttributes|ComponentProps|ComponentType|ElementType|ReactElement|JSX\.Element)(?:<(?:[^<>]|<(?:[^<>]|<[^<>]*>)*>)*>)?/g,
     ''
   );
+
+  // 7. Strip primitive type annotations
   result = result.replace(
     /:\s*(?:string|number|boolean|void|any|null|undefined|never|unknown|object)(?:\s*[|&]\s*(?:string|number|boolean|void|any|null|undefined|never|unknown|object))*(?=\s*[=,;)\]}])/g,
     ''
   );
+
+  // 8. Strip complex type annotations (e.g., : SomeType<X>)
   result = result.replace(
     /:\s*[A-Z][\w.]*(?:<(?:[^<>]|<(?:[^<>]|<[^<>]*>)*>)*>)?(?:\[\])?(?:\s*[|&]\s*(?:string|number|boolean|null|undefined|void|never|unknown|[A-Z][\w.]*)(?:\[\])?)*(?=\s*[=,;)\]}])/g,
     (match, offset) => {
@@ -187,6 +202,7 @@ function stripTypeAnnotations(code: string): string {
     }
   );
 
+  // 9. Preserve generic assignments (= <T>) but strip type generics on hooks
   const genericsMarker = '___GENERIC___';
   const genericsMap: string[] = [];
   result = result.replace(/=\s*<[A-Z][\w,\s]*>(?=\s*\()/g, (match) => {
@@ -199,8 +215,16 @@ function stripTypeAnnotations(code: string): string {
   );
   result = result.replace(/(?<=\w)<(?:[A-Za-z][\w.]*(?:\[\])?(?:\s*\|\s*[\w.]+(?:\[\])?)*(?:\s*,\s*[\w.]+(?:\[\])?(?:\s*\|\s*[\w.]+)?)*)>/g, '');
   result = result.replace(new RegExp(`${genericsMarker}(\\d+)`, 'g'), (_, idx) => genericsMap[parseInt(idx)] || '');
+
+  // 10. Strip `as X` casts and `satisfies X` / `as const`
+  result = result.replace(/\s+as\s+const\b/g, '');
   result = result.replace(/\s+as\s+\w+(?:<[^>]+>)?/g, '');
-  result = result.replace(/\s+satisfies\s+\w+/g, '');
+  result = result.replace(/\s+satisfies\s+\w+(?:<[^>]+>)?/g, '');
+
+  // 11. Strip `!` non-null assertions (common TS pattern: x!)
+  result = result.replace(/(\w)!\./g, '$1.');
+  result = result.replace(/(\w)!(?=[,;)\]}])/g, '$1');
+
   return result;
 }
 

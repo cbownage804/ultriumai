@@ -289,19 +289,14 @@ export function useWorkerCompiler() {
     activeAbortRef.current = ac;
     const { signal } = ac;
 
-    const VITE_TIMEOUT_MS = 30_000;
-
-    // ── Health check: skip sandbox if droplet is down ──
-    const healthy = await isSandboxHealthy();
-    if (!healthy) {
-      console.warn('[Compiler] Sandbox health check failed — skipping to worker fallback');
-    }
+    const VITE_TIMEOUT_MS = 20_000;
+    const WORKER_TIMEOUT_MS = 15_000;
 
     let viteError: Error | null = null;
 
-    // ── Attempt 1: Vite Sandbox (skip if unhealthy) ──
-    if (healthy) try {
-      console.info('[Compiler] Compiling via Vite Sandbox (primary path)', { fileCount: files.length });
+    // ── Attempt 1: Vite Sandbox (primary — 20s timeout, no retry) ──
+    try {
+      console.info('[Compiler] ⏱ Attempt 1: Vite Sandbox', { fileCount: files.length });
       const result = await Promise.race([
         compileViaViteSandbox(files, options, signal),
         new Promise<never>((_, reject) =>
@@ -313,61 +308,24 @@ export function useWorkerCompiler() {
     } catch (err: any) {
       if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
       viteError = err;
-
-      const is503 = /503|busy|Queue|timeout/i.test(err.message);
-      console.warn('[Compiler] Vite Sandbox failed:', err.message, is503 ? '(will retry once)' : '(falling back to worker)');
-
-      // ── Attempt 2: Retry once after 3s on 503/timeout ──
-      if (is503) {
-        try {
-          await new Promise(r => setTimeout(r, 3000));
-          if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
-
-          console.info('[Compiler] Retrying Vite Sandbox after 503...');
-          const retryResult = await Promise.race([
-            compileViaViteSandbox(files, options, signal),
-            new Promise<never>((_, reject) =>
-              setTimeout(() => reject(new Error('Vite sandbox retry timeout')), VITE_TIMEOUT_MS)
-            ),
-          ]);
-          console.info('[Compiler] ✅ Vite Sandbox retry succeeded:', retryResult.html?.length, 'chars');
-          return retryResult;
-        } catch (retryErr: any) {
-          if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
-          console.warn('[Compiler] Vite Sandbox retry also failed:', retryErr.message);
-        }
-      }
+      console.warn('[Compiler] ❌ Vite Sandbox failed:', err.message, '— falling back to Worker');
     }
 
-    // ── Attempt 3: Server-side edge compiler fallback ──
+    // ── Attempt 2: Worker fallback (last resort — 15s timeout) ──
     try {
-      console.info('[Compiler] Falling back to compile-project edge function');
-      const edgeResult = await Promise.race([
-        compileViaEdgeFunction(files, options, signal),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('compile-project fallback timeout (25s)')), 25_000)
-        ),
-      ]);
-      console.info('[Compiler] ✅ compile-project fallback compiled:', edgeResult.html?.length, 'chars');
-      return edgeResult;
-    } catch (edgeErr: any) {
-      if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
-      console.warn('[Compiler] compile-project fallback failed:', edgeErr.message);
-    }
-
-    // ── Attempt 4: Worker fallback (last resort) ──
-    try {
-      console.info('[Compiler] Falling back to Web Worker compiler');
+      console.info('[Compiler] ⏱ Attempt 2: Web Worker compiler (fallback)');
       const workerResult = await Promise.race([
         compileViaWorker(files, options),
         new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Worker fallback timeout (20s)')), 20_000)
+          setTimeout(() => reject(new Error(`Worker fallback timeout (${WORKER_TIMEOUT_MS / 1000}s)`)), WORKER_TIMEOUT_MS)
         ),
       ]);
       console.info('[Compiler] ✅ Worker fallback compiled:', workerResult.html?.length, 'chars (degraded)');
       return workerResult;
     } catch (workerErr: any) {
-      console.error('[Compiler] ❌ Worker fallback also failed:', workerErr.message);
+      console.error('[Compiler] ❌ All compilation attempts failed');
+      console.error('[Compiler]   Vite error:', viteError?.message);
+      console.error('[Compiler]   Worker error:', workerErr.message);
       throw viteError || workerErr;
     }
   }, [compileViaWorker]);
