@@ -419,7 +419,9 @@ async function executeBuild(files, options, installPackages, needsInstall, t0) {
     if (!hasIndexHtml) {
       const entryFile = files.find(f => /^(src\/)?main\.(tsx?|jsx?)$/.test(f.path))
         || files.find(f => /^(src\/)?index\.(tsx?|jsx?)$/.test(f.path));
-      const entryPath = entryFile ? entryFile.path : 'main.tsx';
+      // Normalize: strip leading src/ if present to avoid /src/src/main.tsx
+      const rawEntry = entryFile ? entryFile.path : 'main.tsx';
+      const entryPath = rawEntry.startsWith('src/') ? rawEntry : `src/${rawEntry}`;
       const indexHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -429,7 +431,7 @@ async function executeBuild(files, options, installPackages, needsInstall, t0) {
 </head>
 <body>
   <div id="root"></div>
-  <script type="module" src="/src/${entryPath}"></script>
+  <script type="module" src="/${entryPath}"></script>
 </body>
 </html>`;
       fs.writeFileSync(path.join(buildDir, 'index.html'), indexHtml, 'utf-8');
@@ -482,6 +484,18 @@ export default {
   build: {
     outDir: 'dist',
     rollupOptions: {
+      onwarn(warning, warn) {
+        // Suppress unresolved import warnings — these happen when generated
+        // code references packages/assets not yet installed. We still produce
+        // valid output; the missing module just won't render.
+        if (warning.code === 'UNRESOLVED_IMPORT' ||
+            warning.code === 'MISSING_EXPORT' ||
+            warning.code === 'EMPTY_BUNDLE' ||
+            (warning.message && warning.message.includes('resolve'))) {
+          return;
+        }
+        warn(warning);
+      },
       output: {
         manualChunks: undefined,
       },
