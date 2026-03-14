@@ -155,6 +155,7 @@ export function CompilationBridge({
 
   // Gap 5 HMR: track when a soft reload should be used instead of iframe remount
   const softReloadPendingRef = useRef(false);
+  const goldenIdleAppliedRef = useRef(false);
 
   // ── LKG sessionStorage persistence ──
   const LKG_STORAGE_KEY = 'ai-builder-lkg-preview';
