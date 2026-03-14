@@ -1,8 +1,8 @@
 import { useState, useCallback, useRef } from 'react';
 import type { ProjectFile } from './useProjectFileSystem';
 
-const FILE_DELIMITER = /^===FILE:\s*(.+?)===$/;
-const END_MARKER = /^===END===\s*$/;
+const FILE_DELIMITER = /^\s*===FILE:\s*(.+?)===\s*$/;
+const END_MARKER = /^\s*===END===\s*$/;
 
 function detectLanguage(path: string): string {
   const ext = path.split('.').pop()?.toLowerCase() || '';
@@ -98,7 +98,10 @@ export function useStreamingPreview() {
     }
 
     // ── Check for ===END=== marker ──
-    const hasEndMarker = END_MARKER.test(rawContent.split('\n').slice(-5).join('\n'));
+    const hasEndMarker = rawContent
+      .split('\n')
+      .slice(-8)
+      .some((line) => END_MARKER.test(line));
     integrityRef.current.hasEndMarker = hasEndMarker;
 
     // Optimization: only scan new content from lastScanOffset for new delimiters
@@ -145,7 +148,7 @@ export function useStreamingPreview() {
       
       // Strip ===END=== from last file content
       let content = rawContent.slice(contentStart + 1, contentEnd).trimEnd();
-      content = content.replace(/\n===END===\s*$/, '');
+      content = content.replace(/\n\s*===END===\s*$/, '');
       
       if (content) {
         files.push({

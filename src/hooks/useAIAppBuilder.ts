@@ -373,9 +373,9 @@ export interface VersionSnapshot {
 }
 
 const BUILDER_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-app-builder`;
-const FILE_DELIMITER = /^===FILE:\s*(.+?)===$/;
-const DELETE_DELIMITER = /^===DELETE:\s*(.+?)===$/;
-const EDIT_DELIMITER = /^===EDIT:\s*(.+?)===$/;
+const FILE_DELIMITER = /^\s*===FILE:\s*(.+?)===\s*$/;
+const DELETE_DELIMITER = /^\s*===DELETE:\s*(.+?)===\s*$/;
+const EDIT_DELIMITER = /^\s*===EDIT:\s*(.+?)===\s*$/;
 const HUNK_HEADER = /^@@\s*(\d+)-(\d+)\s*@@$/;
 const UNIFIED_HUNK_HEADER = /^@@\s*-(\d+)(?:,(\d+))?\s*\+(\d+)(?:,(\d+))?\s*@@/;
 // AI model format: @@oldStart,oldCount +newStart,newCount @@ (no leading -)
@@ -599,8 +599,8 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
   const rawAfterEdgeFns = edgeFunctions.length > 0 ? stripEdgeFunctionBlocks(rawAfterMigrations) : rawAfterMigrations;
 
   // Detect and strip ===MODE: react=== directive
-  const isReactMode = /^===MODE:\s*react===$/m.test(rawAfterEdgeFns);
-  const cleanedRaw = rawAfterEdgeFns.replace(/^===MODE:\s*\w+===\s*$/gm, '');
+  const isReactMode = /^\s*===MODE:\s*react===\s*$/m.test(rawAfterEdgeFns);
+  const cleanedRaw = rawAfterEdgeFns.replace(/^\s*===MODE:\s*\w+===\s*$/gm, '');
   const edits = parseEditBlocks(cleanedRaw);
 
   const lines = cleanedRaw.split('\n');
@@ -612,7 +612,7 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
   let inEditBlock = false;
   let sawEnd = false;
 
-  const END_RE = /^===END===\s*$/;
+  const END_RE = /^\s*===END===\s*$/;
 
   // Phase 24: Normalize file paths — strip leading ./ and /, collapse //
   const normalizePath = (p: string): string => p.replace(/\\/g, '/').replace(/^(\.\.\/)+/g, '').replace(/^\.\//, '').replace(/^\//, '').replace(/\/\//g, '/').trim();
