@@ -391,7 +391,7 @@ export function BuilderChatPanel({
   totalTokensUsed, previousFiles, latestFiles, contextBudget,
   onModeChange, onSend, onStop, onClear, onRestoreVersion, onOpenTemplates, onFixError,
   onToggleVisualEdit, isVisualEditActive, onSelectStarterTemplate,
-  supabaseConfig, onUpdateMessages, questionsSlot, isPreviewReady,
+  supabaseConfig, onUpdateMessages, questionsSlot, isPreviewReady, compileState, isGoldenProject,
   streamingContentRef, onNewConversation,
   onShowSettings, onShowHistory, onShowKnowledge, onShowGitHub,
   conversationForks, activeForkId, onForkConversation, onSwitchFork, onDeleteFork,
