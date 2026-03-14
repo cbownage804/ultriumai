@@ -2447,10 +2447,21 @@ export function AIAppBuilderWorkspace() {
   }, []);
 
   const handleRetryCompile = useCallback(() => {
-    setCompileStateRaw('idle');
-    setCompileError(null);
+    const hasAnyFiles = project.files.length > 0;
+    const hasUserFiles = hasUserGeneratedFiles(project.files);
+
+    if (!hasAnyFiles || !hasUserFiles) {
+      setCompileStateRaw('error');
+      setCompileError({
+        message: 'No generated project files available to compile yet.',
+        errors: ['Run a build prompt (or restore from History) before retrying compile.'],
+      });
+      return;
+    }
+
+    // Keep current error visible until CompilationBridge transitions state.
     forceCompileRef.current?.();
-  }, []);
+  }, [project.files]);
 
   const handleDiscardChanges = useCallback(() => {
     clearRepairWatchdog();
