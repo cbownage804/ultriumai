@@ -244,8 +244,34 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 
 const CANONICAL_INDEX_HTML_BODY = `  <div id="root"></div>\n  <script type="module" src="/src/main.tsx"></script>`;
 
+const INLINE_IMAGE_MAX_CHARS = 300_000;
+const INLINE_IMAGE_FALLBACK = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQABNjN9GQAAAAlwSFlzAAAWJQAAFiUBSVIk8AAAABl0RVh0U29mdHdhcmUAcGFpbnQubmV0IDQuMC4xMkMEa+wAAAANSURBVBhXY2BgYGAAAAAFAAGKM+MAAAAAAElFTkSuQmCC';
 
+function sanitizeInlineImageUrl(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
 
+  if (trimmed.startsWith('data:image/')) {
+    const compact = trimmed.replace(/\s+/g, '');
+    if (compact.length > INLINE_IMAGE_MAX_CHARS) {
+      console.warn('[Build] Oversized inline image detected — using lightweight fallback', {
+        kb: Math.round(compact.length / 1024),
+      });
+      return INLINE_IMAGE_FALLBACK;
+    }
+    return compact;
+  }
+
+  return trimmed;
+}
+
+function sanitizeInlineImageDataUrls(content: string): string {
+  return content.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=\s]+/g, (match) => {
+    const compact = match.replace(/\s+/g, '');
+    return compact.length > INLINE_IMAGE_MAX_CHARS ? INLINE_IMAGE_FALLBACK : compact;
+  });
+}
 
 /** Infrastructure files that must not be modified unless the user explicitly mentions them */
 const PROTECTED_INFRA_FILES = PROTECTED_FILES;
