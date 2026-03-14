@@ -1079,6 +1079,32 @@ window.addEventListener('message', function(e) {
               </button>
             </div>
           </div>
+        ) : projectFiles.length > 0 ? (
+          <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden">
+            <img
+              src={previewBgNeon}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover opacity-20"
+              aria-hidden="true"
+            />
+            <div className="absolute inset-0 bg-black/50" />
+            <div className="relative z-10 space-y-4 px-6 max-w-md">
+              <div className="h-3 w-3 rounded-full bg-amber-400 mx-auto animate-pulse" />
+              <h3 className="font-semibold text-lg text-amber-300/90 tracking-tight">
+                Preview unavailable
+              </h3>
+              <p className="text-sm text-white/50 leading-relaxed">
+                We have project files, but no compiled preview is available yet.
+              </p>
+              <button
+                onClick={onRetryCompile}
+                className="px-4 py-2 rounded-lg bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-medium transition-colors"
+              >
+                <RefreshCw className="h-3 w-3 inline mr-1.5" />
+                Retry compile
+              </button>
+            </div>
+          </div>
         ) : (
           <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden">
             <img
@@ -1088,7 +1114,7 @@ window.addEventListener('message', function(e) {
               aria-hidden="true"
             />
             <div className="absolute inset-0 bg-black/40" />
-          <div className="relative z-10 space-y-4 px-6">
+            <div className="relative z-10 space-y-4 px-6">
               <h3 className="font-semibold text-xl text-cyan-300/90 tracking-tight drop-shadow-[0_0_12px_rgba(6,182,212,0.3)]">
                 Live Preview
               </h3>
