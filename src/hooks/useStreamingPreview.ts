@@ -98,7 +98,10 @@ export function useStreamingPreview() {
     }
 
     // ── Check for ===END=== marker ──
-    const hasEndMarker = END_MARKER.test(rawContent.split('\n').slice(-5).join('\n'));
+    const hasEndMarker = rawContent
+      .split('\n')
+      .slice(-8)
+      .some((line) => END_MARKER.test(line));
     integrityRef.current.hasEndMarker = hasEndMarker;
 
     // Optimization: only scan new content from lastScanOffset for new delimiters
