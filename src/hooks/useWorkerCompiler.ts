@@ -306,18 +306,14 @@ export function useWorkerCompiler() {
       console.info('[Compiler] ✅ Vite Sandbox compiled:', result.html?.length, 'chars');
       return result;
     } catch (err: any) {
-      // Only abort if signal was aborted BEFORE Vite started (i.e., a newer compile replaced us).
-      // If Vite itself failed, ALWAYS fall through to Worker — Worker runs locally and doesn't
-      // need the abort signal. Previously, a race-condition abort during Vite's network call
-      // would skip Worker entirely, leaving the preview blank.
-      if (signal.aborted && !err.message?.includes('sandbox')) {
-        // Check: was a NEW compile started? If activeAbortRef points to a different controller,
-        // a newer compile is running — safe to bail.
-        if (ac !== activeAbortRef.current) {
-          throw new DOMException('Aborted', 'AbortError');
-        }
-        // Otherwise, signal was aborted but no new compile replaced us — fall through to Worker
-        console.warn('[Compiler] Signal aborted during Vite attempt but no replacement compile — trying Worker');
+      // If signal was aborted AND a newer compile replaced us, bail — the new compile handles it.
+      // Otherwise, ALWAYS fall through to the Worker fallback. Previously, a race-condition
+      // abort during the Vite network call would skip Worker entirely, leaving previews blank.
+      if (signal.aborted && ac !== activeAbortRef.current) {
+        throw new DOMException('Aborted', 'AbortError');
+      }
+      if (signal.aborted) {
+        console.warn('[Compiler] Signal aborted but no replacement compile — falling through to Worker');
       }
       viteError = err;
       console.warn('[Compiler] ❌ Vite Sandbox failed:', err.message, '— falling back to Worker');
