@@ -148,7 +148,7 @@ export function useStreamingPreview() {
       
       // Strip ===END=== from last file content
       let content = rawContent.slice(contentStart + 1, contentEnd).trimEnd();
-      content = content.replace(/\n===END===\s*$/, '');
+      content = content.replace(/\n\s*===END===\s*$/, '');
       
       if (content) {
         files.push({
