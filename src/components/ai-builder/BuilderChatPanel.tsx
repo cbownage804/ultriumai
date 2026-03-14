@@ -1155,11 +1155,23 @@ export function BuilderChatPanel({
                 "flex-1 text-center text-[12px] py-2.5 font-medium",
                 isStreaming
                   ? "text-cyan-400 bg-cyan-500/[0.06]"
-                  : isPreviewReady
-                    ? "text-emerald-400/70 bg-emerald-500/[0.04]"
-                    : "text-amber-400/70 bg-amber-500/[0.04]"
+                  : compileState === 'error'
+                    ? "text-red-300/80 bg-red-500/[0.08]"
+                    : isPreviewReady
+                      ? "text-emerald-400/70 bg-emerald-500/[0.04]"
+                      : isGoldenProject && compileState !== 'compiling'
+                        ? "text-white/50 bg-white/[0.03]"
+                        : "text-amber-400/70 bg-amber-500/[0.04]"
               )}>
-                {isStreaming ? 'Loading preview...' : isPreviewReady ? 'Preview ready' : 'Compiling...'}
+                {isStreaming
+                  ? 'Loading preview...'
+                  : compileState === 'error'
+                    ? 'Preview failed'
+                    : isPreviewReady
+                      ? 'Preview ready'
+                      : isGoldenProject && compileState !== 'compiling'
+                        ? 'Ready to build'
+                        : 'Compiling...'}
               </div>
             </div>
           </motion.div>
