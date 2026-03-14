@@ -1079,7 +1079,7 @@ window.addEventListener('message', function(e) {
               </button>
             </div>
           </div>
-        ) : projectFiles.length > 0 ? (
+        ) : projectFiles.length > 0 && !isGoldenProject ? (
           <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden">
             <img
               src={previewBgNeon}
