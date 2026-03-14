@@ -244,8 +244,34 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 
 const CANONICAL_INDEX_HTML_BODY = `  <div id="root"></div>\n  <script type="module" src="/src/main.tsx"></script>`;
 
+const INLINE_IMAGE_MAX_CHARS = 300_000;
+const INLINE_IMAGE_FALLBACK = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQABNjN9GQAAAAlwSFlzAAAWJQAAFiUBSVIk8AAAABl0RVh0U29mdHdhcmUAcGFpbnQubmV0IDQuMC4xMkMEa+wAAAANSURBVBhXY2BgYGAAAAAFAAGKM+MAAAAAAElFTkSuQmCC';
 
+function sanitizeInlineImageUrl(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
 
+  if (trimmed.startsWith('data:image/')) {
+    const compact = trimmed.replace(/\s+/g, '');
+    if (compact.length > INLINE_IMAGE_MAX_CHARS) {
+      console.warn('[Build] Oversized inline image detected — using lightweight fallback', {
+        kb: Math.round(compact.length / 1024),
+      });
+      return INLINE_IMAGE_FALLBACK;
+    }
+    return compact;
+  }
+
+  return trimmed;
+}
+
+function sanitizeInlineImageDataUrls(content: string): string {
+  return content.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=\s]+/g, (match) => {
+    const compact = match.replace(/\s+/g, '');
+    return compact.length > INLINE_IMAGE_MAX_CHARS ? INLINE_IMAGE_FALLBACK : compact;
+  });
+}
 
 /** Infrastructure files that must not be modified unless the user explicitly mentions them */
 const PROTECTED_INFRA_FILES = PROTECTED_FILES;
@@ -677,18 +703,22 @@ export function AIAppBuilderWorkspace() {
               const { data, error } = await supabase.functions.invoke('image-generation', {
                 body: { prompt: marker.prompt, quality: 'medium' }
               });
-              if (!error && data?.image) {
+
+              const resolvedImageUrl = sanitizeInlineImageUrl(data?.imageUrl ?? data?.image);
+              if (!error && resolvedImageUrl) {
                 const idx = mergedFiles.findIndex(f => f.path === file.path);
                 if (idx >= 0) {
                   mergedFiles[idx] = {
                     ...mergedFiles[idx],
-                    content: mergedFiles[idx].content.replace(marker.full, data.image)
+                    content: mergedFiles[idx].content.replace(marker.full, resolvedImageUrl)
                   };
                   console.info(`[Build] 🖼️ Resolved image marker: "${marker.prompt.slice(0, 50)}..."`);
                 }
+              } else if (error) {
+                console.warn('[Build] Image generation function returned an error for marker:', marker.prompt.slice(0, 50));
               }
             } catch (imgErr) {
-              console.warn(`[Build] Image generation failed for marker:`, imgErr);
+              console.warn('[Build] Image generation failed for marker:', imgErr);
             }
           }
         }
@@ -716,16 +746,30 @@ export function AIAppBuilderWorkspace() {
                 if (idx >= 0) {
                   mergedFiles[idx] = {
                     ...mergedFiles[idx],
-                    content: mergedFiles[idx].content.replace(marker.full, data.video || data.poster)
+                    content: mergedFiles[idx].content.replace(marker.full, (data.video || data.poster).trim())
                   };
                   console.info(`[Build] 🎬 Resolved video marker: "${marker.prompt.slice(0, 50)}..."`);
                 }
               }
             } catch (vidErr) {
-              console.warn(`[Build] Video generation failed for marker:`, vidErr);
+              console.warn('[Build] Video generation failed for marker:', vidErr);
             }
           }
         }
+      }
+
+      // Hard safety clamp: strip whitespace from inline image URLs and replace oversized payloads.
+      // Prevents malformed multiline data URLs from breaking TS/JS parsing and localStorage quota.
+      let sanitizedImagePayloads = 0;
+      mergedFiles = mergedFiles.map((file) => {
+        if (!file.content.includes('data:image/')) return file;
+        const sanitizedContent = sanitizeInlineImageDataUrls(file.content);
+        if (sanitizedContent === file.content) return file;
+        sanitizedImagePayloads += 1;
+        return { ...file, content: sanitizedContent };
+      });
+      if (sanitizedImagePayloads > 0) {
+        console.info(`[Build] Sanitized inline image payloads in ${sanitizedImagePayloads} file(s) before validation`);
       }
 
       // Diff review removed — always auto-apply all changes immediately
