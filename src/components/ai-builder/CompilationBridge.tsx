@@ -20,8 +20,8 @@ export interface CompileErrorInfo {
   errors: string[];
 }
 
-const COMPILE_TIMEOUT_MS = 40_000; // Vite-only path (30s) + margin
-const COMPILE_SAFETY_TIMEOUT_MS = 50_000; // Hard safety net
+const COMPILE_TIMEOUT_MS = 60_000; // Full compile chain budget (Vite + Worker fallback)
+const COMPILE_SAFETY_TIMEOUT_MS = 70_000; // Hard safety net beyond normal timeout
 const COMPILE_HARD_TIMEOUT_MS = COMPILE_TIMEOUT_MS;
 interface CompilationBridgeProps {
   files: ProjectFile[];
