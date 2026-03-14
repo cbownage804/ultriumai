@@ -414,15 +414,18 @@ export function CompilationBridge({
   }, [isGenerating]);
 
   // Keep fresh/golden projects in a clean idle state (prevents stale "Compiling..." loops).
+  // IMPORTANT: Do NOT abort if a compilation is already in flight — this effect can fire
+  // during the brief window between file commit and compile start, causing "Aborted" errors.
   useEffect(() => {
     if (isGenerating || !isGoldenProject) {
       goldenIdleAppliedRef.current = false;
       return;
     }
     if (goldenIdleAppliedRef.current) return;
+    // Guard: if a compile is running, don't interfere
+    if (compilationInFlightRef.current) return;
 
     abortCompilation();
-    compilationInFlightRef.current = false;
     compileRunIdRef.current++;
     forceCompileRequestedRef.current = false;
     recompileNeededRef.current = false;
