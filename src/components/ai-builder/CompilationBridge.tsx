@@ -228,7 +228,7 @@ export function CompilationBridge({
 
     // ── Always use Vite Sandbox — sole compilation path ──
     try {
-      const BRIDGE_TIMEOUT = 35_000; // Slightly above Vite's 30s internal timeout
+      const BRIDGE_TIMEOUT = 60_000; // Match full compile chain budget (Vite + Worker fallback)
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
       const workerTimeout = new Promise<null>((resolve) => {
         timeoutId = setTimeout(() => {
