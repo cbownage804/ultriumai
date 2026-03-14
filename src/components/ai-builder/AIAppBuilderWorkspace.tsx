@@ -3254,6 +3254,16 @@ export function AIAppBuilderWorkspace() {
   const hasFiles = project.files.length > 0;
   const isGoldenProject = !hasUserGeneratedFiles(project.files);
 
+  // Fresh/golden projects should never inherit stale compile state from previous runs.
+  useEffect(() => {
+    if (!isGoldenProject || isGenerating || isCompiling) return;
+    if (compileState !== 'idle' || compileError) {
+      setIsCompiling(false);
+      setCompileStateRaw('idle');
+      setCompileError(null);
+    }
+  }, [isGoldenProject, isGenerating, isCompiling, compileState, compileError, setIsCompiling]);
+
   // ── Initialize new projects with golden template files ──
   useEffect(() => {
     if (project.files.length === 0) {
@@ -3270,9 +3280,12 @@ export function AIAppBuilderWorkspace() {
     setFiles(goldenFiles);
     setStableHTML(null);
     stableHTMLRef.current = null;
+    setIsCompiling(false);
+    setCompileStateRaw('idle');
+    setCompileError(null);
     try { localStorage.removeItem(COMPILED_CACHE_KEY); } catch {}
     dedupeToast('success', 'Project reset to golden template');
-  }, [project.files, setFiles, pushUndo]);
+  }, [project.files, setFiles, pushUndo, setIsCompiling]);
 
   // Mobile detection
   const [isMobile, setIsMobile] = useState(false);
