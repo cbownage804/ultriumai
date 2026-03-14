@@ -155,6 +155,7 @@ export function CompilationBridge({
 
   // Gap 5 HMR: track when a soft reload should be used instead of iframe remount
   const softReloadPendingRef = useRef(false);
+  const goldenIdleAppliedRef = useRef(false);
 
   // ── LKG sessionStorage persistence ──
   const LKG_STORAGE_KEY = 'ai-builder-lkg-preview';
@@ -401,6 +402,7 @@ export function CompilationBridge({
       compileRunIdRef.current++; // Invalidate prior runs while keeping run-id monotonic (never reset to 0)
       prevFilesDigestRef.current = '';
       prevDigestRef.current = ''; // Reset memo cache so filesDigest recalculates on generation end
+      goldenIdleAppliedRef.current = false;
       // Clear sessionStorage LKG so stale golden template doesn't persist
       try { sessionStorage.removeItem(LKG_STORAGE_KEY); } catch {}
       // Safety: force-clear isCompiling in case it was stuck from previous cycle
@@ -410,6 +412,25 @@ export function CompilationBridge({
     }
     prevIsGeneratingRef.current = isGenerating;
   }, [isGenerating]);
+
+  // Keep fresh/golden projects in a clean idle state (prevents stale "Compiling..." loops).
+  useEffect(() => {
+    if (isGenerating || !isGoldenProject) {
+      goldenIdleAppliedRef.current = false;
+      return;
+    }
+    if (goldenIdleAppliedRef.current) return;
+
+    abortCompilation();
+    compilationInFlightRef.current = false;
+    compileRunIdRef.current++;
+    forceCompileRequestedRef.current = false;
+    recompileNeededRef.current = false;
+    softReloadPendingRef.current = false;
+    transitionCompileState('idle');
+
+    goldenIdleAppliedRef.current = true;
+  }, [isGenerating, isGoldenProject, abortCompilation, transitionCompileState]);
 
   // ── SINGLE COMPILATION PATH ──
   // Fires when: isGenerating becomes false, files exist, and no preview yet.

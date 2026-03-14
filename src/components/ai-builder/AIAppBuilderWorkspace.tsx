@@ -3254,6 +3254,16 @@ export function AIAppBuilderWorkspace() {
   const hasFiles = project.files.length > 0;
   const isGoldenProject = !hasUserGeneratedFiles(project.files);
 
+  // Fresh/golden projects should never inherit stale compile state from previous runs.
+  useEffect(() => {
+    if (!isGoldenProject || isGenerating || isCompiling) return;
+    if (compileState !== 'idle' || compileError) {
+      setIsCompiling(false);
+      setCompileStateRaw('idle');
+      setCompileError(null);
+    }
+  }, [isGoldenProject, isGenerating, isCompiling, compileState, compileError, setIsCompiling]);
+
   // ── Initialize new projects with golden template files ──
   useEffect(() => {
     if (project.files.length === 0) {
@@ -3270,9 +3280,12 @@ export function AIAppBuilderWorkspace() {
     setFiles(goldenFiles);
     setStableHTML(null);
     stableHTMLRef.current = null;
+    setIsCompiling(false);
+    setCompileStateRaw('idle');
+    setCompileError(null);
     try { localStorage.removeItem(COMPILED_CACHE_KEY); } catch {}
     dedupeToast('success', 'Project reset to golden template');
-  }, [project.files, setFiles, pushUndo]);
+  }, [project.files, setFiles, pushUndo, setIsCompiling]);
 
   // Mobile detection
   const [isMobile, setIsMobile] = useState(false);
@@ -3454,7 +3467,7 @@ export function AIAppBuilderWorkspace() {
         <div className="flex-1 overflow-hidden">
           {isMobile ? (
             mobileTab === 'chat' ? (
-              <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} contextBudget={contextBudget} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} onReview={() => { projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)); projectReview.setShowPanel(true); }} supabaseConfig={supabaseConfig} onUpdateMessages={setMessages} streamingContentRef={streamingContentRef} onNewConversation={handleNewConversation} onShowSettings={() => setShowSettingsModal(true)} onShowHistory={() => setShowVersionHistory(true)} onShowKnowledge={() => setShowKnowledge(true)} onShowGitHub={() => setShowGitHubPanel(true)} conversationForks={conversationForks} activeForkId={activeForkId} onForkConversation={forkConversation} onSwitchFork={switchFork} onDeleteFork={deleteFork} isPreviewReady={isPreviewReady} questionsSlot={builderQuestions.pending ? (
+              <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} contextBudget={contextBudget} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} onReview={() => { projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)); projectReview.setShowPanel(true); }} supabaseConfig={supabaseConfig} onUpdateMessages={setMessages} streamingContentRef={streamingContentRef} onNewConversation={handleNewConversation} onShowSettings={() => setShowSettingsModal(true)} onShowHistory={() => setShowVersionHistory(true)} onShowKnowledge={() => setShowKnowledge(true)} onShowGitHub={() => setShowGitHubPanel(true)} conversationForks={conversationForks} activeForkId={activeForkId} onForkConversation={forkConversation} onSwitchFork={switchFork} onDeleteFork={deleteFork} isPreviewReady={isPreviewReady} compileState={compileState} isGoldenProject={isGoldenProject} questionsSlot={builderQuestions.pending ? (
                 <div className="px-3 pt-2">
                   <QuestionsCard
                     questions={builderQuestions.pending.questions}
@@ -3526,7 +3539,7 @@ export function AIAppBuilderWorkspace() {
                 )}
                 <div className="flex-1 overflow-hidden flex flex-col">
                   <div className="flex-1 overflow-hidden">
-                    <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} contextBudget={contextBudget} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} onReview={() => { projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)); projectReview.setShowPanel(true); }} supabaseConfig={supabaseConfig} onUpdateMessages={setMessages} streamingContentRef={streamingContentRef} onNewConversation={handleNewConversation} onShowSettings={() => setShowSettingsModal(true)} onShowHistory={() => setShowVersionHistory(true)} onShowKnowledge={() => setShowKnowledge(true)} onShowGitHub={() => setShowGitHubPanel(true)} conversationForks={conversationForks} activeForkId={activeForkId} onForkConversation={forkConversation} onSwitchFork={switchFork} onDeleteFork={deleteFork} isPreviewReady={isPreviewReady} questionsSlot={builderQuestions.pending ? (
+                    <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} contextBudget={contextBudget} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} onReview={() => { projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)); projectReview.setShowPanel(true); }} supabaseConfig={supabaseConfig} onUpdateMessages={setMessages} streamingContentRef={streamingContentRef} onNewConversation={handleNewConversation} onShowSettings={() => setShowSettingsModal(true)} onShowHistory={() => setShowVersionHistory(true)} onShowKnowledge={() => setShowKnowledge(true)} onShowGitHub={() => setShowGitHubPanel(true)} conversationForks={conversationForks} activeForkId={activeForkId} onForkConversation={forkConversation} onSwitchFork={switchFork} onDeleteFork={deleteFork} isPreviewReady={isPreviewReady} compileState={compileState} isGoldenProject={isGoldenProject} questionsSlot={builderQuestions.pending ? (
                       <div className="px-3 pt-2">
                         <QuestionsCard
                           questions={builderQuestions.pending.questions}

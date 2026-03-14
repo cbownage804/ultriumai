@@ -51,6 +51,10 @@ interface BuilderChatPanelProps {
   questionsSlot?: React.ReactNode;
   /** Whether the preview has valid compiled HTML and is truly ready */
   isPreviewReady?: boolean;
+  /** Current compile state for accurate status labels */
+  compileState?: 'idle' | 'compiling' | 'success' | 'error';
+  /** True when project is still untouched golden template */
+  isGoldenProject?: boolean;
   /** Ref-based streaming: content ref to avoid workspace re-renders */
   streamingContentRef?: MutableRefObject<string>;
   /** New conversation handler — clears messages but keeps files */
@@ -387,7 +391,7 @@ export function BuilderChatPanel({
   totalTokensUsed, previousFiles, latestFiles, contextBudget,
   onModeChange, onSend, onStop, onClear, onRestoreVersion, onOpenTemplates, onFixError,
   onToggleVisualEdit, isVisualEditActive, onSelectStarterTemplate,
-  supabaseConfig, onUpdateMessages, questionsSlot, isPreviewReady,
+  supabaseConfig, onUpdateMessages, questionsSlot, isPreviewReady, compileState, isGoldenProject,
   streamingContentRef, onNewConversation,
   onShowSettings, onShowHistory, onShowKnowledge, onShowGitHub,
   conversationForks, activeForkId, onForkConversation, onSwitchFork, onDeleteFork,
@@ -1151,11 +1155,23 @@ export function BuilderChatPanel({
                 "flex-1 text-center text-[12px] py-2.5 font-medium",
                 isStreaming
                   ? "text-cyan-400 bg-cyan-500/[0.06]"
-                  : isPreviewReady
-                    ? "text-emerald-400/70 bg-emerald-500/[0.04]"
-                    : "text-amber-400/70 bg-amber-500/[0.04]"
+                  : compileState === 'error'
+                    ? "text-red-300/80 bg-red-500/[0.08]"
+                    : isPreviewReady
+                      ? "text-emerald-400/70 bg-emerald-500/[0.04]"
+                      : isGoldenProject && compileState !== 'compiling'
+                        ? "text-white/50 bg-white/[0.03]"
+                        : "text-amber-400/70 bg-amber-500/[0.04]"
               )}>
-                {isStreaming ? 'Loading preview...' : isPreviewReady ? 'Preview ready' : 'Compiling...'}
+                {isStreaming
+                  ? 'Loading preview...'
+                  : compileState === 'error'
+                    ? 'Preview failed'
+                    : isPreviewReady
+                      ? 'Preview ready'
+                      : isGoldenProject && compileState !== 'compiling'
+                        ? 'Ready to build'
+                        : 'Compiling...'}
               </div>
             </div>
           </motion.div>
