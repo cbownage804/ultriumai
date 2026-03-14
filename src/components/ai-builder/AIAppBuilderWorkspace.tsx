@@ -703,18 +703,22 @@ export function AIAppBuilderWorkspace() {
               const { data, error } = await supabase.functions.invoke('image-generation', {
                 body: { prompt: marker.prompt, quality: 'medium' }
               });
-              if (!error && data?.image) {
+
+              const resolvedImageUrl = sanitizeInlineImageUrl(data?.imageUrl ?? data?.image);
+              if (!error && resolvedImageUrl) {
                 const idx = mergedFiles.findIndex(f => f.path === file.path);
                 if (idx >= 0) {
                   mergedFiles[idx] = {
                     ...mergedFiles[idx],
-                    content: mergedFiles[idx].content.replace(marker.full, data.image)
+                    content: mergedFiles[idx].content.replace(marker.full, resolvedImageUrl)
                   };
                   console.info(`[Build] 🖼️ Resolved image marker: "${marker.prompt.slice(0, 50)}..."`);
                 }
+              } else if (error) {
+                console.warn('[Build] Image generation function returned an error for marker:', marker.prompt.slice(0, 50));
               }
             } catch (imgErr) {
-              console.warn(`[Build] Image generation failed for marker:`, imgErr);
+              console.warn('[Build] Image generation failed for marker:', imgErr);
             }
           }
         }
@@ -742,16 +746,30 @@ export function AIAppBuilderWorkspace() {
                 if (idx >= 0) {
                   mergedFiles[idx] = {
                     ...mergedFiles[idx],
-                    content: mergedFiles[idx].content.replace(marker.full, data.video || data.poster)
+                    content: mergedFiles[idx].content.replace(marker.full, (data.video || data.poster).trim())
                   };
                   console.info(`[Build] 🎬 Resolved video marker: "${marker.prompt.slice(0, 50)}..."`);
                 }
               }
             } catch (vidErr) {
-              console.warn(`[Build] Video generation failed for marker:`, vidErr);
+              console.warn('[Build] Video generation failed for marker:', vidErr);
             }
           }
         }
+      }
+
+      // Hard safety clamp: strip whitespace from inline image URLs and replace oversized payloads.
+      // Prevents malformed multiline data URLs from breaking TS/JS parsing and localStorage quota.
+      let sanitizedImagePayloads = 0;
+      mergedFiles = mergedFiles.map((file) => {
+        if (!file.content.includes('data:image/')) return file;
+        const sanitizedContent = sanitizeInlineImageDataUrls(file.content);
+        if (sanitizedContent === file.content) return file;
+        sanitizedImagePayloads += 1;
+        return { ...file, content: sanitizedContent };
+      });
+      if (sanitizedImagePayloads > 0) {
+        console.info(`[Build] Sanitized inline image payloads in ${sanitizedImagePayloads} file(s) before validation`);
       }
 
       // Diff review removed — always auto-apply all changes immediately
