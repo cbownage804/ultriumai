@@ -20,8 +20,8 @@ export interface CompileErrorInfo {
   errors: string[];
 }
 
-const COMPILE_TIMEOUT_MS = 40_000; // Vite-only path (30s) + margin
-const COMPILE_SAFETY_TIMEOUT_MS = 50_000; // Hard safety net
+const COMPILE_TIMEOUT_MS = 60_000; // Full compile chain budget (Vite + Worker fallback)
+const COMPILE_SAFETY_TIMEOUT_MS = 70_000; // Hard safety net beyond normal timeout
 const COMPILE_HARD_TIMEOUT_MS = COMPILE_TIMEOUT_MS;
 interface CompilationBridgeProps {
   files: ProjectFile[];
@@ -228,7 +228,7 @@ export function CompilationBridge({
 
     // ── Always use Vite Sandbox — sole compilation path ──
     try {
-      const BRIDGE_TIMEOUT = 35_000; // Slightly above Vite's 30s internal timeout
+      const BRIDGE_TIMEOUT = 60_000; // Match full compile chain budget (Vite + Worker fallback)
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
       const workerTimeout = new Promise<null>((resolve) => {
         timeoutId = setTimeout(() => {

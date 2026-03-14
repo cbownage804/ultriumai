@@ -290,7 +290,8 @@ export function useWorkerCompiler() {
     const { signal } = ac;
 
     const VITE_TIMEOUT_MS = 20_000;
-    const WORKER_TIMEOUT_MS = 15_000;
+    // Worker fallback can cold-start esbuild-wasm on first use; give it enough headroom.
+    const WORKER_TIMEOUT_MS = 35_000;
 
     let viteError: Error | null = null;
 
