@@ -1,8 +1,8 @@
 import { useState, useCallback, useRef } from 'react';
 import type { ProjectFile } from './useProjectFileSystem';
 
-const FILE_DELIMITER = /^===FILE:\s*(.+?)===$/;
-const END_MARKER = /^===END===\s*$/;
+const FILE_DELIMITER = /^\s*===FILE:\s*(.+?)===\s*$/;
+const END_MARKER = /^\s*===END===\s*$/;
 
 function detectLanguage(path: string): string {
   const ext = path.split('.').pop()?.toLowerCase() || '';
