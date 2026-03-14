@@ -51,6 +51,10 @@ interface BuilderChatPanelProps {
   questionsSlot?: React.ReactNode;
   /** Whether the preview has valid compiled HTML and is truly ready */
   isPreviewReady?: boolean;
+  /** Current compile state for accurate status labels */
+  compileState?: 'idle' | 'compiling' | 'success' | 'error';
+  /** True when project is still untouched golden template */
+  isGoldenProject?: boolean;
   /** Ref-based streaming: content ref to avoid workspace re-renders */
   streamingContentRef?: MutableRefObject<string>;
   /** New conversation handler — clears messages but keeps files */
