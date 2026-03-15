@@ -141,32 +141,43 @@ function stripTypeAnnotations(code: string): string {
   });
 
   // 3. Strip interface, enum, and type alias blocks (brace-counted)
+  // IMPORTANT: Only strip at top-level (ambientDepth === 0) to avoid eating
+  // braces inside functions, try/catch, if/else, etc.
   const lines = result.split('\n');
   const outputLines: string[] = [];
   let stripping = false;
-  let braceDepth = 0;
+  let stripDepth = 0;
+  let ambientDepth = 0; // tracks brace depth of non-stripped code
 
   for (const line of lines) {
     if (!stripping) {
       const trimmed = line.trim();
-      if (/^(?:export\s+)?(?:interface|enum)\s+\w+/.test(trimmed) || 
-          /^(?:export\s+)?type\s+\w+\s*(?:<[^>]*>)?\s*=\s*\{/.test(trimmed)) {
+      // Only strip type declarations at the top level (not inside functions/blocks)
+      if (ambientDepth === 0 &&
+          (/^(?:export\s+)?(?:interface|enum)\s+\w+/.test(trimmed) || 
+           /^(?:export\s+)?type\s+\w+\s*(?:<[^>]*>)?\s*=\s*\{/.test(trimmed))) {
         stripping = true;
-        braceDepth = 0;
+        stripDepth = 0;
         for (const ch of line) {
-          if (ch === '{') braceDepth++;
-          if (ch === '}') braceDepth--;
+          if (ch === '{') stripDepth++;
+          if (ch === '}') stripDepth--;
         }
-        if (braceDepth <= 0) stripping = false;
+        if (stripDepth <= 0) stripping = false;
         continue;
       }
+      // Track ambient brace depth for non-stripped lines
+      for (const ch of line) {
+        if (ch === '{') ambientDepth++;
+        if (ch === '}') ambientDepth--;
+      }
+      if (ambientDepth < 0) ambientDepth = 0;
       outputLines.push(line);
     } else {
       for (const ch of line) {
-        if (ch === '{') braceDepth++;
-        if (ch === '}') braceDepth--;
+        if (ch === '{') stripDepth++;
+        if (ch === '}') stripDepth--;
       }
-      if (braceDepth <= 0) stripping = false;
+      if (stripDepth <= 0) stripping = false;
     }
   }
   result = outputLines.join('\n');
