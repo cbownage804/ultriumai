@@ -532,7 +532,7 @@ window.addEventListener('message', function(e) {
     const handler = (e: MessageEvent) => {
       if (e.data?.type === '__SOFT_RELOAD__') {
         if (htmlWithErrorCapture) {
-          console.info('[HMR] Soft reload: remounting iframe via Blob URL');
+          console.info('[HMR] Soft reload: remounting iframe via srcDoc update');
           setIframeKey(k => k + 1);
         }
       }
