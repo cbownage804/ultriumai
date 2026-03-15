@@ -20,27 +20,27 @@ let esbuildInitPromise: Promise<void> | null = null;
 async function ensureEsbuild(): Promise<boolean> {
   if (esbuildReady) return true;
   if (!esbuildInitPromise) {
-    esbuildInitPromise = (async () => {
-      try {
+    // Wrap ENTIRE init (dynamic import + WASM download + initialize) in a single 8s budget.
+    // Previously, only `esbuild.initialize` had a timeout — the `import('esbuild-wasm')`
+    // dynamic import had NONE, causing the worker to hang for 35s+ on slow networks.
+    esbuildInitPromise = Promise.race([
+      (async () => {
         esbuild = await import('esbuild-wasm');
-        const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('esbuild WASM download timeout (10s)')), 10_000)
-        );
-        await Promise.race([
-          esbuild.initialize({
-            wasmURL: 'https://unpkg.com/esbuild-wasm@0.27.3/esbuild.wasm',
-            worker: false,
-          }),
-          timeoutPromise,
-        ]);
+        await esbuild.initialize({
+          wasmURL: 'https://unpkg.com/esbuild-wasm@0.27.3/esbuild.wasm',
+          worker: false,
+        });
         esbuildReady = true;
         console.info('[CompilerWorker] esbuild-wasm initialized');
-      } catch (err: any) {
-        console.warn('[CompilerWorker] esbuild-wasm failed, using regex fallback:', err?.message);
-        esbuild = null;
-        esbuildInitPromise = null;
-      }
-    })();
+      })(),
+      new Promise<void>((_, reject) =>
+        setTimeout(() => reject(new Error('esbuild init timeout (8s)')), 8_000)
+      ),
+    ]).catch((err: any) => {
+      console.warn('[CompilerWorker] esbuild-wasm failed, using regex fallback:', err?.message);
+      esbuild = null;
+      esbuildInitPromise = null;
+    });
   }
   await esbuildInitPromise;
   return esbuildReady;
