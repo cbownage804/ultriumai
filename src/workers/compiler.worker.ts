@@ -265,39 +265,52 @@ async function transpileFile(file: ProjectFile, moduleMap: Map<string, ProjectFi
     }
   }
 
+  const parseRuntimeNamedImports = (rawNamedImports?: string): Array<{ orig: string; alias?: string }> => {
+    if (!rawNamedImports) return [];
+    return rawNamedImports
+      .split(',')
+      .map((item: string) => item.trim())
+      .filter((item: string) => item.length > 0)
+      // Drop TS type-only named imports: `type Foo`, `type Foo as Bar`
+      .filter((item: string) => !/^type\s+/.test(item))
+      .map((item: string) => {
+        const [orig, alias] = item.split(/\s+as\s+/);
+        return { orig: orig.trim(), alias: alias?.trim() };
+      })
+      .filter(({ orig }) => /^[A-Za-z_$][\w$]*$/.test(orig));
+  };
+
   const importLines: string[] = [];
   code = code.replace(
     /^import\s+(?:(\w+)(?:\s*,\s*)?)?(?:\{([^}]+)\})?\s+from\s+['"]([^'"]+)['"];?\s*$/gm,
     (_match, defaultImport, namedImports, specifier) => {
+      const runtimeNamed = parseRuntimeNamedImports(namedImports);
+
       if (!specifier.startsWith('.') && !specifier.startsWith('/')) {
         if (specifier === 'react') {
           const parts: string[] = [];
           if (defaultImport && defaultImport !== 'React') parts.push(`const ${defaultImport} = React;`);
-          if (namedImports) {
-            const names = namedImports.split(',').map((n: string) => n.trim().split(/\s+as\s+/));
-            for (const [orig, alias] of names) {
-              const target = (alias || orig).trim();
-              if (target !== orig.trim() || !['useState','useEffect','useCallback','useMemo','useRef','useContext','createContext','memo','forwardRef','Fragment','useReducer','useLayoutEffect','useId','useSyncExternalStore','useTransition','useDeferredValue','useInsertionEffect','createElement','Children','cloneElement','isValidElement','Suspense','lazy','StrictMode','Component','PureComponent','createRef','startTransition'].includes(target)) {
-                parts.push(`const ${target} = React.${orig.trim()};`);
-              }
+          for (const { orig, alias } of runtimeNamed) {
+            const target = (alias || orig).trim();
+            if (target !== orig || !['useState','useEffect','useCallback','useMemo','useRef','useContext','createContext','memo','forwardRef','Fragment','useReducer','useLayoutEffect','useId','useSyncExternalStore','useTransition','useDeferredValue','useInsertionEffect','createElement','Children','cloneElement','isValidElement','Suspense','lazy','StrictMode','Component','PureComponent','createRef','startTransition'].includes(target)) {
+              parts.push(`const ${target} = React.${orig};`);
             }
           }
           return parts.join('\n');
         }
         if (specifier === 'react-dom' || specifier === 'react-dom/client') {
-          if (defaultImport && defaultImport !== 'ReactDOM') return `const ${defaultImport} = ReactDOM;`;
-          if (namedImports) {
-            const names = namedImports.split(',').map((n: string) => n.trim().split(/\s+as\s+/));
-            return names
-              .filter(([orig, alias]: string[]) => {
-                const target = (alias || orig).trim();
-                return target !== orig.trim() || !['createRoot','hydrateRoot','render','hydrate','createPortal','flushSync','unmountComponentAtNode','findDOMNode'].includes(target);
-              })
-              .map(([orig, alias]: string[]) => `const ${(alias || orig).trim()} = ReactDOM.${orig.trim()};`)
-              .join('\n');
-          }
-          return '';
+          const parts: string[] = [];
+          if (defaultImport && defaultImport !== 'ReactDOM') parts.push(`const ${defaultImport} = ReactDOM;`);
+          const namedParts = runtimeNamed
+            .filter(({ orig, alias }) => {
+              const target = (alias || orig).trim();
+              return target !== orig || !['createRoot','hydrateRoot','render','hydrate','createPortal','flushSync','unmountComponentAtNode','findDOMNode'].includes(target);
+            })
+            .map(({ orig, alias }) => `const ${(alias || orig).trim()} = ReactDOM.${orig};`);
+          parts.push(...namedParts);
+          return parts.join('\n');
         }
+
         // Gap 3: Clean import resolution via import maps — no Proxy fallbacks
         const importVar = `__pkg_${specifier.replace(/[^a-zA-Z0-9]/g, '_')}`;
         usedExternalPackages.add(specifier);
@@ -305,9 +318,10 @@ async function transpileFile(file: ProjectFile, moduleMap: Map<string, ProjectFi
         if (defaultImport) {
           parts.push(`var ${defaultImport} = (window.${importVar} || {}).default || window.${importVar} || {};`);
         }
-        if (namedImports) {
-          const names = namedImports.split(',').map((n: string) => n.trim().split(/\s+as\s+/));
-          const destructure = names.map(([orig, alias]: string[]) => alias ? `${orig.trim()}: ${alias.trim()}` : orig.trim()).join(', ');
+        if (runtimeNamed.length > 0) {
+          const destructure = runtimeNamed
+            .map(({ orig, alias }) => alias ? `${orig}: ${alias}` : orig)
+            .join(', ');
           parts.push(`var { ${destructure} } = window.${importVar} || {};`);
         }
         return parts.length > 0 ? parts.join('\n') : `// [external] ${specifier}`;
@@ -322,11 +336,10 @@ async function transpileFile(file: ProjectFile, moduleMap: Map<string, ProjectFi
       if (defaultImport) {
         parts.push(`const ${defaultImport} = __modules['${moduleKey}']?.default || __modules['${moduleKey}'];`);
       }
-      if (namedImports) {
-        const destructure = namedImports.split(',').map((n: string) => {
-          const [orig, alias] = n.trim().split(/\s+as\s+/);
-          return alias ? `${orig.trim()}: ${alias.trim()}` : orig.trim();
-        }).join(', ');
+      if (runtimeNamed.length > 0) {
+        const destructure = runtimeNamed
+          .map(({ orig, alias }) => alias ? `${orig}: ${alias}` : orig)
+          .join(', ');
         parts.push(`const { ${destructure} } = __modules['${moduleKey}'] || {};`);
       }
       importLines.push(moduleKey);
