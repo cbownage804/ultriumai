@@ -185,15 +185,20 @@ export function useWorkerCompiler() {
   /** AbortController for the currently in-flight compile — aborted when a new compile starts */
   const activeAbortRef = useRef<AbortController | null>(null);
 
+  const rejectAllPending = useCallback((reason: string) => {
+    if (pendingRef.current.size === 0) return;
+    const err = new Error(reason);
+    for (const [, { reject }] of pendingRef.current) {
+      reject(err);
+    }
+    pendingRef.current.clear();
+  }, []);
+
   useEffect(() => {
     const worker = getSharedWorkerSafe();
     workerRef.current = worker;
 
-    worker.onerror = (e) => {
-      console.error('[WorkerCompiler] Worker error:', e.message || e);
-    };
-
-    const handler = (e: MessageEvent<WorkerResponse>) => {
+    const handleWorkerMessage = (e: MessageEvent<WorkerResponse>) => {
       const msg = e.data;
       if (msg.type === 'compile-result') {
         const pending = pendingRef.current.get(msg.id);
@@ -215,19 +220,24 @@ export function useWorkerCompiler() {
       }
     };
 
-    worker.addEventListener('message', handler);
+    const handleWorkerError = (e: ErrorEvent) => {
+      const message = e.message || 'Unknown worker crash';
+      console.error('[WorkerCompiler] Worker error:', message);
+      rejectAllPending(`Worker crashed: ${message}`);
+    };
+
+    worker.addEventListener('message', handleWorkerMessage);
+    worker.addEventListener('error', handleWorkerError);
 
     return () => {
-      worker.removeEventListener('message', handler);
-      for (const [, { reject }] of pendingRef.current) {
-        reject(new Error('Worker compiler unmounted'));
-      }
-      pendingRef.current.clear();
+      worker.removeEventListener('message', handleWorkerMessage);
+      worker.removeEventListener('error', handleWorkerError);
+      rejectAllPending('Worker compiler unmounted');
       activeAbortRef.current?.abort();
       releaseSharedWorker();
       workerRef.current = null;
     };
-  }, []);
+  }, [rejectAllPending]);
 
   const compileViaWorker = useCallback(async (
     files: ProjectFile[],
@@ -236,7 +246,8 @@ export function useWorkerCompiler() {
       stripeConfig?: { publishableKey: string } | null;
       envVars?: { key: string; value: string }[];
       userPackages?: CDNPackageEntry[];
-    }
+    },
+    timeoutMs: number = DEFAULT_WORKER_REQUEST_TIMEOUT_MS,
   ): Promise<WorkerCompilerResult> => {
     const worker = workerRef.current;
     if (!worker) {
@@ -246,7 +257,23 @@ export function useWorkerCompiler() {
     const id = `compile-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     return new Promise<WorkerCompilerResult>((resolve, reject) => {
-      pendingRef.current.set(id, { resolve, reject });
+      const timeoutId = setTimeout(() => {
+        const pending = pendingRef.current.get(id);
+        if (!pending) return;
+        pendingRef.current.delete(id);
+        reject(new Error(`Worker compile request timeout (${Math.round(timeoutMs / 1000)}s)`));
+      }, timeoutMs);
+
+      pendingRef.current.set(id, {
+        resolve: (result) => {
+          clearTimeout(timeoutId);
+          resolve(result);
+        },
+        reject: (error) => {
+          clearTimeout(timeoutId);
+          reject(error);
+        },
+      });
 
       const request: CompileRequest = {
         type: 'compile',
@@ -260,16 +287,22 @@ export function useWorkerCompiler() {
         } : undefined,
       };
 
-      worker.postMessage(request);
+      try {
+        worker.postMessage(request);
+      } catch (err) {
+        clearTimeout(timeoutId);
+        pendingRef.current.delete(id);
+        reject(err instanceof Error ? err : new Error(String(err)));
+      }
     });
   }, []);
 
   /**
-   * Primary compilation function — Vite Sandbox with Worker fallback.
+   * Primary compilation function — Vite Sandbox with resilient fallback chain.
    * Each new call aborts the prior in-flight compile so the Vite sandbox droplet
    * doesn't accumulate stale connections and exhaust its concurrency cap.
    * 
-   * Flow: Vite Sandbox → (retry on 503) → Worker fallback → throw
+   * Flow: Vite Sandbox → Worker fallback → Legacy edge fallback → throw
    */
   const compileReactProject = useCallback(async (
     files: ProjectFile[],
@@ -292,12 +325,10 @@ export function useWorkerCompiler() {
     const { signal } = ac;
 
     const VITE_TIMEOUT_MS = 20_000;
-    // Worker fallback can cold-start esbuild-wasm on first use; give it enough headroom.
-    const WORKER_TIMEOUT_MS = 35_000;
 
     let viteError: Error | null = null;
 
-    // ── Attempt 1: Vite Sandbox (primary — 20s timeout, no retry) ──
+    // ── Attempt 1: Vite Sandbox (primary — 20s timeout) ──
     try {
       console.info('[Compiler] ⏱ Attempt 1: Vite Sandbox', { fileCount: files.length });
       const result = await Promise.race([
@@ -309,9 +340,6 @@ export function useWorkerCompiler() {
       console.info('[Compiler] ✅ Vite Sandbox compiled:', result.html?.length, 'chars');
       return result;
     } catch (err: any) {
-      // If signal was aborted AND a newer compile replaced us, bail — the new compile handles it.
-      // Otherwise, ALWAYS fall through to the Worker fallback. Previously, a race-condition
-      // abort during the Vite network call would skip Worker entirely, leaving previews blank.
       if (signal.aborted && ac !== activeAbortRef.current) {
         throw new DOMException('Aborted', 'AbortError');
       }
@@ -322,22 +350,39 @@ export function useWorkerCompiler() {
       console.warn('[Compiler] ❌ Vite Sandbox failed:', err.message, '— falling back to Worker');
     }
 
-    // ── Attempt 2: Worker fallback (last resort — 15s timeout) ──
+    // ── Attempt 2: Worker fallback (bounded per-request timeout) ──
     try {
       console.info('[Compiler] ⏱ Attempt 2: Web Worker compiler (fallback)');
-      const workerResult = await Promise.race([
-        compileViaWorker(files, options),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error(`Worker fallback timeout (${WORKER_TIMEOUT_MS / 1000}s)`)), WORKER_TIMEOUT_MS)
-        ),
-      ]);
+      const workerResult = await compileViaWorker(files, options, DEFAULT_WORKER_REQUEST_TIMEOUT_MS);
       console.info('[Compiler] ✅ Worker fallback compiled:', workerResult.html?.length, 'chars (degraded)');
       return workerResult;
     } catch (workerErr: any) {
-      console.error('[Compiler] ❌ All compilation attempts failed');
-      console.error('[Compiler]   Vite error:', viteError?.message);
-      console.error('[Compiler]   Worker error:', workerErr.message);
-      throw viteError || workerErr;
+      console.warn('[Compiler] ❌ Worker fallback failed:', workerErr?.message || workerErr, '— trying legacy edge compiler');
+
+      if (signal.aborted && ac !== activeAbortRef.current) {
+        throw new DOMException('Aborted', 'AbortError');
+      }
+
+      try {
+        console.info('[Compiler] ⏱ Attempt 3: Legacy edge compiler fallback');
+        const edgeResult = await Promise.race([
+          compileViaEdgeFunction(files, options, signal),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error(`Legacy edge timeout (${EDGE_FALLBACK_TIMEOUT_MS / 1000}s)`)), EDGE_FALLBACK_TIMEOUT_MS)
+          ),
+        ]);
+        console.info('[Compiler] ✅ Legacy edge fallback compiled:', edgeResult.html?.length, 'chars');
+        return edgeResult;
+      } catch (edgeErr: any) {
+        const viteMsg = viteError?.message || 'unknown';
+        const workerMsg = workerErr?.message || 'unknown';
+        const edgeMsg = edgeErr?.message || 'unknown';
+        console.error('[Compiler] ❌ All compilation attempts failed');
+        console.error('[Compiler]   Vite error:', viteMsg);
+        console.error('[Compiler]   Worker error:', workerMsg);
+        console.error('[Compiler]   Edge error:', edgeMsg);
+        throw new Error(`Compilation failed (vite: ${viteMsg}; worker: ${workerMsg}; edge: ${edgeMsg})`);
+      }
     }
   }, [compileViaWorker]);
 
