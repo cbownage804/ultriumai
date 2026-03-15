@@ -1045,7 +1045,7 @@ window.addEventListener('message', function(e) {
             isGenerating={isGenerating}
             isCompiling={isCompiling}
           />
-        ) : compileState === 'error' && compileError ? (
+        ) : compileState === 'error' ? (
           /* Compile error on fresh build with no preview — show error + retry instead of empty placeholder */
           <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden">
             <img
@@ -1061,9 +1061,9 @@ window.addEventListener('message', function(e) {
                 Compilation Failed
               </h3>
               <p className="text-sm text-white/50 leading-relaxed">
-                {compileError.message}
+                {compileError?.message || 'Compilation failed. Retry compile or reset to template.'}
               </p>
-              {compileError.errors.length > 0 && (
+              {!!compileError?.errors?.length && (
                 <div className="bg-black/40 rounded-lg p-3 space-y-1 text-left max-h-32 overflow-y-auto">
                   {compileError.errors.slice(0, 3).map((err, i) => (
                     <p key={i} className="text-xs text-red-300/70 font-mono break-all">{err}</p>
