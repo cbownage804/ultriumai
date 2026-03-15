@@ -768,7 +768,7 @@ window.ENV = ${JSON.stringify(envObj)};
     var { createRoot, createPortal, flushSync } = ReactDOM;
     ${options?.supabaseConfig ? `var supabase = window.__supabaseClient;` : ''}
 
-    ${transpiledChunks.map(chunk => `try { ${chunk} } catch(__chunkErr) { console.error('[Module Error]', __chunkErr.message); }`).join('\n\n')}
+    ${transpiledChunks.join('\n\n')}
 
     ${mountScript}
       `)};
