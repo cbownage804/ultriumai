@@ -322,15 +322,17 @@ export function sanitizeStagedFiles(files: ProjectFile[]): { files: ProjectFile[
     let content = f.content;
     let changed = false;
 
-    // Strip common stream-tail artifacts that can leak into the last file block.
+    // Strip protocol-marker artifacts that should never exist inside real file contents.
+    const markerArtifactRegex = /^\s*===(?:END|FILE:\s*.+?|EDIT:\s*.+?|DELETE:\s*.+?|MODE:\s*.+?|MIGRATION(?::\s*.+?)?|EDGE_FUNCTION:\s*.+?)===\s*$/gm;
     const cleaned = content
-      .replace(/\n\s*===END===\s*$/i, '')
+      .replace(markerArtifactRegex, '')
       .replace(/\n\s*`{3,}\s*$/g, '')
-      .replace(/\n\s*={1,10}\s*$/g, '');
+      .replace(/\n\s*={1,10}\s*$/g, '')
+      .replace(/\n{3,}/g, '\n\n');
     if (cleaned !== content) {
       content = cleaned;
       changed = true;
-      fixes.push(`${f.path}: removed trailing stream delimiter artifact`);
+      fixes.push(`${f.path}: removed leaked protocol delimiter artifacts`);
     }
 
     const ext = f.path.split('.').pop()?.toLowerCase() || '';
