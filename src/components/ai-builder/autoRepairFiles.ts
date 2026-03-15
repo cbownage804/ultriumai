@@ -95,68 +95,12 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
         repairs.push(`${f.path}: replaced class= with className=`);
       }
 
-      // ── 6b. Fix mismatched JSX closing tags ──
-      // Detects <tagA ...>...</tagB> mismatches using a simple stack approach.
-      // Only fixes non-component (lowercase) HTML tags to avoid false positives.
-      const tagStack: Array<{ tag: string; closePos: number }> = [];
-      const openTagRegex = /<([a-z][a-z0-9]*)\b[^/>]*(?<!\/)>/gi;
-      const closeTagRegex = /<\/([a-z][a-z0-9]*)\s*>/gi;
-      
-      // Build ordered list of open and close tags with positions
-      const tagEvents: Array<{ type: 'open' | 'close'; tag: string; start: number; end: number; fullMatch: string }> = [];
-      
-      let tagMatch: RegExpExecArray | null;
-      while ((tagMatch = openTagRegex.exec(content)) !== null) {
-        // Skip self-closing and void elements
-        const full = tagMatch[0];
-        if (full.endsWith('/>')) continue;
-        tagEvents.push({ type: 'open', tag: tagMatch[1].toLowerCase(), start: tagMatch.index, end: tagMatch.index + full.length, fullMatch: full });
-      }
-      while ((tagMatch = closeTagRegex.exec(content)) !== null) {
-        tagEvents.push({ type: 'close', tag: tagMatch[1].toLowerCase(), start: tagMatch.index, end: tagMatch.index + tagMatch[0].length, fullMatch: tagMatch[0] });
-      }
-      
-      tagEvents.sort((a, b) => a.start - b.start);
-      
-      // Simple stack-based mismatch detection
-      const mismatchFixes: Array<{ from: string; to: string; pos: number }> = [];
-      const stack: Array<{ tag: string; pos: number }> = [];
-      
-      for (const evt of tagEvents) {
-        if (evt.type === 'open') {
-          // Skip void elements that don't need closing
-          const voidTags = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
-          if (!voidTags.has(evt.tag)) {
-            stack.push({ tag: evt.tag, pos: evt.start });
-          }
-        } else {
-          // Close tag — find matching open tag
-          if (stack.length > 0) {
-            const top = stack[stack.length - 1];
-            if (top.tag === evt.tag) {
-              stack.pop();
-            } else {
-              // Mismatch: close tag doesn't match top of stack
-              // Fix the close tag to match the open tag
-              mismatchFixes.push({
-                from: evt.fullMatch,
-                to: `</${top.tag}>`,
-                pos: evt.start,
-              });
-              stack.pop();
-            }
-          }
-        }
-      }
-      
-      // Apply fixes in reverse order to preserve positions
-      if (mismatchFixes.length > 0 && mismatchFixes.length <= 5) {
-        mismatchFixes.sort((a, b) => b.pos - a.pos);
-        for (const fix of mismatchFixes) {
-          content = content.substring(0, fix.pos) + fix.to + content.substring(fix.pos + fix.from.length);
-          changed = true;
-          repairs.push(`${f.path}: fixed mismatched JSX closing tag ${fix.from} → ${fix.to}`);
-        }
+      // ── 6b. Fix mismatched/missing JSX closing tags (HTML + fragments) ──
+      const jsxBalance = fixJsxTagBalance(content);
+      if (jsxBalance.fixed) {
+        content = jsxBalance.content;
+        changed = true;
+        repairs.push(`${f.path}: ${jsxBalance.description}`);
       }
     }
 
@@ -202,6 +146,94 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
   });
 
   return { files: repaired, repairs };
+}
+
+/**
+ * Fix JSX tag balance for lowercase HTML tags + fragments.
+ * Designed to be conservative (avoids uppercase tags to prevent TS generic false-positives).
+ */
+function fixJsxTagBalance(content: string): { content: string; fixed: boolean; description: string } {
+  const tokenRegex = /<\/>|<>|<\/[a-z][a-z0-9]*\s*>|<[a-z][a-z0-9]*\b[^>]*>/g;
+  const voidTags = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
+  const stack: Array<{ tag: string; isFragment: boolean }> = [];
+
+  let fixed = false;
+  let cursor = 0;
+  let output = '';
+  let tokenMatch: RegExpExecArray | null;
+
+  while ((tokenMatch = tokenRegex.exec(content)) !== null) {
+    const token = tokenMatch[0];
+    const start = tokenMatch.index;
+    output += content.slice(cursor, start);
+
+    if (token === '<>') {
+      stack.push({ tag: '', isFragment: true });
+      output += token;
+    } else if (token === '</>') {
+      if (stack.length > 0 && stack[stack.length - 1].isFragment) {
+        stack.pop();
+        output += token;
+      } else if (stack.length > 0) {
+        const top = stack.pop()!;
+        output += top.isFragment ? '</>' : `</${top.tag}>`;
+        fixed = true;
+      } else {
+        fixed = true;
+      }
+    } else if (token.startsWith('</')) {
+      const closeTag = token.slice(2, -1).trim().toLowerCase();
+      if (stack.length > 0) {
+        const top = stack[stack.length - 1];
+        if (!top.isFragment && top.tag === closeTag) {
+          stack.pop();
+          output += token;
+        } else if (stack.some(s => !s.isFragment && s.tag === closeTag)) {
+          // Close any unclosed inner tags first, then keep the current close token.
+          while (stack.length > 0) {
+            const current = stack[stack.length - 1];
+            if (!current.isFragment && current.tag === closeTag) break;
+            const popped = stack.pop()!;
+            output += popped.isFragment ? '</>' : `</${popped.tag}>`;
+            fixed = true;
+          }
+          if (stack.length > 0) stack.pop();
+          output += token;
+        } else {
+          const expected = stack.pop()!;
+          output += expected.isFragment ? '</>' : `</${expected.tag}>`;
+          fixed = true;
+        }
+      } else {
+        fixed = true;
+      }
+    } else {
+      const openTagName = (token.match(/^<([a-z][a-z0-9]*)\b/)?.[1] || '').toLowerCase();
+      const selfClosing = /\/\s*>$/.test(token);
+      if (!selfClosing && openTagName && !voidTags.has(openTagName)) {
+        stack.push({ tag: openTagName, isFragment: false });
+      }
+      output += token;
+    }
+
+    cursor = start + token.length;
+  }
+
+  output += content.slice(cursor);
+
+  if (stack.length > 0) {
+    fixed = true;
+    for (let i = stack.length - 1; i >= 0; i--) {
+      const tag = stack[i];
+      output += tag.isFragment ? '</>' : `</${tag.tag}>`;
+    }
+  }
+
+  return {
+    content: output,
+    fixed,
+    description: fixed ? 'fixed JSX tag balance (mismatched/missing closers)' : '',
+  };
 }
 
 /**
