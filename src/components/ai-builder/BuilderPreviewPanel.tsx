@@ -999,7 +999,7 @@ window.addEventListener('message', function(e) {
 
       {/* Preview */}
       <div className="flex-1 min-h-0 flex items-stretch justify-center">
-        {htmlWithErrorCapture ? (
+        {previewDocumentHtml ? (
           <div
             className="h-full transition-all duration-300 mx-auto w-full relative"
             style={{
@@ -1011,7 +1011,7 @@ window.addEventListener('message', function(e) {
               ref={iframeRef as React.RefObject<HTMLIFrameElement>}
               key={`iframe-${iframeKey}-${refreshKey ?? 0}`}
               title="App Preview"
-              src={previewBlobUrl || undefined}
+              srcDoc={previewDocumentHtml}
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
               className="w-full h-full border-0 bg-white"
               style={{ colorScheme: 'light' }}
