@@ -624,6 +624,10 @@ export function CompilationBridge({
 
           if (hasIncomplete) {
             console.warn('[CompilationBridge] BUILD GATED: incomplete_files');
+            if (!stableHTMLRef.current || !isPreviewValid(stableHTMLRef.current)) {
+              setLiveCompiledHTML(ERROR_FALLBACK_HTML);
+              setStableHTML(ERROR_FALLBACK_HTML);
+            }
             transitionCompileState('error', { message: 'Incomplete files detected', errors: ['One or more files are incomplete (stream truncated)'] });
           } else if (isPreviewValid(result)) {
             // ── Preview Success Contract: only promote valid HTML ──
@@ -642,13 +646,17 @@ export function CompilationBridge({
             }
             window.postMessage({ type: '__PREVIEW_READY__', source: 'compilation-bridge' }, '*');
           } else {
-            // Compiled but invalid HTML — keep LKG, report error
+            // Compiled but invalid HTML — keep LKG when present, otherwise show fallback HTML.
             console.warn('[CompilationBridge] ❌ Compile produced invalid preview HTML — keeping LKG', previewDebugSummary(result));
             const summary = previewDebugSummary(result);
             const reasons: string[] = [];
             if (!summary.hasDoctype) reasons.push('Missing <!DOCTYPE> or <html> tag');
             if (!summary.hasRoot) reasons.push('Missing <div id="root"> mount point');
             if (summary.isFallback) reasons.push('Output contains error/fallback sentinel');
+            if (!stableHTMLRef.current || !isPreviewValid(stableHTMLRef.current)) {
+              setLiveCompiledHTML(ERROR_FALLBACK_HTML);
+              setStableHTML(ERROR_FALLBACK_HTML);
+            }
             transitionCompileState('error', { message: 'Invalid preview HTML', errors: reasons.length ? reasons : ['Compiled HTML failed validation'] });
           }
         } else {
