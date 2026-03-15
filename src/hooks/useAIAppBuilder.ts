@@ -527,10 +527,11 @@ function parseEditBlocks(raw: string): EditBlock[] {
 
     // If we're inside an ===EDIT: block
     if (currentPath) {
-      // Check for new file/delete/edit delimiter — means this edit block is done
-      if (FILE_DELIMITER.test(line) || DELETE_DELIMITER.test(line)) {
+      // Check for block delimiters — means this edit block is done
+      if (FILE_DELIMITER.test(line) || DELETE_DELIMITER.test(line) || OUTPUT_END_DELIMITER.test(line)) {
         flushEdit();
         currentPath = null;
+        if (OUTPUT_END_DELIMITER.test(line)) break;
         continue;
       }
 
