@@ -615,9 +615,19 @@ export function AIAppBuilderWorkspace() {
       console.warn('[handleBgComplete] 🔧 Truncated files detected:', integrity.truncatedFiles);
     }
 
-    const { files: rawParsedFiles, deletions: rawDeletions, edits: rawEdits } = parseMultiFileOutput(job.output_content);
+    const { files: parsedOutputFiles, deletions: rawDeletions, edits: rawEdits } = parseMultiFileOutput(job.output_content);
+    const incompleteParsedFiles = parsedOutputFiles.filter(f => f.incomplete === true);
+    const rawParsedFiles = parsedOutputFiles.filter(f => f.incomplete !== true);
+
+    if (incompleteParsedFiles.length > 0) {
+      console.warn('[handleBgComplete] ⏭️ Skipping incomplete parsed files to avoid corrupt writes', {
+        skipped: incompleteParsedFiles.map(f => f.path),
+      });
+    }
+
     console.info('[handleBgComplete] 📦 Parsed output', {
       stagedFiles: rawParsedFiles.length,
+      skippedIncomplete: incompleteParsedFiles.length,
       edits: rawEdits.length,
       deletions: rawDeletions.length,
       changedPaths: [...rawParsedFiles.map(f => f.path), ...rawEdits.map(e => e.path)],

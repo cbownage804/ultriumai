@@ -179,8 +179,16 @@ export function AgentModePanel({ run, taskQueue, pendingApproval, onCancel, onCa
         isAwaitingApproval && "border-violet-500/20",
       )}>
         {/* Compact header */}
-        <button
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => setIsExpanded(prev => !prev)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setIsExpanded(prev => !prev);
+            }
+          }}
           className="w-full flex items-center gap-2.5 px-3 py-2 text-left group"
         >
           <div className="relative shrink-0">
@@ -251,7 +259,7 @@ export function AgentModePanel({ run, taskQueue, pendingApproval, onCancel, onCa
               isExpanded && "rotate-180"
             )} />
           </div>
-        </button>
+        </div>
 
         {/* Plan approval card */}
         <AnimatePresence>
