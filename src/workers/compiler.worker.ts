@@ -435,7 +435,18 @@ async function transpileFile(file: ProjectFile, moduleMap: Map<string, ProjectFi
   }
 
   // Build module code + registration as a single string, then wrap safely
-  const moduleBody = code + '\n' + registration.join('\n');
+  let moduleBody = code + '\n' + registration.join('\n');
+
+  // Nuclear safety: strip any lingering TS `type` keywords from var/const destructuring
+  // that survived pre-processing, esbuild, and the import transformer.
+  moduleBody = moduleBody.replace(/\b(var|const|let)\s*\{([^}]+)\}/g, (_m, decl, names) => {
+    const cleaned = names
+      .split(',')
+      .map((n: string) => n.trim())
+      .filter((n: string) => n.length > 0 && !/^type\s+/.test(n))
+      .join(', ');
+    return cleaned ? `${decl} { ${cleaned} }` : `/* stripped type-only destructuring */`;
+  });
   // Use new Function to isolate parsing — if the body has syntax errors,
   // it throws at construction time rather than breaking the outer try/catch structure.
   const wrapped = `/* === ${file.path} === */\n(function() {\n  var __fn;\n  try { __fn = new Function('__modules', ${JSON.stringify(moduleBody)}); } catch(__parseErr) { console.error('[Parse Error] ${file.path}:', __parseErr.message); return; }\n  try { __fn(window.__modules); } catch(__runErr) { console.error('[Runtime Error] ${file.path}:', __runErr.message); }\n})();`;
