@@ -491,35 +491,27 @@ window.addEventListener('message', function(e) {
         )
   ) : null;
 
-  // === Blob URL rendering: externalize module scripts to avoid </script> parser breakout ===
-  const blobUrlRef = useRef<string | null>(null);
+  // === Preview document rendering: externalize inline scripts to avoid </script> parser breakout ===
   const jsBlobUrlsRef = useRef<string[]>([]);
   const htmlWithErrorCapture = htmlWithInjections; // alias for downstream refs
 
-  const previewBlobUrl = useMemo(() => {
-    // Revoke previous blobs
-    if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
-    jsBlobUrlsRef.current.forEach(u => URL.revokeObjectURL(u));
-    blobUrlRef.current = null;
+  const previewDocumentHtml = useMemo(() => {
+    // Revoke previously externalized JS blobs
+    jsBlobUrlsRef.current.forEach((u) => URL.revokeObjectURL(u));
     jsBlobUrlsRef.current = [];
 
     if (!htmlWithInjections) return null;
 
-    // Externalize module scripts containing </script> literals into JS Blob URLs
     const { html: safeHtml, jsBlobUrls } = externalizeModuleScript(htmlWithInjections);
     jsBlobUrlsRef.current = jsBlobUrls;
-
-    const blob = new Blob([safeHtml], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    blobUrlRef.current = url;
-    return url;
+    return safeHtml;
   }, [htmlWithInjections]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
-      jsBlobUrlsRef.current.forEach(u => URL.revokeObjectURL(u));
+      jsBlobUrlsRef.current.forEach((u) => URL.revokeObjectURL(u));
+      jsBlobUrlsRef.current = [];
     };
   }, []);
 
@@ -540,7 +532,7 @@ window.addEventListener('message', function(e) {
     const handler = (e: MessageEvent) => {
       if (e.data?.type === '__SOFT_RELOAD__') {
         if (htmlWithErrorCapture) {
-          console.info('[HMR] Soft reload: remounting iframe via Blob URL');
+          console.info('[HMR] Soft reload: remounting iframe via srcDoc update');
           setIframeKey(k => k + 1);
         }
       }
@@ -696,10 +688,10 @@ window.addEventListener('message', function(e) {
             errorTimestampsRef.current = [];
             attachListener();
             // Restore LKG
-            if (iframeRef.current && html) {
+            if (iframeRef.current && previewDocumentHtml) {
               const sid = newSessionId();
               sessionIdRef.current = sid;
-              iframeRef.current.srcdoc = injectSessionId(html, sid);
+              iframeRef.current.srcdoc = injectSessionId(previewDocumentHtml, sid);
             }
           }, 5000);
 
@@ -748,7 +740,7 @@ window.addEventListener('message', function(e) {
       window.removeEventListener('message', handler);
       listenerAttachedRef.current = false;
     };
-  }, [onAutoFixError, isGenerating, html, crashPageHtml, detachListener, attachListener, newSessionId, injectSessionId]);
+  }, [onAutoFixError, isGenerating, previewDocumentHtml, crashPageHtml, detachListener, attachListener, newSessionId, injectSessionId]);
 
   useEffect(() => {
     if (!htmlWithErrorCapture) {
@@ -759,8 +751,8 @@ window.addEventListener('message', function(e) {
     setErrors([]); setCurrentUrl('/'); setUrlHistory(['/']); setHistoryIndex(0);
     // Phase 36: Reset scroll position on new build
     if (iframeRef.current?.contentWindow) iframeRef.current.contentWindow.scrollTo(0, 0);
-    // Blob URL handles rendering — just log for diagnostics
-    console.info('[PreviewPanel] HTML updated for Blob URL rendering', {
+    // srcDoc handles rendering — just log for diagnostics
+    console.info('[PreviewPanel] HTML updated for srcDoc rendering', {
       htmlLength: htmlWithErrorCapture.length,
       hasDoctype: /<!doctype|<html/i.test(htmlWithErrorCapture),
     });
@@ -1007,7 +999,7 @@ window.addEventListener('message', function(e) {
 
       {/* Preview */}
       <div className="flex-1 min-h-0 flex items-stretch justify-center">
-        {htmlWithErrorCapture ? (
+        {previewDocumentHtml ? (
           <div
             className="h-full transition-all duration-300 mx-auto w-full relative"
             style={{
@@ -1019,7 +1011,7 @@ window.addEventListener('message', function(e) {
               ref={iframeRef as React.RefObject<HTMLIFrameElement>}
               key={`iframe-${iframeKey}-${refreshKey ?? 0}`}
               title="App Preview"
-              src={previewBlobUrl || undefined}
+              srcDoc={previewDocumentHtml}
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
               className="w-full h-full border-0 bg-white"
               style={{ colorScheme: 'light' }}
