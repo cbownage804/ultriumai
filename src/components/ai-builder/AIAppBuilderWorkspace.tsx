@@ -929,13 +929,14 @@ export function AIAppBuilderWorkspace() {
         // triggers the CompilationBridge compilation effect. Calling forceCompile
         // at 200ms aborts the in-flight Vite request and causes blank previews.
 
-        // Safety net: if CompilationBridge hasn't produced HTML after 20s
+        // Safety net: if CompilationBridge hasn't produced HTML after 70s
+        // Must be longer than the full compile chain (Vite 20s + Worker 20s + Edge 15s = 55s)
         setTimeout(() => {
           if (!stableHTMLRef.current && !pendingValidationFixRef.current && !validationFixInFlightRef.current && !repairInFlightRef.current && !awaitingRepairJobStartRef.current && !isCompilingRef.current) {
-            console.warn('[handleBgComplete] Safety net: stableHTML still null 20s after merge (no active compile flag) — forcing compile');
+            console.warn('[handleBgComplete] Safety net: stableHTML still null 70s after merge (no active compile flag) — forcing compile');
             forceCompileRef.current?.();
           }
-        }, 20_000);
+        }, 70_000);
 
         // Auto-switch to preview
         if (rightTabRef.current !== 'preview' && rightTabRef.current !== 'split') {
