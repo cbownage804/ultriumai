@@ -614,7 +614,7 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
   let inEditBlock = false;
   let sawEnd = false;
 
-  const END_RE = /^\s*===END===\s*$/;
+  const END_RE = OUTPUT_END_DELIMITER;
 
   // Phase 24: Normalize file paths — strip leading ./ and /, collapse //
   const normalizePath = (p: string): string => p.replace(/\\/g, '/').replace(/^(\.\.\/)+/g, '').replace(/^\.\//, '').replace(/^\//, '').replace(/\/\//g, '/').trim();
