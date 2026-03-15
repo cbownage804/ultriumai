@@ -421,7 +421,7 @@ async function transpileFile(file: ProjectFile, moduleMap: Map<string, ProjectFi
     registration.push(`__modules['${file.path}']['${name}'] = typeof ${name} !== 'undefined' ? ${name} : undefined;`);
   }
 
-  return { code: `/* === ${file.path} === */\n(function() {\n${code}\n${registration.join('\n')}\n})();`, externalPackages: Array.from(usedExternalPackages) };
+  return { code: `/* === ${file.path} === */\n(function() {\ntry {\n${code}\n${registration.join('\n')}\n} catch(__moduleErr) { console.error('[Module Error] ${file.path}:', __moduleErr.message); }\n})();`, externalPackages: Array.from(usedExternalPackages) };
 }
 
 // ── Dependency Sort ──
