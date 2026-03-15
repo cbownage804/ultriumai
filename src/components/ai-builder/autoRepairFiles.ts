@@ -153,7 +153,7 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
  * Designed to be conservative (avoids uppercase tags to prevent TS generic false-positives).
  */
 function fixJsxTagBalance(content: string): { content: string; fixed: boolean; description: string } {
-  const tokenRegex = /<\/>|<>|<\/[a-z][a-z0-9]*\s*>|<[a-z][a-z0-9]*\b[^>]*>/gi;
+  const tokenRegex = /<\/>|<>|<\/[a-z][a-z0-9]*\s*>|<[a-z][a-z0-9]*\b[^>]*>/g;
   const voidTags = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
   const stack: Array<{ tag: string; isFragment: boolean }> = [];
 
@@ -188,6 +188,17 @@ function fixJsxTagBalance(content: string): { content: string; fixed: boolean; d
         if (!top.isFragment && top.tag === closeTag) {
           stack.pop();
           output += token;
+        } else if (stack.some(s => !s.isFragment && s.tag === closeTag)) {
+          // Close any unclosed inner tags first, then keep the current close token.
+          while (stack.length > 0) {
+            const current = stack[stack.length - 1];
+            if (!current.isFragment && current.tag === closeTag) break;
+            const popped = stack.pop()!;
+            output += popped.isFragment ? '</>' : `</${popped.tag}>`;
+            fixed = true;
+          }
+          if (stack.length > 0) stack.pop();
+          output += token;
         } else {
           const expected = stack.pop()!;
           output += expected.isFragment ? '</>' : `</${expected.tag}>`;
@@ -197,7 +208,7 @@ function fixJsxTagBalance(content: string): { content: string; fixed: boolean; d
         fixed = true;
       }
     } else {
-      const openTagName = (token.match(/^<([a-z][a-z0-9]*)\b/i)?.[1] || '').toLowerCase();
+      const openTagName = (token.match(/^<([a-z][a-z0-9]*)\b/)?.[1] || '').toLowerCase();
       const selfClosing = /\/\s*>$/.test(token);
       if (!selfClosing && openTagName && !voidTags.has(openTagName)) {
         stack.push({ tag: openTagName, isFragment: false });
