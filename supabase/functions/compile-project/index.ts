@@ -458,7 +458,12 @@ function rewriteExternalImport(
   usedExternal.add(specifier);
   const parts: string[] = [];
   if (defaultImport) {
-    parts.push(`var ${defaultImport} = (window.${importVar} || {}).default || window.${importVar} || {};`);
+    const isLikelyComponent = /^[A-Z]/.test(defaultImport);
+    if (isLikelyComponent) {
+      parts.push(`var ${defaultImport} = window.__safeComponent((window.${importVar} || {}).default || window.${importVar}, '${defaultImport}');`);
+    } else {
+      parts.push(`var ${defaultImport} = (window.${importVar} || {}).default || window.${importVar} || {};`);
+    }
   }
   if (namedImports) {
     const destructure = parseNamedImports(namedImports)
