@@ -247,7 +247,7 @@ async function transpileFile(file: ProjectFile, moduleMap: Map<string, ProjectFi
         .map((n: string) => n.trim().replace(/^type\s+/, ''))
         .filter((n: string) => n.length > 0)
         .join(', ');
-      return `import { ${cleaned} }`;
+      return cleaned.length > 0 ? `import { ${cleaned} }` : '';
     }
   );
 
