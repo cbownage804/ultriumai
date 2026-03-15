@@ -951,8 +951,11 @@ export function AIAppBuilderWorkspace() {
         );
         dedupeToast('success', `Build complete — ${totalChanges} files updated`, { duration: 5000 });
       } else {
-        // DO NOT COMMIT — stage for repair
-        console.warn('[handleBgComplete] Validation errors in generated output — staging for repair', valErrors.length);
+        // Commit files even with validation errors so isGoldenProject becomes false
+        // (prevents "Live Preview" placeholder from showing instead of error/retry UI).
+        // The repair pipeline will fix issues in a follow-up pass.
+        setFiles(mergedFiles);
+        console.warn('[handleBgComplete] Validation errors in generated output — committed files, staging for repair', valErrors.length);
         const errorSummary = valErrors.map(e => `${e.file}: ${e.message}`).join('\n');
         pendingValidationFixRef.current = { errorSummary, files: mergedFiles };
         setRepairTrigger(t => t + 1); // Force repair effect to re-evaluate
@@ -983,7 +986,11 @@ export function AIAppBuilderWorkspace() {
             awaitingRepairJobStartRef.current = false;
             repairAttemptRef.current = 0;
             pendingFilesRef.current = null;
-            // Terminal state — keep LKG files, show Repair Failed UI
+            // Terminal state — commit staged files so isGoldenProject becomes false,
+            // then show Repair Failed UI with error state
+            if (pending.files && pending.files.length > 0) {
+              setFiles(pending.files);
+            }
             setRepairFailed(true);
             setRepairErrors(
               pending.errorSummary.split('\n').slice(0, 3).map(line => {
@@ -993,6 +1000,12 @@ export function AIAppBuilderWorkspace() {
                   : { file: 'unknown', message: line };
               })
             );
+            // Restore error state — CompilationBridge may have reset to 'idle' during repair generation
+            setCompileStateRaw('error');
+            setCompileError({
+              message: 'Auto-repair failed — click Retry or Discard',
+              errors: pending.errorSummary.split('\n').slice(0, 3),
+            });
             setIsGeneratingOverride(false);
             // Resolve any pending sendMessage promise
             if (repairActiveJobIdRef.current) {
