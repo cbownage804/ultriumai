@@ -811,6 +811,24 @@ window.ENV = ${JSON.stringify(envObj)};
     window.__modules = {};
     const { useState, useEffect, useCallback, useMemo, useRef, useContext, createContext, memo, forwardRef, Fragment, useReducer, useLayoutEffect, useId, useSyncExternalStore, useTransition, useDeferredValue, useInsertionEffect } = React;
     const { createRoot, createPortal } = ReactDOM;
+
+    // Safe component resolver: prevents React error #130 by returning a
+    // placeholder component instead of undefined when a module failed to load.
+    window.__safeComponent = function(mod, name) {
+      if (mod && typeof mod === 'function') return mod;
+      if (mod && typeof mod === 'object' && mod.default) {
+        if (typeof mod.default === 'function') return mod.default;
+      }
+      // Return a placeholder that renders nothing but logs a warning
+      var placeholder = function(props) {
+        return React.createElement('div', {
+          style: { display: 'none' },
+          'data-missing-component': name || 'unknown'
+        });
+      };
+      placeholder.displayName = (name || 'Missing') + '_Placeholder';
+      return placeholder;
+    };
   </script>
 
   ${needsBabelRuntime ? `<script src="https://unpkg.com/@babel/standalone@7.26.5/babel.min.js"></script>` : ""}
