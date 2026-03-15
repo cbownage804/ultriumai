@@ -149,6 +149,83 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
 }
 
 /**
+ * Fix JSX tag balance for lowercase HTML tags + fragments.
+ * Designed to be conservative (avoids uppercase tags to prevent TS generic false-positives).
+ */
+function fixJsxTagBalance(content: string): { content: string; fixed: boolean; description: string } {
+  const tokenRegex = /<\/>|<>|<\/[a-z][a-z0-9]*\s*>|<[a-z][a-z0-9]*\b[^>]*>/gi;
+  const voidTags = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
+  const stack: Array<{ tag: string; isFragment: boolean }> = [];
+
+  let fixed = false;
+  let cursor = 0;
+  let output = '';
+  let tokenMatch: RegExpExecArray | null;
+
+  while ((tokenMatch = tokenRegex.exec(content)) !== null) {
+    const token = tokenMatch[0];
+    const start = tokenMatch.index;
+    output += content.slice(cursor, start);
+
+    if (token === '<>') {
+      stack.push({ tag: '', isFragment: true });
+      output += token;
+    } else if (token === '</>') {
+      if (stack.length > 0 && stack[stack.length - 1].isFragment) {
+        stack.pop();
+        output += token;
+      } else if (stack.length > 0) {
+        const top = stack.pop()!;
+        output += top.isFragment ? '</>' : `</${top.tag}>`;
+        fixed = true;
+      } else {
+        fixed = true;
+      }
+    } else if (token.startsWith('</')) {
+      const closeTag = token.slice(2, -1).trim().toLowerCase();
+      if (stack.length > 0) {
+        const top = stack[stack.length - 1];
+        if (!top.isFragment && top.tag === closeTag) {
+          stack.pop();
+          output += token;
+        } else {
+          const expected = stack.pop()!;
+          output += expected.isFragment ? '</>' : `</${expected.tag}>`;
+          fixed = true;
+        }
+      } else {
+        fixed = true;
+      }
+    } else {
+      const openTagName = (token.match(/^<([a-z][a-z0-9]*)\b/i)?.[1] || '').toLowerCase();
+      const selfClosing = /\/\s*>$/.test(token);
+      if (!selfClosing && openTagName && !voidTags.has(openTagName)) {
+        stack.push({ tag: openTagName, isFragment: false });
+      }
+      output += token;
+    }
+
+    cursor = start + token.length;
+  }
+
+  output += content.slice(cursor);
+
+  if (stack.length > 0) {
+    fixed = true;
+    for (let i = stack.length - 1; i >= 0; i--) {
+      const tag = stack[i];
+      output += tag.isFragment ? '</>' : `</${tag.tag}>`;
+    }
+  }
+
+  return {
+    content: output,
+    fixed,
+    description: fixed ? 'fixed JSX tag balance (mismatched/missing closers)' : '',
+  };
+}
+
+/**
  * Fix unbalanced brackets by appending missing closers.
  */
 function fixBracketBalance(content: string): { content: string; fixed: boolean; description: string } {
