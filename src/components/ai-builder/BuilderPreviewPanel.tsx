@@ -70,9 +70,13 @@ interface BuilderPreviewPanelProps {
   onResetToGolden?: () => void;
 }
 /**
- * Externalize ALL inline <script> blocks into JS Blob URLs using a
- * JS-aware scanner that finds the real closing </script> tag (ignoring
- * </script> that appear inside JS strings/comments/template literals).
+ * Externalize ONLY risky inline <script> blocks into JS Blob URLs.
+ *
+ * Why selective? Fully externalizing every inline script changes module-base
+ * resolution to blob: URLs, which can break relative imports and produce
+ * a black/blank preview. We now keep normal scripts inline and only
+ * externalize when the script body itself contains a literal "</script"
+ * sequence that would break HTML parsing.
  */
 function externalizeModuleScript(html: string): { html: string; jsBlobUrls: string[] } {
   const jsBlobUrls: string[] = [];
@@ -97,16 +101,11 @@ function externalizeModuleScript(html: string): { html: string; jsBlobUrls: stri
 
     const openTag = html.slice(scriptStart, tagEnd + 1);
     const hasSrc = /\bsrc\s*=\s*['"][^'"]*['"]/i.test(openTag);
-    if (hasSrc) {
-      out += openTag;
-      cursor = tagEnd + 1;
-      continue;
-    }
 
     const contentStart = tagEnd + 1;
     const closeStart = findRealScriptClose(html, contentStart);
     if (closeStart === -1) {
-      // Malformed HTML; pass through remaining content untouched
+      // Malformed HTML; pass through remaining content untouched.
       out += html.slice(scriptStart);
       break;
     }
@@ -118,11 +117,21 @@ function externalizeModuleScript(html: string): { html: string; jsBlobUrls: stri
     }
 
     const scriptBody = html.slice(contentStart, closeStart);
+    const closeTag = html.slice(closeStart, closeEnd + 1);
+
+    // Keep normal scripts inline so module-base URLs remain stable.
+    const isRiskyInlineScript = !hasSrc && /<\/script/i.test(scriptBody);
+    if (!isRiskyInlineScript) {
+      out += openTag + scriptBody + closeTag;
+      cursor = closeEnd + 1;
+      continue;
+    }
+
     const jsBlob = new Blob([scriptBody], { type: 'text/javascript' });
     const jsUrl = URL.createObjectURL(jsBlob);
     jsBlobUrls.push(jsUrl);
 
-    // Preserve existing script attributes (type/nomodule/etc.), just append src
+    // Preserve existing attributes (type/nomodule/etc.), append src.
     let openNoGt = openTag.slice(0, -1).trimEnd();
     if (openNoGt.endsWith('/')) openNoGt = openNoGt.slice(0, -1).trimEnd();
     out += `${openNoGt} src="${jsUrl}"></script>`;
