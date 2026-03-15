@@ -1,53 +1,48 @@
 
 
-## Problem Analysis
+## The Problem
 
-The recurring `SyntaxError: missing } after try block` and `unexpected token: identifier` errors stem from a fundamental architectural flaw in the compilation pipeline:
+The preview panel uses **Sandpack** (CodeSandbox's in-browser bundler) to render previews — not your Vite server. Here's what happens:
 
-1. **The regex-based TypeScript stripper (`stripTypeAnnotations`)** is inherently fragile — it counts braces naively without understanding string literals, template literals, comments, or regex patterns. This corrupts code structure (eating braces, mangling blocks).
-2. **The `new Function('__modules', moduleBody)` wrapper** requires `moduleBody` to be valid JavaScript. When the regex stripper fails to fully strip TypeScript, `new Function` throws a parse error. But worse — when the regex stripper *corrupts* valid code, the `new Function` wrapping itself gets malformed in the output.
-3. **Babel already runs with `['typescript', { isTSX: true }]` preset** in the preview iframe (line 815), making the regex stripper completely redundant.
+1. Your Vite server compiles the project and returns HTML (works correctly)
+2. CompilationBridge receives the HTML and sets `stableHTML` / `compileState = 'success'`
+3. The workspace passes the Vite HTML as `html` prop and the raw files as `previewFiles` to `BuilderPreviewPanel`
+4. **BuilderPreviewPanel ignores the `html` prop entirely** and renders via `SandpackProvider` + `SandpackPreview` instead (line 792-826)
 
-The root cause chain: esbuild WASM fails to load → regex fallback runs → regex corrupts code → `new Function(corrupted)` produces malformed JS → Babel can't parse the outer structure → fatal syntax errors in the preview.
+Sandpack is a separate in-browser bundler from CodeSandbox. It re-compiles everything client-side, which is slower, less reliable, and completely bypasses your Vite server.
 
-## Permanent Fix
+## The Fix
 
-**Dual-path wrapping based on whether esbuild succeeded:**
+Replace the Sandpack rendering path with a direct **srcdoc iframe** that uses the Vite-compiled HTML. The `html` prop (from CompilationBridge/Vite) becomes the single source of truth for the preview.
 
-### When esbuild IS available (current behavior, works fine)
-- esbuild strips TypeScript correctly
-- Code is wrapped in `new Function('__modules', JSON.stringify(moduleBody))` for per-file isolation
-- Babel in preview handles JSX
+### Changes to `src/components/ai-builder/BuilderPreviewPanel.tsx`
 
-### When esbuild is NOT available (the fix)
-- **Skip `stripTypeAnnotations()` entirely** — do not run the regex stripper
-- **Wrap modules in simple IIFEs** instead of `new Function(stringified)`:
-  ```js
-  (function(__modules) {
-    try {
-      // raw code with TypeScript still present
-    } catch(e) { console.error(...); }
-  })(window.__modules);
-  ```
-- **Babel's TypeScript preset** (already configured on line 815) strips all TypeScript syntax correctly in a single pass over the whole code string
-- Runtime errors are still isolated per-file via the try/catch
+1. **Remove `SandpackProvider`/`SandpackPreview`/`SandpackConsole` imports and usage** — the entire block at lines 800-826 gets replaced with an iframe using `srcdoc={htmlWithErrorCapture}`.
 
-### Files to change
+2. **Simplify rendering logic** (line 792):
+   - If `htmlWithErrorCapture` exists (valid Vite output) → render the srcdoc iframe
+   - If generating/compiling → show `SkeletonPreview`
+   - Otherwise → show the "Live Preview" placeholder
 
-**`src/workers/compiler.worker.ts`** — two changes:
+3. **Keep all existing iframe infrastructure** — the error capture injection, session IDs, hot-patching, navigation interception, health checks — all of that already exists in the component and works with srcdoc iframes. It's just not being reached because Sandpack takes priority.
 
-1. **Lines 265-277**: When `useEsbuild` is false (or esbuild fails for a specific file), skip `stripTypeAnnotations()` entirely instead of calling it as fallback.
+4. **Remove `previewFiles` and `previewDependencies` props** from the component interface since they're no longer needed.
 
-2. **Line 463**: Pass `useEsbuild` into the wrapping logic. When esbuild was used, keep the current `new Function` approach (TypeScript is already stripped, safe to parse as JS). When esbuild was NOT used, emit a simple IIFE with the raw code inline so Babel can transform it.
+### Changes to `src/components/ai-builder/AIAppBuilderWorkspace.tsx`
 
-### Why this is permanent
+1. **Remove `buildSandpackFileMap`**, `extractDependencies`, `previewFiles` state, `lastKnownGoodPreviewFilesRef`, and the `previewFilesForRender` computation — all Sandpack-specific infrastructure.
 
-- Eliminates the regex TypeScript stripper from the runtime path entirely (it becomes dead code when esbuild is unavailable)
-- Babel is a production-grade TypeScript parser — no edge cases with brace counting, string literals, template literals, or comments
-- Each module remains isolated in its own IIFE with try/catch for runtime errors
-- No behavioral change when esbuild works (the common path)
+2. **Remove `previewFiles` and `previewDependencies` from all `BuilderPreviewPanel` call sites** (mobile, split, preview-only layouts).
 
-### Trade-off
+3. **Keep the `isGoldenProject` check** for showing the placeholder vs the compiled preview.
 
-If the AI generates genuinely broken JavaScript (not TypeScript-related), a syntax error in one module will cause Babel's whole-file transform to fail. This is the same current behavior (line 815 already does a single Babel transform on all code). Per-file Babel transforms could be added later as an enhancement but are not needed for this fix.
+### Resulting rendering flow
+
+```text
+User prompt → AI generates files → CompilationBridge sends to Vite server
+→ Vite returns compiled HTML → stableHTML set → compileState = 'success'
+→ BuilderPreviewPanel receives html prop → renders in srcdoc iframe
+```
+
+No Sandpack. No client-side re-bundling. One path: Vite server output → iframe.
 

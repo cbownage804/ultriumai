@@ -262,18 +262,20 @@ async function transpileFile(file: ProjectFile, moduleMap: Map<string, ProjectFi
     }
   );
 
+  let tsStripped = false; // tracks whether TypeScript was successfully stripped
   if (file.path.endsWith('.tsx') || file.path.endsWith('.ts')) {
     if (useEsbuild) {
       try {
         code = await esbuildStripTypes(code, file.path.endsWith('.tsx'));
+        tsStripped = true;
       } catch (e: any) {
-        // Fallback to regex if esbuild fails on this file
-        console.warn(`[CompilerWorker] esbuild failed for ${file.path}, using regex:`, e.message);
-        code = stripTypeAnnotations(code);
+        // Do NOT fall back to regex — it corrupts code structure.
+        // Leave TypeScript in; Babel's TypeScript preset in the preview will handle it.
+        console.warn(`[CompilerWorker] esbuild failed for ${file.path}, deferring to Babel:`, e.message);
       }
-    } else {
-      code = stripTypeAnnotations(code);
     }
+    // When esbuild is unavailable: skip stripTypeAnnotations entirely.
+    // Babel's TypeScript preset (configured in the preview HTML) handles it correctly.
   }
 
   const parseRuntimeNamedImports = (rawNamedImports?: string): Array<{ orig: string; alias?: string }> => {
@@ -458,9 +460,19 @@ async function transpileFile(file: ProjectFile, moduleMap: Map<string, ProjectFi
       .join(', ');
     return cleaned ? `${decl} { ${cleaned} }` : `/* stripped type-only destructuring */`;
   });
-  // Use new Function to isolate parsing — if the body has syntax errors,
-  // it throws at construction time rather than breaking the outer try/catch structure.
-  const wrapped = `/* === ${file.path} === */\n(function() {\n  var __fn;\n  try { __fn = new Function('__modules', ${JSON.stringify(moduleBody)}); } catch(__parseErr) { console.error('[Parse Error] ${file.path}:', __parseErr.message); return; }\n  try { __fn(window.__modules); } catch(__runErr) { console.error('[Runtime Error] ${file.path}:', __runErr.message); }\n})();`;
+  let wrapped: string;
+  if (tsStripped) {
+    // TypeScript was stripped (by esbuild) — safe to use new Function for isolation.
+    // Escape </ sequences to prevent premature </script> termination in srcdoc.
+    const safeBody = JSON.stringify(moduleBody).replace(/<\//g, '<\\/');
+    wrapped = `/* === ${file.path} === */\n(function() {\n  var __fn;\n  try { __fn = new Function('__modules', ${safeBody}); } catch(__parseErr) { console.error('[Parse Error] ${file.path}:', __parseErr.message); return; }\n  try { __fn(window.__modules); } catch(__runErr) { console.error('[Runtime Error] ${file.path}:', __runErr.message); }\n})();`;
+  } else {
+    // TypeScript NOT stripped — use inline IIFE so Babel's TypeScript preset in
+    // the preview can transform it in a single pass. new Function would fail on TS syntax.
+    // Escape </ sequences to prevent premature </script> termination in srcdoc.
+    const safeBody = moduleBody.replace(/<\//g, '<\\/');
+    wrapped = `/* === ${file.path} === */\n(function(__modules) {\n  try {\n${safeBody}\n  } catch(__runErr) { console.error('[Runtime Error] ${file.path}:', __runErr.message); }\n})(window.__modules);`;
+  }
   return { code: wrapped, externalPackages: Array.from(usedExternalPackages) };
 }
 
