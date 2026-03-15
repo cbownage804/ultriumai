@@ -751,8 +751,8 @@ window.addEventListener('message', function(e) {
     setErrors([]); setCurrentUrl('/'); setUrlHistory(['/']); setHistoryIndex(0);
     // Phase 36: Reset scroll position on new build
     if (iframeRef.current?.contentWindow) iframeRef.current.contentWindow.scrollTo(0, 0);
-    // Blob URL handles rendering — just log for diagnostics
-    console.info('[PreviewPanel] HTML updated for Blob URL rendering', {
+    // srcDoc handles rendering — just log for diagnostics
+    console.info('[PreviewPanel] HTML updated for srcDoc rendering', {
       htmlLength: htmlWithErrorCapture.length,
       hasDoctype: /<!doctype|<html/i.test(htmlWithErrorCapture),
     });
