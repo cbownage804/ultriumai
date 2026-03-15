@@ -460,9 +460,19 @@ async function transpileFile(file: ProjectFile, moduleMap: Map<string, ProjectFi
       .join(', ');
     return cleaned ? `${decl} { ${cleaned} }` : `/* stripped type-only destructuring */`;
   });
-  // Use new Function to isolate parsing — if the body has syntax errors,
-  // it throws at construction time rather than breaking the outer try/catch structure.
-  const wrapped = `/* === ${file.path} === */\n(function() {\n  var __fn;\n  try { __fn = new Function('__modules', ${JSON.stringify(moduleBody)}); } catch(__parseErr) { console.error('[Parse Error] ${file.path}:', __parseErr.message); return; }\n  try { __fn(window.__modules); } catch(__runErr) { console.error('[Runtime Error] ${file.path}:', __runErr.message); }\n})();`;
+  let wrapped: string;
+  if (tsStripped) {
+    // TypeScript was stripped (by esbuild) — safe to use new Function for isolation.
+    // Escape </ sequences to prevent premature </script> termination in srcdoc.
+    const safeBody = JSON.stringify(moduleBody).replace(/<\//g, '<\\/');
+    wrapped = `/* === ${file.path} === */\n(function() {\n  var __fn;\n  try { __fn = new Function('__modules', ${safeBody}); } catch(__parseErr) { console.error('[Parse Error] ${file.path}:', __parseErr.message); return; }\n  try { __fn(window.__modules); } catch(__runErr) { console.error('[Runtime Error] ${file.path}:', __runErr.message); }\n})();`;
+  } else {
+    // TypeScript NOT stripped — use inline IIFE so Babel's TypeScript preset in
+    // the preview can transform it in a single pass. new Function would fail on TS syntax.
+    // Escape </ sequences to prevent premature </script> termination in srcdoc.
+    const safeBody = moduleBody.replace(/<\//g, '<\\/');
+    wrapped = `/* === ${file.path} === */\n(function(__modules) {\n  try {\n${safeBody}\n  } catch(__runErr) { console.error('[Runtime Error] ${file.path}:', __runErr.message); }\n})(window.__modules);`;
+  }
   return { code: wrapped, externalPackages: Array.from(usedExternalPackages) };
 }
 
