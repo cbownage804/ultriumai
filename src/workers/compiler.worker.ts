@@ -262,18 +262,20 @@ async function transpileFile(file: ProjectFile, moduleMap: Map<string, ProjectFi
     }
   );
 
+  let tsStripped = false; // tracks whether TypeScript was successfully stripped
   if (file.path.endsWith('.tsx') || file.path.endsWith('.ts')) {
     if (useEsbuild) {
       try {
         code = await esbuildStripTypes(code, file.path.endsWith('.tsx'));
+        tsStripped = true;
       } catch (e: any) {
-        // Fallback to regex if esbuild fails on this file
-        console.warn(`[CompilerWorker] esbuild failed for ${file.path}, using regex:`, e.message);
-        code = stripTypeAnnotations(code);
+        // Do NOT fall back to regex — it corrupts code structure.
+        // Leave TypeScript in; Babel's TypeScript preset in the preview will handle it.
+        console.warn(`[CompilerWorker] esbuild failed for ${file.path}, deferring to Babel:`, e.message);
       }
-    } else {
-      code = stripTypeAnnotations(code);
     }
+    // When esbuild is unavailable: skip stripTypeAnnotations entirely.
+    // Babel's TypeScript preset (configured in the preview HTML) handles it correctly.
   }
 
   const parseRuntimeNamedImports = (rawNamedImports?: string): Array<{ orig: string; alias?: string }> => {
