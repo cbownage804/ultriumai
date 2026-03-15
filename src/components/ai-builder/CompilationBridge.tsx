@@ -156,6 +156,10 @@ export function CompilationBridge({
   // Gap 5 HMR: track when a soft reload should be used instead of iframe remount
   const softReloadPendingRef = useRef(false);
   const goldenIdleAppliedRef = useRef(false);
+  // Once generation has started at least once, never force golden idle again.
+  // This prevents valid compile errors (from failed generations) from being cleared
+  // back to idle + placeholder when files are still golden/default.
+  const hasEverGeneratedRef = useRef(false);
 
   // ── LKG sessionStorage persistence ──
   const LKG_STORAGE_KEY = 'ai-builder-lkg-preview';
