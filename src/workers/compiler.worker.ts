@@ -425,7 +425,7 @@ async function transpileFile(file: ProjectFile, moduleMap: Map<string, ProjectFi
   const moduleBody = code + '\n' + registration.join('\n');
   // Use new Function to isolate parsing — if the body has syntax errors,
   // it throws at construction time rather than breaking the outer try/catch structure.
-  const wrapped = `/* === ${file.path} === */\n(function() {\n  var __fn;\n  try { __fn = new Function('__modules', ${JSON.stringify(moduleBody)}); } catch(__parseErr) { console.error('[Parse Error] ${file.path}:', __parseErr.message); return; }\n  try { __fn(__modules); } catch(__runErr) { console.error('[Runtime Error] ${file.path}:', __runErr.message); }\n})();`;
+  const wrapped = `/* === ${file.path} === */\n(function() {\n  var __fn;\n  try { __fn = new Function('__modules', ${JSON.stringify(moduleBody)}); } catch(__parseErr) { console.error('[Parse Error] ${file.path}:', __parseErr.message); return; }\n  try { __fn(window.__modules); } catch(__runErr) { console.error('[Runtime Error] ${file.path}:', __runErr.message); }\n})();`;
   return { code: wrapped, externalPackages: Array.from(usedExternalPackages) };
 }
 
