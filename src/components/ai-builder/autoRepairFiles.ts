@@ -94,6 +94,70 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
         changed = true;
         repairs.push(`${f.path}: replaced class= with className=`);
       }
+
+      // ── 6b. Fix mismatched JSX closing tags ──
+      // Detects <tagA ...>...</tagB> mismatches using a simple stack approach.
+      // Only fixes non-component (lowercase) HTML tags to avoid false positives.
+      const tagStack: Array<{ tag: string; closePos: number }> = [];
+      const openTagRegex = /<([a-z][a-z0-9]*)\b[^/>]*(?<!\/)>/gi;
+      const closeTagRegex = /<\/([a-z][a-z0-9]*)\s*>/gi;
+      
+      // Build ordered list of open and close tags with positions
+      const tagEvents: Array<{ type: 'open' | 'close'; tag: string; start: number; end: number; fullMatch: string }> = [];
+      
+      let tagMatch: RegExpExecArray | null;
+      while ((tagMatch = openTagRegex.exec(content)) !== null) {
+        // Skip self-closing and void elements
+        const full = tagMatch[0];
+        if (full.endsWith('/>')) continue;
+        tagEvents.push({ type: 'open', tag: tagMatch[1].toLowerCase(), start: tagMatch.index, end: tagMatch.index + full.length, fullMatch: full });
+      }
+      while ((tagMatch = closeTagRegex.exec(content)) !== null) {
+        tagEvents.push({ type: 'close', tag: tagMatch[1].toLowerCase(), start: tagMatch.index, end: tagMatch.index + tagMatch[0].length, fullMatch: tagMatch[0] });
+      }
+      
+      tagEvents.sort((a, b) => a.start - b.start);
+      
+      // Simple stack-based mismatch detection
+      const mismatchFixes: Array<{ from: string; to: string; pos: number }> = [];
+      const stack: Array<{ tag: string; pos: number }> = [];
+      
+      for (const evt of tagEvents) {
+        if (evt.type === 'open') {
+          // Skip void elements that don't need closing
+          const voidTags = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
+          if (!voidTags.has(evt.tag)) {
+            stack.push({ tag: evt.tag, pos: evt.start });
+          }
+        } else {
+          // Close tag — find matching open tag
+          if (stack.length > 0) {
+            const top = stack[stack.length - 1];
+            if (top.tag === evt.tag) {
+              stack.pop();
+            } else {
+              // Mismatch: close tag doesn't match top of stack
+              // Fix the close tag to match the open tag
+              mismatchFixes.push({
+                from: evt.fullMatch,
+                to: `</${top.tag}>`,
+                pos: evt.start,
+              });
+              stack.pop();
+            }
+          }
+        }
+      }
+      
+      // Apply fixes in reverse order to preserve positions
+      if (mismatchFixes.length > 0 && mismatchFixes.length <= 5) {
+        mismatchFixes.sort((a, b) => b.pos - a.pos);
+        for (const fix of mismatchFixes) {
+          content = content.substring(0, fix.pos) + fix.to + content.substring(fix.pos + fix.from.length);
+          changed = true;
+          repairs.push(`${f.path}: fixed mismatched JSX closing tag ${fix.from} → ${fix.to}`);
+        }
+      }
     }
 
     // ── 7. Fix broken import paths (missing extension or ./) ──
