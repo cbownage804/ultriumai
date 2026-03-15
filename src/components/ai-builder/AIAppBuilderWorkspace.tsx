@@ -983,7 +983,11 @@ export function AIAppBuilderWorkspace() {
             awaitingRepairJobStartRef.current = false;
             repairAttemptRef.current = 0;
             pendingFilesRef.current = null;
-            // Terminal state — keep LKG files, show Repair Failed UI
+            // Terminal state — commit staged files so isGoldenProject becomes false,
+            // then show Repair Failed UI with error state
+            if (pending.files && pending.files.length > 0) {
+              setFiles(pending.files);
+            }
             setRepairFailed(true);
             setRepairErrors(
               pending.errorSummary.split('\n').slice(0, 3).map(line => {
@@ -993,6 +997,12 @@ export function AIAppBuilderWorkspace() {
                   : { file: 'unknown', message: line };
               })
             );
+            // Restore error state — CompilationBridge may have reset to 'idle' during repair generation
+            setCompileStateRaw('error');
+            setCompileError({
+              message: 'Auto-repair failed — click Retry or Discard',
+              errors: pending.errorSummary.split('\n').slice(0, 3),
+            });
             setIsGeneratingOverride(false);
             // Resolve any pending sendMessage promise
             if (repairActiveJobIdRef.current) {
