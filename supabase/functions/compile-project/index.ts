@@ -478,7 +478,15 @@ function rewriteLocalImport(
   const moduleKey = resolveSpecifier(specifier, moduleMap);
   const parts: string[] = [];
   if (defaultImport) {
-    parts.push(`const ${defaultImport} = __modules['${moduleKey}']?.default || __modules['${moduleKey}'];`);
+    // Use __safeComponent for default imports — these are usually React components.
+    // If the module failed to parse/register, this returns a placeholder instead of
+    // undefined, preventing React error #130.
+    const isLikelyComponent = /^[A-Z]/.test(defaultImport);
+    if (isLikelyComponent) {
+      parts.push(`const ${defaultImport} = window.__safeComponent(__modules['${moduleKey}']?.default || __modules['${moduleKey}'], '${defaultImport}');`);
+    } else {
+      parts.push(`const ${defaultImport} = __modules['${moduleKey}']?.default || __modules['${moduleKey}'] || {};`);
+    }
   }
   if (namedImports) {
     const destructure = parseNamedImports(namedImports)
