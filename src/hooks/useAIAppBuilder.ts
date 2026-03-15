@@ -376,6 +376,7 @@ const BUILDER_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-app-bu
 const FILE_DELIMITER = /^\s*===FILE:\s*(.+?)===\s*$/;
 const DELETE_DELIMITER = /^\s*===DELETE:\s*(.+?)===\s*$/;
 const EDIT_DELIMITER = /^\s*===EDIT:\s*(.+?)===\s*$/;
+const OUTPUT_END_DELIMITER = /^\s*===END===\s*$/;
 const HUNK_HEADER = /^@@\s*(\d+)-(\d+)\s*@@$/;
 const UNIFIED_HUNK_HEADER = /^@@\s*-(\d+)(?:,(\d+))?\s*\+(\d+)(?:,(\d+))?\s*@@/;
 // AI model format: @@oldStart,oldCount +newStart,newCount @@ (no leading -)
