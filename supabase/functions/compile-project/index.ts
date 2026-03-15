@@ -370,8 +370,21 @@ function rewriteImports(
     registration.push(`__modules['${alias.replace(/\.(tsx?|jsx?)$/, "")}'] = __modules['${filePath}'];`);
   }
 
+  // Build module code + registration as a single string, then isolate parse/runtime failures.
+  let moduleBody = code + "\n" + registration.join("\n");
+
+  // Strip any lingering TS type-only entries from destructuring that survive transforms.
+  moduleBody = moduleBody.replace(/\b(var|const|let)\s*\{([^}]+)\}/g, (_m, decl, names) => {
+    const cleaned = names
+      .split(",")
+      .map((n: string) => n.trim())
+      .filter((n: string) => n.length > 0 && !/^type\s+/.test(n))
+      .join(", ");
+    return cleaned ? `${decl} { ${cleaned} }` : `/* stripped type-only destructuring */`;
+  });
+
   return {
-    code: `/* === ${filePath} === */\n(function() {\ntry {\n${code}\n${registration.join("\n")}\n} catch(__e) { console.error('[Module ${filePath}]', __e.message); }\n})();`,
+    code: `/* === ${filePath} === */\n(function() {\n  var __fn;\n  try { __fn = new Function('__modules', ${JSON.stringify(moduleBody)}); } catch(__parseErr) { console.error('[Parse Error] ${filePath}:', __parseErr.message); return; }\n  try { __fn(window.__modules); } catch(__runErr) { console.error('[Runtime Error] ${filePath}:', __runErr.message); }\n})();`,
     externalPackages: Array.from(usedExternalPackages),
   };
 }
@@ -385,10 +398,17 @@ function resolveSpecifier(specifier: string, moduleMap: Map<string, ProjectFile>
 }
 
 function parseNamedImports(raw: string): { orig: string; alias: string }[] {
-  return raw.split(",").map((n) => {
-    const [orig, alias] = n.trim().split(/\s+as\s+/);
-    return { orig: orig.trim(), alias: (alias || orig).trim() };
-  });
+  return raw
+    .split(",")
+    .map((n) => n.trim())
+    .filter((n) => n.length > 0)
+    // Drop TS type-only imports: `type Foo`, `type Foo as Bar`
+    .filter((n) => !/^type\s+/.test(n))
+    .map((n) => {
+      const [orig, alias] = n.split(/\s+as\s+/);
+      return { orig: orig.trim(), alias: (alias || orig).trim() };
+    })
+    .filter(({ orig }) => /^[A-Za-z_$][\w$]*$/.test(orig));
 }
 
 function rewriteReactImport(defaultImport: string | undefined, namedImports: string | undefined): string {
