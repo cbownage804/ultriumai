@@ -3254,11 +3254,12 @@ export function AIAppBuilderWorkspace() {
   const hasFiles = project.files.length > 0;
   const isGoldenProject = !hasUserGeneratedFiles(project.files);
 
-  // Fresh/golden projects should never inherit stale compile state from previous runs.
-  // Guard: only reset if compile state is NOT 'compiling' — prevents aborting in-flight compiles.
+  // Fresh/golden projects should never inherit stale *non-error* compile state.
+  // Preserve explicit error state so failed generations don't fall back to the empty placeholder.
   useEffect(() => {
     if (!isGoldenProject || isGenerating || isCompiling) return;
     if (compileState === 'compiling') return; // Don't interfere with active compilation
+    if (compileState === 'error') return; // Keep error visible until user retries/resets
     if (compileState !== 'idle' || compileError) {
       setIsCompiling(false);
       setCompileStateRaw('idle');

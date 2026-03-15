@@ -421,10 +421,17 @@ export function CompilationBridge({
   // IMPORTANT: Do NOT abort if a compilation is already in flight — this effect can fire
   // during the brief window between file commit and compile start, causing "Aborted" errors.
   useEffect(() => {
-    if (isGenerating || !isGoldenProject) {
+    if (isGenerating) {
+      hasEverGeneratedRef.current = true;
       goldenIdleAppliedRef.current = false;
       return;
     }
+    if (!isGoldenProject) {
+      goldenIdleAppliedRef.current = false;
+      return;
+    }
+    // After at least one generation attempt, preserve downstream error states.
+    if (hasEverGeneratedRef.current) return;
     if (goldenIdleAppliedRef.current) return;
     // Guard: if a compile is running, don't interfere
     if (compilationInFlightRef.current) return;
