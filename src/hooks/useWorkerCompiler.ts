@@ -61,8 +61,8 @@ function getSharedWorkerSafe(): Worker {
 // ── Health check cache ──
 let lastHealthCheck: { ok: boolean; ts: number } | null = null;
 const HEALTH_CACHE_TTL_MS = 30_000;
-const DEFAULT_WORKER_REQUEST_TIMEOUT_MS = 35_000;
-const EDGE_FALLBACK_TIMEOUT_MS = 20_000;
+const DEFAULT_WORKER_REQUEST_TIMEOUT_MS = 20_000; // Reduced from 35s — must fit within CompilationBridge's 60s budget (Vite 20s + Worker 20s + Edge 15s = 55s)
+const EDGE_FALLBACK_TIMEOUT_MS = 15_000; // Reduced from 20s — last-resort tier, keep tight
 
 async function isSandboxHealthy(): Promise<boolean> {
   // Return cached result if fresh
