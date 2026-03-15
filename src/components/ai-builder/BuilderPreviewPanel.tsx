@@ -688,10 +688,10 @@ window.addEventListener('message', function(e) {
             errorTimestampsRef.current = [];
             attachListener();
             // Restore LKG
-            if (iframeRef.current && html) {
+            if (iframeRef.current && previewDocumentHtml) {
               const sid = newSessionId();
               sessionIdRef.current = sid;
-              iframeRef.current.srcdoc = injectSessionId(html, sid);
+              iframeRef.current.srcdoc = injectSessionId(previewDocumentHtml, sid);
             }
           }, 5000);
 
