@@ -3220,10 +3220,10 @@ export function AIAppBuilderWorkspace() {
     if (prevGenForFallbackRef.current && !isGenerating && project.files.length > 0) {
       const timer = setTimeout(() => {
         if (!stableHTMLRef.current && project.files.length > 0 && !pendingValidationFixRef.current && !validationFixInFlightRef.current && !repairInFlightRef.current && !awaitingRepairJobStartRef.current && !isCompilingRef.current) {
-          console.warn('[Workspace] Safety net: stableHTML still null 15s after generation (no active compile flag) — forcing compile');
+          console.warn('[Workspace] Safety net: stableHTML still null 65s after generation (no active compile flag) — forcing compile');
           forceCompileRef.current?.();
         }
-      }, 15_000);
+      }, 65_000);
       prevGenForFallbackRef.current = isGenerating;
       return () => clearTimeout(timer);
     }
