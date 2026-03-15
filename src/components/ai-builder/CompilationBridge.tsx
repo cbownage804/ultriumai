@@ -610,8 +610,12 @@ export function CompilationBridge({
           const looksLikeViteDev = /\/@vite\/client|import\.meta\.hot\b|__vite_plugin_react_preamble_installed__/.test(result);
           if (looksLikeViteDev) {
             console.warn('[CompilationBridge] BUILD GATED: dev client detected in output');
+            if (!stableHTMLRef.current || !isPreviewValid(stableHTMLRef.current)) {
+              setLiveCompiledHTML(ERROR_FALLBACK_HTML);
+              setStableHTML(ERROR_FALLBACK_HTML);
+            }
             transitionCompileState('error', { message: 'Dev client detected in output', errors: ['Compiled output contains Vite dev/HMR client'] });
-            return; // Keep LKG
+            return; // Keep LKG when available
           }
 
           // ── Fail-closed preview gate ──
