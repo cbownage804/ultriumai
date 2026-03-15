@@ -931,8 +931,8 @@ export function AIAppBuilderWorkspace() {
 
         // Safety net: if CompilationBridge hasn't produced HTML after 20s
         setTimeout(() => {
-          if (!stableHTMLRef.current && !pendingValidationFixRef.current && !validationFixInFlightRef.current && !repairInFlightRef.current && !awaitingRepairJobStartRef.current && !isCompilingRef.current && compileStateRef.current !== 'compiling') {
-            console.warn('[handleBgComplete] Safety net: stableHTML still null 20s after merge (and not compiling) — forcing compile');
+          if (!stableHTMLRef.current && !pendingValidationFixRef.current && !validationFixInFlightRef.current && !repairInFlightRef.current && !awaitingRepairJobStartRef.current && !isCompilingRef.current) {
+            console.warn('[handleBgComplete] Safety net: stableHTML still null 20s after merge (no active compile flag) — forcing compile');
             forceCompileRef.current?.();
           }
         }, 20_000);
@@ -3206,8 +3206,8 @@ export function AIAppBuilderWorkspace() {
   useEffect(() => {
     if (prevGenForFallbackRef.current && !isGenerating && project.files.length > 0) {
       const timer = setTimeout(() => {
-        if (!stableHTMLRef.current && project.files.length > 0 && !pendingValidationFixRef.current && !validationFixInFlightRef.current && !repairInFlightRef.current && !awaitingRepairJobStartRef.current && !isCompilingRef.current && compileStateRef.current !== 'compiling') {
-          console.warn('[Workspace] Safety net: stableHTML still null 15s after generation (and not compiling) — forcing compile');
+        if (!stableHTMLRef.current && project.files.length > 0 && !pendingValidationFixRef.current && !validationFixInFlightRef.current && !repairInFlightRef.current && !awaitingRepairJobStartRef.current && !isCompilingRef.current) {
+          console.warn('[Workspace] Safety net: stableHTML still null 15s after generation (no active compile flag) — forcing compile');
           forceCompileRef.current?.();
         }
       }, 15_000);

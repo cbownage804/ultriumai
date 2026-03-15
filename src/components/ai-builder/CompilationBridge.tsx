@@ -527,10 +527,9 @@ export function CompilationBridge({
             // Preserve last-known-good preview — don't overwrite
             return;
           }
-          // No LKG: show validating placeholder so preview is never blank
-          // Render-only: show fallback in iframe WITHOUT updating stableHTMLRef or calling onStableHTML
-          setStableHTMLLocal(VALIDATING_FALLBACK_HTML);
-          console.info('[CompilationBridge] Showing validation fallback (render-only)', {
+          // No LKG: promote validating fallback so parent preview never goes blank.
+          setStableHTML(VALIDATING_FALLBACK_HTML);
+          console.info('[CompilationBridge] Showing validation fallback', {
             htmlLength: VALIDATING_FALLBACK_HTML.length,
             stableHTMLRef: stableHTMLRef.current ? 'truthy' : 'null',
           });
@@ -611,8 +610,12 @@ export function CompilationBridge({
           const looksLikeViteDev = /\/@vite\/client|import\.meta\.hot\b|__vite_plugin_react_preamble_installed__/.test(result);
           if (looksLikeViteDev) {
             console.warn('[CompilationBridge] BUILD GATED: dev client detected in output');
+            if (!stableHTMLRef.current || !isPreviewValid(stableHTMLRef.current)) {
+              setLiveCompiledHTML(ERROR_FALLBACK_HTML);
+              setStableHTML(ERROR_FALLBACK_HTML);
+            }
             transitionCompileState('error', { message: 'Dev client detected in output', errors: ['Compiled output contains Vite dev/HMR client'] });
-            return; // Keep LKG
+            return; // Keep LKG when available
           }
 
           // ── Fail-closed preview gate ──
@@ -621,6 +624,10 @@ export function CompilationBridge({
 
           if (hasIncomplete) {
             console.warn('[CompilationBridge] BUILD GATED: incomplete_files');
+            if (!stableHTMLRef.current || !isPreviewValid(stableHTMLRef.current)) {
+              setLiveCompiledHTML(ERROR_FALLBACK_HTML);
+              setStableHTML(ERROR_FALLBACK_HTML);
+            }
             transitionCompileState('error', { message: 'Incomplete files detected', errors: ['One or more files are incomplete (stream truncated)'] });
           } else if (isPreviewValid(result)) {
             // ── Preview Success Contract: only promote valid HTML ──
@@ -639,13 +646,17 @@ export function CompilationBridge({
             }
             window.postMessage({ type: '__PREVIEW_READY__', source: 'compilation-bridge' }, '*');
           } else {
-            // Compiled but invalid HTML — keep LKG, report error
+            // Compiled but invalid HTML — keep LKG when present, otherwise show fallback HTML.
             console.warn('[CompilationBridge] ❌ Compile produced invalid preview HTML — keeping LKG', previewDebugSummary(result));
             const summary = previewDebugSummary(result);
             const reasons: string[] = [];
             if (!summary.hasDoctype) reasons.push('Missing <!DOCTYPE> or <html> tag');
             if (!summary.hasRoot) reasons.push('Missing <div id="root"> mount point');
             if (summary.isFallback) reasons.push('Output contains error/fallback sentinel');
+            if (!stableHTMLRef.current || !isPreviewValid(stableHTMLRef.current)) {
+              setLiveCompiledHTML(ERROR_FALLBACK_HTML);
+              setStableHTML(ERROR_FALLBACK_HTML);
+            }
             transitionCompileState('error', { message: 'Invalid preview HTML', errors: reasons.length ? reasons : ['Compiled HTML failed validation'] });
           }
         } else {
