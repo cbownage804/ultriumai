@@ -740,7 +740,7 @@ window.addEventListener('message', function(e) {
       window.removeEventListener('message', handler);
       listenerAttachedRef.current = false;
     };
-  }, [onAutoFixError, isGenerating, html, crashPageHtml, detachListener, attachListener, newSessionId, injectSessionId]);
+  }, [onAutoFixError, isGenerating, previewDocumentHtml, crashPageHtml, detachListener, attachListener, newSessionId, injectSessionId]);
 
   useEffect(() => {
     if (!htmlWithErrorCapture) {
