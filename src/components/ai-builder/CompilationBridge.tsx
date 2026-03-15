@@ -527,10 +527,9 @@ export function CompilationBridge({
             // Preserve last-known-good preview — don't overwrite
             return;
           }
-          // No LKG: show validating placeholder so preview is never blank
-          // Render-only: show fallback in iframe WITHOUT updating stableHTMLRef or calling onStableHTML
-          setStableHTMLLocal(VALIDATING_FALLBACK_HTML);
-          console.info('[CompilationBridge] Showing validation fallback (render-only)', {
+          // No LKG: promote validating fallback so parent preview never goes blank.
+          setStableHTML(VALIDATING_FALLBACK_HTML);
+          console.info('[CompilationBridge] Showing validation fallback', {
             htmlLength: VALIDATING_FALLBACK_HTML.length,
             stableHTMLRef: stableHTMLRef.current ? 'truthy' : 'null',
           });
