@@ -458,7 +458,12 @@ function rewriteExternalImport(
   usedExternal.add(specifier);
   const parts: string[] = [];
   if (defaultImport) {
-    parts.push(`var ${defaultImport} = (window.${importVar} || {}).default || window.${importVar} || {};`);
+    const isLikelyComponent = /^[A-Z]/.test(defaultImport);
+    if (isLikelyComponent) {
+      parts.push(`var ${defaultImport} = window.__safeComponent((window.${importVar} || {}).default || window.${importVar}, '${defaultImport}');`);
+    } else {
+      parts.push(`var ${defaultImport} = (window.${importVar} || {}).default || window.${importVar} || {};`);
+    }
   }
   if (namedImports) {
     const destructure = parseNamedImports(namedImports)
@@ -478,7 +483,15 @@ function rewriteLocalImport(
   const moduleKey = resolveSpecifier(specifier, moduleMap);
   const parts: string[] = [];
   if (defaultImport) {
-    parts.push(`const ${defaultImport} = __modules['${moduleKey}']?.default || __modules['${moduleKey}'];`);
+    // Use __safeComponent for default imports — these are usually React components.
+    // If the module failed to parse/register, this returns a placeholder instead of
+    // undefined, preventing React error #130.
+    const isLikelyComponent = /^[A-Z]/.test(defaultImport);
+    if (isLikelyComponent) {
+      parts.push(`const ${defaultImport} = window.__safeComponent(__modules['${moduleKey}']?.default || __modules['${moduleKey}'], '${defaultImport}');`);
+    } else {
+      parts.push(`const ${defaultImport} = __modules['${moduleKey}']?.default || __modules['${moduleKey}'] || {};`);
+    }
   }
   if (namedImports) {
     const destructure = parseNamedImports(namedImports)
@@ -811,6 +824,24 @@ window.ENV = ${JSON.stringify(envObj)};
     window.__modules = {};
     const { useState, useEffect, useCallback, useMemo, useRef, useContext, createContext, memo, forwardRef, Fragment, useReducer, useLayoutEffect, useId, useSyncExternalStore, useTransition, useDeferredValue, useInsertionEffect } = React;
     const { createRoot, createPortal } = ReactDOM;
+
+    // Safe component resolver: prevents React error #130 by returning a
+    // placeholder component instead of undefined when a module failed to load.
+    window.__safeComponent = function(mod, name) {
+      if (mod && typeof mod === 'function') return mod;
+      if (mod && typeof mod === 'object' && mod.default) {
+        if (typeof mod.default === 'function') return mod.default;
+      }
+      // Return a placeholder that renders nothing but logs a warning
+      var placeholder = function(props) {
+        return React.createElement('div', {
+          style: { display: 'none' },
+          'data-missing-component': name || 'unknown'
+        });
+      };
+      placeholder.displayName = (name || 'Missing') + '_Placeholder';
+      return placeholder;
+    };
   </script>
 
   ${needsBabelRuntime ? `<script src="https://unpkg.com/@babel/standalone@7.26.5/babel.min.js"></script>` : ""}
