@@ -61,6 +61,8 @@ function getSharedWorkerSafe(): Worker {
 // ── Health check cache ──
 let lastHealthCheck: { ok: boolean; ts: number } | null = null;
 const HEALTH_CACHE_TTL_MS = 30_000;
+const DEFAULT_WORKER_REQUEST_TIMEOUT_MS = 35_000;
+const EDGE_FALLBACK_TIMEOUT_MS = 20_000;
 
 async function isSandboxHealthy(): Promise<boolean> {
   // Return cached result if fresh
