@@ -421,7 +421,12 @@ async function transpileFile(file: ProjectFile, moduleMap: Map<string, ProjectFi
     registration.push(`__modules['${file.path}']['${name}'] = typeof ${name} !== 'undefined' ? ${name} : undefined;`);
   }
 
-  return { code: `/* === ${file.path} === */\n(function() {\ntry {\n${code}\n${registration.join('\n')}\n} catch(__moduleErr) { console.error('[Module Error] ${file.path}:', __moduleErr.message); }\n})();`, externalPackages: Array.from(usedExternalPackages) };
+  // Build module code + registration as a single string, then wrap safely
+  const moduleBody = code + '\n' + registration.join('\n');
+  // Use new Function to isolate parsing — if the body has syntax errors,
+  // it throws at construction time rather than breaking the outer try/catch structure.
+  const wrapped = `/* === ${file.path} === */\n(function() {\n  var __fn;\n  try { __fn = new Function('__modules', ${JSON.stringify(moduleBody)}); } catch(__parseErr) { console.error('[Parse Error] ${file.path}:', __parseErr.message); return; }\n  try { __fn(window.__modules); } catch(__runErr) { console.error('[Runtime Error] ${file.path}:', __runErr.message); }\n})();`;
+  return { code: wrapped, externalPackages: Array.from(usedExternalPackages) };
 }
 
 // ── Dependency Sort ──
