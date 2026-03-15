@@ -76,6 +76,25 @@ async function isSandboxHealthy(): Promise<boolean> {
   return true;
 }
 
+function hasUnmappedBareImportsInModuleScripts(html: string): boolean {
+  const hasImportMap = /<script\b[^>]*type\s*=\s*["']importmap["'][^>]*>/i.test(html);
+  if (hasImportMap) return false;
+
+  const moduleScriptRegex = /<script\b[^>]*type\s*=\s*["']module["'][^>]*>([\s\S]*?)<\/script>/gi;
+  const staticBareImportRegex = /\b(?:import|export)\s+(?:[^'"]*?\s+from\s+)?['"]([^'"./][^'"]*)['"]/;
+  const dynamicBareImportRegex = /\bimport\s*\(\s*['"]([^'"./][^'"]*)['"]\s*\)/;
+
+  let match: RegExpExecArray | null;
+  while ((match = moduleScriptRegex.exec(html)) !== null) {
+    const moduleCode = match[1] || '';
+    if (staticBareImportRegex.test(moduleCode) || dynamicBareImportRegex.test(moduleCode)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 // ── Vite Sandbox compilation (true Vite on Droplet) ──
 async function compileViaViteSandbox(
   files: ProjectFile[],
@@ -119,6 +138,10 @@ async function compileViaViteSandbox(
 
   if (!data || !data.html) {
     throw new Error('Vite sandbox returned empty result');
+  }
+
+  if (hasUnmappedBareImportsInModuleScripts(data.html)) {
+    throw new Error('Vite sandbox returned unresolved bare imports — falling back');
   }
 
   console.info('[ViteSandbox] ✅ Compiled via real Vite in', Date.now() - t0, 'ms, HTML:', data.html.length, 'chars');
