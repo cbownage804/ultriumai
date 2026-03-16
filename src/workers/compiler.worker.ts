@@ -823,7 +823,7 @@ window.ENV = ${JSON.stringify(envObj)};
     ${transpiledChunks.join('\n\n')}
 
     ${mountScript}
-      `).replace(/<\//g, '<\\/')};
+      `).replace(/<\/script>/gi, '<\\/script>')};
       var transformed = Babel.transform(code, {
         presets: ['react', ['typescript', { isTSX: true, allExtensions: true }]],
         filename: 'app.tsx',
