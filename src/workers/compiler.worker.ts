@@ -469,8 +469,8 @@ async function transpileFile(file: ProjectFile, moduleMap: Map<string, ProjectFi
   } else {
     // TypeScript NOT stripped — use inline IIFE so Babel's TypeScript preset in
     // the preview can transform it in a single pass. new Function would fail on TS syntax.
-    // Escape </ sequences to prevent premature </script> termination in srcdoc.
-    const safeBody = moduleBody.replace(/<\//g, '<\\/');
+    // Only escape literal </script> sequences; escaping all </ breaks JSX closing tags.
+    const safeBody = moduleBody.replace(/<\/script>/gi, '<\\/script>');
     wrapped = `/* === ${file.path} === */\n(function(__modules) {\n  try {\n${safeBody}\n  } catch(__runErr) { console.error('[Runtime Error] ${file.path}:', __runErr.message); }\n})(window.__modules);`;
   }
   return { code: wrapped, externalPackages: Array.from(usedExternalPackages) };
