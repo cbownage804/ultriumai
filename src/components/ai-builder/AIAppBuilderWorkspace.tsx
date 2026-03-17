@@ -1375,7 +1375,7 @@ export function AIAppBuilderWorkspace() {
       autoHeal.completeHeal(true);
       console.info('[AutoHeal] ✅ Auto-fix resolved the build error');
     }
-  }, [autoHeal, lkgDiff, project.files]);
+  }, [autoHeal, lkgDiff, project.files, isGenerating, isGeneratingOverride, sendMessage]);
   useEffect(() => {
     isCompilingRef.current = isCompiling;
     compileStateRef.current = compileState;
