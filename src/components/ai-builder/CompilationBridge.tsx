@@ -146,6 +146,22 @@ export function CompilationBridge({
   // ── Dependency cache (skip re-resolution when imports unchanged) ──
   const { checkDependencies, recordBuild: recordDepBuild, resetCache: resetDepCache } = useDependencyCache();
 
+  // ── HMR state preservation (save/restore UI state across reloads) ──
+  const { injectHMRScript, saveState: saveHMRState, restoreState: restoreHMRState } = useHMRStatePreservation();
+  const injectHMRScriptRef = useRef(injectHMRScript);
+  injectHMRScriptRef.current = injectHMRScript;
+
+  // ── Vite-style error overlay (clickable stack traces in preview) ──
+  const { injectErrorOverlay, showOverlay: showErrorOverlay, clearOverlay: clearErrorOverlay } = useViteErrorOverlay();
+  const injectErrorOverlayRef = useRef(injectErrorOverlay);
+  injectErrorOverlayRef.current = injectErrorOverlay;
+
+  // ── CSS hot reload (sub-100ms style injection) ──
+  const { detectCSSOnlyChange, hotInjectCSS, snapshotCSS } = useCSSHotReload();
+
+  // ── Auto dependency resolver (bare import → esm.sh) ──
+  const { resolveImports, injectImportMap, resetResolver: resetDepResolver } = useAutoDepResolver();
+
   // Start monitoring on mount
   useEffect(() => {
     const cleanup = startMonitoring();
