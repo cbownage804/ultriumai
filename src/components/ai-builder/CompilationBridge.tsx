@@ -120,6 +120,28 @@ export function CompilationBridge({
   const injectHealthMonitorRef = useRef(injectHealthMonitor);
   injectHealthMonitorRef.current = injectHealthMonitor;
 
+  // ── Console error forwarding from iframe ──
+  const { injectConsoleForwarding } = useConsoleForwarding((entry) => {
+    if (entry.level === 'error') {
+      console.warn('[ConsoleForward] iframe error:', entry.message);
+    }
+  });
+  const injectConsoleForwardingRef = useRef(injectConsoleForwarding);
+  injectConsoleForwardingRef.current = injectConsoleForwarding;
+
+  // ── TypeScript error softening ──
+  const { softenErrors } = useTypescriptSoftening();
+  const softenErrorsRef = useRef(softenErrors);
+  softenErrorsRef.current = softenErrors;
+
+  // ── Incremental compile cache (HMR-style delta detection) ──
+  const { computeDelta, snapshotBuild: snapshotIncrementalBuild, resetCache: resetIncrementalCache } = useIncrementalCompileCache();
+  const computeDeltaRef = useRef(computeDelta);
+  computeDeltaRef.current = computeDelta;
+
+  // ── Dependency cache (skip re-resolution when imports unchanged) ──
+  const { checkDependencies, recordBuild: recordDepBuild, resetCache: resetDepCache } = useDependencyCache();
+
   // Start monitoring on mount
   useEffect(() => {
     const cleanup = startMonitoring();
