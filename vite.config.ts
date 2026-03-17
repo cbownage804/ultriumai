@@ -34,7 +34,6 @@ export default defineConfig(({ mode }) => ({
     force: true,
   },
   worker: {
-    plugins: () => [],
     format: 'es',
   },
   resolve: {
