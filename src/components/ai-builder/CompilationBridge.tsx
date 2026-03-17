@@ -421,10 +421,17 @@ export function CompilationBridge({
       result = result.replace('</head>', `${injection}</head>`);
     }
 
-    // ── Inject runtime error overlay for friendly crash display ──
+    // ── Inject runtime error overlay + health monitor + console forwarding ──
     if (result) {
       result = injectOverlayRef.current(result);
       result = injectHealthMonitorRef.current(result);
+      result = injectConsoleForwardingRef.current(result);
+    }
+
+    // ── Snapshot caches on success ──
+    if (result) {
+      snapshotIncrementalBuild(currentFiles);
+      recordDepBuild(currentFiles);
     }
 
     return result;
