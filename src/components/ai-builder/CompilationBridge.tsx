@@ -21,6 +21,10 @@ import { useConsoleForwarding } from './useConsoleForwarding';
 import { useTypescriptSoftening } from './useTypescriptSoftening';
 import { useIncrementalCompileCache } from './useIncrementalCompileCache';
 import { useDependencyCache } from './useDependencyCache';
+import { useHMRStatePreservation } from './useHMRStatePreservation';
+import { useViteErrorOverlay } from './useViteErrorOverlay';
+import { useCSSHotReload } from './useCSSHotReload';
+import { useAutoDepResolver } from './useAutoDepResolver';
 
 /** Compile State Machine — single source of truth for compilation phase */
 export type CompileState = 'idle' | 'compiling' | 'success' | 'error';
@@ -141,6 +145,22 @@ export function CompilationBridge({
 
   // ── Dependency cache (skip re-resolution when imports unchanged) ──
   const { checkDependencies, recordBuild: recordDepBuild, resetCache: resetDepCache } = useDependencyCache();
+
+  // ── HMR state preservation (save/restore UI state across reloads) ──
+  const { injectHMRScript, saveState: saveHMRState, restoreState: restoreHMRState } = useHMRStatePreservation();
+  const injectHMRScriptRef = useRef(injectHMRScript);
+  injectHMRScriptRef.current = injectHMRScript;
+
+  // ── Vite-style error overlay (clickable stack traces in preview) ──
+  const { injectErrorOverlay, showOverlay: showErrorOverlay, clearOverlay: clearErrorOverlay } = useViteErrorOverlay();
+  const injectErrorOverlayRef = useRef(injectErrorOverlay);
+  injectErrorOverlayRef.current = injectErrorOverlay;
+
+  // ── CSS hot reload (sub-100ms style injection) ──
+  const { detectCSSOnlyChange, hotInjectCSS, snapshotCSS } = useCSSHotReload();
+
+  // ── Auto dependency resolver (bare import → esm.sh) ──
+  const { resolveImports, injectImportMap, resetResolver: resetDepResolver } = useAutoDepResolver();
 
   // Start monitoring on mount
   useEffect(() => {
@@ -421,17 +441,20 @@ export function CompilationBridge({
       result = result.replace('</head>', `${injection}</head>`);
     }
 
-    // ── Inject runtime error overlay + health monitor + console forwarding ──
+    // ── Inject runtime error overlay + health monitor + console forwarding + HMR + error overlay ──
     if (result) {
       result = injectOverlayRef.current(result);
       result = injectHealthMonitorRef.current(result);
       result = injectConsoleForwardingRef.current(result);
+      result = injectHMRScriptRef.current(result);
+      result = injectErrorOverlayRef.current(result);
     }
 
     // ── Snapshot caches on success ──
     if (result) {
       snapshotIncrementalBuild(currentFiles);
       recordDepBuild(currentFiles);
+      snapshotCSS(currentFiles);
     }
 
     return result;
@@ -542,9 +565,10 @@ export function CompilationBridge({
       goldenIdleAppliedRef.current = false;
       // Clear sessionStorage LKG so stale golden template doesn't persist
       try { sessionStorage.removeItem(LKG_STORAGE_KEY); } catch {}
-      // Reset incremental + dependency caches for fresh generation
+      // Reset incremental + dependency + CSS + dep resolver caches for fresh generation
       resetIncrementalCache();
       resetDepCache();
+      resetDepResolver();
       // Safety: force-clear isCompiling in case it was stuck from previous cycle
       transitionCompileState('idle');
       // Notify parent immediately so preview panel clears
