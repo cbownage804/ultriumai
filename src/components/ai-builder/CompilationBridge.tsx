@@ -20,8 +20,8 @@ export interface CompileErrorInfo {
   errors: string[];
 }
 
-const COMPILE_TIMEOUT_MS = 60_000; // Full compile chain budget (Vite + Worker fallback)
-const COMPILE_SAFETY_TIMEOUT_MS = 70_000; // Hard safety net beyond normal timeout
+const COMPILE_TIMEOUT_MS = 30_000; // Single-path Vite Sandbox budget
+const COMPILE_SAFETY_TIMEOUT_MS = 40_000; // Hard safety net beyond normal timeout
 const COMPILE_HARD_TIMEOUT_MS = COMPILE_TIMEOUT_MS;
 interface CompilationBridgeProps {
   files: ProjectFile[];
@@ -230,9 +230,9 @@ export function CompilationBridge({
     let result: string | null = null;
     const compileT0 = performance.now();
 
-    // ── Always use Vite Sandbox — sole compilation path ──
+    // ── Single path: Vite Sandbox only ──
     try {
-      const BRIDGE_TIMEOUT = 60_000; // Match full compile chain budget (Vite + Worker fallback)
+      const BRIDGE_TIMEOUT = 30_000; // Single-path Vite Sandbox budget
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
       const workerTimeout = new Promise<null>((resolve) => {
         timeoutId = setTimeout(() => {
@@ -270,7 +270,7 @@ export function CompilationBridge({
     // ── Record compile telemetry ──
     const compileDuration = Math.round(performance.now() - compileT0);
     recordCompileRef.current({
-      tier: result ? 'vite' : 'worker',
+      tier: result ? 'vite' : 'vite',
       success: !!result,
       durationMs: compileDuration,
       htmlLength: result?.length || 0,

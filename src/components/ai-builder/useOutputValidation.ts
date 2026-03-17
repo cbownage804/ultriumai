@@ -85,7 +85,7 @@ function validateHTML(file: ProjectFile, issues: ValidationIssue[]) {
   const content = file.content;
 
   // Unclosed tags (simple heuristic)
-  const openTags = (content.match(/<(?!\/|!|br|hr|img|input|meta|link|area|base|col|embed|source|track|wbr)[a-z][a-z0-9]*(?:\s[^>]*)?>(?!.*<\/\1)/gi) || []).length;
+  const openTags = (content.match(/<(?!\/|!|br|hr|img|input|meta|link|area|base|col|embed|source|track|wbr)[a-z][a-z0-9]*(?:\s[^>]*)?>(?!.*<\/[a-z])/gi) || []).length;
   const closeTags = (content.match(/<\/[a-z][a-z0-9]*>/gi) || []).length;
   if (Math.abs(openTags - closeTags) > 3) {
     issues.push({ file: file.path, severity: 'warning', message: `Potential unclosed HTML tags (${openTags} open vs ${closeTags} close)` });

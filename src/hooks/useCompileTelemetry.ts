@@ -3,7 +3,7 @@ import { useCallback, useRef } from 'react';
 export interface CompileTelemetryEntry {
   id: string;
   timestamp: number;
-  tier: 'vite' | 'vite-retry' | 'worker' | 'vanilla';
+  tier: 'vite' | 'vite-retry' | 'vanilla';
   success: boolean;
   durationMs: number;
   htmlLength: number;
@@ -17,7 +17,6 @@ export interface CompileTelemetrySummary {
   successRate: number;
   avgDurationMs: number;
   viteSuccessRate: number;
-  workerFallbackRate: number;
   topFailureReasons: { reason: string; count: number }[];
   last10: CompileTelemetryEntry[];
 }
@@ -65,7 +64,7 @@ export function useCompileTelemetry() {
     if (entries.length === 0) {
       return {
         totalCompiles: 0, successRate: 100, avgDurationMs: 0,
-        viteSuccessRate: 100, workerFallbackRate: 0,
+        viteSuccessRate: 100,
         topFailureReasons: [], last10: [],
       };
     }
@@ -73,7 +72,6 @@ export function useCompileTelemetry() {
     const successes = entries.filter(e => e.success);
     const viteEntries = entries.filter(e => e.tier === 'vite' || e.tier === 'vite-retry');
     const viteSuccesses = viteEntries.filter(e => e.success);
-    const workerEntries = entries.filter(e => e.tier === 'worker');
 
     // Count failure reasons
     const reasonCounts = new Map<string, number>();
@@ -91,7 +89,6 @@ export function useCompileTelemetry() {
       successRate: (successes.length / entries.length) * 100,
       avgDurationMs: entries.reduce((s, e) => s + e.durationMs, 0) / entries.length,
       viteSuccessRate: viteEntries.length > 0 ? (viteSuccesses.length / viteEntries.length) * 100 : 100,
-      workerFallbackRate: entries.length > 0 ? (workerEntries.length / entries.length) * 100 : 0,
       topFailureReasons,
       last10: entries.slice(-10).reverse(),
     };

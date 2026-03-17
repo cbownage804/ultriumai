@@ -82,9 +82,9 @@ export function BuildHealthDashboard({ onClose }: BuildHealthDashboardProps) {
             value={`${(summary?.viteSuccessRate ?? 100).toFixed(0)}%`}
           />
           <StatCard
-            icon={<AlertTriangle className="w-3.5 h-3.5 text-yellow-400" />}
-            label="Worker Fallback"
-            value={`${(summary?.workerFallbackRate ?? 0).toFixed(0)}%`}
+            icon={<CheckCircle className="w-3.5 h-3.5 text-green-400" />}
+            label="Vite Only"
+            value="✓"
           />
         </div>
 
