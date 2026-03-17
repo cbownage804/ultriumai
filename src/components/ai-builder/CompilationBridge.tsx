@@ -454,6 +454,7 @@ export function CompilationBridge({
     if (result) {
       snapshotIncrementalBuild(currentFiles);
       recordDepBuild(currentFiles);
+      snapshotCSS(currentFiles);
     }
 
     return result;
