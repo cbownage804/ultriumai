@@ -283,6 +283,20 @@ export function CompilationBridge({
     let currentFiles = filesRef.current;
     console.info('[CompilationBridge] runCompile — isReact:', isReactProject, 'files:', currentFiles.length);
 
+    // ── Incremental delta detection (HMR-style) ──
+    const delta = computeDeltaRef.current(currentFiles);
+    if (!delta.isFullRebuild && delta.changed.length > 0) {
+      console.info('[CompilationBridge] 🔄 Incremental build:', delta.changed.length, 'changed,', delta.unchangedCount, 'unchanged,', delta.deleted.length, 'deleted');
+    }
+
+    // ── Dependency cache check ──
+    const depCheck = checkDependencies(currentFiles);
+    if (depCheck.cacheHit) {
+      console.info('[CompilationBridge] 📦 Dep cache hit — imports unchanged, reusing warm pool slot');
+    } else if (!delta.isFullRebuild) {
+      console.info('[CompilationBridge] 📦 Dep cache miss —', depCheck.imports.length, 'imports to resolve');
+    }
+
     // ── Auto-repair pass: fix common syntax issues before sending to Vite ──
     const { files: repairedFiles, repairs } = autoRepairFiles(currentFiles);
     if (repairs.length > 0) {
