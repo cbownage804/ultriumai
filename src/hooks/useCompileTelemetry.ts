@@ -72,7 +72,6 @@ export function useCompileTelemetry() {
     const successes = entries.filter(e => e.success);
     const viteEntries = entries.filter(e => e.tier === 'vite' || e.tier === 'vite-retry');
     const viteSuccesses = viteEntries.filter(e => e.success);
-    const workerEntries = entries.filter(e => e.tier === 'worker');
 
     // Count failure reasons
     const reasonCounts = new Map<string, number>();
