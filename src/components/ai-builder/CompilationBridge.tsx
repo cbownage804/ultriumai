@@ -441,11 +441,13 @@ export function CompilationBridge({
       result = result.replace('</head>', `${injection}</head>`);
     }
 
-    // ── Inject runtime error overlay + health monitor + console forwarding ──
+    // ── Inject runtime error overlay + health monitor + console forwarding + HMR + error overlay ──
     if (result) {
       result = injectOverlayRef.current(result);
       result = injectHealthMonitorRef.current(result);
       result = injectConsoleForwardingRef.current(result);
+      result = injectHMRScriptRef.current(result);
+      result = injectErrorOverlayRef.current(result);
     }
 
     // ── Snapshot caches on success ──
