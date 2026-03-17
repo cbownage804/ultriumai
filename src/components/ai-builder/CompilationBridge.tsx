@@ -9,6 +9,8 @@ import { useLivePreviewSync } from '@/hooks/useLivePreviewSync';
 import type { ProjectAsset } from './AssetManager';
 import { isPreviewValid, previewDebugSummary } from './previewValidation';
 import { autoRepairFiles } from './autoRepairFiles';
+import { generateMissingImportStubs } from './generateMissingImportStubs';
+import { scaffoldTailwindConfig } from './scaffoldTailwindConfig';
 import { preCompileValidate } from './preCompileValidation';
 import { parseViteErrors, mergeErrorSources } from './parseViteErrors';
 import type { ParsedViteError } from './parseViteErrors';
