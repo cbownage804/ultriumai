@@ -3,7 +3,7 @@ import { useCallback, useRef } from 'react';
 export interface CompileTelemetryEntry {
   id: string;
   timestamp: number;
-  tier: 'vite' | 'vite-retry' | 'worker' | 'vanilla';
+  tier: 'vite' | 'vite-retry' | 'vanilla';
   success: boolean;
   durationMs: number;
   htmlLength: number;
