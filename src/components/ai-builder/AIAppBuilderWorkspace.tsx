@@ -1351,7 +1351,7 @@ export function AIAppBuilderWorkspace() {
     console.info('[Workspace] compileState →', state, error ? error.message : '');
 
     // ── Auto-heal: on compile error, automatically re-prompt AI to fix ──
-    if (state === 'error' && error && !isGeneratingRef.current) {
+    if (state === 'error' && error && !(isGenerating || isGeneratingOverride)) {
       if (autoHeal.shouldAutoHeal(error.message)) {
         const diffContext = lkgDiff.getErrorContext(project.files, error.message);
         const healPrompt = autoHeal.buildHealPrompt(error.message, error.errors, diffContext);
@@ -1365,7 +1365,7 @@ export function AIAppBuilderWorkspace() {
 
         // Delay slightly to let UI update, then send auto-fix prompt
         setTimeout(() => {
-          sendMessageRef.current?.(healPrompt);
+          sendMessage(healPrompt);
         }, 1500);
       }
     }
