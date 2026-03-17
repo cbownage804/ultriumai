@@ -228,6 +228,18 @@ export function CompilationBridge({
       currentFiles = repairedFiles;
     }
 
+    // ── Pre-compile validation: catch syntax errors instantly (<1ms) ──
+    const preIssues = preCompileValidate(currentFiles);
+    const preErrors = preIssues.filter(i => i.severity === 'error');
+    if (preErrors.length > 0) {
+      console.warn('[CompilationBridge] Pre-compile validation caught', preErrors.length, 'errors:', preErrors.map(e => `${e.file}: ${e.message}`));
+      // Don't send to Vite — fail fast with clear error
+      return null;
+    }
+    if (preIssues.length > 0) {
+      console.info('[CompilationBridge] Pre-compile warnings:', preIssues.map(e => `${e.file}: ${e.message}`));
+    }
+
     let result: string | null = null;
     const compileT0 = performance.now();
 
