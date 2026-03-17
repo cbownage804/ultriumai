@@ -241,11 +241,17 @@ export function CompilationBridge({
     const preErrors = preIssues.filter(i => i.severity === 'error');
     if (preErrors.length > 0) {
       console.warn('[CompilationBridge] Pre-compile validation caught', preErrors.length, 'errors:', preErrors.map(e => `${e.file}: ${e.message}`));
+      // Surface pre-compile errors as annotations
+      const annotations = mergeErrorSources(preErrors, []);
+      onErrorAnnotations?.(annotations);
       // Don't send to Vite — fail fast with clear error
       return null;
     }
     if (preIssues.length > 0) {
       console.info('[CompilationBridge] Pre-compile warnings:', preIssues.map(e => `${e.file}: ${e.message}`));
+      // Surface warnings as annotations too
+      const warnAnnotations = mergeErrorSources(preIssues.filter(i => i.severity === 'warning'), []);
+      if (warnAnnotations.length > 0) onErrorAnnotations?.(warnAnnotations);
     }
 
     let result: string | null = null;
