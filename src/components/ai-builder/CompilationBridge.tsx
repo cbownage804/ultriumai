@@ -25,6 +25,8 @@ import { useHMRStatePreservation } from './useHMRStatePreservation';
 import { useViteErrorOverlay } from './useViteErrorOverlay';
 import { useCSSHotReload } from './useCSSHotReload';
 import { useAutoDepResolver } from './useAutoDepResolver';
+import { useAutoTestGenerator } from './useAutoTestGenerator';
+import { useDeployGate } from './useDeployGate';
 
 /** Compile State Machine — single source of truth for compilation phase */
 export type CompileState = 'idle' | 'compiling' | 'success' | 'error';
@@ -162,6 +164,15 @@ export function CompilationBridge({
   // ── Auto dependency resolver (bare import → esm.sh) ──
   const { resolveImports, injectImportMap, resetResolver: resetDepResolver } = useAutoDepResolver();
 
+  // ── Auto test generator (AI-powered post-build tests) ──
+  const { injectTestHarness, runAutoTests } = useAutoTestGenerator();
+  const injectTestHarnessRef = useRef(injectTestHarness);
+  injectTestHarnessRef.current = injectTestHarness;
+
+  // ── Deploy gate (smoke tests before deploy) ──
+  const { injectSmokeTests, runSmokeTests } = useDeployGate();
+  const injectSmokeTestsRef = useRef(injectSmokeTests);
+  injectSmokeTestsRef.current = injectSmokeTests;
   // Start monitoring on mount
   useEffect(() => {
     const cleanup = startMonitoring();
@@ -441,13 +452,15 @@ export function CompilationBridge({
       result = result.replace('</head>', `${injection}</head>`);
     }
 
-    // ── Inject runtime error overlay + health monitor + console forwarding + HMR + error overlay ──
+    // ── Inject runtime scripts: overlay + health + console + HMR + error overlay + tests + smoke ──
     if (result) {
       result = injectOverlayRef.current(result);
       result = injectHealthMonitorRef.current(result);
       result = injectConsoleForwardingRef.current(result);
       result = injectHMRScriptRef.current(result);
       result = injectErrorOverlayRef.current(result);
+      result = injectTestHarnessRef.current(result);
+      result = injectSmokeTestsRef.current(result);
     }
 
     // ── Snapshot caches on success ──
