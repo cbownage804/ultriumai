@@ -1246,6 +1246,7 @@ export function AIAppBuilderWorkspace() {
   const conflictDetection = useDependencyConflictDetection();
   const fileScaffolding = useSmartFileScaffolding();
   const errorAnnotations = useInlineErrorAnnotations();
+  const lkgDiff = useLKGDiff();
   const promptMemory = usePromptMemory();
   const lighthouseAudit = useLighthouseAudit(buildLog.addEntry);
   const bundleSize = useBundleSizeTracking(buildLog.addEntry);
