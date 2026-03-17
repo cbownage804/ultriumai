@@ -684,6 +684,8 @@ export function CompilationBridge({
             });
             setStableHTML(result);
             transitionCompileState('success');
+            onErrorAnnotations?.([]); // Clear annotations on success
+            onBuildSuccess?.(filesRef.current); // Snapshot for LKG diff
             liveSync.resetSnapshot(filesRef.current);
             if (softReloadPendingRef.current) {
               softReloadPendingRef.current = false;
