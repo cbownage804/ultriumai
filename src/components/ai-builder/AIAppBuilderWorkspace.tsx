@@ -2415,6 +2415,7 @@ export function AIAppBuilderWorkspace() {
     // Reset global auto-fix counters on new user message
     totalFixAttemptsRef.current = 0;
     autoFixInFlightRef.current = false;
+    autoHeal.resetHealState();
 
     // Agent mode: enqueue task and let the auto-process useEffect handle execution
     // Note: mode may have been auto-escalated above, so re-check current value
