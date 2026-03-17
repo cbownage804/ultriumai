@@ -21,6 +21,10 @@ import { useConsoleForwarding } from './useConsoleForwarding';
 import { useTypescriptSoftening } from './useTypescriptSoftening';
 import { useIncrementalCompileCache } from './useIncrementalCompileCache';
 import { useDependencyCache } from './useDependencyCache';
+import { useHMRStatePreservation } from './useHMRStatePreservation';
+import { useViteErrorOverlay } from './useViteErrorOverlay';
+import { useCSSHotReload } from './useCSSHotReload';
+import { useAutoDepResolver } from './useAutoDepResolver';
 
 /** Compile State Machine — single source of truth for compilation phase */
 export type CompileState = 'idle' | 'compiling' | 'success' | 'error';
