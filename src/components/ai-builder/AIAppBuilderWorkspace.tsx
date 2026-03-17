@@ -3427,6 +3427,13 @@ export function AIAppBuilderWorkspace() {
           onForceCompile={handleForceCompile}
           assets={assets}
           validateFiles={outputValidation.validate}
+          onErrorAnnotations={(annotations: ParsedViteError[]) => {
+            errorAnnotations.updateAnnotations(
+              annotations.filter(a => a.severity === 'warning'),
+              annotations.filter(a => a.severity === 'error'),
+            );
+          }}
+          onBuildSuccess={(files) => lkgDiff.saveSnapshot(files)}
         />
       </PanelErrorBoundary>
       <WelcomeOverlay onQuickStart={(prompt) => handleSend(prompt)} />
