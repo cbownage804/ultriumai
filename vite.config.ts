@@ -12,12 +12,6 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react({
       parserConfig(id) {
-        // The worker-window-shim MUST be skipped: it shims `window` for workers,
-        // and if SWC injects React Refresh preamble before the shim runs, it crashes.
-        if (/worker-window-shim/.test(id)) return undefined;
-        // Other worker files: parse as plain TypeScript so SWC strips TS syntax
-        // (interfaces, types) but don't enable TSX to avoid React Refresh injection.
-        if (/\/workers\//.test(id)) return { syntax: 'typescript', tsx: false };
         if (id.endsWith('.tsx')) return { syntax: 'typescript', tsx: true };
         if (id.endsWith('.ts') || id.endsWith('.mts')) return { syntax: 'typescript', tsx: false };
         if (id.endsWith('.jsx') || id.endsWith('.mdx')) return { syntax: 'ecmascript', jsx: true };
