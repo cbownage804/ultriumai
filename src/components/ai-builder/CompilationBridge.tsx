@@ -356,16 +356,24 @@ export function CompilationBridge({
         envVars,
       }).then(compiled => {
         if (compiled.errors.length > 0) {
-          console.warn('[ViteCompiler] Warnings:', compiled.errors);
-          viteCompileErrors = compiled.errors;
-          // Parse and surface Vite errors as inline annotations
+          // ── TypeScript error softening: downgrade non-critical errors ──
+          const { blocking, warnings, shouldBlockPreview } = softenErrorsRef.current(compiled.errors);
+          if (warnings.length > 0) {
+            console.info('[TS-Soften] Downgraded', warnings.length, 'non-critical errors to warnings');
+          }
+          viteCompileErrors = shouldBlockPreview
+            ? blocking.map(e => e.message)
+            : []; // Only surface blocking errors
+          if (warnings.length > 0) {
+            console.warn('[ViteCompiler] Warnings (non-blocking):', warnings.map(w => w.message));
+          }
+          // Surface all as annotations (blocking = error, softened = warning)
           const parsed = parseViteErrors(compiled.errors);
           if (parsed.length > 0) onErrorAnnotations?.(parsed);
         }
         return compiled.html || null;
       }).catch((err: Error) => {
         console.error('[ViteCompiler] Failed:', err.message);
-        // Try to parse error message for file/line info
         const parsed = parseViteErrors([err.message]);
         if (parsed.length > 0) onErrorAnnotations?.(parsed);
         return null;
