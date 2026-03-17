@@ -267,6 +267,7 @@ export function CompilationBridge({
           resolve(null);
         }, BRIDGE_TIMEOUT);
       });
+      let viteCompileErrors: string[] = [];
       const workerResult = compileReactProjectRef.current(currentFiles, {
         supabaseConfig: supabaseConfig || undefined,
         stripeConfig: stripeConfig || undefined,
@@ -274,10 +275,17 @@ export function CompilationBridge({
       }).then(compiled => {
         if (compiled.errors.length > 0) {
           console.warn('[ViteCompiler] Warnings:', compiled.errors);
+          viteCompileErrors = compiled.errors;
+          // Parse and surface Vite errors as inline annotations
+          const parsed = parseViteErrors(compiled.errors);
+          if (parsed.length > 0) onErrorAnnotations?.(parsed);
         }
         return compiled.html || null;
       }).catch((err: Error) => {
         console.error('[ViteCompiler] Failed:', err.message);
+        // Try to parse error message for file/line info
+        const parsed = parseViteErrors([err.message]);
+        if (parsed.length > 0) onErrorAnnotations?.(parsed);
         return null;
       });
 
