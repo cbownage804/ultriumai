@@ -89,7 +89,6 @@ export function useCompileTelemetry() {
       successRate: (successes.length / entries.length) * 100,
       avgDurationMs: entries.reduce((s, e) => s + e.durationMs, 0) / entries.length,
       viteSuccessRate: viteEntries.length > 0 ? (viteSuccesses.length / viteEntries.length) * 100 : 100,
-      workerFallbackRate: entries.length > 0 ? (workerEntries.length / entries.length) * 100 : 0,
       topFailureReasons,
       last10: entries.slice(-10).reverse(),
     };

@@ -230,9 +230,9 @@ export function CompilationBridge({
     let result: string | null = null;
     const compileT0 = performance.now();
 
-    // ── Always use Vite Sandbox — sole compilation path ──
+    // ── Single path: Vite Sandbox only ──
     try {
-      const BRIDGE_TIMEOUT = 60_000; // Match full compile chain budget (Vite + Worker fallback)
+      const BRIDGE_TIMEOUT = 30_000; // Single-path Vite Sandbox budget
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
       const workerTimeout = new Promise<null>((resolve) => {
         timeoutId = setTimeout(() => {
