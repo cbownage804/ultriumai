@@ -9,11 +9,14 @@ import { useLivePreviewSync } from '@/hooks/useLivePreviewSync';
 import type { ProjectAsset } from './AssetManager';
 import { isPreviewValid, previewDebugSummary } from './previewValidation';
 import { autoRepairFiles } from './autoRepairFiles';
+import { generateMissingImportStubs } from './generateMissingImportStubs';
+import { scaffoldTailwindConfig } from './scaffoldTailwindConfig';
 import { preCompileValidate } from './preCompileValidation';
 import { parseViteErrors, mergeErrorSources } from './parseViteErrors';
 import type { ParsedViteError } from './parseViteErrors';
 import { useCompileTelemetry, classifyFailure } from '@/hooks/useCompileTelemetry';
 import { useRuntimeErrorOverlay } from './useRuntimeErrorOverlay';
+import { usePreviewHealthMonitor } from './usePreviewHealthMonitor';
 
 /** Compile State Machine — single source of truth for compilation phase */
 export type CompileState = 'idle' | 'compiling' | 'success' | 'error';
@@ -107,6 +110,31 @@ export function CompilationBridge({
   const { injectOverlay } = useRuntimeErrorOverlay();
   const injectOverlayRef = useRef(injectOverlay);
   injectOverlayRef.current = injectOverlay;
+
+  // ── Preview health monitor ──
+  const { injectHealthMonitor, startMonitoring, onHealthIssue } = usePreviewHealthMonitor();
+  const injectHealthMonitorRef = useRef(injectHealthMonitor);
+  injectHealthMonitorRef.current = injectHealthMonitor;
+
+  // Start monitoring on mount
+  useEffect(() => {
+    const cleanup = startMonitoring();
+    onHealthIssue((issue) => {
+      console.warn('[CompilationBridge] Preview health issue:', issue.type, issue.message);
+      if (issue.type === 'blank_screen') {
+        onCompileStateChangeRef.current?.('error', {
+          message: 'Blank screen detected — app rendered but nothing is visible',
+          errors: [issue.message],
+        });
+      } else if (issue.type === 'infinite_loop') {
+        onCompileStateChangeRef.current?.('error', {
+          message: 'Possible infinite re-render loop detected',
+          errors: [issue.message],
+        });
+      }
+    });
+    return cleanup;
+  }, [startMonitoring, onHealthIssue]);
 
   // Stabilize function refs to prevent effect re-fires
   // ── Compile telemetry ──
@@ -236,6 +264,20 @@ export function CompilationBridge({
       currentFiles = repairedFiles;
     }
 
+    // ── Missing import stub generation: prevent "module not found" failures ──
+    const { files: stubbedFiles, stubs } = generateMissingImportStubs(currentFiles);
+    if (stubs.length > 0) {
+      console.info('[CompilationBridge] Generated', stubs.length, 'import stubs:', stubs);
+      currentFiles = stubbedFiles;
+    }
+
+    // ── Tailwind config auto-scaffolding: inject config when Tailwind classes detected ──
+    const { files: twFiles, scaffolded } = scaffoldTailwindConfig(currentFiles);
+    if (scaffolded.length > 0) {
+      console.info('[CompilationBridge] Scaffolded Tailwind config:', scaffolded);
+      currentFiles = twFiles;
+    }
+
     // ── Pre-compile validation: catch syntax errors instantly (<1ms) ──
     const preIssues = preCompileValidate(currentFiles);
     const preErrors = preIssues.filter(i => i.severity === 'error');
@@ -334,6 +376,7 @@ export function CompilationBridge({
     // ── Inject runtime error overlay for friendly crash display ──
     if (result) {
       result = injectOverlayRef.current(result);
+      result = injectHealthMonitorRef.current(result);
     }
 
     return result;
