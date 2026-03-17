@@ -351,6 +351,7 @@ export function CompilationBridge({
     // ── Inject runtime error overlay for friendly crash display ──
     if (result) {
       result = injectOverlayRef.current(result);
+      result = injectHealthMonitorRef.current(result);
     }
 
     return result;
