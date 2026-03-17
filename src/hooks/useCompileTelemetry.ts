@@ -64,7 +64,7 @@ export function useCompileTelemetry() {
     if (entries.length === 0) {
       return {
         totalCompiles: 0, successRate: 100, avgDurationMs: 0,
-        viteSuccessRate: 100, workerFallbackRate: 0,
+        viteSuccessRate: 100,
         topFailureReasons: [], last10: [],
       };
     }
