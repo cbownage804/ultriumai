@@ -10,6 +10,8 @@ import type { ProjectAsset } from './AssetManager';
 import { isPreviewValid, previewDebugSummary } from './previewValidation';
 import { autoRepairFiles } from './autoRepairFiles';
 import { preCompileValidate } from './preCompileValidation';
+import { parseViteErrors, mergeErrorSources } from './parseViteErrors';
+import type { ParsedViteError } from './parseViteErrors';
 import { useCompileTelemetry, classifyFailure } from '@/hooks/useCompileTelemetry';
 import { useRuntimeErrorOverlay } from './useRuntimeErrorOverlay';
 
