@@ -18,6 +18,22 @@ export interface WorkerCompilerResult {
 }
 
 const VITE_TIMEOUT_MS = 25_000; // Single path — generous but bounded
+const MAX_TRANSIENT_RETRIES = 1; // Retry once on transient failures
+
+function isTransientError(err: Error): boolean {
+  const msg = err.message?.toLowerCase() || '';
+  return (
+    msg.includes('timeout') ||
+    msg.includes('network') ||
+    msg.includes('fetch') ||
+    msg.includes('failed to fetch') ||
+    msg.includes('unavailable') ||
+    msg.includes('502') ||
+    msg.includes('503') ||
+    msg.includes('504') ||
+    msg.includes('econnrefused')
+  );
+}
 
 function hasUnmappedBareImportsInModuleScripts(html: string): boolean {
   const hasImportMap = /<script\b[^>]*type\s*=\s*["']importmap["'][^>]*>/i.test(html);
