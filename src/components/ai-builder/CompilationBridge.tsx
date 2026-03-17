@@ -17,6 +17,10 @@ import type { ParsedViteError } from './parseViteErrors';
 import { useCompileTelemetry, classifyFailure } from '@/hooks/useCompileTelemetry';
 import { useRuntimeErrorOverlay } from './useRuntimeErrorOverlay';
 import { usePreviewHealthMonitor } from './usePreviewHealthMonitor';
+import { useConsoleForwarding } from './useConsoleForwarding';
+import { useTypescriptSoftening } from './useTypescriptSoftening';
+import { useIncrementalCompileCache } from './useIncrementalCompileCache';
+import { useDependencyCache } from './useDependencyCache';
 
 /** Compile State Machine — single source of truth for compilation phase */
 export type CompileState = 'idle' | 'compiling' | 'success' | 'error';
@@ -115,6 +119,28 @@ export function CompilationBridge({
   const { injectHealthMonitor, startMonitoring, onHealthIssue } = usePreviewHealthMonitor();
   const injectHealthMonitorRef = useRef(injectHealthMonitor);
   injectHealthMonitorRef.current = injectHealthMonitor;
+
+  // ── Console error forwarding from iframe ──
+  const { injectConsoleForwarding } = useConsoleForwarding((entry) => {
+    if (entry.level === 'error') {
+      console.warn('[ConsoleForward] iframe error:', entry.message);
+    }
+  });
+  const injectConsoleForwardingRef = useRef(injectConsoleForwarding);
+  injectConsoleForwardingRef.current = injectConsoleForwarding;
+
+  // ── TypeScript error softening ──
+  const { softenErrors } = useTypescriptSoftening();
+  const softenErrorsRef = useRef(softenErrors);
+  softenErrorsRef.current = softenErrors;
+
+  // ── Incremental compile cache (HMR-style delta detection) ──
+  const { computeDelta, snapshotBuild: snapshotIncrementalBuild, resetCache: resetIncrementalCache } = useIncrementalCompileCache();
+  const computeDeltaRef = useRef(computeDelta);
+  computeDeltaRef.current = computeDelta;
+
+  // ── Dependency cache (skip re-resolution when imports unchanged) ──
+  const { checkDependencies, recordBuild: recordDepBuild, resetCache: resetDepCache } = useDependencyCache();
 
   // Start monitoring on mount
   useEffect(() => {
@@ -257,6 +283,20 @@ export function CompilationBridge({
     let currentFiles = filesRef.current;
     console.info('[CompilationBridge] runCompile — isReact:', isReactProject, 'files:', currentFiles.length);
 
+    // ── Incremental delta detection (HMR-style) ──
+    const delta = computeDeltaRef.current(currentFiles);
+    if (!delta.isFullRebuild && delta.changed.length > 0) {
+      console.info('[CompilationBridge] 🔄 Incremental build:', delta.changed.length, 'changed,', delta.unchangedCount, 'unchanged,', delta.deleted.length, 'deleted');
+    }
+
+    // ── Dependency cache check ──
+    const depCheck = checkDependencies(currentFiles);
+    if (depCheck.cacheHit) {
+      console.info('[CompilationBridge] 📦 Dep cache hit — imports unchanged, reusing warm pool slot');
+    } else if (!delta.isFullRebuild) {
+      console.info('[CompilationBridge] 📦 Dep cache miss —', depCheck.imports.length, 'imports to resolve');
+    }
+
     // ── Auto-repair pass: fix common syntax issues before sending to Vite ──
     const { files: repairedFiles, repairs } = autoRepairFiles(currentFiles);
     if (repairs.length > 0) {
@@ -316,16 +356,24 @@ export function CompilationBridge({
         envVars,
       }).then(compiled => {
         if (compiled.errors.length > 0) {
-          console.warn('[ViteCompiler] Warnings:', compiled.errors);
-          viteCompileErrors = compiled.errors;
-          // Parse and surface Vite errors as inline annotations
+          // ── TypeScript error softening: downgrade non-critical errors ──
+          const { blocking, warnings, shouldBlockPreview } = softenErrorsRef.current(compiled.errors);
+          if (warnings.length > 0) {
+            console.info('[TS-Soften] Downgraded', warnings.length, 'non-critical errors to warnings');
+          }
+          viteCompileErrors = shouldBlockPreview
+            ? blocking.map(e => e.message)
+            : []; // Only surface blocking errors
+          if (warnings.length > 0) {
+            console.warn('[ViteCompiler] Warnings (non-blocking):', warnings.map(w => w.message));
+          }
+          // Surface all as annotations (blocking = error, softened = warning)
           const parsed = parseViteErrors(compiled.errors);
           if (parsed.length > 0) onErrorAnnotations?.(parsed);
         }
         return compiled.html || null;
       }).catch((err: Error) => {
         console.error('[ViteCompiler] Failed:', err.message);
-        // Try to parse error message for file/line info
         const parsed = parseViteErrors([err.message]);
         if (parsed.length > 0) onErrorAnnotations?.(parsed);
         return null;
@@ -373,10 +421,17 @@ export function CompilationBridge({
       result = result.replace('</head>', `${injection}</head>`);
     }
 
-    // ── Inject runtime error overlay for friendly crash display ──
+    // ── Inject runtime error overlay + health monitor + console forwarding ──
     if (result) {
       result = injectOverlayRef.current(result);
       result = injectHealthMonitorRef.current(result);
+      result = injectConsoleForwardingRef.current(result);
+    }
+
+    // ── Snapshot caches on success ──
+    if (result) {
+      snapshotIncrementalBuild(currentFiles);
+      recordDepBuild(currentFiles);
     }
 
     return result;
@@ -487,6 +542,9 @@ export function CompilationBridge({
       goldenIdleAppliedRef.current = false;
       // Clear sessionStorage LKG so stale golden template doesn't persist
       try { sessionStorage.removeItem(LKG_STORAGE_KEY); } catch {}
+      // Reset incremental + dependency caches for fresh generation
+      resetIncrementalCache();
+      resetDepCache();
       // Safety: force-clear isCompiling in case it was stuck from previous cycle
       transitionCompileState('idle');
       // Notify parent immediately so preview panel clears
