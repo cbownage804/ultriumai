@@ -270,7 +270,7 @@ export function CompilationBridge({
     // ── Record compile telemetry ──
     const compileDuration = Math.round(performance.now() - compileT0);
     recordCompileRef.current({
-      tier: result ? 'vite' : 'worker',
+      tier: result ? 'vite' : 'vite',
       success: !!result,
       durationMs: compileDuration,
       htmlLength: result?.length || 0,
