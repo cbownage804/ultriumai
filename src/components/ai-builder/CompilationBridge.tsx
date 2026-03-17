@@ -238,6 +238,20 @@ export function CompilationBridge({
       currentFiles = repairedFiles;
     }
 
+    // ── Missing import stub generation: prevent "module not found" failures ──
+    const { files: stubbedFiles, stubs } = generateMissingImportStubs(currentFiles);
+    if (stubs.length > 0) {
+      console.info('[CompilationBridge] Generated', stubs.length, 'import stubs:', stubs);
+      currentFiles = stubbedFiles;
+    }
+
+    // ── Tailwind config auto-scaffolding: inject config when Tailwind classes detected ──
+    const { files: twFiles, scaffolded } = scaffoldTailwindConfig(currentFiles);
+    if (scaffolded.length > 0) {
+      console.info('[CompilationBridge] Scaffolded Tailwind config:', scaffolded);
+      currentFiles = twFiles;
+    }
+
     // ── Pre-compile validation: catch syntax errors instantly (<1ms) ──
     const preIssues = preCompileValidate(currentFiles);
     const preErrors = preIssues.filter(i => i.severity === 'error');
