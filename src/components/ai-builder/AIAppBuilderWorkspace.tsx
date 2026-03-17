@@ -1248,6 +1248,7 @@ export function AIAppBuilderWorkspace() {
   const fileScaffolding = useSmartFileScaffolding();
   const errorAnnotations = useInlineErrorAnnotations();
   const lkgDiff = useLKGDiff();
+  const autoHeal = useAutoHealCompile();
   const promptMemory = usePromptMemory();
   const lighthouseAudit = useLighthouseAudit(buildLog.addEntry);
   const bundleSize = useBundleSizeTracking(buildLog.addEntry);
