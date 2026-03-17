@@ -1349,7 +1349,33 @@ export function AIAppBuilderWorkspace() {
     setCompileStateRaw(state);
     setCompileError(state === 'error' && error ? error : null);
     console.info('[Workspace] compileState →', state, error ? error.message : '');
-  }, []);
+
+    // ── Auto-heal: on compile error, automatically re-prompt AI to fix ──
+    if (state === 'error' && error && !isGeneratingRef.current) {
+      if (autoHeal.shouldAutoHeal(error.message)) {
+        const diffContext = lkgDiff.getErrorContext(project.files, error.message);
+        const healPrompt = autoHeal.buildHealPrompt(error.message, error.errors, diffContext);
+        autoHeal.recordAttempt(error.message);
+
+        console.info('[AutoHeal] Triggering auto-fix attempt', {
+          attempt: autoHeal.getAttempts().length,
+          remaining: autoHeal.attemptsRemaining(),
+          error: error.message,
+        });
+
+        // Delay slightly to let UI update, then send auto-fix prompt
+        setTimeout(() => {
+          sendMessageRef.current?.(healPrompt);
+        }, 1500);
+      }
+    }
+
+    // On success, mark heal as resolved
+    if (state === 'success' && autoHeal.isHealing()) {
+      autoHeal.completeHeal(true);
+      console.info('[AutoHeal] ✅ Auto-fix resolved the build error');
+    }
+  }, [autoHeal, lkgDiff, project.files]);
   useEffect(() => {
     isCompilingRef.current = isCompiling;
     compileStateRef.current = compileState;
