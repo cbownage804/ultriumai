@@ -62,6 +62,8 @@ import { useSelfReviewPass } from './useSelfReviewPass';
 import { useDependencyConflictDetection } from './useDependencyConflictDetection';
 import { useSmartFileScaffolding } from './useSmartFileScaffolding';
 import { useInlineErrorAnnotations } from './useInlineErrorAnnotations';
+import { useLKGDiff } from './useLKGDiff';
+import type { ParsedViteError } from './parseViteErrors';
 import { usePromptMemory } from './usePromptMemory';
 import { useLighthouseAudit } from './useLighthouseAudit';
 import { useBundleSizeTracking } from './useBundleSizeTracking';
@@ -1244,6 +1246,7 @@ export function AIAppBuilderWorkspace() {
   const conflictDetection = useDependencyConflictDetection();
   const fileScaffolding = useSmartFileScaffolding();
   const errorAnnotations = useInlineErrorAnnotations();
+  const lkgDiff = useLKGDiff();
   const promptMemory = usePromptMemory();
   const lighthouseAudit = useLighthouseAudit(buildLog.addEntry);
   const bundleSize = useBundleSizeTracking(buildLog.addEntry);
@@ -3424,6 +3427,13 @@ export function AIAppBuilderWorkspace() {
           onForceCompile={handleForceCompile}
           assets={assets}
           validateFiles={outputValidation.validate}
+          onErrorAnnotations={(annotations: ParsedViteError[]) => {
+            errorAnnotations.updateAnnotations(
+              annotations.filter(a => a.severity === 'warning'),
+              annotations.filter(a => a.severity === 'error'),
+            );
+          }}
+          onBuildSuccess={(files) => lkgDiff.saveSnapshot(files)}
         />
       </PanelErrorBoundary>
       <WelcomeOverlay onQuickStart={(prompt) => handleSend(prompt)} />

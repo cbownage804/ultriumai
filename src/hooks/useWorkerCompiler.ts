@@ -18,6 +18,22 @@ export interface WorkerCompilerResult {
 }
 
 const VITE_TIMEOUT_MS = 25_000; // Single path — generous but bounded
+const MAX_TRANSIENT_RETRIES = 1; // Retry once on transient failures
+
+function isTransientError(err: Error): boolean {
+  const msg = err.message?.toLowerCase() || '';
+  return (
+    msg.includes('timeout') ||
+    msg.includes('network') ||
+    msg.includes('fetch') ||
+    msg.includes('failed to fetch') ||
+    msg.includes('unavailable') ||
+    msg.includes('502') ||
+    msg.includes('503') ||
+    msg.includes('504') ||
+    msg.includes('econnrefused')
+  );
+}
 
 function hasUnmappedBareImportsInModuleScripts(html: string): boolean {
   const hasImportMap = /<script\b[^>]*type\s*=\s*["']importmap["'][^>]*>/i.test(html);
@@ -121,25 +137,44 @@ export function useWorkerCompiler() {
     activeAbortRef.current = ac;
     const { signal } = ac;
 
-    try {
-      console.info('[Compiler] ⏱ Compiling via Vite Sandbox', { fileCount: files.length });
-      const result = await Promise.race([
-        compileViaViteSandbox(files, options, signal),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error(`Vite sandbox timeout (${VITE_TIMEOUT_MS / 1000}s)`)), VITE_TIMEOUT_MS)
-        ),
-      ]);
-      console.info('[Compiler] ✅ Vite Sandbox compiled:', result.html?.length, 'chars');
-      return result;
-    } catch (err: any) {
-      if (signal.aborted && ac !== activeAbortRef.current) {
-        throw new DOMException('Aborted', 'AbortError');
+    let lastError: Error | null = null;
+
+    for (let attempt = 0; attempt <= MAX_TRANSIENT_RETRIES; attempt++) {
+      try {
+        if (attempt > 0) {
+          console.info(`[Compiler] 🔄 Retry attempt ${attempt}/${MAX_TRANSIENT_RETRIES}`);
+          // Brief backoff before retry
+          await new Promise(r => setTimeout(r, 1000 * attempt));
+          if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
+        }
+
+        console.info('[Compiler] ⏱ Compiling via Vite Sandbox', { fileCount: files.length, attempt });
+        const result = await Promise.race([
+          compileViaViteSandbox(files, options, signal),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error(`Vite sandbox timeout (${VITE_TIMEOUT_MS / 1000}s)`)), VITE_TIMEOUT_MS)
+          ),
+        ]);
+        console.info('[Compiler] ✅ Vite Sandbox compiled:', result.html?.length, 'chars');
+        return result;
+      } catch (err: any) {
+        if (signal.aborted && ac !== activeAbortRef.current) {
+          throw new DOMException('Aborted', 'AbortError');
+        }
+        lastError = err instanceof Error ? err : new Error(String(err));
+
+        // Only retry on transient errors
+        if (attempt < MAX_TRANSIENT_RETRIES && isTransientError(lastError)) {
+          console.warn(`[Compiler] ⚠️ Transient failure (attempt ${attempt + 1}):`, lastError.message);
+          continue;
+        }
+        break;
       }
-      // Single path — no fallback, rethrow with clear message
-      const message = err?.message || 'Unknown compilation error';
-      console.error('[Compiler] ❌ Compilation failed:', message);
-      throw new Error(`Compilation failed: ${message}`);
     }
+
+    const message = lastError?.message || 'Unknown compilation error';
+    console.error('[Compiler] ❌ Compilation failed after retries:', message);
+    throw new Error(`Compilation failed: ${message}`);
   }, []);
 
   /** Abort any in-flight compilation */
