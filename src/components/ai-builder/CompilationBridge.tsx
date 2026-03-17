@@ -542,6 +542,9 @@ export function CompilationBridge({
       goldenIdleAppliedRef.current = false;
       // Clear sessionStorage LKG so stale golden template doesn't persist
       try { sessionStorage.removeItem(LKG_STORAGE_KEY); } catch {}
+      // Reset incremental + dependency caches for fresh generation
+      resetIncrementalCache();
+      resetDepCache();
       // Safety: force-clear isCompiling in case it was stuck from previous cycle
       transitionCompileState('idle');
       // Notify parent immediately so preview panel clears
