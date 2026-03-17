@@ -64,6 +64,7 @@ import { useSmartFileScaffolding } from './useSmartFileScaffolding';
 import { useInlineErrorAnnotations } from './useInlineErrorAnnotations';
 import { useLKGDiff } from './useLKGDiff';
 import type { ParsedViteError } from './parseViteErrors';
+import { useAutoHealCompile } from './useAutoHealCompile';
 import { usePromptMemory } from './usePromptMemory';
 import { useLighthouseAudit } from './useLighthouseAudit';
 import { useBundleSizeTracking } from './useBundleSizeTracking';
