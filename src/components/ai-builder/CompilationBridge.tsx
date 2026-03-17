@@ -16,6 +16,7 @@ import { parseViteErrors, mergeErrorSources } from './parseViteErrors';
 import type { ParsedViteError } from './parseViteErrors';
 import { useCompileTelemetry, classifyFailure } from '@/hooks/useCompileTelemetry';
 import { useRuntimeErrorOverlay } from './useRuntimeErrorOverlay';
+import { usePreviewHealthMonitor } from './usePreviewHealthMonitor';
 
 /** Compile State Machine — single source of truth for compilation phase */
 export type CompileState = 'idle' | 'compiling' | 'success' | 'error';
