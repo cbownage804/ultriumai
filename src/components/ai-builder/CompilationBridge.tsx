@@ -111,6 +111,31 @@ export function CompilationBridge({
   const injectOverlayRef = useRef(injectOverlay);
   injectOverlayRef.current = injectOverlay;
 
+  // ── Preview health monitor ──
+  const { injectHealthMonitor, startMonitoring, onHealthIssue } = usePreviewHealthMonitor();
+  const injectHealthMonitorRef = useRef(injectHealthMonitor);
+  injectHealthMonitorRef.current = injectHealthMonitor;
+
+  // Start monitoring on mount
+  useEffect(() => {
+    const cleanup = startMonitoring();
+    onHealthIssue((issue) => {
+      console.warn('[CompilationBridge] Preview health issue:', issue.type, issue.message);
+      if (issue.type === 'blank_screen') {
+        onCompileStateChangeRef.current?.('error', {
+          message: 'Blank screen detected — app rendered but nothing is visible',
+          errors: [issue.message],
+        });
+      } else if (issue.type === 'infinite_loop') {
+        onCompileStateChangeRef.current?.('error', {
+          message: 'Possible infinite re-render loop detected',
+          errors: [issue.message],
+        });
+      }
+    });
+    return cleanup;
+  }, [startMonitoring, onHealthIssue]);
+
   // Stabilize function refs to prevent effect re-fires
   // ── Compile telemetry ──
   const { recordCompile } = useCompileTelemetry();
