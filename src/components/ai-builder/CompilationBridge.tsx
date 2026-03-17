@@ -164,6 +164,15 @@ export function CompilationBridge({
   // ── Auto dependency resolver (bare import → esm.sh) ──
   const { resolveImports, injectImportMap, resetResolver: resetDepResolver } = useAutoDepResolver();
 
+  // ── Auto test generator (AI-powered post-build tests) ──
+  const { injectTestHarness, runAutoTests } = useAutoTestGenerator();
+  const injectTestHarnessRef = useRef(injectTestHarness);
+  injectTestHarnessRef.current = injectTestHarness;
+
+  // ── Deploy gate (smoke tests before deploy) ──
+  const { injectSmokeTests, runSmokeTests } = useDeployGate();
+  const injectSmokeTestsRef = useRef(injectSmokeTests);
+  injectSmokeTestsRef.current = injectSmokeTests;
   // Start monitoring on mount
   useEffect(() => {
     const cleanup = startMonitoring();
