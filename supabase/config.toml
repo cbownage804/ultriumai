@@ -392,9 +392,6 @@ verify_jwt = false
 [functions.detect-registrar]
 verify_jwt = false
 
-# Server-side project compilation (requires auth)
-[functions.compile-project]
-verify_jwt = false
 
 # Vite Sandbox compilation (proxies to Droplet)
 [functions.compile-vite]
