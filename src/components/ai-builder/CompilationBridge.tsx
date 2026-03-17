@@ -17,6 +17,10 @@ import type { ParsedViteError } from './parseViteErrors';
 import { useCompileTelemetry, classifyFailure } from '@/hooks/useCompileTelemetry';
 import { useRuntimeErrorOverlay } from './useRuntimeErrorOverlay';
 import { usePreviewHealthMonitor } from './usePreviewHealthMonitor';
+import { useConsoleForwarding } from './useConsoleForwarding';
+import { useTypescriptSoftening } from './useTypescriptSoftening';
+import { useIncrementalCompileCache } from './useIncrementalCompileCache';
+import { useDependencyCache } from './useDependencyCache';
 
 /** Compile State Machine — single source of truth for compilation phase */
 export type CompileState = 'idle' | 'compiling' | 'success' | 'error';
