@@ -17,7 +17,6 @@ export interface CompileTelemetrySummary {
   successRate: number;
   avgDurationMs: number;
   viteSuccessRate: number;
-  workerFallbackRate: number;
   topFailureReasons: { reason: string; count: number }[];
   last10: CompileTelemetryEntry[];
 }
