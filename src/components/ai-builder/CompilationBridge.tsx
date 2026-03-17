@@ -9,6 +9,7 @@ import { useLivePreviewSync } from '@/hooks/useLivePreviewSync';
 import type { ProjectAsset } from './AssetManager';
 import { isPreviewValid, previewDebugSummary } from './previewValidation';
 import { autoRepairFiles } from './autoRepairFiles';
+import { preCompileValidate } from './preCompileValidation';
 import { useCompileTelemetry, classifyFailure } from '@/hooks/useCompileTelemetry';
 import { useRuntimeErrorOverlay } from './useRuntimeErrorOverlay';
 
