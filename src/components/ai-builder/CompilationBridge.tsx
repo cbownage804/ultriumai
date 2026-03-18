@@ -605,7 +605,10 @@ export function CompilationBridge({
   // ── Reset stableHTML when a new generation starts ──
   const prevIsGeneratingRef = useRef(false);
   useEffect(() => {
-    if (isGenerating && !prevIsGeneratingRef.current) {
+    const wasGenerating = prevIsGeneratingRef.current;
+    prevIsGeneratingRef.current = isGenerating;
+
+    if (isGenerating && !wasGenerating) {
       // Generation STARTING — reset ALL internal state
       abortCompilation(); // Cancel any in-flight network requests to free droplet concurrency
       stableHTMLRef.current = null;
@@ -626,8 +629,12 @@ export function CompilationBridge({
       transitionCompileState('idle');
       // Notify parent immediately so preview panel clears
       onStableHTML(null);
+    } else if (!isGenerating && wasGenerating) {
+      // Generation ENDING — do NOT abort here. The compile effect will start
+      // a fresh compile after debounce. Aborting here would kill it immediately
+      // due to React effect batching (the compile and this effect fire in the same cycle).
+      console.info('[CompilationBridge] Generation ended — compile will start after debounce');
     }
-    prevIsGeneratingRef.current = isGenerating;
   }, [isGenerating]);
 
   // Keep fresh/golden projects in a clean idle state (prevents stale "Compiling..." loops).
@@ -718,7 +725,8 @@ export function CompilationBridge({
     }
 
     // Shorter debounce for incremental edits (50ms) vs initial generation (150ms)
-    const debounceMs = isIncrementalEditRef.current ? 50 : 150;
+    // Use longer debounce after generation ends to avoid race with React effect batching
+    const debounceMs = isIncrementalEditRef.current ? 50 : 300;
     let safetyTimer: ReturnType<typeof setTimeout> | undefined;
     const timer = setTimeout(async () => {
       // Double-check guards after debounce

@@ -52,6 +52,17 @@ export function preCompileValidate(files: ProjectFile[]): PreCompileIssue[] {
       issues.push({ file: file.path, message: `Multiple default exports (${defaultExports})`, severity: 'error' });
     }
 
+    // ── 7. Truncated expression artifacts — stray ')} or ")} at line boundaries ──
+    // These appear when AI output is cut mid-JSX-attribute and crash esbuild internally
+    if (/^['"`]\s*\)\s*[;}]\s*$/m.test(content)) {
+      issues.push({ file: file.path, message: 'Possible truncated expression artifact (stray quote-paren-brace sequence)', severity: 'warning' });
+    }
+
+    // ── 8. Truncated JSX attribute — opening ={ without matching close ──
+    if (hasTruncatedJsxAttribute(content)) {
+      issues.push({ file: file.path, message: 'Truncated JSX attribute expression (opening ={ without close)', severity: 'warning' });
+    }
+
     // ── 6. Import from non-existent relative path ──
     const relativeImports = content.matchAll(/from\s+['"](\.[^'"]+)['"]/g);
     for (const match of relativeImports) {
@@ -170,6 +181,44 @@ function checkJSXErrors(content: string): string | null {
   }
 
   return null;
+}
+
+/**
+ * Detect truncated JSX attribute expressions like `prop={value` without a closing `}`.
+ * This is a common AI truncation artifact that crashes esbuild.
+ */
+function hasTruncatedJsxAttribute(content: string): boolean {
+  // Look for JSX attribute patterns that open an expression but never close it
+  // on the same or next line (simplified heuristic for common cases)
+  const lines = content.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    // Match attr={...  where the brace expression isn't closed on this or next line
+    const attrExprMatch = line.match(/\w+=\{/);
+    if (!attrExprMatch) continue;
+
+    // Count braces from match position to end of this + next line
+    const startIdx = line.indexOf(attrExprMatch[0]) + attrExprMatch[0].length;
+    let remainder = line.slice(startIdx);
+    if (i + 1 < lines.length) remainder += '\n' + lines[i + 1];
+
+    let depth = 1;
+    let inStr: string | null = null;
+    for (let j = 0; j < remainder.length; j++) {
+      const ch = remainder[j];
+      if (inStr) {
+        if (ch === inStr && remainder[j - 1] !== '\\') inStr = null;
+        continue;
+      }
+      if (ch === '"' || ch === "'" || ch === '`') { inStr = ch; continue; }
+      if (ch === '{') depth++;
+      else if (ch === '}') { depth--; if (depth === 0) break; }
+    }
+
+    // If we reached end without balancing, it's truncated
+    if (depth > 0 && i >= lines.length - 2) return true;
+  }
+  return false;
 }
 
 function resolveRelativeImport(fromPath: string, specifier: string, files: ProjectFile[]): boolean {
