@@ -164,17 +164,75 @@ serve(async (req) => {
     }
 
     // ── Auto-inject `import React` into TSX/JSX files that lack it ──
-    // The Vite sandbox uses the classic JSX transform which compiles JSX to
-    // React.createElement(). If a file doesn't import React, the compiled
-    // code will reference an undefined `React` variable.
     for (const f of files) {
       if (typeof f.content !== 'string') continue;
       if (!/\.(tsx|jsx)$/.test(f.path)) continue;
-      // Skip if React is already imported (default or namespace)
       if (/import\s+React[\s,{]/i.test(f.content)) continue;
       if (/import\s+\*\s+as\s+React/i.test(f.content)) continue;
-      // Add React import at the top (before other imports)
       f.content = `import React from 'react';\n${f.content}`;
+    }
+
+    // ── Auto-generate Tailwind CSS infrastructure (BEFORE index.html check) ──
+    // This must run regardless of whether the user supplied index.html,
+    // because PostCSS needs tailwind.config.js + postcss.config.js + @tailwind directives.
+    const hasTailwindClasses = files.some((f: any) =>
+      typeof f.content === 'string' && /className\s*=\s*["'][^"']*(?:bg-|text-|flex|grid|p-|m-|rounded|shadow|border|font-|hover:|w-|h-|gap-|space-|items-|justify-)/i.test(f.content)
+    );
+
+    if (hasTailwindClasses) {
+      // Ensure a CSS file with @tailwind directives exists
+      const hasTailwindDirectives = files.some((f: any) =>
+        typeof f.content === 'string' && f.content.includes('@tailwind')
+      );
+      if (!hasTailwindDirectives) {
+        const cssFile = files.find((f: any) =>
+          f.path === "src/index.css" || f.path === "src/styles.css" || f.path === "src/App.css"
+        );
+        if (cssFile) {
+          // Prepend @tailwind directives to existing CSS
+          cssFile.content = `@tailwind base;\n@tailwind components;\n@tailwind utilities;\n\n${cssFile.content}`;
+          console.log(`[compile-vite] Prepended @tailwind directives to ${cssFile.path}`);
+        } else {
+          files.push({
+            path: "src/index.css",
+            content: `@tailwind base;\n@tailwind components;\n@tailwind utilities;\n`,
+          });
+          existingPaths.add("src/index.css");
+          console.log(`[compile-vite] Auto-injected src/index.css with Tailwind directives`);
+        }
+      }
+
+      // Ensure tailwind.config.js exists
+      if (!existingPaths.has('tailwind.config.js') && !existingPaths.has('tailwind.config.ts')) {
+        files.push({
+          path: "tailwind.config.js",
+          content: `/** @type {import('tailwindcss').Config} */\nexport default {\n  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],\n  theme: { extend: {} },\n  plugins: [],\n};\n`,
+        });
+        existingPaths.add("tailwind.config.js");
+        console.log(`[compile-vite] Auto-injected tailwind.config.js`);
+      }
+
+      // Ensure postcss.config.js exists
+      if (!existingPaths.has('postcss.config.js') && !existingPaths.has('postcss.config.ts')) {
+        files.push({
+          path: "postcss.config.js",
+          content: `export default {\n  plugins: {\n    tailwindcss: {},\n    autoprefixer: {},\n  },\n};\n`,
+        });
+        existingPaths.add("postcss.config.js");
+        console.log(`[compile-vite] Auto-injected postcss.config.js`);
+      }
+    }
+
+    // ── Inject Tailwind CDN into existing index.html as runtime fallback ──
+    const existingIndexHtml = files.find((f: any) => f.path === "index.html");
+    if (existingIndexHtml && hasTailwindClasses && typeof existingIndexHtml.content === 'string') {
+      if (!existingIndexHtml.content.includes('cdn.tailwindcss.com')) {
+        existingIndexHtml.content = existingIndexHtml.content.replace(
+          '</head>',
+          `<script src="https://cdn.tailwindcss.com"><\/script>\n</head>`
+        );
+        console.log(`[compile-vite] Injected Tailwind CDN fallback into existing index.html`);
+      }
     }
 
     // Auto-inject index.html if missing
@@ -190,47 +248,11 @@ serve(async (req) => {
         f.path === "styles.css" || f.path === "index.css"
       );
 
-      // ── Auto-generate Tailwind CSS if no CSS file exists ──
-      // Without an index.css containing @tailwind directives, PostCSS
-      // never processes Tailwind classes and the output has zero styles.
-      if (!cssFile) {
-        const hasTailwindClasses = files.some((f: any) =>
-          typeof f.content === 'string' && /className\s*=\s*["'][^"']*(?:bg-|text-|flex|grid|p-|m-|rounded|shadow|border|font-|hover:)/i.test(f.content)
-        );
-        if (hasTailwindClasses) {
-          files.push({
-            path: "src/index.css",
-            content: `@tailwind base;\n@tailwind components;\n@tailwind utilities;\n`,
-          });
-          existingPaths.add("src/index.css");
-          cssFile = files[files.length - 1];
-          console.log(`[compile-vite] Auto-injected src/index.css with Tailwind directives`);
-        }
-      }
-
-      // ── Auto-generate tailwind.config.js and postcss.config.js if needed ──
-      if (cssFile && !existingPaths.has('tailwind.config.js') && !existingPaths.has('tailwind.config.ts')) {
-        files.push({
-          path: "tailwind.config.js",
-          content: `/** @type {import('tailwindcss').Config} */\nexport default {\n  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],\n  theme: { extend: {} },\n  plugins: [],\n};\n`,
-        });
-        existingPaths.add("tailwind.config.js");
-      }
-      if (cssFile && !existingPaths.has('postcss.config.js') && !existingPaths.has('postcss.config.ts')) {
-        files.push({
-          path: "postcss.config.js",
-          content: `export default {\n  plugins: {\n    tailwindcss: {},\n    autoprefixer: {},\n  },\n};\n`,
-        });
-        existingPaths.add("postcss.config.js");
-      }
-
       if (!mainEntry) {
-        // Check for App.tsx at both src/ and root level
         const appInSrc = files.some((f: any) => f.path === "src/App.tsx" || f.path === "src/App.ts");
         const appAtRoot = files.some((f: any) => f.path === "App.tsx" || f.path === "App.ts");
         
         if (appAtRoot && !appInSrc) {
-          // Move root-level App.tsx to src/App.tsx for Vite compatibility
           const appFile = files.find((f: any) => f.path === "App.tsx" || f.path === "App.ts");
           if (appFile) {
             files.push({
@@ -240,7 +262,6 @@ serve(async (req) => {
             existingPaths.add(`src/${appFile.path}`);
             console.log(`[compile-vite] Mirrored ${appFile.path} → src/${appFile.path}`);
           }
-          // Also move styles.css if at root
           const rootCss = files.find((f: any) => f.path === "styles.css");
           if (rootCss) {
             files.push({ path: "src/styles.css", content: rootCss.content });
@@ -260,15 +281,15 @@ serve(async (req) => {
         }
       }
 
-      // Include Tailwind CDN as runtime fallback in case PostCSS doesn't process it
-      const tailwindFallback = `<script src="https://cdn.tailwindcss.com"><\/script>`;
+      // Include Tailwind CDN as runtime fallback
+      const tailwindFallback = hasTailwindClasses ? `<script src="https://cdn.tailwindcss.com"><\/script>\n` : '';
 
       files.push({
         path: "index.html",
-        content: `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8" />\n<meta name="viewport" content="width=device-width, initial-scale=1.0" />\n<title>App</title>\n${tailwindFallback}\n</head>\n<body>\n<div id="root"></div>\n<script type="module" src="${mainEntry ? entryPath : '/src/main.tsx'}"></script>\n</body>\n</html>`
+        content: `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8" />\n<meta name="viewport" content="width=device-width, initial-scale=1.0" />\n<title>App</title>\n${tailwindFallback}</head>\n<body>\n<div id="root"></div>\n<script type="module" src="${mainEntry ? entryPath : '/src/main.tsx'}"></script>\n</body>\n</html>`
       });
       existingPaths.add("index.html");
-      console.log(`[compile-vite] Auto-injected index.html + Tailwind CDN + ${!mainEntry ? 'main.tsx' : 'no extra entry'}`);
+      console.log(`[compile-vite] Auto-injected index.html${hasTailwindClasses ? ' + Tailwind CDN' : ''}`);
     }
 
     // Detect imports to request dynamic npm install on the sandbox
