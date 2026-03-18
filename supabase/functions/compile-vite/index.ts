@@ -342,6 +342,15 @@ export default defineConfig({
     }
 
     const t0 = Date.now();
+
+    // ── Post-process: inject importmap for bare imports left by sandbox ──
+    // The sandbox may externalize react/react-dom (its Vite config has them
+    // as externals).  Rather than fighting that, inject an importmap so the
+    // browser can resolve the bare specifiers via esm.sh CDN.
+    if (typeof result.html === 'string' && result.html.length > 0) {
+      result.html = injectImportMapIfNeeded(result.html, detectedPackages);
+    }
+
     console.log(`[compile-vite] Success: ${result.html?.length || 0} chars`);
 
     return new Response(
