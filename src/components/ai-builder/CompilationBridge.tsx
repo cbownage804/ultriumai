@@ -870,19 +870,16 @@ export function CompilationBridge({
             return; // Keep LKG when available
           }
 
-          // ── Fail-closed preview gate ──
+          // ── Incomplete files: soft gate — warn but still try to show preview ──
           const filesToValidate = filesRef.current;
           const hasIncomplete = filesToValidate.some(f => (f as any).incomplete === true);
           const partialFilesHaveIncomplete = partialFilesRef.current.some(f => (f as any).incomplete === true);
 
           if (hasIncomplete || partialFilesHaveIncomplete) {
-            console.warn('[CompilationBridge] BUILD GATED: incomplete_files');
-            if (!stableHTMLRef.current || !isPreviewValid(stableHTMLRef.current)) {
-              setLiveCompiledHTML(ERROR_FALLBACK_HTML);
-              setStableHTML(ERROR_FALLBACK_HTML);
-            }
-            transitionCompileState('error', { message: 'Incomplete files detected', errors: ['One or more files are incomplete (stream truncated)'] });
-          } else if (isPreviewValid(result)) {
+            console.warn('[CompilationBridge] Incomplete files detected (soft gate) — checking if preview is still valid');
+          }
+
+          if (isPreviewValid(result)) {
             // ── Preview Success Contract: only promote valid HTML ──
             setLiveCompiledHTML(result);
             console.info('[CompilationBridge] ✅ Preview valid — committing', {
