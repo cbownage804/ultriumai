@@ -611,14 +611,16 @@ export function CompilationBridge({
     if (isGenerating && !wasGenerating) {
       // Generation STARTING — abort prior compiles, but respect the lock
       // if a post-generation compile is already in-flight (prevents race condition
-      // where React effect batching causes this to fire after a compile just started).
+      // where React StrictMode double-invokes this effect after a compile just started).
       if (compilationInFlightRef.current) {
-        // A compile is running — just invalidate it via run-ID so it discards its result,
-        // but do NOT abort the network request (the new generation will naturally supersede it).
-        console.info('[CompilationBridge] Generation starting while compile in-flight — invalidating via run-ID (not aborting)');
-      } else {
-        abortCompilation(true);
+        // A compile is already running (likely the post-generation compile).
+        // This is almost certainly a React StrictMode double-invoke — do NOT
+        // invalidate the run-ID or clear state, as that would discard the
+        // compile result and leave the preview blank.
+        console.info('[CompilationBridge] Generation-start effect fired while compile in-flight — ignoring (likely StrictMode replay)');
+        return;
       }
+      abortCompilation(true);
       stableHTMLRef.current = null;
       setStableHTMLLocal(null);
       setLiveCompiledHTML(null);
