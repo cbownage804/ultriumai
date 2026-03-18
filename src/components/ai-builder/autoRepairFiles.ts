@@ -290,12 +290,18 @@ function fixBracketBalance(content: string): { content: string; fixed: boolean; 
   const analysis = analyzeBracketSyntax(analysisTarget);
   let suffix = '';
 
-  if (unterminatedLiteral === '`') {
-    suffix += '`';
-    fixes.push('closed unterminated template literal');
-  } else if (unterminatedLiteral === '"' || unterminatedLiteral === "'") {
+  if (unterminatedLiteral) {
     suffix += unterminatedLiteral;
-    fixes.push('closed unterminated string literal');
+    if (unterminatedLiteral === '`' || unterminatedLiteral.endsWith('`')) {
+      const exprClosers = unterminatedLiteral.slice(0, -1); // everything before the backtick
+      if (exprClosers.length > 0) {
+        fixes.push(`closed ${exprClosers.length} open template expression(s) and template literal`);
+      } else {
+        fixes.push('closed unterminated template literal');
+      }
+    } else if (unterminatedLiteral === '"' || unterminatedLiteral === "'") {
+      fixes.push('closed unterminated string literal');
+    }
   }
 
   if (!analysis.issue && analysis.stack.length > 0 && analysis.stack.length <= 5) {
