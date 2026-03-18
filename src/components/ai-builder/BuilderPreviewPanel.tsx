@@ -258,7 +258,10 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
   // Gap 4: Service Worker preview — real browsing context
   const { isReady: swReady, previewUrl, updatePreview, version: swVersion, softReload: swSoftReload } = usePreviewServiceWorker();
 
-  const viewportWidth = getViewportWidth(viewportMode);
+  const [isLandscape, setIsLandscape] = useState(false);
+  const [customWidth, setCustomWidth] = useState(400);
+  const [customHeight, setCustomHeight] = useState(700);
+  const viewportWidth = getViewportWidth(viewportMode, customWidth, isLandscape);
 
   // Phase 4: Never remount iframe on HTML content changes.
   // Browser handles srcdoc updates natively — no need to force remount via key.
