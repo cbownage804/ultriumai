@@ -922,9 +922,11 @@ export function CompilationBridge({
         const errMsg = err instanceof Error ? err.message : String(err);
         if (isAbortError(err)) {
           console.info('[CompilationBridge] Compile aborted — ignoring stale/cancelled run');
-          // If no successor compile is queued, reset to idle to prevent permanent "Compiling..." state
+          // If no successor compile is queued, auto-retry once instead of going idle
+          // (prevents the "Preview unavailable" state when a spurious abort kills the only compile)
           if (thisRunId === compileRunIdRef.current && !recompileNeededRef.current) {
-            transitionCompileState('idle');
+            console.info('[CompilationBridge] No successor compile — scheduling auto-retry');
+            recompileNeededRef.current = true;
           }
         } else {
           console.error('[CompilationBridge] Compilation crashed:', errMsg);
