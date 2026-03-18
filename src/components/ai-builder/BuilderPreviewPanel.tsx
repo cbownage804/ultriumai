@@ -258,7 +258,10 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
   // Gap 4: Service Worker preview — real browsing context
   const { isReady: swReady, previewUrl, updatePreview, version: swVersion, softReload: swSoftReload } = usePreviewServiceWorker();
 
-  const viewportWidth = getViewportWidth(viewportMode);
+  const [isLandscape, setIsLandscape] = useState(false);
+  const [customWidth, setCustomWidth] = useState(400);
+  const [customHeight, setCustomHeight] = useState(700);
+  const viewportWidth = getViewportWidth(viewportMode, customWidth, isLandscape);
 
   // Phase 4: Never remount iframe on HTML content changes.
   // Browser handles srcdoc updates natively — no need to force remount via key.
@@ -985,7 +988,15 @@ window.addEventListener('message', function(e) {
 
             {/* Right toolbar — responsive only */}
             <div className="flex items-center gap-0.5">
-              <ResponsivePreviewBar active={viewportMode} onChange={setViewportMode} />
+              <ResponsivePreviewBar
+                active={viewportMode}
+                onChange={setViewportMode}
+                customWidth={customWidth}
+                customHeight={customHeight}
+                onCustomSize={(w, h) => { setCustomWidth(w); setCustomHeight(h); }}
+                isLandscape={isLandscape}
+                onToggleLandscape={() => setIsLandscape(prev => !prev)}
+              />
               {/* Visual Edit toggle */}
               <VisualEditOverlay
                 isActive={!!externalVisualEdit}
