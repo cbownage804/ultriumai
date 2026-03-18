@@ -15,6 +15,7 @@ export interface WorkerCompilerResult {
   isReactProject: boolean;
   componentCount: number;
   errors: string[];
+  errorMessage?: string;
 }
 
 const VITE_TIMEOUT_MS = 25_000; // Single path — generous but bounded
