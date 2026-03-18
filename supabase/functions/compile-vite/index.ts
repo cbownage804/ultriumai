@@ -196,6 +196,40 @@ serve(async (req) => {
       console.log(`[compile-vite] Installing ${installPackages.length} packages: ${installPackages.join(', ')}`);
     }
 
+    // Ensure a vite.config exists that bundles ALL dependencies (no externals).
+    // Without this, the sandbox's default config may externalize react/react-dom,
+    // producing bare imports that browsers can't resolve.
+    const hasViteConfig = files.some((f: any) =>
+      /^vite\.config\.(ts|js|mjs)$/.test(f.path)
+    );
+    if (!hasViteConfig) {
+      files.push({
+        path: 'vite.config.ts',
+        content: `import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  build: {
+    rollupOptions: {
+      // Do NOT externalize anything — bundle all deps into the output
+      external: [],
+    },
+    // Inline everything into a single HTML file
+    cssCodeSplit: false,
+    assetsInlineLimit: 1000000,
+    modulePreload: false,
+  },
+  // Ensure React JSX transform works
+  esbuild: {
+    jsxInject: undefined,
+  },
+});
+`,
+      });
+      console.log('[compile-vite] Auto-injected vite.config.ts (bundle-all mode)');
+    }
+
     // Sort files — index.html first
     const sortedFiles = [
       ...files.filter((f: any) => f.path === 'index.html'),
