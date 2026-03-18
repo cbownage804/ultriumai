@@ -535,7 +535,6 @@ window.addEventListener('message', function(e) {
   const displayHtml = previewDocumentHtml ?? (
     (isGenerating || isCompiling) ? lastGoodPreviewHtmlRef.current : null
   );
-  const isShowingRetainedPreview = !previewDocumentHtml && !!displayHtml && (isGenerating || isCompiling);
 
   // Cleanup on unmount
   useEffect(() => {
