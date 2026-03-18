@@ -389,6 +389,25 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
     repairs.push('src/main.tsx: auto-generated entry point');
   }
 
+  // ── Ensure index.html has essential SEO meta tags ──
+  const indexHtml = repaired.find(f => f.path === 'index.html');
+  if (indexHtml) {
+    if (!indexHtml.content.includes('viewport')) {
+      indexHtml.content = indexHtml.content.replace(
+        '</head>',
+        '  <meta name="viewport" content="width=device-width, initial-scale=1.0" />\n  </head>'
+      );
+      repairs.push('index.html: added viewport meta tag');
+    }
+    if (!indexHtml.content.includes('charset')) {
+      indexHtml.content = indexHtml.content.replace(
+        '<head>',
+        '<head>\n  <meta charset="UTF-8" />'
+      );
+      repairs.push('index.html: added charset meta tag');
+    }
+  }
+
   return { files: repaired, repairs };
 }
 
