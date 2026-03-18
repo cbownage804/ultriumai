@@ -96,8 +96,8 @@ function injectImportMapIfNeeded(html: string, detectedPackages: Set<string>): s
   return html.slice(0, firstModuleScript) + importmapScript + '\n' + html.slice(firstModuleScript);
 }
 
+serve(async (req) => {
 
-  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
