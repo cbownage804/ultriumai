@@ -12,6 +12,12 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
   
   const repaired = files.map(f => {
     const ext = f.path.split('.').pop()?.toLowerCase() || '';
+    if (ext === 'css') {
+      const cssResult = fixCssBraceBalance(f.content);
+      if (!cssResult.fixed) return f;
+      repairs.push(`${f.path}: ${cssResult.description}`);
+      return { ...f, content: cssResult.content };
+    }
     if (!['ts', 'tsx', 'js', 'jsx'].includes(ext)) return f;
     
     let content = f.content;
