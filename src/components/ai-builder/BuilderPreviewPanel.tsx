@@ -894,7 +894,7 @@ window.addEventListener('message', function(e) {
     <div ref={containerRef} className="flex flex-col h-full bg-[#0d0d14] relative">
       {children}
       {/* Toolbar */}
-      {html && (
+      {(html || displayHtml) && (
         <div className="flex flex-col border-b border-white/[0.06] bg-[#0a0a10] shrink-0">
           {/* Address bar — Lovable-style single row */}
           <div className="flex items-center gap-1.5 px-2 h-10">
