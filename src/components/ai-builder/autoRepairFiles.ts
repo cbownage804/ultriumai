@@ -161,6 +161,24 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
       }
     }
 
+    // ── 5c. Fix truncated component declarations (no arrow/body after params) ──
+    // Pattern: `export const Foo = (props: SomeType\n);` — missing `=> (...)` body
+    if (['tsx', 'jsx'].includes(ext)) {
+      const truncatedComponentPattern = /(?:export\s+)?(?:const|let|var)\s+([A-Z]\w*)\s*=\s*\([^)]*\)\s*;/g;
+      let truncMatch;
+      while ((truncMatch = truncatedComponentPattern.exec(content)) !== null) {
+        const fullMatch = truncMatch[0];
+        const compName = truncMatch[1];
+        // Only fix if it looks like a component (starts uppercase) and has no arrow
+        if (!fullMatch.includes('=>') && !fullMatch.includes('function')) {
+          const replacement = fullMatch.replace(/\)\s*;/, ') => (\n  <div />\n);');
+          content = content.replace(fullMatch, replacement);
+          changed = true;
+          repairs.push(`${f.path}: fixed truncated component "${compName}" — added placeholder body`);
+        }
+      }
+    }
+
     // ── 6. Fix inline SVG icon components → replace with lucide-react placeholder ──
     if (['tsx', 'jsx'].includes(ext)) {
       // Detect custom SVG icon components with React.SVGProps (esbuild misparses generics as JSX)
