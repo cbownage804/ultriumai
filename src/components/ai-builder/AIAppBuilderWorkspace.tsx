@@ -3258,6 +3258,15 @@ export function AIAppBuilderWorkspace() {
     if (html && changed) {
       setPreviewRefreshKey(k => k + 1);
     }
+    // ── Auto-capture thumbnail when valid compiled HTML arrives ──
+    if (html && changed && isPreviewValidFn(html) && currentProjectId) {
+      // Also update the hosting ref so it's available for thumbnail capture
+      compiledForHostingRef.current = html;
+      // Delay to allow rendering to settle (fonts, images loading)
+      setTimeout(() => {
+        captureAndUpload(html, currentProjectId).catch(() => {});
+      }, 5000);
+    }
   }, []);
 
 
