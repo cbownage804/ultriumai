@@ -609,8 +609,8 @@ export function CompilationBridge({
     prevIsGeneratingRef.current = isGenerating;
 
     if (isGenerating && !wasGenerating) {
-      // Generation STARTING — reset ALL internal state
-      abortCompilation(); // Cancel any in-flight network requests to free droplet concurrency
+      // Generation STARTING — force-abort even if locked
+      abortCompilation(true);
       stableHTMLRef.current = null;
       setStableHTMLLocal(null);
       setLiveCompiledHTML(null);
