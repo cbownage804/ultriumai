@@ -153,6 +153,9 @@ function TreeItem({
     >
       {getFileIcon(node.path)}
       <span className="truncate flex-1 font-mono">{node.name}</span>
+      {isModified && (
+        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0 mr-1" title="Modified" />
+      )}
     </div>
   );
 }
