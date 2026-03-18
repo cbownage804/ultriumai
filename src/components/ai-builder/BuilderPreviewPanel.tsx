@@ -68,6 +68,10 @@ interface BuilderPreviewPanelProps {
   isGoldenProject?: boolean;
   /** Reset to golden template */
   onResetToGolden?: () => void;
+  /** Whether the preview is showing LKG fallback instead of latest */
+  isUsingLKG?: boolean;
+  /** Auto-heal summary info */
+  autoHealSummary?: { attempts: number; maxAttempts: number; lastError?: string; resolved: boolean } | null;
 }
 /**
  * Externalize ONLY risky inline <script> blocks into JS Blob URLs.
@@ -231,7 +235,7 @@ function findRealScriptClose(html: string, start: number): number {
   return -1;
 }
 
-export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole = false, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey, repairFailed, repairErrors, onRetryRepair, onDiscardChanges, compileError, onRetryCompile, isGoldenProject, onResetToGolden }: BuilderPreviewPanelProps) {
+export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole = false, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey, repairFailed, repairErrors, onRetryRepair, onDiscardChanges, compileError, onRetryCompile, isGoldenProject, onResetToGolden, isUsingLKG, autoHealSummary }: BuilderPreviewPanelProps) {
   const [internalViewportMode, setInternalViewportMode] = useState<ViewportMode>('desktop');
   const viewportMode = externalViewportMode ?? internalViewportMode;
   const setViewportMode = onExternalViewportChange ?? setInternalViewportMode;
@@ -1025,6 +1029,25 @@ window.addEventListener('message', function(e) {
               className="w-full h-full border-0 bg-white"
               style={{ colorScheme: 'light' }}
             />
+
+            {/* LKG fallback banner */}
+            {isUsingLKG && !isGenerating && !isCompiling && (
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/15 border border-amber-500/25 backdrop-blur-sm">
+                <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                <span className="text-[10px] text-amber-300/80 font-medium">Showing previous working version</span>
+              </div>
+            )}
+
+            {/* Auto-heal summary banner */}
+            {autoHealSummary && !autoHealSummary.resolved && autoHealSummary.attempts >= autoHealSummary.maxAttempts && !isGenerating && (
+              <div className="absolute bottom-14 left-3 right-3 z-20 rounded-lg bg-red-500/10 border border-red-500/20 backdrop-blur-sm p-3 space-y-1">
+                <p className="text-[11px] text-red-300/90 font-medium">Auto-fix exhausted ({autoHealSummary.attempts}/{autoHealSummary.maxAttempts} attempts)</p>
+                {autoHealSummary.lastError && (
+                  <p className="text-[10px] text-red-300/60 font-mono truncate">{autoHealSummary.lastError}</p>
+                )}
+                <p className="text-[10px] text-white/40">Try describing the issue in chat for a manual fix.</p>
+              </div>
+            )}
 
             {/* Reset to Golden Template button */}
             {!isGoldenProject && onResetToGolden && !isGenerating && !isCompiling && (

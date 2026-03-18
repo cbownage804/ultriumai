@@ -15,6 +15,8 @@ interface ProjectFileTreeProps {
   onCreateFile?: (path: string) => void;
   onRenameFile?: (oldPath: string, newPath: string) => void;
   previousFiles?: ProjectFile[];
+  /** Set of file paths that were modified in the last generation */
+  modifiedPaths?: Set<string>;
 }
 
 function getFileIcon(path: string) {
@@ -83,7 +85,7 @@ function countFiles(node: TreeNode): number {
 
 function TreeItem({ 
   node, depth, activeFilePath, expandedFolders,
-  onSelectFile, onToggleFolder,
+  onSelectFile, onToggleFolder, modifiedPaths,
 }: {
   node: TreeNode;
   depth: number;
@@ -91,10 +93,12 @@ function TreeItem({
   expandedFolders: Set<string>;
   onSelectFile: (path: string) => void;
   onToggleFolder: (path: string) => void;
+  modifiedPaths?: Set<string>;
 }) {
   const isExpanded = expandedFolders.has(node.path);
   const isActive = activeFilePath === node.path;
   const fileCount = node.isFolder ? countFiles(node) : 0;
+  const isModified = !node.isFolder && modifiedPaths?.has(node.path);
 
   if (node.isFolder) {
     return (
@@ -129,6 +133,7 @@ function TreeItem({
             expandedFolders={expandedFolders}
             onSelectFile={onSelectFile}
             onToggleFolder={onToggleFolder}
+            modifiedPaths={modifiedPaths}
           />
         ))}
       </div>
@@ -148,11 +153,14 @@ function TreeItem({
     >
       {getFileIcon(node.path)}
       <span className="truncate flex-1 font-mono">{node.name}</span>
+      {isModified && (
+        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0 mr-1" title="Modified" />
+      )}
     </div>
   );
 }
 
-export function ProjectFileTree({ files, activeFilePath, onSelectFile }: ProjectFileTreeProps) {
+export function ProjectFileTree({ files, activeFilePath, onSelectFile, modifiedPaths }: ProjectFileTreeProps) {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
   // Auto-expand all folders on first render or when files change
@@ -205,6 +213,7 @@ export function ProjectFileTree({ files, activeFilePath, onSelectFile }: Project
               expandedFolders={expandedFolders}
               onSelectFile={onSelectFile}
               onToggleFolder={toggleFolder}
+              modifiedPaths={modifiedPaths}
             />
           ))}
         </div>
