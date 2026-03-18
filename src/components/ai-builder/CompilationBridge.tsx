@@ -687,7 +687,9 @@ export function CompilationBridge({
   useEffect(() => {
     if (isGenerating || filesRef.current.length === 0) return;
     // Skip compilation for untouched golden template — no need to compile placeholder content
-    if (isGoldenProject) return;
+    // BUT: if a generation has ever run, always attempt compilation even if isGoldenProject
+    // is still true due to React batching delays in prop updates.
+    if (isGoldenProject && !hasEverGeneratedRef.current) return;
 
     // Sync from external if handleBgComplete already compiled
     if (!stableHTMLRef.current && externalStableHTMLRef?.current) {
