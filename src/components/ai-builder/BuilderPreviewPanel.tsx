@@ -462,7 +462,7 @@ document.addEventListener('click', function(e) {
 });
 document.addEventListener('submit', function(e) { var form = e.target; if (form && form.tagName === 'FORM' && form.getAttribute('action')) { e.preventDefault(); } });
 window.open = function(url) { window.parent.postMessage({ type: '__PREVIEW_NAV__', href: url, newTab: true }, '*'); return null; };
-window.addEventListener('beforeunload', function(e) { e.preventDefault(); });
+window.addEventListener('beforeunload', function(e) { /* no-op: prevent iframe from triggering parent leave dialog */ });
 (function() {
   var origFetch = window.fetch;
   window.fetch = function() {
