@@ -24,6 +24,7 @@ export function usePreviewCapture() {
       const iframe = document.createElement('iframe');
       iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:1280px;height:800px;border:none;z-index:-1;opacity:0;pointer-events:none;';
       iframe.sandbox.add('allow-same-origin');
+      iframe.sandbox.add('allow-scripts'); // Required for React/CSS to render
       document.body.appendChild(iframe);
 
       // Write compiled HTML into iframe
