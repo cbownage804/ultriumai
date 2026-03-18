@@ -605,7 +605,10 @@ export function CompilationBridge({
   // ── Reset stableHTML when a new generation starts ──
   const prevIsGeneratingRef = useRef(false);
   useEffect(() => {
-    if (isGenerating && !prevIsGeneratingRef.current) {
+    const wasGenerating = prevIsGeneratingRef.current;
+    prevIsGeneratingRef.current = isGenerating;
+
+    if (isGenerating && !wasGenerating) {
       // Generation STARTING — reset ALL internal state
       abortCompilation(); // Cancel any in-flight network requests to free droplet concurrency
       stableHTMLRef.current = null;
@@ -626,8 +629,12 @@ export function CompilationBridge({
       transitionCompileState('idle');
       // Notify parent immediately so preview panel clears
       onStableHTML(null);
+    } else if (!isGenerating && wasGenerating) {
+      // Generation ENDING — do NOT abort here. The compile effect will start
+      // a fresh compile after debounce. Aborting here would kill it immediately
+      // due to React effect batching (the compile and this effect fire in the same cycle).
+      console.info('[CompilationBridge] Generation ended — compile will start after debounce');
     }
-    prevIsGeneratingRef.current = isGenerating;
   }, [isGenerating]);
 
   // Keep fresh/golden projects in a clean idle state (prevents stale "Compiling..." loops).
