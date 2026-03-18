@@ -524,8 +524,9 @@ window.addEventListener('message', function(e) {
   }, [htmlWithInjections]);
 
   // Hold last good preview: keep showing the previous successful render while compiling/generating
+  // Never store fallback/error HTML — only real app renders
   useEffect(() => {
-    if (previewDocumentHtml) {
+    if (previewDocumentHtml && !previewDocumentHtml.includes('ai-builder-fallback') && !previewDocumentHtml.includes('Compilation Error')) {
       lastGoodPreviewHtmlRef.current = previewDocumentHtml;
     }
   }, [previewDocumentHtml]);
