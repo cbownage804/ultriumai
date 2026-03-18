@@ -51,7 +51,7 @@ const HEALTH_MONITOR_SCRIPT = `
 
   // Start observing after the app mounts
   setTimeout(function() {
-    var root = document.getElementById('root');
+    var root = document.getElementById('root') || document.getElementById('app');
     if (root) {
       observer.observe(root, { childList: true, subtree: true, characterData: true });
     }
@@ -59,7 +59,7 @@ const HEALTH_MONITOR_SCRIPT = `
 
   // ── Blank screen detection ──
   setTimeout(function() {
-    var root = document.getElementById('root');
+    var root = document.getElementById('root') || document.getElementById('app');
     if (!root) return;
     
     // Check if root has any visible content

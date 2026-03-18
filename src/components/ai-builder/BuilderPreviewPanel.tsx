@@ -302,7 +302,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
       htmlLength: html?.length ?? 0,
       normalizedLength: normalizedHtml?.length ?? 0,
       hasDoctype: normalizedHtml ? /<!doctype|<html/i.test(normalizedHtml) : false,
-      hasRoot: normalizedHtml ? /id\s*=\s*["']root["']/i.test(normalizedHtml) : false,
+      hasMount: normalizedHtml ? /id\s*=\s*["'](root|app)["']/i.test(normalizedHtml) : false,
       isCompiling,
       compileError: compileError?.message ?? null,
     });

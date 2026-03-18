@@ -903,7 +903,7 @@ export function CompilationBridge({
             const summary = previewDebugSummary(result);
             const reasons: string[] = [];
             if (!summary.hasDoctype) reasons.push('Missing <!DOCTYPE> or <html> tag');
-            if (!summary.hasRoot) reasons.push('Missing <div id="root"> mount point');
+            if (!summary.hasMount) reasons.push('Missing mount point (<div id="root"> or <div id="app">)');
             if (summary.isFallback) reasons.push('Output contains error/fallback sentinel');
             if (!stableHTMLRef.current || !isPreviewValid(stableHTMLRef.current)) {
               setLiveCompiledHTML(ERROR_FALLBACK_HTML);

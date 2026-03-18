@@ -128,12 +128,12 @@ export function mergeOntoGolden(generatedFiles: ProjectFile[]): ProjectFile[] {
 export function validateRequiredFiles(files: ProjectFile[]): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
 
-  // 1. index.html must exist with id="root"
+  // 1. index.html must exist with a mount point (id="root" or id="app")
   const indexFile = files.find(f => f.path === 'index.html');
   if (!indexFile) {
     errors.push('Missing index.html');
-  } else if (!/id\s*=\s*["']root["']/i.test(indexFile.content)) {
-    errors.push('index.html missing <div id="root">');
+  } else if (!/id\s*=\s*["'](root|app)["']/i.test(indexFile.content)) {
+    errors.push('index.html missing mount point (<div id="root"> or <div id="app">)');
   }
 
   // 2. src/main.tsx must exist with createRoot

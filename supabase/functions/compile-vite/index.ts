@@ -172,16 +172,43 @@ serve(async (req) => {
       const entryPath = mainEntry ? `/${mainEntry.path}` : "/src/App.tsx";
       
       const cssFile = files.find((f: any) =>
-        f.path === "src/index.css" || f.path === "src/styles.css" || f.path === "src/App.css"
+        f.path === "src/index.css" || f.path === "src/styles.css" || f.path === "src/App.css" ||
+        f.path === "styles.css" || f.path === "index.css"
       );
 
       if (!mainEntry) {
-        const hasApp = files.some((f: any) => f.path === "src/App.tsx" || f.path === "src/App.ts");
-        if (hasApp) {
+        // Check for App.tsx at both src/ and root level
+        const appInSrc = files.some((f: any) => f.path === "src/App.tsx" || f.path === "src/App.ts");
+        const appAtRoot = files.some((f: any) => f.path === "App.tsx" || f.path === "App.ts");
+        
+        if (appAtRoot && !appInSrc) {
+          // Move root-level App.tsx to src/App.tsx for Vite compatibility
+          const appFile = files.find((f: any) => f.path === "App.tsx" || f.path === "App.ts");
+          if (appFile) {
+            files.push({
+              path: `src/${appFile.path}`,
+              content: appFile.content,
+            });
+            existingPaths.add(`src/${appFile.path}`);
+            console.log(`[compile-vite] Mirrored ${appFile.path} → src/${appFile.path}`);
+          }
+          // Also move styles.css if at root
+          const rootCss = files.find((f: any) => f.path === "styles.css");
+          if (rootCss) {
+            files.push({ path: "src/styles.css", content: rootCss.content });
+            existingPaths.add("src/styles.css");
+          }
+        }
+        
+        if (appInSrc || appAtRoot) {
+          const cssImport = cssFile
+            ? `import './${(cssFile.path.startsWith('src/') ? cssFile.path.slice(4) : cssFile.path)}';\n`
+            : '';
           files.push({
             path: "src/main.tsx",
-            content: `import React from 'react';\nimport ReactDOM from 'react-dom/client';\nimport App from './App';\n${cssFile ? `import './${cssFile.path.split('/').pop()}';\n` : ''}ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><App /></React.StrictMode>);`
+            content: `import React from 'react';\nimport ReactDOM from 'react-dom/client';\nimport App from './App';\n${cssImport}ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><App /></React.StrictMode>);`
           });
+          existingPaths.add("src/main.tsx");
         }
       }
 
@@ -189,6 +216,7 @@ serve(async (req) => {
         path: "index.html",
         content: `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8" />\n<meta name="viewport" content="width=device-width, initial-scale=1.0" />\n<title>App</title>\n</head>\n<body>\n<div id="root"></div>\n<script type="module" src="${mainEntry ? entryPath : '/src/main.tsx'}"></script>\n</body>\n</html>`
       });
+      existingPaths.add("index.html");
       console.log(`[compile-vite] Auto-injected index.html + ${!mainEntry ? 'main.tsx' : 'no extra entry'}`);
     }
 

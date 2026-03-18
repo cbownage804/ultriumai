@@ -63,7 +63,7 @@ const SMOKE_TEST_SCRIPT = `
     var results = [];
     
     // Test 1: Root has content
-    var root = document.getElementById('root');
+    var root = document.getElementById('root') || document.getElementById('app');
     var hasContent = root && root.children.length > 0;
     results.push({
       name: 'Root renders content',

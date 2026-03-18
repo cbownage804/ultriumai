@@ -5,7 +5,7 @@
  * A preview is valid when ALL of:
  *  1. html is non-empty
  *  2. contains <!DOCTYPE or <html
- *  3. contains the mount node (id="root")
+ *  3. contains a mount node (id="root" OR id="app")
  *  4. is NOT an error/fallback page (no ai-builder-fallback sentinel)
  */
 export function isPreviewValid(html: string | null | undefined): boolean {
@@ -17,9 +17,9 @@ export function isPreviewValid(html: string | null | undefined): boolean {
   const hasDoctype = lower.includes('<!doctype') || lower.includes('<html');
   if (!hasDoctype) return false;
 
-  // Must contain root mount point
-  const hasRoot = /id\s*=\s*["']root["']/i.test(html);
-  if (!hasRoot) return false;
+  // Must contain a mount point — support both id="root" (React) and id="app" (vanilla)
+  const hasMount = /id\s*=\s*["'](root|app)["']/i.test(html);
+  if (!hasMount) return false;
 
   // Must NOT be a fallback/error sentinel page
   if (html.includes('name="ai-builder-fallback"')) return false;
@@ -32,11 +32,11 @@ export function isPreviewValid(html: string | null | undefined): boolean {
  * Debug summary of preview HTML for logging.
  */
 export function previewDebugSummary(html: string | null | undefined): Record<string, unknown> {
-  if (!html) return { htmlLength: 0, hasDoctype: false, hasRoot: false, isFallback: false };
+  if (!html) return { htmlLength: 0, hasDoctype: false, hasMount: false, isFallback: false };
   return {
     htmlLength: html.length,
     hasDoctype: /<!doctype|<html/i.test(html),
-    hasRoot: /id\s*=\s*["']root["']/i.test(html),
+    hasMount: /id\s*=\s*["'](root|app)["']/i.test(html),
     isFallback: html.includes('name="ai-builder-fallback"') || html.includes('⚠️ Compilation Error'),
     first80: html.slice(0, 80),
   };

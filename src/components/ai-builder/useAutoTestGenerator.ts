@@ -117,7 +117,7 @@ function generateTestCases(files: ProjectFile[]): { id: string; name: string; fi
       file: `${file.path}.test`,
       targetFile: file.path,
       code: `
-        var root = document.getElementById('root');
+        var root = document.getElementById('root') || document.getElementById('app');
         expect(root).not.toBeNull();
         expect(root.children.length).toBeGreaterThan(0);
       `,
