@@ -1081,7 +1081,9 @@ export function useAIAppBuilder() {
 - Every component that uses useState, useEffect, etc. MUST import them: import { useState, useEffect } from 'react';
 - Do NOT use optional chaining on function calls for event handlers (e.g. onClick?.()). Use standard patterns.
 - All string literals and template literals MUST be properly closed on the same logical line.
-- NEVER leave trailing commas, colons, or operators at the end of a file.`);
+- NEVER leave trailing commas, colons, or operators at the end of a file.
+- LOGOS: Never render a company logo as plain unstyled text. Always create a styled logo using a lucide-react icon + styled text, or use the company's actual favicon URL. Example: <div className="flex items-center gap-2"><Building2 className="h-8 w-8" /><span className="text-xl font-bold">Brand</span></div>
+- IMAGES: For placeholder/stock images, use Unsplash URLs (https://images.unsplash.com/photo-ID?w=800). Never leave empty or broken img src attributes.`);
 
     // Merge into a single system message, capped at 20K chars
     if (systemParts.length > 0) {
