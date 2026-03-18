@@ -52,6 +52,35 @@ describe('autoRepairFiles JSX tag balancing', () => {
     expect(content.trimEnd().endsWith('`}')).toBe(true);
   });
 
+  it('removes trailing unexpected closing braces at EOF', () => {
+    const files = [
+      makeTsx('src/App.tsx', `export default function App() {
+  return <div>Hello</div>;
+}}`),
+    ];
+
+    const { files: repairedFiles, repairs } = autoRepairFiles(files);
+    const content = repairedFiles[0].content;
+
+    expect(repairs.some(r => r.includes('removed trailing unexpected "}"'))).toBe(true);
+    expect(content).toContain('return <div>Hello</div>;');
+    expect(content.trimEnd().endsWith('}')).toBe(true);
+    expect(content.trimEnd().endsWith('}}')).toBe(false);
+  });
+
+  it('closes unterminated string literals at EOF', () => {
+    const files = [
+      makeTsx('src/App.tsx', `export default function App() {
+  const title = "Hello world`),
+    ];
+
+    const { files: repairedFiles, repairs } = autoRepairFiles(files);
+    const content = repairedFiles[0].content;
+
+    expect(repairs.some(r => r.includes('closed unterminated string literal'))).toBe(true);
+    expect(content.trimEnd().endsWith('"}')).toBe(true);
+  });
+
   it('does not treat TypeScript generics as JSX tags', () => {
     const files = [
       makeTsx('src/App.tsx', `type Item = { id: string };
