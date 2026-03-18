@@ -39,6 +39,19 @@ describe('autoRepairFiles JSX tag balancing', () => {
     expect(repairs.some(r => r.includes('fixed JSX tag balance'))).toBe(true);
   });
 
+  it('closes unterminated template literals at EOF', () => {
+    const files = [
+      makeTsx('src/App.tsx', `export default function App() {
+  const title = \`Hello world`),
+    ];
+
+    const { files: repairedFiles, repairs } = autoRepairFiles(files);
+    const content = repairedFiles[0].content;
+
+    expect(repairs.some(r => r.includes('closed unterminated template literal'))).toBe(true);
+    expect(content.trimEnd().endsWith('`}')).toBe(true);
+  });
+
   it('does not treat TypeScript generics as JSX tags', () => {
     const files = [
       makeTsx('src/App.tsx', `type Item = { id: string };
