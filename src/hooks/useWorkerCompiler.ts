@@ -41,13 +41,21 @@ function hasUnmappedBareImportsInModuleScripts(html: string): boolean {
   if (hasImportMap) return false;
 
   const moduleScriptRegex = /<script\b[^>]*type\s*=\s*["']module["'][^>]*>([\s\S]*?)<\/script>/gi;
-  const staticBareImportRegex = /\b(?:import|export)\s+(?:[^'"]*?\s+from\s+)?['"]([^'"./][^'"]*)['"]/;
+  // Match both spaced `from "react"` and minified `from"react"` bare imports
+  const staticBareImportRegex = /\b(?:import|export)\s+(?:[^'"]*?\s+from\s*)?['"]([^'"./][^'"]*)['"]/;
+  // Also catch minified `from"pkg"` without any space (Vite minifier output)
+  const minifiedFromRegex = /\bfrom\s*['"]([^'"./][^'"]*)['"]/;
   const dynamicBareImportRegex = /\bimport\s*\(\s*['"]([^'"./][^'"]*)['"]\s*\)/;
 
   let match: RegExpExecArray | null;
   while ((match = moduleScriptRegex.exec(html)) !== null) {
     const moduleCode = match[1] || '';
-    if (staticBareImportRegex.test(moduleCode) || dynamicBareImportRegex.test(moduleCode)) {
+    if (
+      staticBareImportRegex.test(moduleCode) ||
+      minifiedFromRegex.test(moduleCode) ||
+      dynamicBareImportRegex.test(moduleCode)
+    ) {
+      console.warn('[ViteSandbox] Detected bare imports in module script — sandbox did not bundle dependencies');
       return true;
     }
   }
