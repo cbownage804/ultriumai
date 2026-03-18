@@ -534,6 +534,7 @@ export function CompilationBridge({
             supabaseConfig: supabaseConfig || undefined,
             stripeConfig: stripeConfig || undefined,
             envVars,
+            localOnly: true,
           }).then(r => r.html || null).catch(() => null),
           new Promise<null>(r => setTimeout(() => r(null), 20_000)),
         ]);
