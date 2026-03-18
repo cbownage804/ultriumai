@@ -85,7 +85,7 @@ function countFiles(node: TreeNode): number {
 
 function TreeItem({ 
   node, depth, activeFilePath, expandedFolders,
-  onSelectFile, onToggleFolder,
+  onSelectFile, onToggleFolder, modifiedPaths,
 }: {
   node: TreeNode;
   depth: number;
@@ -93,10 +93,12 @@ function TreeItem({
   expandedFolders: Set<string>;
   onSelectFile: (path: string) => void;
   onToggleFolder: (path: string) => void;
+  modifiedPaths?: Set<string>;
 }) {
   const isExpanded = expandedFolders.has(node.path);
   const isActive = activeFilePath === node.path;
   const fileCount = node.isFolder ? countFiles(node) : 0;
+  const isModified = !node.isFolder && modifiedPaths?.has(node.path);
 
   if (node.isFolder) {
     return (
