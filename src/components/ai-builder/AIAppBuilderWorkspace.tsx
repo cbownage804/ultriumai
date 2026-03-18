@@ -3371,7 +3371,30 @@ export function AIAppBuilderWorkspace() {
     }
   }, [isGoldenProject, isGenerating, isCompiling, compileState, compileError, setIsCompiling]);
 
-  // ── Initialize new projects with golden template files ──
+  // Track modified files across generations
+  const [modifiedPaths, setModifiedPaths] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (isGenerating) {
+      // Snapshot current files when generation starts
+      const snapshot = new Map<string, string>();
+      project.files.forEach(f => snapshot.set(f.path, f.content));
+      prevFileSnapshotRef.current = snapshot;
+    } else if (prevFileSnapshotRef.current.size > 0) {
+      // Generation ended — diff against snapshot
+      const changed = new Set<string>();
+      project.files.forEach(f => {
+        const prev = prevFileSnapshotRef.current.get(f.path);
+        if (prev === undefined || prev !== f.content) changed.add(f.path);
+      });
+      if (changed.size > 0) {
+        setModifiedPaths(changed);
+        modifiedPathsRef.current = changed;
+        // Auto-clear after 30s
+        setTimeout(() => setModifiedPaths(new Set()), 30000);
+      }
+    }
+  }, [isGenerating]);
+
   useEffect(() => {
     if (project.files.length === 0) {
       console.info('[Workspace] No files — initializing with golden template');
