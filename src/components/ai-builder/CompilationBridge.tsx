@@ -609,8 +609,16 @@ export function CompilationBridge({
     prevIsGeneratingRef.current = isGenerating;
 
     if (isGenerating && !wasGenerating) {
-      // Generation STARTING — force-abort even if locked
-      abortCompilation(true);
+      // Generation STARTING — abort prior compiles, but respect the lock
+      // if a post-generation compile is already in-flight (prevents race condition
+      // where React effect batching causes this to fire after a compile just started).
+      if (compilationInFlightRef.current) {
+        // A compile is running — just invalidate it via run-ID so it discards its result,
+        // but do NOT abort the network request (the new generation will naturally supersede it).
+        console.info('[CompilationBridge] Generation starting while compile in-flight — invalidating via run-ID (not aborting)');
+      } else {
+        abortCompilation(true);
+      }
       stableHTMLRef.current = null;
       setStableHTMLLocal(null);
       setLiveCompiledHTML(null);
@@ -914,9 +922,11 @@ export function CompilationBridge({
         const errMsg = err instanceof Error ? err.message : String(err);
         if (isAbortError(err)) {
           console.info('[CompilationBridge] Compile aborted — ignoring stale/cancelled run');
-          // If no successor compile is queued, reset to idle to prevent permanent "Compiling..." state
+          // If no successor compile is queued, auto-retry once instead of going idle
+          // (prevents the "Preview unavailable" state when a spurious abort kills the only compile)
           if (thisRunId === compileRunIdRef.current && !recompileNeededRef.current) {
-            transitionCompileState('idle');
+            console.info('[CompilationBridge] No successor compile — scheduling auto-retry');
+            recompileNeededRef.current = true;
           }
         } else {
           console.error('[CompilationBridge] Compilation crashed:', errMsg);
