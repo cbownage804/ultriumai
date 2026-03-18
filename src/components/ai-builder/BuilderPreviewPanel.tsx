@@ -1070,6 +1070,20 @@ window.addEventListener('message', function(e) {
               style={{ colorScheme: 'light' }}
             />
 
+            {/* Compile error banner on retained preview */}
+            {!previewDocumentHtml && compileState === 'error' && compileError && (
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/15 border border-red-500/30 backdrop-blur-md max-w-md">
+                <div className="h-2 w-2 rounded-full bg-red-400 shrink-0" />
+                <span className="text-[11px] text-red-300/90 font-medium truncate">
+                  {compileError.message || 'Compile failed'}
+                </span>
+                {onRetryCompile && (
+                  <button onClick={onRetryCompile} className="shrink-0 px-2 py-0.5 rounded bg-red-500/20 hover:bg-red-500/30 text-[10px] text-red-200 transition-colors">
+                    Retry
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* LKG fallback banner */}
             {isUsingLKG && !isGenerating && !isCompiling && (
