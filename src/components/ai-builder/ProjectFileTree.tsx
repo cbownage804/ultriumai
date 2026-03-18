@@ -15,6 +15,8 @@ interface ProjectFileTreeProps {
   onCreateFile?: (path: string) => void;
   onRenameFile?: (oldPath: string, newPath: string) => void;
   previousFiles?: ProjectFile[];
+  /** Set of file paths that were modified in the last generation */
+  modifiedPaths?: Set<string>;
 }
 
 function getFileIcon(path: string) {

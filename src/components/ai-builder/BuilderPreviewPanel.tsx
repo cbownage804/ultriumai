@@ -68,6 +68,10 @@ interface BuilderPreviewPanelProps {
   isGoldenProject?: boolean;
   /** Reset to golden template */
   onResetToGolden?: () => void;
+  /** Whether the preview is showing LKG fallback instead of latest */
+  isUsingLKG?: boolean;
+  /** Auto-heal summary info */
+  autoHealSummary?: { attempts: number; maxAttempts: number; lastError?: string; resolved: boolean } | null;
 }
 /**
  * Externalize ONLY risky inline <script> blocks into JS Blob URLs.
