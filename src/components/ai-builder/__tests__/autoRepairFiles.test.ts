@@ -194,3 +194,28 @@ describe('autoRepairFiles corrupted arrow functions', () => {
     expect(repairs.some(r => r.includes('corrupted arrow'))).toBe(true);
   });
 });
+
+describe('autoRepairFiles orphaned hook closures', () => {
+  it('removes orphaned }, []); after function declaration', () => {
+    const files = [
+      makeTsx('src/components/Navbar.tsx', `import React from 'react';
+
+export default function Navbar() {
+    }, []);
+
+    const navLinks = [
+      { label: 'Home', href: '/' },
+    ];
+
+    return <nav>{navLinks.map(l => <a key={l.href} href={l.href}>{l.label}</a>)}</nav>;
+}`),
+    ];
+
+    const { files: repairedFiles, repairs } = autoRepairFiles(files);
+    const content = repairedFiles[0].content;
+
+    expect(content).not.toContain('}, []);');
+    expect(content).toContain('const navLinks');
+    expect(repairs.some(r => r.includes('orphaned hook closure'))).toBe(true);
+  });
+});
