@@ -703,6 +703,9 @@ export default function AIStudioProjectsPage() {
                                   </span>
                                 )}
                               </div>
+                              <div className="text-[9px] text-muted-foreground/50 mt-0.5">
+                                Created {formatTimeAgo(item.created_at)}
+                              </div>
                             </div>
 
                             {!selectionMode && (
