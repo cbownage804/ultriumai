@@ -79,6 +79,25 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
       }
     }
 
+    // ── 5b. Fix stray truncation artifacts: lines like  ')}  or  ")}; ──
+    // These appear when AI output is cut mid-JSX-attribute, leaving a orphaned
+    // string-close + paren/brace that crashes esbuild internally.
+    const strayArtifactPattern = /^[ \t]*['"`]\s*\)\s*[;}]?\s*$/gm;
+    let strayMatch;
+    while ((strayMatch = strayArtifactPattern.exec(content)) !== null) {
+      const lineStart = content.lastIndexOf('\n', strayMatch.index) + 1;
+      const lineEnd = content.indexOf('\n', strayMatch.index);
+      const fullLine = content.slice(lineStart, lineEnd === -1 ? content.length : lineEnd);
+      // Only remove if the line is ONLY the stray artifact (nothing else meaningful)
+      if (fullLine.trim().length <= 4) {
+        content = content.slice(0, lineStart) + content.slice(lineEnd === -1 ? content.length : lineEnd + 1);
+        changed = true;
+        repairs.push(`${f.path}: removed stray truncation artifact line: ${fullLine.trim()}`);
+        // Reset regex since content changed
+        strayArtifactPattern.lastIndex = 0;
+      }
+    }
+
     // ── 6. Fix inline SVG icon components → replace with lucide-react placeholder ──
     if (['tsx', 'jsx'].includes(ext)) {
       // Detect custom SVG icon components with React.SVGProps (esbuild misparses generics as JSX)

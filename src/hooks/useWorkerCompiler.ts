@@ -127,8 +127,51 @@ async function compileViaViteSandbox(
     html,
     isReactProject: true,
     componentCount: data.componentCount || 0,
-    errors: sandboxErrors,
+    errors: processedErrors,
   };
+}
+
+/**
+ * Extract actionable error info from raw esbuild crash logs.
+ * esbuild's `failureErrorWithLog` wraps the real error in a verbose log.
+ * This extracts the relevant file:line:col + message for auto-heal.
+ */
+function extractActionableError(raw: string): string {
+  // Pattern: "ERROR: ... in src/file.tsx:line:col" buried in crash log
+  const esbuildErrorMatch = raw.match(/ERROR:\s*(.+?)(?:\n|$)/i);
+  if (esbuildErrorMatch) {
+    const errorLine = esbuildErrorMatch[1].trim();
+    // Also extract file location if present
+    const locMatch = raw.match(/([\w/.-]+\.(?:tsx?|jsx?)):(\d+):(\d+)/);
+    if (locMatch) {
+      return `${locMatch[1]}:${locMatch[2]}:${locMatch[3]} - error: ${errorLine}`;
+    }
+    return errorLine;
+  }
+
+  // Pattern: "Transform failed with X error(s):" — extract first error line after it
+  const transformMatch = raw.match(/Transform failed[\s\S]*?\n\s*>\s*\d+\s*\|(.+)/);
+  if (transformMatch) {
+    const locMatch = raw.match(/([\w/.-]+\.(?:tsx?|jsx?)):(\d+):(\d+)/);
+    const snippet = transformMatch[1].trim();
+    if (locMatch) {
+      return `${locMatch[1]}:${locMatch[2]}:${locMatch[3]} - error: Syntax error near: ${snippet}`;
+    }
+    return `Syntax error near: ${snippet}`;
+  }
+
+  // Pattern: stack traces with "failureErrorWithLog" — extract the message before the stack
+  const failureMatch = raw.match(/^(.+?)(?:\n\s+at\s)/s);
+  if (failureMatch && failureMatch[1].length < 500) {
+    return failureMatch[1].trim();
+  }
+
+  // Truncate excessively long error messages (crash logs can be huge)
+  if (raw.length > 500) {
+    return raw.slice(0, 500) + '…';
+  }
+
+  return raw;
 }
 
 export function useWorkerCompiler() {

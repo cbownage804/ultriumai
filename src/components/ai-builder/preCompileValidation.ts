@@ -183,6 +183,44 @@ function checkJSXErrors(content: string): string | null {
   return null;
 }
 
+/**
+ * Detect truncated JSX attribute expressions like `prop={value` without a closing `}`.
+ * This is a common AI truncation artifact that crashes esbuild.
+ */
+function hasTruncatedJsxAttribute(content: string): boolean {
+  // Look for JSX attribute patterns that open an expression but never close it
+  // on the same or next line (simplified heuristic for common cases)
+  const lines = content.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    // Match attr={...  where the brace expression isn't closed on this or next line
+    const attrExprMatch = line.match(/\w+=\{/);
+    if (!attrExprMatch) continue;
+
+    // Count braces from match position to end of this + next line
+    const startIdx = line.indexOf(attrExprMatch[0]) + attrExprMatch[0].length;
+    let remainder = line.slice(startIdx);
+    if (i + 1 < lines.length) remainder += '\n' + lines[i + 1];
+
+    let depth = 1;
+    let inStr: string | null = null;
+    for (let j = 0; j < remainder.length; j++) {
+      const ch = remainder[j];
+      if (inStr) {
+        if (ch === inStr && remainder[j - 1] !== '\\') inStr = null;
+        continue;
+      }
+      if (ch === '"' || ch === "'" || ch === '`') { inStr = ch; continue; }
+      if (ch === '{') depth++;
+      else if (ch === '}') { depth--; if (depth === 0) break; }
+    }
+
+    // If we reached end without balancing, it's truncated
+    if (depth > 0 && i >= lines.length - 2) return true;
+  }
+  return false;
+}
+
 function resolveRelativeImport(fromPath: string, specifier: string, files: ProjectFile[]): boolean {
   const dir = fromPath.split('/').slice(0, -1).join('/');
   const resolved = specifier.startsWith('./')
