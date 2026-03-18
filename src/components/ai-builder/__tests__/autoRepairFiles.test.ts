@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { autoRepairFiles } from '../autoRepairFiles';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 
-function makeTsx(path: string, content: string): ProjectFile {
+function makeTsx(path: string, content: string, language = 'typescript'): ProjectFile {
   return {
     path,
     content,
-    language: 'typescript',
+    language,
   };
 }
 
@@ -95,5 +95,33 @@ export default function App() {
 
     expect(content).toContain('useState<Item[]>([])');
     expect(content).not.toContain('</item>');
+  });
+
+  it('repairs CSS files with extra closing braces', () => {
+    const files = [
+      makeTsx('src/index.css', `.hero {
+  color: red;
+}
+}`, 'css'),
+    ];
+
+    const { files: repairedFiles, repairs } = autoRepairFiles(files);
+    const content = repairedFiles[0].content;
+
+    expect(repairs.some(r => r.includes('removed 1 unexpected CSS closing brace'))).toBe(true);
+    expect((content.match(/}/g) || []).length).toBe(1);
+  });
+
+  it('repairs CSS files with missing closing braces', () => {
+    const files = [
+      makeTsx('src/index.css', `.hero {
+  color: red;`, 'css'),
+    ];
+
+    const { files: repairedFiles, repairs } = autoRepairFiles(files);
+    const content = repairedFiles[0].content;
+
+    expect(repairs.some(r => r.includes('added 1 missing CSS closing brace'))).toBe(true);
+    expect(content.trimEnd().endsWith('}')).toBe(true);
   });
 });

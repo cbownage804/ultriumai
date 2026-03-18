@@ -438,6 +438,38 @@ function analyzeBracketSyntax(code: string): {
       inLineComment = true;
       i++;
       continue;
+    }
+
+    if (ch === '/' && next === '*') {
+      inBlockComment = true;
+      i++;
+      continue;
+    }
+
+    if (ch === '"' || ch === "'") {
+      inString = ch;
+      continue;
+    }
+
+    if (ch === '`') {
+      inTemplateLiteral = true;
+      continue;
+    }
+
+    if (ch === '(' || ch === '[' || ch === '{') {
+      stack.push(ch);
+    } else if (ch === ')' || ch === ']' || ch === '}') {
+      const expected = pairs[ch];
+      if (stack.length === 0 || stack[stack.length - 1] !== expected) {
+        return { issue: { char: ch, index: i }, stack };
+      }
+      stack.pop();
+    }
+  }
+
+  return { issue: null, stack };
+}
+
 /**
  * Repair basic CSS brace imbalance by dropping unmatched closing braces and
  * appending missing closing braces at EOF. Strings/comments are preserved.
@@ -518,39 +550,10 @@ function fixCssBraceBalance(content: string): { content: string; fixed: boolean;
     return { content, fixed: false, description: '' };
   }
 
-  const suffix = depth > 0 ? `${output.trimEnd()}\n${'}'.repeat(depth)}\n` : output;
+  const repairedContent = depth > 0 ? `${output.trimEnd()}\n${'}'.repeat(depth)}\n` : output;
   return {
-    content: suffix,
+    content: repairedContent,
     fixed: true,
     description: fixes.join(', '),
   };
-}
-    if (ch === '/' && next === '*') {
-      inBlockComment = true;
-      i++;
-      continue;
-    }
-
-    if (ch === '"' || ch === "'") {
-      inString = ch;
-      continue;
-    }
-
-    if (ch === '`') {
-      inTemplateLiteral = true;
-      continue;
-    }
-
-    if (ch === '(' || ch === '[' || ch === '{') {
-      stack.push(ch);
-    } else if (ch === ')' || ch === ']' || ch === '}') {
-      const expected = pairs[ch];
-      if (stack.length === 0 || stack[stack.length - 1] !== expected) {
-        return { issue: { char: ch, index: i }, stack };
-      }
-      stack.pop();
-    }
-  }
-
-  return { issue: null, stack };
 }
