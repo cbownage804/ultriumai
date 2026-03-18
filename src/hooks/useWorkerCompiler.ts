@@ -111,8 +111,10 @@ async function compileViaViteSandbox(
 }
 
 export function useWorkerCompiler() {
-  /** AbortController for the currently in-flight compile */
+  /** AbortController for the primary compile lane */
   const activeAbortRef = useRef<AbortController | null>(null);
+  /** AbortController for best-effort local/streaming compiles */
+  const localAbortRef = useRef<AbortController | null>(null);
 
   /**
    * Single compilation path — Vite Sandbox only.
@@ -128,61 +130,79 @@ export function useWorkerCompiler() {
       localOnly?: boolean;
     }
   ): Promise<WorkerCompilerResult> => {
-    // Abort any prior in-flight compilation
-    if (activeAbortRef.current) {
-      console.info('[Compiler] Aborting prior in-flight compilation');
-      activeAbortRef.current.abort();
+    const useLocalLane = options?.localOnly === true;
+    const abortRef = useLocalLane ? localAbortRef : activeAbortRef;
+
+    // Abort only prior work on the same lane.
+    if (abortRef.current) {
+      console.info('[Compiler] Aborting prior in-flight compilation', { lane: useLocalLane ? 'local' : 'primary' });
+      abortRef.current.abort();
     }
     const ac = new AbortController();
-    activeAbortRef.current = ac;
+    abortRef.current = ac;
     const { signal } = ac;
 
     let lastError: Error | null = null;
 
-    for (let attempt = 0; attempt <= MAX_TRANSIENT_RETRIES; attempt++) {
-      try {
-        if (attempt > 0) {
-          console.info(`[Compiler] 🔄 Retry attempt ${attempt}/${MAX_TRANSIENT_RETRIES}`);
-          // Brief backoff before retry
-          await new Promise(r => setTimeout(r, 1000 * attempt));
-          if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
-        }
+    try {
+      for (let attempt = 0; attempt <= MAX_TRANSIENT_RETRIES; attempt++) {
+        try {
+          if (attempt > 0) {
+            console.info(`[Compiler] 🔄 Retry attempt ${attempt}/${MAX_TRANSIENT_RETRIES}`);
+            // Brief backoff before retry
+            await new Promise(r => setTimeout(r, 1000 * attempt));
+            if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
+          }
 
-        console.info('[Compiler] ⏱ Compiling via Vite Sandbox', { fileCount: files.length, attempt });
-        const result = await Promise.race([
-          compileViaViteSandbox(files, options, signal),
-          new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error(`Vite sandbox timeout (${VITE_TIMEOUT_MS / 1000}s)`)), VITE_TIMEOUT_MS)
-          ),
-        ]);
-        console.info('[Compiler] ✅ Vite Sandbox compiled:', result.html?.length, 'chars');
-        return result;
-      } catch (err: any) {
-        if (signal.aborted && ac !== activeAbortRef.current) {
-          throw new DOMException('Aborted', 'AbortError');
-        }
-        lastError = err instanceof Error ? err : new Error(String(err));
+          console.info('[Compiler] ⏱ Compiling via Vite Sandbox', {
+            fileCount: files.length,
+            attempt,
+            lane: useLocalLane ? 'local' : 'primary',
+          });
+          const result = await Promise.race([
+            compileViaViteSandbox(files, options, signal),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error(`Vite sandbox timeout (${VITE_TIMEOUT_MS / 1000}s)`)), VITE_TIMEOUT_MS)
+            ),
+          ]);
+          console.info('[Compiler] ✅ Vite Sandbox compiled:', result.html?.length, 'chars');
+          return result;
+        } catch (err: any) {
+          if (signal.aborted && ac !== abortRef.current) {
+            throw new DOMException('Aborted', 'AbortError');
+          }
+          lastError = err instanceof Error ? err : new Error(String(err));
 
-        // Only retry on transient errors
-        if (attempt < MAX_TRANSIENT_RETRIES && isTransientError(lastError)) {
-          console.warn(`[Compiler] ⚠️ Transient failure (attempt ${attempt + 1}):`, lastError.message);
-          continue;
+          // Only retry on transient errors
+          if (attempt < MAX_TRANSIENT_RETRIES && isTransientError(lastError)) {
+            console.warn(`[Compiler] ⚠️ Transient failure (attempt ${attempt + 1}):`, lastError.message);
+            continue;
+          }
+          break;
         }
-        break;
+      }
+
+      const message = lastError?.message || 'Unknown compilation error';
+      console.error('[Compiler] ❌ Compilation failed after retries:', message);
+      throw new Error(`Compilation failed: ${message}`);
+    } finally {
+      if (abortRef.current === ac) {
+        abortRef.current = null;
       }
     }
-
-    const message = lastError?.message || 'Unknown compilation error';
-    console.error('[Compiler] ❌ Compilation failed after retries:', message);
-    throw new Error(`Compilation failed: ${message}`);
   }, []);
 
   /** Abort any in-flight compilation */
   const abortCompilation = useCallback(() => {
     if (activeAbortRef.current) {
-      console.info('[Compiler] abortCompilation called — cancelling in-flight requests');
+      console.info('[Compiler] abortCompilation called — cancelling primary in-flight requests');
       activeAbortRef.current.abort();
       activeAbortRef.current = null;
+    }
+    if (localAbortRef.current) {
+      console.info('[Compiler] abortCompilation called — cancelling local in-flight requests');
+      localAbortRef.current.abort();
+      localAbortRef.current = null;
     }
   }, []);
 
