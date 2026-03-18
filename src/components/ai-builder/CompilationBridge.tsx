@@ -857,18 +857,22 @@ export function CompilationBridge({
         }
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : String(err);
-        console.error('[CompilationBridge] Compilation crashed:', errMsg);
-        // Only apply fallback if this run is still current AND no LKG exists
-        if (thisRunId === compileRunIdRef.current) {
-          if (stableHTMLRef.current && isPreviewValid(stableHTMLRef.current)) {
-            console.warn('[CompilationBridge] Compile crashed — preserving LKG preview');
-          } else {
-            setLiveCompiledHTML(ERROR_FALLBACK_HTML);
-            setStableHTML(ERROR_FALLBACK_HTML);
+        if (isAbortError(err)) {
+          console.info('[CompilationBridge] Compile aborted — ignoring stale/cancelled run');
+        } else {
+          console.error('[CompilationBridge] Compilation crashed:', errMsg);
+          if (thisRunId === compileRunIdRef.current) {
+            if (stableHTMLRef.current && isPreviewValid(stableHTMLRef.current)) {
+              console.warn('[CompilationBridge] Compile crashed — preserving LKG preview');
+            } else {
+              setLiveCompiledHTML(ERROR_FALLBACK_HTML);
+              setStableHTML(ERROR_FALLBACK_HTML);
+            }
+            transitionCompileState('error', { message: errMsg, errors: [errMsg] });
           }
-          transitionCompileState('error', { message: errMsg, errors: [errMsg] });
         }
       } finally {
+
         clearTimeout(safetyTimer);
         compilationInFlightRef.current = false;
         // If files changed during this compile, retrigger
