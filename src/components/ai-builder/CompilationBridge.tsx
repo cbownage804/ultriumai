@@ -718,7 +718,8 @@ export function CompilationBridge({
     }
 
     // Shorter debounce for incremental edits (50ms) vs initial generation (150ms)
-    const debounceMs = isIncrementalEditRef.current ? 50 : 150;
+    // Use longer debounce after generation ends to avoid race with React effect batching
+    const debounceMs = isIncrementalEditRef.current ? 50 : 300;
     let safetyTimer: ReturnType<typeof setTimeout> | undefined;
     const timer = setTimeout(async () => {
       // Double-check guards after debounce
