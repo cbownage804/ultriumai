@@ -784,6 +784,7 @@ export function CompilationBridge({
       compilationInFlightRef.current = true;
       compiledDigestRef.current = filesDigest;
       recompileNeededRef.current = false;
+      lockCompile(); // Prevent spurious aborts from other effects in the same render cycle
       transitionCompileState('compiling');
 
       // Safety net: force-reset isCompiling if compilation hangs
