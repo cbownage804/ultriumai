@@ -237,44 +237,52 @@ function fixJsxTagBalance(content: string): { content: string; fixed: boolean; d
 }
 
 /**
- * Fix unbalanced brackets by appending missing closers.
+ * Fix unbalanced brackets by trimming trailing unexpected closers and
+ * appending missing closers for small EOF truncation cases.
  */
 function fixBracketBalance(content: string): { content: string; fixed: boolean; description: string } {
-  // Strip strings and comments for accurate counting
-  const stripped = content
-    .replace(/\/\/.*$/gm, '')
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/'(?:[^'\\]|\\.)*'/g, '""')
-    .replace(/"(?:[^"\\]|\\.)*"/g, '""')
-    .replace(/`(?:[^`\\]|\\.)*`/gs, '""');
+  const fixes: string[] = [];
+  let working = content;
 
-  const counts: Record<string, number> = { '{': 0, '(': 0, '[': 0 };
-  const closers: Record<string, string> = { '}': '{', ')': '(', ']': '[' };
-  const closerChars: Record<string, string> = { '{': '}', '(': ')', '[': ']' };
+  // Remove stray trailing closers like `}` / `]` / `)` that often appear in
+  // truncated AI output and trigger `Unexpected '}'` before repair can run.
+  while (true) {
+    const trimmed = working.trimEnd();
+    if (!trimmed || !/[\]\)}]$/.test(trimmed)) break;
 
-  for (const char of stripped) {
-    if (char in counts) counts[char]++;
-    if (char in closers) counts[closers[char]]--;
+    const analysis = analyzeBracketSyntax(trimmed);
+    const lastIndex = trimmed.length - 1;
+    if (!analysis.issue || analysis.issue.index !== lastIndex) break;
+
+    working = `${trimmed.slice(0, -1)}\n`;
+    fixes.push(`removed trailing unexpected "${analysis.issue.char}"`);
   }
 
-  const fixes: string[] = [];
+  const unterminatedLiteral = detectUnterminatedLiteral(working);
+  const analysisTarget = unterminatedLiteral ? `${working}${unterminatedLiteral}` : working;
+  const analysis = analyzeBracketSyntax(analysisTarget);
   let suffix = '';
 
-  for (const [open, count] of Object.entries(counts)) {
-    if (count > 0 && count <= 5) { // Only fix small imbalances (likely truncation)
-      const closer = closerChars[open];
-      suffix += closer.repeat(count);
-      fixes.push(`added ${count}× "${closer}"`);
-    }
+  if (unterminatedLiteral === '`') {
+    suffix += '`';
+    fixes.push('closed unterminated template literal');
+  } else if (unterminatedLiteral === '"' || unterminatedLiteral === "'") {
+    suffix += unterminatedLiteral;
+    fixes.push('closed unterminated string literal');
   }
 
-  // Fix odd backtick count (unterminated template literal)
-  const commentStripped = content.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/'(?:[^'\\]|\\.)*'/g, '').replace(/"(?:[^"\\]|\\.)*"/g, '');
-  const backtickCount = (commentStripped.match(/`/g) || []).length;
-  if (backtickCount % 2 !== 0) {
-    suffix = '`' + suffix;
-    fixes.push('closed unterminated template literal');
+  if (!analysis.issue && analysis.stack.length > 0 && analysis.stack.length <= 5) {
+    const closerChars: Record<string, string> = { '{': '}', '(': ')', '[': ']' };
+    const missingClosers = [...analysis.stack].reverse().map(open => closerChars[open]).join('');
+    suffix += missingClosers;
+
+    const groupedCounts = new Map<string, number>();
+    for (const closer of missingClosers) {
+      groupedCounts.set(closer, (groupedCounts.get(closer) || 0) + 1);
+    }
+    for (const [closer, count] of groupedCounts.entries()) {
+      fixes.push(`added ${count}× "${closer}"`);
+    }
   }
 
   if (fixes.length === 0) {
@@ -282,8 +290,176 @@ function fixBracketBalance(content: string): { content: string; fixed: boolean; 
   }
 
   return {
-    content: content + '\n' + suffix + '\n',
+    content: suffix ? `${working}\n${suffix}\n` : working,
     fixed: true,
     description: fixes.join(', '),
   };
+}
+
+function detectUnterminatedLiteral(content: string): '"' | "'" | '`' | null {
+  let inString: '"' | "'" | null = null;
+  let inTemplateLiteral = false;
+  let inLineComment = false;
+  let inBlockComment = false;
+  let escaped = false;
+
+  for (let i = 0; i < content.length; i++) {
+    const ch = content[i];
+    const next = content[i + 1];
+
+    if (inLineComment) {
+      if (ch === '\n') inLineComment = false;
+      continue;
+    }
+
+    if (inBlockComment) {
+      if (ch === '*' && next === '/') {
+        inBlockComment = false;
+        i++;
+      }
+      continue;
+    }
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (ch === '\\') {
+        escaped = true;
+        continue;
+      }
+      if (ch === inString) inString = null;
+      continue;
+    }
+
+    if (inTemplateLiteral) {
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (ch === '\\') {
+        escaped = true;
+        continue;
+      }
+      if (ch === '`') inTemplateLiteral = false;
+      continue;
+    }
+
+    if (ch === '/' && next === '/') {
+      inLineComment = true;
+      i++;
+      continue;
+    }
+
+    if (ch === '/' && next === '*') {
+      inBlockComment = true;
+      i++;
+      continue;
+    }
+
+    if (ch === '"' || ch === "'") {
+      inString = ch;
+      continue;
+    }
+
+    if (ch === '`') {
+      inTemplateLiteral = true;
+    }
+  }
+
+  if (inString) return inString;
+  if (inTemplateLiteral) return '`';
+  return null;
+}
+
+function analyzeBracketSyntax(code: string): {
+  issue: { char: string; index: number } | null;
+  stack: string[];
+} {
+  const stack: string[] = [];
+  const pairs: Record<string, string> = { ')': '(', ']': '[', '}': '{' };
+  let inString: string | null = null;
+  let escaped = false;
+  let inLineComment = false;
+  let inBlockComment = false;
+  let inTemplateLiteral = false;
+
+  for (let i = 0; i < code.length; i++) {
+    const ch = code[i];
+    const next = code[i + 1];
+
+    if (inLineComment) {
+      if (ch === '\n') inLineComment = false;
+      continue;
+    }
+
+    if (inBlockComment) {
+      if (ch === '*' && next === '/') {
+        inBlockComment = false;
+        i++;
+      }
+      continue;
+    }
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (ch === '\\') {
+        escaped = true;
+        continue;
+      }
+      if (ch === inString) inString = null;
+      continue;
+    }
+
+    if (inTemplateLiteral) {
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (ch === '\\') {
+        escaped = true;
+        continue;
+      }
+      if (ch === '`') inTemplateLiteral = false;
+      continue;
+    }
+
+    if (ch === '/' && next === '/') {
+      inLineComment = true;
+      i++;
+      continue;
+    }
+
+    if (ch === '/' && next === '*') {
+      inBlockComment = true;
+      i++;
+      continue;
+    }
+
+    if (ch === '"' || ch === "'") {
+      inString = ch;
+      continue;
+    }
+
+    if (ch === '`') {
+      inTemplateLiteral = true;
+      continue;
+    }
+
+    if (ch === '(' || ch === '[' || ch === '{') {
+      stack.push(ch);
+    } else if (ch === ')' || ch === ']' || ch === '}') {
+      const expected = pairs[ch];
+      if (stack.length === 0 || stack[stack.length - 1] !== expected) {
+        return { issue: { char: ch, index: i }, stack };
+      }
+      stack.pop();
+    }
+  }
+
+  return { issue: null, stack };
 }
