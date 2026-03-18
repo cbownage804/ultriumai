@@ -2100,7 +2100,11 @@ export function AIAppBuilderWorkspace() {
         const html = compiledForHostingRef.current || stableHTMLRef.current;
         const pid = sessionIdRef.current;
         if (html && pid && pid !== 'draft') {
-          captureAndUpload(html, pid).catch(() => {});
+          captureAndUpload(html, pid)
+            .then((url) => {
+              if (url) toast.success('Project thumbnail saved', { duration: 2000 });
+            })
+            .catch(() => {});
         }
       } catch { /* best-effort — don't block navigation */ }
     };
