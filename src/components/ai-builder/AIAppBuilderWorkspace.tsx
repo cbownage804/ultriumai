@@ -644,12 +644,13 @@ export function AIAppBuilderWorkspace() {
       deletions: rawDeletions.length,
       changedPaths: [...rawParsedFiles.map(f => f.path), ...rawEdits.map(e => e.path)],
     });
-    // ── Infrastructure file protection: block edits to boot-critical files unless user explicitly mentioned them ──
+    // ── Infrastructure file protection: preserve existing boot files, but allow bootstrap creation on fresh runs ──
     const { parsedFiles, edits, deletions: safeDeletions, blocked } = filterProtectedFiles(
       rawParsedFiles,
       rawEdits,
       rawDeletions,
       latestMessagesRef.current,
+      new Set(project.files.map(f => f.path)),
       repairInFlightRef.current,
     );
     if (blocked.length > 0) {

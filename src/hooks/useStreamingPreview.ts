@@ -141,28 +141,34 @@ export function useStreamingPreview() {
       const delim = allDelimiters[i];
       const contentStart = rawContent.indexOf('\n', delim.startOffset);
       if (contentStart === -1) continue;
-      
-      const contentEnd = i < allDelimiters.length - 1 
-        ? allDelimiters[i + 1].startOffset 
+
+      const isLastFile = i === allDelimiters.length - 1;
+      const contentEnd = !isLastFile
+        ? allDelimiters[i + 1].startOffset
         : rawContent.length;
-      
+
       // Strip ===END=== from last file content
       let content = rawContent.slice(contentStart + 1, contentEnd).trimEnd();
       content = content.replace(/\n\s*===END===\s*$/, '');
-      
+
       if (content) {
+        const ext = delim.path.split('.').pop()?.toLowerCase() || '';
+        const shouldCheckTruncation = ['ts', 'tsx', 'js', 'jsx'].includes(ext);
+        const isTruncated = shouldCheckTruncation && isFileTruncated(content);
+
         files.push({
           path: delim.path,
           content,
           language: detectLanguage(delim.path),
+          ...(isLastFile && (!hasEndMarker || isTruncated) ? { incomplete: true } : {}),
         });
-        if (i < allDelimiters.length - 1) {
+
+        if (!isLastFile) {
           completedCount++;
-          // Check truncation on completed files
-          const ext = delim.path.split('.').pop()?.toLowerCase() || '';
-          if (['ts', 'tsx', 'js', 'jsx'].includes(ext) && isFileTruncated(content)) {
-            truncatedFiles.push(delim.path);
-          }
+        }
+
+        if (isTruncated) {
+          truncatedFiles.push(delim.path);
         }
       }
     }
