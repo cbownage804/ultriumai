@@ -43,18 +43,20 @@ export function ShortcutsHint() {
         className="fixed bottom-20 right-4 z-[100]"
       >
         {!expanded ? (
-          <button
-            onClick={() => setExpanded(true)}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#0d0d14] border border-white/[0.08] shadow-xl shadow-black/40 hover:border-white/[0.15] transition-colors group"
-          >
-            <Keyboard className="h-3.5 w-3.5 text-cyan-400/60 group-hover:text-cyan-400" />
-            <span className="text-[11px] text-white/40 group-hover:text-white/60">
-              Press <kbd className="px-1 py-0.5 bg-white/[0.05] rounded text-[9px] font-mono text-cyan-400/70 mx-0.5">⌘K</kbd> for shortcuts
-            </span>
-            <button onClick={(e) => { e.stopPropagation(); dismiss(); }} className="h-4 w-4 rounded flex items-center justify-center text-white/15 hover:text-white/40">
+          <div className="flex items-center gap-1 rounded-xl bg-[#0d0d14] border border-white/[0.08] shadow-xl shadow-black/40 pr-1">
+            <button
+              onClick={() => setExpanded(true)}
+              className="flex items-center gap-2 px-3 py-2 transition-colors group"
+            >
+              <Keyboard className="h-3.5 w-3.5 text-cyan-400/60 group-hover:text-cyan-400" />
+              <span className="text-[11px] text-white/40 group-hover:text-white/60">
+                Press <kbd className="px-1 py-0.5 bg-white/[0.05] rounded text-[9px] font-mono text-cyan-400/70 mx-0.5">⌘K</kbd> for shortcuts
+              </span>
+            </button>
+            <button onClick={dismiss} className="h-4 w-4 rounded flex items-center justify-center text-white/15 hover:text-white/40">
               <X className="h-2.5 w-2.5" />
             </button>
-          </button>
+          </div>
         ) : (
           <div className="w-56 rounded-xl bg-[#0d0d14] border border-white/[0.08] shadow-xl shadow-black/40 p-3">
             <div className="flex items-center justify-between mb-2">

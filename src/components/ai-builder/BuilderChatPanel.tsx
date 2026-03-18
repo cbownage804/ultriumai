@@ -522,6 +522,17 @@ export function BuilderChatPanel({
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
   };
 
+  const handleBuildModeClick = useCallback(() => {
+    if (mode !== 'build') {
+      onModeChange('build');
+      return;
+    }
+
+    if (input.trim() && !isGenerating) {
+      void handleSend();
+    }
+  }, [handleSend, input, isGenerating, mode, onModeChange]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // Phase 106: Cmd/Ctrl+Enter to send, plain Enter for newlines
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
@@ -2090,13 +2101,14 @@ export function BuilderChatPanel({
               )}>1cr</span>
             </button>
             <button
-              onClick={() => onModeChange('build')}
+              onClick={handleBuildModeClick}
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all",
                 mode === 'build'
                   ? "bg-violet-500/20 text-violet-400 ring-1 ring-violet-500/30"
                   : "text-white/40 hover:text-white/60 hover:bg-white/5"
               )}
+              title={mode === 'build' && input.trim() ? 'Build now' : 'Switch to build mode'}
             >
               Build
               <span className={cn(
