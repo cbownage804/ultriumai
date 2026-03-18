@@ -947,7 +947,7 @@ export function CompilationBridge({
   useEffect(() => {
     onForceCompile?.(() => {
       console.info('[CompilationBridge] forceCompile invoked — invalidating in-flight run');
-      abortCompilation(); // Cancel in-flight network requests
+      abortCompilation(true); // Force-abort even if locked
       compileRunIdRef.current++; // Invalidate any in-flight compile
       compilationInFlightRef.current = false;
       stableHTMLRef.current = null;
