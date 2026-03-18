@@ -2094,6 +2094,15 @@ export function AIAppBuilderWorkspace() {
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('beforeunload', flushDraft);
       flushDraft(); // also flush on unmount (route change)
+
+      // ── Capture thumbnail on exit so project cards show latest preview ──
+      try {
+        const html = compiledForHostingRef.current || stableHTMLRef.current;
+        const pid = sessionIdRef.current;
+        if (html && pid && pid !== 'draft') {
+          captureAndUpload(html, pid).catch(() => {});
+        }
+      } catch { /* best-effort — don't block navigation */ }
     };
     // Intentionally stable deps — refs handle changing values
   }, [saveDraftImmediate, loadDraft, setFiles, renameProject, setMessages]);
