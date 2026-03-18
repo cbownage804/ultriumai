@@ -12,6 +12,12 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
   
   const repaired = files.map(f => {
     const ext = f.path.split('.').pop()?.toLowerCase() || '';
+    if (ext === 'css') {
+      const cssResult = fixCssBraceBalance(f.content);
+      if (!cssResult.fixed) return f;
+      repairs.push(`${f.path}: ${cssResult.description}`);
+      return { ...f, content: cssResult.content };
+    }
     if (!['ts', 'tsx', 'js', 'jsx'].includes(ext)) return f;
     
     let content = f.content;
@@ -462,4 +468,92 @@ function analyzeBracketSyntax(code: string): {
   }
 
   return { issue: null, stack };
+}
+
+/**
+ * Repair basic CSS brace imbalance by dropping unmatched closing braces and
+ * appending missing closing braces at EOF. Strings/comments are preserved.
+ */
+function fixCssBraceBalance(content: string): { content: string; fixed: boolean; description: string } {
+  let output = '';
+  let depth = 0;
+  let removedClosers = 0;
+  let inString: '"' | "'" | null = null;
+  let inComment = false;
+  let escaped = false;
+
+  for (let i = 0; i < content.length; i++) {
+    const ch = content[i];
+    const next = content[i + 1];
+
+    if (inComment) {
+      output += ch;
+      if (ch === '*' && next === '/') {
+        output += '/';
+        inComment = false;
+        i++;
+      }
+      continue;
+    }
+
+    if (inString) {
+      output += ch;
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (ch === '\\') {
+        escaped = true;
+        continue;
+      }
+      if (ch === inString) inString = null;
+      continue;
+    }
+
+    if (ch === '/' && next === '*') {
+      output += '/*';
+      inComment = true;
+      i++;
+      continue;
+    }
+
+    if (ch === '"' || ch === "'") {
+      inString = ch;
+      output += ch;
+      continue;
+    }
+
+    if (ch === '{') {
+      depth++;
+      output += ch;
+      continue;
+    }
+
+    if (ch === '}') {
+      if (depth === 0) {
+        removedClosers++;
+        continue;
+      }
+      depth--;
+      output += ch;
+      continue;
+    }
+
+    output += ch;
+  }
+
+  const fixes: string[] = [];
+  if (removedClosers > 0) fixes.push(`removed ${removedClosers} unexpected CSS closing brace${removedClosers === 1 ? '' : 's'}`);
+  if (depth > 0) fixes.push(`added ${depth} missing CSS closing brace${depth === 1 ? '' : 's'}`);
+
+  if (fixes.length === 0) {
+    return { content, fixed: false, description: '' };
+  }
+
+  const repairedContent = depth > 0 ? `${output.trimEnd()}\n${'}'.repeat(depth)}\n` : output;
+  return {
+    content: repairedContent,
+    fixed: true,
+    description: fixes.join(', '),
+  };
 }
