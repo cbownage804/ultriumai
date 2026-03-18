@@ -256,8 +256,20 @@ export function useWorkerCompiler() {
     }
   }, []);
 
-  /** Abort any in-flight compilation */
-  const abortCompilation = useCallback(() => {
+  /** Lock to prevent spurious aborts during critical post-generation compiles */
+  const compileLockRef = useRef(false);
+
+  /** Lock compilation — prevents abortCompilation from cancelling in-flight work */
+  const lockCompile = useCallback(() => { compileLockRef.current = true; }, []);
+  /** Unlock compilation */
+  const unlockCompile = useCallback(() => { compileLockRef.current = false; }, []);
+
+  /** Abort any in-flight compilation (skipped if compile is locked) */
+  const abortCompilation = useCallback((force = false) => {
+    if (compileLockRef.current && !force) {
+      console.info('[Compiler] abortCompilation SKIPPED — compile is locked (post-generation critical path)');
+      return;
+    }
     if (activeAbortRef.current) {
       console.info('[Compiler] abortCompilation called — cancelling primary in-flight requests');
       activeAbortRef.current.abort();
