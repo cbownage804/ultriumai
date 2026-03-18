@@ -914,6 +914,10 @@ export function CompilationBridge({
         const errMsg = err instanceof Error ? err.message : String(err);
         if (isAbortError(err)) {
           console.info('[CompilationBridge] Compile aborted — ignoring stale/cancelled run');
+          // If no successor compile is queued, reset to idle to prevent permanent "Compiling..." state
+          if (thisRunId === compileRunIdRef.current && !recompileNeededRef.current) {
+            transitionCompileState('idle');
+          }
         } else {
           console.error('[CompilationBridge] Compilation crashed:', errMsg);
           if (thisRunId === compileRunIdRef.current) {
