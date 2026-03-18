@@ -85,23 +85,46 @@ async function compileViaViteSandbox(
 
   if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
 
+  console.info('[ViteSandbox] invoke result:', {
+    hasError: !!error,
+    errorMsg: error?.message,
+    dataType: typeof data,
+    dataIsNull: data === null,
+    dataKeys: data && typeof data === 'object' ? Object.keys(data) : 'N/A',
+    htmlType: typeof data?.html,
+    htmlLength: typeof data?.html === 'string' ? data.html.length : 0,
+    hasFallback: data?.fallback,
+  });
+
   if (error) {
     throw new Error(`Vite sandbox error: ${error.message}`);
   }
 
-  if (data?.fallback) {
-    throw new Error(data.error || 'Vite sandbox unavailable');
+  // Handle case where data is a raw string (Supabase SDK parsing issue)
+  let parsedData = data;
+  if (typeof data === 'string') {
+    try {
+      parsedData = JSON.parse(data);
+      console.info('[ViteSandbox] Parsed string data to object, html length:', parsedData?.html?.length || 0);
+    } catch {
+      console.error('[ViteSandbox] Failed to parse string response');
+      throw new Error('Vite sandbox returned unparseable response');
+    }
   }
 
-  const sandboxErrors = Array.isArray(data?.errors)
-    ? data.errors.filter((value: unknown): value is string => typeof value === 'string' && value.trim().length > 0)
+  if (parsedData?.fallback) {
+    throw new Error(parsedData.error || 'Vite sandbox unavailable');
+  }
+
+  const sandboxErrors = Array.isArray(parsedData?.errors)
+    ? parsedData.errors.filter((value: unknown): value is string => typeof value === 'string' && value.trim().length > 0)
     : [];
   
   // Extract actionable error messages from esbuild crash logs
   // esbuild crashes produce `failureErrorWithLog` with the real error buried in the log
   const processedErrors = sandboxErrors.map(extractActionableError);
   
-  const html = typeof data?.html === 'string' ? data.html : '';
+  const html = typeof parsedData?.html === 'string' ? parsedData.html : '';
 
   if (!html) {
     if (processedErrors.length > 0) {
