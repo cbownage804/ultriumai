@@ -97,7 +97,7 @@ function injectImportMapIfNeeded(html: string, detectedPackages: Set<string>): s
 }
 
 serve(async (req) => {
-
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
