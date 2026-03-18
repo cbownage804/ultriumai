@@ -314,6 +314,32 @@ export function CompilationBridge({
     return error.name === 'AbortError' || /\babort(ed)?\b/i.test(error.message);
   }, []);
 
+  const prepareFilesForCompile = useCallback((inputFiles: ProjectFile[]) => {
+    let preparedFiles = inputFiles;
+
+    const { files: repairedFiles, repairs } = autoRepairFiles(preparedFiles);
+    if (repairs.length > 0) {
+      preparedFiles = repairedFiles;
+    }
+
+    const { files: stubbedFiles, stubs } = generateMissingImportStubs(preparedFiles);
+    if (stubs.length > 0) {
+      preparedFiles = stubbedFiles;
+    }
+
+    const { files: twFiles, scaffolded } = scaffoldTailwindConfig(preparedFiles);
+    if (scaffolded.length > 0) {
+      preparedFiles = twFiles;
+    }
+
+    return {
+      files: preparedFiles,
+      repairs,
+      stubs,
+      scaffolded,
+    };
+  }, []);
+
   // ── Core compile function (with auto-repair) ──
   const runCompile = useCallback(async () => {
     let currentFiles = filesRef.current;
@@ -333,26 +359,17 @@ export function CompilationBridge({
       console.info('[CompilationBridge] 📦 Dep cache miss —', depCheck.imports.length, 'imports to resolve');
     }
 
-    // ── Auto-repair pass: fix common syntax issues before sending to Vite ──
-    const { files: repairedFiles, repairs } = autoRepairFiles(currentFiles);
+    const { files: preparedFiles, repairs, stubs, scaffolded } = prepareFilesForCompile(currentFiles);
     if (repairs.length > 0) {
       console.info('[CompilationBridge] Auto-repaired', repairs.length, 'issues:', repairs);
-      currentFiles = repairedFiles;
     }
-
-    // ── Missing import stub generation: prevent "module not found" failures ──
-    const { files: stubbedFiles, stubs } = generateMissingImportStubs(currentFiles);
     if (stubs.length > 0) {
       console.info('[CompilationBridge] Generated', stubs.length, 'import stubs:', stubs);
-      currentFiles = stubbedFiles;
     }
-
-    // ── Tailwind config auto-scaffolding: inject config when Tailwind classes detected ──
-    const { files: twFiles, scaffolded } = scaffoldTailwindConfig(currentFiles);
     if (scaffolded.length > 0) {
       console.info('[CompilationBridge] Scaffolded Tailwind config:', scaffolded);
-      currentFiles = twFiles;
     }
+    currentFiles = preparedFiles;
 
     // ── Pre-compile validation: catch syntax errors instantly (<1ms) ──
     const preIssues = preCompileValidate(currentFiles);
@@ -469,7 +486,7 @@ export function CompilationBridge({
     }
 
     return result;
-  }, [isAbortError, isReactProject, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, linkedGPT, assets]);
+  }, [isAbortError, isReactProject, prepareFilesForCompile, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, linkedGPT, assets]);
 
   // ── Streaming preview: compile partial files during generation ──
   // Shows progressive UI without promoting partial output to persistent LKG preview.
@@ -516,9 +533,11 @@ export function CompilationBridge({
       const hasIndex = partial.some(f => f.path === 'index.html');
       if (!(hasIndex || (hasMain && hasApp))) return;
 
+      const { files: preparedPartial } = prepareFilesForCompile(partial);
+
       // Skip streaming compile if partial files are already known invalid
       if (validateFiles) {
-        const vResult = validateFiles(partial);
+        const vResult = validateFiles(preparedPartial);
         const syntaxErrors = vResult.issues.filter(i => i.severity === 'error');
         if (syntaxErrors.length > 0) return;
       }
@@ -526,11 +545,11 @@ export function CompilationBridge({
       streamingCompileInFlightRef.current = true;
       lastStreamingCompileCountRef.current = completedCount;
 
-      console.info('[StreamingPreview] Compiling %d partial files (%d completed)', partial.length, completedCount);
+      console.info('[StreamingPreview] Compiling %d partial files (%d completed)', preparedPartial.length, completedCount);
 
       try {
         const result = await Promise.race([
-          compileReactProjectRef.current(partial, {
+          compileReactProjectRef.current(preparedPartial, {
             supabaseConfig: supabaseConfig || undefined,
             stripeConfig: stripeConfig || undefined,
             envVars,
@@ -559,7 +578,7 @@ export function CompilationBridge({
         streamingCompileTimerRef.current = null;
       }
     };
-  }, [isGenerating, isGoldenProject, supabaseConfig, stripeConfig, envVars, transitionCompileState, validateFiles]);
+  }, [isGenerating, isGoldenProject, prepareFilesForCompile, supabaseConfig, stripeConfig, envVars, transitionCompileState, validateFiles]);
 
   // ── Reset stableHTML when a new generation starts ──
   const prevIsGeneratingRef = useRef(false);
@@ -687,7 +706,8 @@ export function CompilationBridge({
       // ── Early validation gate — skip compile if syntax errors ──
       if (validateFiles) {
         const currentFiles = filesRef.current;
-        const vResult = validateFiles(currentFiles);
+        const { files: preparedFiles } = prepareFilesForCompile(currentFiles);
+        const vResult = validateFiles(preparedFiles);
         const syntaxErrors = vResult.issues.filter(i => i.severity === 'error');
         if (syntaxErrors.length > 0) {
           console.warn('[CompilationBridge] VALIDATION GATE: skipping compile', {
