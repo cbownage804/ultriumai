@@ -3101,14 +3101,8 @@ export function AIAppBuilderWorkspace() {
       setStableHTML(null);
       try { localStorage.removeItem('ai-builder-compiled-html'); } catch {}
     }
-    if (wasGeneratingRef.current && !isGenerating && project.files.length > 0 && currentProjectId) {
-      setTimeout(() => {
-        const html = compiledForHostingRef.current || stableHTMLRef.current;
-        if (html) {
-          captureAndUpload(html, currentProjectId).catch(() => {});
-        }
-      }, 4000);
-    }
+    // Thumbnail capture is handled in handleStableHTML after Vite compilation completes.
+    // Do NOT capture here — compiledForHostingRef may still hold stale/default HTML.
     wasGeneratingRef.current = isGenerating;
   }, [isGenerating, project.files.length, currentProjectId, captureAndUpload]);
 
