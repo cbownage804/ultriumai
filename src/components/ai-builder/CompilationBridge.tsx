@@ -375,10 +375,11 @@ export function CompilationBridge({
     const preIssues = preCompileValidate(currentFiles);
     const preErrors = preIssues.filter(i => i.severity === 'error');
     if (preErrors.length > 0) {
-      console.warn('[CompilationBridge] Pre-compile validation caught', preErrors.length, 'errors:', preErrors.map(e => `${e.file}: ${e.message}`));
+      const errorMessages = preErrors.map(e => `${e.file}: ${e.message}`);
+      console.warn('[CompilationBridge] Pre-compile validation caught', preErrors.length, 'errors:', errorMessages);
       const annotations = mergeErrorSources(preErrors, []);
       onErrorAnnotations?.(annotations);
-      return null;
+      throw new Error(errorMessages.join('\n'));
     }
     if (preIssues.length > 0) {
       console.info('[CompilationBridge] Pre-compile warnings:', preIssues.map(e => `${e.file}: ${e.message}`));
@@ -387,11 +388,12 @@ export function CompilationBridge({
     }
 
     let result: string | null = null;
+    let compileError: Error | null = null;
     const compileT0 = performance.now();
+    const BRIDGE_TIMEOUT = 30_000;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     try {
-      const BRIDGE_TIMEOUT = 30_000;
-      let timeoutId: ReturnType<typeof setTimeout> | null = null;
       const workerTimeout = new Promise<null>((resolve) => {
         timeoutId = setTimeout(() => {
           console.warn(`[CompilationBridge] Compilation timed out after ${BRIDGE_TIMEOUT / 1000}s`);
@@ -416,6 +418,11 @@ export function CompilationBridge({
             throw new Error(blocking.map(error => error.message).join('\n'));
           }
         }
+
+        if (!compiled.html && compiled.errorMessage) {
+          throw new Error(compiled.errorMessage);
+        }
+
         return compiled.html || null;
       }).catch((err: Error) => {
         if (isAbortError(err)) {
@@ -428,12 +435,27 @@ export function CompilationBridge({
       });
 
       result = await Promise.race([workerResult, workerTimeout]);
-      if (timeoutId) clearTimeout(timeoutId);
     } catch (err) {
       if (isAbortError(err)) {
         throw err;
       }
-      result = null;
+      compileError = err instanceof Error ? err : new Error(String(err));
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
+    }
+
+    if (compileError) {
+      const compileDuration = Math.round(performance.now() - compileT0);
+      recordCompileRef.current({
+        tier: 'vite',
+        success: false,
+        durationMs: compileDuration,
+        htmlLength: 0,
+        fileCount: currentFiles.length,
+        errorMessage: compileError.message,
+        failureReason: classifyFailure(compileError.message),
+      });
+      throw compileError;
     }
 
     if (!result && !isReactProject) {

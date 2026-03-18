@@ -108,7 +108,17 @@ export function useCompileTelemetry() {
 export function classifyFailure(errorMessage: string): CompileTelemetryEntry['failureReason'] {
   const msg = errorMessage.toLowerCase();
   if (msg.includes('timeout') || msg.includes('timed out')) return 'timeout';
-  if (msg.includes('syntax') || msg.includes('unexpected') || msg.includes('unbalanced') || msg.includes('unterminated')) return 'syntax';
+  if (
+    msg.includes('syntax') ||
+    msg.includes('unexpected') ||
+    msg.includes('unbalanced') ||
+    msg.includes('unterminated') ||
+    msg.includes('unclosed') ||
+    msg.includes('mismatched bracket') ||
+    msg.includes('missing )') ||
+    msg.includes("missing '") ||
+    msg.includes('escaped forward slashes in jsx')
+  ) return 'syntax';
   if (msg.includes('network') || msg.includes('fetch') || msg.includes('503') || msg.includes('busy')) return 'network';
   if (msg.includes('memory') || msg.includes('oom') || msg.includes('heap')) return 'memory';
   return 'unknown';
