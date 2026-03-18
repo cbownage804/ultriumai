@@ -372,14 +372,19 @@ export function CompilationBridge({
     currentFiles = preparedFiles;
 
     // ── Pre-compile validation: catch syntax errors instantly (<1ms) ──
+    // NOTE: Pre-compile errors are now a SOFT gate — we log and annotate them,
+    // but still attempt Vite compilation. The Vite sandbox often provides better
+    // error recovery and diagnostics. This prevents the preview from getting
+    // permanently stuck when the bracket checker has false positives on JSX/TSX
+    // or when AI-generated code has minor truncation artifacts that Vite can handle.
     const preIssues = preCompileValidate(currentFiles);
     const preErrors = preIssues.filter(i => i.severity === 'error');
+    let preCompileErrorMessages: string[] = [];
     if (preErrors.length > 0) {
-      const errorMessages = preErrors.map(e => `${e.file}: ${e.message}`);
-      console.warn('[CompilationBridge] Pre-compile validation caught', preErrors.length, 'errors:', errorMessages);
+      preCompileErrorMessages = preErrors.map(e => `${e.file}: ${e.message}`);
+      console.warn('[CompilationBridge] Pre-compile validation caught', preErrors.length, 'errors (soft gate — still attempting Vite):', preCompileErrorMessages);
       const annotations = mergeErrorSources(preErrors, []);
       onErrorAnnotations?.(annotations);
-      throw new Error(errorMessages.join('\n'));
     }
     if (preIssues.length > 0) {
       console.info('[CompilationBridge] Pre-compile warnings:', preIssues.map(e => `${e.file}: ${e.message}`));
