@@ -630,21 +630,29 @@ export default function AIStudioProjectsPage() {
                                 alt={`${item.name} preview`}
                                 className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
                                 loading="lazy"
+                                onError={(e) => {
+                                  // Hide broken image, show fallback
+                                  (e.target as HTMLImageElement).style.display = 'none';
+                                  const fallback = (e.target as HTMLImageElement).nextElementSibling;
+                                  if (fallback) (fallback as HTMLElement).style.display = 'flex';
+                                }}
                               />
-                            ) : (
-                              <div className={cn(
+                            ) : null}
+                            <div
+                              className={cn(
                                 "w-full h-full flex items-center justify-center",
                                 item.type === 'app'
                                   ? "bg-gradient-to-br from-card via-muted/30 to-card"
                                   : "bg-gradient-to-br from-primary/10 to-muted/10"
-                              )}>
-                                {item.type === 'app' ? (
-                                  <Code2 className="h-8 w-8 text-muted-foreground/20" />
-                                ) : (
-                                  <Bot className="h-8 w-8 text-muted-foreground/20" />
-                                )}
-                              </div>
-                            )}
+                              )}
+                              style={{ display: item.type === 'app' && item.thumbnail_url ? 'none' : 'flex' }}
+                            >
+                              {item.type === 'app' ? (
+                                <Code2 className="h-8 w-8 text-muted-foreground/20" />
+                              ) : (
+                                <Bot className="h-8 w-8 text-muted-foreground/20" />
+                              )}
+                            </div>
                             {/* Badges */}
                             <div className="absolute top-2 left-2 flex items-center gap-1">
                               <Badge className={cn(
