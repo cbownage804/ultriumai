@@ -133,6 +133,7 @@ function TreeItem({
             expandedFolders={expandedFolders}
             onSelectFile={onSelectFile}
             onToggleFolder={onToggleFolder}
+            modifiedPaths={modifiedPaths}
           />
         ))}
       </div>
