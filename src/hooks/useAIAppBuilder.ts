@@ -1081,7 +1081,9 @@ export function useAIAppBuilder() {
 - Every component that uses useState, useEffect, etc. MUST import them: import { useState, useEffect } from 'react';
 - Do NOT use optional chaining on function calls for event handlers (e.g. onClick?.()). Use standard patterns.
 - All string literals and template literals MUST be properly closed on the same logical line.
-- NEVER leave trailing commas, colons, or operators at the end of a file.`);
+- NEVER leave trailing commas, colons, or operators at the end of a file.
+- LOGOS: Never render a company logo as plain unstyled text. Always create a styled logo using a lucide-react icon + styled text, or use the company's actual favicon URL. Example: <div className="flex items-center gap-2"><Building2 className="h-8 w-8" /><span className="text-xl font-bold">Brand</span></div>
+- IMAGES: For placeholder/stock images, use Unsplash URLs (https://images.unsplash.com/photo-ID?w=800). Never leave empty or broken img src attributes.`);
 
     // Merge into a single system message, capped at 20K chars
     if (systemParts.length > 0) {
@@ -1121,12 +1123,33 @@ export function useAIAppBuilder() {
         toast.warning('Could not scrape website — AI will use its best knowledge instead.');
       }
 
+      // Try to extract favicon/logo URL from the scraped site
+      let siteLogoUrl: string | null = null;
+      if (urlClone.url) {
+        try {
+          const origin = new URL(urlClone.url).origin;
+          siteLogoUrl = `${origin}/favicon.ico`;
+        } catch {}
+      }
+
       if (scrapedContent) {
         apiMessages.push({ role: 'system', content: scrapedContent });
         apiMessages.push({ role: 'system', content: `[SCRAPE INSTRUCTIONS] Use the SCRAPED WEBSITE CONTENT above as the real data for this website. Reproduce the site structure, text, and content faithfully. Do NOT hallucinate or guess the site content — it is provided above.` });
       } else {
         apiMessages.push({ role: 'system', content: `[URL CLONE] The user wants to clone/replicate the design from: ${urlClone.url}. Analyze the typical design patterns of this website and generate a faithful reproduction. Focus on layout structure, color scheme, typography, and component patterns.` });
       }
+
+      // Logo handling for cloned sites
+      apiMessages.push({ role: 'system', content: `[LOGO & BRANDING — MANDATORY]
+When cloning a website, NEVER use plain unstyled text as the logo (e.g. "KWCCPAs" as raw text). Instead:
+1. If the user uploaded a logo image, use that (see ASSET PRIORITY instructions).
+2. Otherwise, create a STYLED logo component with:
+   - A visually distinct design using CSS (gradient text, icon + text combo, bordered/badged treatment, or a colored shape behind initials)
+   - Use a lucide-react icon that matches the business type alongside the company name
+   - Example: <div className="flex items-center gap-2"><Building2 className="h-8 w-8 text-primary" /><span className="text-2xl font-bold tracking-tight">KWC<span className="text-primary">CPAs</span></span></div>
+3. For hero sections and other areas that would normally have stock photos, use placeholder image URLs from https://images.unsplash.com with relevant search terms (e.g. https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800 for accounting).
+4. NEVER leave an <img> tag with an empty or broken src. Either use a real URL or omit the image entirely.
+${siteLogoUrl ? `5. The site favicon is likely at: ${siteLogoUrl} — you MAY use this as a small logo if appropriate.` : ''}` });
 
       // If images are also attached, add explicit priority instructions WITH the actual data URLs
       if (effectiveImageDataUrls?.length) {
