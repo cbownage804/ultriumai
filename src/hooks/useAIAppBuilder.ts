@@ -9,6 +9,32 @@ import { detectSupabaseIntents, buildSupabaseContext, buildConversationMemory, b
 import { parseMigrationBlocks, stripMigrationBlocks, type MigrationBlock } from '@/components/ai-builder/MigrationApprovalCard';
 import { parseEdgeFunctionBlocks, stripEdgeFunctionBlocks, type EdgeFunctionBlock } from '@/components/ai-builder/EdgeFunctionCard';
 
+// ── Helper: Build branding context from Firecrawl branding response ──
+function buildBrandingContext(branding: any): string {
+  if (!branding) return '';
+  const parts: string[] = ['\n[EXTRACTED BRAND IDENTITY]'];
+  if (branding.colorScheme) parts.push(`Color Scheme: ${branding.colorScheme}`);
+  if (branding.colors) {
+    parts.push('Brand Colors:');
+    for (const [key, val] of Object.entries(branding.colors)) {
+      if (val) parts.push(`  ${key}: ${val}`);
+    }
+  }
+  if (branding.fonts?.length) {
+    parts.push(`Fonts: ${branding.fonts.map((f: any) => f.family || f).join(', ')}`);
+  }
+  if (branding.typography) {
+    const t = branding.typography;
+    if (t.fontFamilies) parts.push(`Font Families: primary=${t.fontFamilies.primary || '?'}, heading=${t.fontFamilies.heading || '?'}`);
+  }
+  if (branding.logo) parts.push(`Logo URL: ${branding.logo}`);
+  if (branding.images?.logo) parts.push(`Logo URL: ${branding.images.logo}`);
+  if (branding.images?.favicon) parts.push(`Favicon URL: ${branding.images.favicon}`);
+  if (branding.images?.ogImage) parts.push(`OG Image: ${branding.images.ogImage}`);
+  if (branding.spacing?.borderRadius) parts.push(`Border Radius: ${branding.spacing.borderRadius}`);
+  return parts.join('\n');
+}
+
 // ── File hash tracking for incremental context (Lovable-grade) ──
 const fileHashCache = new Map<string, string>();
 
