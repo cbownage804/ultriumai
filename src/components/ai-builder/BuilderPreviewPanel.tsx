@@ -1030,6 +1030,25 @@ window.addEventListener('message', function(e) {
               style={{ colorScheme: 'light' }}
             />
 
+            {/* LKG fallback banner */}
+            {isUsingLKG && !isGenerating && !isCompiling && (
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/15 border border-amber-500/25 backdrop-blur-sm">
+                <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                <span className="text-[10px] text-amber-300/80 font-medium">Showing previous working version</span>
+              </div>
+            )}
+
+            {/* Auto-heal summary banner */}
+            {autoHealSummary && !autoHealSummary.resolved && autoHealSummary.attempts >= autoHealSummary.maxAttempts && !isGenerating && (
+              <div className="absolute bottom-14 left-3 right-3 z-20 rounded-lg bg-red-500/10 border border-red-500/20 backdrop-blur-sm p-3 space-y-1">
+                <p className="text-[11px] text-red-300/90 font-medium">Auto-fix exhausted ({autoHealSummary.attempts}/{autoHealSummary.maxAttempts} attempts)</p>
+                {autoHealSummary.lastError && (
+                  <p className="text-[10px] text-red-300/60 font-mono truncate">{autoHealSummary.lastError}</p>
+                )}
+                <p className="text-[10px] text-white/40">Try describing the issue in chat for a manual fix.</p>
+              </div>
+            )}
+
             {/* Reset to Golden Template button */}
             {!isGoldenProject && onResetToGolden && !isGenerating && !isCompiling && (
               <div className="absolute bottom-3 right-3 z-20">
