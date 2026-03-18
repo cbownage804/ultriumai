@@ -1619,6 +1619,9 @@ export async function exportProject(
     for (const file of files) {
       zip.file(file.path, file.content);
     }
+    // Add a basic README for raw exports
+    const fileList = files.map(f => `- \`${f.path}\``).join('\n');
+    zip.file('README.md', `# ${projectName}\n\nExported from UltriumAI App Builder.\n\n## Files\n\n${fileList}\n\n## Getting Started\n\nOpen \`index.html\` in your browser, or use a local server:\n\n\`\`\`bash\nnpx serve .\n\`\`\`\n`);
   } else if (mode === 'docker') {
     const scaffolding = getScaffoldingFiles(projectName, files);
     for (const [path, content] of Object.entries(scaffolding)) {
