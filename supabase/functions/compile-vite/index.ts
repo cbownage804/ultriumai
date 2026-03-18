@@ -31,6 +31,71 @@ function resolveRelativeImportPath(fromPath: string, importPath: string): string
   return normalized.join("/");
 }
 
+/**
+ * Detect bare imports in <script type="module"> blocks and inject an importmap
+ * so the browser can resolve them via esm.sh CDN.
+ */
+function injectImportMapIfNeeded(html: string, detectedPackages: Set<string>): string {
+  // Skip if already has an importmap
+  if (/<script\b[^>]*type\s*=\s*["']importmap["']/i.test(html)) return html;
+
+  // Check if there are bare imports in module scripts
+  const moduleScriptRegex = /<script\b[^>]*type\s*=\s*["']module["'][^>]*>([\s\S]*?)<\/script>/gi;
+  const bareImportRegex = /\bfrom\s*['"]([^'"./][^'"]*)['"]/g;
+
+  const barePackages = new Set<string>();
+  let match: RegExpExecArray | null;
+
+  while ((match = moduleScriptRegex.exec(html)) !== null) {
+    const code = match[1] || '';
+    let bareMatch: RegExpExecArray | null;
+    const localRegex = new RegExp(bareImportRegex.source, 'g');
+    while ((bareMatch = localRegex.exec(code)) !== null) {
+      const specifier = bareMatch[1];
+      // Get the package name (handle scoped packages)
+      const pkg = specifier.startsWith('@')
+        ? specifier.split('/').slice(0, 2).join('/')
+        : specifier.split('/')[0];
+      barePackages.add(pkg);
+      // Also add the full specifier if it's a subpath import
+      if (specifier !== pkg) {
+        barePackages.add(specifier);
+      }
+    }
+  }
+
+  if (barePackages.size === 0) return html;
+
+  // Build importmap with esm.sh CDN URLs
+  // Use a pinned React version for consistency
+  const REACT_VERSION = '18.3.1';
+  const imports: Record<string, string> = {};
+
+  for (const pkg of barePackages) {
+    // Special handling for React ecosystem to ensure shared state
+    if (pkg === 'react') {
+      imports['react'] = `https://esm.sh/react@${REACT_VERSION}`;
+    } else if (pkg === 'react-dom' || pkg === 'react-dom/client') {
+      imports[pkg] = `https://esm.sh/${pkg}@${REACT_VERSION}?external=react`;
+    } else if (pkg === 'react/jsx-runtime' || pkg === 'react/jsx-dev-runtime') {
+      imports[pkg] = `https://esm.sh/${pkg}@${REACT_VERSION}`;
+    } else {
+      // For other packages, use esm.sh with React externalized
+      imports[pkg] = `https://esm.sh/${pkg}?external=react,react-dom`;
+    }
+  }
+
+  const importmapScript = `<script type="importmap">\n${JSON.stringify({ imports }, null, 2)}\n</script>`;
+
+  // Inject before the first <script type="module">
+  const firstModuleScript = html.indexOf('<script type="module"');
+  if (firstModuleScript === -1) {
+    // Fallback: inject in <head>
+    return html.replace('</head>', `${importmapScript}\n</head>`);
+  }
+  return html.slice(0, firstModuleScript) + importmapScript + '\n' + html.slice(firstModuleScript);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -308,6 +373,15 @@ serve(async (req) => {
     }
 
     const t0 = Date.now();
+
+    // ── Post-process: inject importmap for bare imports left by sandbox ──
+    // The sandbox may externalize react/react-dom (its Vite config has them
+    // as externals).  Rather than fighting that, inject an importmap so the
+    // browser can resolve the bare specifiers via esm.sh CDN.
+    if (typeof result.html === 'string' && result.html.length > 0) {
+      result.html = injectImportMapIfNeeded(result.html, detectedPackages);
+    }
+
     console.log(`[compile-vite] Success: ${result.html?.length || 0} chars`);
 
     return new Response(
