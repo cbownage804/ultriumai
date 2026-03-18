@@ -533,10 +533,13 @@ window.addEventListener('message', function(e) {
 
   // The HTML to actually render: current if available, otherwise last good preview
   // Retain last good during: generation, compilation, or compile errors (so the user always sees something)
-  const displayHtml = previewDocumentHtml ?? (
-    lastGoodPreviewHtmlRef.current && (isGenerating || isCompiling || compileState === 'error')
+  // If current HTML is a fallback/error page but we have a real last-good, prefer showing the real one
+  const isCurrentFallback = previewDocumentHtml && (previewDocumentHtml.includes('ai-builder-fallback') || previewDocumentHtml.includes('Compilation Error'));
+  const effectiveCurrentHtml = isCurrentFallback ? null : previewDocumentHtml;
+  const displayHtml = effectiveCurrentHtml ?? (
+    lastGoodPreviewHtmlRef.current && (isGenerating || isCompiling || compileState === 'error' || isCurrentFallback)
       ? lastGoodPreviewHtmlRef.current
-      : null
+      : previewDocumentHtml // fall back to whatever we have, including fallback HTML
   );
 
   // Cleanup on unmount
