@@ -309,6 +309,11 @@ export function CompilationBridge({
   // Track previous filesDigest for hot-patch detection
   const prevFilesDigestRef = useRef<string>('');
 
+  const isAbortError = useCallback((error: unknown) => {
+    if (!(error instanceof Error)) return false;
+    return error.name === 'AbortError' || /\babort(ed)?\b/i.test(error.message);
+  }, []);
+
   // ── Core compile function (with auto-repair) ──
   const runCompile = useCallback(async () => {
     let currentFiles = filesRef.current;
@@ -354,15 +359,12 @@ export function CompilationBridge({
     const preErrors = preIssues.filter(i => i.severity === 'error');
     if (preErrors.length > 0) {
       console.warn('[CompilationBridge] Pre-compile validation caught', preErrors.length, 'errors:', preErrors.map(e => `${e.file}: ${e.message}`));
-      // Surface pre-compile errors as annotations
       const annotations = mergeErrorSources(preErrors, []);
       onErrorAnnotations?.(annotations);
-      // Don't send to Vite — fail fast with clear error
       return null;
     }
     if (preIssues.length > 0) {
       console.info('[CompilationBridge] Pre-compile warnings:', preIssues.map(e => `${e.file}: ${e.message}`));
-      // Surface warnings as annotations too
       const warnAnnotations = mergeErrorSources(preIssues.filter(i => i.severity === 'warning'), []);
       if (warnAnnotations.length > 0) onErrorAnnotations?.(warnAnnotations);
     }
@@ -370,9 +372,8 @@ export function CompilationBridge({
     let result: string | null = null;
     const compileT0 = performance.now();
 
-    // ── Single path: Vite Sandbox only ──
     try {
-      const BRIDGE_TIMEOUT = 30_000; // Single-path Vite Sandbox budget
+      const BRIDGE_TIMEOUT = 30_000;
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
       const workerTimeout = new Promise<null>((resolve) => {
         timeoutId = setTimeout(() => {
@@ -380,30 +381,29 @@ export function CompilationBridge({
           resolve(null);
         }, BRIDGE_TIMEOUT);
       });
-      let viteCompileErrors: string[] = [];
+
       const workerResult = compileReactProjectRef.current(currentFiles, {
         supabaseConfig: supabaseConfig || undefined,
         stripeConfig: stripeConfig || undefined,
         envVars,
       }).then(compiled => {
         if (compiled.errors.length > 0) {
-          // ── TypeScript error softening: downgrade non-critical errors ──
           const { blocking, warnings, shouldBlockPreview } = softenErrorsRef.current(compiled.errors);
           if (warnings.length > 0) {
             console.info('[TS-Soften] Downgraded', warnings.length, 'non-critical errors to warnings');
-          }
-          viteCompileErrors = shouldBlockPreview
-            ? blocking.map(e => e.message)
-            : []; // Only surface blocking errors
-          if (warnings.length > 0) {
             console.warn('[ViteCompiler] Warnings (non-blocking):', warnings.map(w => w.message));
           }
-          // Surface all as annotations (blocking = error, softened = warning)
           const parsed = parseViteErrors(compiled.errors);
           if (parsed.length > 0) onErrorAnnotations?.(parsed);
+          if (shouldBlockPreview && blocking.length > 0) {
+            return null;
+          }
         }
         return compiled.html || null;
       }).catch((err: Error) => {
+        if (isAbortError(err)) {
+          throw err;
+        }
         console.error('[ViteCompiler] Failed:', err.message);
         const parsed = parseViteErrors([err.message]);
         if (parsed.length > 0) onErrorAnnotations?.(parsed);
@@ -412,21 +412,24 @@ export function CompilationBridge({
 
       result = await Promise.race([workerResult, workerTimeout]);
       if (timeoutId) clearTimeout(timeoutId);
-    } catch {
+    } catch (err) {
+      if (isAbortError(err)) {
+        throw err;
+      }
       result = null;
     }
 
-    // For non-React projects (plain HTML), use vanilla bundler as they don't need Vite
     if (!result && !isReactProject) {
       try {
         result = getCompiledHTMLRef.current(supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, bundleForBrowserRef.current, linkedGPT);
-      } catch { result = null; }
+      } catch {
+        result = null;
+      }
     }
 
-    // ── Record compile telemetry ──
     const compileDuration = Math.round(performance.now() - compileT0);
     recordCompileRef.current({
-      tier: result ? 'vite' : 'vite',
+      tier: 'vite',
       success: !!result,
       durationMs: compileDuration,
       htmlLength: result?.length || 0,
@@ -435,15 +438,12 @@ export function CompilationBridge({
       failureReason: result ? undefined : 'unknown',
     });
 
-    // Reset flag after use
     isIncrementalEditRef.current = false;
 
-    // Inject uploaded assets into the compiled HTML so images render in preview
     if (result && assets.length > 0) {
-      const assetScript = assets.map(a => 
+      const assetScript = assets.map(a =>
         `window.__ASSETS__=window.__ASSETS__||{};window.__ASSETS__[${JSON.stringify(a.name)}]=${JSON.stringify(a.dataUrl)};`
       ).join('');
-      // Also inject CSS custom properties for each asset
       const assetCSS = assets
         .filter(a => a.type.startsWith('image/'))
         .map(a => `--asset-${a.name.replace(/[^a-zA-Z0-9]/g, '-')}:url(${a.dataUrl});`)
@@ -452,7 +452,6 @@ export function CompilationBridge({
       result = result.replace('</head>', `${injection}</head>`);
     }
 
-    // ── Inject runtime scripts: overlay + health + console + HMR + error overlay + tests + smoke ──
     if (result) {
       result = injectOverlayRef.current(result);
       result = injectHealthMonitorRef.current(result);
@@ -463,7 +462,6 @@ export function CompilationBridge({
       result = injectSmokeTestsRef.current(result);
     }
 
-    // ── Snapshot caches on success ──
     if (result) {
       snapshotIncrementalBuild(currentFiles);
       recordDepBuild(currentFiles);
@@ -471,7 +469,7 @@ export function CompilationBridge({
     }
 
     return result;
-  }, [isReactProject, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, linkedGPT, assets]);
+  }, [isAbortError, isReactProject, supabaseConfig, stripeConfig, envVars, serviceKeys, cdnPackages, linkedGPT, assets]);
 
   // ── Streaming preview: compile partial files during generation ──
   // Shows progressive UI without promoting partial output to persistent LKG preview.
@@ -536,6 +534,7 @@ export function CompilationBridge({
             supabaseConfig: supabaseConfig || undefined,
             stripeConfig: stripeConfig || undefined,
             envVars,
+            localOnly: true,
           }).then(r => r.html || null).catch(() => null),
           new Promise<null>(r => setTimeout(() => r(null), 20_000)),
         ]);
@@ -858,18 +857,22 @@ export function CompilationBridge({
         }
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : String(err);
-        console.error('[CompilationBridge] Compilation crashed:', errMsg);
-        // Only apply fallback if this run is still current AND no LKG exists
-        if (thisRunId === compileRunIdRef.current) {
-          if (stableHTMLRef.current && isPreviewValid(stableHTMLRef.current)) {
-            console.warn('[CompilationBridge] Compile crashed — preserving LKG preview');
-          } else {
-            setLiveCompiledHTML(ERROR_FALLBACK_HTML);
-            setStableHTML(ERROR_FALLBACK_HTML);
+        if (isAbortError(err)) {
+          console.info('[CompilationBridge] Compile aborted — ignoring stale/cancelled run');
+        } else {
+          console.error('[CompilationBridge] Compilation crashed:', errMsg);
+          if (thisRunId === compileRunIdRef.current) {
+            if (stableHTMLRef.current && isPreviewValid(stableHTMLRef.current)) {
+              console.warn('[CompilationBridge] Compile crashed — preserving LKG preview');
+            } else {
+              setLiveCompiledHTML(ERROR_FALLBACK_HTML);
+              setStableHTML(ERROR_FALLBACK_HTML);
+            }
+            transitionCompileState('error', { message: errMsg, errors: [errMsg] });
           }
-          transitionCompileState('error', { message: errMsg, errors: [errMsg] });
         }
       } finally {
+
         clearTimeout(safetyTimer);
         compilationInFlightRef.current = false;
         // If files changed during this compile, retrigger
