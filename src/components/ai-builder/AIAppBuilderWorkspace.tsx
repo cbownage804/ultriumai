@@ -3338,8 +3338,25 @@ export function AIAppBuilderWorkspace() {
     ? stableHTML
     : lastKnownGoodHTMLRef.current || stableHTML;
   const isPreviewReady = compileState === 'success' && !!(compiledHTML && isPreviewValidFn(compiledHTML));
+  const isUsingLKG = !!(compiledHTML && compiledHTML === lastKnownGoodHTMLRef.current && stableHTML !== compiledHTML);
   const hasFiles = project.files.length > 0;
   const isGoldenProject = !hasUserGeneratedFiles(project.files);
+
+  // Compute auto-heal summary for preview banners
+  const autoHealSummary = useMemo(() => {
+    const attempts = autoHeal.getAttempts();
+    if (attempts.length === 0) return null;
+    return {
+      attempts: attempts.length,
+      maxAttempts: 2,
+      lastError: attempts[attempts.length - 1]?.errorMessage,
+      resolved: attempts[attempts.length - 1]?.resolved ?? false,
+    };
+  }, [compileState, compileError]);
+
+  // Track modified file paths from last generation
+  const modifiedPathsRef = useRef<Set<string>>(new Set());
+  const prevFileSnapshotRef = useRef<Map<string, string>>(new Map());
 
   // Fresh/golden projects should never inherit stale *non-error* compile state.
   // Preserve explicit error state so failed generations don't fall back to the empty placeholder.
