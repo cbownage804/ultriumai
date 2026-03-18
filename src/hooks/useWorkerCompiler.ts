@@ -96,16 +96,21 @@ async function compileViaViteSandbox(
   const sandboxErrors = Array.isArray(data?.errors)
     ? data.errors.filter((value: unknown): value is string => typeof value === 'string' && value.trim().length > 0)
     : [];
+  
+  // Extract actionable error messages from esbuild crash logs
+  // esbuild crashes produce `failureErrorWithLog` with the real error buried in the log
+  const processedErrors = sandboxErrors.map(extractActionableError);
+  
   const html = typeof data?.html === 'string' ? data.html : '';
 
   if (!html) {
-    if (sandboxErrors.length > 0) {
+    if (processedErrors.length > 0) {
       return {
         html: '',
         isReactProject: true,
         componentCount: data?.componentCount || 0,
-        errors: sandboxErrors,
-        errorMessage: sandboxErrors[0],
+        errors: processedErrors,
+        errorMessage: processedErrors[0],
       };
     }
 
