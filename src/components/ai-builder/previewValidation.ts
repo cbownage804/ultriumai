@@ -32,11 +32,11 @@ export function isPreviewValid(html: string | null | undefined): boolean {
  * Debug summary of preview HTML for logging.
  */
 export function previewDebugSummary(html: string | null | undefined): Record<string, unknown> {
-  if (!html) return { htmlLength: 0, hasDoctype: false, hasRoot: false, isFallback: false };
+  if (!html) return { htmlLength: 0, hasDoctype: false, hasMount: false, isFallback: false };
   return {
     htmlLength: html.length,
     hasDoctype: /<!doctype|<html/i.test(html),
-    hasRoot: /id\s*=\s*["']root["']/i.test(html),
+    hasMount: /id\s*=\s*["'](root|app)["']/i.test(html),
     isFallback: html.includes('name="ai-builder-fallback"') || html.includes('⚠️ Compilation Error'),
     first80: html.slice(0, 80),
   };
