@@ -145,4 +145,31 @@ export default function App() {
     expect(content).not.toContain('SVGProps<X />');
     expect(repairs.some(r => r.includes('malformed SVGProps'))).toBe(true);
   });
+
+  it('closes unterminated template literal with open ${} expression', () => {
+    const files = [
+      makeTsx('src/App.tsx', `export default function App() {
+  return <div className={\`task-\${status`),
+    ];
+
+    const { files: repairedFiles, repairs } = autoRepairFiles(files);
+    const content = repairedFiles[0].content;
+
+    // Should close the ${} expression AND the template literal AND the missing braces
+    expect(repairs.some(r => r.includes('template expression'))).toBe(true);
+    // The closing sequence should contain }` to close ${...} and the template
+    expect(content).toContain('}`');
+  });
+
+  it('closes multiple nested template expressions', () => {
+    const files = [
+      makeTsx('src/App.tsx', `export default function App() {
+  const x = \`outer \${\`inner \${deep`),
+    ];
+
+    const { files: repairedFiles, repairs } = autoRepairFiles(files);
+    const content = repairedFiles[0].content;
+
+    expect(repairs.some(r => r.includes('template expression') || r.includes('template literal'))).toBe(true);
+  });
 });
