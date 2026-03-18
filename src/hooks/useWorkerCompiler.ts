@@ -93,16 +93,6 @@ async function compileViaViteSandbox(
 
   if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
 
-  console.info('[ViteSandbox] invoke result:', {
-    hasError: !!error,
-    errorMsg: error?.message,
-    dataType: typeof data,
-    dataIsNull: data === null,
-    dataKeys: data && typeof data === 'object' ? Object.keys(data) : 'N/A',
-    htmlType: typeof data?.html,
-    htmlLength: typeof data?.html === 'string' ? data.html.length : 0,
-    hasFallback: data?.fallback,
-  });
 
   if (error) {
     throw new Error(`Vite sandbox error: ${error.message}`);
