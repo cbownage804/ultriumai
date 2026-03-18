@@ -2101,13 +2101,14 @@ export function BuilderChatPanel({
               )}>1cr</span>
             </button>
             <button
-              onClick={() => onModeChange('build')}
+              onClick={handleBuildModeClick}
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all",
                 mode === 'build'
                   ? "bg-violet-500/20 text-violet-400 ring-1 ring-violet-500/30"
                   : "text-white/40 hover:text-white/60 hover:bg-white/5"
               )}
+              title={mode === 'build' && input.trim() ? 'Build now' : 'Switch to build mode'}
             >
               Build
               <span className={cn(
