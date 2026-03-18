@@ -114,7 +114,7 @@ export function CompilationBridge({
   onBuildSuccess,
 }: CompilationBridgeProps) {
   // ── Worker-based React Compiler (off main thread) ──
-  const { compileReactProject, abortCompilation } = useWorkerCompiler();
+  const { compileReactProject, abortCompilation, lockCompile, unlockCompile } = useWorkerCompiler();
 
   // ── Runtime error overlay ──
   const { injectOverlay } = useRuntimeErrorOverlay();
@@ -609,8 +609,8 @@ export function CompilationBridge({
     prevIsGeneratingRef.current = isGenerating;
 
     if (isGenerating && !wasGenerating) {
-      // Generation STARTING — reset ALL internal state
-      abortCompilation(); // Cancel any in-flight network requests to free droplet concurrency
+      // Generation STARTING — force-abort even if locked
+      abortCompilation(true);
       stableHTMLRef.current = null;
       setStableHTMLLocal(null);
       setLiveCompiledHTML(null);
@@ -784,6 +784,7 @@ export function CompilationBridge({
       compilationInFlightRef.current = true;
       compiledDigestRef.current = filesDigest;
       recompileNeededRef.current = false;
+      lockCompile(); // Prevent spurious aborts from other effects in the same render cycle
       transitionCompileState('compiling');
 
       // Safety net: force-reset isCompiling if compilation hangs
@@ -922,7 +923,7 @@ export function CompilationBridge({
           }
         }
       } finally {
-
+        unlockCompile(); // Allow future aborts
         clearTimeout(safetyTimer);
         compilationInFlightRef.current = false;
         // If files changed during this compile, retrigger
@@ -946,7 +947,7 @@ export function CompilationBridge({
   useEffect(() => {
     onForceCompile?.(() => {
       console.info('[CompilationBridge] forceCompile invoked — invalidating in-flight run');
-      abortCompilation(); // Cancel in-flight network requests
+      abortCompilation(true); // Force-abort even if locked
       compileRunIdRef.current++; // Invalidate any in-flight compile
       compilationInFlightRef.current = false;
       stableHTMLRef.current = null;
