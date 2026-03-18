@@ -3104,7 +3104,7 @@ export function AIAppBuilderWorkspace() {
     // Thumbnail capture is handled in handleStableHTML after Vite compilation completes.
     // Do NOT capture here — compiledForHostingRef may still hold stale/default HTML.
     wasGeneratingRef.current = isGenerating;
-  }, [isGenerating, project.files.length, currentProjectId, captureAndUpload]);
+  }, [isGenerating]);
 
   // Auto-advance to next phase when generation completes and autoAdvance is on
   useEffect(() => {
