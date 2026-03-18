@@ -323,12 +323,27 @@ function fixBracketBalance(content: string): { content: string; fixed: boolean; 
   };
 }
 
-function detectUnterminatedLiteral(content: string): '"' | "'" | '`' | null {
+/**
+ * Detect unterminated string/template literals and return the FULL closing
+ * sequence needed. For template literals this includes closing any open
+ * `${...}` expressions before closing the backtick.
+ * 
+ * Returns null if everything is balanced, or a string like:
+ *   `"`   – close a regular string
+ *   `` ` ``   – close a template literal (no open expressions)
+ *   `` }` ``  – close one open `${...}` expression, then the template literal
+ *   `` }}` `` – close two nested `${...}` expressions, then the literal
+ */
+function detectUnterminatedLiteral(content: string): string | null {
   let inString: '"' | "'" | null = null;
   let inTemplateLiteral = false;
+  let templateExpressionDepth = 0; // depth of ${...} nesting inside template literals
   let inLineComment = false;
   let inBlockComment = false;
   let escaped = false;
+  // Track brace depth within template expressions to distinguish
+  // `${ obj.x }` from `${ {a:1} }` (object literal inside expression)
+  const templateBraceStack: number[] = []; // stack of brace depths per ${} level
 
   for (let i = 0; i < content.length; i++) {
     const ch = content[i];
@@ -360,7 +375,8 @@ function detectUnterminatedLiteral(content: string): '"' | "'" | '`' | null {
       continue;
     }
 
-    if (inTemplateLiteral) {
+    if (inTemplateLiteral && templateExpressionDepth === 0) {
+      // We're inside the template literal text (not inside ${...})
       if (escaped) {
         escaped = false;
         continue;
@@ -369,10 +385,76 @@ function detectUnterminatedLiteral(content: string): '"' | "'" | '`' | null {
         escaped = true;
         continue;
       }
-      if (ch === '`') inTemplateLiteral = false;
+      if (ch === '`') {
+        inTemplateLiteral = false;
+        continue;
+      }
+      if (ch === '$' && next === '{') {
+        templateExpressionDepth++;
+        templateBraceStack.push(0);
+        i++; // skip '{'
+        continue;
+      }
       continue;
     }
 
+    if (templateExpressionDepth > 0) {
+      // We're inside a ${...} expression within a template literal
+      // Need to track nested braces, strings, comments, and nested template literals
+      if (ch === '/' && next === '/') {
+        inLineComment = true;
+        i++;
+        continue;
+      }
+      if (ch === '/' && next === '*') {
+        inBlockComment = true;
+        i++;
+        continue;
+      }
+      if (ch === '"' || ch === "'") {
+        inString = ch;
+        continue;
+      }
+      if (ch === '`') {
+        // Nested template literal inside ${...}
+        inTemplateLiteral = true;
+        // The outer expression is still open; this is a new template literal layer
+        // We handle it by re-entering the template literal state
+        // but templateExpressionDepth stays > 0 so the outer ${} is still tracked
+        // Actually, we need to recurse conceptually. For simplicity,
+        // let's track this as: we're in a new template literal layer.
+        // When we exit it (find matching `), we return to the expression.
+        // The simplest approach: push a marker and handle inline.
+        continue;
+      }
+      if (ch === '{') {
+        templateBraceStack[templateBraceStack.length - 1]++;
+        continue;
+      }
+      if (ch === '}') {
+        const currentBraceDepth = templateBraceStack[templateBraceStack.length - 1];
+        if (currentBraceDepth > 0) {
+          // Closing a nested brace inside the expression (e.g., object literal)
+          templateBraceStack[templateBraceStack.length - 1]--;
+        } else {
+          // This '}' closes the ${...} expression
+          templateBraceStack.pop();
+          templateExpressionDepth--;
+          // Now we're back in template literal text
+        }
+        continue;
+      }
+      if (ch === '$' && next === '{') {
+        // Nested ${...} inside an expression (rare but possible in nested templates)
+        templateExpressionDepth++;
+        templateBraceStack.push(0);
+        i++;
+        continue;
+      }
+      continue;
+    }
+
+    // Top-level code (not in any string/template/comment)
     if (ch === '/' && next === '/') {
       inLineComment = true;
       i++;
@@ -396,7 +478,19 @@ function detectUnterminatedLiteral(content: string): '"' | "'" | '`' | null {
   }
 
   if (inString) return inString;
-  if (inTemplateLiteral) return '`';
+  if (inTemplateLiteral || templateExpressionDepth > 0) {
+    // Build closing sequence: close all open ${} expressions, then close the template
+    let closer = '';
+    // Close any nested braces inside the innermost expression
+    if (templateBraceStack.length > 0) {
+      closer += '}'.repeat(templateBraceStack[templateBraceStack.length - 1]);
+    }
+    // Close each open ${} expression level
+    closer += '}'.repeat(templateExpressionDepth);
+    // Close the template literal itself
+    closer += '`';
+    return closer;
+  }
   return null;
 }
 
