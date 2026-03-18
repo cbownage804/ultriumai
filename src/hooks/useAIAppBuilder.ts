@@ -1083,7 +1083,41 @@ export function useAIAppBuilder() {
 - All string literals and template literals MUST be properly closed on the same logical line.
 - NEVER leave trailing commas, colons, or operators at the end of a file.
 - LOGOS: Never render a company logo as plain unstyled text. Always create a styled logo using a lucide-react icon + styled text, or use the company's actual favicon URL. Example: <div className="flex items-center gap-2"><Building2 className="h-8 w-8" /><span className="text-xl font-bold">Brand</span></div>
-- IMAGES: For placeholder/stock images, use Unsplash URLs (https://images.unsplash.com/photo-ID?w=800). Never leave empty or broken img src attributes.`);
+- IMAGES: For placeholder/stock images, use Unsplash URLs (https://images.unsplash.com/photo-ID?w=800). Never leave empty or broken img src attributes. Always add loading="lazy" to images below the fold.
+
+[VISUAL QUALITY & POLISH — MANDATORY]
+- HERO SECTIONS: Always include a visually compelling hero with a relevant Unsplash background image or gradient. Never leave hero sections as plain colored backgrounds.
+- STOCK PHOTOS: Use real Unsplash photo URLs for team photos, service images, and backgrounds. Pick relevant photos by using descriptive Unsplash URLs. Examples:
+  - Accounting/finance: https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800
+  - Technology: https://images.unsplash.com/photo-1518770660439-4636190af475?w=800
+  - Healthcare: https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800
+  - Restaurant/food: https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800
+  - Real estate: https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800
+- ANIMATIONS: Add subtle entrance animations to sections. Use CSS transitions for hover effects on buttons and cards. Add transition-all duration-300 to interactive elements.
+- FOOTER: ALWAYS generate a proper footer with company info, navigation links, and copyright. Never omit the footer.
+- DARK MODE: Include a light/dark color scheme in your CSS variables. Use Tailwind's dark: variants for key elements.
+
+[RESPONSIVE DESIGN — MANDATORY]
+- All layouts MUST be mobile-first. Use Tailwind responsive prefixes (sm:, md:, lg:) to scale UP.
+- Navigation must collapse to a hamburger menu on mobile (below md: breakpoint).
+- Hero text should scale: text-3xl on mobile → text-5xl md: → text-6xl lg:.
+- Grid layouts: grid-cols-1 on mobile → grid-cols-2 md: → grid-cols-3 lg:.
+- Ensure minimum 44px touch targets for all buttons and links on mobile.
+- Test: the site must look good at 375px viewport width.
+
+[SEO & META — MANDATORY]
+- In index.html, ALWAYS include: <title>, <meta name="description">, <meta name="viewport">, and Open Graph tags (og:title, og:description, og:type).
+- Use semantic HTML: one <h1> per page, proper heading hierarchy, <nav>, <main>, <footer>, <section>.
+- Add alt text to ALL images.
+
+[MULTI-PAGE ROUTING]
+- When the site has multiple distinct pages (e.g., About, Services, Contact), use react-router-dom with BrowserRouter, Routes, and Route components.
+- Wrap pages in React.lazy() and Suspense for code splitting.
+- Navigation links should use <Link to="/path"> not <a href="/path">.
+
+[LOADING & ERROR STATES]
+- For any component that fetches data, include a loading skeleton and an error state.
+- Buttons should show loading spinners during async operations.`);
 
     // Merge into a single system message, capped at 20K chars
     if (systemParts.length > 0) {
