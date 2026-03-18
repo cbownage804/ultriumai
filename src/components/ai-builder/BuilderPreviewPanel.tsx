@@ -988,7 +988,15 @@ window.addEventListener('message', function(e) {
 
             {/* Right toolbar — responsive only */}
             <div className="flex items-center gap-0.5">
-              <ResponsivePreviewBar active={viewportMode} onChange={setViewportMode} />
+              <ResponsivePreviewBar
+                active={viewportMode}
+                onChange={setViewportMode}
+                customWidth={customWidth}
+                customHeight={customHeight}
+                onCustomSize={(w, h) => { setCustomWidth(w); setCustomHeight(h); }}
+                isLandscape={isLandscape}
+                onToggleLandscape={() => setIsLandscape(prev => !prev)}
+              />
               {/* Visual Edit toggle */}
               <VisualEditOverlay
                 isActive={!!externalVisualEdit}
