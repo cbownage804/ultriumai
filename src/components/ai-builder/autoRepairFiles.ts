@@ -283,6 +283,36 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
       content = lines.filter((_, idx) => !linesToRemove.has(idx)).join('\n');
     }
 
+    // ── 9. Auto-add loading="lazy" to img tags missing it (below-fold optimization) ──
+    if (['tsx', 'jsx', 'html'].includes(ext)) {
+      const imgWithoutLazy = /<img\b(?![^>]*loading=)[^>]*>/gi;
+      let imgMatch;
+      while ((imgMatch = imgWithoutLazy.exec(content)) !== null) {
+        const original = imgMatch[0];
+        // Don't add lazy to the first image (likely above fold / hero)
+        const isFirstImage = content.indexOf(original) === imgMatch.index && imgMatch.index < 500;
+        if (!isFirstImage) {
+          const fixed = original.replace(/<img\b/, '<img loading="lazy"');
+          content = content.replace(original, fixed);
+          changed = true;
+          repairs.push(`${f.path}: added loading="lazy" to img tag`);
+        }
+      }
+    }
+
+    // ── 10. Fix empty/missing img src attributes ──
+    if (['tsx', 'jsx'].includes(ext)) {
+      const emptySrcPattern = /<img\b[^>]*src\s*=\s*["']\s*["'][^>]*>/gi;
+      let emptySrcMatch;
+      while ((emptySrcMatch = emptySrcPattern.exec(content)) !== null) {
+        const original = emptySrcMatch[0];
+        const fixed = original.replace(/src\s*=\s*["']\s*["']/, 'src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=800"');
+        content = content.replace(original, fixed);
+        changed = true;
+        repairs.push(`${f.path}: replaced empty img src with placeholder`);
+      }
+    }
+
     if (!changed) return f;
     return { ...f, content };
   });
@@ -357,6 +387,25 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
       language: 'typescriptreact',
     } as ProjectFile);
     repairs.push('src/main.tsx: auto-generated entry point');
+  }
+
+  // ── Ensure index.html has essential SEO meta tags ──
+  const indexHtml = repaired.find(f => f.path === 'index.html');
+  if (indexHtml) {
+    if (!indexHtml.content.includes('viewport')) {
+      indexHtml.content = indexHtml.content.replace(
+        '</head>',
+        '  <meta name="viewport" content="width=device-width, initial-scale=1.0" />\n  </head>'
+      );
+      repairs.push('index.html: added viewport meta tag');
+    }
+    if (!indexHtml.content.includes('charset')) {
+      indexHtml.content = indexHtml.content.replace(
+        '<head>',
+        '<head>\n  <meta charset="UTF-8" />'
+      );
+      repairs.push('index.html: added charset meta tag');
+    }
   }
 
   return { files: repaired, repairs };
