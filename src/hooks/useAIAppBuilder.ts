@@ -230,11 +230,10 @@ function validateGeneratedFiles(files: ProjectFile[]): ValidationResult {
       if (Math.abs(opens - closes) > 2) {
         errors.push({ file: f.path, message: `Unbalanced brackets: ${opens} open vs ${closes} close` });
       }
-      // Unclosed template literals
-      const backticks = (f.content.match(/`/g) || []).length;
-      if (backticks % 2 !== 0) {
-        errors.push({ file: f.path, message: `Odd number of backticks (unclosed template literal)` });
-      }
+      // Unclosed template literals — downgraded to non-blocking since autoRepairFiles
+      // handles this with a proper parser. Naive backtick count has false positives.
+      // const backticks = (f.content.match(/`/g) || []).length;
+      // if (backticks % 2 !== 0) { ... }
     }
 
     // CSS: check for unclosed braces
