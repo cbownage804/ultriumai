@@ -1061,7 +1061,8 @@ export function useAIAppBuilder() {
 - Ensure all JSX tags are properly closed and self-closing where required (<img />, <br />, <input />).
 - Do not introduce new npm dependencies unless the user explicitly asks for them.
 - All imports must precede variable declarations — no import statements after code.
-- TypeScript generics with angle brackets (e.g. useState<Item[]>) must NOT contain JSX-like syntax that esbuild could misparse.`);
+- TypeScript generics with angle brackets (e.g. useState<Item[]>) must NOT contain JSX-like syntax that esbuild could misparse.
+- FILE SIZE LIMIT: Keep EVERY file under 300 lines. Split large components into multiple files (extract data, sub-components, hooks). This prevents output truncation.`);
 
     // Merge into a single system message, capped at 20K chars
     if (systemParts.length > 0) {
