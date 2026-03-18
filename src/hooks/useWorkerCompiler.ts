@@ -282,5 +282,5 @@ export function useWorkerCompiler() {
     }
   }, []);
 
-  return { compileReactProject, abortCompilation };
+  return { compileReactProject, abortCompilation, lockCompile, unlockCompile };
 }
