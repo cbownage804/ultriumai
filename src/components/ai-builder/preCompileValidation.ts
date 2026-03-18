@@ -52,6 +52,17 @@ export function preCompileValidate(files: ProjectFile[]): PreCompileIssue[] {
       issues.push({ file: file.path, message: `Multiple default exports (${defaultExports})`, severity: 'error' });
     }
 
+    // ── 7. Truncated expression artifacts — stray ')} or ")} at line boundaries ──
+    // These appear when AI output is cut mid-JSX-attribute and crash esbuild internally
+    if (/^['"`]\s*\)\s*[;}]\s*$/m.test(content)) {
+      issues.push({ file: file.path, message: 'Possible truncated expression artifact (stray quote-paren-brace sequence)', severity: 'warning' });
+    }
+
+    // ── 8. Truncated JSX attribute — opening ={ without matching close ──
+    if (hasTruncatedJsxAttribute(content)) {
+      issues.push({ file: file.path, message: 'Truncated JSX attribute expression (opening ={ without close)', severity: 'warning' });
+    }
+
     // ── 6. Import from non-existent relative path ──
     const relativeImports = content.matchAll(/from\s+['"](\.[^'"]+)['"]/g);
     for (const match of relativeImports) {
