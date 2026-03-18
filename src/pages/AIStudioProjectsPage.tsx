@@ -497,18 +497,24 @@ export default function AIStudioProjectsPage() {
 
         {/* Content */}
         {loading ? (
-          <div className="animate-pulse">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="h-[260px] rounded-xl border border-border/30 overflow-hidden">
-                  <div className="h-[180px] bg-muted/15" />
-                  <div className="p-2.5 space-y-2">
-                    <div className="h-3.5 w-3/4 bg-muted/25 rounded" />
-                    <div className="h-2.5 w-1/2 bg-muted/15 rounded" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className="h-[260px] rounded-xl border border-border/30 overflow-hidden">
+                <div className="h-[180px] bg-muted/10 relative overflow-hidden">
+                  <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-muted/20 to-transparent" />
+                </div>
+                <div className="p-2.5 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-10 bg-muted/20 rounded-full" />
+                    <div className="h-3.5 flex-1 bg-muted/15 rounded" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-2.5 w-2.5 bg-muted/10 rounded-full" />
+                    <div className="h-2.5 w-16 bg-muted/10 rounded" />
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
