@@ -172,6 +172,22 @@ serve(async (req) => {
       f.content = `import React from 'react';\n${f.content}`;
     }
 
+    // ── Ensure main.tsx/main.ts imports CSS if a CSS file exists ──
+    const mainEntry = files.find((f: any) => f.path === 'src/main.tsx' || f.path === 'src/main.ts');
+    if (mainEntry && typeof mainEntry.content === 'string') {
+      const hasCssImport = /import\s+['"]\.\/(?:index|styles|App)\.css['"]/.test(mainEntry.content);
+      if (!hasCssImport) {
+        const cssFile = files.find((f: any) =>
+          f.path === 'src/index.css' || f.path === 'src/styles.css' || f.path === 'src/App.css'
+        );
+        if (cssFile) {
+          const cssName = cssFile.path.replace('src/', './');
+          mainEntry.content = `import '${cssName}';\n${mainEntry.content}`;
+          console.log(`[compile-vite] Auto-injected CSS import '${cssName}' into ${mainEntry.path}`);
+        }
+      }
+    }
+
     // ── Auto-generate Tailwind CSS infrastructure (BEFORE index.html check) ──
     // This must run regardless of whether the user supplied index.html,
     // because PostCSS needs tailwind.config.js + postcss.config.js + @tailwind directives.

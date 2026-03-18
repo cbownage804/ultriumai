@@ -269,6 +269,78 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
     return { ...f, content };
   });
 
+  // ── Project-level structural repairs ──
+  const existingPaths = new Set(repaired.map(f => f.path));
+
+  // Ensure src/main.tsx imports src/index.css
+  const mainFile = repaired.find(f => f.path === 'src/main.tsx' || f.path === 'src/main.ts');
+  if (mainFile) {
+    const hasCssImport = /import\s+['"]\.\/index\.css['"]/.test(mainFile.content) ||
+                         /import\s+['"]\.\/styles\.css['"]/.test(mainFile.content) ||
+                         /import\s+['"]\.\/App\.css['"]/.test(mainFile.content);
+    const cssFileExists = existingPaths.has('src/index.css') || existingPaths.has('src/styles.css') || existingPaths.has('src/App.css');
+    
+    if (!hasCssImport && cssFileExists) {
+      const cssPath = existingPaths.has('src/index.css') ? './index.css' : 
+                      existingPaths.has('src/styles.css') ? './styles.css' : './App.css';
+      mainFile.content = `import '${cssPath}';\n${mainFile.content}`;
+      repairs.push(`${mainFile.path}: added missing CSS import (${cssPath})`);
+    }
+    
+    // Ensure main.tsx imports React
+    if (!mainFile.content.includes("from 'react'") && !mainFile.content.includes('from "react"')) {
+      mainFile.content = `import React from 'react';\n${mainFile.content}`;
+      repairs.push(`${mainFile.path}: added missing React import`);
+    }
+    
+    // Ensure main.tsx imports ReactDOM
+    if (!mainFile.content.includes("from 'react-dom") && !mainFile.content.includes('from "react-dom')) {
+      mainFile.content = `import ReactDOM from 'react-dom/client';\n${mainFile.content}`;
+      repairs.push(`${mainFile.path}: added missing ReactDOM import`);
+    }
+  }
+
+  // If src/index.css exists but has no @tailwind directives, and other files use Tailwind classes
+  const indexCss = repaired.find(f => f.path === 'src/index.css');
+  const hasTailwindUsage = repaired.some(f => 
+    /\.(tsx|jsx)$/.test(f.path) && 
+    /className\s*=\s*["'][^"']*(?:bg-|text-|flex|grid|p-|m-|rounded|shadow|border|font-|hover:|w-|h-|gap-|items-|justify-)/i.test(f.content)
+  );
+  if (indexCss && hasTailwindUsage && !indexCss.content.includes('@tailwind')) {
+    indexCss.content = `@tailwind base;\n@tailwind components;\n@tailwind utilities;\n\n${indexCss.content}`;
+    repairs.push('src/index.css: prepended @tailwind directives');
+  }
+
+  // If no src/index.css but Tailwind classes are used, create one
+  if (!existingPaths.has('src/index.css') && !existingPaths.has('src/styles.css') && hasTailwindUsage) {
+    repaired.push({
+      path: 'src/index.css',
+      content: '@tailwind base;\n@tailwind components;\n@tailwind utilities;\n',
+      language: 'css',
+    } as ProjectFile);
+    existingPaths.add('src/index.css');
+    repairs.push('src/index.css: auto-created with @tailwind directives');
+    
+    // Also ensure main.tsx imports it
+    if (mainFile && !mainFile.content.includes('./index.css')) {
+      mainFile.content = `import './index.css';\n${mainFile.content}`;
+      repairs.push(`${mainFile.path}: added import for auto-created index.css`);
+    }
+  }
+
+  // Ensure src/main.tsx exists if we have src/App.tsx but no entry point
+  const hasApp = existingPaths.has('src/App.tsx') || existingPaths.has('src/App.ts');
+  const hasMain = existingPaths.has('src/main.tsx') || existingPaths.has('src/main.ts');
+  if (hasApp && !hasMain) {
+    const cssImport = existingPaths.has('src/index.css') ? "import './index.css';\n" : '';
+    repaired.push({
+      path: 'src/main.tsx',
+      content: `import React from 'react';\nimport ReactDOM from 'react-dom/client';\nimport App from './App';\n${cssImport}\nReactDOM.createRoot(document.getElementById('root')!).render(\n  <React.StrictMode>\n    <App />\n  </React.StrictMode>\n);\n`,
+      language: 'typescriptreact',
+    } as ProjectFile);
+    repairs.push('src/main.tsx: auto-generated entry point');
+  }
+
   return { files: repaired, repairs };
 }
 
