@@ -396,7 +396,7 @@ export function CompilationBridge({
           const parsed = parseViteErrors(compiled.errors);
           if (parsed.length > 0) onErrorAnnotations?.(parsed);
           if (shouldBlockPreview && blocking.length > 0) {
-            return null;
+            throw new Error(blocking.map(error => error.message).join('\n'));
           }
         }
         return compiled.html || null;
@@ -407,7 +407,7 @@ export function CompilationBridge({
         console.error('[ViteCompiler] Failed:', err.message);
         const parsed = parseViteErrors([err.message]);
         if (parsed.length > 0) onErrorAnnotations?.(parsed);
-        return null;
+        throw err;
       });
 
       result = await Promise.race([workerResult, workerTimeout]);
