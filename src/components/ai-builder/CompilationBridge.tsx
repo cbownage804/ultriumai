@@ -453,7 +453,7 @@ export function CompilationBridge({
         htmlLength: 0,
         fileCount: currentFiles.length,
         errorMessage: compileError.message,
-        failureReason: 'compiler_error',
+        failureReason: classifyFailure(compileError.message),
       });
       throw compileError;
     }
