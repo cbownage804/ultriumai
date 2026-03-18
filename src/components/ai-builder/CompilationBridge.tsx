@@ -638,8 +638,8 @@ export function CompilationBridge({
   }, [isGenerating]);
 
   // Keep fresh/golden projects in a clean idle state (prevents stale "Compiling..." loops).
-  // IMPORTANT: Do NOT abort if a compilation is already in flight — this effect can fire
-  // during the brief window between file commit and compile start, causing "Aborted" errors.
+  // CRITICAL: Never call abortCompilation here — it kills post-generation compiles due to
+  // React effect batching (this effect and the compile effect fire in the same commit).
   useEffect(() => {
     if (isGenerating) {
       hasEverGeneratedRef.current = true;
@@ -656,7 +656,7 @@ export function CompilationBridge({
     // Guard: if a compile is running, don't interfere
     if (compilationInFlightRef.current) return;
 
-    abortCompilation();
+    // Do NOT call abortCompilation() — just reset state for idle golden projects
     compileRunIdRef.current++;
     forceCompileRequestedRef.current = false;
     recompileNeededRef.current = false;
@@ -664,7 +664,7 @@ export function CompilationBridge({
     transitionCompileState('idle');
 
     goldenIdleAppliedRef.current = true;
-  }, [isGenerating, isGoldenProject, abortCompilation, transitionCompileState]);
+  }, [isGenerating, isGoldenProject, transitionCompileState]);
 
   // ── SINGLE COMPILATION PATH ──
   // Fires when: isGenerating becomes false, files exist, and no preview yet.
