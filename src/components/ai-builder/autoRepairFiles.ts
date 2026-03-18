@@ -246,6 +246,26 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
       }
     }
 
+    // ── 6d. Fix orphaned hook closures at start of function body ──
+    // AI truncation sometimes produces:
+    //   export default function Foo() {
+    //     }, []);        ← orphaned useEffect/useMemo/useCallback closure
+    //     const x = ...  ← real code starts here
+    // Remove the orphaned `}, [...]); ` or `});` lines that appear before any real statement.
+    {
+      const orphanedHookPattern = /^((?:export\s+)?(?:default\s+)?(?:function|const|let|var)\s+\w+[\s\S]*?\{\s*\n)((?:\s*\}(?:,\s*\[[^\]]*\])?\s*\)?\s*;?\s*\n)+)/m;
+      const orphanMatch = orphanedHookPattern.exec(content);
+      if (orphanMatch) {
+        const orphanedBlock = orphanMatch[2];
+        // Only remove if the orphaned block looks like a hook closure (}, []); or });)
+        if (/\}\s*,?\s*\[?\]?\s*\)?\s*;/.test(orphanedBlock.trim())) {
+          content = content.replace(orphanMatch[0], orphanMatch[1]);
+          changed = true;
+          repairs.push(`${f.path}: removed orphaned hook closure at start of function body`);
+        }
+      }
+    }
+
     // ── 7. Fix broken import paths (missing extension or ./) ──
     if (['ts', 'tsx', 'js', 'jsx'].includes(ext)) {
       // Fix imports from '@components/...' → '@/components/...'
