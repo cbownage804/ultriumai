@@ -531,9 +531,12 @@ window.addEventListener('message', function(e) {
     }
   }, [previewDocumentHtml]);
 
-  // The HTML to actually render: current if available, otherwise last good during transitions
+  // The HTML to actually render: current if available, otherwise last good preview
+  // Retain last good during: generation, compilation, or compile errors (so the user always sees something)
   const displayHtml = previewDocumentHtml ?? (
-    (isGenerating || isCompiling) ? lastGoodPreviewHtmlRef.current : null
+    lastGoodPreviewHtmlRef.current && (isGenerating || isCompiling || compileState === 'error')
+      ? lastGoodPreviewHtmlRef.current
+      : null
   );
 
   // Cleanup on unmount
