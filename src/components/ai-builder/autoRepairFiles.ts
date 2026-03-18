@@ -408,6 +408,17 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
     }
   }
 
+  // ── Ensure smooth scrolling in CSS ──
+  const cssFileForScroll = repaired.find(f => f.path === 'src/index.css') || repaired.find(f => f.path === 'src/styles.css');
+  if (cssFileForScroll && !cssFileForScroll.content.includes('scroll-behavior')) {
+    const insertPoint = cssFileForScroll.content.includes('@tailwind utilities;') 
+      ? cssFileForScroll.content.indexOf('@tailwind utilities;') + '@tailwind utilities;'.length
+      : 0;
+    const smoothScrollCSS = '\n\nhtml {\n  scroll-behavior: smooth;\n}\n';
+    cssFileForScroll.content = cssFileForScroll.content.slice(0, insertPoint) + smoothScrollCSS + cssFileForScroll.content.slice(insertPoint);
+    repairs.push(`${cssFileForScroll.path}: added smooth scrolling to html`);
+  }
+
   return { files: repaired, repairs };
 }
 
