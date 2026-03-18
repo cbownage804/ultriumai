@@ -522,6 +522,17 @@ export function BuilderChatPanel({
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
   };
 
+  const handleBuildModeClick = useCallback(() => {
+    if (mode !== 'build') {
+      onModeChange('build');
+      return;
+    }
+
+    if (input.trim() && !isGenerating) {
+      void handleSend();
+    }
+  }, [handleSend, input, isGenerating, mode, onModeChange]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // Phase 106: Cmd/Ctrl+Enter to send, plain Enter for newlines
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
