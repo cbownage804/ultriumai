@@ -129,11 +129,14 @@ function validateJS(file: ProjectFile, issues: ValidationIssue[]) {
   }
 
   // Unterminated template literals (backtick count should be even after stripping comments)
+  // Downgraded to 'warning' because autoRepairFiles already fixes real unterminated literals
+  // with a more sophisticated parser — the naive count here causes false positives
+  // (e.g., escaped backticks, backticks inside strings, or tagged templates)
   const commentStripped = content.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/'(?:[^'\\]|\\.)*'/g, '').replace(/"(?:[^"\\]|\\.)*"/g, '');
   const backtickCount = (commentStripped.match(/`/g) || []).length;
   if (backtickCount % 2 !== 0) {
-    issues.push({ file: file.path, severity: 'error', message: 'Unterminated template literal (odd number of backticks)', suggestion: 'Check for a missing closing backtick in template strings' });
+    issues.push({ file: file.path, severity: 'warning', message: 'Unterminated template literal (odd number of backticks)', suggestion: 'Check for a missing closing backtick in template strings' });
   }
 
   // Duplicate function/const declarations
