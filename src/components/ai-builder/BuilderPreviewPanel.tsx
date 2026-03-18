@@ -524,18 +524,22 @@ window.addEventListener('message', function(e) {
   }, [htmlWithInjections]);
 
   // Hold last good preview: keep showing the previous successful render while compiling/generating
+  // Never store fallback/error HTML — only real app renders
   useEffect(() => {
-    if (previewDocumentHtml) {
+    if (previewDocumentHtml && !previewDocumentHtml.includes('ai-builder-fallback') && !previewDocumentHtml.includes('Compilation Error')) {
       lastGoodPreviewHtmlRef.current = previewDocumentHtml;
     }
   }, [previewDocumentHtml]);
 
   // The HTML to actually render: current if available, otherwise last good preview
   // Retain last good during: generation, compilation, or compile errors (so the user always sees something)
-  const displayHtml = previewDocumentHtml ?? (
-    lastGoodPreviewHtmlRef.current && (isGenerating || isCompiling || compileState === 'error')
+  // If current HTML is a fallback/error page but we have a real last-good, prefer showing the real one
+  const isCurrentFallback = previewDocumentHtml && (previewDocumentHtml.includes('ai-builder-fallback') || previewDocumentHtml.includes('Compilation Error'));
+  const effectiveCurrentHtml = isCurrentFallback ? null : previewDocumentHtml;
+  const displayHtml = effectiveCurrentHtml ?? (
+    lastGoodPreviewHtmlRef.current && (isGenerating || isCompiling || compileState === 'error' || isCurrentFallback)
       ? lastGoodPreviewHtmlRef.current
-      : null
+      : previewDocumentHtml // fall back to whatever we have, including fallback HTML
   );
 
   // Cleanup on unmount
@@ -1057,7 +1061,7 @@ window.addEventListener('message', function(e) {
             />
 
             {/* Compile error banner on retained preview */}
-            {!previewDocumentHtml && compileState === 'error' && compileError && (
+            {!effectiveCurrentHtml && compileState === 'error' && compileError && (
               <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/15 border border-red-500/30 backdrop-blur-md max-w-md">
                 <div className="h-2 w-2 rounded-full bg-red-400 shrink-0" />
                 <span className="text-[11px] text-red-300/90 font-medium truncate">
