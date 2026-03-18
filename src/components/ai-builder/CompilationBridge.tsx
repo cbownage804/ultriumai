@@ -114,7 +114,7 @@ export function CompilationBridge({
   onBuildSuccess,
 }: CompilationBridgeProps) {
   // ── Worker-based React Compiler (off main thread) ──
-  const { compileReactProject, abortCompilation } = useWorkerCompiler();
+  const { compileReactProject, abortCompilation, lockCompile, unlockCompile } = useWorkerCompiler();
 
   // ── Runtime error overlay ──
   const { injectOverlay } = useRuntimeErrorOverlay();
