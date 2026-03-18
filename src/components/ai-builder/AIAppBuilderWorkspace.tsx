@@ -335,8 +335,8 @@ function validateBootIntegrity(files: ProjectFile[]): { errors: string[]; repair
     console.warn('[BootIntegrity] Auto-injected missing index.html');
   } else {
     const html = indexFile.content;
-    if (!/<div\s+id\s*=\s*["']root["']\s*>/i.test(html)) {
-      errors.push('index.html missing <div id="root"></div> mount point.');
+    if (!/<div\s+id\s*=\s*["'](root|app)["']\s*>/i.test(html)) {
+      errors.push('index.html missing mount point (<div id="root"> or <div id="app">).');
       // Auto-repair: inject root div + script before </body>
       const idx = repairedFiles.findIndex(f => f.path === 'index.html');
       const repaired = html.replace(/<\/body>/i, `${CANONICAL_INDEX_HTML_BODY}\n</body>`);
