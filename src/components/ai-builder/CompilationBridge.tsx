@@ -923,7 +923,7 @@ export function CompilationBridge({
           }
         }
       } finally {
-
+        unlockCompile(); // Allow future aborts
         clearTimeout(safetyTimer);
         compilationInFlightRef.current = false;
         // If files changed during this compile, retrigger
