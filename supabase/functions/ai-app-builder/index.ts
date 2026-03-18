@@ -133,7 +133,14 @@ LENGTH: If your response will exceed 4000 lines, use ===CONTINUE=== to signal yo
 NEVER leave a file half-written. Finish the current file completely before moving to the next.
 If you run out of space, end your response with ===CONTINUE=== on its own line — the system will
 automatically send a follow-up request for remaining files. Do NOT rush or truncate files
-to fit everything in one response. Quality over completeness.`;
+to fit everything in one response. Quality over completeness.
+
+FILE SIZE — CRITICAL: Keep EVERY file under 300 lines. If a component would exceed 300 lines, you MUST split it into smaller files:
+- Extract data/constants into a separate file (e.g., src/data.ts or src/constants.ts)
+- Extract sub-components into their own files (e.g., src/components/StatCard.tsx, src/components/Chart.tsx)
+- Extract hooks into src/hooks/ directory
+- The main App.tsx should import from these files and orchestrate them
+This prevents output truncation which corrupts large single-file outputs. NEVER put mock data arrays, component definitions, AND layout in a single 500+ line file.`;
 
 
 
