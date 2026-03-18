@@ -2270,6 +2270,7 @@ export function AIAppBuilderWorkspace() {
       if ((e.metaKey || e.ctrlKey) && e.key === 'j') { e.preventDefault(); setShowConsole(prev => !prev); }
       if ((e.metaKey || e.ctrlKey) && e.key === '.') { e.preventDefault(); setRightTab(prev => prev === 'preview' ? 'code' : 'preview'); }
       if ((e.metaKey || e.ctrlKey) && e.key === '`') { e.preventDefault(); setShowTerminal(prev => !prev); }
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'e') { e.preventDefault(); setShowEnvVars(prev => !prev); }
       if (e.key === 'Escape') {
         // Stop AI generation first (highest priority)
         if (isGenerating) { e.preventDefault(); stopGenerating(); return; }
