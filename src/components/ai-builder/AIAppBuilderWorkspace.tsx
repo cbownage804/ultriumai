@@ -3258,6 +3258,20 @@ export function AIAppBuilderWorkspace() {
     if (html && changed) {
       setPreviewRefreshKey(k => k + 1);
     }
+    // ── Auto-capture thumbnail when valid compiled HTML arrives ──
+    // Use refs to avoid stale closure (handleStableHTML has [] deps)
+    if (html && changed && isPreviewValidFn(html)) {
+      compiledForHostingRef.current = html;
+      // Delay to allow rendering to settle (fonts, images loading)
+      setTimeout(() => {
+        const pid = currentProjectId; // captured via closure at call time - but we need latest
+        // Read from the sessionIdRef which is always up-to-date
+        const projectIdForCapture = sessionIdRef.current;
+        if (projectIdForCapture && projectIdForCapture !== 'draft') {
+          captureAndUpload(html, projectIdForCapture).catch(() => {});
+        }
+      }, 5000);
+    }
   }, []);
 
 
