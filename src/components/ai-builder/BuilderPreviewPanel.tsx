@@ -1054,18 +1054,6 @@ window.addEventListener('message', function(e) {
               style={{ colorScheme: 'light' }}
             />
 
-            {/* Retained preview overlay: subtle indicator while recompiling */}
-            {isShowingRetainedPreview && (
-              <div className="absolute inset-0 z-10 pointer-events-none">
-                <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px] transition-opacity duration-500" />
-                <div className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 backdrop-blur-md pointer-events-auto">
-                  <div className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                  <span className="text-[10px] text-white/70 font-medium">
-                    {isGenerating ? 'Generating new version...' : 'Compiling...'}
-                  </span>
-                </div>
-              </div>
-            )}
 
             {/* LKG fallback banner */}
             {isUsingLKG && !isGenerating && !isCompiling && (
