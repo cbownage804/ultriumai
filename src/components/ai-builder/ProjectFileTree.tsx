@@ -213,6 +213,7 @@ export function ProjectFileTree({ files, activeFilePath, onSelectFile, modifiedP
               expandedFolders={expandedFolders}
               onSelectFile={onSelectFile}
               onToggleFolder={toggleFolder}
+              modifiedPaths={modifiedPaths}
             />
           ))}
         </div>
