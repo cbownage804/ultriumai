@@ -1061,7 +1061,7 @@ window.addEventListener('message', function(e) {
             />
 
             {/* Compile error banner on retained preview */}
-            {!previewDocumentHtml && compileState === 'error' && compileError && (
+            {!effectiveCurrentHtml && compileState === 'error' && compileError && (
               <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/15 border border-red-500/30 backdrop-blur-md max-w-md">
                 <div className="h-2 w-2 rounded-full bg-red-400 shrink-0" />
                 <span className="text-[11px] text-red-300/90 font-medium truncate">
