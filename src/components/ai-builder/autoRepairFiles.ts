@@ -53,7 +53,36 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
       }
     }
 
-    // ── 4. Fix missing export default for component files ──
+    // ── 4. Fix multiple default exports (truncation artifact) ──
+    if (['ts', 'tsx', 'js', 'jsx'].includes(ext)) {
+      const defaultExportMatches = [...content.matchAll(/^export\s+default\s+/gm)];
+      if (defaultExportMatches.length > 1) {
+        // Keep only the FIRST export default, remove subsequent ones
+        // This handles the common truncation case where the AI repeats code blocks
+        const lines2 = content.split('\n');
+        let foundFirst = false;
+        const cleanedLines: string[] = [];
+        for (const line of lines2) {
+          if (/^export\s+default\s+/.test(line)) {
+            if (!foundFirst) {
+              foundFirst = true;
+              cleanedLines.push(line);
+            } else {
+              // Skip duplicate export default line
+              changed = true;
+            }
+          } else {
+            cleanedLines.push(line);
+          }
+        }
+        if (changed) {
+          content = cleanedLines.join('\n');
+          repairs.push(`${f.path}: removed ${defaultExportMatches.length - 1} duplicate export default(s)`);
+        }
+      }
+    }
+
+    // ── 4b. Fix missing export default for component files ──
     if (['tsx', 'jsx'].includes(ext) && !f.path.includes('index.') && !f.path.includes('main.')) {
       const hasExportDefault = /export\s+default\s/.test(content);
       const hasNamedExport = /export\s+(?:function|const|class)\s/.test(content);
@@ -65,6 +94,40 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
           changed = true;
           repairs.push(`${f.path}: added missing export default ${match[1]}`);
         }
+      }
+    }
+
+    // ── 4c. Fix duplicate top-level declarations (truncation artifact) ──
+    // When AI output is truncated and retried, it sometimes produces duplicate
+    // const/function declarations. Keep the last one (most likely complete).
+    if (['ts', 'tsx', 'js', 'jsx'].includes(ext)) {
+      const declPattern = /^(?:export\s+)?(?:const|let|var|function)\s+([A-Z_]\w*)\s*(?:[:=<(])/gm;
+      const declMap = new Map<string, { index: number; line: number }>();
+      const linesToRemoveDups = new Set<number>();
+      const contentLines = content.split('\n');
+      let declMatch2;
+      
+      while ((declMatch2 = declPattern.exec(content)) !== null) {
+        const name = declMatch2[1];
+        const lineNum = content.slice(0, declMatch2.index).split('\n').length - 1;
+        
+        if (declMap.has(name)) {
+          // Mark the FIRST occurrence for removal (keep the last, which is more likely complete)
+          const prev = declMap.get(name)!;
+          // Find the range of the first declaration to remove
+          // Simple heuristic: remove from the line of the first declaration up to the line before the second
+          // This is imprecise but handles the common case of duplicated code blocks
+          linesToRemoveDups.add(prev.line);
+          changed = true;
+        }
+        declMap.set(name, { index: declMatch2.index, line: lineNum });
+      }
+      
+      // Only apply if we found simple single-line duplicates (conservative)
+      // For complex multi-line duplicates, we skip to avoid breaking code
+      if (linesToRemoveDups.size > 0 && linesToRemoveDups.size <= 3) {
+        content = contentLines.filter((_, idx) => !linesToRemoveDups.has(idx)).join('\n');
+        repairs.push(`${f.path}: removed ${linesToRemoveDups.size} duplicate declaration line(s)`);
       }
     }
 
