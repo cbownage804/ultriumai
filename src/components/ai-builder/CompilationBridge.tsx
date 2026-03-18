@@ -850,11 +850,11 @@ export function CompilationBridge({
         // ── Stale run-ID check — discard if a newer compile was started ──
         if (thisRunId !== compileRunIdRef.current) {
           console.info('[CompilationBridge] Stale compile run', thisRunId, '— discarding (current:', compileRunIdRef.current, ')');
-          // Check if a newer compile is actually in-flight or pending.
-          // If not, we must reset state to prevent permanent "Compiling..." spinner.
-          if (!compilationInFlightRef.current && !recompileNeededRef.current) {
-            console.warn('[CompilationBridge] No successor compile detected — resetting to idle');
-            transitionCompileState('idle');
+          // If this run became stale but no successor compile is actually queued,
+          // retry instead of dropping into an idle/no-preview state.
+          if (!recompileNeededRef.current) {
+            console.warn('[CompilationBridge] No successor compile detected for stale run — scheduling retry');
+            recompileNeededRef.current = true;
           }
           return;
         }
