@@ -1062,7 +1062,26 @@ export function useAIAppBuilder() {
 - Do not introduce new npm dependencies unless the user explicitly asks for them.
 - All imports must precede variable declarations — no import statements after code.
 - TypeScript generics with angle brackets (e.g. useState<Item[]>) must NOT contain JSX-like syntax that esbuild could misparse.
-- FILE SIZE LIMIT: Keep EVERY file under 300 lines. Split large components into multiple files (extract data, sub-components, hooks). This prevents output truncation.`);
+- FILE SIZE LIMIT: Keep EVERY file under 300 lines. Split large components into multiple files (extract data, sub-components, hooks). This prevents output truncation.
+
+[REQUIRED PROJECT STRUCTURE — FIRST-ATTEMPT SUCCESS]
+- ALWAYS generate a src/main.tsx entry point that imports React, ReactDOM, the root App component, AND src/index.css.
+- The src/main.tsx MUST follow this exact pattern:
+  import React from 'react';
+  import ReactDOM from 'react-dom/client';
+  import App from './App';
+  import './index.css';
+  ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><App /></React.StrictMode>);
+- ALWAYS generate src/index.css with Tailwind directives (@tailwind base; @tailwind components; @tailwind utilities;) plus any custom styles.
+- ALWAYS generate src/App.tsx as the root component with a default export.
+- Every component file MUST have exactly ONE default export OR named exports — never forget the export.
+- Arrow function callbacks: ALWAYS use => syntax. NEVER write "= />" — that is a syntax error.
+- NEVER use \`class=\` in JSX — always use \`className=\`.
+- NEVER use \`for=\` on labels — always use \`htmlFor=\`.
+- Every component that uses useState, useEffect, etc. MUST import them: import { useState, useEffect } from 'react';
+- Do NOT use optional chaining on function calls for event handlers (e.g. onClick?.()). Use standard patterns.
+- All string literals and template literals MUST be properly closed on the same logical line.
+- NEVER leave trailing commas, colons, or operators at the end of a file.`);
 
     // Merge into a single system message, capped at 20K chars
     if (systemParts.length > 0) {
