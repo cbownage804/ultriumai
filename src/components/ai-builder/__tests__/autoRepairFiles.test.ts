@@ -124,4 +124,25 @@ export default function App() {
     expect(repairs.some(r => r.includes('added 1 missing CSS closing brace'))).toBe(true);
     expect(content.trimEnd().endsWith('}')).toBe(true);
   });
+
+  it('fixes malformed SVGProps<X /> generic that esbuild misparses as JSX', () => {
+    const files = [
+      makeTsx('src/App.tsx', `import React from 'react';
+
+const CheckIcon = (props: React.SVGProps<X />) => (
+  <span />
+);
+
+export default function App() {
+  return <CheckIcon />;
+}`),
+    ];
+
+    const { files: repairedFiles, repairs } = autoRepairFiles(files);
+    const content = repairedFiles[0].content;
+
+    expect(content).toContain('SVGProps<SVGSVGElement>');
+    expect(content).not.toContain('SVGProps<X />');
+    expect(repairs.some(r => r.includes('malformed SVGProps'))).toBe(true);
+  });
 });
