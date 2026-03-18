@@ -268,6 +268,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
   // iframeKey only changes from: user Refresh button, health check recovery, refreshKey prop.
   const prevHtmlRef = useRef<string | null>(null);
   const hasEverHadHtmlRef = useRef(false);
+  const lastGoodPreviewHtmlRef = useRef<string | null>(null);
   useEffect(() => {
     if (html) hasEverHadHtmlRef.current = true;
     prevHtmlRef.current = html;
@@ -522,6 +523,19 @@ window.addEventListener('message', function(e) {
     jsBlobUrlsRef.current = jsBlobUrls;
     return safeHtml;
   }, [htmlWithInjections]);
+
+  // Hold last good preview: keep showing the previous successful render while compiling/generating
+  useEffect(() => {
+    if (previewDocumentHtml) {
+      lastGoodPreviewHtmlRef.current = previewDocumentHtml;
+    }
+  }, [previewDocumentHtml]);
+
+  // The HTML to actually render: current if available, otherwise last good during transitions
+  const displayHtml = previewDocumentHtml ?? (
+    (isGenerating || isCompiling) ? lastGoodPreviewHtmlRef.current : null
+  );
+  const isShowingRetainedPreview = !previewDocumentHtml && !!displayHtml && (isGenerating || isCompiling);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -880,7 +894,7 @@ window.addEventListener('message', function(e) {
     <div ref={containerRef} className="flex flex-col h-full bg-[#0d0d14] relative">
       {children}
       {/* Toolbar */}
-      {html && (
+      {(html || displayHtml) && (
         <div className="flex flex-col border-b border-white/[0.06] bg-[#0a0a10] shrink-0">
           {/* Address bar — Lovable-style single row */}
           <div className="flex items-center gap-1.5 px-2 h-10">
@@ -1023,7 +1037,7 @@ window.addEventListener('message', function(e) {
 
       {/* Preview */}
       <div className="flex-1 min-h-0 flex items-stretch justify-center">
-        {previewDocumentHtml ? (
+        {displayHtml ? (
           <div
             className="h-full transition-all duration-300 mx-auto w-full relative"
             style={{
@@ -1035,11 +1049,24 @@ window.addEventListener('message', function(e) {
               ref={iframeRef as React.RefObject<HTMLIFrameElement>}
               key={`iframe-${iframeKey}-${refreshKey ?? 0}`}
               title="App Preview"
-              srcDoc={previewDocumentHtml}
+              srcDoc={displayHtml}
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
               className="w-full h-full border-0 bg-white"
               style={{ colorScheme: 'light' }}
             />
+
+            {/* Retained preview overlay: subtle indicator while recompiling */}
+            {isShowingRetainedPreview && (
+              <div className="absolute inset-0 z-10 pointer-events-none">
+                <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px] transition-opacity duration-500" />
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 backdrop-blur-md pointer-events-auto">
+                  <div className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                  <span className="text-[10px] text-white/70 font-medium">
+                    {isGenerating ? 'Generating new version...' : 'Compiling...'}
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* LKG fallback banner */}
             {isUsingLKG && !isGenerating && !isCompiling && (
