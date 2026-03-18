@@ -75,13 +75,23 @@ function injectImportMapIfNeeded(html: string, detectedPackages: Set<string>): s
     // Special handling for React ecosystem to ensure shared state
     if (pkg === 'react') {
       imports['react'] = `https://esm.sh/react@${REACT_VERSION}`;
-    } else if (pkg === 'react-dom' || pkg === 'react-dom/client') {
-      imports[pkg] = `https://esm.sh/${pkg}@${REACT_VERSION}?external=react`;
-    } else if (pkg === 'react/jsx-runtime' || pkg === 'react/jsx-dev-runtime') {
-      imports[pkg] = `https://esm.sh/${pkg}@${REACT_VERSION}`;
+    } else if (pkg === 'react-dom') {
+      imports['react-dom'] = `https://esm.sh/react-dom@${REACT_VERSION}?external=react`;
+    } else if (pkg === 'react-dom/client') {
+      imports['react-dom/client'] = `https://esm.sh/react-dom@${REACT_VERSION}/client?external=react`;
+    } else if (pkg === 'react/jsx-runtime') {
+      imports['react/jsx-runtime'] = `https://esm.sh/react@${REACT_VERSION}/jsx-runtime`;
+    } else if (pkg === 'react/jsx-dev-runtime') {
+      imports['react/jsx-dev-runtime'] = `https://esm.sh/react@${REACT_VERSION}/jsx-dev-runtime`;
     } else {
-      // For other packages, use esm.sh with React externalized
-      imports[pkg] = `https://esm.sh/${pkg}?external=react,react-dom`;
+      // For other packages: put version after base package, subpath after
+      const parts = pkg.split('/');
+      const basePkg = pkg.startsWith('@') ? parts.slice(0, 2).join('/') : parts[0];
+      const subpath = pkg.startsWith('@') ? parts.slice(2).join('/') : parts.slice(1).join('/');
+      const url = subpath
+        ? `https://esm.sh/${basePkg}@latest/${subpath}?external=react,react-dom`
+        : `https://esm.sh/${basePkg}?external=react,react-dom`;
+      imports[pkg] = url;
     }
   }
 
