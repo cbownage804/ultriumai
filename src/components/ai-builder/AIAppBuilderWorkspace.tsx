@@ -404,19 +404,28 @@ function userExplicitlyMentionedFile(messages: { role: string; content: string }
 
 /**
  * Filter out AI edits/replacements to infrastructure files unless the user explicitly asked for them.
- * Returns the filtered lists and logs any blocked files.
+ * Fresh bootstrap files (index.html, src/main.tsx) are allowed when they do not exist yet,
+ * since blocking them can break first-run generations entirely.
  */
 function filterProtectedFiles(
   parsedFiles: ProjectFile[],
   edits: { path: string; [k: string]: any }[],
   deletions: string[],
   messages: { role: string; content: string }[],
+  existingPaths: Set<string>,
   allowInfraEdits = false,
 ): { parsedFiles: ProjectFile[]; edits: typeof edits; deletions: string[]; blocked: string[] } {
   const blocked: string[] = [];
 
+  const canTouchProtectedPath = (path: string) => {
+    if (allowInfraEdits) return true;
+    if (!PROTECTED_INFRA_FILES.includes(path)) return true;
+    if (!existingPaths.has(path)) return true;
+    return userExplicitlyMentionedFile(messages, path);
+  };
+
   const filteredParsed = parsedFiles.filter(f => {
-    if (!allowInfraEdits && PROTECTED_INFRA_FILES.includes(f.path) && !userExplicitlyMentionedFile(messages, f.path)) {
+    if (!canTouchProtectedPath(f.path)) {
       blocked.push(f.path);
       return false;
     }
@@ -424,7 +433,7 @@ function filterProtectedFiles(
   });
 
   const filteredEdits = edits.filter(e => {
-    if (!allowInfraEdits && PROTECTED_INFRA_FILES.includes(e.path) && !userExplicitlyMentionedFile(messages, e.path)) {
+    if (!canTouchProtectedPath(e.path)) {
       blocked.push(e.path);
       return false;
     }
@@ -635,12 +644,13 @@ export function AIAppBuilderWorkspace() {
       deletions: rawDeletions.length,
       changedPaths: [...rawParsedFiles.map(f => f.path), ...rawEdits.map(e => e.path)],
     });
-    // ── Infrastructure file protection: block edits to boot-critical files unless user explicitly mentioned them ──
+    // ── Infrastructure file protection: preserve existing boot files, but allow bootstrap creation on fresh runs ──
     const { parsedFiles, edits, deletions: safeDeletions, blocked } = filterProtectedFiles(
       rawParsedFiles,
       rawEdits,
       rawDeletions,
       latestMessagesRef.current,
+      new Set(project.files.map(f => f.path)),
       repairInFlightRef.current,
     );
     if (blocked.length > 0) {

@@ -804,8 +804,9 @@ export function CompilationBridge({
           // ── Fail-closed preview gate ──
           const filesToValidate = filesRef.current;
           const hasIncomplete = filesToValidate.some(f => (f as any).incomplete === true);
+          const partialFilesHaveIncomplete = partialFilesRef.current.some(f => (f as any).incomplete === true);
 
-          if (hasIncomplete) {
+          if (hasIncomplete || partialFilesHaveIncomplete) {
             console.warn('[CompilationBridge] BUILD GATED: incomplete_files');
             if (!stableHTMLRef.current || !isPreviewValid(stableHTMLRef.current)) {
               setLiveCompiledHTML(ERROR_FALLBACK_HTML);
