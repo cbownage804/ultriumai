@@ -1117,7 +1117,44 @@ export function useAIAppBuilder() {
 
 [LOADING & ERROR STATES]
 - For any component that fetches data, include a loading skeleton and an error state.
-- Buttons should show loading spinners during async operations.`);
+- Buttons should show loading spinners during async operations.
+
+[COLOR & FONT EXTRACTION — SITE CLONES]
+- When cloning a website, analyze the scraped content to infer the brand's color palette.
+- Generate CSS custom properties in index.css for the brand colors: --primary, --secondary, --accent, --background, --foreground.
+- Use Google Fonts for typography. Import fonts via @import url('https://fonts.googleapis.com/css2?family=FontName:wght@400;600;700&display=swap') in index.css.
+- Choose fonts that match the industry: law/finance → serif (e.g., Playfair Display + Inter), tech → geometric sans (e.g., Space Grotesk + Inter), creative → display fonts (e.g., Outfit + DM Sans).
+- Apply the extracted/inferred color palette consistently across ALL components — do not use default Tailwind blue.
+
+[CONTACT FORMS — MANDATORY FOR BUSINESS SITES]
+- When generating a business website, ALWAYS include a functional contact form with: name, email, phone (optional), and message fields.
+- Use proper form validation: required fields, email format validation, phone format hints.
+- On submit, show a success toast/message: "Thank you! We'll be in touch within 24 hours."
+- Style the form with proper spacing, labels, and a prominent submit button.
+- Include the contact form in a dedicated section or Contact page with the business address/phone/email alongside it.
+- Wrap the form in a try/catch with error state handling.
+
+[ACCESSIBILITY — MANDATORY]
+- Add a "Skip to main content" link as the first focusable element: <a href="#main-content" className="sr-only focus:not-sr-only ...">Skip to main content</a>
+- Use <main id="main-content"> for the primary content area.
+- All interactive elements must have visible focus indicators (focus:ring-2 focus:ring-primary).
+- Use aria-label on icon-only buttons and navigation landmarks.
+- Ensure color contrast ratio of at least 4.5:1 for text.
+- Images must have descriptive alt text (not just "image" or "photo").
+- Form inputs must have associated <label> elements.
+
+[404 PAGE — MANDATORY]
+- When using react-router-dom, ALWAYS include a catch-all route with a styled 404 page.
+- The 404 page should include: a large "404" heading, a friendly message, and a "Go Home" button linking to /.
+- Style it consistently with the rest of the site.
+
+[SCROLL & NAVIGATION POLISH — MANDATORY]
+- Add scroll-behavior: smooth to the html element in index.css.
+- For single-page sites with anchor links (e.g., #about, #services), use smooth scrolling.
+- When using react-router-dom, add a ScrollToTop component that scrolls to top on route changes:
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+- Highlight the active navigation link using the current route/hash.
+- For sticky/fixed navbars, add a subtle shadow on scroll: use a scroll event listener to toggle a shadow class.`);
 
     // Merge into a single system message, capped at 20K chars
     if (systemParts.length > 0) {
