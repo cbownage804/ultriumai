@@ -173,3 +173,20 @@ export default function App() {
     expect(repairs.some(r => r.includes('template expression') || r.includes('template literal'))).toBe(true);
   });
 });
+
+describe('autoRepairFiles corrupted arrow functions', () => {
+  it('fixes "= />" corrupted arrow in JSX callback', () => {
+    const files = [
+      makeTsx('src/App.tsx', `export default function App() {
+  return <input onChange={(e) = /> setQuery(e.target.value)} />;
+}`),
+    ];
+
+    const { files: repairedFiles, repairs } = autoRepairFiles(files);
+    const content = repairedFiles[0].content;
+
+    expect(content).toContain('(e) => setQuery');
+    expect(content).not.toContain('= />');
+    expect(repairs.some(r => r.includes('corrupted arrow'))).toBe(true);
+  });
+});

@@ -213,6 +213,21 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
       }
     }
 
+    // ── 6c. Fix corrupted arrow functions: `= />` should be `=>` ──
+    // AI sometimes splits `=>` across a line boundary or confuses it with JSX self-close `/>`.
+    // Pattern: `(e) = />` or `() = />` should be `(e) =>` or `() =>`
+    {
+      const corruptedArrowPattern = /=\s*\/>/g;
+      let arrowMatch;
+      // Only fix when it looks like a callback context (preceded by `)`)
+      const corruptedCallbackPattern = /\)\s*=\s*\/>\s*/g;
+      if (corruptedCallbackPattern.test(content)) {
+        content = content.replace(/(\))\s*=\s*\/>\s*/g, '$1 => ');
+        changed = true;
+        repairs.push(`${f.path}: fixed corrupted arrow function "= />" → "=>"`);
+      }
+    }
+
     // ── 7. Fix broken import paths (missing extension or ./) ──
     if (['ts', 'tsx', 'js', 'jsx'].includes(ext)) {
       // Fix imports from '@components/...' → '@/components/...'
