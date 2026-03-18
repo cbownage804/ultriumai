@@ -158,41 +158,56 @@ async function compileViaViteSandbox(
  * This extracts the relevant file:line:col + message for auto-heal.
  */
 function extractActionableError(raw: string): string {
-  // Pattern: "ERROR: ... in src/file.tsx:line:col" buried in crash log
+  const locMatch = raw.match(/([\w/.-]+\.(?:tsx?|jsx?)):(\d+):(\d+)/);
+  const formatWithLocation = (message: string) => {
+    const clean = message.trim();
+    if (!clean) return locMatch ? `${locMatch[1]}:${locMatch[2]}:${locMatch[3]} - error` : 'Compilation failed';
+    return locMatch
+      ? `${locMatch[1]}:${locMatch[2]}:${locMatch[3]} - error: ${clean}`
+      : clean;
+  };
+
+  // Pattern: "ERROR: ..." buried in the log
   const esbuildErrorMatch = raw.match(/ERROR:\s*(.+?)(?:\n|$)/i);
   if (esbuildErrorMatch) {
-    const errorLine = esbuildErrorMatch[1].trim();
-    // Also extract file location if present
-    const locMatch = raw.match(/([\w/.-]+\.(?:tsx?|jsx?)):(\d+):(\d+)/);
-    if (locMatch) {
-      return `${locMatch[1]}:${locMatch[2]}:${locMatch[3]} - error: ${errorLine}`;
-    }
-    return errorLine;
+    return formatWithLocation(esbuildErrorMatch[1]);
   }
 
-  // Pattern: "Transform failed with X error(s):" — extract first error line after it
+  // Pattern: esbuild code frame snippets like "96 | ... 97 | ..."
+  const codeFrameMatch = raw.match(/((?:\d+\s*\|.*(?:\n|$)){1,5})/);
+  if (codeFrameMatch) {
+    const snippet = codeFrameMatch[1]
+      .trim()
+      .split('\n')
+      .map(line => line.trim())
+      .join('\n');
+    return formatWithLocation(`Syntax error near:\n${snippet}`);
+  }
+
+  // Pattern: "Transform failed with X error(s):" + first visible code line
   const transformMatch = raw.match(/Transform failed[\s\S]*?\n\s*>\s*\d+\s*\|(.+)/);
   if (transformMatch) {
-    const locMatch = raw.match(/([\w/.-]+\.(?:tsx?|jsx?)):(\d+):(\d+)/);
-    const snippet = transformMatch[1].trim();
-    if (locMatch) {
-      return `${locMatch[1]}:${locMatch[2]}:${locMatch[3]} - error: Syntax error near: ${snippet}`;
-    }
-    return `Syntax error near: ${snippet}`;
+    return formatWithLocation(`Syntax error near: ${transformMatch[1].trim()}`);
   }
 
-  // Pattern: stack traces with "failureErrorWithLog" — extract the message before the stack
+  // Strip noisy stack traces even when they are inline on a single line
+  const beforeStackMatch = raw.match(/^(.*?)(?=\s+at\s+(?:failureErrorWithLog|responseCallbacks|handleIncomingPacket|Socket|Pipe\.onStreamRead|Readable\.)\b)/s);
+  if (beforeStackMatch?.[1]?.trim()) {
+    return beforeStackMatch[1].trim();
+  }
+
+  // Pattern: multiline stack traces with newlines
   const failureMatch = raw.match(/^(.+?)(?:\n\s+at\s)/s);
-  if (failureMatch && failureMatch[1].length < 500) {
+  if (failureMatch?.[1]?.trim()) {
     return failureMatch[1].trim();
   }
 
-  // Truncate excessively long error messages (crash logs can be huge)
-  if (raw.length > 500) {
-    return raw.slice(0, 500) + '…';
+  const firstLine = raw.split('\n').find(line => line.trim());
+  if (firstLine) {
+    return firstLine.trim();
   }
 
-  return raw;
+  return raw.trim();
 }
 
 export function useWorkerCompiler() {

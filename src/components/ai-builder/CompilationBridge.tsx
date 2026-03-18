@@ -935,13 +935,21 @@ export function CompilationBridge({
         } else {
           console.error('[CompilationBridge] Compilation crashed:', errMsg);
           if (thisRunId === compileRunIdRef.current) {
+            const structuredErrors = errMsg
+              .split('\n')
+              .map(line => line.trim())
+              .filter(Boolean)
+              .slice(0, 5);
             if (stableHTMLRef.current && isPreviewValid(stableHTMLRef.current)) {
               console.warn('[CompilationBridge] Compile crashed — preserving LKG preview');
             } else {
               setLiveCompiledHTML(ERROR_FALLBACK_HTML);
               setStableHTML(ERROR_FALLBACK_HTML);
             }
-            transitionCompileState('error', { message: errMsg, errors: [errMsg] });
+            transitionCompileState('error', {
+              message: structuredErrors[0] || 'Compilation failed',
+              errors: structuredErrors.length > 1 ? structuredErrors : [errMsg],
+            });
           }
         }
       } finally {
