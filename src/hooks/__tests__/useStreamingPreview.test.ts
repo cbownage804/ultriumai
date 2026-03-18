@@ -38,7 +38,7 @@ function isFileTruncated(content: string): boolean {
     else if (ch === ']') brackets--;
   }
 
-  return braces > 2 || parens > 2 || brackets > 2;
+  return braces > 0 || parens > 0 || brackets > 0;
 }
 
 function parseIncremental(rawContent: string): { files: ParsedFile[]; completedCount: number } {

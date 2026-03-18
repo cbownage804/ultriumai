@@ -47,8 +47,8 @@ function isFileTruncated(content: string): boolean {
     else if (ch === '[') brackets++;
     else if (ch === ']') brackets--;
   }
-  // Truncated if significantly unbalanced
-  return braces > 2 || parens > 2 || brackets > 2;
+  // Treat any positive imbalance as likely truncation for streamed source files.
+  return braces > 0 || parens > 0 || brackets > 0;
 }
 
 /**
