@@ -524,6 +524,19 @@ window.addEventListener('message', function(e) {
     return safeHtml;
   }, [htmlWithInjections]);
 
+  // Hold last good preview: keep showing the previous successful render while compiling/generating
+  useEffect(() => {
+    if (previewDocumentHtml) {
+      lastGoodPreviewHtmlRef.current = previewDocumentHtml;
+    }
+  }, [previewDocumentHtml]);
+
+  // The HTML to actually render: current if available, otherwise last good during transitions
+  const displayHtml = previewDocumentHtml ?? (
+    (isGenerating || isCompiling) ? lastGoodPreviewHtmlRef.current : null
+  );
+  const isShowingRetainedPreview = !previewDocumentHtml && !!displayHtml && (isGenerating || isCompiling);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
