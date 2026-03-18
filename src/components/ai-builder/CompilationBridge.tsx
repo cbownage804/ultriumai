@@ -833,8 +833,12 @@ export function CompilationBridge({
         // ── Stale run-ID check — discard if a newer compile was started ──
         if (thisRunId !== compileRunIdRef.current) {
           console.info('[CompilationBridge] Stale compile run', thisRunId, '— discarding (current:', compileRunIdRef.current, ')');
-          // Don't reset to 'idle' — a newer compile is running, let it set the final state.
-          // Only clear the in-flight flag for THIS run (the newer run manages its own flag).
+          // Check if a newer compile is actually in-flight or pending.
+          // If not, we must reset state to prevent permanent "Compiling..." spinner.
+          if (!compilationInFlightRef.current && !recompileNeededRef.current) {
+            console.warn('[CompilationBridge] No successor compile detected — resetting to idle');
+            transitionCompileState('idle');
+          }
           return;
         }
 
