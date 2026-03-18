@@ -268,6 +268,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
   // iframeKey only changes from: user Refresh button, health check recovery, refreshKey prop.
   const prevHtmlRef = useRef<string | null>(null);
   const hasEverHadHtmlRef = useRef(false);
+  const lastGoodPreviewHtmlRef = useRef<string | null>(null);
   useEffect(() => {
     if (html) hasEverHadHtmlRef.current = true;
     prevHtmlRef.current = html;
