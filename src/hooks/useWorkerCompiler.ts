@@ -15,6 +15,7 @@ export interface WorkerCompilerResult {
   isReactProject: boolean;
   componentCount: number;
   errors: string[];
+  errorMessage?: string;
 }
 
 const VITE_TIMEOUT_MS = 25_000; // Single path — generous but bounded
@@ -92,21 +93,36 @@ async function compileViaViteSandbox(
     throw new Error(data.error || 'Vite sandbox unavailable');
   }
 
-  if (!data || !data.html) {
+  const sandboxErrors = Array.isArray(data?.errors)
+    ? data.errors.filter((value: unknown): value is string => typeof value === 'string' && value.trim().length > 0)
+    : [];
+  const html = typeof data?.html === 'string' ? data.html : '';
+
+  if (!html) {
+    if (sandboxErrors.length > 0) {
+      return {
+        html: '',
+        isReactProject: true,
+        componentCount: data?.componentCount || 0,
+        errors: sandboxErrors,
+        errorMessage: sandboxErrors[0],
+      };
+    }
+
     throw new Error('Vite sandbox returned empty result');
   }
 
-  if (hasUnmappedBareImportsInModuleScripts(data.html)) {
+  if (hasUnmappedBareImportsInModuleScripts(html)) {
     throw new Error('Vite sandbox returned unresolved bare imports');
   }
 
-  console.info('[ViteSandbox] ✅ Compiled via real Vite in', Date.now() - t0, 'ms, HTML:', data.html.length, 'chars');
+  console.info('[ViteSandbox] ✅ Compiled via real Vite in', Date.now() - t0, 'ms, HTML:', html.length, 'chars');
 
   return {
-    html: data.html,
+    html,
     isReactProject: true,
     componentCount: data.componentCount || 0,
-    errors: data.errors || [],
+    errors: sandboxErrors,
   };
 }
 
