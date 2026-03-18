@@ -14,12 +14,12 @@ interface DevicePreset {
 }
 
 const PRESETS: DevicePreset[] = [
-  { id: 'desktop',    icon: Monitor,    label: 'Desktop',         width: 0,    height: 0,    group: 'primary' },
-  { id: 'laptop',     icon: Laptop,     label: 'Laptop — 1280px', width: 1280, height: 800,  group: 'extra' },
-  { id: 'tablet',     icon: Tablet,     label: 'iPad — 820px',    width: 820,  height: 1180, group: 'primary' },
-  { id: 'tablet-sm',  icon: Tablet,     label: 'iPad Mini — 768px', width: 768, height: 1024, group: 'extra' },
-  { id: 'mobile',     icon: Smartphone, label: 'iPhone 15 — 393px', width: 393,  height: 852,  group: 'primary' },
-  { id: 'mobile-sm',  icon: Smartphone, label: 'iPhone SE — 375px', width: 375,  height: 667,  group: 'extra' },
+  { id: 'desktop',    icon: Monitor,    label: 'Desktop',                width: 0,    height: 0,    group: 'primary' },
+  { id: 'laptop',     icon: Laptop,     label: 'Laptop — 1440px',       width: 1440, height: 900,  group: 'extra' },
+  { id: 'tablet',     icon: Tablet,     label: 'iPad Pro 11″ — 834px',  width: 834,  height: 1194, group: 'primary' },
+  { id: 'tablet-sm',  icon: Tablet,     label: 'iPad 10th — 820px',     width: 820,  height: 1180, group: 'extra' },
+  { id: 'mobile',     icon: Smartphone, label: 'iPhone 16 — 393px',     width: 393,  height: 852,  group: 'primary' },
+  { id: 'mobile-sm',  icon: Smartphone, label: 'Galaxy S24 — 360px',    width: 360,  height: 780,  group: 'extra' },
 ];
 
 const PRIMARY_PRESETS = PRESETS.filter(p => p.group === 'primary');
