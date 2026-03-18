@@ -160,7 +160,7 @@ function TreeItem({
   );
 }
 
-export function ProjectFileTree({ files, activeFilePath, onSelectFile }: ProjectFileTreeProps) {
+export function ProjectFileTree({ files, activeFilePath, onSelectFile, modifiedPaths }: ProjectFileTreeProps) {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
   // Auto-expand all folders on first render or when files change
