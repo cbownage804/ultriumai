@@ -1173,20 +1173,50 @@ export function useAIAppBuilder() {
     let scrapedContent: string | null = null;
     if (urlClone.hasURL && urlClone.url) {
       toast.info('Scraping website content...', { duration: 3000 });
+
+      // --- Enhanced scrape: request branding + markdown + links for full brand extraction ---
+      let brandingData: any = null;
+      let siteLogoUrl: string | null = null;
+
       try {
         const { data, error } = await supabase.functions.invoke('firecrawl-scrape', {
           body: {
             url: urlClone.url,
-            options: { formats: ['markdown'], onlyMainContent: true },
+            options: {
+              formats: ['markdown', 'branding', 'links'],
+              onlyMainContent: false, // get full page to capture footer/contact info
+            },
           },
         });
         if (!error && data?.success !== false) {
           const md = data?.data?.markdown || data?.markdown || '';
           const title = data?.data?.metadata?.title || data?.metadata?.title || '';
           const description = data?.data?.metadata?.description || data?.metadata?.description || '';
+          brandingData = data?.data?.branding || data?.branding || null;
+
+          // Extract logo from branding response
+          if (brandingData?.logo) {
+            siteLogoUrl = brandingData.logo;
+          } else if (brandingData?.images?.logo) {
+            siteLogoUrl = brandingData.images.logo;
+          }
+          // Fallback: try favicon from branding or origin
+          if (!siteLogoUrl) {
+            if (brandingData?.images?.favicon) {
+              siteLogoUrl = brandingData.images.favicon;
+            } else {
+              try {
+                const origin = new URL(urlClone.url).origin;
+                siteLogoUrl = `${origin}/favicon.ico`;
+              } catch {}
+            }
+          }
+
           if (md) {
-            scrapedContent = `[SCRAPED WEBSITE CONTENT from ${urlClone.url}]\nTitle: ${title}\nDescription: ${description}\n\nContent:\n${md.slice(0, 12000)}`;
-            toast.success('Website content loaded!');
+            // Build rich scraped context with branding info
+            const brandSection = brandingData ? buildBrandingContext(brandingData) : '';
+            scrapedContent = `[SCRAPED WEBSITE CONTENT from ${urlClone.url}]\nTitle: ${title}\nDescription: ${description}\n${brandSection}\n\nFull Page Content (use ALL addresses, phone numbers, emails, and details EXACTLY as shown):\n${md.slice(0, 15000)}`;
+            toast.success('Website content & branding loaded!');
           }
         }
       } catch (scrapeErr) {
@@ -1194,33 +1224,54 @@ export function useAIAppBuilder() {
         toast.warning('Could not scrape website — AI will use its best knowledge instead.');
       }
 
-      // Try to extract favicon/logo URL from the scraped site
-      let siteLogoUrl: string | null = null;
-      if (urlClone.url) {
-        try {
-          const origin = new URL(urlClone.url).origin;
-          siteLogoUrl = `${origin}/favicon.ico`;
-        } catch {}
-      }
-
       if (scrapedContent) {
         apiMessages.push({ role: 'system', content: scrapedContent });
-        apiMessages.push({ role: 'system', content: `[SCRAPE INSTRUCTIONS] Use the SCRAPED WEBSITE CONTENT above as the real data for this website. Reproduce the site structure, text, and content faithfully. Do NOT hallucinate or guess the site content — it is provided above.` });
+        apiMessages.push({ role: 'system', content: `[SCRAPE INSTRUCTIONS — CRITICAL ACCURACY RULES]
+1. Use the SCRAPED WEBSITE CONTENT above as the SOLE source of truth for ALL factual data.
+2. ADDRESSES: Copy every address EXACTLY as shown in the scraped content. Do NOT substitute, abbreviate, or guess addresses.
+3. PHONE NUMBERS: Use phone numbers EXACTLY as scraped. Do NOT invent or change phone numbers.
+4. EMAILS: Use email addresses EXACTLY as scraped.
+5. COMPANY NAME: Use the exact company name, including any "CPAs", "LLC", "Inc" suffixes.
+6. SERVICES: List only services mentioned in the scraped content.
+7. TEAM/STAFF: Only include names and titles that appear in the scraped content.
+8. If information is NOT in the scraped content, OMIT it entirely — do NOT hallucinate or fill in from general knowledge.` });
       } else {
         apiMessages.push({ role: 'system', content: `[URL CLONE] The user wants to clone/replicate the design from: ${urlClone.url}. Analyze the typical design patterns of this website and generate a faithful reproduction. Focus on layout structure, color scheme, typography, and component patterns.` });
       }
 
-      // Logo handling for cloned sites
+      // Logo & branding with extracted colors
+      const brandColors = brandingData?.colors;
       apiMessages.push({ role: 'system', content: `[LOGO & BRANDING — MANDATORY]
-When cloning a website, NEVER use plain unstyled text as the logo (e.g. "KWCCPAs" as raw text). Instead:
+When cloning a website, NEVER use plain unstyled text as the logo. Instead:
 1. If the user uploaded a logo image, use that (see ASSET PRIORITY instructions).
-2. Otherwise, create a STYLED logo component with:
+2. If a logo URL was extracted from the site: ${siteLogoUrl ? `USE THIS LOGO: ${siteLogoUrl}` : 'No logo found — create a styled logo component.'}
+3. If no logo is available, create a STYLED logo component with:
    - A visually distinct design using CSS (gradient text, icon + text combo, bordered/badged treatment, or a colored shape behind initials)
    - Use a lucide-react icon that matches the business type alongside the company name
-   - Example: <div className="flex items-center gap-2"><Building2 className="h-8 w-8 text-primary" /><span className="text-2xl font-bold tracking-tight">KWC<span className="text-primary">CPAs</span></span></div>
-3. For hero sections and other areas that would normally have stock photos, use placeholder image URLs from https://images.unsplash.com with relevant search terms (e.g. https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800 for accounting).
-4. NEVER leave an <img> tag with an empty or broken src. Either use a real URL or omit the image entirely.
-${siteLogoUrl ? `5. The site favicon is likely at: ${siteLogoUrl} — you MAY use this as a small logo if appropriate.` : ''}` });
+4. For hero sections, use placeholder image URLs from https://images.unsplash.com with relevant search terms.
+5. NEVER leave an <img> tag with an empty or broken src.
+
+${brandColors ? `[BRAND COLORS — USE THESE EXACT COLORS]
+Primary: ${brandColors.primary || 'not found'}
+Secondary: ${brandColors.secondary || 'not found'}
+Accent: ${brandColors.accent || 'not found'}
+Background: ${brandColors.background || 'not found'}
+Text Primary: ${brandColors.textPrimary || 'not found'}
+Text Secondary: ${brandColors.textSecondary || 'not found'}
+
+Apply these colors throughout the entire design:
+- Primary color for buttons, CTAs, links, and key accents
+- Secondary for supporting elements and hover states
+- Background and text colors for the overall page theme
+- Define CSS variables: --primary, --secondary, --accent using these exact hex values
+DO NOT use generic blue/purple defaults. The scraped brand colors MUST be applied.` : 'No brand colors were extracted — analyze the site URL domain and industry to choose appropriate professional colors.'}
+
+${brandingData?.fonts?.length ? `[BRAND FONTS]
+${brandingData.fonts.map((f: any) => f.family || f).join(', ')}
+Import these fonts from Google Fonts if available.` : ''}
+
+${brandingData?.typography ? `[TYPOGRAPHY]
+${JSON.stringify(brandingData.typography, null, 2)}` : ''}` });
 
       // If images are also attached, add explicit priority instructions WITH the actual data URLs
       if (effectiveImageDataUrls?.length) {
