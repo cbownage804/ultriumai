@@ -1054,12 +1054,14 @@ export function useAIAppBuilder() {
     // ── Safe Output Contract ──
     systemParts.push(`[SAFE OUTPUT CONTRACT — MANDATORY]
 - NEVER generate inline <svg> markup in JSX/TSX files. Use lucide-react icons instead: import { IconName } from 'lucide-react';
-- If the user asks for icons, use lucide-react by default.
+- NEVER create custom SVG icon components with React.SVGProps or SVGProps type annotations. Always use lucide-react.
+- If the user asks for icons, use lucide-react by default. Browse https://lucide.dev/icons for available icons.
 - NEVER output extremely long single-line JSX. Format JSX with line breaks.
 - Always wrap JSX returns in parentheses: return ( <div>...</div> );
 - Ensure all JSX tags are properly closed and self-closing where required (<img />, <br />, <input />).
 - Do not introduce new npm dependencies unless the user explicitly asks for them.
-- All imports must precede variable declarations — no import statements after code.`);
+- All imports must precede variable declarations — no import statements after code.
+- TypeScript generics with angle brackets (e.g. useState<Item[]>) must NOT contain JSX-like syntax that esbuild could misparse.`);
 
     // Merge into a single system message, capped at 20K chars
     if (systemParts.length > 0) {

@@ -79,8 +79,29 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
       }
     }
 
-    // ── 6. Fix unclosed JSX tags (self-closing correction) ──
+    // ── 6. Fix inline SVG icon components → replace with lucide-react placeholder ──
     if (['tsx', 'jsx'].includes(ext)) {
+      // Detect custom SVG icon components with React.SVGProps (esbuild misparses generics as JSX)
+      // Pattern: const IconName = (props: React.SVGProps<SVGSVGElement>) => ( <svg ... /> );
+      const svgComponentPattern = /(?:const|function)\s+(\w+)\s*=?\s*\(?(?:\s*props\s*:\s*(?:React\.)?SVGProps<[^>]*>)?\)?\s*(?:=>|{)\s*\(?[\s\S]*?<svg\b[\s\S]*?<\/svg>\s*\)?\s*\)?\s*;?/g;
+      let svgMatch;
+      while ((svgMatch = svgComponentPattern.exec(content)) !== null) {
+        const componentName = svgMatch[1];
+        const replacement = `const ${componentName} = (props: React.SVGProps<SVGSVGElement>) => (\n  <span {...props as any} className="inline-block w-6 h-6" />\n);`;
+        content = content.replace(svgMatch[0], replacement);
+        changed = true;
+        repairs.push(`${f.path}: replaced inline SVG component "${componentName}" (use lucide-react instead)`);
+      }
+
+      // Also fix the specific broken pattern: React.SVGProps<X /> where esbuild sees <X /> as JSX
+      // This catches truncated/malformed generic type annotations
+      const brokenGenericPattern = /SVGProps<(\w+)\s*\/>/g;
+      if (brokenGenericPattern.test(content)) {
+        content = content.replace(/SVGProps<(\w+)\s*\/>/g, 'SVGProps<SVGSVGElement>');
+        changed = true;
+        repairs.push(`${f.path}: fixed malformed SVGProps generic type annotation`);
+      }
+
       // Detect common unclosed void-like elements that should be self-closing
       const unclosedVoidTags = content.match(/<(img|input|br|hr|meta|link)\b[^/>]*>/gi);
       if (unclosedVoidTags) {
