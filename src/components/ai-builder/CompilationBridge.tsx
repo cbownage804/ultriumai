@@ -120,6 +120,7 @@ export function CompilationBridge({
   isGoldenProject = false,
   onErrorAnnotations,
   onBuildSuccess,
+  onCompilePhaseChange,
 }: CompilationBridgeProps) {
   // ── Worker-based React Compiler (off main thread) ──
   const { compileReactProject, abortCompilation, lockCompile, unlockCompile } = useWorkerCompiler();
