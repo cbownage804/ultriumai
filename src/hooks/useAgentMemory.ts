@@ -213,7 +213,7 @@ export function useAgentMemory() {
   const updateMemoryMarkdown = useCallback((markdown: string) => {
     const newMemory: ProjectMemory = { conventions: [], preferences: [], patterns: [], errorFixes: [], userRules: memoryRef.current.userRules };
     const now = Date.now();
-    let currentSection: keyof ProjectMemory = 'preferences';
+    let currentSection: 'conventions' | 'preferences' | 'patterns' | 'errorFixes' | 'userRules' = 'preferences';
     for (const line of markdown.split('\n')) {
       if (/^##\s*conventions/i.test(line)) { currentSection = 'conventions'; continue; }
       if (/^##\s*user\s*preferences/i.test(line)) { currentSection = 'preferences'; continue; }
