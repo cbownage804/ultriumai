@@ -580,6 +580,7 @@ export function CompilationBridge({
 
     isIncrementalEditRef.current = false;
 
+    setCompilePhase('injecting');
     if (result && assets.length > 0) {
       const assetScript = assets.map(a =>
         `window.__ASSETS__=window.__ASSETS__||{};window.__ASSETS__[${JSON.stringify(a.name)}]=${JSON.stringify(a.dataUrl)};`
