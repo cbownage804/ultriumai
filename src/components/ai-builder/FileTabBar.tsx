@@ -32,7 +32,7 @@ function getTabIcon(path: string) {
   }
 }
 
-export function FileTabBar({ openPaths, activePath, dirtyFiles, streamingFilePath, onSelect, onClose, onReorder }: FileTabBarProps) {
+export function FileTabBar({ openPaths, activePath, dirtyFiles, streamingFilePath, onSelect, onClose, onReorder, hasFileHistory, onUndoFile }: FileTabBarProps) {
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const dragIndexRef = useRef<number | null>(null);
 
