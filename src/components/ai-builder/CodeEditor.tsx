@@ -415,3 +415,31 @@ export function CodeEditor({ file, onContentChange, remoteCursors = [], onCursor
     </div>
   );
 }
+
+/** Resolve an import path to a project file path */
+function resolveImportPath(importPath: string, currentFilePath: string, projectFiles: ProjectFile[]): string | null {
+  // Handle @/ alias
+  let resolved = importPath;
+  if (resolved.startsWith('@/')) {
+    resolved = 'src/' + resolved.slice(2);
+  } else if (resolved.startsWith('./') || resolved.startsWith('../')) {
+    // Resolve relative to current file
+    const currentDir = currentFilePath.split('/').slice(0, -1).join('/');
+    const parts = (currentDir ? currentDir + '/' + resolved : resolved).split('/');
+    const normalized: string[] = [];
+    for (const part of parts) {
+      if (part === '.' || part === '') continue;
+      if (part === '..') { normalized.pop(); continue; }
+      normalized.push(part);
+    }
+    resolved = normalized.join('/');
+  }
+
+  // Try exact match, then with common extensions
+  const extensions = ['', '.ts', '.tsx', '.js', '.jsx', '/index.ts', '/index.tsx', '/index.js'];
+  for (const ext of extensions) {
+    const candidate = resolved + ext;
+    if (projectFiles.some(f => f.path === candidate)) return candidate;
+  }
+  return null;
+}
