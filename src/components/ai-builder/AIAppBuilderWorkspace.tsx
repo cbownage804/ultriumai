@@ -1394,6 +1394,7 @@ export function AIAppBuilderWorkspace() {
   const MAX_FIX_ATTEMPTS = 3;
   const [isCompiling, setIsCompilingRaw] = useState(false);
   const [compileState, setCompileStateRaw] = useState<CompileState>('idle');
+  const [compilePhase, setCompilePhase] = useState<CompilePhase>(null);
   const [compileError, setCompileError] = useState<CompileErrorInfo | null>(null);
   const isCompilingRef = useRef(false);
   const compileStateRef = useRef<CompileState>('idle');
