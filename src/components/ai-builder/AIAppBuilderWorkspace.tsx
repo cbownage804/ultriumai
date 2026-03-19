@@ -195,6 +195,7 @@ import {
   APIBuilderPanel as APIBuilderPanelLazy,
 } from './lazyPanels';
 import { useErrorPatternLearning } from '@/hooks/useErrorPatternLearning';
+import { useDeployGate } from './useDeployGate';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
