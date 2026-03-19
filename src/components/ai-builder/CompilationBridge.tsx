@@ -27,6 +27,7 @@ import { useCSSHotReload } from './useCSSHotReload';
 import { useAutoDepResolver } from './useAutoDepResolver';
 import { useAutoTestGenerator } from './useAutoTestGenerator';
 import { useDeployGate } from './useDeployGate';
+import { useAssetResilience } from './useAssetResilience';
 
 /** Compile State Machine — single source of truth for compilation phase */
 export type CompileState = 'idle' | 'compiling' | 'success' | 'error';
