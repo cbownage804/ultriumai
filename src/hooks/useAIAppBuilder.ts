@@ -1103,6 +1103,18 @@ export function useAIAppBuilder() {
     // ── Anti-pattern injection: inject learned error patterns into system prompt ──
     // (Consumer must call getAntiPatternPrompt() from useErrorPatternLearning and pass as knowledgeContext)
 
+    // ── Scope constraint for iterative edits ──
+    const isIterativeEdit = currentFiles.length > 0;
+    if (isIterativeEdit) {
+      systemParts.push(`[CHANGE SCOPE — CRITICAL]
+You are editing an EXISTING project. ONLY make the changes the user explicitly asked for.
+- Do NOT add, remove, or restyle sections, backgrounds, images, or layout elements that the user did NOT mention.
+- Do NOT "improve" or "enhance" parts of the site beyond the user's request.
+- If the user says "redesign the logo", ONLY change the logo — do NOT touch hero backgrounds, color schemes, or other unrelated elements.
+- Preserve all existing code, styles, and structure that are not directly related to the request.
+- When in doubt, change LESS rather than MORE.`);
+    }
+
     // ── Step 7: Smarter EDIT vs FILE selection ──
     systemParts.push(`[EDIT vs FILE SELECTION — MANDATORY]
 - For changes affecting LESS THAN 20% of a file, use ===EDIT: path=== with unified diff hunks instead of ===FILE: path=== full rewrites.
