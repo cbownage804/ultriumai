@@ -2004,6 +2004,16 @@ export function BuilderChatPanel({
                         <Pin className="h-2.5 w-2.5" />
                       </button>
                     )}
+                    {/* Wave 10: Star prompt as favorite */}
+                    {msg.role === 'user' && onTogglePromptFavorite && (
+                      <button
+                        onClick={() => onTogglePromptFavorite(msg.id)}
+                        className={cn("flex items-center gap-0.5 transition-colors ml-1", favoritePromptIds?.has(msg.id) ? "text-amber-400/80" : "text-white/25 hover:text-amber-400/60")}
+                        title={favoritePromptIds?.has(msg.id) ? "Unfavorite" : "Save as favorite"}
+                      >
+                        <Star className={cn("h-2.5 w-2.5", favoritePromptIds?.has(msg.id) && "fill-current")} />
+                      </button>
+                    )}
                     {msg.role === 'user' && !isGenerating && (
                       <>
                         {/* Edit & Resend — truncates conversation to this point (Step 2: Conversation Branching) */}
