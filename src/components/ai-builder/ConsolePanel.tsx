@@ -37,6 +37,7 @@ interface ConsolePanelProps {
   onNavigateToFile?: (path: string, line?: number) => void;
   iframeRef?: React.RefObject<HTMLIFrameElement | null>;
   fileCount?: number;
+  buildErrors?: ParsedViteError[];
 }
 
 type ActiveTab = 'console' | 'problems' | 'network' | 'terminal' | 'output' | 'logs';
