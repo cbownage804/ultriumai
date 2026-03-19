@@ -258,11 +258,44 @@ export function CompilationBridge({
   // back to idle + placeholder when files are still golden/default.
   const hasEverGeneratedRef = useRef(false);
 
-  // ── LKG sessionStorage persistence ──
+  // ── LKG persistence: IndexedDB + sessionStorage ──
   const LKG_STORAGE_KEY = 'ai-builder-lkg-preview';
+  const LKG_IDB_KEY = 'ai-builder-lkg-preview';
   
-  // On mount: restore LKG from sessionStorage
+  // IndexedDB helpers (fire-and-forget, non-blocking)
+  const openLKGDB = useCallback((): Promise<IDBDatabase> => {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open('ai-builder-lkg', 1);
+      req.onupgradeneeded = () => req.result.createObjectStore('lkg');
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }, []);
+
+  const saveLKGToIDB = useCallback(async (html: string) => {
+    try {
+      const db = await openLKGDB();
+      const tx = db.transaction('lkg', 'readwrite');
+      tx.objectStore('lkg').put(html, LKG_IDB_KEY);
+      db.close();
+    } catch {}
+  }, [openLKGDB]);
+
+  const loadLKGFromIDB = useCallback(async (): Promise<string | null> => {
+    try {
+      const db = await openLKGDB();
+      return new Promise((resolve) => {
+        const tx = db.transaction('lkg', 'readonly');
+        const req = tx.objectStore('lkg').get(LKG_IDB_KEY);
+        req.onsuccess = () => { db.close(); resolve(req.result || null); };
+        req.onerror = () => { db.close(); resolve(null); };
+      });
+    } catch { return null; }
+  }, [openLKGDB]);
+
+  // On mount: restore LKG from sessionStorage (fast) then upgrade from IndexedDB (durable)
   useEffect(() => {
+    // Fast path: sessionStorage
     try {
       const cached = sessionStorage.getItem(LKG_STORAGE_KEY);
       if (cached && isPreviewValid(cached) && !stableHTMLRef.current) {
@@ -274,24 +307,40 @@ export function CompilationBridge({
         onCompilingChangeRef.current?.(false);
       }
     } catch {}
+    // Slow path: IndexedDB (more durable, survives tab close)
+    loadLKGFromIDB().then(idbHtml => {
+      if (idbHtml && isPreviewValid(idbHtml) && !stableHTMLRef.current) {
+        console.info('[CompilationBridge] Restored LKG from IndexedDB:', idbHtml.length, 'chars');
+        setStableHTMLLocal(idbHtml);
+        stableHTMLRef.current = idbHtml;
+        onStableHTML(idbHtml);
+        onCompileStateChangeRef.current?.('success');
+        onCompilingChangeRef.current?.(false);
+      }
+    });
   }, []);
 
   // ── stableHTML state ──
   const [stableHTML, setStableHTMLLocal] = useState<string | null>(null);
   const stableHTMLRef = useRef<string | null>(null);
   const setStableHTML = useCallback((html: string | null) => {
+    // CRITICAL: Never store fallback/error HTML as stableHTML
+    if (html && (html.includes('ai-builder-fallback') || html.includes('Compilation Error'))) {
+      console.warn('[CompilationBridge] Blocked fallback HTML from being set as stableHTML');
+      return; // Silently reject — keep current LKG
+    }
+    
     console.info('[CompilationBridge] setStableHTML:', html ? `${html.length} chars` : 'null');
     setStableHTMLLocal(html);
     stableHTMLRef.current = html;
     onStableHTML(html);
     
-    // Persist to sessionStorage on success (skip fallback/error HTML)
-    if (html && isPreviewValid(html) && !html.includes('ai-builder-fallback')) {
-      try {
-        sessionStorage.setItem(LKG_STORAGE_KEY, html);
-      } catch {}
+    // Persist valid HTML to both storage layers
+    if (html && isPreviewValid(html)) {
+      try { sessionStorage.setItem(LKG_STORAGE_KEY, html); } catch {}
+      saveLKGToIDB(html);
     }
-  }, [onStableHTML]);
+  }, [onStableHTML, saveLKGToIDB]);
 
   // ── SINGLE in-flight guard — replaces all previous lock/attempted/digest refs ──
   const compilationInFlightRef = useRef(false);
