@@ -1309,6 +1309,15 @@ export function AIAppBuilderWorkspace() {
   const fileScaffolding = useSmartFileScaffolding();
   const errorAnnotations = useInlineErrorAnnotations();
   const smartFileCreation = useSmartFileCreation();
+  const conversationHistory = useConversationHistory();
+  const elementSourceMapper = useElementSourceMapper(project.files);
+  const [showConversationDrawer, setShowConversationDrawer] = useState(false);
+  const [inlineChatOpen, setInlineChatOpen] = useState(false);
+  const [inlineChatPosition, setInlineChatPosition] = useState({ top: 0, left: 0 });
+  const [inlineChatCode, setInlineChatCode] = useState('');
+  const [inlineChatFile, setInlineChatFile] = useState('');
+  const [inlineChatStartLine, setInlineChatStartLine] = useState(0);
+  const [inlineChatEndLine, setInlineChatEndLine] = useState(0);
   const lkgDiff = useLKGDiff();
   const autoHeal = useAutoHealCompile();
   const errorPatterns = useErrorPatternLearning();
