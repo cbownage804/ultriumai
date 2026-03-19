@@ -1795,7 +1795,7 @@ ${JSON.stringify(brandingData.typography, null, 2)}` : ''}` });
         // Retry with fallback model after a short delay
         setTimeout(() => {
           fallbackRetryRef.current = false;
-          sendMessage(input, currentFiles, supabaseConfig, stripeConfig, serviceKeys, imageDataUrls, fallbackModel, effectiveImageDataUrls, isFixRequest);
+          sendMessage(input, currentFiles, supabaseConfig, stripeConfig, serviceKeys, imageDataUrls, fallbackModel, undefined, isAutoFix);
         }, classified.retryDelayMs || 2000);
         return;
       }
