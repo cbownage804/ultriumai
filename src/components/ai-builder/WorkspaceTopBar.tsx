@@ -1,10 +1,10 @@
-import { type RefObject } from 'react';
+import { type RefObject, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import type { UndoEntry } from '@/hooks/useUndoRedo';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { SyncStatusIndicator, ProjectDropdownMenu, UndoPreviewPopover } from './lazyPanels';
 import {
-  Eye, Code, Rocket, MessageSquare, Users, ListTodo,
+  Eye, Code, Rocket, MessageSquare, Users, ListTodo, Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ultriumLogo from '/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png';
