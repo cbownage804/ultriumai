@@ -183,6 +183,12 @@ export function CompilationBridge({
   const { injectSmokeTests, runSmokeTests } = useDeployGate();
   const injectSmokeTestsRef = useRef(injectSmokeTests);
   injectSmokeTestsRef.current = injectSmokeTests;
+
+  // ── Step 13: Asset loading resilience ──
+  const { injectAssetResilience } = useAssetResilience();
+  const injectAssetResilienceRef = useRef(injectAssetResilience);
+  injectAssetResilienceRef.current = injectAssetResilience;
+
   // Start monitoring on mount + runtime error forwarding
   useEffect(() => {
     const cleanup = startMonitoring();
