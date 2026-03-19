@@ -1326,6 +1326,8 @@ export function AIAppBuilderWorkspace() {
   rightTabRef.current = rightTab;
   setRightTabRef.current = setRightTab;
   const [previewCurrentUrl, setPreviewCurrentUrl] = useState('/');
+  // Step 5: Persist layout changes to localStorage
+  useEffect(() => { localStorage.setItem('builder-layout-rightTab', rightTab); }, [rightTab]);
   // showShortcuts now managed by usePanelManager
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState(project.name);
