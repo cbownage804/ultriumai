@@ -5,7 +5,7 @@ import {
   X, Brain, Compass, Code2,
   LayoutGrid, Wrench, AlertTriangle, Copy, ChevronDown, Check, Pencil,
   Crosshair, Plus, Camera, Paperclip, AtSign, Rocket,
-  Settings, Clock, BookOpen, GitBranch, Eye, Search as SearchIcon, Pin,
+  Settings, Clock, BookOpen, GitBranch, Eye, Search as SearchIcon, Pin, Star,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -50,38 +50,36 @@ interface BuilderChatPanelProps {
   onSelectStarterTemplate?: (template: import('./AppStarterTemplates').AppStarterTemplate) => void;
   supabaseConfig?: { url: string; anonKey: string } | null;
   onUpdateMessages?: (updater: (prev: BuilderMessage[]) => BuilderMessage[]) => void;
-  /** Questions UI rendered above the input */
   questionsSlot?: React.ReactNode;
-  /** Whether the preview has valid compiled HTML and is truly ready */
   isPreviewReady?: boolean;
-  /** Current compile state for accurate status labels */
   compileState?: 'idle' | 'compiling' | 'success' | 'error';
-  /** True when project is still untouched golden template */
   isGoldenProject?: boolean;
-  /** Ref-based streaming: content ref to avoid workspace re-renders */
   streamingContentRef?: MutableRefObject<string>;
-  /** Current build errors for smart follow-up suggestions */
   buildErrors?: ParsedViteError[];
-  /** New conversation handler — clears messages but keeps files */
   onNewConversation?: () => void;
   onShowSettings?: () => void;
   onShowHistory?: () => void;
   onShowKnowledge?: () => void;
   onShowGitHub?: () => void;
-  // Conversation forking
   conversationForks?: { id: string; label: string; createdAt: Date }[];
   activeForkId?: string | null;
   onForkConversation?: () => void;
   onSwitchFork?: (forkId: string) => void;
   onDeleteFork?: (forkId: string) => void;
-  // Wave 2: Per-message revert
   onRevertToMessage?: (messageId: string) => void;
   onForkFromMessage?: (messageId: string) => void;
-  // Wave 2: Model selection
   selectedModel?: string;
   onModelChange?: (model: string) => void;
   onOpenEditHistory?: () => void;
   onReview?: () => void;
+  // Wave 10: @-file mentions
+  projectFiles?: ProjectFile[];
+  // Wave 10: Component extraction
+  componentExtractionCount?: number;
+  componentExtractionPrompt?: string | null;
+  // Wave 10: Prompt favorites
+  onTogglePromptFavorite?: (messageId: string) => void;
+  favoritePromptIds?: Set<string>;
 }
 
 
@@ -411,23 +409,56 @@ export function BuilderChatPanel({
   onRevertToMessage, onForkFromMessage,
   selectedModel, onModelChange, onOpenEditHistory, onReview,
   buildErrors,
+  projectFiles,
+  componentExtractionCount,
+  componentExtractionPrompt,
+  onTogglePromptFavorite,
+  favoritePromptIds,
 }: BuilderChatPanelProps) {
   const [input, setInput] = useState('');
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [imageResizes, setImageResizes] = useState<Record<number, number>>({}); // index → max width px
+  const [imageResizes, setImageResizes] = useState<Record<number, number>>({});
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [chatSearch, setChatSearch] = useState('');
   const [showChatSearch, setShowChatSearch] = useState(false);
-  
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [plusMenuOpen, setPlusMenuOpen] = useState(false);
+  // Wave 10: @-file mention autocomplete
+  const [showFileMentions, setShowFileMentions] = useState(false);
+  const [fileMentionQuery, setFileMentionQuery] = useState('');
+  const [mentionedFilePaths, setMentionedFilePaths] = useState<string[]>([]);
+  const [mentionCursorPos, setMentionCursorPos] = useState(0);
+  // Wave 10: Context budget expansion
+  const [contextExpanded, setContextExpanded] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const contextWarningShown = useRef(false);
 
-  // Context budget warning toast at 80%
+  // Wave 10: File mention autocomplete suggestions
+  const fileMentionSuggestions = useMemo(() => {
+    if (!projectFiles || !showFileMentions) return [];
+    const q = fileMentionQuery.toLowerCase();
+    return projectFiles
+      .map(f => ({ path: f.path, shortName: f.path.split('/').pop() || f.path }))
+      .filter(f => !q || f.path.toLowerCase().includes(q) || f.shortName.toLowerCase().includes(q))
+      .slice(0, 8);
+  }, [projectFiles, showFileMentions, fileMentionQuery]);
+
+  const handleFileMentionSelect = useCallback((path: string) => {
+    setMentionedFilePaths(prev => prev.includes(path) ? prev : [...prev, path]);
+    setShowFileMentions(false);
+    const shortName = path.split('/').pop() || path;
+    const beforeCursor = input.slice(0, mentionCursorPos);
+    const atIdx = beforeCursor.lastIndexOf('@');
+    if (atIdx >= 0) {
+      setInput(beforeCursor.slice(0, atIdx) + `@${shortName} ` + input.slice(mentionCursorPos));
+    }
+    setTimeout(() => textareaRef.current?.focus(), 50);
+  }, [input, mentionCursorPos]);
+
+
   useEffect(() => {
     if (contextBudget && contextBudget.percentUsed >= 80 && !contextWarningShown.current) {
       contextWarningShown.current = true;
@@ -1529,7 +1560,7 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Bottom action bar — Copy only */}
+        {/* Bottom action bar — Copy + Rollback */}
         {isCompleted && (
           <div className="flex items-center gap-1 pt-1">
             <button
@@ -1539,6 +1570,21 @@ export function BuilderChatPanel({
             >
               <Copy className="h-3.5 w-3.5" />
             </button>
+            {/* Wave 10: Restore to here */}
+            {onRevertToMessage && msg.filesSnapshot && (
+              <button
+                onClick={() => {
+                  if (confirm('Revert project files to this point? This cannot be undone.')) {
+                    onRevertToMessage(msg.id);
+                  }
+                }}
+                className="h-7 px-2 rounded-md flex items-center gap-1 text-white/20 hover:text-amber-400/80 hover:bg-amber-500/[0.08] transition-colors text-[10px]"
+                title="Restore files to this point"
+              >
+                <Clock className="h-3 w-3" />
+                Restore
+              </button>
+            )}
           </div>
         )}
 
@@ -1958,6 +2004,16 @@ export function BuilderChatPanel({
                         <Pin className="h-2.5 w-2.5" />
                       </button>
                     )}
+                    {/* Wave 10: Star prompt as favorite */}
+                    {msg.role === 'user' && onTogglePromptFavorite && (
+                      <button
+                        onClick={() => onTogglePromptFavorite(msg.id)}
+                        className={cn("flex items-center gap-0.5 transition-colors ml-1", favoritePromptIds?.has(msg.id) ? "text-amber-400/80" : "text-white/25 hover:text-amber-400/60")}
+                        title={favoritePromptIds?.has(msg.id) ? "Unfavorite" : "Save as favorite"}
+                      >
+                        <Star className={cn("h-2.5 w-2.5", favoritePromptIds?.has(msg.id) && "fill-current")} />
+                      </button>
+                    )}
                     {msg.role === 'user' && !isGenerating && (
                       <>
                         {/* Edit & Resend — truncates conversation to this point (Step 2: Conversation Branching) */}
@@ -2076,34 +2132,74 @@ export function BuilderChatPanel({
         </div>
       )}
 
-      {/* Wave 2 Step 3: Context window indicator */}
+      {/* Wave 10: Component extraction suggestion */}
+      {!isGenerating && componentExtractionCount && componentExtractionCount > 0 && componentExtractionPrompt && (
+        <div className="px-3 pt-2 shrink-0">
+          <button
+            onClick={() => onSend(componentExtractionPrompt)}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-500/[0.06] border border-violet-500/20 text-[11px] text-violet-300 hover:bg-violet-500/[0.1] hover:border-violet-500/30 transition-all"
+          >
+            <Wrench className="h-3.5 w-3.5 shrink-0" />
+            <span>Extract {componentExtractionCount} inline component{componentExtractionCount > 1 ? 's' : ''} to separate files</span>
+          </button>
+        </div>
+      )}
+
+      {/* Wave 2 Step 3: Context window indicator — Wave 10: Expandable */}
       {contextBudget && contextBudget.percentUsed > 30 && (
         <div className="px-3 pt-2 shrink-0">
-          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
-            <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-              <div
-                className={cn(
-                  "h-full rounded-full transition-all duration-500",
-                  contextBudget.percentUsed > 85 ? "bg-red-400" : contextBudget.percentUsed > 60 ? "bg-amber-400" : "bg-emerald-400"
-                )}
-                style={{ width: `${Math.min(contextBudget.percentUsed, 100)}%` }}
-              />
+          <button
+            onClick={() => setContextExpanded(prev => !prev)}
+            className="w-full"
+          >
+            <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.04] transition-colors">
+              <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all duration-500",
+                    contextBudget.percentUsed > 85 ? "bg-red-400" : contextBudget.percentUsed > 60 ? "bg-amber-400" : "bg-emerald-400"
+                  )}
+                  style={{ width: `${Math.min(contextBudget.percentUsed, 100)}%` }}
+                />
+              </div>
+              <span className={cn(
+                "text-[9px] font-mono whitespace-nowrap",
+                contextBudget.percentUsed > 85 ? "text-red-400/70" : contextBudget.percentUsed > 60 ? "text-amber-400/60" : "text-white/25"
+              )}>
+                {Math.round(contextBudget.percentUsed)}% context
+              </span>
+              <ChevronDown className={cn("h-2.5 w-2.5 text-white/20 transition-transform", !contextExpanded && "-rotate-90")} />
+              {contextBudget.percentUsed > 85 && onNewConversation && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onNewConversation(); }}
+                  className="text-[9px] text-red-400/70 hover:text-red-300 underline"
+                >
+                  New chat
+                </button>
+              )}
             </div>
-            <span className={cn(
-              "text-[9px] font-mono whitespace-nowrap",
-              contextBudget.percentUsed > 85 ? "text-red-400/70" : contextBudget.percentUsed > 60 ? "text-amber-400/60" : "text-white/25"
-            )}>
-              {Math.round(contextBudget.percentUsed)}% context
-            </span>
-            {contextBudget.percentUsed > 85 && onNewConversation && (
-              <button
-                onClick={onNewConversation}
-                className="text-[9px] text-red-400/70 hover:text-red-300 underline"
-              >
-                New chat
-              </button>
-            )}
-          </div>
+          </button>
+          {/* Wave 10: Expanded context breakdown */}
+          {contextExpanded && contextBudget.fileBreakdown && (
+            <div className="mt-1.5 px-2.5 py-2 rounded-lg bg-white/[0.02] border border-white/[0.06] space-y-1">
+              <div className="text-[9px] text-white/30 font-medium uppercase tracking-wider mb-1">Top files by context usage</div>
+              {contextBudget.fileBreakdown.slice(0, 5).map((fb: any, i: number) => (
+                <div key={fb.path} className="flex items-center gap-2 text-[10px]">
+                  <span className="flex-1 text-white/40 font-mono truncate">{fb.path.split('/').pop()}</span>
+                  <span className="text-white/25 font-mono">{Math.round(fb.chars / 4)}t</span>
+                  <div className="w-16 h-1 rounded-full bg-white/[0.06] overflow-hidden">
+                    <div className="h-full rounded-full bg-cyan-400/50" style={{ width: `${Math.min(fb.percent, 100)}%` }} />
+                  </div>
+                  <span className="text-white/20 w-8 text-right">{Math.round(fb.percent)}%</span>
+                </div>
+              ))}
+              {contextBudget.percentUsed > 90 && (
+                <p className="text-[9px] text-amber-400/60 mt-1.5 pt-1.5 border-t border-white/[0.06]">
+                  💡 Start a fresh conversation to free up context space
+                </p>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -2374,13 +2470,63 @@ export function BuilderChatPanel({
                 })()}
               </div>
             )}
+            {/* Wave 10: @-file mention autocomplete */}
+            {showFileMentions && fileMentionSuggestions.length > 0 && (
+              <div className="absolute bottom-full left-0 right-0 mb-1 mx-2 bg-[#1a1a22] border border-white/[0.1] rounded-xl shadow-2xl overflow-hidden z-50 max-h-[200px] overflow-y-auto">
+                <div className="px-3 py-1.5 border-b border-white/[0.06]">
+                  <span className="text-[10px] text-white/30 uppercase tracking-wider font-medium">Mention a file</span>
+                </div>
+                {fileMentionSuggestions.map(f => (
+                  <button
+                    key={f.path}
+                    onClick={() => handleFileMentionSelect(f.path)}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors text-left"
+                  >
+                    <FileCode className="h-3.5 w-3.5 text-white/30 shrink-0" />
+                    <span className="font-mono truncate">{f.shortName}</span>
+                    <span className="text-[10px] text-white/20 ml-auto truncate">{f.path}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {/* Wave 10: Mentioned file chips */}
+            {mentionedFilePaths.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-1.5 shrink-0">
+                {mentionedFilePaths.map(p => (
+                  <span key={p} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-cyan-500/10 border border-cyan-500/20 text-[10px] text-cyan-300 font-mono">
+                    @{p.split('/').pop()}
+                    <button onClick={() => setMentionedFilePaths(prev => prev.filter(x => x !== p))} className="text-cyan-400/50 hover:text-cyan-300">
+                      <X className="h-2.5 w-2.5" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
             <textarea
               ref={textareaRef}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                // Wave 10: Detect @-mention trigger
+                const cursorPos = e.target.selectionStart || 0;
+                const beforeCursor = e.target.value.slice(0, cursorPos);
+                const atIdx = beforeCursor.lastIndexOf('@');
+                if (atIdx >= 0 && projectFiles) {
+                  const afterAt = beforeCursor.slice(atIdx + 1);
+                  if (!afterAt.includes(' ') && afterAt.length < 60) {
+                    setShowFileMentions(true);
+                    setFileMentionQuery(afterAt);
+                    setMentionCursorPos(cursorPos);
+                  } else {
+                    setShowFileMentions(false);
+                  }
+                } else {
+                  setShowFileMentions(false);
+                }
+              }}
               onKeyDown={handleKeyDown}
               onPaste={handlePaste}
-              placeholder="Ask UltriumAI... (type / for templates)"
+              placeholder="Ask UltriumAI... (type / for templates, @ for files)"
               rows={3}
               className="flex-1 bg-transparent text-sm text-white/90 placeholder:text-white/35 resize-none outline-none focus:outline-none focus:ring-0 border-none min-h-[72px] max-h-[200px] py-0.5"
             />
