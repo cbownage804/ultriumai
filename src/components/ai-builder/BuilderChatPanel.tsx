@@ -17,6 +17,7 @@ import type { BuilderMessage, BuilderMode, ThinkingPhase, VersionSnapshot } from
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import ReactMarkdown from 'react-markdown';
 import { CodeDiffViewer } from './CodeDiffViewer';
+import { generateErrorSuggestions, type ParsedViteError } from './parseViteErrors';
 import { InlineSQLRunner } from './InlineSQLRunner';
 import { SUPABASE_SLASH_COMMANDS, type ContextBudgetInfo } from './SupabaseConversational';
 import { StarterTemplatePicker } from './StarterTemplatePicker';
