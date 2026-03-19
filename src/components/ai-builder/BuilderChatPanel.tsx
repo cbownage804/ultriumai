@@ -2132,34 +2132,74 @@ export function BuilderChatPanel({
         </div>
       )}
 
-      {/* Wave 2 Step 3: Context window indicator */}
+      {/* Wave 10: Component extraction suggestion */}
+      {!isGenerating && componentExtractionCount && componentExtractionCount > 0 && componentExtractionPrompt && (
+        <div className="px-3 pt-2 shrink-0">
+          <button
+            onClick={() => onSend(componentExtractionPrompt)}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-500/[0.06] border border-violet-500/20 text-[11px] text-violet-300 hover:bg-violet-500/[0.1] hover:border-violet-500/30 transition-all"
+          >
+            <Wrench className="h-3.5 w-3.5 shrink-0" />
+            <span>Extract {componentExtractionCount} inline component{componentExtractionCount > 1 ? 's' : ''} to separate files</span>
+          </button>
+        </div>
+      )}
+
+      {/* Wave 2 Step 3: Context window indicator — Wave 10: Expandable */}
       {contextBudget && contextBudget.percentUsed > 30 && (
         <div className="px-3 pt-2 shrink-0">
-          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
-            <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-              <div
-                className={cn(
-                  "h-full rounded-full transition-all duration-500",
-                  contextBudget.percentUsed > 85 ? "bg-red-400" : contextBudget.percentUsed > 60 ? "bg-amber-400" : "bg-emerald-400"
-                )}
-                style={{ width: `${Math.min(contextBudget.percentUsed, 100)}%` }}
-              />
+          <button
+            onClick={() => setContextExpanded(prev => !prev)}
+            className="w-full"
+          >
+            <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.04] transition-colors">
+              <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all duration-500",
+                    contextBudget.percentUsed > 85 ? "bg-red-400" : contextBudget.percentUsed > 60 ? "bg-amber-400" : "bg-emerald-400"
+                  )}
+                  style={{ width: `${Math.min(contextBudget.percentUsed, 100)}%` }}
+                />
+              </div>
+              <span className={cn(
+                "text-[9px] font-mono whitespace-nowrap",
+                contextBudget.percentUsed > 85 ? "text-red-400/70" : contextBudget.percentUsed > 60 ? "text-amber-400/60" : "text-white/25"
+              )}>
+                {Math.round(contextBudget.percentUsed)}% context
+              </span>
+              <ChevronDown className={cn("h-2.5 w-2.5 text-white/20 transition-transform", !contextExpanded && "-rotate-90")} />
+              {contextBudget.percentUsed > 85 && onNewConversation && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onNewConversation(); }}
+                  className="text-[9px] text-red-400/70 hover:text-red-300 underline"
+                >
+                  New chat
+                </button>
+              )}
             </div>
-            <span className={cn(
-              "text-[9px] font-mono whitespace-nowrap",
-              contextBudget.percentUsed > 85 ? "text-red-400/70" : contextBudget.percentUsed > 60 ? "text-amber-400/60" : "text-white/25"
-            )}>
-              {Math.round(contextBudget.percentUsed)}% context
-            </span>
-            {contextBudget.percentUsed > 85 && onNewConversation && (
-              <button
-                onClick={onNewConversation}
-                className="text-[9px] text-red-400/70 hover:text-red-300 underline"
-              >
-                New chat
-              </button>
-            )}
-          </div>
+          </button>
+          {/* Wave 10: Expanded context breakdown */}
+          {contextExpanded && contextBudget.fileBreakdown && (
+            <div className="mt-1.5 px-2.5 py-2 rounded-lg bg-white/[0.02] border border-white/[0.06] space-y-1">
+              <div className="text-[9px] text-white/30 font-medium uppercase tracking-wider mb-1">Top files by context usage</div>
+              {contextBudget.fileBreakdown.slice(0, 5).map((fb: any, i: number) => (
+                <div key={fb.path} className="flex items-center gap-2 text-[10px]">
+                  <span className="flex-1 text-white/40 font-mono truncate">{fb.path.split('/').pop()}</span>
+                  <span className="text-white/25 font-mono">{Math.round(fb.chars / 4)}t</span>
+                  <div className="w-16 h-1 rounded-full bg-white/[0.06] overflow-hidden">
+                    <div className="h-full rounded-full bg-cyan-400/50" style={{ width: `${Math.min(fb.percent, 100)}%` }} />
+                  </div>
+                  <span className="text-white/20 w-8 text-right">{Math.round(fb.percent)}%</span>
+                </div>
+              ))}
+              {contextBudget.percentUsed > 90 && (
+                <p className="text-[9px] text-amber-400/60 mt-1.5 pt-1.5 border-t border-white/[0.06]">
+                  💡 Start a fresh conversation to free up context space
+                </p>
+              )}
+            </div>
+          )}
         </div>
       )}
 
