@@ -57,7 +57,7 @@ interface OutputEntry {
   timestamp: Date;
 }
 
-export function ConsolePanel({ open, onToggle, onFixError, onNavigateToFile, iframeRef, fileCount }: ConsolePanelProps) {
+export function ConsolePanel({ open, onToggle, onFixError, onNavigateToFile, iframeRef, fileCount, buildErrors }: ConsolePanelProps) {
   const [entries, setEntries] = useState<ConsoleEntry[]>([]);
   const [networkEntries, setNetworkEntries] = useState<NetworkEntry[]>([]);
   const [terminalEntries, setTerminalEntries] = useState<TerminalEntry[]>([]);
