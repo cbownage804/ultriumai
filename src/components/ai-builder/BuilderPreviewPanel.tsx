@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import {
   RefreshCw,
-  ArrowLeft, ArrowRight, Lock, Wrench, X, ChevronDown,
+  ArrowLeft, ArrowRight, Lock, ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import previewBgNeon from '@/assets/preview-bg-neon.jpg';
