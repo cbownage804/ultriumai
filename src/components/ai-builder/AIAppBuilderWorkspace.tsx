@@ -1402,6 +1402,9 @@ export function AIAppBuilderWorkspace() {
 
     // ── Auto-heal: on compile error, automatically re-prompt AI to fix ──
     if (state === 'error' && error && !(isGenerating || isGeneratingOverride)) {
+      // Record error pattern for anti-pattern injection
+      errorPatterns.recordError(error.message);
+
       if (autoHeal.shouldAutoHeal(error.message)) {
         const diffContext = lkgDiff.getErrorContext(project.files, error.message);
         
@@ -1441,7 +1444,7 @@ export function AIAppBuilderWorkspace() {
       autoHeal.completeHeal(true);
       console.info('[AutoHeal] ✅ Auto-fix resolved the build error');
     }
-  }, [autoHeal, lkgDiff, project.files, isGenerating, isGeneratingOverride, sendMessage]);
+  }, [autoHeal, lkgDiff, errorPatterns, project.files, isGenerating, isGeneratingOverride, sendMessage]);
   useEffect(() => {
     isCompilingRef.current = isCompiling;
     compileStateRef.current = compileState;
