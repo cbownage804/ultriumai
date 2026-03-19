@@ -642,8 +642,15 @@ export function parseMultiFileOutput(raw: string): { files: ProjectFile[]; delet
 
   const END_RE = OUTPUT_END_DELIMITER;
 
-  // Phase 24: Normalize file paths — strip leading ./ and /, collapse //
-  const normalizePath = (p: string): string => p.replace(/\\/g, '/').replace(/^(\.\.\/)+/g, '').replace(/^\.\//, '').replace(/^\//, '').replace(/\/\//g, '/').trim();
+  // Phase 24: Normalize file paths — strip leading ./ and /, collapse //, handle Unicode
+  const normalizePath = (p: string): string => p
+    .replace(/\\/g, '/') // Windows backslashes
+    .replace(/^(\.\.\/)+/g, '') // Parent traversals
+    .replace(/^\.\//, '') // Leading ./
+    .replace(/^\//, '') // Leading /
+    .replace(/\/\//g, '/') // Double slashes
+    .replace(/[\x00-\x1f]/g, '') // Control characters
+    .trim();
 
   /** Only strip if a single outer fence wraps the entire file content */
   const stripOuterMarkdownFenceOnly = (content: string): string => {
