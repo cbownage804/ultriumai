@@ -1107,7 +1107,7 @@ export function useAIAppBuilder() {
     const isIterativeEdit = currentFiles.length > 0;
     if (isIterativeEdit) {
       // Detect which files the user's request likely targets
-      const focusFiles = detectFocusFiles(userMessage, currentFiles);
+      const focusFiles = detectFocusFiles(input, currentFiles);
       const focusDirective = focusFiles.length > 0
         ? `\n[FOCUS FILES — only modify these unless absolutely necessary]\n${focusFiles.map(f => `  ✏️  ${f}`).join('\n')}\n[DO NOT TOUCH — preserve exactly as-is]\n${currentFiles.filter(f => !focusFiles.includes(f.path)).map(f => `  🔒 ${f.path}`).slice(0, 15).join('\n')}${currentFiles.length - focusFiles.length > 15 ? `\n  ... and ${currentFiles.length - focusFiles.length - 15} more locked files` : ''}`
         : '';
