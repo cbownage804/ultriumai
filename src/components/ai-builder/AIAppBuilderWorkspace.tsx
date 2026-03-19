@@ -1416,15 +1416,33 @@ export function AIAppBuilderWorkspace() {
         const diffContext = lkgDiff.getErrorContext(project.files, error.message);
         
         // Extract failing file paths from error messages and include their full content
-        const failingFiles = error.errors
+        const failingFilePaths = error.errors
           .map(e => {
             const fileMatch = e.match(/^([^\s:]+\.[a-z]+)/i);
             return fileMatch ? fileMatch[1] : null;
           })
           .filter((p): p is string => !!p)
           .map(p => {
-            // Try with and without src/ prefix
             const file = project.files.find(f => f.path === p || f.path === `src/${p}` || f.path.endsWith(`/${p}`));
+            return file ? file.path : null;
+          })
+          .filter((p): p is string => !!p);
+
+        // Step A: Dependency-aware auto-heal — include files in the dependency graph
+        const depGraph = astBundler.buildDependencyGraph(project.files);
+        const relatedPaths = new Set<string>(failingFilePaths);
+        for (const fp of failingFilePaths) {
+          const node = depGraph.get(fp);
+          if (node) node.dependencies.forEach(d => relatedPaths.add(d));
+          // Also include reverse deps (files that import the failing file)
+          for (const [path, n] of depGraph) {
+            if (n.dependencies.includes(fp)) relatedPaths.add(path);
+          }
+        }
+
+        const failingFiles = [...relatedPaths]
+          .map(p => {
+            const file = project.files.find(f => f.path === p);
             return file ? { path: file.path, content: file.content } : null;
           })
           .filter((f): f is { path: string; content: string } => !!f);
@@ -1437,6 +1455,7 @@ export function AIAppBuilderWorkspace() {
           remaining: autoHeal.attemptsRemaining(),
           error: error.message,
           failingFiles: failingFiles.map(f => f.path),
+          depGraphFiles: relatedPaths.size,
         });
 
         // Delay slightly to let UI update, then send auto-fix prompt

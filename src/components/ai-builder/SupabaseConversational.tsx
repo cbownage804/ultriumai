@@ -464,10 +464,11 @@ export function detectWorkflowIntent(message: string): { isWorkflow: boolean; st
  */
 export function compressConversationHistory(
   messages: { role: string; content: string }[],
-  keepRecent = 8,
-  maxOlderMessages = 20,
+  keepRecent = 6,
+  maxOlderMessages = 15,
 ): { role: string; content: string }[] {
-  if (messages.length <= keepRecent + 2) return messages;
+  // Step D: Rolling summarization — compress early (threshold lowered from keepRecent+2 to 10)
+  if (messages.length <= Math.min(keepRecent + 2, 10)) return messages;
 
   const older = messages.slice(0, -keepRecent).slice(-maxOlderMessages);
   const recent = messages.slice(-keepRecent);

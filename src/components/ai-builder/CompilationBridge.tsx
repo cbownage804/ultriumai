@@ -702,7 +702,7 @@ export function CompilationBridge({
       } finally {
         streamingCompileInFlightRef.current = false;
       }
-    }, 8000);
+    }, 5000);
 
     return () => {
       if (streamingCompileTimerRef.current) {
