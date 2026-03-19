@@ -436,7 +436,29 @@ export function BuilderChatPanel({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const contextWarningShown = useRef(false);
 
-  // Context budget warning toast at 80%
+  // Wave 10: File mention autocomplete suggestions
+  const fileMentionSuggestions = useMemo(() => {
+    if (!projectFiles || !showFileMentions) return [];
+    const q = fileMentionQuery.toLowerCase();
+    return projectFiles
+      .map(f => ({ path: f.path, shortName: f.path.split('/').pop() || f.path }))
+      .filter(f => !q || f.path.toLowerCase().includes(q) || f.shortName.toLowerCase().includes(q))
+      .slice(0, 8);
+  }, [projectFiles, showFileMentions, fileMentionQuery]);
+
+  const handleFileMentionSelect = useCallback((path: string) => {
+    setMentionedFilePaths(prev => prev.includes(path) ? prev : [...prev, path]);
+    setShowFileMentions(false);
+    const shortName = path.split('/').pop() || path;
+    const beforeCursor = input.slice(0, mentionCursorPos);
+    const atIdx = beforeCursor.lastIndexOf('@');
+    if (atIdx >= 0) {
+      setInput(beforeCursor.slice(0, atIdx) + `@${shortName} ` + input.slice(mentionCursorPos));
+    }
+    setTimeout(() => textareaRef.current?.focus(), 50);
+  }, [input, mentionCursorPos]);
+
+
   useEffect(() => {
     if (contextBudget && contextBudget.percentUsed >= 80 && !contextWarningShown.current) {
       contextWarningShown.current = true;
