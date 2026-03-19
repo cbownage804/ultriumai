@@ -33,6 +33,7 @@ interface ConsolePanelProps {
   open: boolean;
   onToggle: () => void;
   onFixError?: (errorMessage: string) => void;
+  onNavigateToFile?: (path: string, line?: number) => void;
   iframeRef?: React.RefObject<HTMLIFrameElement | null>;
   fileCount?: number;
 }
@@ -54,7 +55,7 @@ interface OutputEntry {
   timestamp: Date;
 }
 
-export function ConsolePanel({ open, onToggle, onFixError, iframeRef, fileCount }: ConsolePanelProps) {
+export function ConsolePanel({ open, onToggle, onFixError, onNavigateToFile, iframeRef, fileCount }: ConsolePanelProps) {
   const [entries, setEntries] = useState<ConsoleEntry[]>([]);
   const [networkEntries, setNetworkEntries] = useState<NetworkEntry[]>([]);
   const [terminalEntries, setTerminalEntries] = useState<TerminalEntry[]>([]);
@@ -296,7 +297,15 @@ export function ConsolePanel({ open, onToggle, onFixError, iframeRef, fileCount 
                     <div key={entry.id} className={cn("flex items-start gap-1.5 px-2 py-1 rounded group", entry.type === 'error' && "bg-red-500/5", entry.type === 'warn' && "bg-amber-500/5")}>
                       {typeIcon(entry.type)}
                       <span className={cn("flex-1 break-all leading-4", entry.type === 'error' ? "text-red-300/70" : entry.type === 'warn' ? "text-amber-300/70" : "text-white/40")}>{entry.message}</span>
-                      {entry.source && <span className="text-[8px] text-white/15 shrink-0">{entry.source}{entry.line ? `:${entry.line}` : ''}</span>}
+                      {entry.source && (
+                        <button
+                          onClick={() => onNavigateToFile?.(entry.source!, entry.line)}
+                          className="text-[8px] text-white/15 shrink-0 hover:text-cyan-400 hover:underline cursor-pointer transition-colors"
+                          title={`Open ${entry.source}${entry.line ? `:${entry.line}` : ''}`}
+                        >
+                          {entry.source}{entry.line ? `:${entry.line}` : ''}
+                        </button>
+                      )}
                       <span className="text-[8px] text-white/10 shrink-0">{entry.timestamp.toLocaleTimeString()}</span>
                       {entry.type === 'error' && onFixError && (
                         <button onClick={() => onFixError(`Fix this console error: "${entry.message}"`)} className="opacity-0 group-hover:opacity-100 h-4 px-1.5 rounded bg-cyan-500/10 text-cyan-400 text-[8px] hover:bg-cyan-500/20 transition-all shrink-0 flex items-center gap-0.5">

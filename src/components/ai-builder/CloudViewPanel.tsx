@@ -12,6 +12,7 @@ interface CloudViewPanelProps {
   onClose: () => void;
   supabaseConfig: any;
   onOpenPanel: (key: string) => void;
+  onRefreshTypes?: () => void;
 }
 
 type CloudTab = 'database' | 'users' | 'storage' | 'edge-functions' | 'secrets';
@@ -32,7 +33,7 @@ function PanelFallback() {
   );
 }
 
-export function CloudViewPanel({ isOpen, onClose, supabaseConfig, onOpenPanel }: CloudViewPanelProps) {
+export function CloudViewPanel({ isOpen, onClose, supabaseConfig, onOpenPanel, onRefreshTypes }: CloudViewPanelProps) {
   const [activeTab, setActiveTab] = useState<CloudTab>('database');
 
   if (!isOpen) return null;
@@ -95,6 +96,7 @@ export function CloudViewPanel({ isOpen, onClose, supabaseConfig, onOpenPanel }:
                   <CloudDatabasePanel
                     supabaseUrl={supabaseConfig.supabaseUrl}
                     supabaseKey={supabaseConfig.supabaseKey}
+                    onRefreshTypes={onRefreshTypes}
                   />
                 )}
                 {activeTab === 'users' && (

@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { X, Globe, Rocket, Check, Copy, ExternalLink, Loader2, RefreshCw, Trash2, Plus, Shield, AlertCircle, Download, FileArchive, Container, Smartphone, Wifi, Package, ChevronLeft, Pencil, Users, FileText, Link, RotateCcw, Eye, FileCode, Zap } from 'lucide-react';
+import { useState, useCallback, useMemo } from 'react';
+import { X, Globe, Rocket, Check, Copy, ExternalLink, Loader2, RefreshCw, Trash2, Plus, Shield, AlertCircle, Download, FileArchive, Container, Smartphone, Wifi, Package, ChevronLeft, Pencil, Users, FileText, Link, RotateCcw, Eye, FileCode, Zap, ShieldAlert, Bug, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +7,7 @@ import { exportProject, type ExportMode, type ExportContext, type EdgeFunctionMe
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import type { SupabaseConfig, StripeConfig, ServiceKey, EnvVar } from './ProjectSettings';
 import type { DeploymentRecord } from '@/hooks/useProjectPersistence';
+import { runPrePublishReview, type ReviewResult, type ReviewIssue } from './prePublishReview';
 
 interface CustomDomain {
   id: string;
@@ -68,6 +69,8 @@ export function PublishPanel({ open, onClose, publishedUrl, previewUrl, projectN
 
   const [smokeTestState, setSmokeTestState] = useState<'idle' | 'running' | 'passed' | 'failed'>('idle');
   const [smokeTestResults, setSmokeTestResults] = useState<DeployGateResult | null>(null);
+  const [reviewResult, setReviewResult] = useState<ReviewResult | null>(null);
+  const [showReview, setShowReview] = useState(false);
 
   const hasIntegrations = !!(supabaseConfig || stripeConfig || (serviceKeys && serviceKeys.length > 0));
 
@@ -336,7 +339,94 @@ export function PublishPanel({ open, onClose, publishedUrl, previewUrl, projectN
                 </div>
               )}
 
-              {/* Deploy button — shows preview first */}
+              {/* Pre-publish code review */}
+              {!showDeployPreview && !showReview && (
+                <button
+                  onClick={() => {
+                    const result = runPrePublishReview(files);
+                    setReviewResult(result);
+                    setShowReview(true);
+                  }}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] transition-colors group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <ShieldAlert className="h-3.5 w-3.5 text-cyan-400/50 group-hover:text-cyan-400/70" />
+                    <span className="text-[12px] font-medium text-white/60 group-hover:text-white/80">Run code review</span>
+                  </div>
+                  {reviewResult && (
+                    <span className={cn(
+                      "text-[10px] font-mono font-medium px-2 py-0.5 rounded-full",
+                      reviewResult.score >= 80 ? "bg-emerald-500/15 text-emerald-400" :
+                      reviewResult.score >= 50 ? "bg-amber-500/15 text-amber-400" :
+                      "bg-red-500/15 text-red-400"
+                    )}>
+                      {reviewResult.score}/100
+                    </span>
+                  )}
+                </button>
+              )}
+
+              {/* Review results panel */}
+              {showReview && reviewResult && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-3.5 w-3.5 text-cyan-400" />
+                      <span className="text-xs font-medium text-white/80">Code Review</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={cn(
+                        "text-[11px] font-mono font-semibold px-2 py-0.5 rounded-full",
+                        reviewResult.score >= 80 ? "bg-emerald-500/15 text-emerald-400" :
+                        reviewResult.score >= 50 ? "bg-amber-500/15 text-amber-400" :
+                        "bg-red-500/15 text-red-400"
+                      )}>
+                        {reviewResult.score}/100
+                      </span>
+                      <button onClick={() => setShowReview(false)} className="h-5 w-5 rounded flex items-center justify-center text-white/25 hover:text-white/50">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="text-[10px] text-white/30">
+                    {reviewResult.passedChecks}/{reviewResult.totalChecks} checks passed
+                  </div>
+                  {reviewResult.issues.length === 0 ? (
+                    <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10 flex items-center gap-2">
+                      <Check className="h-3 w-3 text-emerald-400" />
+                      <span className="text-[11px] text-emerald-400/80">All checks passed — ready to publish!</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
+                      {reviewResult.issues.map(issue => (
+                        <div key={issue.id} className={cn(
+                          "p-2.5 rounded-lg border flex items-start gap-2",
+                          issue.severity === 'error' ? "bg-red-500/5 border-red-500/10" :
+                          issue.severity === 'warning' ? "bg-amber-500/5 border-amber-500/10" :
+                          "bg-blue-500/5 border-blue-500/10"
+                        )}>
+                          {issue.severity === 'error' ? <AlertCircle className="h-3 w-3 text-red-400 shrink-0 mt-0.5" /> :
+                           issue.severity === 'warning' ? <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0 mt-0.5" /> :
+                           <Bug className="h-3 w-3 text-blue-400 shrink-0 mt-0.5" />}
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[10px] text-white/70">{issue.message}</div>
+                            <div className="text-[9px] text-white/30 font-mono mt-0.5">{issue.file}{issue.line ? `:${issue.line}` : ''}</div>
+                          </div>
+                          <span className={cn(
+                            "text-[8px] px-1.5 py-0.5 rounded-full shrink-0",
+                            issue.category === 'security' ? "bg-red-500/15 text-red-400" :
+                            issue.category === 'quality' ? "bg-amber-500/15 text-amber-400" :
+                            issue.category === 'performance' ? "bg-blue-500/15 text-blue-400" :
+                            "bg-white/10 text-white/40"
+                          )}>{issue.category}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+
               {!showDeployPreview && (
                 <button
                   onClick={() => setShowDeployPreview(true)}

@@ -2615,6 +2615,17 @@ export function AIAppBuilderWorkspace() {
     sendMessage(diagnosisContext, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
   }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys, selectedModel, getLastAIResponse]);
 
+  // Listen for "Fix with AI" from preview error overlay
+  useEffect(() => {
+    const fixHandler = (e: MessageEvent) => {
+      if (e.data?.type === '__FIX_WITH_AI__' && e.data.message) {
+        handleFixError(`Runtime error in preview: ${e.data.message}`);
+      }
+    };
+    window.addEventListener('message', fixHandler);
+    return () => window.removeEventListener('message', fixHandler);
+  }, [handleFixError]);
+
   const handleSmartFixError = useCallback((error: import('./ErrorConsole').PreviewError, context: string) => {
     const isSameError = lastFixError === error.message;
     const newCount = isSameError ? fixAttemptCount + 1 : 1;
@@ -3972,7 +3983,19 @@ export function AIAppBuilderWorkspace() {
                     onGoToFile={(file, line) => { handleSetActiveFile(file); setRightTab('code'); }}
                   />
                 </SafePanel>
-                <CloudViewPanel isOpen={!!panels.showCloudView} onClose={() => setShowCloudView(false)} supabaseConfig={supabaseConfig} onOpenPanel={openPanelByKey} />
+                <CloudViewPanel isOpen={!!panels.showCloudView} onClose={() => setShowCloudView(false)} supabaseConfig={supabaseConfig} onOpenPanel={openPanelByKey} onRefreshTypes={() => {
+                  const sk = serviceKeys.find(k => k.serviceId === 'supabase_service_role');
+                  if (sk && supabaseConfig?.url) {
+                    schemaIntrospection.invalidateCache();
+                    schemaIntrospection.fetchSchema(supabaseConfig.url, sk.apiKey, true).then(schema => {
+                      if (schema) {
+                        const typesFile = schemaIntrospection.generateTypesFile();
+                        if (typesFile) upsertFile(typesFile.path, typesFile.content);
+                        toast.success('TypeScript types regenerated');
+                      }
+                    });
+                  }
+                }} />
                 <DesignViewPanel
                   isOpen={!!panels.showDesignView}
                   onClose={() => setShowDesignView(false)}

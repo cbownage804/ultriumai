@@ -10,6 +10,7 @@ import { createClient } from '@supabase/supabase-js';
 interface CloudDatabasePanelProps {
   supabaseUrl: string;
   supabaseKey: string;
+  onRefreshTypes?: () => void;
 }
 
 interface TableInfo {
@@ -24,7 +25,7 @@ interface ColumnInfo {
   column_default: string | null;
 }
 
-export function CloudDatabasePanel({ supabaseUrl, supabaseKey }: CloudDatabasePanelProps) {
+export function CloudDatabasePanel({ supabaseUrl, supabaseKey, onRefreshTypes }: CloudDatabasePanelProps) {
   const [tables, setTables] = useState<TableInfo[]>([]);
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [columns, setColumns] = useState<ColumnInfo[]>([]);
@@ -211,8 +212,17 @@ export function CloudDatabasePanel({ supabaseUrl, supabaseKey }: CloudDatabasePa
     <div className="flex h-full">
       {/* Table list sidebar */}
       <div className="w-48 shrink-0 border-r border-white/[0.06] flex flex-col">
-        <div className="px-3 py-2 text-[10px] text-white/20 uppercase tracking-wider font-medium border-b border-white/[0.06]">
-          Tables ({tables.length})
+        <div className="px-3 py-2 text-[10px] text-white/20 uppercase tracking-wider font-medium border-b border-white/[0.06] flex items-center justify-between">
+          <span>Tables ({tables.length})</span>
+          {onRefreshTypes && (
+            <button
+              onClick={onRefreshTypes}
+              title="Regenerate TypeScript types from schema"
+              className="h-5 w-5 rounded flex items-center justify-center text-white/20 hover:text-cyan-400 hover:bg-white/5 transition-colors"
+            >
+              <RefreshCw className="h-3 w-3" />
+            </button>
+          )}
         </div>
         <ScrollArea className="flex-1">
           {tables.map(t => (
