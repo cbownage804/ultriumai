@@ -17,6 +17,8 @@ export interface HMRSnapshot {
   openDetails: string[];
   activeTab: string | null;
   dialogOpen: boolean;
+  /** Step 12: Preserve React Router path across reloads */
+  routerPath: string | null;
   timestamp: number;
 }
 
@@ -35,6 +37,7 @@ const HMR_STATE_SCRIPT = `
         openDetails: [],
         activeTab: null,
         dialogOpen: false,
+        routerPath: (window.location.pathname !== '/' ? window.location.pathname : null),
         timestamp: Date.now()
       };
 
@@ -90,6 +93,14 @@ const HMR_STATE_SCRIPT = `
       if (Date.now() - state.timestamp > 10000) {
         sessionStorage.removeItem('__hmr_snapshot__');
         return;
+      }
+
+      // Step 12: Restore React Router path first (before scroll/inputs)
+      if (state.routerPath && window.location.pathname !== state.routerPath) {
+        try {
+          window.history.replaceState(null, '', state.routerPath);
+          window.dispatchEvent(new PopStateEvent('popstate'));
+        } catch(e) {}
       }
 
       // Restore scroll position (deferred to after React render)

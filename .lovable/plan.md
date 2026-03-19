@@ -19,12 +19,13 @@
 - ✅ **Step 9 — Post-generation diff review**: Collapsible diff summary shown in chat after generation
 - ✅ **Step 18 — Deploy gate enforcement**: Smoke tests block publishing, with escape hatch
 
+- ✅ **Step 3 — Compile result caching**: Full HTML cached by filesDigest, returns cached preview in 0ms on unchanged files
+- ✅ **Step 5 — CSS hot-reload verification**: CSS-only changes detected via hasCSSOnlyChanges and injected without full recompile
+- ✅ **Step 7 — Smarter EDIT vs FILE selection**: System prompt directive instructs AI to use ===EDIT: hunks for <20% changes
+- ✅ **Step 12 — Preview navigation state preservation**: Router path saved/restored across HMR reloads via history.replaceState
+
 ### Next Priority
-- Step 3 — Compile result caching
 - Step 4 — Compile progress accuracy
-- Step 5 — Parallel CSS hot-reload verification
-- Step 7 — Smarter EDIT vs FILE selection
-- Step 12 — Preview navigation state preservation
 - Step 13 — Asset loading resilience
 - Step 14 — Build time telemetry dashboard
 - Step 15 — Keyboard-first workflow

@@ -162,7 +162,7 @@ export function CompilationBridge({
   injectErrorOverlayRef.current = injectErrorOverlay;
 
   // ── CSS hot reload (sub-100ms style injection) ──
-  const { detectCSSOnlyChange, hotInjectCSS, snapshotCSS } = useCSSHotReload();
+  const { detectCSSOnlyChange, hotInjectCSS, snapshotCSS, hasCSSOnlyChanges } = useCSSHotReload();
 
   // ── Auto dependency resolver (bare import → esm.sh) ──
   const { resolveImports, injectImportMap, resetResolver: resetDepResolver } = useAutoDepResolver();
@@ -375,6 +375,9 @@ export function CompilationBridge({
   const recompileNeededRef = useRef(false);
   // Step 2: Track last compiled digest + timestamp for dedup
   const lastCompiledDigestRef = useRef<{ digest: string; timestamp: number }>({ digest: '', timestamp: 0 });
+  // Step 3: Full HTML result cache keyed by filesDigest (skip Vite when unchanged)
+  const compiledHTMLCacheRef = useRef<Map<string, string>>(new Map());
+  const MAX_HTML_CACHE_ENTRIES = 5;
 
   // ── liveCompiledHTML (async, post-generation) ──
   const [liveCompiledHTML, setLiveCompiledHTML] = useState<string | null>(null);
@@ -794,6 +797,18 @@ export function CompilationBridge({
         return;
       }
 
+      // ── Step 5: CSS-only hot-reload — detect and inject without full recompile ──
+      const { cssOnly, changedFiles: changedCSSFiles } = hasCSSOnlyChanges(filesRef.current);
+      if (cssOnly && changedCSSFiles.length > 0) {
+        const injected = hotInjectCSS(previewIframeRef, changedCSSFiles);
+        if (injected) {
+          prevFilesDigestRef.current = filesDigest;
+          snapshotCSS(filesRef.current);
+          console.info('[CompilationBridge] ⚡ Step 5: CSS-only hot-reload bypassed full recompile');
+          return;
+        }
+      }
+
       prevFilesDigestRef.current = filesDigest;
       const patched = liveSync.applyPatches(previewIframeRef, filesRef.current);
       if (patched === true) {
@@ -803,6 +818,17 @@ export function CompilationBridge({
       if (patched === 'soft-reload') {
         softReloadPendingRef.current = true;
       }
+
+      // ── Step 3: Check compiled HTML cache before full recompile ──
+      const cachedHTML = compiledHTMLCacheRef.current.get(filesDigest);
+      if (cachedHTML && isPreviewValid(cachedHTML)) {
+        console.info('[CompilationBridge] ✅ Step 3: Cache hit — returning cached HTML (%d chars)', cachedHTML.length);
+        setStableHTML(cachedHTML);
+        transitionCompileState('success');
+        onErrorAnnotations?.([]); 
+        return;
+      }
+
       // Fall through to full recompile — but mark as incremental edit for local-only compilation
       isIncrementalEditRef.current = true;
       stableHTMLRef.current = null; // Allow recompile
@@ -986,6 +1012,12 @@ export function CompilationBridge({
             onErrorAnnotations?.([]); // Clear annotations on success
             onBuildSuccess?.(filesRef.current); // Snapshot for LKG diff
             liveSync.resetSnapshot(filesRef.current);
+            // ── Step 3: Cache successful HTML for future digest matches ──
+            compiledHTMLCacheRef.current.set(filesDigest, result);
+            if (compiledHTMLCacheRef.current.size > MAX_HTML_CACHE_ENTRIES) {
+              const firstKey = compiledHTMLCacheRef.current.keys().next().value;
+              if (firstKey) compiledHTMLCacheRef.current.delete(firstKey);
+            }
             if (softReloadPendingRef.current) {
               softReloadPendingRef.current = false;
               window.postMessage({ type: '__SOFT_RELOAD__', source: 'compilation-bridge' }, '*');
