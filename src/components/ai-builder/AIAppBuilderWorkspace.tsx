@@ -4487,6 +4487,46 @@ export function AIAppBuilderWorkspace() {
         onApproveSelected={(paths) => { setShowAgentDiffReview(false); diffResolverRef.current?.(paths); }}
         onRejectAll={() => { setShowAgentDiffReview(false); diffResolverRef.current?.(null); }}
       />
+      {/* Wave 9 Step 1: Conversation Drawer */}
+      <ConversationDrawer
+        isOpen={showConversationDrawer}
+        onClose={() => setShowConversationDrawer(false)}
+        conversations={conversationHistory.conversations}
+        activeConversationId={conversationHistory.activeConversationId}
+        onSwitch={(id) => {
+          const msgs = conversationHistory.switchToConversation(id);
+          if (msgs) setMessages(msgs);
+        }}
+        onDelete={conversationHistory.deleteConversation}
+        onNew={() => {
+          conversationHistory.saveCurrentConversation(messages, currentProjectId || undefined);
+          clearChat();
+          setShowConversationDrawer(false);
+        }}
+      />
+      {/* Wave 9 Step 4: Inline Chat Widget */}
+      <InlineChatWidget
+        isOpen={inlineChatOpen}
+        position={inlineChatPosition}
+        selectedCode={inlineChatCode}
+        filePath={inlineChatFile}
+        isLoading={inlineEdit.inlineEdit.isLoading}
+        suggestion={inlineEdit.inlineEdit.suggestion}
+        onSubmit={(prompt) => inlineEdit.submitPrompt(prompt)}
+        onAccept={() => {
+          const result = inlineEdit.acceptSuggestion();
+          if (result && activeFile) {
+            const file = project.files.find(f => f.path === activeFile);
+            if (file) {
+              const lines = file.content.split('\n');
+              lines.splice(result.startLine - 1, result.endLine - result.startLine + 1, ...result.code.split('\n'));
+              upsertFile(file.path, lines.join('\n'));
+            }
+          }
+          setInlineChatOpen(false);
+        }}
+        onDismiss={() => { inlineEdit.dismissEdit(); setInlineChatOpen(false); }}
+      />
     </TooltipProvider>
   );
 }
