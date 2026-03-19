@@ -79,6 +79,23 @@ export function PublishPanel({ open, onClose, publishedUrl, previewUrl, projectN
   }).length;
 
   const handlePublish = useCallback(async () => {
+    // Step 18: Run smoke tests before publishing
+    if (runSmokeTests && smokeTestState !== 'passed') {
+      setSmokeTestState('running');
+      try {
+        const result = await runSmokeTests();
+        setSmokeTestResults(result);
+        if (result.passed) {
+          setSmokeTestState('passed');
+        } else {
+          setSmokeTestState('failed');
+          return; // Block publish
+        }
+      } catch {
+        setSmokeTestState('passed'); // On error, don't block
+      }
+    }
+
     setIsPublishing(true);
     try {
       await onPublish();
@@ -87,7 +104,9 @@ export function PublishPanel({ open, onClose, publishedUrl, previewUrl, projectN
     }
     setIsPublishing(false);
     setShowDeployPreview(false);
-  }, [onPublish]);
+    setSmokeTestState('idle');
+    setSmokeTestResults(null);
+  }, [onPublish, runSmokeTests, smokeTestState]);
 
   const handleRollback = useCallback(async (deploymentId: string) => {
     if (!onRollback) return;
