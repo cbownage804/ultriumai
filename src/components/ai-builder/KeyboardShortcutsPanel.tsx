@@ -15,14 +15,17 @@ const SHORTCUTS: Shortcut[] = [
   { keys: ['⌘', '⇧', 'F'], description: 'Search across files', category: 'Navigation' },
   { keys: ['⌘', '/'], description: 'Show keyboard shortcuts', category: 'Navigation' },
   { keys: ['⌘', 'B'], description: 'Toggle file tree', category: 'Navigation' },
+  { keys: ['⌘', '.'], description: 'Toggle preview/code', category: 'Navigation' },
   { keys: ['⌘', 'Z'], description: 'Undo', category: 'Editing' },
   { keys: ['⌘', '⇧', 'Z'], description: 'Redo', category: 'Editing' },
+  { keys: ['⌘', 'I'], description: 'Inline AI edit (in editor)', category: 'Editing' },
   { keys: ['Enter'], description: 'Send message', category: 'Chat' },
   { keys: ['⇧', 'Enter'], description: 'New line in chat', category: 'Chat' },
   { keys: ['⌘', 'Enter'], description: 'Quick send', category: 'Chat' },
-  { keys: ['Esc'], description: 'Stop generation', category: 'Chat' },
-  { keys: ['⌘', 'E'], description: 'Toggle preview/code', category: 'Build' },
+  { keys: ['Esc'], description: 'Stop generation / close panel', category: 'Chat' },
   { keys: ['⌘', 'J'], description: 'Toggle console', category: 'Build' },
+  { keys: ['⌘', '`'], description: 'Toggle terminal', category: 'Build' },
+  { keys: ['⌘', '⇧', 'E'], description: 'Toggle env vars', category: 'Build' },
 ];
 
 interface KeyboardShortcutsPanelProps {
