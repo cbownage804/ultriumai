@@ -852,11 +852,7 @@ export function CompilationBridge({
           compileRunIdRef.current++;
           compilationInFlightRef.current = false;
           transitionCompileState('error', { message: 'Compile safety timeout exceeded', errors: ['Compilation took too long and was aborted'] });
-          if (!stableHTMLRef.current || !isPreviewValid(stableHTMLRef.current)) {
-            setLiveCompiledHTML(ERROR_FALLBACK_HTML);
-            setStableHTML(ERROR_FALLBACK_HTML);
-          }
-          // else: LKG is valid, keep it
+          // LKG preserved — never overwrite with fallback HTML
         }
       }, COMPILE_SAFETY_TIMEOUT_MS);
 
