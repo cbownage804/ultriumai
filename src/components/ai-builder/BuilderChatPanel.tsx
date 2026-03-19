@@ -2243,7 +2243,7 @@ export function BuilderChatPanel({
               </button>
             )}
           </div>
-          {/* Chat / Build mode toggle */}
+          {/* Chat / Build mode toggle + Model picker */}
           <div className="flex items-center gap-1.5 pt-1.5">
             <button
               onClick={() => onModeChange('discuss')}
@@ -2276,6 +2276,41 @@ export function BuilderChatPanel({
                 mode === 'build' ? "bg-violet-500/20 text-violet-300" : "bg-white/5 text-white/30"
               )}>3cr</span>
             </button>
+
+            {/* Inline model picker */}
+            {selectedModel && onModelChange && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="ml-auto flex items-center gap-1 px-2 py-1 rounded-full text-[10px] text-white/30 hover:text-white/50 hover:bg-white/[0.04] transition-all border border-transparent hover:border-white/[0.08]">
+                    <span>{AI_MODELS.find(m => m.id === selectedModel)?.icon || '🤖'}</span>
+                    <span className="font-medium">{AI_MODELS.find(m => m.id === selectedModel)?.label || 'Model'}</span>
+                    <ChevronDown className="h-2.5 w-2.5" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent side="top" align="end" className="w-52 p-1 bg-[#1a1a22] border-white/[0.1]">
+                  <div className="px-2 py-1.5 text-[9px] text-white/25 uppercase tracking-wider font-medium">AI Model</div>
+                  {AI_MODELS.map(model => (
+                    <button
+                      key={model.id}
+                      onClick={() => onModelChange(model.id)}
+                      className={cn(
+                        "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[12px] transition-colors",
+                        selectedModel === model.id
+                          ? "bg-white/[0.08] text-white/90"
+                          : "text-white/60 hover:text-white hover:bg-white/[0.06]"
+                      )}
+                    >
+                      <span className="text-sm">{model.icon}</span>
+                      <div className="flex-1 text-left">
+                        <div className="font-medium">{model.label}</div>
+                        <div className="text-[10px] text-white/30">{model.desc}</div>
+                      </div>
+                      {selectedModel === model.id && <Check className="h-3 w-3 text-cyan-400" />}
+                    </button>
+                  ))}
+                </PopoverContent>
+              </Popover>
+            )}
           </div>
         </div>
       </div>
