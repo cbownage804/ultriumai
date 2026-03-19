@@ -98,6 +98,7 @@ import { usePromptChains } from '@/hooks/usePromptChains';
 import { useAICodeReview } from '@/hooks/useAICodeReview';
 import { useTestGenerator } from '@/hooks/useTestGenerator';
 import { useNLDatabaseQuery } from '@/hooks/useNLDatabaseQuery';
+import { useComponentExtractor } from '@/hooks/useComponentExtractor';
 import { useMultiCursorEditor } from '@/hooks/useMultiCursorEditor';
 import { useMinimapHeatZones } from '@/hooks/useMinimapHeatZones';
 import { useSymbolNavigator } from '@/hooks/useSymbolNavigator';
