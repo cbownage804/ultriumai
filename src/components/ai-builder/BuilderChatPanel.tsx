@@ -472,7 +472,7 @@ export function BuilderChatPanel({
   }, [messages, isGenerating, localStreamContent]);
 
   const filteredMessages = useMemo(() => {
-    return displayMessages.filter((msg) => {
+    const visible = displayMessages.filter((msg) => {
       if (isInternalMessage(msg.content)) return false;
       if (msg.role === 'assistant') {
         const { text, fileNames } = getDisplayContent(msg);
@@ -481,7 +481,22 @@ export function BuilderChatPanel({
       }
       return true;
     });
-  }, [displayMessages]);
+    // Chat search filter
+    if (chatSearch.trim()) {
+      const lower = chatSearch.toLowerCase();
+      return visible.filter(m => m.content.toLowerCase().includes(lower));
+    }
+    return visible;
+  }, [displayMessages, chatSearch]);
+
+  // Pinned messages
+  const pinnedMessages = useMemo(() => {
+    return messages.filter(m => m.pinned);
+  }, [messages]);
+
+  const togglePin = useCallback((msgId: string) => {
+    onUpdateMessages?.(prev => prev.map(m => m.id === msgId ? { ...m, pinned: !m.pinned } : m));
+  }, [onUpdateMessages]);
 
   useEffect(() => {
     // ScrollArea's actual scrollable element is the Viewport child
