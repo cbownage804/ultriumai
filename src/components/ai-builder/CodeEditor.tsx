@@ -245,9 +245,81 @@ export function CodeEditor({ file, onContentChange, remoteCursors = [], onCursor
       },
     });
 
+    // ── Wave 4 Step 2: Go-to-definition provider ──
+    const defDisposable = monaco.languages.registerDefinitionProvider(['typescript', 'typescriptreact', 'javascript', 'javascriptreact'], {
+      provideDefinition: (model: any, position: any) => {
+        const wordInfo = model.getWordAtPosition(position);
+        if (!wordInfo) return null;
+        const line = model.getLineContent(position.lineNumber);
+        
+        // Check if this is an import statement
+        const importMatch = line.match(/from\s+['"]([^'"]+)['"]/);
+        if (importMatch) {
+          const importPath = importMatch[1];
+          if (importPath.startsWith('.') || importPath.startsWith('@/')) {
+            // Resolve relative/alias imports against project files
+            const resolvedPath = resolveImportPath(importPath, file?.path || '', projectFiles);
+            if (resolvedPath) {
+              onNavigateToFile?.(resolvedPath);
+              return null; // Navigate handled externally
+            }
+          }
+          return null;
+        }
+
+        // Check if word is a component/function defined in another file
+        const word = wordInfo.word;
+        for (const pf of projectFiles) {
+          if (pf.path === file?.path) continue;
+          // Check for exported symbol matching the word
+          const exportPattern = new RegExp(`export\\s+(?:default\\s+)?(?:function|const|class|interface|type)\\s+${word}\\b`);
+          if (exportPattern.test(pf.content)) {
+            onNavigateToFile?.(pf.path);
+            return null;
+          }
+        }
+        return null;
+      },
+    });
+
+    // ── Document symbol provider for breadcrumb/outline ──
+    const symDisposable = monaco.languages.registerDocumentSymbolProvider(['typescript', 'typescriptreact', 'javascript', 'javascriptreact'], {
+      provideDocumentSymbols: (model: any) => {
+        const symbols: any[] = [];
+        const content = model.getValue();
+        const lines = content.split('\n');
+        const patterns = [
+          { regex: /^(?:export\s+)?(?:default\s+)?function\s+(\w+)/m, kind: 11 }, // Function
+          { regex: /^(?:export\s+)?const\s+(\w+)\s*[:=]\s*(?:\(|function)/m, kind: 11 },
+          { regex: /^(?:export\s+)?(?:interface|type)\s+(\w+)/m, kind: 10 }, // Interface
+          { regex: /^(?:export\s+)?class\s+(\w+)/m, kind: 4 }, // Class
+        ];
+        for (let i = 0; i < lines.length; i++) {
+          for (const { regex, kind } of patterns) {
+            const match = lines[i].match(regex);
+            if (match) {
+              symbols.push({
+                name: match[1],
+                kind,
+                range: new monaco.Range(i + 1, 1, i + 1, lines[i].length + 1),
+                selectionRange: new monaco.Range(i + 1, 1, i + 1, lines[i].length + 1),
+              });
+            }
+          }
+        }
+        return symbols;
+      },
+    });
+
+    // Cleanup providers on unmount
+    editor.onDidDispose(() => {
+      defDisposable.dispose();
+      symDisposable.dispose();
+    });
+
     // Initial remote cursor render
     updateRemoteCursors();
-  }, [onCursorChange, updateRemoteCursors, onTriggerInlineEdit, file?.path]);
+  }, [onCursorChange, updateRemoteCursors, onTriggerInlineEdit, file?.path, projectFiles, onNavigateToFile]);
 
   const handleAIAction = useCallback((actionId: string) => {
     if (onInlineAIAction && file && selectedText) {
