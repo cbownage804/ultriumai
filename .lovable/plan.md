@@ -1,68 +1,68 @@
 
 
-# Lovable Parity — Wave 10
+# Lovable Parity — Wave 11
 
-Six improvements targeting chat intelligence, context control, and workflow polish.
-
----
-
-## 1. @-File Mentions in Chat
-
-**Gap**: Users can't explicitly reference specific files in prompts. Lovable supports `@filename` mentions that force-include those files in the AI context, ensuring accurate edits to the right files.
-
-**Fix**: Add an `@`-mention autocomplete popover in the chat input. When the user types `@`, show a filterable list of project files. Selected files get injected as explicit context alongside the prompt (full content prepended). Display mentioned files as styled chips in the input area.
-
-**Files**: `BuilderChatPanel.tsx` (@ autocomplete popover + chip rendering), `AIAppBuilderWorkspace.tsx` (inject mentioned file contents into prompt context)
+Six improvements targeting collaboration, debugging depth, and production readiness.
 
 ---
 
-## 2. Rollback to Any Message Point
+## 1. Image/Screenshot Attachment in Chat Input
 
-**Gap**: Version history saves snapshots per generation, but users can't roll back to the exact state after a specific chat message. Lovable lets users click "Restore to here" on any assistant message to revert files to that generation's output.
+**Gap**: The `ChatFileUpload` component exists but isn't wired into `BuilderChatPanel`'s main chat input. Users can attach images in Visual Edit mode but not in the primary chat. Lovable lets users paste or drag screenshots directly into chat to say "make it look like this."
 
-**Fix**: Each assistant message with a `diffSummary` already links to a version snapshot. Add a "Restore to here" action in the message context menu that reverts files to the snapshot associated with that message and truncates subsequent messages. Confirm via dialog.
+**Fix**: Wire `ChatFileUpload` into the main chat input area of `BuilderChatPanel.tsx`. Support clipboard paste (Ctrl+V with image data) and drag-and-drop onto the input. Attached image data URLs get prepended to the prompt as context for the AI.
 
-**Files**: `BuilderChatPanel.tsx` (restore action on assistant messages), `AIAppBuilderWorkspace.tsx` (handle restore + message truncation)
-
----
-
-## 3. Multi-Model Output Comparison
-
-**Gap**: Users pick one AI model and hope for the best. Lovable could let users generate with 2 models in parallel and compare outputs side-by-side before choosing which to apply.
-
-**Fix**: Add a "Compare Models" option in the model switcher. When active, the next prompt runs against 2 selected models simultaneously. Results appear in a split comparison view showing diff summaries for each. User picks one to apply, the other is discarded.
-
-**Files**: New `ModelComparisonModal.tsx`, `ModelSwitcherPanel.tsx` (compare toggle), `AIAppBuilderWorkspace.tsx` (parallel generation + comparison flow)
+**Files**: `BuilderChatPanel.tsx` (integrate ChatFileUpload, add paste/drop handlers)
 
 ---
 
-## 4. Persistent Prompt Favorites
+## 2. Per-File Undo (Granular Revert)
 
-**Gap**: Users re-type common prompts frequently. While prompt history exists, there's no way to explicitly save and organize favorite prompts for quick reuse.
+**Gap**: Undo/redo operates on the entire project snapshot. Lovable supports reverting a single file to its previous version without affecting other files. The `EnhancedVersionDiffViewer` has cherry-pick rollback UI but there's no quick "undo last edit to this file" action in the editor tab bar.
 
-**Fix**: Add a "star" action to any sent message to save it as a favorite. Store favorites in localStorage keyed by project. Show a "Favorites" tab in the prompt history panel with one-click reuse. Support editing saved prompts before sending.
+**Fix**: Track per-file edit history (last 10 versions per file) in a lightweight ref. Add an "Undo file changes" action to the file tab context menu and the editor toolbar. Reverting replaces only that file's content without touching the global undo stack.
 
-**Files**: `PromptHistoryPanel.tsx` (favorites tab + star action), `BuilderChatPanel.tsx` (star button on sent messages)
-
----
-
-## 5. AI-Powered Component Extraction
-
-**Gap**: As projects grow, files become bloated with inline components. Lovable could detect extractable components and offer to refactor them into separate files automatically.
-
-**Fix**: After generation, scan files for inline component definitions (functions returning JSX that aren't the default export). If found, show a suggestion chip: "Extract 3 components to separate files". Clicking it sends a targeted refactoring prompt that splits them out with proper imports.
-
-**Files**: New `useComponentExtractor.ts` (detection logic), `BuilderChatPanel.tsx` (extraction suggestion chips)
+**Files**: New `usePerFileHistory.ts`, `FileTabBar.tsx` (context menu action), `AIAppBuilderWorkspace.tsx` (wire hook)
 
 ---
 
-## 6. Smart Context Pruning Indicator
+## 3. Build Error Quick-Fix Suggestions
 
-**Gap**: The context budget indicator shows usage percentage but doesn't tell users which files are consuming the most context or how to reduce it. Lovable shows a breakdown.
+**Gap**: When a build fails, the auto-heal loop retries but the user gets no actionable suggestions. Lovable shows specific fix suggestions (e.g., "Missing import — click to add") as clickable chips in the error console.
 
-**Fix**: Enhance the context budget bar to be clickable, expanding into a mini panel showing the top 5 files by token count in the current context window. Add "Exclude from context" toggles per file. Show a "Start fresh conversation" recommendation when context exceeds 90%.
+**Fix**: Enhance `parseViteErrors.ts` to classify common errors (missing import, undefined variable, type mismatch, missing dependency) and generate one-click fix actions. Display these as chips in `ConsolePanel.tsx` and the error overlay. Clicking a fix either applies it directly (for simple imports) or sends a targeted prompt.
 
-**Files**: `BuilderChatPanel.tsx` (expandable context breakdown), `AIAppBuilderWorkspace.tsx` (file exclusion list for context)
+**Files**: `parseViteErrors.ts` (error classification + fix suggestions), `ConsolePanel.tsx` (render fix chips), `AIAppBuilderWorkspace.tsx` (handle fix actions)
+
+---
+
+## 4. Live Collaboration Awareness
+
+**Gap**: `CollaborativePresence` and `LiveCursors` exist but aren't connected to real presence data. Lovable shows who else is viewing/editing the project with cursor positions and active file indicators.
+
+**Fix**: Wire `CollaborativePresence` to Supabase Realtime Presence channel keyed by project ID. Broadcast the current user's active file, cursor position, and selection. Render other users' avatars in the top bar with their active file tooltip, and show their cursors in the editor via the existing `remoteCursors` prop.
+
+**Files**: `CollaborativePresence.tsx` (Supabase Realtime integration), `AIAppBuilderWorkspace.tsx` (broadcast local state, pass remote cursors to editor)
+
+---
+
+## 5. Dependency Auto-Install from Import
+
+**Gap**: When AI-generated code uses a new npm package, users must manually add it via Package Manager. Lovable detects unresolved imports and auto-suggests adding the package.
+
+**Fix**: After each generation, scan new/modified files for import statements. Cross-reference against the project's existing CDN packages. For unresolved imports of known npm packages, show a notification: "New dependency detected: `framer-motion` — Add to project?" with one-click install that adds it to the CDN package list.
+
+**Files**: New `useAutoDepInstall.ts` (import scanning + matching), `AIAppBuilderWorkspace.tsx` (post-generation hook), `BuildNotificationCenter.tsx` (install prompt)
+
+---
+
+## 6. Chat Message Search and Filter
+
+**Gap**: Long conversations become hard to navigate. Lovable lets users search through chat history with keyword filtering and jump-to-message navigation.
+
+**Fix**: Add a search icon in the chat panel header that expands a search input. Filter messages by content match, highlighting matched terms. Show result count and prev/next navigation arrows. Support filtering by role (user/assistant) and by messages that contain code changes.
+
+**Files**: `BuilderChatPanel.tsx` (search bar, filtering logic, scroll-to-match)
 
 ---
 
@@ -70,10 +70,10 @@ Six improvements targeting chat intelligence, context control, and workflow poli
 
 | Step | Impact | Effort |
 |------|--------|--------|
-| 1 — @-file mentions | High (precision) | Medium |
-| 2 — Rollback to message | High (safety) | Low |
-| 6 — Context pruning | Medium (efficiency) | Low |
-| 4 — Prompt favorites | Medium (speed) | Low |
-| 5 — Component extraction | Medium (quality) | Low |
-| 3 — Multi-model comparison | Low (exploration) | Medium |
+| 1 — Image attachment in chat | High (vision) | Low |
+| 3 — Build error quick-fixes | High (debugging) | Medium |
+| 5 — Auto dep install | Medium (DX) | Low |
+| 2 — Per-file undo | Medium (safety) | Low |
+| 6 — Chat message search | Medium (navigation) | Low |
+| 4 — Live collaboration | Low (multiplayer) | Medium |
 
