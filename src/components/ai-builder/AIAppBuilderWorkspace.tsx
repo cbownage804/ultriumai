@@ -178,7 +178,7 @@ import {
   RichTextConfigPanel, FilePreviewGenPanel, AvatarGenPanel,
   CarouselBuilderPanel, GalleryLightboxPanel,
   APIKeyPanel, PermissionMatrixPanel,
-   FullTextSearchPanel, FacetedFilterPanel, AutocompletePanel,
+    FullTextSearchPanel, FacetedFilterPanel, AutocompletePanel,
    TagSystemPanel, SEOMetaPanel,
    KPIDashboardPanel, AlertingRulesPanel, AuditTrailPanel,
    ClickHeatmapPanel, BudgetMonitorPanel,
@@ -194,6 +194,7 @@ import {
   CollaborationPanel as CollaborationPanelLazy,
   APIBuilderPanel as APIBuilderPanelLazy,
 } from './lazyPanels';
+import { useErrorPatternLearning } from '@/hooks/useErrorPatternLearning';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
