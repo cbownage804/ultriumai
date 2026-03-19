@@ -399,6 +399,7 @@ export function BuilderChatPanel({
   const [input, setInput] = useState('');
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [imageResizes, setImageResizes] = useState<Record<number, number>>({}); // index → max width px
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
