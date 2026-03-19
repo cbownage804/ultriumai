@@ -33,6 +33,7 @@ interface ConsolePanelProps {
   open: boolean;
   onToggle: () => void;
   onFixError?: (errorMessage: string) => void;
+  onNavigateToFile?: (path: string, line?: number) => void;
   iframeRef?: React.RefObject<HTMLIFrameElement | null>;
   fileCount?: number;
 }
