@@ -21,4 +21,12 @@
 - ✅ **Step 5 — Workspace layout persistence**: rightTab persisted to localStorage, restored on mount
 - ✅ **Step 6 — Error anti-patterns in auto-heal**: Anti-pattern context from useErrorPatternLearning injected into heal prompts
 
+### Completed (Phase 4: Lovable Parity — Wave 2)
+- ✅ **Step 1 — Inline change diff per message**: Collapsible per-file diffs rendered in assistant messages using CodeDiffViewer
+- ✅ **Step 2 — One-click revert per generation**: fileSnapshot stored on each assistant message, "↩ Revert" button restores pre-generation state
+- ✅ **Step 3 — Smart context window indicator**: Visual progress bar near input (green/amber/red) with "New chat" shortcut when >85%
+- ✅ **Step 4 — Warm compile cache**: LKG preview cached in sessionStorage + IndexedDB, restored instantly on project load
+- ✅ **Step 5 — Proactive lint-on-type**: preCompileValidate wired into CodeEditor onChange with 500ms debounce, surfaces Monaco markers
+- ✅ **Step 6 — Token cost display**: Running token counter shown during streaming
+
 ### All steps complete ✅

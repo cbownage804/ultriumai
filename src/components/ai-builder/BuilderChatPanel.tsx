@@ -1946,6 +1946,44 @@ export function BuilderChatPanel({
         </div>
       )}
 
+      {/* Wave 2 Step 3: Context window indicator */}
+      {contextBudget && contextBudget.percentUsed > 30 && (
+        <div className="px-3 pt-2 shrink-0">
+          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+            <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-all duration-500",
+                  contextBudget.percentUsed > 85 ? "bg-red-400" : contextBudget.percentUsed > 60 ? "bg-amber-400" : "bg-emerald-400"
+                )}
+                style={{ width: `${Math.min(contextBudget.percentUsed, 100)}%` }}
+              />
+            </div>
+            <span className={cn(
+              "text-[9px] font-mono whitespace-nowrap",
+              contextBudget.percentUsed > 85 ? "text-red-400/70" : contextBudget.percentUsed > 60 ? "text-amber-400/60" : "text-white/25"
+            )}>
+              {Math.round(contextBudget.percentUsed)}% context
+            </span>
+            {contextBudget.percentUsed > 85 && onNewConversation && (
+              <button
+                onClick={onNewConversation}
+                className="text-[9px] text-red-400/70 hover:text-red-300 underline"
+              >
+                New chat
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Wave 2 Step 6: Token cost display */}
+      {isGenerating && totalTokensUsed > 0 && (
+        <div className="px-3 pt-1 shrink-0">
+          <span className="text-[9px] text-white/20 font-mono">~{(totalTokensUsed / 1000).toFixed(1)}k tokens</span>
+        </div>
+      )}
+
       {/* Quick Actions + Context Indicator + Mode Toggle + Input */}
       <div className="p-3 border-t border-white/[0.06] shrink-0 space-y-2" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))' }}>
         {/* Slash command suggestions */}
