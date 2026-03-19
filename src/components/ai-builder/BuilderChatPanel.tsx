@@ -403,6 +403,8 @@ export function BuilderChatPanel({
   streamingContentRef, onNewConversation,
   onShowSettings, onShowHistory, onShowKnowledge, onShowGitHub,
   conversationForks, activeForkId, onForkConversation, onSwitchFork, onDeleteFork,
+  onRevertToMessage, onForkFromMessage,
+  selectedModel, onModelChange, onOpenEditHistory, onReview,
 }: BuilderChatPanelProps) {
   const [input, setInput] = useState('');
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);

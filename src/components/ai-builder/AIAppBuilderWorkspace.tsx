@@ -1101,6 +1101,8 @@ export function AIAppBuilderWorkspace() {
         filesGenerated: parsedFiles.length + safeDeletions.length,
         suggestions,
         mode,
+        // Step 2 (Wave 2): Attach pre-generation snapshot for per-message revert
+        filesSnapshot: preGenSnapshotRef.current || undefined,
       }];
     });
 
