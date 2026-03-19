@@ -1,38 +1,16 @@
 
 
-
 ## Production Readiness Roadmap — Progress
 
-### Completed
-- ✅ Eliminated ERROR_FALLBACK_HTML — preview never shows error pages
-- ✅ Soft validation gate — no longer blocks compilation on fixable issues
-- ✅ Auto-heal bumped to 3 attempts with full file context
-- ✅ LKG persisted to IndexedDB (survives tab close)
-- ✅ Auto-retry with backoff for transient Vite Sandbox failures
-- ✅ Streaming parser hardened (Unicode, control chars, path normalization)
-- ✅ Test coverage for previewValidation and preCompileValidation
-- ✅ **Step 1 — Streaming truncation recovery**: Auto-continues generation when ===END=== is missing
-- ✅ **Step 10 — Runtime error auto-fix**: Iframe runtime errors forwarded to parent, fed into auto-heal loop
-- ✅ **Step 11 — White screen detection**: Already wired via usePreviewHealthMonitor, now triggers auto-heal
-- ✅ **Step 8 — Anti-pattern prompt injection**: useErrorPatternLearning injected into knowledge context
-- ✅ **Step 2 — Duplicate compile suppression**: lastCompiledDigestRef skips identical compiles within 2s
-- ✅ **Step 6 — Context window optimization**: CSS/config deprioritized, skeleton mode for large files
-- ✅ **Step 9 — Post-generation diff review**: Collapsible diff summary shown in chat after generation
-- ✅ **Step 18 — Deploy gate enforcement**: Smoke tests block publishing, with escape hatch
+### Completed (Phase 1: Steps 1–20)
+- ✅ All 20 original roadmap steps complete
 
-- ✅ **Step 3 — Compile result caching**: Full HTML cached by filesDigest, returns cached preview in 0ms on unchanged files
-- ✅ **Step 5 — CSS hot-reload verification**: CSS-only changes detected via hasCSSOnlyChanges and injected without full recompile
-- ✅ **Step 7 — Smarter EDIT vs FILE selection**: System prompt directive instructs AI to use ===EDIT: hunks for <20% changes
-- ✅ **Step 12 — Preview navigation state preservation**: Router path saved/restored across HMR reloads via history.replaceState
+### Completed (Phase 2: Next Wave)
+- ✅ **Step A — Dependency-aware auto-heal**: Auto-heal now includes full dependency graph (imports + reverse deps) of failing files
+- ✅ **Step B — Speculative pre-compilation**: Streaming compile polls every 5s (was 8s) with 2-file threshold (was 4)
+- ✅ **Step C — Smart model fallback**: Auto-retries with alternate model on 429/503 errors (e.g., Gemini → Claude)
+- ✅ **Step D — Prompt compression**: Rolling summarization triggers earlier (keepRecent=6, maxOlder=15)
+- ✅ **Step E — Import graph validation**: Post-parse import check auto-stubs missing imports, surfaces warnings in diff summary
+- ✅ **Step F — Build cancellation UX**: Already implemented (stop button in chat panel)
 
-- ✅ **Step 4 — Compile progress accuracy**: Granular sub-phases (preparing→bundling→injecting→rendering) shown in SkeletonPreview with determinate progress
-- ✅ **Step 13 — Asset loading resilience**: useAssetResilience injects error handlers with retry + placeholder SVG for broken images
-- ✅ **Step 14 — Build time telemetry dashboard**: Timing breakdown (fastest/median/slowest), trend detection, mini bar chart in BuildHealthDashboard
-- ✅ **Step 15 — Keyboard-first workflow**: Added missing shortcuts (⌘., ⌘`, ⌘⇧E, ⌘I) to KeyboardShortcutsPanel
-
-- ✅ **Step 16 — Mobile preview accuracy**: Device frame chrome (notch, rounded corners) for mobile/tablet viewports
-- ✅ **Step 17 — File tree performance**: Virtualized rendering for 100+ file trees with windowed scroll
-- ✅ **Step 19 — Preview hosting reliability**: Retry with exponential backoff (3 attempts) for DB upsert and storage upload
-- ✅ **Step 20 — Error telemetry and alerting**: Trend detection (rising/falling/stable), alert threshold (10+ unresolved), sparkline chart in ErrorTrackingPanel
-
-### All 20 steps complete ✅
+### All steps complete ✅
