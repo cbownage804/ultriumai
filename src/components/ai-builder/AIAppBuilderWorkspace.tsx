@@ -3282,13 +3282,20 @@ export function AIAppBuilderWorkspace() {
   // Auto-capture thumbnail after generation completes — use refs to avoid stale closure
   const wasGeneratingRef = useRef(false);
   useEffect(() => {
-    // Generation STARTING — clear LKG so stale golden template HTML doesn't mask compile failures
+    // Generation STARTING — keep LKG visible so the preview doesn't go blank.
+    // The old code cleared stableHTML + LKG here, causing the preview to disappear
+    // for the entire duration of generation + compilation (~15-30s).
+    // Instead, we keep the last preview visible. CompilationBridge will replace it
+    // once the new build succeeds, and the LKG fallback chain (line 3513) ensures
+    // something is always shown.
     if (!wasGeneratingRef.current && isGenerating) {
-      console.info('[Workspace] Generation starting — clearing LKG to prevent stale preview');
-      lastKnownGoodHTMLRef.current = null;
-      stableHTMLRef.current = null;
-      setStableHTML(null);
-      try { localStorage.removeItem('ai-builder-compiled-html'); } catch {}
+      console.info('[Workspace] Generation starting — keeping LKG preview visible during build');
+      // Only clear the golden-template flag, not the actual preview HTML
+      // so stale golden template HTML doesn't mask real compile failures
+      if (stableHTMLRef.current && !isPreviewValidFn(stableHTMLRef.current)) {
+        stableHTMLRef.current = null;
+        setStableHTML(null);
+      }
     }
     // Thumbnail capture is handled in handleStableHTML after Vite compilation completes.
     // Do NOT capture here — compiledForHostingRef may still hold stale/default HTML.
@@ -3485,21 +3492,64 @@ export function AIAppBuilderWorkspace() {
   // (toggling stableHTML triggers broken recompilation in CompilationBridge).
   const [previewRefreshKey, setPreviewRefreshKey] = useState(0);
   useEffect(() => {
-    const handleVisible = () => {
-      if (document.visibilityState === 'visible' && stableHTMLRef.current) {
-        // Phase 3: Only remount iframe if content appears gone
-        const iframe = previewIframeRef.current;
-        if (iframe) {
-          try {
-            const body = iframe.contentDocument?.body;
-            if (body && body.innerHTML.trim().length > 10) {
-              // Iframe is healthy — skip remount
-              return;
-            }
-          } catch { /* cross-origin — remount to be safe */ }
+    const handleVisible = async () => {
+      if (document.visibilityState !== 'visible') return;
+
+      // If stableHTML is gone (browser evicted localStorage, long idle, etc.)
+      // attempt recovery from IndexedDB LKG before remounting
+      if (!stableHTMLRef.current) {
+        console.info('[Workspace] Tab visible but stableHTML is null — attempting IDB LKG recovery');
+        try {
+          const db = await new Promise<IDBDatabase>((resolve, reject) => {
+            const req = indexedDB.open('ai-builder-lkg', 1);
+            req.onupgradeneeded = () => req.result.createObjectStore('lkg');
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+          });
+          const html = await new Promise<string | null>((resolve) => {
+            const tx = db.transaction('lkg', 'readonly');
+            const req = tx.objectStore('lkg').get('ai-builder-lkg-preview');
+            req.onsuccess = () => { db.close(); resolve(req.result || null); };
+            req.onerror = () => { db.close(); resolve(null); };
+          });
+          if (html && isPreviewValidFn(html)) {
+            console.info('[Workspace] Recovered LKG from IndexedDB:', html.length, 'chars');
+            stableHTMLRef.current = html;
+            lastKnownGoodHTMLRef.current = html;
+            setStableHTML(html);
+            try { localStorage.setItem(COMPILED_CACHE_KEY, html); } catch {}
+            setPreviewRefreshKey(k => k + 1);
+            return;
+          }
+        } catch {
+          console.warn('[Workspace] IDB LKG recovery failed');
         }
-        setPreviewRefreshKey(k => k + 1);
+        // Also try localStorage as fallback
+        try {
+          const cached = localStorage.getItem(COMPILED_CACHE_KEY);
+          if (cached && isPreviewValidFn(cached)) {
+            console.info('[Workspace] Recovered preview from localStorage cache');
+            stableHTMLRef.current = cached;
+            lastKnownGoodHTMLRef.current = cached;
+            setStableHTML(cached);
+            setPreviewRefreshKey(k => k + 1);
+            return;
+          }
+        } catch {}
+        return; // nothing to recover
       }
+
+      // stableHTML exists — check if iframe content was discarded by browser
+      const iframe = previewIframeRef.current;
+      if (iframe) {
+        try {
+          const body = iframe.contentDocument?.body;
+          if (body && body.innerHTML.trim().length > 10) {
+            return; // Iframe is healthy — skip remount
+          }
+        } catch { /* cross-origin — remount to be safe */ }
+      }
+      setPreviewRefreshKey(k => k + 1);
     };
     document.addEventListener('visibilitychange', handleVisible);
     return () => document.removeEventListener('visibilitychange', handleVisible);
