@@ -3609,6 +3609,7 @@ export function AIAppBuilderWorkspace() {
             );
           }}
           onBuildSuccess={(files) => lkgDiff.saveSnapshot(files)}
+          onCompilePhaseChange={setCompilePhase}
         />
       </PanelErrorBoundary>
       <WelcomeOverlay onQuickStart={(prompt) => handleSend(prompt)} />
