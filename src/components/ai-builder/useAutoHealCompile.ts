@@ -22,8 +22,8 @@ export interface AutoHealConfig {
 }
 
 const DEFAULT_CONFIG: AutoHealConfig = {
-  maxAttempts: 2,
-  cooldownMs: 3000,
+  maxAttempts: 3,
+  cooldownMs: 2000,
 };
 
 export function useAutoHealCompile(config: Partial<AutoHealConfig> = {}) {
