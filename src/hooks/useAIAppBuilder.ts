@@ -1155,6 +1155,11 @@ export function useAIAppBuilder() {
     // ── Anti-pattern injection: inject learned error patterns into system prompt ──
     // (Consumer must call getAntiPatternPrompt() from useErrorPatternLearning and pass as knowledgeContext)
 
+    // ── Wave 14: Inject user rules from correction learning ──
+    if (typeof (options as any)?.getUserRulesContext === 'function') {
+      const rulesCtx = (options as any).getUserRulesContext();
+      if (rulesCtx) systemParts.push(rulesCtx);
+    }
     // ── Scope constraint for iterative edits with focus-file detection ──
     const isIterativeEdit = currentFiles.length > 0;
     if (isIterativeEdit) {

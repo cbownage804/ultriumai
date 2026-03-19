@@ -1619,7 +1619,7 @@ export async function exportProject(
     for (const file of files) {
       zip.file(file.path, file.content);
     }
-    // Wave 8 Step 6: Enhanced README for raw exports
+    // Tech stack detection
     const techStack: string[] = ['React', 'Vite'];
     const hasTailwind = files.some(f => f.content.includes('tailwind') || f.content.includes('className='));
     const hasTS = files.some(f => f.path.endsWith('.ts') || f.path.endsWith('.tsx'));
@@ -1628,12 +1628,92 @@ export async function exportProject(
     if (hasTailwind) techStack.push('Tailwind CSS');
     if (hasSupabase) techStack.push('Supabase');
 
+    // Detect env vars used
     const envVarsUsed = new Set<string>();
     for (const f of files) {
       const matches = f.content.matchAll(/import\.meta\.env\.(\w+)/g);
       for (const m of matches) envVarsUsed.add(m[1]);
     }
 
+    // ── Wave 14: Production-ready configs ──
+
+    // .env.example
+    if (envVarsUsed.size > 0) {
+      zip.file('.env.example', Array.from(envVarsUsed).map(v => `${v}=`).join('\n') + '\n');
+    }
+
+    // package.json with proper scripts
+    const pkgJson = {
+      name: slug,
+      private: true,
+      version: '1.0.0',
+      type: 'module',
+      scripts: {
+        dev: 'vite',
+        build: hasTS ? 'tsc && vite build' : 'vite build',
+        preview: 'vite preview',
+        lint: 'eslint .',
+      },
+      dependencies: {
+        react: '^18.3.1',
+        'react-dom': '^18.3.1',
+        ...(hasSupabase ? { '@supabase/supabase-js': '^2.50.0' } : {}),
+      },
+      devDependencies: {
+        '@vitejs/plugin-react-swc': '^3.5.0',
+        vite: '^5.4.0',
+        ...(hasTS ? { typescript: '^5.5.0', '@types/react': '^18.3.0', '@types/react-dom': '^18.3.0' } : {}),
+        ...(hasTailwind ? { tailwindcss: '^3.4.0', autoprefixer: '^10.4.0', postcss: '^8.4.0' } : {}),
+      },
+    };
+    zip.file('package.json', JSON.stringify(pkgJson, null, 2));
+
+    // GitHub Actions CI/CD
+    const ciYml = `name: Build & Deploy
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+`;
+    zip.file('.github/workflows/deploy.yml', ciYml);
+
+    // Netlify config
+    zip.file('netlify.toml', `[build]
+  command = "npm run build"
+  publish = "dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+`);
+
+    // Vercel config
+    zip.file('vercel.json', JSON.stringify({
+      buildCommand: 'npm run build',
+      outputDirectory: 'dist',
+      framework: 'vite',
+      rewrites: [{ source: '/(.*)', destination: '/index.html' }],
+    }, null, 2));
+
+    // README
     const readmeLines = [
       `# ${projectName}`,
       '',
@@ -1653,13 +1733,23 @@ export async function exportProject(
       'npm run preview',
       '```',
       '',
+      '## Deploy',
+      '',
+      '### Netlify',
+      '[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start)',
+      '',
+      '### Vercel',
+      '[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)',
+      '',
+      'CI/CD is pre-configured via `.github/workflows/deploy.yml`.',
+      '',
     ];
 
     if (envVarsUsed.size > 0) {
       readmeLines.push(
         '## Environment Variables',
         '',
-        'Create a `.env` file with:',
+        'Copy `.env.example` to `.env` and fill in your values:',
         '',
         '```',
         ...Array.from(envVarsUsed).map(v => `${v}=your-value-here`),
