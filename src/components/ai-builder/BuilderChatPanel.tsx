@@ -69,6 +69,14 @@ interface BuilderChatPanelProps {
   onForkConversation?: () => void;
   onSwitchFork?: (forkId: string) => void;
   onDeleteFork?: (forkId: string) => void;
+  // Wave 2: Per-message revert
+  onRevertToMessage?: (messageId: string) => void;
+  onForkFromMessage?: (messageId: string) => void;
+  // Wave 2: Model selection
+  selectedModel?: string;
+  onModelChange?: (model: string) => void;
+  onOpenEditHistory?: () => void;
+  onReview?: () => void;
 }
 
 
