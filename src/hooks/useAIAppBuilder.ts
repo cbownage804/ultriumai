@@ -384,6 +384,8 @@ export interface BuilderMessage {
   commitMessage?: string;
   /** Which mode this message was sent/received in */
   mode?: BuilderMode;
+  /** Step 9: Post-generation diff summary */
+  diffSummary?: { added: string[]; modified: string[]; deleted: string[]; totalLinesChanged: number };
 }
 
 export type BuilderMode = 'build' | 'discuss';

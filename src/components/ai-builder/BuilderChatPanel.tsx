@@ -1188,7 +1188,49 @@ export function BuilderChatPanel({
           </motion.div>
         )}
 
-        {/* Details modal — full-screen overlay */}
+        {/* Step 9: Post-generation diff summary */}
+        {msg.diffSummary && !isStreaming && (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl border border-white/[0.08] overflow-hidden bg-white/[0.02]"
+          >
+            <button
+              onClick={() => toggleBuildExpanded(`diff-${msg.id}`)}
+              className="w-full px-4 py-2.5 flex items-center gap-2 text-left hover:bg-white/[0.02] transition-colors"
+            >
+              <FileCode className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+              <span className="text-[12px] font-medium text-white/60">
+                Changes: {msg.diffSummary.modified.length + msg.diffSummary.added.length} file{msg.diffSummary.modified.length + msg.diffSummary.added.length !== 1 ? 's' : ''}
+                {msg.diffSummary.deleted.length > 0 && `, ${msg.diffSummary.deleted.length} removed`}
+              </span>
+              <ChevronDown className={cn("h-3 w-3 text-white/25 ml-auto transition-transform", !expandedBuildMessages.has(`diff-${msg.id}`) && "-rotate-90")} />
+            </button>
+            {expandedBuildMessages.has(`diff-${msg.id}`) && (
+              <div className="px-4 pb-3 space-y-1 border-t border-white/[0.06]">
+                {msg.diffSummary.added.map(f => (
+                  <div key={f} className="flex items-center gap-2 py-0.5">
+                    <Plus className="h-3 w-3 text-emerald-400 shrink-0" />
+                    <span className="text-[11px] text-white/50 font-mono truncate">{f.split('/').pop()}</span>
+                  </div>
+                ))}
+                {msg.diffSummary.modified.map(f => (
+                  <div key={f} className="flex items-center gap-2 py-0.5">
+                    <Pencil className="h-3 w-3 text-amber-400 shrink-0" />
+                    <span className="text-[11px] text-white/50 font-mono truncate">{f.split('/').pop()}</span>
+                  </div>
+                ))}
+                {msg.diffSummary.deleted.map(f => (
+                  <div key={f} className="flex items-center gap-2 py-0.5">
+                    <X className="h-3 w-3 text-red-400 shrink-0" />
+                    <span className="text-[11px] text-white/50 font-mono truncate">{f.split('/').pop()}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+
         {isBuildExpanded && (
           <Dialog open={true} onOpenChange={() => toggleBuildExpanded(msg.id)}>
             <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-[#0c0c10] border-white/[0.1] text-white">

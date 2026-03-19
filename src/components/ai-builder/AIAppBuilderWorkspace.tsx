@@ -195,6 +195,7 @@ import {
   APIBuilderPanel as APIBuilderPanelLazy,
 } from './lazyPanels';
 import { useErrorPatternLearning } from '@/hooks/useErrorPatternLearning';
+import { useDeployGate } from './useDeployGate';
 
 import {
   Eye, Code, Pencil, Database, CreditCard, Key, Bot, MessageSquare,
@@ -1300,6 +1301,10 @@ export function AIAppBuilderWorkspace() {
   const lkgDiff = useLKGDiff();
   const autoHeal = useAutoHealCompile();
   const errorPatterns = useErrorPatternLearning();
+  const deployGate = useDeployGate();
+  const runSmokeTestsForDeploy = useCallback(async () => {
+    return deployGate.runSmokeTests(previewIframeRef);
+  }, [deployGate]);
   const promptMemory = usePromptMemory();
   const lighthouseAudit = useLighthouseAudit(buildLog.addEntry);
   const bundleSize = useBundleSizeTracking(buildLog.addEntry);
@@ -1916,7 +1921,13 @@ export function AIAppBuilderWorkspace() {
       if (diffs.length > 0) {
         const cm = commitMessages.generateLocal(diffs);
         commitMsg = `${cm.type}(${cm.scope}): ${cm.subject}`;
-        setMessages(prev => prev.map((m, i) => i === prev.length - 1 ? { ...m, commitMessage: commitMsg } : m));
+        // Step 9: Build diff summary for chat
+        const added = diffs.filter((d: any) => d.type === 'added' || !previousFiles.some(pf => pf.path === d.path)).map((d: any) => d.path);
+        const modified = diffs.filter((d: any) => d.type !== 'added' && previousFiles.some(pf => pf.path === d.path)).map((d: any) => d.path);
+        const deleted = previousFiles.filter(pf => !latestFiles.some(lf => lf.path === pf.path)).map(pf => pf.path);
+        const totalLinesChanged = diffs.reduce((sum: number, d: any) => sum + (d.additions || 0) + (d.deletions || 0), 0);
+        const diffSummary = { added, modified, deleted, totalLinesChanged };
+        setMessages(prev => prev.map((m, i) => i === prev.length - 1 ? { ...m, commitMessage: commitMsg, diffSummary } : m));
       }
       // Post-gen analysis completely disabled to prevent browser freeze.
       // These were running smoke tests, conflict detection, TS validation,
@@ -4209,6 +4220,7 @@ export function AIAppBuilderWorkspace() {
         setPendingDiffChanges={setPendingDiffChanges}
         showBugReport={!!panels.showBugReport}
         setShowBugReport={setShowBugReport}
+        runSmokeTests={runSmokeTestsForDeploy}
       />
       {/* Conditionally-mounted panel groups — hooks only initialize when panels are active */}
       {(panels.showEnvManager || panels.showRollback || panels.showUptimeMonitor || panels.showBuildCache || panels.showBuildScripts || panels.showCMSMode || panels.showBlogEngine || panels.showImageOptimizer || panels.showVideoEmbed || panels.showI18n || panels.showAnalyticsDashboard || panels.showErrorTracking || panels.showSessionReplay || panels.showABTesting || panels.showAIUsage || panels.showDepScanner || panels.showCSPGenerator || panels.showGDPR || panels.showRateLimiter || panels.showSecretRotation || panels.showSnippetLibrary || panels.showSplitDiff || panels.showComments || panels.showTeamActivity || panels.showApprovals || panels.showForking || panels.showFigmaImport || panels.showColorExtractor || panels.showIconPicker || panels.showBreakpointEditor || panels.showAnimationBuilder || panels.showVisualSchema || panels.showSeedData || panels.showAPITester || panels.showWebhookBuilder || panels.showCronScheduler) && (

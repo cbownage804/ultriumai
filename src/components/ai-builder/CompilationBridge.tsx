@@ -373,6 +373,8 @@ export function CompilationBridge({
   // Track the filesDigest at compile start — if it changed by the time compile finishes, retrigger
   const compiledDigestRef = useRef<string>('');
   const recompileNeededRef = useRef(false);
+  // Step 2: Track last compiled digest + timestamp for dedup
+  const lastCompiledDigestRef = useRef<{ digest: string; timestamp: number }>({ digest: '', timestamp: 0 });
 
   // ── liveCompiledHTML (async, post-generation) ──
   const [liveCompiledHTML, setLiveCompiledHTML] = useState<string | null>(null);
@@ -808,6 +810,16 @@ export function CompilationBridge({
 
     prevFilesDigestRef.current = filesDigest;
 
+    // ── Step 2: Duplicate compile suppression ──
+    // Skip if same digest was just compiled within 2s (StrictMode double-effects, rapid edits)
+    if (
+      filesDigest === lastCompiledDigestRef.current.digest &&
+      Date.now() - lastCompiledDigestRef.current.timestamp < 2000
+    ) {
+      console.info('[CompilationBridge] Skipping duplicate compile (same digest within 2s)');
+      return;
+    }
+
     // Already compiling? Skip.
     if (compilationInFlightRef.current) {
       console.info('[CompilationBridge] Compilation already in flight — marking recompile needed');
@@ -862,6 +874,7 @@ export function CompilationBridge({
       });
       compilationInFlightRef.current = true;
       compiledDigestRef.current = filesDigest;
+      lastCompiledDigestRef.current = { digest: filesDigest, timestamp: Date.now() };
       recompileNeededRef.current = false;
       lockCompile(); // Prevent spurious aborts from other effects in the same render cycle
       transitionCompileState('compiling');
