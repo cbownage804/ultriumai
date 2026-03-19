@@ -31,6 +31,9 @@ import { useDeployGate } from './useDeployGate';
 /** Compile State Machine — single source of truth for compilation phase */
 export type CompileState = 'idle' | 'compiling' | 'success' | 'error';
 
+/** Step 4: Granular compile sub-phases for progress accuracy */
+export type CompilePhase = 'preparing' | 'bundling' | 'rendering' | 'injecting' | null;
+
 export interface CompileErrorInfo {
   message: string;
   errors: string[];
