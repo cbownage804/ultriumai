@@ -4516,7 +4516,7 @@ export function AIAppBuilderWorkspace() {
         onAccept={() => {
           const result = inlineAIEdit.acceptSuggestion();
           if (result && activeFile) {
-            const file = project.files.find(f => f.path === activeFile);
+            const file = project.files.find(f => f.path === activeFile.path);
             if (file) {
               const lines = file.content.split('\n');
               lines.splice(result.startLine - 1, result.endLine - result.startLine + 1, ...result.code.split('\n'));
