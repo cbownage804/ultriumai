@@ -1,68 +1,68 @@
 
 
-# Lovable Parity — Wave 8
+# Lovable Parity — Wave 9
 
-Six improvements targeting the final remaining gaps between the builder and Lovable's production UX.
-
----
-
-## 1. AI-Generated Commit Messages on Save
-
-**Gap**: When saving or publishing, there's no auto-generated description of what changed. Lovable generates meaningful commit messages summarizing the changes made in each generation.
-
-**Fix**: After each AI generation, auto-generate a one-line commit message from the diff summary (files added/modified/deleted + key patterns detected). Display it in the version history timeline and deployment history. Allow user editing before save.
-
-**Files**: `AIAppBuilderWorkspace.tsx` (auto-generate on generation complete), `VersionHistoryPanel.tsx` (display commit messages)
+Six improvements targeting the last remaining UX and workflow gaps between the builder and Lovable's production experience.
 
 ---
 
-## 2. Guided Onboarding Tour for New Projects
+## 1. Conversation Persistence and Switching
 
-**Gap**: New users land in the workspace with no guidance beyond quick-action chips. Lovable walks first-time users through the key UI areas (chat, preview, code editor, file tree) with a step-by-step tooltip tour.
+**Gap**: When the user clicks "New conversation", previous messages are lost. Lovable persists conversation threads and lets users switch between them from a sidebar list.
 
-**Fix**: Create a lightweight onboarding tour that highlights 5-6 key areas on first project creation. Use a `hasSeenTour` localStorage flag. Each step positions a tooltip near the relevant UI element with a brief explanation and Next/Skip buttons.
+**Fix**: Store conversations in IndexedDB keyed by project ID. Add a conversation list drawer (accessible from the chat panel "history" icon) showing past conversations with their first message as a title. Clicking a conversation loads its messages. Cap at 20 stored conversations per project, auto-pruning oldest.
 
-**Files**: New `OnboardingTour.tsx`, `AIAppBuilderWorkspace.tsx` (mount on first visit)
-
----
-
-## 3. Smart File Creation from Chat
-
-**Gap**: Users must manually create files or rely on the AI to generate them. Lovable supports "create a new component called X" as a chat command that scaffolds the file instantly without a full generation cycle.
-
-**Fix**: Detect file-creation intent in chat messages (e.g., "create a component called UserCard", "add a hook for authentication"). For simple scaffolding requests, instantly create the file from templates (reusing `useSmartScaffolding`) without invoking the AI model, saving tokens and time.
-
-**Files**: `AIAppBuilderWorkspace.tsx` (intent detection in handleSend), `useSmartScaffolding.ts` (expose quick-create)
+**Files**: New `useConversationHistory.ts` (IndexedDB persistence), `BuilderChatPanel.tsx` (conversation list drawer), `AIAppBuilderWorkspace.tsx` (wire load/save)
 
 ---
 
-## 4. Inline Error Annotations in Code Editor
+## 2. "Select to Edit" Element-to-Source Mapping
 
-**Gap**: Build errors show in the console and auto-heal triggers, but the code editor doesn't highlight the exact error lines with inline annotations. Lovable shows red squiggly underlines and hover tooltips on error lines.
+**Gap**: Visual Edit mode lets users modify text/color/images directly, but doesn't map the clicked element back to its source JSX line for in-editor navigation. Lovable highlights the exact source code line when an element is selected.
 
-**Fix**: After a failed build, parse error locations from `ParsedViteError` (file + line) and set Monaco editor markers (red underline + hover message) on the affected lines. Clear markers on next successful build. This complements the existing `preCompileValidate` lint markers.
+**Fix**: When a visual-edit element is selected, use the element's selector + text content to fuzzy-match against project files and identify the JSX line. Open that file in the editor and scroll to the matching line. Add a "View Source" button to the Visual Edit toolbar.
 
-**Files**: `CodeEditor.tsx` (add build error markers), `CompilationBridge.tsx` (expose parsed errors to editor)
-
----
-
-## 5. Quick Settings Toggle Bar
-
-**Gap**: Common settings (auto-save, auto-compile, sound effects, AI model) require navigating to the settings panel. Lovable surfaces frequently-toggled options in a compact bar.
-
-**Fix**: Add a slim collapsible settings strip below the top bar or in the status area with toggles for: auto-compile on/off, sound effects, auto-heal on/off, and the current AI model badge. Each toggle updates the corresponding state immediately.
-
-**Files**: New `QuickSettingsBar.tsx`, `AIAppBuilderWorkspace.tsx` (wire toggles)
+**Files**: `VisualEditToolbar.tsx` (View Source button), new `useElementSourceMapper.ts` (fuzzy matching logic), `AIAppBuilderWorkspace.tsx` (wire file navigation)
 
 ---
 
-## 6. Export as Standalone ZIP with README
+## 3. Diff Review Before Apply
 
-**Gap**: Export exists but doesn't include setup instructions. Lovable generates a README.md with install/run instructions, tech stack summary, and environment variable documentation alongside the exported files.
+**Gap**: After AI generation, changes are applied immediately. Lovable shows a diff review step where users can accept/reject individual file changes before they're committed to the project.
 
-**Fix**: When exporting, auto-generate a `README.md` that lists: project name, tech stack (React + Vite + Tailwind), install commands (`npm install && npm run dev`), environment variables needed, and Supabase setup instructions if connected. Bundle into the ZIP.
+**Fix**: After parsing AI output, instead of immediately applying files, show a diff review modal listing each changed file with before/after comparison. Users can toggle files on/off and click "Apply Selected" or "Apply All". Rejected files are discarded. Uses the existing `EnhancedVersionDiffViewer` pattern.
 
-**Files**: `ExportButton.tsx` (add README generation to ZIP export)
+**Files**: New `DiffReviewModal.tsx`, `AIAppBuilderWorkspace.tsx` (intercept post-generation to show review)
+
+---
+
+## 4. Inline Chat in Code Editor
+
+**Gap**: To ask about specific code, users must copy it into chat. Lovable supports `Cmd+I` inline chat directly in the editor — select code, press Cmd+I, type a prompt, and get an inline diff suggestion.
+
+**Fix**: The `onTriggerInlineEdit` callback already exists on CodeEditor but isn't fully wired. Add a floating input widget that appears at the selection when Cmd+I is pressed. The prompt + selected code is sent to the AI, and the response replaces the selection with an inline diff preview (accept/reject).
+
+**Files**: New `InlineChatWidget.tsx`, `CodeEditor.tsx` (mount widget on Cmd+I), `AIAppBuilderWorkspace.tsx` (handle inline edit requests)
+
+---
+
+## 5. Smart Follow-Up Suggestions After Generation
+
+**Gap**: After each generation, users must think of what to do next. Lovable shows contextual follow-up chips (e.g., "Add authentication", "Make it responsive", "Add dark mode") based on what was just built.
+
+**Fix**: After each successful generation, analyze the generated files to suggest 3-4 relevant next steps. Detection rules: if no auth → suggest auth; if no responsive meta → suggest responsive; if no dark mode → suggest theming; if no tests → suggest tests. Show as clickable chips below the assistant message.
+
+**Files**: New `useFollowUpSuggestions.ts`, `BuilderChatPanel.tsx` (render suggestion chips after assistant messages)
+
+---
+
+## 6. Project Environment Indicator
+
+**Gap**: There's no clear indication of the project's runtime environment status (Supabase connected, env vars set, edge functions deployed). Lovable shows environment health at a glance.
+
+**Fix**: Add a compact environment status strip showing connection states: Supabase (connected/disconnected), env vars count, edge functions deployed, and storage buckets. Use colored dots (green/amber/gray). Clicking each opens the relevant panel.
+
+**Files**: New `EnvironmentStatusBar.tsx`, `AIAppBuilderWorkspace.tsx` (mount in status area)
 
 ---
 
@@ -70,10 +70,10 @@ Six improvements targeting the final remaining gaps between the builder and Lova
 
 | Step | Impact | Effort |
 |------|--------|--------|
-| 4 — Inline error annotations | High (debugging) | Low |
-| 1 — Auto commit messages | High (version clarity) | Low |
-| 6 — Export with README | Medium (onboarding) | Low |
-| 3 — Smart file creation | Medium (speed) | Low |
-| 2 — Onboarding tour | Medium (new users) | Medium |
-| 5 — Quick settings bar | Low (convenience) | Low |
+| 3 — Diff review before apply | High (safety) | Medium |
+| 4 — Inline chat in editor | High (DX) | Medium |
+| 1 — Conversation persistence | High (continuity) | Medium |
+| 5 — Follow-up suggestions | Medium (guidance) | Low |
+| 2 — Element-to-source mapping | Medium (DX) | Low |
+| 6 — Environment indicator | Low (visibility) | Low |
 
