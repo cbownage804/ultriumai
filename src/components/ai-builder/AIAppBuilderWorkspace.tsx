@@ -614,7 +614,7 @@ export function AIAppBuilderWorkspace() {
       setStableHTML(null);
     }
 
-    // ── Stream integrity check ──
+    // ── Stream integrity check + TRUNCATION RECOVERY ──
     const integrity = getStreamIntegrity();
     if (!integrity.hasEndMarker && hasFileMarkers) {
       console.warn('[handleBgComplete] ⚠️ Stream may be truncated (no ===END=== marker)', {
@@ -635,6 +635,45 @@ export function AIAppBuilderWorkspace() {
       console.warn('[handleBgComplete] ⏭️ Skipping incomplete parsed files to avoid corrupt writes', {
         skipped: incompleteParsedFiles.map(f => f.path),
       });
+    }
+
+    // ── Truncation recovery: auto-continue when stream was cut off ──
+    if (!integrity.hasEndMarker && hasFileMarkers && incompleteParsedFiles.length > 0) {
+      const lastTruncatedPath = incompleteParsedFiles[incompleteParsedFiles.length - 1]?.path || 'unknown';
+      const completedPaths = rawParsedFiles.map(f => f.path);
+      console.info('[handleBgComplete] 🔄 Triggering truncation recovery — requesting continuation');
+
+      // Apply completed files immediately (they're safe), hold LKG for incomplete ones
+      if (rawParsedFiles.length > 0) {
+        const partialMerge = [...project.files];
+        for (const newFile of rawParsedFiles) {
+          const existingIdx = partialMerge.findIndex(f => f.path === newFile.path);
+          if (existingIdx >= 0) partialMerge[existingIdx] = newFile;
+          else partialMerge.push(newFile);
+        }
+        setFiles(partialMerge);
+      }
+
+      // Send continuation prompt after a short delay
+      const continuationPrompt = `[CONTINUE] The previous output was truncated at \`===FILE: ${lastTruncatedPath}===\`. Please continue from where you left off.\n\nCompleted files: ${completedPaths.join(', ')}\n\nOutput the remaining files using ===FILE: path=== format. Start by re-outputting the truncated file \`${lastTruncatedPath}\` in full, then continue with any remaining files. End with ===END=== on its own line.`;
+      
+      setMessages(prev => [...prev, {
+        id: crypto.randomUUID(),
+        role: 'assistant' as const,
+        content: job.output_content!,
+        timestamp: new Date(),
+        filesGenerated: rawParsedFiles.length,
+        mode,
+      }]);
+
+      setTimeout(() => {
+        sendMessage(continuationPrompt);
+      }, 2000);
+
+      setIsGeneratingOverride(false);
+      clearRepairWatchdog();
+      finalize('truncation-recovery');
+      return;
     }
 
     console.info('[handleBgComplete] 📦 Parsed output', {
