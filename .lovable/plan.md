@@ -1,68 +1,48 @@
 
 
-# Builder Improvements — Wave 13
+# Builder Improvements — Wave 14
 
-Six targeted improvements across generation quality, speed/reliability, UX/workflow, and output polish.
-
----
-
-## 1. Smart Diff Preview Before Apply
-
-**Problem**: Users can't see what the AI changed before it takes effect — changes just appear, sometimes with unwanted modifications (like the background issue you experienced).
-
-**What it does**: After the AI generates code, show a visual diff summary in the chat with a "Review Changes" expandable section. Each file shows added/removed/modified line counts. Users can accept all, reject all, or cherry-pick individual files.
-
-**Files**: `useAIAppBuilder.ts` (enhance pending approval flow), `BuilderChatPanel.tsx` (diff summary UI)
+Four improvements covering smarter error recovery, prompt templates, AI memory, and export/deployment polish.
 
 ---
 
-## 2. Generation Progress with Per-File Streaming
+## 1. Cascading Error Recovery with Root-Cause Analysis
 
-**Problem**: During generation, users see a vague "thinking" state with no visibility into what's happening — leading to "is it stuck?" anxiety.
+**Problem**: The current auto-fix loop (3 retries) sends the raw error message back to the AI, but doesn't analyze whether the error is a symptom of a deeper issue (e.g., a missing import causes 3 different "undefined" errors).
 
-**What it does**: Show real-time file-by-file progress as the AI streams output. Each file appears as a checklist item: `✅ src/components/Hero.tsx` → `⏳ src/components/Footer.tsx` → `⬚ src/App.tsx`. Include elapsed time and an estimated completion bar.
+**What it does**: Before retrying, group related errors by file and deduplicate. Extract the root cause (e.g., "missing import" vs "undefined variable") and send a single consolidated fix prompt instead of fixing symptoms one-by-one. On the 2nd retry, include a diff of what changed since the last working state (from `useLKGDiff`) so the AI can see exactly what broke.
 
-**Files**: `GeneratingOverlay.tsx` (enhanced progress UI), `AIAppBuilderWorkspace.tsx` (wire streaming file refs to overlay)
-
----
-
-## 3. "Undo Last AI Change" One-Click Button
-
-**Problem**: When the AI over-edits (adds unwanted backgrounds, changes colors), there's no quick way to revert just that change.
-
-**What it does**: Add a persistent "Undo" button in the preview toolbar that instantly reverts to the state before the last AI generation. Uses the existing `useUndoRedo` hook but surfaces it prominently with a keyboard shortcut (Cmd+Z at workspace level).
-
-**Files**: `WorkspaceTopBar.tsx` (add undo button), `AIAppBuilderWorkspace.tsx` (wire undo to toolbar)
+**Files**: `useAutoFixLoop.ts` (add error grouping + LKG diff injection), `useErrorPatternLearning.ts` (feed successful fixes back as positive patterns)
 
 ---
 
-## 4. Output Quality Gate — Post-Generation Validation
+## 2. Expanded Prompt Templates with Context-Aware Suggestions
 
-**Problem**: AI sometimes generates code with missing imports, broken references, or syntax issues that cause compilation failures.
+**Problem**: The slash command templates exist but are static — they don't adapt to what's already in the project (e.g., suggesting "Add Auth" when auth is already implemented).
 
-**What it does**: After parsing AI output, run a fast pre-compilation validation pass that checks for: missing imports, undefined component references, unmatched JSX tags, and empty files. Auto-fix trivial issues (add missing React imports) before compilation starts, reducing "fix loop" cycles.
+**What it does**: Before showing templates, scan the project files to detect which features already exist (auth, routing, dark mode, etc.). Mark implemented templates as "✓ Done" and surface only relevant ones. Add new template categories: "Optimize" (performance, SEO, accessibility), "Polish" (animations, loading states, error boundaries), and "Scale" (pagination, caching, lazy loading).
 
-**Files**: `preCompileValidation.ts` (enhance validation rules), `AIAppBuilderWorkspace.tsx` (wire validation into post-parse flow)
-
----
-
-## 5. Responsive Preview Quick-Toggle
-
-**Problem**: Users need to manually resize the preview or open device presets to check mobile layouts.
-
-**What it does**: Add three quick-toggle buttons (Desktop / Tablet / Mobile) directly in the preview toolbar with one-click switching. Shows a subtle device frame around the preview when in mobile/tablet mode. Currently the device presets exist but are buried in a picker — this surfaces them as primary controls.
-
-**Files**: `ResponsivePreviewBar.tsx` (simplify to 3 primary buttons), `BuilderPreviewPanel.tsx` (wire quick toggles)
+**Files**: `promptTemplates.ts` (add new templates + feature detection), `BuilderChatPanel.tsx` (wire context-aware filtering into slash menu)
 
 ---
 
-## 6. Smarter Scope Enforcement with Change Heatmap
+## 3. Persistent AI Memory with Correction Learning
 
-**Problem**: The `[CHANGE SCOPE — CRITICAL]` directive helps, but the AI still sometimes over-edits because it doesn't know which specific DOM sections the user's request maps to.
+**Problem**: `useAgentMemory` tracks conventions and preferences in localStorage, but doesn't learn from user corrections (e.g., "I told you not to change the background" should permanently stick).
 
-**What it does**: Before sending to the AI, analyze the user's request against the existing file structure to identify exactly which files and sections are relevant. Inject a `[FOCUS FILES]` directive listing only the 1-3 files that should be modified, with explicit "DO NOT TOUCH" markers for other files. This makes the scope constraint actionable rather than aspirational.
+**What it does**: After each generation, detect correction patterns in user follow-ups ("don't change X", "always use Y", "keep Z"). Auto-extract these as hard rules and inject them into future system prompts as `[USER RULES]`. Show a "Memory" indicator in the chat header with a count of learned rules, and let users view/edit/delete them.
 
-**Files**: `useAIAppBuilder.ts` (add focus-file detection before system prompt construction)
+**Files**: `useAgentMemory.ts` (add correction detection + rule extraction), `useAIAppBuilder.ts` (inject rules into system prompt), `BuilderChatPanel.tsx` (add memory indicator UI)
+
+---
+
+## 4. One-Click GitHub Export with Production Config
+
+**Problem**: Export exists but produces a raw ZIP. Users who want to push to GitHub and deploy still need to manually add package.json scripts, environment configs, and build settings.
+
+**What it does**: Enhance the "Full-Stack" export to generate a production-ready repository with: proper `package.json` (with `build`, `dev`, `preview` scripts), `.env.example` with all required variables listed, a GitHub Actions CI/CD workflow file (`.github/workflows/deploy.yml`), and a `netlify.toml` / `vercel.json` for one-click platform deploys. Add a "Push to GitHub" button that uses the existing GitHub sync to create a repo with these files included.
+
+**Files**: `exportProject.ts` (add CI/CD config generation, .env.example, platform configs), `PublishPanel.tsx` (add GitHub export button)
 
 ---
 
@@ -70,10 +50,8 @@ Six targeted improvements across generation quality, speed/reliability, UX/workf
 
 | Step | Area | Impact | Effort |
 |------|------|--------|--------|
-| 6 — Scope enforcement | Generation quality | High | Low |
-| 3 — Undo button | UX | High | Low |
-| 1 — Diff preview | UX | High | Medium |
-| 4 — Quality gate | Reliability | Medium | Low |
-| 2 — Streaming progress | UX | Medium | Medium |
-| 5 — Responsive toggles | Output polish | Medium | Low |
+| 3 — Correction learning | AI memory | High | Low |
+| 1 — Root-cause recovery | Error recovery | High | Medium |
+| 2 — Context-aware templates | Prompt shortcuts | Medium | Low |
+| 4 — GitHub export | Deployment | Medium | Medium |
 
