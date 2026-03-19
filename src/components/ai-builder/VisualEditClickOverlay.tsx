@@ -64,6 +64,18 @@ export function VisualEditClickOverlay({ isActive, onToggle, iframeRef, onDirect
               e.preventDefault();
               e.stopPropagation();
               var el = e.target;
+              // Step 3: Source-mapped visual edits — prefer data-source-file attributes
+              var sourceFile = null;
+              var sourceLine = null;
+              var current = el;
+              while (current && current !== document.body) {
+                if (current.getAttribute && current.getAttribute('data-source-file')) {
+                  sourceFile = current.getAttribute('data-source-file');
+                  sourceLine = current.getAttribute('data-source-line');
+                  break;
+                }
+                current = current.parentElement;
+              }
               var selector = el.tagName.toLowerCase();
               if (el.id) selector += '#' + el.id;
               if (el.className && typeof el.className === 'string') selector += '.' + el.className.split(' ').join('.');
@@ -73,6 +85,8 @@ export function VisualEditClickOverlay({ isActive, onToggle, iframeRef, onDirect
                 tagName: el.tagName,
                 text: el.textContent?.slice(0, 200) || '',
                 rect: el.getBoundingClientRect(),
+                sourceFile: sourceFile,
+                sourceLine: sourceLine ? parseInt(sourceLine, 10) : null,
               }, '*');
             }, true);
           })();
