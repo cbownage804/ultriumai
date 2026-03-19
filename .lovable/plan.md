@@ -13,4 +13,12 @@
 - ✅ **Step E — Import graph validation**: Post-parse import check auto-stubs missing imports, surfaces warnings in diff summary
 - ✅ **Step F — Build cancellation UX**: Already implemented (stop button in chat panel)
 
+### Completed (Phase 3: Lovable Parity)
+- ✅ **Step 1 — Error locality in auto-heal**: Extracts file:line from ParsedViteError, sends ±20 line window instead of full file
+- ✅ **Step 2 — Conversation branching**: Edit & resend truncates subsequent messages, enabling conversation forking from any point
+- ✅ **Step 3 — Source-mapped visual edits**: Visual edit overlay reads data-source-file/line attributes, passes source location to AI prompts
+- ✅ **Step 4 — Streaming file status**: Live file-by-file progress during generation with checkmarks for completed files
+- ✅ **Step 5 — Workspace layout persistence**: rightTab persisted to localStorage, restored on mount
+- ✅ **Step 6 — Error anti-patterns in auto-heal**: Anti-pattern context from useErrorPatternLearning injected into heal prompts
+
 ### All steps complete ✅
