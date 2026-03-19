@@ -20,6 +20,8 @@ import { CodeDiffViewer } from './CodeDiffViewer';
 import { generateErrorSuggestions, type ParsedViteError } from './parseViteErrors';
 import { InlineSQLRunner } from './InlineSQLRunner';
 import { SUPABASE_SLASH_COMMANDS, type ContextBudgetInfo } from './SupabaseConversational';
+import { generateFollowUpSuggestions } from './generateFollowUpSuggestions';
+import { searchTemplates, TEMPLATE_CATEGORIES, type PromptTemplate } from './promptTemplates';
 import { StarterTemplatePicker } from './StarterTemplatePicker';
 import { MigrationApprovalCard, type MigrationBlock } from './MigrationApprovalCard';
 import { EdgeFunctionCard, type EdgeFunctionBlock } from './EdgeFunctionCard';
@@ -1540,6 +1542,26 @@ export function BuilderChatPanel({
           </div>
         )}
 
+        {/* Wave 5 Step 3: AI Follow-Up Suggestions after generation */}
+        {isCompleted && !isStreaming && isLast && (hasFiles || fileNames.length > 0) && (() => {
+          const followUps = generateFollowUpSuggestions(msg.diffSummary, fileNames);
+          if (followUps.length === 0) return null;
+          return (
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {followUps.map((fu, i) => (
+                <button
+                  key={i}
+                  onClick={() => onSend(fu.prompt)}
+                  className="px-2.5 py-1.5 rounded-lg text-[11px] bg-white/[0.04] border border-white/[0.06] text-white/50 hover:text-white/80 hover:bg-white/[0.08] transition-all flex items-center gap-1.5"
+                >
+                  <span>{fu.icon}</span>
+                  {fu.label}
+                </button>
+              ))}
+            </div>
+          );
+        })()}
+
         {/* Lovable-style plan action bar — Approve, Edit, or Override */}
         {showApproveButton && (
           <motion.div
@@ -2315,13 +2337,50 @@ export function BuilderChatPanel({
               </div>
             )}
 
+            {/* Slash command dropdown */}
+            {input.startsWith('/') && !isGenerating && (
+              <div className="absolute bottom-full left-0 right-0 mb-1 mx-2 bg-[#1a1a22] border border-white/[0.1] rounded-xl shadow-2xl overflow-hidden z-50 max-h-[280px] overflow-y-auto">
+                <div className="px-3 py-2 border-b border-white/[0.06]">
+                  <span className="text-[10px] text-white/30 uppercase tracking-wider font-medium">Prompt Templates</span>
+                </div>
+                {(() => {
+                  const query = input.slice(1);
+                  const results = searchTemplates(query);
+                  if (results.length === 0) return <div className="px-3 py-4 text-[12px] text-white/30 text-center">No matching templates</div>;
+                  let lastCat = '';
+                  return results.map(t => {
+                    const showCat = t.category !== lastCat;
+                    lastCat = t.category;
+                    return (
+                      <div key={t.id}>
+                        {showCat && (
+                          <div className="px-3 py-1.5 text-[9px] text-white/25 uppercase tracking-wider font-medium bg-white/[0.02]">
+                            {TEMPLATE_CATEGORIES.find(c => c.id === t.category)?.icon} {t.category}
+                          </div>
+                        )}
+                        <button
+                          onClick={() => { setInput(t.prompt); setTimeout(() => textareaRef.current?.focus(), 50); }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors text-left"
+                        >
+                          <span>{t.icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium">{t.label}</div>
+                            <div className="text-[10px] text-white/30 truncate">{t.prompt.slice(0, 60)}...</div>
+                          </div>
+                        </button>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            )}
             <textarea
               ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               onPaste={handlePaste}
-              placeholder="Ask UltriumAI..."
+              placeholder="Ask UltriumAI... (type / for templates)"
               rows={3}
               className="flex-1 bg-transparent text-sm text-white/90 placeholder:text-white/35 resize-none outline-none focus:outline-none focus:ring-0 border-none min-h-[72px] max-h-[200px] py-0.5"
             />
