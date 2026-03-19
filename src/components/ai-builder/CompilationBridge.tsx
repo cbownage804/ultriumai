@@ -753,40 +753,28 @@ export function CompilationBridge({
       if (compilationInFlightRef.current) return;
       if (stableHTMLRef.current && !softReloadPendingRef.current) return;
 
-      // ── Early validation gate — skip compile if syntax errors ──
+      // ── Validation gate — SOFT: log warnings but never block compilation ──
+      // Auto-repair already ran inside prepareFilesForCompile. If issues remain,
+      // let Vite handle them — it provides better diagnostics and sometimes compiles
+      // code that our heuristic checks flag as broken.
       if (validateFiles) {
         const currentFiles = filesRef.current;
         const { files: preparedFiles } = prepareFilesForCompile(currentFiles);
         const vResult = validateFiles(preparedFiles);
         const syntaxErrors = vResult.issues.filter(i => i.severity === 'error');
         if (syntaxErrors.length > 0) {
-          console.warn('[CompilationBridge] VALIDATION GATE: skipping compile', {
-            errorCount: syntaxErrors.length,
-            errors: syntaxErrors.slice(0, 3).map(e => ({ file: e.file, message: e.message })),
-          });
+          console.warn('[CompilationBridge] Validation found', syntaxErrors.length, 'issues (soft gate — proceeding to Vite):', 
+            syntaxErrors.slice(0, 3).map(e => ({ file: e.file, message: e.message })),
+          );
+          // Surface as annotations for the editor, but do NOT block compilation
           window.postMessage({
             type: '__BUILD_GATED__',
             payload: {
-              reason: 'syntax_errors',
+              reason: 'syntax_warnings',
               errors: syntaxErrors.map(e => `${e.file}: ${e.message}`),
             },
             source: 'compilation-bridge',
           }, '*');
-          // IMPORTANT: stop "compiling" state immediately
-          transitionCompileState('error', { message: 'Syntax errors in source files', errors: syntaxErrors.map(e => `${e.file}: ${e.message}`) });
-          compilationInFlightRef.current = false;
-
-          if (stableHTMLRef.current) {
-            // Preserve last-known-good preview — don't overwrite
-            return;
-          }
-          // No LKG: promote validating fallback so parent preview never goes blank.
-          setStableHTML(VALIDATING_FALLBACK_HTML);
-          console.info('[CompilationBridge] Showing validation fallback', {
-            htmlLength: VALIDATING_FALLBACK_HTML.length,
-            stableHTMLRef: stableHTMLRef.current ? 'truthy' : 'null',
-          });
-          return;
         }
       }
 
