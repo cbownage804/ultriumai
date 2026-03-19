@@ -2470,13 +2470,63 @@ export function BuilderChatPanel({
                 })()}
               </div>
             )}
+            {/* Wave 10: @-file mention autocomplete */}
+            {showFileMentions && fileMentionSuggestions.length > 0 && (
+              <div className="absolute bottom-full left-0 right-0 mb-1 mx-2 bg-[#1a1a22] border border-white/[0.1] rounded-xl shadow-2xl overflow-hidden z-50 max-h-[200px] overflow-y-auto">
+                <div className="px-3 py-1.5 border-b border-white/[0.06]">
+                  <span className="text-[10px] text-white/30 uppercase tracking-wider font-medium">Mention a file</span>
+                </div>
+                {fileMentionSuggestions.map(f => (
+                  <button
+                    key={f.path}
+                    onClick={() => handleFileMentionSelect(f.path)}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors text-left"
+                  >
+                    <FileCode className="h-3.5 w-3.5 text-white/30 shrink-0" />
+                    <span className="font-mono truncate">{f.shortName}</span>
+                    <span className="text-[10px] text-white/20 ml-auto truncate">{f.path}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {/* Wave 10: Mentioned file chips */}
+            {mentionedFilePaths.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-1.5 shrink-0">
+                {mentionedFilePaths.map(p => (
+                  <span key={p} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-cyan-500/10 border border-cyan-500/20 text-[10px] text-cyan-300 font-mono">
+                    @{p.split('/').pop()}
+                    <button onClick={() => setMentionedFilePaths(prev => prev.filter(x => x !== p))} className="text-cyan-400/50 hover:text-cyan-300">
+                      <X className="h-2.5 w-2.5" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
             <textarea
               ref={textareaRef}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                // Wave 10: Detect @-mention trigger
+                const cursorPos = e.target.selectionStart || 0;
+                const beforeCursor = e.target.value.slice(0, cursorPos);
+                const atIdx = beforeCursor.lastIndexOf('@');
+                if (atIdx >= 0 && projectFiles) {
+                  const afterAt = beforeCursor.slice(atIdx + 1);
+                  if (!afterAt.includes(' ') && afterAt.length < 60) {
+                    setShowFileMentions(true);
+                    setFileMentionQuery(afterAt);
+                    setMentionCursorPos(cursorPos);
+                  } else {
+                    setShowFileMentions(false);
+                  }
+                } else {
+                  setShowFileMentions(false);
+                }
+              }}
               onKeyDown={handleKeyDown}
               onPaste={handlePaste}
-              placeholder="Ask UltriumAI... (type / for templates)"
+              placeholder="Ask UltriumAI... (type / for templates, @ for files)"
               rows={3}
               className="flex-1 bg-transparent text-sm text-white/90 placeholder:text-white/35 resize-none outline-none focus:outline-none focus:ring-0 border-none min-h-[72px] max-h-[200px] py-0.5"
             />

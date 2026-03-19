@@ -588,6 +588,8 @@ export interface ContextBudgetInfo {
   filesOmitted: number;
   isWarning: boolean;
   isCritical: boolean;
+  /** Wave 10: Per-file context breakdown for expandable indicator */
+  fileBreakdown?: { path: string; chars: number; percent: number }[];
 }
 
 export function calculateContextBudget(
