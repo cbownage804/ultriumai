@@ -45,6 +45,7 @@ export const PANEL_KEYS = [
   'showFTS', 'showFacetedFilter', 'showAutocomplete', 'showTagSystem', 'showSEOMeta',
   'showKPIDashboard', 'showAlertingRules', 'showAuditTrail', 'showClickHeatmap', 'showBudgetMonitor',
   'showChangelogAuto', 'showREADMEGen', 'showLicensePicker', 'showOpenAPISpec', 'showProjectHealth',
+  'showComponentIsolation',
   // Non-panel-group panels managed inline
   'showPromptHistory', 'showFileSearch', 'showFileTree', 'showTemplates', 'showShortcuts',
   'showQuickSwitcher', 'showCloudView', 'showDesignView',

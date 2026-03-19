@@ -202,6 +202,7 @@ import {
   DesignSystemPanel as DesignSystemPanelLazy,
   CollaborationPanel as CollaborationPanelLazy,
   APIBuilderPanel as APIBuilderPanelLazy,
+  ComponentIsolationPanel,
 } from './lazyPanels';
 import { useErrorPatternLearning } from '@/hooks/useErrorPatternLearning';
 import { useDeployGate } from './useDeployGate';
@@ -4477,6 +4478,16 @@ export function AIAppBuilderWorkspace() {
         <FinalPolishPanelGroup project={project} upsertFile={upsertFile} activeFile={activeFile} setActiveFile={(path) => setActiveFile(path)} setRightTab={setRightTab} pushUndo={pushUndo} setFiles={setFiles} sendMessage={sendMessage} supabaseConfig={supabaseConfig} stripeConfig={stripeConfig} serviceKeys={serviceKeys} selectedModel={selectedModel} publishedUrl={publishedUrl} hostedPreviewUrl={hostedPreviewUrl} previewSlug={previewSlug} currentProjectId={currentProjectId}
           showChangelogAuto={!!panels.showChangelogAuto} setShowChangelogAuto={setShowChangelogAuto} showREADMEGen={!!panels.showREADMEGen} setShowREADMEGen={setShowREADMEGen} showLicensePicker={!!panels.showLicensePicker} setShowLicensePicker={setShowLicensePicker} showOpenAPISpec={!!panels.showOpenAPISpec} setShowOpenAPISpec={setShowOpenAPISpec} showProjectHealth={!!panels.showProjectHealth} setShowProjectHealth={setShowProjectHealth}
         />
+      )}
+      {panels.showComponentIsolation && (
+        <SafePanel show={true} name="Component Isolation">
+          <ComponentIsolationPanel
+            open={true}
+            onClose={() => panelSetters.showComponentIsolation(false)}
+            files={project.files}
+            onGoToFile={(path) => setActiveFile(path)}
+          />
+        </SafePanel>
       )}
       {pendingConflicts && (
         <FileConflictDialog open={!!pendingConflicts} conflicts={pendingConflicts} onResolve={handleConflictResolve} onCancel={() => setPendingConflicts(null)} />

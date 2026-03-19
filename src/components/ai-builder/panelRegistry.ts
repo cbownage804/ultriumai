@@ -327,6 +327,7 @@ export const PANEL_REGISTRY: PanelEntry[] = [
   { id: 'shortcuts', label: 'Keyboard Shortcuts', icon: Keyboard, category: 'dx', keywords: ['keyboard', 'shortcut', 'hotkey', 'keybind'], stateKey: 'showShortcuts' },
   { id: 'diff-review', label: 'Diff Review', icon: Eye, category: 'edit', keywords: ['diff', 'review', 'changes', 'approve'], stateKey: 'showDiffReview' },
   { id: 'quick-switcher', label: 'Quick File Switcher', icon: Search, category: 'edit', keywords: ['quick', 'switch', 'file', 'jump'], stateKey: 'showQuickSwitcher' },
+  { id: 'component-isolation', label: 'Component Preview', icon: Eye, category: 'testing', keywords: ['component', 'preview', 'isolation', 'storybook', 'props'], stateKey: 'showComponentIsolation' },
 ];
 
 /** Get panels grouped by category */
