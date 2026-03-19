@@ -808,6 +808,16 @@ export function CompilationBridge({
 
     prevFilesDigestRef.current = filesDigest;
 
+    // ── Step 2: Duplicate compile suppression ──
+    // Skip if same digest was just compiled within 2s (StrictMode double-effects, rapid edits)
+    if (
+      filesDigest === lastCompiledDigestRef.current.digest &&
+      Date.now() - lastCompiledDigestRef.current.timestamp < 2000
+    ) {
+      console.info('[CompilationBridge] Skipping duplicate compile (same digest within 2s)');
+      return;
+    }
+
     // Already compiling? Skip.
     if (compilationInFlightRef.current) {
       console.info('[CompilationBridge] Compilation already in flight — marking recompile needed');
