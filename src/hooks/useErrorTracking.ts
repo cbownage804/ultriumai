@@ -20,6 +20,10 @@ export interface ErrorStats {
   errorRate: number;
   topErrors: TrackedError[];
   errorsByHour: { hour: string; count: number }[];
+  /** Error trend: 'rising' if last-hour errors > previous-hour, 'falling' if less, 'stable' otherwise */
+  trend: 'rising' | 'falling' | 'stable';
+  /** True when unresolved errors exceed threshold (10+) */
+  alertThresholdExceeded: boolean;
 }
 
 export function useErrorTracking() {
