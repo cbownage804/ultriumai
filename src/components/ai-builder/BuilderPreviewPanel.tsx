@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import {
   RefreshCw,
-  ArrowLeft, ArrowRight, Lock, Wrench, X, ChevronDown,
+  ArrowLeft, ArrowRight, Lock, ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import previewBgNeon from '@/assets/preview-bg-neon.jpg';
@@ -1060,94 +1060,21 @@ window.addEventListener('message', function(e) {
               style={{ colorScheme: 'light' }}
             />
 
-            {/* Compile error banner on retained preview */}
-            {!effectiveCurrentHtml && compileState === 'error' && compileError && (
-              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/15 border border-red-500/30 backdrop-blur-md max-w-md">
-                <div className="h-2 w-2 rounded-full bg-red-400 shrink-0" />
-                <span className="text-[11px] text-red-300/90 font-medium truncate">
-                  {compileError.message || 'Compile failed'}
-                </span>
-                {onRetryCompile && (
-                  <button onClick={onRetryCompile} className="shrink-0 px-2 py-0.5 rounded bg-red-500/20 hover:bg-red-500/30 text-[10px] text-red-200 transition-colors">
-                    Retry
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* LKG fallback banner */}
+            {/* LKG fallback banner — subtle, non-blocking */}
             {isUsingLKG && !isGenerating && !isCompiling && (
               <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/15 border border-amber-500/25 backdrop-blur-sm">
                 <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
                 <span className="text-[10px] text-amber-300/80 font-medium">Showing previous working version</span>
               </div>
             )}
-
-            {/* Auto-heal summary banner */}
-            {autoHealSummary && !autoHealSummary.resolved && autoHealSummary.attempts >= autoHealSummary.maxAttempts && !isGenerating && (
-              <div className="absolute bottom-14 left-3 right-3 z-20 rounded-lg bg-red-500/10 border border-red-500/20 backdrop-blur-sm p-3 space-y-1">
-                <p className="text-[11px] text-red-300/90 font-medium">Auto-fix exhausted ({autoHealSummary.attempts}/{autoHealSummary.maxAttempts} attempts)</p>
-                {autoHealSummary.lastError && (
-                  <p className="text-[10px] text-red-300/60 font-mono truncate">{autoHealSummary.lastError}</p>
-                )}
-                <p className="text-[10px] text-white/40">Try describing the issue in chat for a manual fix.</p>
-              </div>
-            )}
-
-            {/* Reset to Golden Template button */}
-            {!isGoldenProject && onResetToGolden && !isGenerating && !isCompiling && (
-              <div className="absolute bottom-3 right-3 z-20">
-                <button
-                  onClick={onResetToGolden}
-                  className="px-2.5 py-1.5 text-[10px] rounded-lg bg-white/[0.06] border border-white/[0.08] text-white/40 hover:text-white/70 hover:bg-white/[0.1] transition-all"
-                  title="Reset project to golden template"
-                >
-                  Reset to template
-                </button>
-              </div>
-            )}
           </div>
-        ) : isGenerating || isCompiling ? (
+        ) : (isGenerating || isCompiling || compileState === 'error') ? (
           <SkeletonPreview
             projectFiles={projectFiles}
             completedFileCount={completedFileCount}
             isGenerating={isGenerating}
-            isCompiling={isCompiling}
+            isCompiling={isCompiling || compileState === 'error'}
           />
-        ) : compileState === 'error' ? (
-          /* Compile error on fresh build with no preview — show error + retry instead of empty placeholder */
-          <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden">
-            <img
-              src={previewBgNeon}
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover opacity-20"
-              aria-hidden="true"
-            />
-            <div className="absolute inset-0 bg-black/50" />
-            <div className="relative z-10 space-y-4 px-6 max-w-md">
-              <div className="h-3 w-3 rounded-full bg-amber-400 mx-auto animate-pulse" />
-              <h3 className="font-semibold text-lg text-amber-300/90 tracking-tight">
-                Compilation Failed
-              </h3>
-              <p className="text-sm text-white/50 leading-relaxed">
-                {compileError?.message || 'Compilation failed. Retry compile or reset to template.'}
-              </p>
-              {!!compileError?.errors?.length && (
-                <div className="bg-black/40 rounded-lg p-3 space-y-1 text-left max-h-32 overflow-y-auto">
-                  {compileError.errors.slice(0, 3).map((err, i) => (
-                    <p key={i} className="text-xs text-red-300/70 font-mono break-all">{err}</p>
-                  ))}
-                </div>
-              )}
-              <button
-                onClick={onRetryCompile}
-                className="px-4 py-2 rounded-lg bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-medium transition-colors"
-              >
-                <RefreshCw className="h-3 w-3 inline mr-1.5" />
-                Retry compile
-              </button>
-            </div>
-          </div>
         ) : projectFiles.length > 0 && !isGoldenProject ? (
           <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden">
             <img
@@ -1198,118 +1125,6 @@ window.addEventListener('message', function(e) {
         )}
       </div>
 
-      {/* Transactional build: Repair Failed overlay */}
-      {repairFailed && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#1a1a2e] border border-red-500/30 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="h-2.5 w-2.5 rounded-full bg-red-400" />
-              <h3 className="text-base font-semibold text-red-300">Repair Failed</h3>
-            </div>
-            <p className="text-sm text-white/60 mb-4">
-              We couldn't automatically repair the generated code after 2 attempts.
-            </p>
-            {repairErrors && repairErrors.length > 0 && (
-              <div className="bg-black/40 rounded-lg p-3 mb-4 space-y-1.5 max-h-32 overflow-y-auto">
-                {repairErrors.slice(0, 3).map((err, i) => (
-                  <div key={i} className="text-xs">
-                    <span className="text-red-400 font-mono">{err.file}</span>
-                    <span className="text-white/40 ml-1.5">{err.message}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="flex gap-2">
-              <button onClick={onRetryRepair} className="flex-1 px-3 py-2 rounded-lg bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-medium transition-colors">
-                Retry repair
-              </button>
-              <button onClick={onDiscardChanges} className="flex-1 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white/70 text-xs font-medium transition-colors">
-                Discard changes
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Compile error overlay — shown when compile state machine is in 'error' */}
-      {compileError && !repairFailed && !isGenerating && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-[#1a1a2e] border border-amber-500/30 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-              <h3 className="text-base font-semibold text-amber-300">Compile failed</h3>
-            </div>
-            <p className="text-sm text-white/60 mb-4">
-              {compileError.message}
-            </p>
-            {compileError.errors.length > 0 && (
-              <div className="bg-black/40 rounded-lg p-3 mb-4 space-y-1.5 max-h-32 overflow-y-auto">
-                {compileError.errors.slice(0, 3).map((err, i) => (
-                  <div key={i} className="text-xs text-red-300/80 font-mono">{err}</div>
-                ))}
-              </div>
-            )}
-            <button onClick={onRetryCompile} className="w-full px-3 py-2 rounded-lg bg-amber-600/80 hover:bg-amber-600 text-white text-xs font-medium transition-colors">
-              Retry compile
-            </button>
-          </div>
-        </div>
-      )}
-
-      {errors.length > 0 && errors.some(e => e.type === 'error') && (
-        <div className="relative z-20 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="bg-red-950/95 backdrop-blur-sm border-t border-red-500/30">
-            {/* Error summary bar */}
-            <div className="flex items-center justify-between px-4 py-2.5">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <div className="h-2 w-2 rounded-full bg-red-400 animate-pulse" />
-                  <span className="text-xs font-medium text-red-300">
-                    {errors.filter(e => e.type === 'error').length} error{errors.filter(e => e.type === 'error').length > 1 ? 's' : ''}
-                  </span>
-                </div>
-                <span className="text-[11px] text-red-200/70 truncate">
-                  {errors.find(e => e.type === 'error')?.message?.slice(0, 120)}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                {fixAttemptCount !== undefined && maxFixAttempts !== undefined && fixAttemptCount > 0 && (
-                  <span className="text-[10px] text-red-400/60">
-                    Attempt {fixAttemptCount}/{maxFixAttempts}
-                  </span>
-                )}
-                {onSmartFixError && (
-                  <button
-                    onClick={() => {
-                      const firstError = errors.find(e => e.type === 'error');
-                      if (!firstError) return;
-                      const errorFile = firstError.source && projectFiles
-                        ? projectFiles.find(f => firstError.source?.includes(f.path))
-                        : null;
-                      const ctx = [
-                        `Error: "${firstError.message}"`,
-                        firstError.source ? `Source: ${firstError.source}${firstError.line ? `:${firstError.line}` : ''}` : '',
-                        errorFile ? `\nFile content (${errorFile.path}):\n\`\`\`\n${errorFile.content}\n\`\`\`` : '',
-                      ].filter(Boolean).join('\n');
-                      onSmartFixError(firstError, ctx);
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/30 border border-red-500/40 text-red-100 text-xs font-medium hover:bg-red-500/40 transition-colors"
-                  >
-                    <Wrench className="h-3 w-3" />
-                    Try to fix
-                  </button>
-                )}
-                <button
-                  onClick={() => setErrors([])}
-                  className="h-6 w-6 rounded-md flex items-center justify-center text-red-300/50 hover:text-red-200 hover:bg-red-500/20 transition-colors"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );
