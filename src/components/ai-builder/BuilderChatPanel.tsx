@@ -20,6 +20,8 @@ import { CodeDiffViewer } from './CodeDiffViewer';
 import { generateErrorSuggestions, type ParsedViteError } from './parseViteErrors';
 import { InlineSQLRunner } from './InlineSQLRunner';
 import { SUPABASE_SLASH_COMMANDS, type ContextBudgetInfo } from './SupabaseConversational';
+import { generateFollowUpSuggestions } from './generateFollowUpSuggestions';
+import { searchTemplates, TEMPLATE_CATEGORIES, type PromptTemplate } from './promptTemplates';
 import { StarterTemplatePicker } from './StarterTemplatePicker';
 import { MigrationApprovalCard, type MigrationBlock } from './MigrationApprovalCard';
 import { EdgeFunctionCard, type EdgeFunctionBlock } from './EdgeFunctionCard';
