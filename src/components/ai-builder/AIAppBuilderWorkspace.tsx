@@ -3213,9 +3213,13 @@ export function AIAppBuilderWorkspace() {
     setConfirmAction({
       title: 'Start new conversation?',
       description: 'This will clear all messages but keep your project files intact.',
-      onConfirm: () => { clearChat(); },
+      onConfirm: () => {
+        // Wave 9: Save current conversation before clearing
+        conversationHistory.saveCurrentConversation(messages, currentProjectId || undefined);
+        clearChat();
+      },
     });
-  }, [clearChat]);
+  }, [clearChat, messages, conversationHistory, currentProjectId]);
 
   const handleRename = async () => {
     const newName = editName.trim();
