@@ -1946,7 +1946,13 @@ export function AIAppBuilderWorkspace() {
         const modified = diffs.filter((d: any) => d.type !== 'added' && previousFiles.some(pf => pf.path === d.path)).map((d: any) => d.path);
         const deleted = previousFiles.filter(pf => !latestFiles.some(lf => lf.path === pf.path)).map(pf => pf.path);
         const totalLinesChanged = diffs.reduce((sum: number, d: any) => sum + (d.additions || 0) + (d.deletions || 0), 0);
-        const diffSummary = { added, modified, deleted, totalLinesChanged };
+        // Step E: Import graph validation — detect missing imports and auto-stub
+        const { stubs: missingImportStubs } = generateMissingImportStubs(latestFiles);
+        const missingImports = missingImportStubs.length > 0 ? missingImportStubs.map(s => s.split(' (stub')[0]) : [];
+        const diffSummary = { added, modified, deleted, totalLinesChanged, missingImports };
+        if (missingImports.length > 0) {
+          console.warn('[PostGen] Step E: Missing imports auto-stubbed:', missingImports);
+        }
         setMessages(prev => prev.map((m, i) => i === prev.length - 1 ? { ...m, commitMessage: commitMsg, diffSummary } : m));
       }
       // Post-gen analysis completely disabled to prevent browser freeze.
