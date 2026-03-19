@@ -1053,13 +1053,19 @@ export function useAIAppBuilder() {
       toast.info('Generating image...', { duration: 4000 });
       setThinkingPhase('analyzing');
       try {
-        const { data: imgData, error: imgError } = await supabase.functions.invoke('image-generation', {
-          body: { prompt: imageGenIntent.prompt, quality: imageGenIntent.quality },
-        });
+        const imageGenerationResult = await Promise.race([
+          supabase.functions.invoke('image-generation', {
+            body: { prompt: imageGenIntent.prompt, quality: imageGenIntent.quality },
+          }),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('Image generation timed out')), 12000)
+          ),
+        ]);
+
+        const { data: imgData, error: imgError } = imageGenerationResult;
         if (!imgError && imgData?.image) {
           generatedImageDataUrls = [...generatedImageDataUrls, imgData.image];
           toast.success('Image generated! Embedding in your project...');
-          // Inject context so the AI knows about the generated image
           systemParts.push(`[AI-GENERATED IMAGE]\nThe user asked to generate an image. An image has been generated and is attached as a data URL in this message.\nYou MUST use this generated image in the project by embedding the exact data URL in an <img> tag.\nPrompt used: "${imageGenIntent.prompt}"\n\nDo NOT generate a placeholder SVG or icon — use the ACTUAL generated image data URL provided.`);
         } else {
           console.warn('Image generation failed:', imgError);
