@@ -70,6 +70,8 @@ export function PublishPanel({ open, onClose, publishedUrl, previewUrl, projectN
 
   const [smokeTestState, setSmokeTestState] = useState<'idle' | 'running' | 'passed' | 'failed'>('idle');
   const [smokeTestResults, setSmokeTestResults] = useState<DeployGateResult | null>(null);
+  const [reviewResult, setReviewResult] = useState<ReviewResult | null>(null);
+  const [showReview, setShowReview] = useState(false);
 
   const hasIntegrations = !!(supabaseConfig || stripeConfig || (serviceKeys && serviceKeys.length > 0));
 
