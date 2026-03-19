@@ -3801,7 +3801,7 @@ export function AIAppBuilderWorkspace() {
                   <>
                     <FileTabBar openPaths={project.openFilePaths} activePath={streamingFilePathRef.current || project.activeFilePath} dirtyFiles={dirtyFiles} streamingFilePath={streamingFilePathRef.current} onSelect={(path) => setActiveFile(path)} onClose={(path) => closeFile(path)} onReorder={reorderOpenFiles} />
                     <div className="flex-1 min-h-0">
-                      <StreamingCodeEditor isStreamingPreview={isStreamingPreview} partialFilesRef={partialFilesRef} activeFile={activeFile} activeFilePath={project.activeFilePath} onContentChange={(path, content) => { upsertFile(path, content); setDirtyFiles(prev => new Set(prev).add(path)); }} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} onStreamingFileChange={handleStreamingFileChange} />
+                      <StreamingCodeEditor isStreamingPreview={isStreamingPreview} partialFilesRef={partialFilesRef} activeFile={activeFile} activeFilePath={project.activeFilePath} onContentChange={(path, content) => { upsertFile(path, content); setDirtyFiles(prev => new Set(prev).add(path)); }} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} onStreamingFileChange={handleStreamingFileChange} buildErrorMarkers={buildErrorMarkers} />
                     </div>
                   </>
                 )}
