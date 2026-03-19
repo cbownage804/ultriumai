@@ -45,12 +45,17 @@ const OVERLAY_SCRIPT = `
 
   window.addEventListener('error',function(e){
     if(e.message==='ResizeObserver loop') return;
+    if(/ResizeObserver/.test(e.message||'')) return;
     addError(e.message||'Unknown error',e.filename,e.lineno);
+    // Forward to parent for auto-heal
+    window.parent.postMessage({type:'__RUNTIME_ERROR__',message:e.message||'Unknown error',source:e.filename||'',line:e.lineno||0},'*');
   });
 
   window.addEventListener('unhandledrejection',function(e){
     var msg=e.reason?(e.reason.message||String(e.reason)):'Unhandled promise rejection';
     addError(msg,'','');
+    // Forward to parent for auto-heal
+    window.parent.postMessage({type:'__RUNTIME_ERROR__',message:msg,source:'',line:0},'*');
   });
 })();
 </script>`;

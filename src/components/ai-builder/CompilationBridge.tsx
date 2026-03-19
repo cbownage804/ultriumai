@@ -176,7 +176,7 @@ export function CompilationBridge({
   const { injectSmokeTests, runSmokeTests } = useDeployGate();
   const injectSmokeTestsRef = useRef(injectSmokeTests);
   injectSmokeTestsRef.current = injectSmokeTests;
-  // Start monitoring on mount
+  // Start monitoring on mount + runtime error forwarding
   useEffect(() => {
     const cleanup = startMonitoring();
     onHealthIssue((issue) => {
@@ -193,7 +193,29 @@ export function CompilationBridge({
         });
       }
     });
-    return cleanup;
+
+    // ── Runtime error forwarding: capture iframe errors and surface to auto-heal ──
+    const runtimeErrorHandler = (event: MessageEvent) => {
+      if (event.data?.type !== '__RUNTIME_ERROR__') return;
+      const { message, source, line } = event.data;
+      // Ignore noisy errors
+      if (/ResizeObserver|Script error|Loading chunk/i.test(message)) return;
+      console.warn('[CompilationBridge] Runtime error from preview:', message, source, line);
+      // Surface as compile error so auto-heal can pick it up
+      onCompileStateChangeRef.current?.('error', {
+        message: `Runtime error: ${message}`,
+        errors: [
+          source && line ? `${source}:${line}: ${message}` : message,
+          'The app compiled successfully but crashed at runtime.',
+        ],
+      });
+    };
+    window.addEventListener('message', runtimeErrorHandler);
+
+    return () => {
+      cleanup();
+      window.removeEventListener('message', runtimeErrorHandler);
+    };
   }, [startMonitoring, onHealthIssue]);
 
   // Stabilize function refs to prevent effect re-fires

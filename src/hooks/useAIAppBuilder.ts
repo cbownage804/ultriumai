@@ -1084,6 +1084,9 @@ export function useAIAppBuilder() {
       }
     }
 
+    // ── Anti-pattern injection: inject learned error patterns into system prompt ──
+    // (Consumer must call getAntiPatternPrompt() from useErrorPatternLearning and pass as knowledgeContext)
+
     // ── Safe Output Contract ──
     systemParts.push(`[SAFE OUTPUT CONTRACT — MANDATORY]
 - NEVER generate inline <svg> markup in JSX/TSX files. Use lucide-react icons instead: import { IconName } from 'lucide-react';
