@@ -112,6 +112,8 @@ import {
   MonetizationPanelGroup, IntegrationPanelGroup, InfraPanelGroup,
 } from './panel-groups';
 import { StreamingCodeEditor } from './StreamingCodeEditor';
+import { QuickSettingsBar } from './QuickSettingsBar';
+import { useSmartFileCreation } from './useSmartFileCreation';
 
 import {
   PromptHistoryPanel, UndoPreviewPopover, BuilderChatPanel, BuilderPreviewPanel,
