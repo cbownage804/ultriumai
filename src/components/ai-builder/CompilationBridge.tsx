@@ -493,6 +493,7 @@ export function CompilationBridge({
     const BRIDGE_TIMEOUT = 30_000;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
+    setCompilePhase('bundling');
     try {
       const workerTimeout = new Promise<null>((resolve) => {
         timeoutId = setTimeout(() => {
