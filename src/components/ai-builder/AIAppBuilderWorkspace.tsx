@@ -1449,7 +1449,7 @@ export function AIAppBuilderWorkspace() {
           .filter((f): f is { path: string; content: string } => !!f);
 
         // Step 1: Parse Vite errors for error locality (file:line windows)
-        const { parseViteErrors: parseErrors } = await import(/* @vite-ignore */ './parseViteErrors');
+        const parsedErrors = parseViteErrors(error.errors);
         const parsedErrors = parseViteErrors(error.errors);
         const antiPatternCtx = errorPatterns.getAntiPatternPrompt();
 
