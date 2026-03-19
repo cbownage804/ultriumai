@@ -1,50 +1,46 @@
 
 
-# Lovable Parity — Wave 11
+# Lovable Parity — Wave 12
 
-Six improvements targeting collaboration, debugging depth, and production readiness.
-
----
-
-## 1. Image/Screenshot Attachment in Chat Input ✅
-
-**Status**: Already integrated. `BuilderChatPanel` supports clipboard paste, drag-and-drop, and file upload for images. The Plus menu provides Camera (screenshot capture) and Attach options.
+Six improvements targeting editor-integrated AI and developer experience.
 
 ---
 
-## 2. Per-File Undo (Granular Revert) ✅
+## 1. Inline AI Chat (Cmd+I) ✅
 
-**Status**: Implemented via `usePerFileHistory.ts`. Tracks last 10 versions per file. `FileTabBar` now shows an undo button on hover for files with history.
-
-**Files**: `src/hooks/usePerFileHistory.ts` (new), `src/components/ai-builder/FileTabBar.tsx` (undo button)
+**Status**: Already integrated. `CodeEditor` registers `Cmd+I` keybinding that triggers `onTriggerInlineEdit`. `InlineChatWidget` renders as a floating input. `useInlineAIEdit` manages state, prompt submission, and suggestion acceptance. Wired end-to-end in `AIAppBuilderWorkspace`.
 
 ---
 
-## 3. Build Error Quick-Fix Suggestions ✅
+## 2. Branch/Fork Conversations ✅
 
-**Status**: `ConsolePanel` now renders quick-fix chips in the Problems tab when `buildErrors` are present. Uses `generateErrorSuggestions()` from `parseViteErrors.ts` to classify missing imports, modules, type mismatches, and syntax errors.
-
-**Files**: `src/components/ai-builder/ConsolePanel.tsx` (quick-fix chip rendering)
+**Status**: Already integrated. `useBranching` manages file branches. `BuilderChatPanel` supports `conversationForks`, `onForkConversation`, `onSwitchFork`, `onDeleteFork`, `onRevertToMessage`, and `onForkFromMessage` props. `ConversationDrawer` provides conversation history UI.
 
 ---
 
-## 4. Live Collaboration Awareness ✅
+## 3. Environment Variable Manager ✅
 
-**Status**: `CollaborativePresence.tsx` already integrates with Supabase Realtime Presence, broadcasting user presence with active file indicators and rendering avatars with editing status.
-
----
-
-## 5. Dependency Auto-Install from Import ✅
-
-**Status**: Implemented via `useAutoDepInstall.ts`. Scans files for bare imports not in the CDN package registry and surfaces missing dependency suggestions.
-
-**Files**: `src/hooks/useAutoDepInstall.ts` (new)
+**Status**: Already integrated. `EnvVarsPanel` provides dedicated UI for managing env vars with secret masking (eye toggle), add/remove, and `window.ENV` injection docs.
 
 ---
 
-## 6. Chat Message Search and Filter ✅
+## 4. Component Preview Isolation ✅
 
-**Status**: Already implemented in `BuilderChatPanel`. Search icon appears when >3 messages exist, with keyword filtering, result count, and message content matching.
+**Status**: Implemented. `ComponentIsolationPanel` provides Storybook-like isolated component preview. Scans project files for exported React components, extracts prop interfaces, and lets users configure prop values with type-aware controls (string/number/boolean). Generates preview code and links to source files.
+
+**Files**: `src/components/ai-builder/ComponentIsolationPanel.tsx` (new), `lazyPanels.ts`, `panelKeys.ts`, `panelRegistry.ts`, `AIAppBuilderWorkspace.tsx`
+
+---
+
+## 5. AI-Generated Test Suggestions ✅
+
+**Status**: Already integrated. `useAutoTestGenerator` runs post-build test generation via `CompilationBridge`. `TestGeneratorPanel` provides UI for selecting testable files and generating Vitest tests.
+
+---
+
+## 6. Drag-and-Drop UI Prototyping ✅
+
+**Status**: Already integrated. `PageBuilderPanel` provides visual page scaffolding with section-based layout building. `ComponentPalette` offers searchable component categories for insertion. Both wired in `UIBuildingPanelGroup`.
 
 ---
 
@@ -52,9 +48,9 @@ Six improvements targeting collaboration, debugging depth, and production readin
 
 | Step | Impact | Effort | Status |
 |------|--------|--------|--------|
-| 1 — Image attachment in chat | High (vision) | Low | ✅ |
-| 3 — Build error quick-fixes | High (debugging) | Medium | ✅ |
-| 5 — Auto dep install | Medium (DX) | Low | ✅ |
-| 2 — Per-file undo | Medium (safety) | Low | ✅ |
-| 6 — Chat message search | Medium (navigation) | Low | ✅ |
-| 4 — Live collaboration | Low (multiplayer) | Medium | ✅ |
+| 1 — Inline AI Chat | High (editing) | Low | ✅ |
+| 4 — Component Preview | High (DX) | Medium | ✅ |
+| 3 — Env Variable Manager | Medium (config) | Low | ✅ |
+| 5 — AI-Generated Tests | Medium (quality) | Low | ✅ |
+| 2 — Branch/Fork | Medium (exploration) | Low | ✅ |
+| 6 — Drag-and-Drop UI | Low (prototyping) | Medium | ✅ |
