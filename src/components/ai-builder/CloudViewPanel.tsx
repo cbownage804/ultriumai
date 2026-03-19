@@ -33,7 +33,7 @@ function PanelFallback() {
   );
 }
 
-export function CloudViewPanel({ isOpen, onClose, supabaseConfig, onOpenPanel }: CloudViewPanelProps) {
+export function CloudViewPanel({ isOpen, onClose, supabaseConfig, onOpenPanel, onRefreshTypes }: CloudViewPanelProps) {
   const [activeTab, setActiveTab] = useState<CloudTab>('database');
 
   if (!isOpen) return null;
