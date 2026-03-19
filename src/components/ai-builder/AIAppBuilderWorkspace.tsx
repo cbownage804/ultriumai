@@ -1424,7 +1424,7 @@ export function AIAppBuilderWorkspace() {
       // Record error pattern for anti-pattern injection
       errorPatterns.recordError(error.message);
 
-      if (autoHeal.shouldAutoHeal(error.message)) {
+      if (autoHealEnabled && autoHeal.shouldAutoHeal(error.message)) {
         const diffContext = lkgDiff.getErrorContext(project.files, error.message);
         
         // Extract failing file paths from error messages and include their full content
