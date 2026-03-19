@@ -72,7 +72,10 @@ interface CompilationBridgeProps {
   onBuildSuccess?: (files: ProjectFile[]) => void;
 }
 
-export const ERROR_FALLBACK_HTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Compilation Error</title><style>*{margin:0;padding:0;box-sizing:border-box}body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0a0a14;color:#fff;font-family:system-ui,sans-serif}.card{text-align:center;max-width:440px;padding:2rem}h1{font-size:1.5rem;margin-bottom:1rem;color:#f87171}p{color:#ffffff90;line-height:1.6;margin-bottom:0.5rem}code{background:#1e1e2e;padding:2px 6px;border-radius:4px;font-size:0.85em}</style></head><body><div class="card"><h1>⚠️ Compilation Error</h1><p>Your project files were generated but could not be compiled into a preview.</p><p>Check that your project has an <code>index.html</code> file and try regenerating.</p></div></body></html>`;
+// ERROR_FALLBACK_HTML is retained only as a type sentinel — it is NEVER set as stableHTML.
+// Instead, the system always preserves the Last Known Good (LKG) preview or shows null
+// (which renders the skeleton/background in BuilderPreviewPanel).
+export const ERROR_FALLBACK_HTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Compilation Error</title><meta name="ai-builder-fallback" content="error" /><style>*{margin:0;padding:0;box-sizing:border-box}body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0a0a14;color:#fff;font-family:system-ui,sans-serif}.card{text-align:center;max-width:440px;padding:2rem}h1{font-size:1.5rem;margin-bottom:1rem;color:#f87171}p{color:#ffffff90;line-height:1.6;margin-bottom:0.5rem}code{background:#1e1e2e;padding:2px 6px;border-radius:4px;font-size:0.85em}</style></head><body><div class="card"><h1>⚠️ Compilation Error</h1><p>Your project files were generated but could not be compiled into a preview.</p><p>Check that your project has an <code>index.html</code> file and try regenerating.</p></div></body></html>`;
 
 export const VALIDATING_FALLBACK_HTML = `<!doctype html><html><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0" /><meta name="ai-builder-fallback" content="validating" /><title>Validating…</title><style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0a0a14;color:#fff;font-family:system-ui,sans-serif}.card{max-width:520px;padding:24px;text-align:center}.spinner{width:22px;height:22px;border:2px solid #ffffff2a;border-top-color:#a78bfa;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}@keyframes spin{to{transform:rotate(360deg)}}h1{font-size:18px;margin:0 0 8px;color:#a78bfa}p{margin:0;color:#ffffff80;line-height:1.5}</style></head><body><div class="card"><div class="spinner"></div><h1>Validating generated code…</h1><p>Syntax issues were detected. We're preparing an automatic repair.</p></div></body></html>`;
 
@@ -255,11 +258,44 @@ export function CompilationBridge({
   // back to idle + placeholder when files are still golden/default.
   const hasEverGeneratedRef = useRef(false);
 
-  // ── LKG sessionStorage persistence ──
+  // ── LKG persistence: IndexedDB + sessionStorage ──
   const LKG_STORAGE_KEY = 'ai-builder-lkg-preview';
+  const LKG_IDB_KEY = 'ai-builder-lkg-preview';
   
-  // On mount: restore LKG from sessionStorage
+  // IndexedDB helpers (fire-and-forget, non-blocking)
+  const openLKGDB = useCallback((): Promise<IDBDatabase> => {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open('ai-builder-lkg', 1);
+      req.onupgradeneeded = () => req.result.createObjectStore('lkg');
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }, []);
+
+  const saveLKGToIDB = useCallback(async (html: string) => {
+    try {
+      const db = await openLKGDB();
+      const tx = db.transaction('lkg', 'readwrite');
+      tx.objectStore('lkg').put(html, LKG_IDB_KEY);
+      db.close();
+    } catch {}
+  }, [openLKGDB]);
+
+  const loadLKGFromIDB = useCallback(async (): Promise<string | null> => {
+    try {
+      const db = await openLKGDB();
+      return new Promise((resolve) => {
+        const tx = db.transaction('lkg', 'readonly');
+        const req = tx.objectStore('lkg').get(LKG_IDB_KEY);
+        req.onsuccess = () => { db.close(); resolve(req.result || null); };
+        req.onerror = () => { db.close(); resolve(null); };
+      });
+    } catch { return null; }
+  }, [openLKGDB]);
+
+  // On mount: restore LKG from sessionStorage (fast) then upgrade from IndexedDB (durable)
   useEffect(() => {
+    // Fast path: sessionStorage
     try {
       const cached = sessionStorage.getItem(LKG_STORAGE_KEY);
       if (cached && isPreviewValid(cached) && !stableHTMLRef.current) {
@@ -271,24 +307,40 @@ export function CompilationBridge({
         onCompilingChangeRef.current?.(false);
       }
     } catch {}
+    // Slow path: IndexedDB (more durable, survives tab close)
+    loadLKGFromIDB().then(idbHtml => {
+      if (idbHtml && isPreviewValid(idbHtml) && !stableHTMLRef.current) {
+        console.info('[CompilationBridge] Restored LKG from IndexedDB:', idbHtml.length, 'chars');
+        setStableHTMLLocal(idbHtml);
+        stableHTMLRef.current = idbHtml;
+        onStableHTML(idbHtml);
+        onCompileStateChangeRef.current?.('success');
+        onCompilingChangeRef.current?.(false);
+      }
+    });
   }, []);
 
   // ── stableHTML state ──
   const [stableHTML, setStableHTMLLocal] = useState<string | null>(null);
   const stableHTMLRef = useRef<string | null>(null);
   const setStableHTML = useCallback((html: string | null) => {
+    // CRITICAL: Never store fallback/error HTML as stableHTML
+    if (html && (html.includes('ai-builder-fallback') || html.includes('Compilation Error'))) {
+      console.warn('[CompilationBridge] Blocked fallback HTML from being set as stableHTML');
+      return; // Silently reject — keep current LKG
+    }
+    
     console.info('[CompilationBridge] setStableHTML:', html ? `${html.length} chars` : 'null');
     setStableHTMLLocal(html);
     stableHTMLRef.current = html;
     onStableHTML(html);
     
-    // Persist to sessionStorage on success (skip fallback/error HTML)
-    if (html && isPreviewValid(html) && !html.includes('ai-builder-fallback')) {
-      try {
-        sessionStorage.setItem(LKG_STORAGE_KEY, html);
-      } catch {}
+    // Persist valid HTML to both storage layers
+    if (html && isPreviewValid(html)) {
+      try { sessionStorage.setItem(LKG_STORAGE_KEY, html); } catch {}
+      saveLKGToIDB(html);
     }
-  }, [onStableHTML]);
+  }, [onStableHTML, saveLKGToIDB]);
 
   // ── SINGLE in-flight guard — replaces all previous lock/attempted/digest refs ──
   const compilationInFlightRef = useRef(false);
@@ -750,40 +802,28 @@ export function CompilationBridge({
       if (compilationInFlightRef.current) return;
       if (stableHTMLRef.current && !softReloadPendingRef.current) return;
 
-      // ── Early validation gate — skip compile if syntax errors ──
+      // ── Validation gate — SOFT: log warnings but never block compilation ──
+      // Auto-repair already ran inside prepareFilesForCompile. If issues remain,
+      // let Vite handle them — it provides better diagnostics and sometimes compiles
+      // code that our heuristic checks flag as broken.
       if (validateFiles) {
         const currentFiles = filesRef.current;
         const { files: preparedFiles } = prepareFilesForCompile(currentFiles);
         const vResult = validateFiles(preparedFiles);
         const syntaxErrors = vResult.issues.filter(i => i.severity === 'error');
         if (syntaxErrors.length > 0) {
-          console.warn('[CompilationBridge] VALIDATION GATE: skipping compile', {
-            errorCount: syntaxErrors.length,
-            errors: syntaxErrors.slice(0, 3).map(e => ({ file: e.file, message: e.message })),
-          });
+          console.warn('[CompilationBridge] Validation found', syntaxErrors.length, 'issues (soft gate — proceeding to Vite):', 
+            syntaxErrors.slice(0, 3).map(e => ({ file: e.file, message: e.message })),
+          );
+          // Surface as annotations for the editor, but do NOT block compilation
           window.postMessage({
             type: '__BUILD_GATED__',
             payload: {
-              reason: 'syntax_errors',
+              reason: 'syntax_warnings',
               errors: syntaxErrors.map(e => `${e.file}: ${e.message}`),
             },
             source: 'compilation-bridge',
           }, '*');
-          // IMPORTANT: stop "compiling" state immediately
-          transitionCompileState('error', { message: 'Syntax errors in source files', errors: syntaxErrors.map(e => `${e.file}: ${e.message}`) });
-          compilationInFlightRef.current = false;
-
-          if (stableHTMLRef.current) {
-            // Preserve last-known-good preview — don't overwrite
-            return;
-          }
-          // No LKG: promote validating fallback so parent preview never goes blank.
-          setStableHTML(VALIDATING_FALLBACK_HTML);
-          console.info('[CompilationBridge] Showing validation fallback', {
-            htmlLength: VALIDATING_FALLBACK_HTML.length,
-            stableHTMLRef: stableHTMLRef.current ? 'truthy' : 'null',
-          });
-          return;
         }
       }
 
@@ -812,11 +852,7 @@ export function CompilationBridge({
           compileRunIdRef.current++;
           compilationInFlightRef.current = false;
           transitionCompileState('error', { message: 'Compile safety timeout exceeded', errors: ['Compilation took too long and was aborted'] });
-          if (!stableHTMLRef.current || !isPreviewValid(stableHTMLRef.current)) {
-            setLiveCompiledHTML(ERROR_FALLBACK_HTML);
-            setStableHTML(ERROR_FALLBACK_HTML);
-          }
-          // else: LKG is valid, keep it
+          // LKG preserved — never overwrite with fallback HTML
         }
       }, COMPILE_SAFETY_TIMEOUT_MS);
 
@@ -838,13 +874,37 @@ export function CompilationBridge({
 
         console.info('[CompilationBridge] compile tier start', { runId: thisRunId, ms: Math.round(performance.now() - t0) });
         
-        // ── Hard timeout: prevent infinite "Compiling…" ──
-        const result = await Promise.race([
-          runCompile(),
-          new Promise<null>((_, reject) =>
-            setTimeout(() => reject(new Error('Compile timeout — exceeded ' + COMPILE_HARD_TIMEOUT_MS + 'ms')), COMPILE_HARD_TIMEOUT_MS)
-          ),
-        ]);
+        // ── Compile with auto-retry for transient failures ──
+        const MAX_RETRIES = 2;
+        let result: string | null = null;
+        let lastError: Error | null = null;
+
+        for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+          if (thisRunId !== compileRunIdRef.current) break; // Stale
+          try {
+            result = await Promise.race([
+              runCompile(),
+              new Promise<null>((_, reject) =>
+                setTimeout(() => reject(new Error('Compile timeout — exceeded ' + COMPILE_HARD_TIMEOUT_MS + 'ms')), COMPILE_HARD_TIMEOUT_MS)
+              ),
+            ]);
+            lastError = null;
+            break; // Success
+          } catch (err) {
+            lastError = err instanceof Error ? err : new Error(String(err));
+            if (isAbortError(err)) throw err; // Don't retry aborts
+            const msg = lastError.message.toLowerCase();
+            const isTransient = msg.includes('timeout') || msg.includes('fetch') || msg.includes('network') 
+              || msg.includes('503') || msg.includes('502') || msg.includes('unavailable')
+              || msg.includes('econnrefused') || msg.includes('enotfound');
+            if (!isTransient || attempt >= MAX_RETRIES) {
+              throw lastError; // Non-transient or exhausted retries
+            }
+            const backoffMs = (attempt + 1) * 2000; // 2s, 4s
+            console.warn(`[CompilationBridge] Transient failure (attempt ${attempt + 1}/${MAX_RETRIES + 1}) — retrying in ${backoffMs}ms:`, lastError.message);
+            await new Promise(r => setTimeout(r, backoffMs));
+          }
+        }
         console.info('[CompilationBridge] compile resolved', { runId: thisRunId, ms: Math.round(performance.now() - t0) });
 
         // ── Stale run-ID check — discard if a newer compile was started ──
@@ -864,10 +924,7 @@ export function CompilationBridge({
           const looksLikeViteDev = /\/@vite\/client|import\.meta\.hot\b|__vite_plugin_react_preamble_installed__/.test(result);
           if (looksLikeViteDev) {
             console.warn('[CompilationBridge] BUILD GATED: dev client detected in output');
-            if (!stableHTMLRef.current || !isPreviewValid(stableHTMLRef.current)) {
-              setLiveCompiledHTML(ERROR_FALLBACK_HTML);
-              setStableHTML(ERROR_FALLBACK_HTML);
-            }
+            // LKG preserved — never overwrite with fallback HTML
             transitionCompileState('error', { message: 'Dev client detected in output', errors: ['Compiled output contains Vite dev/HMR client'] });
             return; // Keep LKG when available
           }
@@ -907,20 +964,15 @@ export function CompilationBridge({
             if (!summary.hasDoctype) reasons.push('Missing <!DOCTYPE> or <html> tag');
             if (!summary.hasMount) reasons.push('Missing mount point (<div id="root"> or <div id="app">)');
             if (summary.isFallback) reasons.push('Output contains error/fallback sentinel');
-            if (!stableHTMLRef.current || !isPreviewValid(stableHTMLRef.current)) {
-              setLiveCompiledHTML(ERROR_FALLBACK_HTML);
-              setStableHTML(ERROR_FALLBACK_HTML);
-            }
+            // LKG preserved — never overwrite with fallback HTML
             transitionCompileState('error', { message: 'Invalid preview HTML', errors: reasons.length ? reasons : ['Compiled HTML failed validation'] });
           }
         } else {
-          // Compilation returned null — keep LKG if we have one, otherwise show error
+          // Compilation returned null — keep LKG, or null (skeleton shows)
           if (stableHTMLRef.current && isPreviewValid(stableHTMLRef.current)) {
             console.warn('[CompilationBridge] Compilation returned null — preserving LKG preview');
           } else {
-            console.warn('[CompilationBridge] Compilation returned null, no LKG — showing error fallback');
-            setLiveCompiledHTML(ERROR_FALLBACK_HTML);
-            setStableHTML(ERROR_FALLBACK_HTML);
+            console.warn('[CompilationBridge] Compilation returned null, no LKG — skeleton will show');
           }
           transitionCompileState('error', { message: 'Compilation returned empty result', errors: ['Compiler produced no output'] });
         }
@@ -945,8 +997,7 @@ export function CompilationBridge({
             if (stableHTMLRef.current && isPreviewValid(stableHTMLRef.current)) {
               console.warn('[CompilationBridge] Compile crashed — preserving LKG preview');
             } else {
-              setLiveCompiledHTML(ERROR_FALLBACK_HTML);
-              setStableHTML(ERROR_FALLBACK_HTML);
+              console.warn('[CompilationBridge] Compile crashed, no LKG — skeleton will show');
             }
             transitionCompileState('error', {
               message: structuredErrors[0] || 'Compilation failed',
