@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Terminal, Trash2, AlertTriangle, XCircle, Info, ChevronDown, ChevronUp, Wrench, Globe, Bug, DollarSign, ScrollText, GripHorizontal, Play } from 'lucide-react';
+import { Terminal, Trash2, AlertTriangle, XCircle, Info, ChevronDown, ChevronUp, Wrench, Globe, Bug, DollarSign, ScrollText, GripHorizontal, Play, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { generateErrorSuggestions, parseViteErrors, type ParsedViteError } from './parseViteErrors';
 
 export interface ConsoleEntry {
   id: string;
