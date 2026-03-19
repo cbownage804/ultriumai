@@ -61,4 +61,12 @@
 - ✅ **Step 5 — Responsive preview sync with chat**: Current viewport mode injected into AI prompt context for viewport-aware generation
 - ✅ **Step 6 — Quick actions from empty state**: WelcomeOverlay enhanced with contextual quick-action chips (Add landing page, Set up auth, etc.)
 
+### Completed (Phase 8: Lovable Parity — Wave 7)
+- ✅ **Step 1 — Supabase type generation**: Auto-generates TypeScript types from schema on connect + "Refresh Types" button in Cloud Database panel
+- ✅ **Step 2 — Persistent error log with source navigation**: Console entries have clickable source file:line links for one-click editor navigation
+- ✅ **Step 3 — Pre-publish code review**: Static analysis (hardcoded secrets, console.log, empty catch blocks, TODOs, missing error boundaries) with score and fix prompts in PublishPanel
+- ✅ **Step 4 — Live preview error overlay with Fix with AI**: Runtime error overlay now includes "Fix with AI" button that triggers auto-fix via postMessage
+- ✅ **Step 5 — Smart file grouping**: ProjectFileTree already implements nested collapsible folder tree with file counts
+- ✅ **Step 6 — Keyboard shortcuts**: Cmd+B, Cmd+J, Cmd+., Cmd+`, Cmd+Shift+E already registered and documented
+
 ### All steps complete ✅
