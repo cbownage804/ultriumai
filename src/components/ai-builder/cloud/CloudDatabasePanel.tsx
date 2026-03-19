@@ -10,6 +10,7 @@ import { createClient } from '@supabase/supabase-js';
 interface CloudDatabasePanelProps {
   supabaseUrl: string;
   supabaseKey: string;
+  onRefreshTypes?: () => void;
 }
 
 interface TableInfo {
