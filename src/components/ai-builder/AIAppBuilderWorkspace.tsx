@@ -3467,6 +3467,12 @@ export function AIAppBuilderWorkspace() {
     };
   }, [compileState, compileError]);
 
+  // Wave 3: Parse build errors for smart follow-up suggestions
+  const parsedBuildErrors = useMemo(() => {
+    if (!compileError?.errors?.length) return undefined;
+    return parseViteErrors(compileError.errors);
+  }, [compileError]);
+
   // Track modified file paths from last generation
   const modifiedPathsRef = useRef<Set<string>>(new Set());
   const prevFileSnapshotRef = useRef<Map<string, string>>(new Map());
