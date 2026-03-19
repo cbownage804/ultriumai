@@ -4478,6 +4478,16 @@ export function AIAppBuilderWorkspace() {
           showChangelogAuto={!!panels.showChangelogAuto} setShowChangelogAuto={setShowChangelogAuto} showREADMEGen={!!panels.showREADMEGen} setShowREADMEGen={setShowREADMEGen} showLicensePicker={!!panels.showLicensePicker} setShowLicensePicker={setShowLicensePicker} showOpenAPISpec={!!panels.showOpenAPISpec} setShowOpenAPISpec={setShowOpenAPISpec} showProjectHealth={!!panels.showProjectHealth} setShowProjectHealth={setShowProjectHealth}
         />
       )}
+      {panels.showComponentIsolation && (
+        <SafePanel show={true} name="Component Isolation">
+          <ComponentIsolationPanel
+            open={true}
+            onClose={() => panelSetters.showComponentIsolation(false)}
+            files={project.files}
+            onGoToFile={(path) => setActiveFile(path)}
+          />
+        </SafePanel>
+      )}
       {pendingConflicts && (
         <FileConflictDialog open={!!pendingConflicts} conflicts={pendingConflicts} onResolve={handleConflictResolve} onCancel={() => setPendingConflicts(null)} />
       )}
