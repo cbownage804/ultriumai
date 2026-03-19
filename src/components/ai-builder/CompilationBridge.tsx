@@ -438,6 +438,7 @@ export function CompilationBridge({
   const runCompile = useCallback(async () => {
     let currentFiles = filesRef.current;
     console.info('[CompilationBridge] runCompile — isReact:', isReactProject, 'files:', currentFiles.length);
+    setCompilePhase('preparing');
 
     // ── Incremental delta detection (HMR-style) ──
     const delta = computeDeltaRef.current(currentFiles);
