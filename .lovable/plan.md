@@ -1,40 +1,79 @@
 
 
-## Production Readiness Roadmap — Progress
+# Lovable Parity — Wave 4
 
-### Completed (Phase 1: Steps 1–20)
-- ✅ All 20 original roadmap steps complete
+Six improvements targeting remaining experience gaps around collaboration, navigation, and generation quality.
 
-### Completed (Phase 2: Next Wave)
-- ✅ **Step A — Dependency-aware auto-heal**: Auto-heal now includes full dependency graph (imports + reverse deps) of failing files
-- ✅ **Step B — Speculative pre-compilation**: Streaming compile polls every 5s (was 8s) with 2-file threshold (was 4)
-- ✅ **Step C — Smart model fallback**: Auto-retries with alternate model on 429/503 errors (e.g., Gemini → Claude)
-- ✅ **Step D — Prompt compression**: Rolling summarization triggers earlier (keepRecent=6, maxOlder=15)
-- ✅ **Step E — Import graph validation**: Post-parse import check auto-stubs missing imports, surfaces warnings in diff summary
-- ✅ **Step F — Build cancellation UX**: Already implemented (stop button in chat panel)
+---
 
-### Completed (Phase 3: Lovable Parity)
-- ✅ **Step 1 — Error locality in auto-heal**: Extracts file:line from ParsedViteError, sends ±20 line window instead of full file
-- ✅ **Step 2 — Conversation branching**: Edit & resend truncates subsequent messages, enabling conversation forking from any point
-- ✅ **Step 3 — Source-mapped visual edits**: Visual edit overlay reads data-source-file/line attributes, passes source location to AI prompts
-- ✅ **Step 4 — Streaming file status**: Live file-by-file progress during generation with checkmarks for completed files
-- ✅ **Step 5 — Workspace layout persistence**: rightTab persisted to localStorage, restored on mount
-- ✅ **Step 6 — Error anti-patterns in auto-heal**: Anti-pattern context from useErrorPatternLearning injected into heal prompts
+## 1. Chat Image Attachment with AI Vision Context
 
-### Completed (Phase 4: Lovable Parity — Wave 2)
-- ✅ **Step 1 — Inline change diff per message**: Collapsible per-file diffs rendered in assistant messages using CodeDiffViewer
-- ✅ **Step 2 — One-click revert per generation**: fileSnapshot stored on each assistant message, "↩ Revert" button restores pre-generation state
-- ✅ **Step 3 — Smart context window indicator**: Visual progress bar near input (green/amber/red) with "New chat" shortcut when >85%
-- ✅ **Step 4 — Warm compile cache**: LKG preview cached in sessionStorage + IndexedDB, restored instantly on project load
-- ✅ **Step 5 — Proactive lint-on-type**: preCompileValidate wired into CodeEditor onChange with 500ms debounce, surfaces Monaco markers
-- ✅ **Step 6 — Token cost display**: Running token counter shown during streaming
+**Current state**: Image paste/upload exists in `BuilderChatPanel.tsx` but images are stored as previews only — they aren't sent as context to the AI model for vision-based understanding.
 
-### Completed (Phase 5: Lovable Parity — Wave 3)
-- ✅ **Step 1 — Per-file accept/reject in generation**: Inline diff review with per-file checkboxes after generation (DiffReviewPanel pattern)
-- ✅ **Step 2 — Persistent file tabs with reorder**: Open tabs + active tab persisted to localStorage, restored on mount via useProjectFileSystem
-- ✅ **Step 3 — Smart error follow-up prompts**: Build errors parsed via generateErrorSuggestions to render actionable chips (missing imports, packages, types)
-- ✅ **Step 4 — Generation diff preview before apply**: Staging mode for multi-file changes with review-before-apply (via existing DiffReviewPanel)
-- ✅ **Step 5 — Inline model picker in chat input**: Model selection dropdown next to Chat/Build mode toggle, wired to selectedModel/onModelChange
-- ✅ **Step 6 — Auto-save indicator**: SyncStatusIndicator already present in WorkspaceTopBar with lastSaved timestamp
+**Fix**: When images are attached, include them as base64 data URLs in the AI prompt payload (within the user message content array). This enables "build this from my screenshot" and "match this design" workflows that Lovable supports.
 
-### All steps complete ✅
+**Files**: `BuilderChatPanel.tsx` (pass image data in message), `useAIAppBuilder.ts` (include images in API payload)
+
+---
+
+## 2. Go-to-Definition and Symbol Navigation
+
+**Gap**: Monaco editor has minimap and basic IntelliSense but no cross-file go-to-definition. Lovable supports clicking on imports/components to jump to their definition.
+
+**Fix**: Register a Monaco `DefinitionProvider` in `CodeEditor.tsx` that resolves import paths against the project's file list. Clicking an import (Cmd+Click) or pressing F12 opens the target file via `setActiveFile`. Also register a `DocumentSymbolProvider` for outline/breadcrumb support.
+
+**Files**: `CodeEditor.tsx` (register providers on mount)
+
+---
+
+## 3. Smarter Package Management via AI Prompt
+
+**Gap**: `NPMPackageManagerPanel` tracks packages in local state but the AI doesn't know what's installed. When it generates code using a library, it may fail because the dependency wasn't declared.
+
+**Fix**: Inject the list of `installedPackages` into the system prompt context so the AI knows available dependencies. When the AI references a new package in generated code, auto-detect it from import statements and add it to `installedPackages` + `package.json`.
+
+**Files**: `AIAppBuilderWorkspace.tsx` (inject packages into context), `useAIAppBuilder.ts` (auto-detect new imports)
+
+---
+
+## 4. Conversation Search and Pin
+
+**Gap**: Long chat histories become hard to navigate. Lovable lets users search through messages and pin important ones for quick reference.
+
+**Fix**: Add a search input above the message list in `BuilderChatPanel.tsx` that filters messages by content. Add a pin toggle on each message that keeps pinned messages in a collapsible section at the top. Persist pins in the message object.
+
+**Files**: `BuilderChatPanel.tsx` (search filter + pin UI)
+
+---
+
+## 5. Responsive Preview Sync with Chat
+
+**Gap**: The responsive preview bar exists but switching device modes doesn't inform the AI. When users ask "make this work on mobile", the AI doesn't know what viewport they're looking at.
+
+**Fix**: Include the current viewport mode (e.g., "iPhone 16 Pro — 393×852") in the AI prompt context when the user sends a message. This gives the AI precise knowledge of what the user is testing against.
+
+**Files**: `AIAppBuilderWorkspace.tsx` (pass viewport to sendMessage context)
+
+---
+
+## 6. Quick Actions from Empty State
+
+**Gap**: When a new project starts, the empty chat shows starter templates but no quick-action prompts. Lovable shows contextual suggestions like "Add a landing page", "Set up authentication", "Connect a database".
+
+**Fix**: Enhance `WelcomeOverlay.tsx` with 6-8 quick-action chips that pre-fill the chat input with common first prompts. Show these below the template picker. Chips should be contextual — if Supabase is connected, show DB-related actions.
+
+**Files**: `WelcomeOverlay.tsx` (quick action chips), `BuilderChatPanel.tsx` (accept pre-fill from welcome)
+
+---
+
+## Priority
+
+| Step | Impact | Effort |
+|------|--------|--------|
+| 1 — Image vision context | High (unlock design-to-code) | Low |
+| 2 — Go-to-definition | High (daily DX) | Medium |
+| 3 — Package auto-detection | High (fewer build errors) | Medium |
+| 5 — Viewport in AI context | Medium (accuracy) | Low |
+| 6 — Quick actions empty state | Medium (onboarding) | Low |
+| 4 — Chat search & pin | Medium (long sessions) | Low |
+
