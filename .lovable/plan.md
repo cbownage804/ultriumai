@@ -14,9 +14,21 @@
 - ✅ **Step 10 — Runtime error auto-fix**: Iframe runtime errors forwarded to parent, fed into auto-heal loop
 - ✅ **Step 11 — White screen detection**: Already wired via usePreviewHealthMonitor, now triggers auto-heal
 - ✅ **Step 8 — Anti-pattern prompt injection**: useErrorPatternLearning injected into knowledge context
+- ✅ **Step 2 — Duplicate compile suppression**: lastCompiledDigestRef skips identical compiles within 2s
+- ✅ **Step 6 — Context window optimization**: CSS/config deprioritized, skeleton mode for large files
+- ✅ **Step 9 — Post-generation diff review**: Collapsible diff summary shown in chat after generation
+- ✅ **Step 18 — Deploy gate enforcement**: Smoke tests block publishing, with escape hatch
 
 ### Next Priority
-- Step 2 — Duplicate compile suppression
-- Step 6 — Context window optimization
-- Step 18 — Deploy gate enforcement
-- Step 9 — Post-generation diff review
+- Step 3 — Compile result caching
+- Step 4 — Compile progress accuracy
+- Step 5 — Parallel CSS hot-reload verification
+- Step 7 — Smarter EDIT vs FILE selection
+- Step 12 — Preview navigation state preservation
+- Step 13 — Asset loading resilience
+- Step 14 — Build time telemetry dashboard
+- Step 15 — Keyboard-first workflow
+- Step 16 — Mobile preview accuracy
+- Step 17 — File tree performance
+- Step 19 — Preview hosting reliability
+- Step 20 — Error telemetry and alerting
