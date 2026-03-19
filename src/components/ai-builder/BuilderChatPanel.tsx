@@ -409,17 +409,28 @@ export function BuilderChatPanel({
   onRevertToMessage, onForkFromMessage,
   selectedModel, onModelChange, onOpenEditHistory, onReview,
   buildErrors,
+  projectFiles,
+  componentExtractionCount,
+  componentExtractionPrompt,
+  onTogglePromptFavorite,
+  favoritePromptIds,
 }: BuilderChatPanelProps) {
   const [input, setInput] = useState('');
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [imageResizes, setImageResizes] = useState<Record<number, number>>({}); // index → max width px
+  const [imageResizes, setImageResizes] = useState<Record<number, number>>({});
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [chatSearch, setChatSearch] = useState('');
   const [showChatSearch, setShowChatSearch] = useState(false);
-  
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [plusMenuOpen, setPlusMenuOpen] = useState(false);
+  // Wave 10: @-file mention autocomplete
+  const [showFileMentions, setShowFileMentions] = useState(false);
+  const [fileMentionQuery, setFileMentionQuery] = useState('');
+  const [mentionedFilePaths, setMentionedFilePaths] = useState<string[]>([]);
+  const [mentionCursorPos, setMentionCursorPos] = useState(0);
+  // Wave 10: Context budget expansion
+  const [contextExpanded, setContextExpanded] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
