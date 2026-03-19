@@ -112,6 +112,8 @@ import {
   MonetizationPanelGroup, IntegrationPanelGroup, InfraPanelGroup,
 } from './panel-groups';
 import { StreamingCodeEditor } from './StreamingCodeEditor';
+import { QuickSettingsBar } from './QuickSettingsBar';
+import { useSmartFileCreation } from './useSmartFileCreation';
 
 import {
   PromptHistoryPanel, UndoPreviewPopover, BuilderChatPanel, BuilderPreviewPanel,
@@ -1301,6 +1303,7 @@ export function AIAppBuilderWorkspace() {
   const conflictDetection = useDependencyConflictDetection();
   const fileScaffolding = useSmartFileScaffolding();
   const errorAnnotations = useInlineErrorAnnotations();
+  const smartFileCreation = useSmartFileCreation();
   const lkgDiff = useLKGDiff();
   const autoHeal = useAutoHealCompile();
   const errorPatterns = useErrorPatternLearning();
@@ -1421,7 +1424,7 @@ export function AIAppBuilderWorkspace() {
       // Record error pattern for anti-pattern injection
       errorPatterns.recordError(error.message);
 
-      if (autoHeal.shouldAutoHeal(error.message)) {
+      if (autoHealEnabled && autoHeal.shouldAutoHeal(error.message)) {
         const diffContext = lkgDiff.getErrorContext(project.files, error.message);
         
         // Extract failing file paths from error messages and include their full content
@@ -1524,6 +1527,7 @@ export function AIAppBuilderWorkspace() {
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const pluginRegistry = usePluginRegistry();
   const [recentFiles, setRecentFiles] = useState<string[]>([]);
+  const [autoHealEnabled, setAutoHealEnabled] = useState(true);
   const collaborationEngine = useCollaborationEngine(currentProjectId);
   const apiBuilder = useAPIBuilder();
   const projectReview = useProjectReview();
@@ -2425,6 +2429,23 @@ export function AIAppBuilderWorkspace() {
   }, [mode]);
 
   const handleSend = async (input: string, imageDataUrls?: string[] | null, skipQuestions?: boolean) => {
+    // ── Wave 8 Step 3: Smart file creation from chat ──
+    // Detect simple scaffolding intents and create files instantly
+    if (!imageDataUrls && !skipQuestions) {
+      const scaffold = smartFileCreation.detectIntent(input);
+      if (scaffold) {
+        upsertFile(scaffold.path, scaffold.content);
+        setActiveFile(scaffold.path);
+        setMessages(prev => [
+          ...prev,
+          { id: crypto.randomUUID(), role: 'user', content: input, timestamp: new Date() },
+          { id: crypto.randomUUID(), role: 'assistant', content: `✅ Created \`${scaffold.path}\` with a ${scaffold.name} template. You can now edit it in the code editor or ask me to customize it further.`, timestamp: new Date() },
+        ]);
+        dedupeToast('success', `Created ${scaffold.path}`);
+        return;
+      }
+    }
+
     // ── LIGHTWEIGHT CHAT PATH ──
     // When in discuss mode and auto-escalation doesn't trigger, bypass the entire
     // build pipeline and call vanguard-general-chat directly. This avoids:
@@ -3494,6 +3515,16 @@ export function AIAppBuilderWorkspace() {
     return parseViteErrors(compileError.errors);
   }, [compileError]);
 
+  // Wave 8 Step 4: Build error markers for inline editor annotations
+  const buildErrorMarkers = useMemo(() => {
+    return errorAnnotations.annotations.map(a => ({
+      file: a.file,
+      line: a.line,
+      message: a.message,
+      severity: a.severity as 'error' | 'warning',
+    }));
+  }, [errorAnnotations.annotations]);
+
   // Track modified file paths from last generation
   const modifiedPathsRef = useRef<Set<string>>(new Set());
   const prevFileSnapshotRef = useRef<Map<string, string>>(new Map());
@@ -3741,6 +3772,14 @@ export function AIAppBuilderWorkspace() {
             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }}
         />
+        {/* Wave 8 Step 5: Quick Settings Bar */}
+        <QuickSettingsBar
+          soundEnabled={soundEnabled}
+          onSoundToggle={(v) => { setSoundEnabled(v); localStorage.setItem('builder-sound', String(v)); }}
+          autoHealEnabled={autoHealEnabled}
+          onAutoHealToggle={setAutoHealEnabled}
+          selectedModel={selectedModel}
+        />
         {/* ── Main Content ── */}
         <div className="flex-1 overflow-hidden">
           {isMobile ? (
@@ -3771,7 +3810,7 @@ export function AIAppBuilderWorkspace() {
                   <>
                     <FileTabBar openPaths={project.openFilePaths} activePath={streamingFilePathRef.current || project.activeFilePath} dirtyFiles={dirtyFiles} streamingFilePath={streamingFilePathRef.current} onSelect={(path) => setActiveFile(path)} onClose={(path) => closeFile(path)} onReorder={reorderOpenFiles} />
                     <div className="flex-1 min-h-0">
-                      <StreamingCodeEditor isStreamingPreview={isStreamingPreview} partialFilesRef={partialFilesRef} activeFile={activeFile} activeFilePath={project.activeFilePath} onContentChange={(path, content) => { upsertFile(path, content); setDirtyFiles(prev => new Set(prev).add(path)); }} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} onStreamingFileChange={handleStreamingFileChange} />
+                      <StreamingCodeEditor isStreamingPreview={isStreamingPreview} partialFilesRef={partialFilesRef} activeFile={activeFile} activeFilePath={project.activeFilePath} onContentChange={(path, content) => { upsertFile(path, content); setDirtyFiles(prev => new Set(prev).add(path)); }} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} onStreamingFileChange={handleStreamingFileChange} buildErrorMarkers={buildErrorMarkers} />
                     </div>
                   </>
                 )}
@@ -4157,7 +4196,7 @@ export function AIAppBuilderWorkspace() {
                                   <div data-tour="code-editor" className="h-full flex flex-col bg-[#0d0d14]">
                                     <FileBreadcrumb file={editorFile} allFiles={project.files} onNavigate={(path) => { setActiveFile(path); }} />
                                     <div className="flex-1 overflow-hidden">
-                                      <StreamingCodeEditor isStreamingPreview={isStreamingPreview} partialFilesRef={partialFilesRef} activeFile={activeFile} activeFilePath={project.activeFilePath} onContentChange={handleContentChange} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} onInlineAIAction={handleInlineAIAction} onStreamingFileChange={handleStreamingFileChange} />
+                                      <StreamingCodeEditor isStreamingPreview={isStreamingPreview} partialFilesRef={partialFilesRef} activeFile={activeFile} activeFilePath={project.activeFilePath} onContentChange={handleContentChange} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} onInlineAIAction={handleInlineAIAction} onStreamingFileChange={handleStreamingFileChange} buildErrorMarkers={buildErrorMarkers} />
                                     </div>
                                   </div>
                                 </ResizablePanel>
@@ -4172,7 +4211,7 @@ export function AIAppBuilderWorkspace() {
                               <div data-tour="code-editor" className="h-full flex flex-col bg-[#0d0d14]">
                                 <FileBreadcrumb file={editorFile} allFiles={project.files} onNavigate={(path) => { setActiveFile(path); }} />
                                 <div className="flex-1 overflow-hidden">
-                                  <StreamingCodeEditor isStreamingPreview={isStreamingPreview} partialFilesRef={partialFilesRef} activeFile={activeFile} activeFilePath={project.activeFilePath} onContentChange={handleContentChange} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} onInlineAIAction={handleInlineAIAction} onStreamingFileChange={handleStreamingFileChange} />
+                                  <StreamingCodeEditor isStreamingPreview={isStreamingPreview} partialFilesRef={partialFilesRef} activeFile={activeFile} activeFilePath={project.activeFilePath} onContentChange={handleContentChange} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} onInlineAIAction={handleInlineAIAction} onStreamingFileChange={handleStreamingFileChange} buildErrorMarkers={buildErrorMarkers} />
                                 </div>
                               </div>
                             )}

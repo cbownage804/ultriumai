@@ -13,6 +13,13 @@ export interface RemoteCursor {
   column: number;
 }
 
+export interface BuildErrorMarker {
+  file: string;
+  line: number;
+  message: string;
+  severity: 'error' | 'warning';
+}
+
 interface CodeEditorProps {
   file: ProjectFile | null;
   onContentChange?: (path: string, content: string) => void;
@@ -25,6 +32,8 @@ interface CodeEditorProps {
   projectFiles?: ProjectFile[];
   /** Navigate to a file by path */
   onNavigateToFile?: (path: string) => void;
+  /** Build error markers from compilation */
+  buildErrorMarkers?: BuildErrorMarker[];
 }
 
 const LANGUAGE_MAP: Record<string, string> = {
@@ -39,7 +48,7 @@ const AI_ACTIONS = [
   { id: 'fix', label: 'Fix', icon: Sparkles },
 ];
 
-export function CodeEditor({ file, onContentChange, remoteCursors = [], onCursorChange, onInlineAIAction, onTriggerInlineEdit, projectFiles = [], onNavigateToFile }: CodeEditorProps) {
+export function CodeEditor({ file, onContentChange, remoteCursors = [], onCursorChange, onInlineAIAction, onTriggerInlineEdit, projectFiles = [], onNavigateToFile, buildErrorMarkers = [] }: CodeEditorProps) {
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<any>(null);
   const decorationsRef = useRef<string[]>([]);
@@ -73,6 +82,36 @@ export function CodeEditor({ file, onContentChange, remoteCursors = [], onCursor
       }, 500);
     }
   }, [file, onContentChange]);
+
+  // Wave 8 Step 4: Apply build error markers from compilation
+  useEffect(() => {
+    const monaco = monacoRef.current;
+    const editor = editorRef.current;
+    if (!monaco || !editor) return;
+    const model = editor.getModel();
+    if (!model || !file) return;
+
+    const fileMarkers = buildErrorMarkers.filter(
+      m => m.file === file.path || file.path.endsWith(m.file)
+    );
+
+    const markers = fileMarkers.map(m => ({
+      startLineNumber: m.line,
+      startColumn: 1,
+      endLineNumber: m.line,
+      endColumn: 1000,
+      message: m.message,
+      severity: m.severity === 'error' ? monaco.MarkerSeverity.Error : monaco.MarkerSeverity.Warning,
+    }));
+
+    monaco.editor.setModelMarkers(model, 'build-errors', markers);
+
+    return () => {
+      if (model && !model.isDisposed()) {
+        monaco.editor.setModelMarkers(model, 'build-errors', []);
+      }
+    };
+  }, [buildErrorMarkers, file?.path]);
 
   // Update remote cursor decorations
   const updateRemoteCursors = useCallback(() => {

@@ -1619,9 +1619,68 @@ export async function exportProject(
     for (const file of files) {
       zip.file(file.path, file.content);
     }
-    // Add a basic README for raw exports
-    const fileList = files.map(f => `- \`${f.path}\``).join('\n');
-    zip.file('README.md', `# ${projectName}\n\nExported from UltriumAI App Builder.\n\n## Files\n\n${fileList}\n\n## Getting Started\n\nOpen \`index.html\` in your browser, or use a local server:\n\n\`\`\`bash\nnpx serve .\n\`\`\`\n`);
+    // Wave 8 Step 6: Enhanced README for raw exports
+    const techStack: string[] = ['React', 'Vite'];
+    const hasTailwind = files.some(f => f.content.includes('tailwind') || f.content.includes('className='));
+    const hasTS = files.some(f => f.path.endsWith('.ts') || f.path.endsWith('.tsx'));
+    const hasSupabase = files.some(f => f.content.includes('supabase') || f.content.includes('@supabase'));
+    if (hasTS) techStack.push('TypeScript');
+    if (hasTailwind) techStack.push('Tailwind CSS');
+    if (hasSupabase) techStack.push('Supabase');
+
+    const envVarsUsed = new Set<string>();
+    for (const f of files) {
+      const matches = f.content.matchAll(/import\.meta\.env\.(\w+)/g);
+      for (const m of matches) envVarsUsed.add(m[1]);
+    }
+
+    const readmeLines = [
+      `# ${projectName}`,
+      '',
+      `Built with ${techStack.join(' + ')}.`,
+      '',
+      '## Quick Start',
+      '',
+      '```bash',
+      'npm install',
+      'npm run dev',
+      '```',
+      '',
+      '## Build for Production',
+      '',
+      '```bash',
+      'npm run build',
+      'npm run preview',
+      '```',
+      '',
+    ];
+
+    if (envVarsUsed.size > 0) {
+      readmeLines.push(
+        '## Environment Variables',
+        '',
+        'Create a `.env` file with:',
+        '',
+        '```',
+        ...Array.from(envVarsUsed).map(v => `${v}=your-value-here`),
+        '```',
+        '',
+      );
+    }
+
+    readmeLines.push(
+      '## Project Files',
+      '',
+      ...files.slice(0, 40).map(f => `- \`${f.path}\``),
+      ...(files.length > 40 ? [`- ... and ${files.length - 40} more files`] : []),
+      '',
+      '---',
+      '',
+      `Exported from UltriumAI App Builder.`,
+      '',
+    );
+
+    zip.file('README.md', readmeLines.join('\n'));
   } else if (mode === 'docker') {
     const scaffolding = getScaffoldingFiles(projectName, files);
     for (const [path, content] of Object.entries(scaffolding)) {
