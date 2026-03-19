@@ -1450,7 +1450,6 @@ export function AIAppBuilderWorkspace() {
 
         // Step 1: Parse Vite errors for error locality (file:line windows)
         const parsedErrors = parseViteErrors(error.errors);
-        const parsedErrors = parseViteErrors(error.errors);
         const antiPatternCtx = errorPatterns.getAntiPatternPrompt();
 
         const healPrompt = autoHeal.buildHealPrompt(error.message, error.errors, diffContext, failingFiles, parsedErrors, antiPatternCtx);
