@@ -63,7 +63,7 @@ import { useDependencyConflictDetection } from './useDependencyConflictDetection
 import { useSmartFileScaffolding } from './useSmartFileScaffolding';
 import { useInlineErrorAnnotations } from './useInlineErrorAnnotations';
 import { useLKGDiff } from './useLKGDiff';
-import type { ParsedViteError } from './parseViteErrors';
+import { parseViteErrors, type ParsedViteError } from './parseViteErrors';
 import { useAutoHealCompile } from './useAutoHealCompile';
 import { usePromptMemory } from './usePromptMemory';
 import { useLighthouseAudit } from './useLighthouseAudit';
@@ -1318,10 +1318,16 @@ export function AIAppBuilderWorkspace() {
   const idbPersistence = useIndexedDBPersistence();
   const [showRecoveryDialog, setShowRecoveryDialog] = useState(false);
 
-  const [rightTab, setRightTab] = useState<'preview' | 'code' | 'split'>('preview');
+  // Step 5: Persist & restore workspace layout
+  const [rightTab, setRightTab] = useState<'preview' | 'code' | 'split'>(() => {
+    const saved = localStorage.getItem('builder-layout-rightTab');
+    return (saved === 'preview' || saved === 'code' || saved === 'split') ? saved : 'preview';
+  });
   rightTabRef.current = rightTab;
   setRightTabRef.current = setRightTab;
   const [previewCurrentUrl, setPreviewCurrentUrl] = useState('/');
+  // Step 5: Persist layout changes to localStorage
+  useEffect(() => { localStorage.setItem('builder-layout-rightTab', rightTab); }, [rightTab]);
   // showShortcuts now managed by usePanelManager
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState(project.name);
@@ -1448,7 +1454,11 @@ export function AIAppBuilderWorkspace() {
           })
           .filter((f): f is { path: string; content: string } => !!f);
 
-        const healPrompt = autoHeal.buildHealPrompt(error.message, error.errors, diffContext, failingFiles);
+        // Step 1: Parse Vite errors for error locality (file:line windows)
+        const parsedErrors = parseViteErrors(error.errors);
+        const antiPatternCtx = errorPatterns.getAntiPatternPrompt();
+
+        const healPrompt = autoHeal.buildHealPrompt(error.message, error.errors, diffContext, failingFiles, parsedErrors, antiPatternCtx);
         autoHeal.recordAttempt(error.message);
 
         console.info('[AutoHeal] Triggering auto-fix attempt', {

@@ -16,6 +16,8 @@ export function VisualEditClickOverlay({ isActive, onToggle, iframeRef, onDirect
     tagName: string;
     text: string;
     rect: DOMRect;
+    sourceFile?: string | null;
+    sourceLine?: number | null;
   } | null>(null);
   const [editMode, setEditMode] = useState<'text' | 'prompt' | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -36,6 +38,8 @@ export function VisualEditClickOverlay({ isActive, onToggle, iframeRef, onDirect
           tagName: e.data.tagName,
           text: e.data.text,
           rect: e.data.rect,
+          sourceFile: e.data.sourceFile || null,
+          sourceLine: e.data.sourceLine || null,
         });
         setEditValue(e.data.text);
       }
@@ -64,6 +68,18 @@ export function VisualEditClickOverlay({ isActive, onToggle, iframeRef, onDirect
               e.preventDefault();
               e.stopPropagation();
               var el = e.target;
+              // Step 3: Source-mapped visual edits — prefer data-source-file attributes
+              var sourceFile = null;
+              var sourceLine = null;
+              var current = el;
+              while (current && current !== document.body) {
+                if (current.getAttribute && current.getAttribute('data-source-file')) {
+                  sourceFile = current.getAttribute('data-source-file');
+                  sourceLine = current.getAttribute('data-source-line');
+                  break;
+                }
+                current = current.parentElement;
+              }
               var selector = el.tagName.toLowerCase();
               if (el.id) selector += '#' + el.id;
               if (el.className && typeof el.className === 'string') selector += '.' + el.className.split(' ').join('.');
@@ -73,6 +89,8 @@ export function VisualEditClickOverlay({ isActive, onToggle, iframeRef, onDirect
                 tagName: el.tagName,
                 text: el.textContent?.slice(0, 200) || '',
                 rect: el.getBoundingClientRect(),
+                sourceFile: sourceFile,
+                sourceLine: sourceLine ? parseInt(sourceLine, 10) : null,
               }, '*');
             }, true);
           })();
@@ -109,7 +127,11 @@ export function VisualEditClickOverlay({ isActive, onToggle, iframeRef, onDirect
 
   const handlePromptSend = () => {
     if (selectedElement && onAIPromptEdit && promptValue.trim()) {
-      onAIPromptEdit(selectedElement.selector, selectedElement.text, promptValue.trim());
+      // Step 3: Include source file location in AI prompt context for precise edits
+      const sourceContext = selectedElement.sourceFile
+        ? `[Source: ${selectedElement.sourceFile}${selectedElement.sourceLine ? `:${selectedElement.sourceLine}` : ''}]`
+        : '';
+      onAIPromptEdit(selectedElement.selector, `${sourceContext} ${selectedElement.text}`.trim(), promptValue.trim());
     }
     setPromptValue('');
     setEditMode(null);
@@ -136,7 +158,9 @@ export function VisualEditClickOverlay({ isActive, onToggle, iframeRef, onDirect
         <div className="absolute top-14 left-1/2 -translate-x-1/2 z-30 animate-in fade-in zoom-in-95 duration-200">
           <div className="bg-[#0d0d14] border border-white/[0.1] rounded-xl shadow-2xl px-2 py-1.5 flex items-center gap-1">
             <span className="text-[10px] text-white/30 px-1.5 font-mono truncate max-w-[120px]">
-              {selectedElement.tagName.toLowerCase()}
+              {selectedElement.sourceFile
+                ? `${selectedElement.sourceFile.split('/').pop()}:${selectedElement.sourceLine || '?'}`
+                : selectedElement.tagName.toLowerCase()}
             </span>
             <div className="h-4 w-px bg-white/[0.08]" />
             <button

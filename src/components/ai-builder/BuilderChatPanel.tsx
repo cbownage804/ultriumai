@@ -399,6 +399,7 @@ export function BuilderChatPanel({
   const [input, setInput] = useState('');
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [imageResizes, setImageResizes] = useState<Record<number, number>>({}); // index → max width px
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
@@ -514,6 +515,14 @@ export function BuilderChatPanel({
           return Promise.resolve(img);
         })
       );
+    }
+    // Step 2: Conversation branching — if editing a message, truncate after it first
+    if (editingMessageId) {
+      onUpdateMessages?.(prev => {
+        const idx = prev.findIndex(m => m.id === editingMessageId);
+        return idx >= 0 ? prev.slice(0, idx) : prev;
+      });
+      setEditingMessageId(null);
     }
     onSend(input.trim(), finalImages);
     setInput('');
@@ -1540,10 +1549,28 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {isStreaming && !hasFiles && fileNames.length > 0 && (
-          <div className="flex items-center gap-2 text-xs">
-            <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />
-            <span className="text-white/40">Writing {fileNames.length} file{fileNames.length > 1 ? 's' : ''}...</span>
+        {/* Step 4: File-by-file streaming status with checkmarks */}
+        {isStreaming && fileNames.length > 0 && (
+          <div className="space-y-1 mt-1">
+            {fileNames.map((name, i) => {
+              const isLast = i === fileNames.length - 1;
+              const isComplete = !isLast; // All but the last are complete
+              return (
+                <div key={name} className="flex items-center gap-1.5 text-[11px]">
+                  {isComplete ? (
+                    <CheckCircle2 className="h-3 w-3 text-emerald-400/70 shrink-0" />
+                  ) : (
+                    <Loader2 className="h-3 w-3 animate-spin text-cyan-400 shrink-0" />
+                  )}
+                  <span className={cn(
+                    "font-mono truncate",
+                    isComplete ? "text-white/40" : "text-white/60"
+                  )}>
+                    {name.split('/').pop()}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
 
@@ -1779,14 +1806,29 @@ export function BuilderChatPanel({
                       </span>
                     )}
                     {msg.role === 'user' && !isGenerating && (
-                      <button
-                        onClick={() => onSend(msg.content, msg.imageUrls || (msg.imageUrl ? [msg.imageUrl] : null))}
-                        className="flex items-center gap-0.5 text-white/25 hover:text-white/60 transition-colors ml-1"
-                        title="Retry this message"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
-                        Retry
-                      </button>
+                      <>
+                        {/* Edit & Resend — truncates conversation to this point (Step 2: Conversation Branching) */}
+                        <button
+                          onClick={() => {
+                            setInput(msg.content);
+                            setEditingMessageId(msg.id);
+                            setTimeout(() => textareaRef.current?.focus(), 50);
+                          }}
+                          className="flex items-center gap-0.5 text-white/25 hover:text-white/60 transition-colors ml-1"
+                          title="Edit & resend (replaces subsequent messages)"
+                        >
+                          <Pencil className="h-2.5 w-2.5" />
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => onSend(msg.content, msg.imageUrls || (msg.imageUrl ? [msg.imageUrl] : null))}
+                          className="flex items-center gap-0.5 text-white/25 hover:text-white/60 transition-colors ml-1"
+                          title="Retry this message"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+                          Retry
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -2091,6 +2133,17 @@ export function BuilderChatPanel({
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs">Visual Edit Mode</TooltipContent>
               </Tooltip>
+            )}
+
+            {/* Step 2: Editing indicator */}
+            {editingMessageId && (
+              <div className="flex items-center gap-1.5 text-[10px] text-amber-400/70 bg-amber-500/10 px-2 py-1 rounded-md">
+                <Pencil className="h-2.5 w-2.5" />
+                <span>Editing message — send will replace subsequent messages</span>
+                <button onClick={() => { setEditingMessageId(null); setInput(''); }} className="text-white/30 hover:text-white/60 ml-1">
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
             )}
 
             <textarea
