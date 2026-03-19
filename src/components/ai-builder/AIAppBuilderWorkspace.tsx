@@ -4220,6 +4220,7 @@ export function AIAppBuilderWorkspace() {
         setPendingDiffChanges={setPendingDiffChanges}
         showBugReport={!!panels.showBugReport}
         setShowBugReport={setShowBugReport}
+        runSmokeTests={runSmokeTestsForDeploy}
       />
       {/* Conditionally-mounted panel groups — hooks only initialize when panels are active */}
       {(panels.showEnvManager || panels.showRollback || panels.showUptimeMonitor || panels.showBuildCache || panels.showBuildScripts || panels.showCMSMode || panels.showBlogEngine || panels.showImageOptimizer || panels.showVideoEmbed || panels.showI18n || panels.showAnalyticsDashboard || panels.showErrorTracking || panels.showSessionReplay || panels.showABTesting || panels.showAIUsage || panels.showDepScanner || panels.showCSPGenerator || panels.showGDPR || panels.showRateLimiter || panels.showSecretRotation || panels.showSnippetLibrary || panels.showSplitDiff || panels.showComments || panels.showTeamActivity || panels.showApprovals || panels.showForking || panels.showFigmaImport || panels.showColorExtractor || panels.showIconPicker || panels.showBreakpointEditor || panels.showAnimationBuilder || panels.showVisualSchema || panels.showSeedData || panels.showAPITester || panels.showWebhookBuilder || panels.showCronScheduler) && (
