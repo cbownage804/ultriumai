@@ -148,8 +148,35 @@ export function WorkspaceTopBar({
           )}
         </div>
 
-        {/* RIGHT: Sync status + Share + Publish */}
+        {/* RIGHT: Health score + Sync status + Share + Publish */}
         <div className="flex items-center gap-2">
+          {/* Wave 5 Step 5: Project Health Score Badge */}
+          {(() => {
+            const tsFiles = currentFiles.filter(f => f.path.endsWith('.ts') || f.path.endsWith('.tsx')).length;
+            const jsFiles = currentFiles.filter(f => f.path.endsWith('.js') || f.path.endsWith('.jsx')).length;
+            const total = tsFiles + jsFiles;
+            const tsRatio = total > 0 ? tsFiles / total : 1;
+            const hasTests = currentFiles.some(f => f.path.includes('.test.') || f.path.includes('.spec.'));
+            const hasSrc = currentFiles.some(f => f.path.startsWith('src/'));
+            const score = Math.round((tsRatio * 40) + (hasTests ? 30 : 0) + (hasSrc ? 30 : 0));
+            const grade = score >= 90 ? 'A' : score >= 70 ? 'B' : score >= 50 ? 'C' : 'D';
+            const gradeColor = grade === 'A' ? 'text-emerald-400' : grade === 'B' ? 'text-cyan-400' : grade === 'C' ? 'text-amber-400' : 'text-red-400';
+            if (currentFiles.length < 3) return null;
+            return (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="hidden md:flex items-center gap-1 px-2 py-1 rounded-md bg-white/[0.04] border border-white/[0.06] cursor-default">
+                    <Activity className="h-3 w-3 text-white/30" />
+                    <span className={cn("text-[11px] font-bold", gradeColor)}>{grade}</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">
+                  <p className="font-medium">Project Health: {score}%</p>
+                  <p className="text-white/50">TS: {Math.round(tsRatio * 100)}% • Tests: {hasTests ? '✓' : '✗'} • Structure: {hasSrc ? '✓' : '✗'}</p>
+                </TooltipContent>
+              </Tooltip>
+            );
+          })()}
           <SyncStatusIndicator status={syncStatus} lastSaved={lastSaved} />
           <button
             onClick={() => setShowShareDialog(true)}

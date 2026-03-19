@@ -245,6 +245,30 @@ export function CodeEditor({ file, onContentChange, remoteCursors = [], onCursor
       },
     });
 
+    // ── Wave 5 Step 4: Context menu code actions ──
+    const codeActions = [
+      { id: 'ai-explain', label: '💡 Explain Selection', actionId: 'explain' },
+      { id: 'ai-refactor', label: '🔧 Refactor Selection', actionId: 'refactor' },
+      { id: 'ai-test', label: '🧪 Generate Tests', actionId: 'test' },
+      { id: 'ai-fix', label: '✨ Fix Selection', actionId: 'fix' },
+    ];
+    for (const ca of codeActions) {
+      editor.addAction({
+        id: ca.id,
+        label: ca.label,
+        contextMenuGroupId: 'ai',
+        contextMenuOrder: 1,
+        run: (ed: any) => {
+          const sel = ed.getSelection();
+          const model = ed.getModel();
+          if (!sel || !model || sel.isEmpty()) return;
+          const code = model.getValueInRange(sel);
+          if (code.trim().length < 3) return;
+          onInlineAIAction?.(ca.actionId, code, file?.path || '');
+        },
+      });
+    }
+
     // ── Wave 4 Step 2: Go-to-definition provider ──
     const defDisposable = monaco.languages.registerDefinitionProvider(['typescript', 'typescriptreact', 'javascript', 'javascriptreact'], {
       provideDefinition: (model: any, position: any) => {
