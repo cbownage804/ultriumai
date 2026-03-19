@@ -58,6 +58,8 @@ interface BuilderChatPanelProps {
   isGoldenProject?: boolean;
   /** Ref-based streaming: content ref to avoid workspace re-renders */
   streamingContentRef?: MutableRefObject<string>;
+  /** Current build errors for smart follow-up suggestions */
+  buildErrors?: ParsedViteError[];
   /** New conversation handler — clears messages but keeps files */
   onNewConversation?: () => void;
   onShowSettings?: () => void;
