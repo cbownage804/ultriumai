@@ -375,6 +375,9 @@ export function CompilationBridge({
   const recompileNeededRef = useRef(false);
   // Step 2: Track last compiled digest + timestamp for dedup
   const lastCompiledDigestRef = useRef<{ digest: string; timestamp: number }>({ digest: '', timestamp: 0 });
+  // Step 3: Full HTML result cache keyed by filesDigest (skip Vite when unchanged)
+  const compiledHTMLCacheRef = useRef<Map<string, string>>(new Map());
+  const MAX_HTML_CACHE_ENTRIES = 5;
 
   // ── liveCompiledHTML (async, post-generation) ──
   const [liveCompiledHTML, setLiveCompiledHTML] = useState<string | null>(null);
