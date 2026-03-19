@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
-import { X, FileCode, FileText, Image, File } from 'lucide-react';
+import { X, FileCode, FileText, Image, File, Undo2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface FileTabBarProps {
   openPaths: string[];
@@ -11,6 +12,10 @@ interface FileTabBarProps {
   onSelect: (path: string) => void;
   onClose: (path: string) => void;
   onReorder?: (paths: string[]) => void;
+  /** Per-file undo — check if a file has undo history */
+  hasFileHistory?: (path: string) => boolean;
+  /** Per-file undo — revert a single file */
+  onUndoFile?: (path: string) => void;
 }
 
 function getTabIcon(path: string) {
