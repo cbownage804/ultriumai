@@ -240,11 +240,20 @@ export function CompilationBridge({
   onCompilingChangeRef.current = onCompilingChange;
   const onCompileStateChangeRef = useRef(onCompileStateChange);
   onCompileStateChangeRef.current = onCompileStateChange;
+  const onCompilePhaseChangeRef = useRef(onCompilePhaseChange);
+  onCompilePhaseChangeRef.current = onCompilePhaseChange;
 
   // Helper to transition compile state machine
   const transitionCompileState = useCallback((state: CompileState, error?: CompileErrorInfo) => {
     onCompilingChangeRef.current?.(state === 'compiling');
     onCompileStateChangeRef.current?.(state, error);
+    // Reset phase when leaving 'compiling' state
+    if (state !== 'compiling') onCompilePhaseChangeRef.current?.(null);
+  }, []);
+
+  // Helper to set compile sub-phase
+  const setCompilePhase = useCallback((phase: CompilePhase) => {
+    onCompilePhaseChangeRef.current?.(phase);
   }, []);
 
   // Store files in a ref so effects can read latest data without depending on the array reference
