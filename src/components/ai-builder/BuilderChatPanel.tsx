@@ -5,7 +5,7 @@ import {
   X, Brain, Compass, Code2,
   LayoutGrid, Wrench, AlertTriangle, Copy, ChevronDown, Check, Pencil,
   Crosshair, Plus, Camera, Paperclip, AtSign, Rocket,
-  Settings, Clock, BookOpen, GitBranch, Eye,
+  Settings, Clock, BookOpen, GitBranch, Eye, Search as SearchIcon, Pin,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
