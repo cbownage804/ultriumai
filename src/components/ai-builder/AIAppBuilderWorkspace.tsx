@@ -4187,7 +4187,7 @@ export function AIAppBuilderWorkspace() {
                                   <div data-tour="code-editor" className="h-full flex flex-col bg-[#0d0d14]">
                                     <FileBreadcrumb file={editorFile} allFiles={project.files} onNavigate={(path) => { setActiveFile(path); }} />
                                     <div className="flex-1 overflow-hidden">
-                                      <StreamingCodeEditor isStreamingPreview={isStreamingPreview} partialFilesRef={partialFilesRef} activeFile={activeFile} activeFilePath={project.activeFilePath} onContentChange={handleContentChange} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} onInlineAIAction={handleInlineAIAction} onStreamingFileChange={handleStreamingFileChange} />
+                                      <StreamingCodeEditor isStreamingPreview={isStreamingPreview} partialFilesRef={partialFilesRef} activeFile={activeFile} activeFilePath={project.activeFilePath} onContentChange={handleContentChange} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} onInlineAIAction={handleInlineAIAction} onStreamingFileChange={handleStreamingFileChange} buildErrorMarkers={buildErrorMarkers} />
                                     </div>
                                   </div>
                                 </ResizablePanel>
