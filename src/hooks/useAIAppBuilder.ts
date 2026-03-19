@@ -1089,6 +1089,19 @@ export function useAIAppBuilder() {
     // ── Anti-pattern injection: inject learned error patterns into system prompt ──
     // (Consumer must call getAntiPatternPrompt() from useErrorPatternLearning and pass as knowledgeContext)
 
+    // ── Step 7: Smarter EDIT vs FILE selection ──
+    systemParts.push(`[EDIT vs FILE SELECTION — MANDATORY]
+- For changes affecting LESS THAN 20% of a file, use ===EDIT: path=== with unified diff hunks instead of ===FILE: path=== full rewrites.
+- EDIT hunks are faster, reduce token usage, and are less error-prone for small changes.
+- Use ===FILE: path=== ONLY when creating new files OR rewriting more than 20% of an existing file.
+- Example EDIT format:
+  ===EDIT: src/App.tsx===
+  @@ -10,3 +10,5 @@
+   import { Button } from './Button';
+  +import { Dialog } from './Dialog';
+   
+  ===END===`);
+
     // ── Safe Output Contract ──
     systemParts.push(`[SAFE OUTPUT CONTRACT — MANDATORY]
 - NEVER generate inline <svg> markup in JSX/TSX files. Use lucide-react icons instead: import { IconName } from 'lucide-react';

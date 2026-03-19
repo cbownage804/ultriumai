@@ -1012,6 +1012,12 @@ export function CompilationBridge({
             onErrorAnnotations?.([]); // Clear annotations on success
             onBuildSuccess?.(filesRef.current); // Snapshot for LKG diff
             liveSync.resetSnapshot(filesRef.current);
+            // ── Step 3: Cache successful HTML for future digest matches ──
+            compiledHTMLCacheRef.current.set(filesDigest, result);
+            if (compiledHTMLCacheRef.current.size > MAX_HTML_CACHE_ENTRIES) {
+              const firstKey = compiledHTMLCacheRef.current.keys().next().value;
+              if (firstKey) compiledHTMLCacheRef.current.delete(firstKey);
+            }
             if (softReloadPendingRef.current) {
               softReloadPendingRef.current = false;
               window.postMessage({ type: '__SOFT_RELOAD__', source: 'compilation-bridge' }, '*');

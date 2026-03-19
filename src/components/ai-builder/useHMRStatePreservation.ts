@@ -95,6 +95,14 @@ const HMR_STATE_SCRIPT = `
         return;
       }
 
+      // Step 12: Restore React Router path first (before scroll/inputs)
+      if (state.routerPath && window.location.pathname !== state.routerPath) {
+        try {
+          window.history.replaceState(null, '', state.routerPath);
+          window.dispatchEvent(new PopStateEvent('popstate'));
+        } catch(e) {}
+      }
+
       // Restore scroll position (deferred to after React render)
       requestAnimationFrame(function() {
         setTimeout(function() {
