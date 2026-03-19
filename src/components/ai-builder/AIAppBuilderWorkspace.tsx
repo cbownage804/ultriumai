@@ -3983,7 +3983,19 @@ export function AIAppBuilderWorkspace() {
                     onGoToFile={(file, line) => { handleSetActiveFile(file); setRightTab('code'); }}
                   />
                 </SafePanel>
-                <CloudViewPanel isOpen={!!panels.showCloudView} onClose={() => setShowCloudView(false)} supabaseConfig={supabaseConfig} onOpenPanel={openPanelByKey} />
+                <CloudViewPanel isOpen={!!panels.showCloudView} onClose={() => setShowCloudView(false)} supabaseConfig={supabaseConfig} onOpenPanel={openPanelByKey} onRefreshTypes={() => {
+                  const sk = serviceKeys.find(k => k.serviceId === 'supabase_service_role');
+                  if (sk && supabaseConfig?.url) {
+                    schemaIntrospection.invalidateCache();
+                    schemaIntrospection.fetchSchema(supabaseConfig.url, sk.apiKey, true).then(schema => {
+                      if (schema) {
+                        const typesFile = schemaIntrospection.generateTypesFile();
+                        if (typesFile) upsertFile(typesFile.path, typesFile.content);
+                        toast.success('TypeScript types regenerated');
+                      }
+                    });
+                  }
+                }} />
                 <DesignViewPanel
                   isOpen={!!panels.showDesignView}
                   onClose={() => setShowDesignView(false)}
