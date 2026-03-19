@@ -973,8 +973,7 @@ export function CompilationBridge({
             if (stableHTMLRef.current && isPreviewValid(stableHTMLRef.current)) {
               console.warn('[CompilationBridge] Compile crashed — preserving LKG preview');
             } else {
-              setLiveCompiledHTML(ERROR_FALLBACK_HTML);
-              setStableHTML(ERROR_FALLBACK_HTML);
+              console.warn('[CompilationBridge] Compile crashed, no LKG — skeleton will show');
             }
             transitionCompileState('error', {
               message: structuredErrors[0] || 'Compilation failed',
