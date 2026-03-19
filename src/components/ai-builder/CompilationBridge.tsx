@@ -608,6 +608,7 @@ export function CompilationBridge({
       result = injectErrorOverlayRef.current(result);
       result = injectTestHarnessRef.current(result);
       result = injectSmokeTestsRef.current(result);
+      result = injectAssetResilienceRef.current(result); // Step 13
     }
 
     if (result) {
