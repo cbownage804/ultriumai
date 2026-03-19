@@ -17,6 +17,8 @@ export interface HMRSnapshot {
   openDetails: string[];
   activeTab: string | null;
   dialogOpen: boolean;
+  /** Step 12: Preserve React Router path across reloads */
+  routerPath: string | null;
   timestamp: number;
 }
 
