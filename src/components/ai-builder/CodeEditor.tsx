@@ -13,6 +13,13 @@ export interface RemoteCursor {
   column: number;
 }
 
+export interface BuildErrorMarker {
+  file: string;
+  line: number;
+  message: string;
+  severity: 'error' | 'warning';
+}
+
 interface CodeEditorProps {
   file: ProjectFile | null;
   onContentChange?: (path: string, content: string) => void;
@@ -25,6 +32,8 @@ interface CodeEditorProps {
   projectFiles?: ProjectFile[];
   /** Navigate to a file by path */
   onNavigateToFile?: (path: string) => void;
+  /** Build error markers from compilation */
+  buildErrorMarkers?: BuildErrorMarker[];
 }
 
 const LANGUAGE_MAP: Record<string, string> = {
