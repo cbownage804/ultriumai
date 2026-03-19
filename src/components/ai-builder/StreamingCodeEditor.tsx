@@ -81,6 +81,7 @@ export function StreamingCodeEditor({
       remoteCursors={remoteCursors}
       onCursorChange={onCursorChange}
       onInlineAIAction={onInlineAIAction}
+      buildErrorMarkers={buildErrorMarkers}
     />
   );
 }
