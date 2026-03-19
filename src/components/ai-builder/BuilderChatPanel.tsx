@@ -1560,7 +1560,7 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Bottom action bar — Copy only */}
+        {/* Bottom action bar — Copy + Rollback */}
         {isCompleted && (
           <div className="flex items-center gap-1 pt-1">
             <button
@@ -1570,6 +1570,21 @@ export function BuilderChatPanel({
             >
               <Copy className="h-3.5 w-3.5" />
             </button>
+            {/* Wave 10: Restore to here */}
+            {onRevertToMessage && msg.filesSnapshot && (
+              <button
+                onClick={() => {
+                  if (confirm('Revert project files to this point? This cannot be undone.')) {
+                    onRevertToMessage(msg.id);
+                  }
+                }}
+                className="h-7 px-2 rounded-md flex items-center gap-1 text-white/20 hover:text-amber-400/80 hover:bg-amber-500/[0.08] transition-colors text-[10px]"
+                title="Restore files to this point"
+              >
+                <Clock className="h-3 w-3" />
+                Restore
+              </button>
+            )}
           </div>
         )}
 
