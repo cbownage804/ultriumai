@@ -1,5 +1,6 @@
 
 
+
 ## Production Readiness Roadmap — Progress
 
 ### Completed
@@ -29,8 +30,9 @@
 - ✅ **Step 14 — Build time telemetry dashboard**: Timing breakdown (fastest/median/slowest), trend detection, mini bar chart in BuildHealthDashboard
 - ✅ **Step 15 — Keyboard-first workflow**: Added missing shortcuts (⌘., ⌘`, ⌘⇧E, ⌘I) to KeyboardShortcutsPanel
 
-### Next Priority
-- Step 16 — Mobile preview accuracy
-- Step 17 — File tree performance
-- Step 19 — Preview hosting reliability
-- Step 20 — Error telemetry and alerting
+- ✅ **Step 16 — Mobile preview accuracy**: Device frame chrome (notch, rounded corners) for mobile/tablet viewports
+- ✅ **Step 17 — File tree performance**: Virtualized rendering for 100+ file trees with windowed scroll
+- ✅ **Step 19 — Preview hosting reliability**: Retry with exponential backoff (3 attempts) for DB upsert and storage upload
+- ✅ **Step 20 — Error telemetry and alerting**: Trend detection (rising/falling/stable), alert threshold (10+ unresolved), sparkline chart in ErrorTrackingPanel
+
+### All 20 steps complete ✅

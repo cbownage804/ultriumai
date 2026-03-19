@@ -20,6 +20,10 @@ export interface ErrorStats {
   errorRate: number;
   topErrors: TrackedError[];
   errorsByHour: { hour: string; count: number }[];
+  /** Error trend: 'rising' if last-hour errors > previous-hour, 'falling' if less, 'stable' otherwise */
+  trend: 'rising' | 'falling' | 'stable';
+  /** True when unresolved errors exceed threshold (10+) */
+  alertThresholdExceeded: boolean;
 }
 
 export function useErrorTracking() {
@@ -63,12 +67,24 @@ export function useErrorTracking() {
       const h = e.timestamp.toISOString().slice(0, 13);
       hourCounts.set(h, (hourCounts.get(h) || 0) + e.occurrences);
     }
+
+    // Trend detection: compare last hour vs previous hour
+    const now = new Date();
+    const thisHourKey = now.toISOString().slice(0, 13);
+    const prevHour = new Date(now.getTime() - 3600000);
+    const prevHourKey = prevHour.toISOString().slice(0, 13);
+    const thisHourCount = hourCounts.get(thisHourKey) || 0;
+    const prevHourCount = hourCounts.get(prevHourKey) || 0;
+    const trend: ErrorStats['trend'] = thisHourCount > prevHourCount + 2 ? 'rising' : thisHourCount < prevHourCount - 2 ? 'falling' : 'stable';
+
     return {
       totalErrors: errors.reduce((s, e) => s + e.occurrences, 0),
       unresolvedCount: unresolved.length,
       errorRate: errors.length > 0 ? Math.round((unresolved.length / errors.length) * 100) : 0,
       topErrors: [...unresolved].sort((a, b) => b.occurrences - a.occurrences).slice(0, 10),
       errorsByHour: [...hourCounts.entries()].sort().map(([hour, count]) => ({ hour, count })),
+      trend,
+      alertThresholdExceeded: unresolved.length >= 10,
     };
   }, [errors]);
 

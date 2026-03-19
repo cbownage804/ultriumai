@@ -36,39 +36,52 @@ export function usePreviewHosting() {
         setIsUploading(true);
         lastHash.current = contentHash;
 
-        // 1. Upsert into live_previews table for fast DB-based serving
-        const { error: dbError } = await supabase
-          .from('app_builder_live_previews')
-          .upsert({
-            user_id: user.id,
-            project_slug: slug,
-            compiled_html: compiledHtml,
-            version_hash: contentHash,
-            updated_at: new Date().toISOString(),
-          }, { onConflict: 'user_id,project_slug' });
+        // Retry wrapper with exponential backoff
+        const withRetry = async <T,>(fn: () => Promise<T>, maxRetries = 3): Promise<T> => {
+          for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+              return await fn();
+            } catch (err) {
+              if (attempt === maxRetries) throw err;
+              await new Promise(r => setTimeout(r, Math.min(1000 * 2 ** attempt, 8000)));
+            }
+          }
+          throw new Error('Unreachable');
+        };
 
-        if (dbError) {
-          console.error('Live preview DB upsert failed:', dbError);
-        }
+        // 1. Upsert into live_previews table for fast DB-based serving
+        await withRetry(async () => {
+          const { error: dbError } = await supabase
+            .from('app_builder_live_previews')
+            .upsert({
+              user_id: user.id,
+              project_slug: slug,
+              compiled_html: compiledHtml,
+              version_hash: contentHash,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: 'user_id,project_slug' });
+          if (dbError) throw dbError;
+        });
 
         // 2. Also upload to storage as fallback
-        const filePath = `${user.id}/previews/${slug}/index.html`;
-        const { error } = await supabase.storage
-          .from('published-apps')
-          .upload(filePath, new Blob([compiledHtml], { type: 'text/html' }), {
-            upsert: true,
-            contentType: 'text/html',
-          });
-
-        if (error) {
-          console.error('Preview storage upload failed:', error);
-        }
+        await withRetry(async () => {
+          const filePath = `${user.id}/previews/${slug}/index.html`;
+          const { error } = await supabase.storage
+            .from('published-apps')
+            .upload(filePath, new Blob([compiledHtml], { type: 'text/html' }), {
+              upsert: true,
+              contentType: 'text/html',
+            });
+          if (error) throw error;
+        });
 
         // Set the shareable URL
         const shareUrl = `https://${slug}.apps.ultriumai.com`;
         setPreviewUrl(shareUrl);
       } catch (err) {
         console.error('Preview hosting error:', err);
+        // Reset hash so next attempt retries
+        lastHash.current = null;
       } finally {
         setIsUploading(false);
       }
