@@ -1437,16 +1437,36 @@ export function BuilderChatPanel({
         )}
 
         {msg.inlineError && !isStreaming && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/[0.06] border border-red-500/20 text-xs">
-            <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0" />
-            <span className="text-red-300/80 flex-1 truncate font-mono text-[11px]">{msg.inlineError.message}</span>
-            <button
-              onClick={() => onFixError(`Fix this runtime error in my app: "${msg.inlineError!.message}"${msg.inlineError!.source ? ` (in ${msg.inlineError!.source}${msg.inlineError!.line ? `:${msg.inlineError!.line}` : ''})` : ''}`)}
-              className="flex items-center gap-1 px-2 py-1 rounded-md bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 transition-colors shrink-0 font-medium"
-            >
-              <Wrench className="h-3 w-3" />
-              Fix this
-            </button>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/[0.06] border border-red-500/20 text-xs">
+              <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0" />
+              <span className="text-red-300/80 flex-1 truncate font-mono text-[11px]">{msg.inlineError.message}</span>
+              <button
+                onClick={() => onFixError(`Fix this runtime error in my app: "${msg.inlineError!.message}"${msg.inlineError!.source ? ` (in ${msg.inlineError!.source}${msg.inlineError!.line ? `:${msg.inlineError!.line}` : ''})` : ''}`)}
+                className="flex items-center gap-1 px-2 py-1 rounded-md bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 transition-colors shrink-0 font-medium"
+              >
+                <Wrench className="h-3 w-3" />
+                Fix this
+              </button>
+            </div>
+            {/* Smart error follow-up suggestion chips */}
+            {buildErrors && buildErrors.length > 0 && (() => {
+              const suggestions = generateErrorSuggestions(buildErrors);
+              if (suggestions.length === 0) return null;
+              return (
+                <div className="flex flex-wrap gap-1.5">
+                  {suggestions.map((s, i) => (
+                    <button
+                      key={i}
+                      onClick={() => onFixError(s.prompt)}
+                      className="px-2.5 py-1.5 rounded-lg text-[10px] bg-amber-500/[0.06] border border-amber-500/20 text-amber-300/80 hover:bg-amber-500/[0.12] hover:text-amber-200 transition-all"
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         )}
 
