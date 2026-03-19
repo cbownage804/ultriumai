@@ -985,6 +985,7 @@ export function CompilationBridge({
           }
         }
         console.info('[CompilationBridge] compile resolved', { runId: thisRunId, ms: Math.round(performance.now() - t0) });
+        setCompilePhase('rendering');
 
         // ── Stale run-ID check — discard if a newer compile was started ──
         if (thisRunId !== compileRunIdRef.current) {
