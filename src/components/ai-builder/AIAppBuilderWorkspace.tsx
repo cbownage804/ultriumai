@@ -3790,6 +3790,17 @@ export function AIAppBuilderWorkspace() {
             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }}
         />
+        {/* Wave 9 Step 6: Environment Status Bar */}
+        <EnvironmentStatusBar
+          supabaseConnected={!!supabaseConfig?.url}
+          envVarCount={envVariables.filter(v => v.key && v.value).length}
+          edgeFunctionCount={edgeFunctions.length}
+          storageBucketCount={0}
+          onClickSupabase={() => openPanelByKey('showDatabase')}
+          onClickEnvVars={() => setShowEnvVars(true)}
+          onClickEdgeFunctions={() => setShowEdgeFunctions(true)}
+          onClickStorage={() => setShowStorage(true)}
+        />
         {/* Wave 8 Step 5: Quick Settings Bar */}
         <QuickSettingsBar
           soundEnabled={soundEnabled}
