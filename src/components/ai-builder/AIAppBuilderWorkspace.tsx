@@ -4510,11 +4510,11 @@ export function AIAppBuilderWorkspace() {
         position={inlineChatPosition}
         selectedCode={inlineChatCode}
         filePath={inlineChatFile}
-        isLoading={inlineEdit.inlineEdit.isLoading}
-        suggestion={inlineEdit.inlineEdit.suggestion}
-        onSubmit={(prompt) => inlineEdit.submitPrompt(prompt)}
+        isLoading={inlineAIEdit.inlineEdit.isLoading}
+        suggestion={inlineAIEdit.inlineEdit.suggestion}
+        onSubmit={(prompt) => inlineAIEdit.submitPrompt(prompt)}
         onAccept={() => {
-          const result = inlineEdit.acceptSuggestion();
+          const result = inlineAIEdit.acceptSuggestion();
           if (result && activeFile) {
             const file = project.files.find(f => f.path === activeFile);
             if (file) {
@@ -4525,7 +4525,7 @@ export function AIAppBuilderWorkspace() {
           }
           setInlineChatOpen(false);
         }}
-        onDismiss={() => { inlineEdit.dismissEdit(); setInlineChatOpen(false); }}
+        onDismiss={() => { inlineAIEdit.dismissEdit(); setInlineChatOpen(false); }}
       />
     </TooltipProvider>
   );
