@@ -25,7 +25,7 @@ interface ColumnInfo {
   column_default: string | null;
 }
 
-export function CloudDatabasePanel({ supabaseUrl, supabaseKey }: CloudDatabasePanelProps) {
+export function CloudDatabasePanel({ supabaseUrl, supabaseKey, onRefreshTypes }: CloudDatabasePanelProps) {
   const [tables, setTables] = useState<TableInfo[]>([]);
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [columns, setColumns] = useState<ColumnInfo[]>([]);
