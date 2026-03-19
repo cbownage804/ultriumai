@@ -1301,6 +1301,10 @@ export function AIAppBuilderWorkspace() {
   const lkgDiff = useLKGDiff();
   const autoHeal = useAutoHealCompile();
   const errorPatterns = useErrorPatternLearning();
+  const deployGate = useDeployGate();
+  const runSmokeTestsForDeploy = useCallback(async () => {
+    return deployGate.runSmokeTests(previewIframeRef);
+  }, [deployGate]);
   const promptMemory = usePromptMemory();
   const lighthouseAudit = useLighthouseAudit(buildLog.addEntry);
   const bundleSize = useBundleSizeTracking(buildLog.addEntry);
