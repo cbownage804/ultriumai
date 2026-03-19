@@ -28,9 +28,11 @@ interface VisualEditToolbarProps {
   iframeRef: React.RefObject<HTMLIFrameElement | null>;
   onEditRequest: (selector: string, elementContext: string, prompt: string) => void;
   onDirectEdit: (selector: string, property: string, value: string) => void;
+  /** Wave 9 Step 2: Navigate to source code for selected element */
+  onViewSource?: (selector: string, textContent: string, tagName: string) => void;
 }
 
-export function VisualEditToolbar({ active, onToggle, iframeRef, onEditRequest, onDirectEdit }: VisualEditToolbarProps) {
+export function VisualEditToolbar({ active, onToggle, iframeRef, onEditRequest, onDirectEdit, onViewSource }: VisualEditToolbarProps) {
   const [selectedElement, setSelectedElement] = useState<SelectedElement | null>(null);
   const [editMode, setEditMode] = useState<'select' | 'text' | 'style' | 'image' | 'prompt'>('select');
   const [editText, setEditText] = useState('');
