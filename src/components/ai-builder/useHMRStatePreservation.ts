@@ -37,6 +37,7 @@ const HMR_STATE_SCRIPT = `
         openDetails: [],
         activeTab: null,
         dialogOpen: false,
+        routerPath: (window.location.pathname !== '/' ? window.location.pathname : null),
         timestamp: Date.now()
       };
 
