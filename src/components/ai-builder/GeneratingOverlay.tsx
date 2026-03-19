@@ -1,6 +1,6 @@
-import { useState, useEffect, type RefObject } from 'react';
+import { useState, useEffect, useRef, type RefObject } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, Check, FileCode, Sparkles } from 'lucide-react';
+import { Loader2, Check, FileCode, Sparkles, Clock } from 'lucide-react';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 
 interface GeneratingOverlayProps {
@@ -19,14 +19,31 @@ const PHASE_CONFIG: Record<string, { label: string; color: string; gradient: str
   writing: { label: 'Writing code...', color: 'text-emerald-400', gradient: 'from-emerald-500 via-cyan-400 to-teal-500' },
 };
 
+function formatElapsed(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+}
+
 export function GeneratingOverlay({ isGenerating, isCompiling, phase, partialFilesRef, completedFileCountRef, continuationRound = 0 }: GeneratingOverlayProps) {
-  // Phase 4: Only show overlay during generation, not compilation-only.
-  // Compilation happens silently — the old preview stays visible until the new one is ready.
   const showOverlay = isGenerating;
 
-  // Local polling state — reads from refs every 500ms, only THIS component re-renders
   const [localFiles, setLocalFiles] = useState<ProjectFile[]>([]);
   const [localCompleted, setLocalCompleted] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
+  const startTimeRef = useRef<number>(0);
+
+  // Elapsed timer
+  useEffect(() => {
+    if (!showOverlay) {
+      setElapsed(0);
+      return;
+    }
+    startTimeRef.current = Date.now();
+    const timer = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startTimeRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [showOverlay]);
 
   useEffect(() => {
     if (!showOverlay) {
@@ -34,7 +51,6 @@ export function GeneratingOverlay({ isGenerating, isCompiling, phase, partialFil
       setLocalCompleted(0);
       return;
     }
-    // Phase 6: Skip polling during compilation-only phase (no new files to show)
     if (isCompiling && !isGenerating) return;
     const interval = setInterval(() => {
       const files = partialFilesRef.current;
@@ -60,7 +76,7 @@ export function GeneratingOverlay({ isGenerating, isCompiling, phase, partialFil
           transition={{ duration: 0.4, ease: 'easeOut' }}
           className="absolute inset-0 z-10 pointer-events-none"
         >
-          {/* Top shimmer bar — CSS-only to avoid JS animation overhead */}
+          {/* Top shimmer bar */}
           <div className="absolute top-0 left-0 right-0 h-[3px] overflow-hidden">
             <div
               className={`h-full w-[200%] bg-gradient-to-r ${shimmerGradient} opacity-90`}
@@ -76,19 +92,27 @@ export function GeneratingOverlay({ isGenerating, isCompiling, phase, partialFil
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
             className="absolute top-3 right-3 bg-[#0a0a14]/95 border border-white/[0.08] rounded-xl overflow-hidden min-w-[190px] shadow-2xl shadow-black/50"
           >
-            <div className="flex items-center gap-2 px-3 py-2.5 border-b border-white/[0.06]">
-              {isCompiling && !isGenerating ? (
-                <Sparkles className="h-3.5 w-3.5 text-amber-400 animate-pulse" />
-              ) : (
-                <Loader2 className="h-3.5 w-3.5 text-cyan-400 animate-spin" />
+            <div className="flex items-center justify-between gap-2 px-3 py-2.5 border-b border-white/[0.06]">
+              <div className="flex items-center gap-2">
+                {isCompiling && !isGenerating ? (
+                  <Sparkles className="h-3.5 w-3.5 text-amber-400 animate-pulse" />
+                ) : (
+                  <Loader2 className="h-3.5 w-3.5 text-cyan-400 animate-spin" />
+                )}
+                <span className={`text-[11px] font-medium ${phaseConfig?.color || 'text-white/60'}`}>
+                  {isCompiling && !isGenerating 
+                    ? 'Compiling preview...' 
+                    : continuationRound > 0 
+                       ? `Getting ready... (round ${continuationRound + 1})`
+                      : phaseConfig?.label || 'Getting ready...'}
+                </span>
+              </div>
+              {elapsed > 0 && (
+                <div className="flex items-center gap-1 text-[9px] text-white/25 font-mono">
+                  <Clock className="h-2.5 w-2.5" />
+                  {formatElapsed(elapsed)}
+                </div>
               )}
-              <span className={`text-[11px] font-medium ${phaseConfig?.color || 'text-white/60'}`}>
-                {isCompiling && !isGenerating 
-                  ? 'Compiling preview...' 
-                  : continuationRound > 0 
-                     ? `Getting ready... (round ${continuationRound + 1})`
-                    : phaseConfig?.label || 'Getting ready...'}
-              </span>
             </div>
 
             {totalFiles > 0 && (

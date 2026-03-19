@@ -1103,16 +1103,24 @@ export function useAIAppBuilder() {
     // ── Anti-pattern injection: inject learned error patterns into system prompt ──
     // (Consumer must call getAntiPatternPrompt() from useErrorPatternLearning and pass as knowledgeContext)
 
-    // ── Scope constraint for iterative edits ──
+    // ── Scope constraint for iterative edits with focus-file detection ──
     const isIterativeEdit = currentFiles.length > 0;
     if (isIterativeEdit) {
+      // Detect which files the user's request likely targets
+      const focusFiles = detectFocusFiles(userMessage, currentFiles);
+      const focusDirective = focusFiles.length > 0
+        ? `\n[FOCUS FILES — only modify these unless absolutely necessary]\n${focusFiles.map(f => `  ✏️  ${f}`).join('\n')}\n[DO NOT TOUCH — preserve exactly as-is]\n${currentFiles.filter(f => !focusFiles.includes(f.path)).map(f => `  🔒 ${f.path}`).slice(0, 15).join('\n')}${currentFiles.length - focusFiles.length > 15 ? `\n  ... and ${currentFiles.length - focusFiles.length - 15} more locked files` : ''}`
+        : '';
+
       systemParts.push(`[CHANGE SCOPE — CRITICAL]
 You are editing an EXISTING project. ONLY make the changes the user explicitly asked for.
 - Do NOT add, remove, or restyle sections, backgrounds, images, or layout elements that the user did NOT mention.
 - Do NOT "improve" or "enhance" parts of the site beyond the user's request.
 - If the user says "redesign the logo", ONLY change the logo — do NOT touch hero backgrounds, color schemes, or other unrelated elements.
 - Preserve all existing code, styles, and structure that are not directly related to the request.
-- When in doubt, change LESS rather than MORE.`);
+- When in doubt, change LESS rather than MORE.
+- NEVER change backgrounds, gradients, or color schemes unless explicitly asked.
+- NEVER add new sections, images, or animations unless explicitly asked.${focusDirective}`);
     }
 
     // ── Step 7: Smarter EDIT vs FILE selection ──
