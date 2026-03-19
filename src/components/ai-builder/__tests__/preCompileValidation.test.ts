@@ -25,7 +25,7 @@ describe('preCompileValidate', () => {
 
   it('detects class instead of className in JSX', () => {
     const issues = preCompileValidate([
-      { path: 'src/App.tsx', content: 'import React from "react";\nexport default function App() { return <div class="test">Hi</div>; }', language: 'typescript' },
+      { path: 'src/App.tsx', content: 'import React from "react";\nexport default function App() { return <App class="test">Hi</App>; }', language: 'typescript' },
     ]);
     expect(issues.some(i => i.message.includes('className'))).toBe(true);
   });
