@@ -29,4 +29,12 @@
 - ✅ **Step 5 — Proactive lint-on-type**: preCompileValidate wired into CodeEditor onChange with 500ms debounce, surfaces Monaco markers
 - ✅ **Step 6 — Token cost display**: Running token counter shown during streaming
 
+### Completed (Phase 5: Lovable Parity — Wave 3)
+- ✅ **Step 1 — Per-file accept/reject in generation**: Inline diff review with per-file checkboxes after generation (DiffReviewPanel pattern)
+- ✅ **Step 2 — Persistent file tabs with reorder**: Open tabs + active tab persisted to localStorage, restored on mount via useProjectFileSystem
+- ✅ **Step 3 — Smart error follow-up prompts**: Build errors parsed via generateErrorSuggestions to render actionable chips (missing imports, packages, types)
+- ✅ **Step 4 — Generation diff preview before apply**: Staging mode for multi-file changes with review-before-apply (via existing DiffReviewPanel)
+- ✅ **Step 5 — Inline model picker in chat input**: Model selection dropdown next to Chat/Build mode toggle, wired to selectedModel/onModelChange
+- ✅ **Step 6 — Auto-save indicator**: SyncStatusIndicator already present in WorkspaceTopBar with lastSaved timestamp
+
 ### All steps complete ✅
