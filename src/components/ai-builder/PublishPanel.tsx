@@ -280,19 +280,59 @@ export function PublishPanel({ open, onClose, publishedUrl, previewUrl, projectN
                     </div>
                   )}
 
+                  {/* Step 18: Smoke test results */}
+                  {smokeTestState === 'running' && (
+                    <div className="p-2 rounded-lg bg-cyan-500/5 border border-cyan-500/10 flex items-center gap-2">
+                      <Loader2 className="h-3 w-3 text-cyan-400 animate-spin shrink-0" />
+                      <span className="text-[10px] text-cyan-400/70">Running pre-deploy checks...</span>
+                    </div>
+                  )}
+
+                  {smokeTestState === 'failed' && smokeTestResults && (
+                    <div className="p-2 rounded-lg bg-red-500/5 border border-red-500/10 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="h-3 w-3 text-red-400 shrink-0" />
+                        <span className="text-[10px] font-medium text-red-400/80">Pre-deploy checks failed</span>
+                      </div>
+                      {smokeTestResults.tests.filter(t => !t.passed).map((t, i) => (
+                        <div key={i} className="flex items-center gap-2 pl-5">
+                          <X className="h-2.5 w-2.5 text-red-400/60 shrink-0" />
+                          <span className="text-[9px] text-red-400/60">{t.name}: {t.message}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {smokeTestState === 'passed' && (
+                    <div className="p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 flex items-center gap-2">
+                      <Check className="h-3 w-3 text-emerald-400 shrink-0" />
+                      <span className="text-[10px] text-emerald-400/70">All pre-deploy checks passed</span>
+                    </div>
+                  )}
+
                   <div className="flex gap-2">
-                    <button onClick={() => setShowDeployPreview(false)} className="flex-1 h-9 rounded-lg text-[12px] text-white/40 hover:text-white/60 bg-white/[0.03] hover:bg-white/[0.06] transition-colors">
+                    <button onClick={() => { setShowDeployPreview(false); setSmokeTestState('idle'); setSmokeTestResults(null); }} className="flex-1 h-9 rounded-lg text-[12px] text-white/40 hover:text-white/60 bg-white/[0.03] hover:bg-white/[0.06] transition-colors">
                       Cancel
                     </button>
                     <button
                       onClick={handlePublish}
-                      disabled={isPublishing}
-                      className="flex-1 h-9 rounded-lg text-[12px] font-medium bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-400 hover:to-blue-500 flex items-center justify-center gap-1.5 transition-all"
+                      disabled={isPublishing || smokeTestState === 'running'}
+                      className="flex-1 h-9 rounded-lg text-[12px] font-medium bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-400 hover:to-blue-500 flex items-center justify-center gap-1.5 transition-all disabled:opacity-50"
                     >
-                      {isPublishing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Rocket className="h-3.5 w-3.5" />}
-                      {isPublishing ? 'Publishing...' : 'Confirm Deploy'}
+                      {smokeTestState === 'running' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : isPublishing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Rocket className="h-3.5 w-3.5" />}
+                      {smokeTestState === 'running' ? 'Checking...' : isPublishing ? 'Publishing...' : 'Confirm Deploy'}
                     </button>
                   </div>
+
+                  {/* Escape hatch for failed checks */}
+                  {smokeTestState === 'failed' && (
+                    <button
+                      onClick={() => { setSmokeTestState('passed'); }}
+                      className="w-full text-center text-[10px] text-white/25 hover:text-white/40 transition-colors py-1"
+                    >
+                      Publish anyway (skip checks)
+                    </button>
+                  )}
                 </div>
               )}
 
