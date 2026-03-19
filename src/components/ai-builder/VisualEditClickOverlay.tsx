@@ -38,6 +38,8 @@ export function VisualEditClickOverlay({ isActive, onToggle, iframeRef, onDirect
           tagName: e.data.tagName,
           text: e.data.text,
           rect: e.data.rect,
+          sourceFile: e.data.sourceFile || null,
+          sourceLine: e.data.sourceLine || null,
         });
         setEditValue(e.data.text);
       }
