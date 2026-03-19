@@ -1364,13 +1364,29 @@ export function AIAppBuilderWorkspace() {
     if (state === 'error' && error && !(isGenerating || isGeneratingOverride)) {
       if (autoHeal.shouldAutoHeal(error.message)) {
         const diffContext = lkgDiff.getErrorContext(project.files, error.message);
-        const healPrompt = autoHeal.buildHealPrompt(error.message, error.errors, diffContext);
+        
+        // Extract failing file paths from error messages and include their full content
+        const failingFiles = error.errors
+          .map(e => {
+            const fileMatch = e.match(/^([^\s:]+\.[a-z]+)/i);
+            return fileMatch ? fileMatch[1] : null;
+          })
+          .filter((p): p is string => !!p)
+          .map(p => {
+            // Try with and without src/ prefix
+            const file = project.files.find(f => f.path === p || f.path === `src/${p}` || f.path.endsWith(`/${p}`));
+            return file ? { path: file.path, content: file.content } : null;
+          })
+          .filter((f): f is { path: string; content: string } => !!f);
+
+        const healPrompt = autoHeal.buildHealPrompt(error.message, error.errors, diffContext, failingFiles);
         autoHeal.recordAttempt(error.message);
 
         console.info('[AutoHeal] Triggering auto-fix attempt', {
           attempt: autoHeal.getAttempts().length,
           remaining: autoHeal.attemptsRemaining(),
           error: error.message,
+          failingFiles: failingFiles.map(f => f.path),
         });
 
         // Delay slightly to let UI update, then send auto-fix prompt
