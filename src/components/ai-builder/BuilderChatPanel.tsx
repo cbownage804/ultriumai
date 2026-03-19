@@ -50,38 +50,36 @@ interface BuilderChatPanelProps {
   onSelectStarterTemplate?: (template: import('./AppStarterTemplates').AppStarterTemplate) => void;
   supabaseConfig?: { url: string; anonKey: string } | null;
   onUpdateMessages?: (updater: (prev: BuilderMessage[]) => BuilderMessage[]) => void;
-  /** Questions UI rendered above the input */
   questionsSlot?: React.ReactNode;
-  /** Whether the preview has valid compiled HTML and is truly ready */
   isPreviewReady?: boolean;
-  /** Current compile state for accurate status labels */
   compileState?: 'idle' | 'compiling' | 'success' | 'error';
-  /** True when project is still untouched golden template */
   isGoldenProject?: boolean;
-  /** Ref-based streaming: content ref to avoid workspace re-renders */
   streamingContentRef?: MutableRefObject<string>;
-  /** Current build errors for smart follow-up suggestions */
   buildErrors?: ParsedViteError[];
-  /** New conversation handler — clears messages but keeps files */
   onNewConversation?: () => void;
   onShowSettings?: () => void;
   onShowHistory?: () => void;
   onShowKnowledge?: () => void;
   onShowGitHub?: () => void;
-  // Conversation forking
   conversationForks?: { id: string; label: string; createdAt: Date }[];
   activeForkId?: string | null;
   onForkConversation?: () => void;
   onSwitchFork?: (forkId: string) => void;
   onDeleteFork?: (forkId: string) => void;
-  // Wave 2: Per-message revert
   onRevertToMessage?: (messageId: string) => void;
   onForkFromMessage?: (messageId: string) => void;
-  // Wave 2: Model selection
   selectedModel?: string;
   onModelChange?: (model: string) => void;
   onOpenEditHistory?: () => void;
   onReview?: () => void;
+  // Wave 10: @-file mentions
+  projectFiles?: ProjectFile[];
+  // Wave 10: Component extraction
+  componentExtractionCount?: number;
+  componentExtractionPrompt?: string | null;
+  // Wave 10: Prompt favorites
+  onTogglePromptFavorite?: (messageId: string) => void;
+  favoritePromptIds?: Set<string>;
 }
 
 
