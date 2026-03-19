@@ -34,6 +34,7 @@ export function StreamingCodeEditor({
   onCursorChange,
   onInlineAIAction,
   onStreamingFileChange,
+  buildErrorMarkers,
 }: StreamingCodeEditorProps) {
   const [editorStreamFiles, setEditorStreamFiles] = useState<ProjectFile[]>([]);
 
