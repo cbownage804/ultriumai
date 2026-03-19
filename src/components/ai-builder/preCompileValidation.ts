@@ -12,6 +12,42 @@ export interface PreCompileIssue {
   severity: 'error' | 'warning';
 }
 
+/**
+ * Auto-fix trivial issues that would cause compilation failures.
+ * Returns a new array with fixes applied.
+ */
+export function autoFixTrivialIssues(files: ProjectFile[]): ProjectFile[] {
+  return files.map(file => {
+    const ext = file.path.split('.').pop()?.toLowerCase() || '';
+    if (!['ts', 'tsx', 'js', 'jsx'].includes(ext)) return file;
+    let content = file.content;
+
+    // Fix 1: Empty files — add a minimal export
+    if (!content.trim()) {
+      content = `// Auto-generated placeholder\nexport {};\n`;
+      return { ...file, content };
+    }
+
+    // Fix 2: TSX/JSX files using React but missing React import (for older React versions)
+    if (['tsx', 'jsx'].includes(ext)) {
+      const hasJSX = /<[A-Z]/.test(content) || /<[a-z]+[\s>]/.test(content);
+      const hasReactImport = /import\s+.*\bReact\b.*from\s+['"]react['"]/.test(content);
+      if (hasJSX && !hasReactImport && !content.includes('/** @jsxImportSource')) {
+        content = `import React from 'react';\n${content}`;
+        return { ...file, content };
+      }
+    }
+
+    // Fix 3: Escaped forward slashes in JSX (<\/div> → </div>)
+    if (['tsx', 'jsx'].includes(ext) && /\\\//.test(content)) {
+      content = content.replace(/\\\//g, '/');
+      return { ...file, content };
+    }
+
+    return file;
+  });
+}
+
 export function preCompileValidate(files: ProjectFile[]): PreCompileIssue[] {
   const issues: PreCompileIssue[] = [];
 
@@ -20,7 +56,10 @@ export function preCompileValidate(files: ProjectFile[]): PreCompileIssue[] {
     if (!['ts', 'tsx', 'js', 'jsx'].includes(ext)) continue;
 
     const content = file.content;
-    if (!content.trim()) continue;
+    if (!content.trim()) {
+      issues.push({ file: file.path, message: 'Empty file', severity: 'warning' });
+      continue;
+    }
 
     // ── 1. Bracket balance check ──
     const bracketIssue = checkBracketBalance(content);
@@ -53,7 +92,6 @@ export function preCompileValidate(files: ProjectFile[]): PreCompileIssue[] {
     }
 
     // ── 7. Truncated expression artifacts — stray ')} or ")} at line boundaries ──
-    // These appear when AI output is cut mid-JSX-attribute and crash esbuild internally
     if (/^['"`]\s*\)\s*[;}]\s*$/m.test(content)) {
       issues.push({ file: file.path, message: 'Possible truncated expression artifact (stray quote-paren-brace sequence)', severity: 'warning' });
     }

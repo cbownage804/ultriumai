@@ -38,6 +38,58 @@ function buildBrandingContext(branding: any): string {
 // ── File hash tracking for incremental context (Lovable-grade) ──
 const fileHashCache = new Map<string, string>();
 
+// ── Focus-file detection: match user request to likely target files ──
+function detectFocusFiles(input: string, files: ProjectFile[]): string[] {
+  const lower = input.toLowerCase();
+  const matches: string[] = [];
+
+  // 1. Explicit file mentions (e.g., "update App.tsx", "fix the header")
+  for (const file of files) {
+    const fileName = file.path.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '').toLowerCase() || '';
+    if (lower.includes(fileName) && fileName.length > 2) {
+      matches.push(file.path);
+    }
+  }
+
+  // 2. Component/section keyword mapping
+  const KEYWORD_MAP: Record<string, string[]> = {
+    'header': ['header', 'navbar', 'nav', 'topbar'],
+    'footer': ['footer'],
+    'hero': ['hero', 'landing', 'home'],
+    'sidebar': ['sidebar', 'sidenav'],
+    'logo': ['logo', 'brand', 'header', 'navbar', 'nav'],
+    'button': ['button', 'cta'],
+    'form': ['form', 'contact', 'input'],
+    'card': ['card'],
+    'modal': ['modal', 'dialog'],
+    'color': ['index.css', 'theme', 'tailwind'],
+    'font': ['index.css', 'theme', 'tailwind'],
+    'style': ['index.css', 'theme'],
+    'navigation': ['nav', 'header', 'sidebar', 'router', 'routes'],
+    'route': ['router', 'routes', 'app'],
+    'page': [],  // too generic
+  };
+
+  for (const [keyword, fileHints] of Object.entries(KEYWORD_MAP)) {
+    if (!lower.includes(keyword)) continue;
+    for (const file of files) {
+      const fileLower = file.path.toLowerCase();
+      if (fileHints.some(hint => fileLower.includes(hint)) && !matches.includes(file.path)) {
+        matches.push(file.path);
+      }
+    }
+  }
+
+  // 3. Always include App.tsx/main.tsx for routing changes
+  if (/\b(page|route|navigation|menu)\b/i.test(input)) {
+    const appFile = files.find(f => /\/(App|main)\.(tsx?|jsx?)$/.test(f.path));
+    if (appFile && !matches.includes(appFile.path)) matches.push(appFile.path);
+  }
+
+  // Cap at 5 focus files to keep the directive useful
+  return matches.slice(0, 5);
+}
+
 // Health check removed — false positives from CORS preflight errors caused misleading "AI slow" warnings.
 // Actual request failures are handled by the smart error classifier below.
 
@@ -1103,16 +1155,24 @@ export function useAIAppBuilder() {
     // ── Anti-pattern injection: inject learned error patterns into system prompt ──
     // (Consumer must call getAntiPatternPrompt() from useErrorPatternLearning and pass as knowledgeContext)
 
-    // ── Scope constraint for iterative edits ──
+    // ── Scope constraint for iterative edits with focus-file detection ──
     const isIterativeEdit = currentFiles.length > 0;
     if (isIterativeEdit) {
+      // Detect which files the user's request likely targets
+      const focusFiles = detectFocusFiles(input, currentFiles);
+      const focusDirective = focusFiles.length > 0
+        ? `\n[FOCUS FILES — only modify these unless absolutely necessary]\n${focusFiles.map(f => `  ✏️  ${f}`).join('\n')}\n[DO NOT TOUCH — preserve exactly as-is]\n${currentFiles.filter(f => !focusFiles.includes(f.path)).map(f => `  🔒 ${f.path}`).slice(0, 15).join('\n')}${currentFiles.length - focusFiles.length > 15 ? `\n  ... and ${currentFiles.length - focusFiles.length - 15} more locked files` : ''}`
+        : '';
+
       systemParts.push(`[CHANGE SCOPE — CRITICAL]
 You are editing an EXISTING project. ONLY make the changes the user explicitly asked for.
 - Do NOT add, remove, or restyle sections, backgrounds, images, or layout elements that the user did NOT mention.
 - Do NOT "improve" or "enhance" parts of the site beyond the user's request.
 - If the user says "redesign the logo", ONLY change the logo — do NOT touch hero backgrounds, color schemes, or other unrelated elements.
 - Preserve all existing code, styles, and structure that are not directly related to the request.
-- When in doubt, change LESS rather than MORE.`);
+- When in doubt, change LESS rather than MORE.
+- NEVER change backgrounds, gradients, or color schemes unless explicitly asked.
+- NEVER add new sections, images, or animations unless explicitly asked.${focusDirective}`);
     }
 
     // ── Step 7: Smarter EDIT vs FILE selection ──
