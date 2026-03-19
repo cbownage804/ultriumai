@@ -27,9 +27,13 @@ import { useCSSHotReload } from './useCSSHotReload';
 import { useAutoDepResolver } from './useAutoDepResolver';
 import { useAutoTestGenerator } from './useAutoTestGenerator';
 import { useDeployGate } from './useDeployGate';
+import { useAssetResilience } from './useAssetResilience';
 
 /** Compile State Machine — single source of truth for compilation phase */
 export type CompileState = 'idle' | 'compiling' | 'success' | 'error';
+
+/** Step 4: Granular compile sub-phases for progress accuracy */
+export type CompilePhase = 'preparing' | 'bundling' | 'rendering' | 'injecting' | null;
 
 export interface CompileErrorInfo {
   message: string;
@@ -61,6 +65,8 @@ interface CompilationBridgeProps {
   onCompiledForHosting: (html: string | null) => void;
   onCompilingChange?: (compiling: boolean) => void;
   onCompileStateChange?: (state: CompileState, error?: CompileErrorInfo) => void;
+  /** Step 4: Granular compile phase callback */
+  onCompilePhaseChange?: (phase: CompilePhase) => void;
   skipNextCompileRef?: React.MutableRefObject<boolean>;
   externalStableHTMLRef?: React.RefObject<string | null>;
   onForceCompile?: (fn: () => void) => void;
@@ -115,6 +121,7 @@ export function CompilationBridge({
   isGoldenProject = false,
   onErrorAnnotations,
   onBuildSuccess,
+  onCompilePhaseChange,
 }: CompilationBridgeProps) {
   // ── Worker-based React Compiler (off main thread) ──
   const { compileReactProject, abortCompilation, lockCompile, unlockCompile } = useWorkerCompiler();
@@ -176,6 +183,12 @@ export function CompilationBridge({
   const { injectSmokeTests, runSmokeTests } = useDeployGate();
   const injectSmokeTestsRef = useRef(injectSmokeTests);
   injectSmokeTestsRef.current = injectSmokeTests;
+
+  // ── Step 13: Asset loading resilience ──
+  const { injectAssetResilience } = useAssetResilience();
+  const injectAssetResilienceRef = useRef(injectAssetResilience);
+  injectAssetResilienceRef.current = injectAssetResilience;
+
   // Start monitoring on mount + runtime error forwarding
   useEffect(() => {
     const cleanup = startMonitoring();
@@ -234,11 +247,20 @@ export function CompilationBridge({
   onCompilingChangeRef.current = onCompilingChange;
   const onCompileStateChangeRef = useRef(onCompileStateChange);
   onCompileStateChangeRef.current = onCompileStateChange;
+  const onCompilePhaseChangeRef = useRef(onCompilePhaseChange);
+  onCompilePhaseChangeRef.current = onCompilePhaseChange;
 
   // Helper to transition compile state machine
   const transitionCompileState = useCallback((state: CompileState, error?: CompileErrorInfo) => {
     onCompilingChangeRef.current?.(state === 'compiling');
     onCompileStateChangeRef.current?.(state, error);
+    // Reset phase when leaving 'compiling' state
+    if (state !== 'compiling') onCompilePhaseChangeRef.current?.(null);
+  }, []);
+
+  // Helper to set compile sub-phase
+  const setCompilePhase = useCallback((phase: CompilePhase) => {
+    onCompilePhaseChangeRef.current?.(phase);
   }, []);
 
   // Store files in a ref so effects can read latest data without depending on the array reference
@@ -423,6 +445,7 @@ export function CompilationBridge({
   const runCompile = useCallback(async () => {
     let currentFiles = filesRef.current;
     console.info('[CompilationBridge] runCompile — isReact:', isReactProject, 'files:', currentFiles.length);
+    setCompilePhase('preparing');
 
     // ── Incremental delta detection (HMR-style) ──
     const delta = computeDeltaRef.current(currentFiles);
@@ -477,6 +500,7 @@ export function CompilationBridge({
     const BRIDGE_TIMEOUT = 30_000;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
+    setCompilePhase('bundling');
     try {
       const workerTimeout = new Promise<null>((resolve) => {
         timeoutId = setTimeout(() => {
@@ -563,6 +587,7 @@ export function CompilationBridge({
 
     isIncrementalEditRef.current = false;
 
+    setCompilePhase('injecting');
     if (result && assets.length > 0) {
       const assetScript = assets.map(a =>
         `window.__ASSETS__=window.__ASSETS__||{};window.__ASSETS__[${JSON.stringify(a.name)}]=${JSON.stringify(a.dataUrl)};`
@@ -583,6 +608,7 @@ export function CompilationBridge({
       result = injectErrorOverlayRef.current(result);
       result = injectTestHarnessRef.current(result);
       result = injectSmokeTestsRef.current(result);
+      result = injectAssetResilienceRef.current(result); // Step 13
     }
 
     if (result) {
@@ -967,6 +993,7 @@ export function CompilationBridge({
           }
         }
         console.info('[CompilationBridge] compile resolved', { runId: thisRunId, ms: Math.round(performance.now() - t0) });
+        setCompilePhase('rendering');
 
         // ── Stale run-ID check — discard if a newer compile was started ──
         if (thisRunId !== compileRunIdRef.current) {

@@ -2,9 +2,12 @@
  * Premium loading screen shown during AI generation and compilation.
  * Features: animated code rain, real build progress, and morphing skeleton wireframe.
  * All heavy animations are CSS-only to keep the main thread free.
+ *
+ * Step 4: Now accepts compilePhase for granular progress messages.
  */
 import { useState, useEffect, useMemo } from 'react';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
+import type { CompilePhase } from './CompilationBridge';
 
 interface SkeletonPreviewProps {
   /** Files being generated (partial list during streaming) */
@@ -15,6 +18,8 @@ interface SkeletonPreviewProps {
   isGenerating?: boolean;
   /** True during compilation phase */
   isCompiling?: boolean;
+  /** Step 4: Granular compile sub-phase */
+  compilePhase?: CompilePhase;
 }
 
 // Fake code lines for the rain effect
@@ -49,11 +54,19 @@ const TIPS = [
   'Publish your app with one click when it\'s ready.',
 ];
 
+const PHASE_LABELS: Record<string, { text: string; detail: string }> = {
+  preparing: { text: 'Preparing files…', detail: 'Auto-repairing & validating syntax' },
+  bundling: { text: 'Bundling with Vite…', detail: 'Compiling TypeScript & JSX' },
+  rendering: { text: 'Validating output…', detail: 'Checking preview integrity' },
+  injecting: { text: 'Injecting runtime…', detail: 'Adding HMR, overlays & assets' },
+};
+
 export function SkeletonPreview({
   projectFiles,
   completedFileCount = 0,
   isGenerating = true,
   isCompiling = false,
+  compilePhase,
 }: SkeletonPreviewProps) {
   const [tipIndex, setTipIndex] = useState(0);
   const [tipFading, setTipFading] = useState(false);
@@ -88,11 +101,21 @@ export function SkeletonPreview({
     return cols;
   }, []);
 
+  // Step 4: Phase-aware status text
+  const phaseInfo = compilePhase ? PHASE_LABELS[compilePhase] : null;
   const statusText = isCompiling && !isGenerating
-    ? 'Compiling preview…'
+    ? (phaseInfo?.text ?? 'Compiling preview…')
     : totalFiles > 0
       ? `Writing code… (${completedFileCount}/${totalFiles} files)`
       : 'Building your app…';
+  const detailText = isCompiling && !isGenerating
+    ? (phaseInfo?.detail ?? 'Almost there…')
+    : 'This usually takes a few seconds';
+
+  // Step 4: Phase progress indicator (determinate during compile)
+  const phaseProgress = compilePhase
+    ? { preparing: 15, bundling: 50, injecting: 80, rendering: 95 }[compilePhase] ?? 0
+    : 0;
 
   return (
     <div className="flex flex-col items-center justify-center h-full w-full bg-[#09090b] relative overflow-hidden select-none">
@@ -184,7 +207,7 @@ export function SkeletonPreview({
             {statusText}
           </p>
           <p className="text-[11px] text-white/20">
-            {isCompiling ? 'Almost there…' : 'This usually takes a few seconds'}
+            {detailText}
           </p>
         </div>
 
@@ -192,10 +215,16 @@ export function SkeletonPreview({
         <div className="w-full max-w-[260px]">
           <div className="h-[3px] rounded-full bg-white/[0.06] overflow-hidden relative">
             {totalFiles > 0 ? (
-              /* Determinate progress */
+              /* Determinate progress during generation */
               <div
                 className="h-full rounded-full bg-gradient-to-r from-cyan-500 via-violet-500 to-cyan-400 transition-all duration-700 ease-out"
                 style={{ width: `${Math.max(progress, 4)}%` }}
+              />
+            ) : isCompiling && compilePhase ? (
+              /* Step 4: Determinate progress during compilation phases */
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-cyan-500 via-violet-500 to-cyan-400 transition-all duration-500 ease-out"
+                style={{ width: `${phaseProgress}%` }}
               />
             ) : (
               /* Indeterminate shimmer */
@@ -205,6 +234,11 @@ export function SkeletonPreview({
           {totalFiles > 0 && (
             <p className="text-[9px] text-white/15 mt-1.5 text-right font-mono tabular-nums">
               {completedFileCount}/{totalFiles} files
+            </p>
+          )}
+          {isCompiling && compilePhase && (
+            <p className="text-[9px] text-white/15 mt-1.5 text-right font-mono tabular-nums">
+              {phaseProgress}%
             </p>
           )}
         </div>
@@ -225,6 +259,31 @@ export function SkeletonPreview({
                   )}
                   <span className={`text-[10px] font-mono truncate ${isDone ? 'text-white/20' : 'text-cyan-300/50'}`}>
                     {fileName}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Step 4: Compile phase steps indicator */}
+        {isCompiling && !isGenerating && compilePhase && (
+          <div className="w-full max-w-[260px] flex items-center gap-1.5 mt-1">
+            {(['preparing', 'bundling', 'injecting', 'rendering'] as const).map((phase) => {
+              const phases = ['preparing', 'bundling', 'injecting', 'rendering'];
+              const currentIdx = phases.indexOf(compilePhase);
+              const thisIdx = phases.indexOf(phase);
+              const isDone = thisIdx < currentIdx;
+              const isCurrent = phase === compilePhase;
+              return (
+                <div key={phase} className="flex-1 flex flex-col items-center gap-1">
+                  <div className={`h-[2px] w-full rounded-full transition-colors duration-300 ${
+                    isDone ? 'bg-emerald-400/60' : isCurrent ? 'bg-cyan-400/60' : 'bg-white/[0.06]'
+                  }`} />
+                  <span className={`text-[7px] uppercase tracking-wider ${
+                    isDone ? 'text-emerald-400/40' : isCurrent ? 'text-cyan-400/50' : 'text-white/10'
+                  }`}>
+                    {phase.slice(0, 4)}
                   </span>
                 </div>
               );

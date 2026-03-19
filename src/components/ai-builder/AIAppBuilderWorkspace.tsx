@@ -39,7 +39,7 @@ import type { ChangelogEntry } from './ChangelogPanel';
 import type { CommandAction } from './EnhancedCommandPalette';
 import { useProjectBundler } from '@/hooks/useProjectBundler';
 import { CompilationBridge, ERROR_FALLBACK_HTML } from './CompilationBridge';
-import type { CompileState, CompileErrorInfo } from './CompilationBridge';
+import type { CompileState, CompileErrorInfo, CompilePhase } from './CompilationBridge';
 import { detectReactProject } from '@/hooks/useReactCompiler';
 import { useWorkerCompiler } from '@/hooks/useWorkerCompiler';
 import { useASTBundler } from '@/hooks/useASTBundler';
@@ -1394,6 +1394,7 @@ export function AIAppBuilderWorkspace() {
   const MAX_FIX_ATTEMPTS = 3;
   const [isCompiling, setIsCompilingRaw] = useState(false);
   const [compileState, setCompileStateRaw] = useState<CompileState>('idle');
+  const [compilePhase, setCompilePhase] = useState<CompilePhase>(null);
   const [compileError, setCompileError] = useState<CompileErrorInfo | null>(null);
   const isCompilingRef = useRef(false);
   const compileStateRef = useRef<CompileState>('idle');
@@ -3608,6 +3609,7 @@ export function AIAppBuilderWorkspace() {
             );
           }}
           onBuildSuccess={(files) => lkgDiff.saveSnapshot(files)}
+          onCompilePhaseChange={setCompilePhase}
         />
       </PanelErrorBoundary>
       <WelcomeOverlay onQuickStart={(prompt) => handleSend(prompt)} />

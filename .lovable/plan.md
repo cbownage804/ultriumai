@@ -24,11 +24,12 @@
 - ✅ **Step 7 — Smarter EDIT vs FILE selection**: System prompt directive instructs AI to use ===EDIT: hunks for <20% changes
 - ✅ **Step 12 — Preview navigation state preservation**: Router path saved/restored across HMR reloads via history.replaceState
 
+- ✅ **Step 4 — Compile progress accuracy**: Granular sub-phases (preparing→bundling→injecting→rendering) shown in SkeletonPreview with determinate progress
+- ✅ **Step 13 — Asset loading resilience**: useAssetResilience injects error handlers with retry + placeholder SVG for broken images
+- ✅ **Step 14 — Build time telemetry dashboard**: Timing breakdown (fastest/median/slowest), trend detection, mini bar chart in BuildHealthDashboard
+- ✅ **Step 15 — Keyboard-first workflow**: Added missing shortcuts (⌘., ⌘`, ⌘⇧E, ⌘I) to KeyboardShortcutsPanel
+
 ### Next Priority
-- Step 4 — Compile progress accuracy
-- Step 13 — Asset loading resilience
-- Step 14 — Build time telemetry dashboard
-- Step 15 — Keyboard-first workflow
 - Step 16 — Mobile preview accuracy
 - Step 17 — File tree performance
 - Step 19 — Preview hosting reliability
