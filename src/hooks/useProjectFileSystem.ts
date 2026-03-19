@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { detectReactProject } from './useReactCompiler';
 
 export interface ProjectFile {
@@ -139,13 +139,12 @@ export function useProjectFileSystem() {
   }, []);
 
   const setActiveFile = useCallback((path: string) => {
-    setProject(prev => ({
-      ...prev,
-      activeFilePath: path,
-      openFilePaths: prev.openFilePaths.includes(path)
+    setProject(prev => {
+      const openFilePaths = prev.openFilePaths.includes(path)
         ? prev.openFilePaths
-        : [...prev.openFilePaths, path],
-    }));
+        : [...prev.openFilePaths, path];
+      return { ...prev, activeFilePath: path, openFilePaths };
+    });
   }, []);
 
   const closeFile = useCallback((path: string) => {
@@ -162,6 +161,42 @@ export function useProjectFileSystem() {
   const reorderOpenFiles = useCallback((paths: string[]) => {
     setProject(prev => ({ ...prev, openFilePaths: paths }));
   }, []);
+
+  // Persist open tabs to localStorage
+  const tabPersistKey = `ai-builder-tabs-${project.name}`;
+  const isRestoredRef = useRef(false);
+
+  useEffect(() => {
+    if (project.openFilePaths.length > 0 && isRestoredRef.current) {
+      try {
+        localStorage.setItem(tabPersistKey, JSON.stringify({
+          openPaths: project.openFilePaths,
+          activePath: project.activeFilePath,
+        }));
+      } catch {}
+    }
+  }, [project.openFilePaths, project.activeFilePath, tabPersistKey]);
+
+  // Restore tabs on mount when files are loaded
+  useEffect(() => {
+    if (isRestoredRef.current || project.files.length === 0) return;
+    isRestoredRef.current = true;
+    try {
+      const saved = localStorage.getItem(tabPersistKey);
+      if (!saved) return;
+      const { openPaths, activePath } = JSON.parse(saved);
+      if (!Array.isArray(openPaths)) return;
+      const filePaths = new Set(project.files.map(f => f.path));
+      const validPaths = openPaths.filter((p: string) => filePaths.has(p));
+      if (validPaths.length > 0) {
+        setProject(prev => ({
+          ...prev,
+          openFilePaths: validPaths,
+          activeFilePath: activePath && filePaths.has(activePath) ? activePath : validPaths[0],
+        }));
+      }
+    } catch {}
+  }, [project.files.length, tabPersistKey]);
 
   const renameProject = useCallback((name: string) => {
     setProject(prev => ({ ...prev, name }));

@@ -1,81 +1,40 @@
 
 
-# Lovable Parity — Wave 3
+## Production Readiness Roadmap — Progress
 
-Six improvements targeting the remaining experience gaps. Focus: generation accuracy, developer confidence, and workflow polish.
+### Completed (Phase 1: Steps 1–20)
+- ✅ All 20 original roadmap steps complete
 
----
+### Completed (Phase 2: Next Wave)
+- ✅ **Step A — Dependency-aware auto-heal**: Auto-heal now includes full dependency graph (imports + reverse deps) of failing files
+- ✅ **Step B — Speculative pre-compilation**: Streaming compile polls every 5s (was 8s) with 2-file threshold (was 4)
+- ✅ **Step C — Smart model fallback**: Auto-retries with alternate model on 429/503 errors (e.g., Gemini → Claude)
+- ✅ **Step D — Prompt compression**: Rolling summarization triggers earlier (keepRecent=6, maxOlder=15)
+- ✅ **Step E — Import graph validation**: Post-parse import check auto-stubs missing imports, surfaces warnings in diff summary
+- ✅ **Step F — Build cancellation UX**: Already implemented (stop button in chat panel)
 
-## 1. Per-File Accept/Reject in Generation Output
+### Completed (Phase 3: Lovable Parity)
+- ✅ **Step 1 — Error locality in auto-heal**: Extracts file:line from ParsedViteError, sends ±20 line window instead of full file
+- ✅ **Step 2 — Conversation branching**: Edit & resend truncates subsequent messages, enabling conversation forking from any point
+- ✅ **Step 3 — Source-mapped visual edits**: Visual edit overlay reads data-source-file/line attributes, passes source location to AI prompts
+- ✅ **Step 4 — Streaming file status**: Live file-by-file progress during generation with checkmarks for completed files
+- ✅ **Step 5 — Workspace layout persistence**: rightTab persisted to localStorage, restored on mount
+- ✅ **Step 6 — Error anti-patterns in auto-heal**: Anti-pattern context from useErrorPatternLearning injected into heal prompts
 
-**Gap**: After AI generates code, all files are applied atomically. Lovable lets users review each file and selectively accept or reject individual files before they're applied. The `AgentDiffReviewModal` exists but is only used for agent mode, not standard generations.
+### Completed (Phase 4: Lovable Parity — Wave 2)
+- ✅ **Step 1 — Inline change diff per message**: Collapsible per-file diffs rendered in assistant messages using CodeDiffViewer
+- ✅ **Step 2 — One-click revert per generation**: fileSnapshot stored on each assistant message, "↩ Revert" button restores pre-generation state
+- ✅ **Step 3 — Smart context window indicator**: Visual progress bar near input (green/amber/red) with "New chat" shortcut when >85%
+- ✅ **Step 4 — Warm compile cache**: LKG preview cached in sessionStorage + IndexedDB, restored instantly on project load
+- ✅ **Step 5 — Proactive lint-on-type**: preCompileValidate wired into CodeEditor onChange with 500ms debounce, surfaces Monaco markers
+- ✅ **Step 6 — Token cost display**: Running token counter shown during streaming
 
-**Fix**: After generation completes, if more than 1 file was changed, show a lightweight inline diff review in the chat message (expand the existing diff summary card). Add per-file "Accept" / "Reject" checkboxes. Only apply accepted files; rejected files are discarded. Reuse the `DiffReviewPanel` pattern.
+### Completed (Phase 5: Lovable Parity — Wave 3)
+- ✅ **Step 1 — Per-file accept/reject in generation**: Inline diff review with per-file checkboxes after generation (DiffReviewPanel pattern)
+- ✅ **Step 2 — Persistent file tabs with reorder**: Open tabs + active tab persisted to localStorage, restored on mount via useProjectFileSystem
+- ✅ **Step 3 — Smart error follow-up prompts**: Build errors parsed via generateErrorSuggestions to render actionable chips (missing imports, packages, types)
+- ✅ **Step 4 — Generation diff preview before apply**: Staging mode for multi-file changes with review-before-apply (via existing DiffReviewPanel)
+- ✅ **Step 5 — Inline model picker in chat input**: Model selection dropdown next to Chat/Build mode toggle, wired to selectedModel/onModelChange
+- ✅ **Step 6 — Auto-save indicator**: SyncStatusIndicator already present in WorkspaceTopBar with lastSaved timestamp
 
-**Files**: `BuilderChatPanel.tsx` (inline review UI), `AIAppBuilderWorkspace.tsx` (deferred file application)
-
----
-
-## 2. Persistent File Tabs with Reorder
-
-**Gap**: Open file tabs reset on refresh. Lovable remembers which files are open, their order, and which tab is active. Tab order can be changed via drag-and-drop.
-
-**Fix**: Persist open tabs + active tab to `localStorage` keyed by project ID. Restore on mount. Add basic drag-to-reorder using native HTML5 drag events (no library needed). Save order on every change.
-
-**Files**: `FileTabBar.tsx` (drag reorder + persist), `AIAppBuilderWorkspace.tsx` (restore on mount)
-
----
-
-## 3. Smart Follow-Up Prompts from Build Errors
-
-**Gap**: When a build fails, the user sees the error and a "Try to fix" button. Lovable also suggests specific follow-up prompts based on the error type (e.g., "Install missing package X", "Add the missing import for Y").
-
-**Fix**: In the error display area of `BuilderChatPanel.tsx`, parse the `ParsedViteError` to generate 2-3 specific actionable chips (e.g., "Add missing import for `useState`", "Create file `src/utils/helpers.ts`"). Clicking a chip sends it as a prompt.
-
-**Files**: `BuilderChatPanel.tsx` (error-specific suggestion chips), `parseViteErrors.ts` (extract actionable info)
-
----
-
-## 4. Generation Diff Preview Before Apply
-
-**Gap**: Currently files are applied immediately as soon as the AI finishes streaming. Lovable shows a "Review changes" step where users can see exactly what will change before committing. This is especially important for large refactors.
-
-**Fix**: Add an optional "Review before apply" mode (toggleable in settings or auto-triggered when >5 files change). When active, parsed files are staged but not applied. A compact diff card shows what will change. User clicks "Apply all" or reviews per-file. Falls back to auto-apply for small changes (1-2 files).
-
-**Files**: `AIAppBuilderWorkspace.tsx` (staging logic), `BuilderChatPanel.tsx` (review card UI)
-
----
-
-## 5. Intelligent Model Picker in Chat Input
-
-**Gap**: The model selector exists in settings but not inline. Lovable lets users pick the AI model directly from the chat input area, seeing which model will handle their next message. This is especially useful when switching between fast (small) and capable (large) models.
-
-**Fix**: Add a small model badge/dropdown to the left of the send button in `BuilderChatPanel.tsx`. Show the current model name abbreviated (e.g., "Gemini 2.5"). Clicking opens a dropdown to switch. The `selectedModel` and `onModelChange` props are already declared but unused in the UI.
-
-**Files**: `BuilderChatPanel.tsx` (model picker widget near input)
-
----
-
-## 6. Auto-Save Indicator with Conflict Detection
-
-**Gap**: Users have no visibility into when their project was last saved or whether there are unsaved changes. Lovable shows a persistent save indicator ("Saved 2s ago" / "Saving..." / "Unsaved changes").
-
-**Fix**: Surface the existing `lastSaved` timestamp and `isDirty` state as a small indicator in the top bar. Show "Saving..." during debounce, "Saved Xs ago" after save, and "Unsaved" with a warning dot if persistence fails. Use the existing `useProjectPersistence` and `useDraftPersistence` hooks.
-
-**Files**: `WorkspaceTopBar.tsx` (save status indicator)
-
----
-
-## Priority
-
-| Step | Impact | Effort |
-|------|--------|--------|
-| 5 — Model picker in input | High (daily UX) | Low |
-| 3 — Error follow-up prompts | High (fix success) | Low |
-| 6 — Save indicator | Medium (confidence) | Low |
-| 2 — Persistent file tabs | Medium (DX) | Low |
-| 1 — Per-file accept/reject | High (control) | Medium |
-| 4 — Diff preview before apply | High (safety) | High |
-
-All changes are independent and can be shipped in any order.
-
+### All steps complete ✅

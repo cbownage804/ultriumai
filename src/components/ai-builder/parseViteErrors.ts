@@ -122,3 +122,77 @@ export function mergeErrorSources(
 
   return merged;
 }
+
+/**
+ * Generate actionable follow-up prompt suggestions from build errors.
+ * Returns 2-3 specific chips like "Add missing import for useState" or "Create file src/utils/helpers.ts".
+ */
+export function generateErrorSuggestions(errors: ParsedViteError[]): { label: string; prompt: string }[] {
+  const suggestions: { label: string; prompt: string }[] = [];
+  const seen = new Set<string>();
+
+  for (const err of errors) {
+    const msg = err.message;
+
+    // Missing import / Cannot find name
+    const nameMatch = msg.match(/Cannot find name '(\w+)'/i) || msg.match(/is not defined.*'(\w+)'/i);
+    if (nameMatch && !seen.has(`import-${nameMatch[1]}`)) {
+      seen.add(`import-${nameMatch[1]}`);
+      suggestions.push({
+        label: `Add missing import for \`${nameMatch[1]}\``,
+        prompt: `Add the missing import for "${nameMatch[1]}" in ${err.file}`,
+      });
+    }
+
+    // Module not found / Cannot find module
+    const moduleMatch = msg.match(/Cannot find module '([^']+)'/i) || msg.match(/Module not found.*'([^']+)'/i);
+    if (moduleMatch && !seen.has(`module-${moduleMatch[1]}`)) {
+      seen.add(`module-${moduleMatch[1]}`);
+      const mod = moduleMatch[1];
+      if (mod.startsWith('.') || mod.startsWith('/')) {
+        suggestions.push({
+          label: `Create file \`${mod}\``,
+          prompt: `Create the missing file "${mod}" that is imported in ${err.file}`,
+        });
+      } else {
+        suggestions.push({
+          label: `Install package \`${mod}\``,
+          prompt: `Add the missing npm package "${mod}" and update the imports in ${err.file}`,
+        });
+      }
+    }
+
+    // Type errors
+    const typeMatch = msg.match(/Type '(\w+)' is not assignable to type '(\w+)'/i);
+    if (typeMatch && !seen.has(`type-${typeMatch[1]}-${typeMatch[2]}`)) {
+      seen.add(`type-${typeMatch[1]}-${typeMatch[2]}`);
+      suggestions.push({
+        label: `Fix type mismatch in \`${err.file.split('/').pop()}\``,
+        prompt: `Fix the type error in ${err.file}:${err.line} — Type '${typeMatch[1]}' is not assignable to type '${typeMatch[2]}'`,
+      });
+    }
+
+    // Property does not exist
+    const propMatch = msg.match(/Property '(\w+)' does not exist on type '(\w+)'/i);
+    if (propMatch && !seen.has(`prop-${propMatch[1]}`)) {
+      seen.add(`prop-${propMatch[1]}`);
+      suggestions.push({
+        label: `Add property \`${propMatch[1]}\` to \`${propMatch[2]}\``,
+        prompt: `Fix the error in ${err.file}:${err.line} — add the missing property "${propMatch[1]}" to the type "${propMatch[2]}"`,
+      });
+    }
+
+    // JSX/syntax errors
+    if (/unexpected token|expected.*[;,)}]/i.test(msg) && !seen.has(`syntax-${err.file}`)) {
+      seen.add(`syntax-${err.file}`);
+      suggestions.push({
+        label: `Fix syntax error in \`${err.file.split('/').pop()}\``,
+        prompt: `Fix the syntax error at ${err.file}:${err.line} — ${msg}`,
+      });
+    }
+
+    if (suggestions.length >= 3) break;
+  }
+
+  return suggestions.slice(0, 3);
+}
