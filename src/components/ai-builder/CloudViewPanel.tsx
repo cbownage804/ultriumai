@@ -96,6 +96,7 @@ export function CloudViewPanel({ isOpen, onClose, supabaseConfig, onOpenPanel }:
                   <CloudDatabasePanel
                     supabaseUrl={supabaseConfig.supabaseUrl}
                     supabaseKey={supabaseConfig.supabaseKey}
+                    onRefreshTypes={onRefreshTypes}
                   />
                 )}
                 {activeTab === 'users' && (
