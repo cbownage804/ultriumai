@@ -38,6 +38,58 @@ function buildBrandingContext(branding: any): string {
 // ── File hash tracking for incremental context (Lovable-grade) ──
 const fileHashCache = new Map<string, string>();
 
+// ── Focus-file detection: match user request to likely target files ──
+function detectFocusFiles(input: string, files: ProjectFile[]): string[] {
+  const lower = input.toLowerCase();
+  const matches: string[] = [];
+
+  // 1. Explicit file mentions (e.g., "update App.tsx", "fix the header")
+  for (const file of files) {
+    const fileName = file.path.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '').toLowerCase() || '';
+    if (lower.includes(fileName) && fileName.length > 2) {
+      matches.push(file.path);
+    }
+  }
+
+  // 2. Component/section keyword mapping
+  const KEYWORD_MAP: Record<string, string[]> = {
+    'header': ['header', 'navbar', 'nav', 'topbar'],
+    'footer': ['footer'],
+    'hero': ['hero', 'landing', 'home'],
+    'sidebar': ['sidebar', 'sidenav'],
+    'logo': ['logo', 'brand', 'header', 'navbar', 'nav'],
+    'button': ['button', 'cta'],
+    'form': ['form', 'contact', 'input'],
+    'card': ['card'],
+    'modal': ['modal', 'dialog'],
+    'color': ['index.css', 'theme', 'tailwind'],
+    'font': ['index.css', 'theme', 'tailwind'],
+    'style': ['index.css', 'theme'],
+    'navigation': ['nav', 'header', 'sidebar', 'router', 'routes'],
+    'route': ['router', 'routes', 'app'],
+    'page': [],  // too generic
+  };
+
+  for (const [keyword, fileHints] of Object.entries(KEYWORD_MAP)) {
+    if (!lower.includes(keyword)) continue;
+    for (const file of files) {
+      const fileLower = file.path.toLowerCase();
+      if (fileHints.some(hint => fileLower.includes(hint)) && !matches.includes(file.path)) {
+        matches.push(file.path);
+      }
+    }
+  }
+
+  // 3. Always include App.tsx/main.tsx for routing changes
+  if (/\b(page|route|navigation|menu)\b/i.test(input)) {
+    const appFile = files.find(f => /\/(App|main)\.(tsx?|jsx?)$/.test(f.path));
+    if (appFile && !matches.includes(appFile.path)) matches.push(appFile.path);
+  }
+
+  // Cap at 5 focus files to keep the directive useful
+  return matches.slice(0, 5);
+}
+
 // Health check removed — false positives from CORS preflight errors caused misleading "AI slow" warnings.
 // Actual request failures are handled by the smart error classifier below.
 
