@@ -17,6 +17,18 @@ interface CustomDomain {
   sslStatus: 'provisioning' | 'active' | 'failed';
 }
 
+interface SmokeTestResult {
+  name: string;
+  passed: boolean;
+  message: string;
+}
+
+interface DeployGateResult {
+  passed: boolean;
+  tests: SmokeTestResult[];
+  blockedReason?: string;
+}
+
 interface PublishPanelProps {
   open: boolean;
   onClose: () => void;
@@ -37,9 +49,11 @@ interface PublishPanelProps {
   authProviders?: string[];
   deployHistory?: DeploymentRecord[];
   onRollback?: (deploymentId: string) => Promise<void>;
+  /** Step 18: Run smoke tests before deploy */
+  runSmokeTests?: () => Promise<DeployGateResult>;
 }
 
-export function PublishPanel({ open, onClose, publishedUrl, previewUrl, projectName, hasFiles, onPublish, onUnpublish, files = [], supabaseConfig, stripeConfig, serviceKeys, envVars, cdnPackages, edgeFunctions, storageBuckets, authProviders, deployHistory: externalHistory = [], onRollback }: PublishPanelProps) {
+export function PublishPanel({ open, onClose, publishedUrl, previewUrl, projectName, hasFiles, onPublish, onUnpublish, files = [], supabaseConfig, stripeConfig, serviceKeys, envVars, cdnPackages, edgeFunctions, storageBuckets, authProviders, deployHistory: externalHistory = [], onRollback, runSmokeTests }: PublishPanelProps) {
   const [isPublishing, setIsPublishing] = useState(false);
   const [customDomains, setCustomDomains] = useState<CustomDomain[]>([]);
   const [newDomain, setNewDomain] = useState('');
