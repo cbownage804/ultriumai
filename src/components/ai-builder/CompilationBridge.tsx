@@ -874,6 +874,7 @@ export function CompilationBridge({
       });
       compilationInFlightRef.current = true;
       compiledDigestRef.current = filesDigest;
+      lastCompiledDigestRef.current = { digest: filesDigest, timestamp: Date.now() };
       recompileNeededRef.current = false;
       lockCompile(); // Prevent spurious aborts from other effects in the same render cycle
       transitionCompileState('compiling');

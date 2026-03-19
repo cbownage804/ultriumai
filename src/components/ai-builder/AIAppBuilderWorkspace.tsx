@@ -1916,7 +1916,13 @@ export function AIAppBuilderWorkspace() {
       if (diffs.length > 0) {
         const cm = commitMessages.generateLocal(diffs);
         commitMsg = `${cm.type}(${cm.scope}): ${cm.subject}`;
-        setMessages(prev => prev.map((m, i) => i === prev.length - 1 ? { ...m, commitMessage: commitMsg } : m));
+        // Step 9: Build diff summary for chat
+        const added = diffs.filter((d: any) => d.type === 'added' || !previousFiles.some(pf => pf.path === d.path)).map((d: any) => d.path);
+        const modified = diffs.filter((d: any) => d.type !== 'added' && previousFiles.some(pf => pf.path === d.path)).map((d: any) => d.path);
+        const deleted = previousFiles.filter(pf => !latestFiles.some(lf => lf.path === pf.path)).map(pf => pf.path);
+        const totalLinesChanged = diffs.reduce((sum: number, d: any) => sum + (d.additions || 0) + (d.deletions || 0), 0);
+        const diffSummary = { added, modified, deleted, totalLinesChanged };
+        setMessages(prev => prev.map((m, i) => i === prev.length - 1 ? { ...m, commitMessage: commitMsg, diffSummary } : m));
       }
       // Post-gen analysis completely disabled to prevent browser freeze.
       // These were running smoke tests, conflict detection, TS validation,
