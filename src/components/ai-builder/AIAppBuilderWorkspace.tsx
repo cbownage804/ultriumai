@@ -2288,19 +2288,19 @@ export function AIAppBuilderWorkspace() {
   const hasAutoLoaded = useRef(false);
   const lastLoadedProjectId = useRef<string | null>(null);
 
-  // Reset auto-load guard when the project ID changes (navigating between projects)
   useEffect(() => {
+    // Allow re-loading when navigating to a different project
     if (initialProjectId && initialProjectId !== lastLoadedProjectId.current) {
       hasAutoLoaded.current = false;
     }
-  }, [initialProjectId]);
-
-  useEffect(() => {
     if (!initialProjectId || hasAutoLoaded.current) return;
     hasAutoLoaded.current = true;
 
     // Clear stale preview from previous project before loading new one
-    if (lastLoadedProjectId.current && lastLoadedProjectId.current !== initialProjectId) {
+    const isProjectSwitch = lastLoadedProjectId.current != null && lastLoadedProjectId.current !== initialProjectId;
+    lastLoadedProjectId.current = initialProjectId;
+
+    if (isProjectSwitch) {
       stableHTMLRef.current = null;
       lastKnownGoodHTMLRef.current = null;
       compiledForHostingRef.current = null;
@@ -2308,14 +2308,12 @@ export function AIAppBuilderWorkspace() {
       setStableHTML(null);
       try { localStorage.removeItem('ai-builder-compiled-html'); } catch {}
     }
-    lastLoadedProjectId.current = initialProjectId;
 
     (async () => {
       const loaded = await loadProject(initialProjectId);
       if (loaded) {
         setFiles((loaded.files as any[]) || []);
         renameProject(loaded.name);
-        // If the loaded project already has a real name, skip auto-naming
         if (loaded.name && loaded.name !== 'Untitled Project') {
           hasAutoNamed.current = true;
         }
