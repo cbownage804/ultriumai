@@ -398,6 +398,7 @@ export interface VersionSnapshot {
 }
 
 const BUILDER_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-app-builder`;
+// Whitespace-tolerant delimiters — handle leading/trailing spaces, indentation, and Unicode-safe
 const FILE_DELIMITER = /^\s*===FILE:\s*(.+?)===\s*$/;
 const DELETE_DELIMITER = /^\s*===DELETE:\s*(.+?)===\s*$/;
 const EDIT_DELIMITER = /^\s*===EDIT:\s*(.+?)===\s*$/;
