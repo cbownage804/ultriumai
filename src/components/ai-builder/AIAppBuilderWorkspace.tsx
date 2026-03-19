@@ -2482,6 +2482,7 @@ export function AIAppBuilderWorkspace() {
     // Log to prompt history
     promptHistory.addEntry(input, selectedModel, project.files.length);
 
+    const antiPatternCtx = errorPatterns.getAntiPatternPrompt();
     const knowledgeCtx = [
       knowledge.customInstructions || '',
       knowledge.contextFiles.length > 0 ? '\n\nContext files:\n' + knowledge.contextFiles.map(f => `--- ${f.name} ---\n${f.content}`).join('\n\n') : '',
@@ -2489,6 +2490,7 @@ export function AIAppBuilderWorkspace() {
       selfReview.buildSelfReviewInstruction(),
       promptMemory.buildMemoryContext(),
       schemaIntrospection.getSchemaSummary() || '',
+      antiPatternCtx,
     ].filter(Boolean).join('\n') || undefined;
     
     const fullInput = contextPrefix + contextHint + input;
