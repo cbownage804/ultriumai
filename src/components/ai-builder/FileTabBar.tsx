@@ -98,12 +98,29 @@ export function FileTabBar({ openPaths, activePath, dirtyFiles, streamingFilePat
             {isDirty && !isStreamingThis && (
               <div className="h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" />
             )}
+            {/* Per-file undo button */}
+            {hasFileHistory && onUndoFile && hasFileHistory(path) && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onUndoFile(path);
+                    }}
+                    className="ml-0.5 opacity-0 group-hover:opacity-100 hover:bg-amber-500/20 text-amber-400/60 hover:text-amber-400 rounded p-0.5 transition-all"
+                  >
+                    <Undo2 className="h-2.5 w-2.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-[10px]">Undo file changes</TooltipContent>
+              </Tooltip>
+            )}
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onClose(path);
               }}
-              className="ml-1 opacity-0 group-hover:opacity-100 hover:bg-white/10 rounded p-0.5 transition-opacity"
+              className="ml-0.5 opacity-0 group-hover:opacity-100 hover:bg-white/10 rounded p-0.5 transition-opacity"
             >
               <X className="h-2.5 w-2.5" />
             </button>

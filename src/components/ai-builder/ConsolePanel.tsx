@@ -318,23 +318,50 @@ export function ConsolePanel({ open, onToggle, onFixError, onNavigateToFile, ifr
                   ))
                 )}
                 {activeTab === 'problems' && (
-                  problemEntries.length === 0 ? (
-                    <div className="text-center text-white/15 py-6 flex flex-col items-center gap-1">
-                      <Bug className="h-4 w-4 text-white/10" />
-                      <span>No problems detected</span>
-                    </div>
-                  ) : problemEntries.map(entry => (
-                    <div key={entry.id} className={cn("flex items-start gap-1.5 px-2 py-1 rounded group", entry.type === 'error' ? "bg-red-500/5" : "bg-amber-500/5")}>
-                      {typeIcon(entry.type)}
-                      <span className={cn("flex-1 break-all leading-4", entry.type === 'error' ? "text-red-300/70" : "text-amber-300/70")}>{entry.message}</span>
-                      {entry.source && <span className="text-[8px] text-white/15 shrink-0">{entry.source}{entry.line ? `:${entry.line}` : ''}</span>}
-                      {entry.type === 'error' && onFixError && (
-                        <button onClick={() => onFixError(`Fix this error: "${entry.message}"`)} className="opacity-0 group-hover:opacity-100 h-4 px-1.5 rounded bg-cyan-500/10 text-cyan-400 text-[8px] hover:bg-cyan-500/20 transition-all shrink-0 flex items-center gap-0.5">
-                          <Wrench className="h-2.5 w-2.5" />Fix
-                        </button>
-                      )}
-                    </div>
-                  ))
+                  <>
+                    {/* Wave 11: Build error quick-fix chips */}
+                    {buildErrors && buildErrors.length > 0 && onFixError && (() => {
+                      const suggestions = generateErrorSuggestions(buildErrors);
+                      if (suggestions.length === 0) return null;
+                      return (
+                        <div className="px-2 py-2 border-b border-white/[0.06] space-y-1.5">
+                          <div className="flex items-center gap-1.5 text-[9px] text-amber-400/60 font-medium uppercase tracking-wider">
+                            <Zap className="h-2.5 w-2.5" />
+                            Quick fixes
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {suggestions.map((s, i) => (
+                              <button
+                                key={i}
+                                onClick={() => onFixError(s.prompt)}
+                                className="px-2 py-1 rounded-md text-[9px] bg-cyan-500/[0.08] border border-cyan-500/20 text-cyan-300/80 hover:bg-cyan-500/[0.15] hover:text-cyan-200 transition-all flex items-center gap-1"
+                              >
+                                <Wrench className="h-2.5 w-2.5" />
+                                {s.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    {problemEntries.length === 0 && (!buildErrors || buildErrors.length === 0) ? (
+                      <div className="text-center text-white/15 py-6 flex flex-col items-center gap-1">
+                        <Bug className="h-4 w-4 text-white/10" />
+                        <span>No problems detected</span>
+                      </div>
+                    ) : problemEntries.map(entry => (
+                      <div key={entry.id} className={cn("flex items-start gap-1.5 px-2 py-1 rounded group", entry.type === 'error' ? "bg-red-500/5" : "bg-amber-500/5")}>
+                        {typeIcon(entry.type)}
+                        <span className={cn("flex-1 break-all leading-4", entry.type === 'error' ? "text-red-300/70" : "text-amber-300/70")}>{entry.message}</span>
+                        {entry.source && <span className="text-[8px] text-white/15 shrink-0">{entry.source}{entry.line ? `:${entry.line}` : ''}</span>}
+                        {entry.type === 'error' && onFixError && (
+                          <button onClick={() => onFixError(`Fix this error: "${entry.message}"`)} className="opacity-0 group-hover:opacity-100 h-4 px-1.5 rounded bg-cyan-500/10 text-cyan-400 text-[8px] hover:bg-cyan-500/20 transition-all shrink-0 flex items-center gap-0.5">
+                            <Wrench className="h-2.5 w-2.5" />Fix
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </>
                 )}
                 {activeTab === 'output' && (
                   outputEntries.length === 0 ? (
