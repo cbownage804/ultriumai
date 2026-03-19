@@ -83,6 +83,36 @@ export function CodeEditor({ file, onContentChange, remoteCursors = [], onCursor
     }
   }, [file, onContentChange]);
 
+  // Wave 8 Step 4: Apply build error markers from compilation
+  useEffect(() => {
+    const monaco = monacoRef.current;
+    const editor = editorRef.current;
+    if (!monaco || !editor) return;
+    const model = editor.getModel();
+    if (!model || !file) return;
+
+    const fileMarkers = buildErrorMarkers.filter(
+      m => m.file === file.path || file.path.endsWith(m.file)
+    );
+
+    const markers = fileMarkers.map(m => ({
+      startLineNumber: m.line,
+      startColumn: 1,
+      endLineNumber: m.line,
+      endColumn: 1000,
+      message: m.message,
+      severity: m.severity === 'error' ? monaco.MarkerSeverity.Error : monaco.MarkerSeverity.Warning,
+    }));
+
+    monaco.editor.setModelMarkers(model, 'build-errors', markers);
+
+    return () => {
+      if (model && !model.isDisposed()) {
+        monaco.editor.setModelMarkers(model, 'build-errors', []);
+      }
+    };
+  }, [buildErrorMarkers, file?.path]);
+
   // Update remote cursor decorations
   const updateRemoteCursors = useCallback(() => {
     const editor = editorRef.current;
