@@ -53,4 +53,12 @@
 - ✅ **Step 5 — Project health score dashboard**: Health grade badge (A-F) in WorkspaceTopBar based on TS coverage, tests, structure
 - ✅ **Step 6 — Smart prompt templates library**: Slash command system (/) in chat input with categorized searchable template dropdown
 
+### Completed (Phase 6: Lovable Parity — Wave 6)
+- ✅ **Step 1 — Chat image attachment with AI vision context**: Images already sent as image_url content blocks + embeddable data URLs in useAIAppBuilder.ts
+- ✅ **Step 2 — Go-to-definition and symbol navigation**: Monaco DefinitionProvider + DocumentSymbolProvider registered in CodeEditor for cross-file Cmd+Click navigation
+- ✅ **Step 3 — Smarter package management via AI prompt**: Installed packages from package.json injected into knowledge context so AI knows available dependencies
+- ✅ **Step 4 — Conversation search and pin**: Search bar filters messages by content; pin toggle per message with pinned section at top
+- ✅ **Step 5 — Responsive preview sync with chat**: Current viewport mode injected into AI prompt context for viewport-aware generation
+- ✅ **Step 6 — Quick actions from empty state**: WelcomeOverlay enhanced with contextual quick-action chips (Add landing page, Set up auth, etc.)
+
 ### All steps complete ✅
