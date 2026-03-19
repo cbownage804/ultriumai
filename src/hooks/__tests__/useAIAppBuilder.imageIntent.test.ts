@@ -10,7 +10,7 @@ describe('detectImageGenerationIntent', () => {
 
   it('detects explicit new-image generation requests', () => {
     expect(detectImageGenerationIntent('create a new logo from scratch for my app')).toEqual({
-      prompt: 'create a new logo from scratch  app',
+      prompt: 'create a new logo from scratch',
       quality: 'standard',
     });
 
