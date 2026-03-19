@@ -2296,17 +2296,18 @@ export function AIAppBuilderWorkspace() {
     if (!initialProjectId || hasAutoLoaded.current) return;
     hasAutoLoaded.current = true;
 
-    // Clear stale preview from previous project before loading new one
+    // On project switch: clear localStorage cache (prevent wrong-project restore on refresh)
+    // but keep in-memory preview visible until the new project compiles
     const isProjectSwitch = lastLoadedProjectId.current != null && lastLoadedProjectId.current !== initialProjectId;
     lastLoadedProjectId.current = initialProjectId;
 
     if (isProjectSwitch) {
-      stableHTMLRef.current = null;
-      lastKnownGoodHTMLRef.current = null;
       compiledForHostingRef.current = null;
       setCompiledForHostingState(null);
-      setStableHTML(null);
       try { localStorage.removeItem('ai-builder-compiled-html'); } catch {}
+      // Note: stableHTMLRef / lastKnownGoodHTMLRef are NOT cleared here —
+      // the old preview stays visible while the new project's files recompile.
+      // They'll be naturally replaced once compilation succeeds.
     }
 
     (async () => {
