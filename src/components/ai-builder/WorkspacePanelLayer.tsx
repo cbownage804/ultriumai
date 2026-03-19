@@ -51,6 +51,8 @@ interface WorkspacePanelLayerProps {
   setPendingDiffChanges: (v: any) => void;
   showBugReport: boolean;
   setShowBugReport: (v: boolean) => void;
+  /** Step 18: Deploy gate smoke test runner */
+  runSmokeTests?: () => Promise<any>;
 }
 
 export function WorkspacePanelLayer(props: WorkspacePanelLayerProps) {
