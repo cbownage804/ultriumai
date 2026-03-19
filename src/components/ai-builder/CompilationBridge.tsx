@@ -797,6 +797,18 @@ export function CompilationBridge({
         return;
       }
 
+      // ── Step 5: CSS-only hot-reload — detect and inject without full recompile ──
+      const { cssOnly, changedFiles: changedCSSFiles } = hasCSSOnlyChanges(filesRef.current);
+      if (cssOnly && changedCSSFiles.length > 0) {
+        const injected = hotInjectCSS(previewIframeRef, changedCSSFiles);
+        if (injected) {
+          prevFilesDigestRef.current = filesDigest;
+          snapshotCSS(filesRef.current);
+          console.info('[CompilationBridge] ⚡ Step 5: CSS-only hot-reload bypassed full recompile');
+          return;
+        }
+      }
+
       prevFilesDigestRef.current = filesDigest;
       const patched = liveSync.applyPatches(previewIframeRef, filesRef.current);
       if (patched === true) {
@@ -806,6 +818,17 @@ export function CompilationBridge({
       if (patched === 'soft-reload') {
         softReloadPendingRef.current = true;
       }
+
+      // ── Step 3: Check compiled HTML cache before full recompile ──
+      const cachedHTML = compiledHTMLCacheRef.current.get(filesDigest);
+      if (cachedHTML && isPreviewValid(cachedHTML)) {
+        console.info('[CompilationBridge] ✅ Step 3: Cache hit — returning cached HTML (%d chars)', cachedHTML.length);
+        setStableHTML(cachedHTML);
+        transitionCompileState('success');
+        onErrorAnnotations?.([]); 
+        return;
+      }
+
       // Fall through to full recompile — but mark as incremental edit for local-only compilation
       isIncrementalEditRef.current = true;
       stableHTMLRef.current = null; // Allow recompile
