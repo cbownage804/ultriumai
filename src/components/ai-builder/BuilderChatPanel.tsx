@@ -2135,6 +2135,17 @@ export function BuilderChatPanel({
               </Tooltip>
             )}
 
+            {/* Step 2: Editing indicator */}
+            {editingMessageId && (
+              <div className="flex items-center gap-1.5 text-[10px] text-amber-400/70 bg-amber-500/10 px-2 py-1 rounded-md">
+                <Pencil className="h-2.5 w-2.5" />
+                <span>Editing message — send will replace subsequent messages</span>
+                <button onClick={() => { setEditingMessageId(null); setInput(''); }} className="text-white/30 hover:text-white/60 ml-1">
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            )}
+
             <textarea
               ref={textareaRef}
               value={input}
