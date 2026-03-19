@@ -202,6 +202,7 @@ import {
   DesignSystemPanel as DesignSystemPanelLazy,
   CollaborationPanel as CollaborationPanelLazy,
   APIBuilderPanel as APIBuilderPanelLazy,
+  ComponentIsolationPanel,
 } from './lazyPanels';
 import { useErrorPatternLearning } from '@/hooks/useErrorPatternLearning';
 import { useDeployGate } from './useDeployGate';
