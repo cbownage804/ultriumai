@@ -874,13 +874,37 @@ export function CompilationBridge({
 
         console.info('[CompilationBridge] compile tier start', { runId: thisRunId, ms: Math.round(performance.now() - t0) });
         
-        // ── Hard timeout: prevent infinite "Compiling…" ──
-        const result = await Promise.race([
-          runCompile(),
-          new Promise<null>((_, reject) =>
-            setTimeout(() => reject(new Error('Compile timeout — exceeded ' + COMPILE_HARD_TIMEOUT_MS + 'ms')), COMPILE_HARD_TIMEOUT_MS)
-          ),
-        ]);
+        // ── Compile with auto-retry for transient failures ──
+        const MAX_RETRIES = 2;
+        let result: string | null = null;
+        let lastError: Error | null = null;
+
+        for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+          if (thisRunId !== compileRunIdRef.current) break; // Stale
+          try {
+            result = await Promise.race([
+              runCompile(),
+              new Promise<null>((_, reject) =>
+                setTimeout(() => reject(new Error('Compile timeout — exceeded ' + COMPILE_HARD_TIMEOUT_MS + 'ms')), COMPILE_HARD_TIMEOUT_MS)
+              ),
+            ]);
+            lastError = null;
+            break; // Success
+          } catch (err) {
+            lastError = err instanceof Error ? err : new Error(String(err));
+            if (isAbortError(err)) throw err; // Don't retry aborts
+            const msg = lastError.message.toLowerCase();
+            const isTransient = msg.includes('timeout') || msg.includes('fetch') || msg.includes('network') 
+              || msg.includes('503') || msg.includes('502') || msg.includes('unavailable')
+              || msg.includes('econnrefused') || msg.includes('enotfound');
+            if (!isTransient || attempt >= MAX_RETRIES) {
+              throw lastError; // Non-transient or exhausted retries
+            }
+            const backoffMs = (attempt + 1) * 2000; // 2s, 4s
+            console.warn(`[CompilationBridge] Transient failure (attempt ${attempt + 1}/${MAX_RETRIES + 1}) — retrying in ${backoffMs}ms:`, lastError.message);
+            await new Promise(r => setTimeout(r, backoffMs));
+          }
+        }
         console.info('[CompilationBridge] compile resolved', { runId: thisRunId, ms: Math.round(performance.now() - t0) });
 
         // ── Stale run-ID check — discard if a newer compile was started ──
