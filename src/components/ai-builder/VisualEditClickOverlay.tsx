@@ -127,7 +127,11 @@ export function VisualEditClickOverlay({ isActive, onToggle, iframeRef, onDirect
 
   const handlePromptSend = () => {
     if (selectedElement && onAIPromptEdit && promptValue.trim()) {
-      onAIPromptEdit(selectedElement.selector, selectedElement.text, promptValue.trim());
+      // Step 3: Include source file location in AI prompt context for precise edits
+      const sourceContext = selectedElement.sourceFile
+        ? `[Source: ${selectedElement.sourceFile}${selectedElement.sourceLine ? `:${selectedElement.sourceLine}` : ''}]`
+        : '';
+      onAIPromptEdit(selectedElement.selector, `${sourceContext} ${selectedElement.text}`.trim(), promptValue.trim());
     }
     setPromptValue('');
     setEditMode(null);
