@@ -168,6 +168,29 @@ export function WelcomeOverlay({ onDismiss, onQuickStart, hasSupabase }: Welcome
                       <Code2 className="h-3.5 w-3.5" />
                       Start from Scratch
                     </button>
+                   </div>
+                </div>
+
+                {/* Wave 4 Step 6: Quick action chips */}
+                <div className="px-8 pb-3">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Zap className="h-3 w-3 text-amber-400/60" />
+                    <span className="text-[10px] font-semibold text-white/40 uppercase tracking-wider">Quick Actions</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {QUICK_ACTIONS
+                      .filter(a => hasSupabase || !a.label.includes('database'))
+                      .slice(0, 6)
+                      .map(a => (
+                        <button
+                          key={a.label}
+                          onClick={() => handleQuickStart(a.prompt)}
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-[11px] text-white/50 hover:text-white/80 hover:bg-white/[0.08] hover:border-white/[0.15] transition-all"
+                        >
+                          <span>{a.icon}</span>
+                          {a.label}
+                        </button>
+                      ))}
                   </div>
                 </div>
 
