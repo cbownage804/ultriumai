@@ -1318,7 +1318,11 @@ export function AIAppBuilderWorkspace() {
   const idbPersistence = useIndexedDBPersistence();
   const [showRecoveryDialog, setShowRecoveryDialog] = useState(false);
 
-  const [rightTab, setRightTab] = useState<'preview' | 'code' | 'split'>('preview');
+  // Step 5: Persist & restore workspace layout
+  const [rightTab, setRightTab] = useState<'preview' | 'code' | 'split'>(() => {
+    const saved = localStorage.getItem('builder-layout-rightTab');
+    return (saved === 'preview' || saved === 'code' || saved === 'split') ? saved : 'preview';
+  });
   rightTabRef.current = rightTab;
   setRightTabRef.current = setRightTab;
   const [previewCurrentUrl, setPreviewCurrentUrl] = useState('/');
