@@ -944,13 +944,11 @@ export function CompilationBridge({
             transitionCompileState('error', { message: 'Invalid preview HTML', errors: reasons.length ? reasons : ['Compiled HTML failed validation'] });
           }
         } else {
-          // Compilation returned null — keep LKG if we have one, otherwise show error
+          // Compilation returned null — keep LKG, or null (skeleton shows)
           if (stableHTMLRef.current && isPreviewValid(stableHTMLRef.current)) {
             console.warn('[CompilationBridge] Compilation returned null — preserving LKG preview');
           } else {
-            console.warn('[CompilationBridge] Compilation returned null, no LKG — showing error fallback');
-            setLiveCompiledHTML(ERROR_FALLBACK_HTML);
-            setStableHTML(ERROR_FALLBACK_HTML);
+            console.warn('[CompilationBridge] Compilation returned null, no LKG — skeleton will show');
           }
           transitionCompileState('error', { message: 'Compilation returned empty result', errors: ['Compiler produced no output'] });
         }
