@@ -39,7 +39,19 @@ const FEATURES = [
 interface WelcomeOverlayProps {
   onDismiss?: () => void;
   onQuickStart?: (prompt: string) => void;
+  hasSupabase?: boolean;
 }
+
+const QUICK_ACTIONS = [
+  { icon: '🏠', label: 'Add a landing page', prompt: 'Add a beautiful landing page with hero, features, testimonials, and footer' },
+  { icon: '🔐', label: 'Set up authentication', prompt: 'Add user authentication with login, signup, and protected routes' },
+  { icon: '🗄️', label: 'Connect a database', prompt: 'Set up Supabase database with tables and CRUD operations' },
+  { icon: '📊', label: 'Build a dashboard', prompt: 'Create an analytics dashboard with charts and KPI cards' },
+  { icon: '💳', label: 'Add payments', prompt: 'Integrate Stripe payments with a checkout flow' },
+  { icon: '📱', label: 'Make it responsive', prompt: 'Make the entire app fully responsive for all screen sizes' },
+  { icon: '🌙', label: 'Add dark mode', prompt: 'Add a dark/light mode toggle with system preference detection' },
+  { icon: '🔍', label: 'Add search', prompt: 'Add a global search feature with filtering and results' },
+];
 
 export function WelcomeOverlay({ onDismiss, onQuickStart }: WelcomeOverlayProps) {
   const [show, setShow] = useState(false);
