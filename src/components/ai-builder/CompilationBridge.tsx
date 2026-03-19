@@ -940,10 +940,7 @@ export function CompilationBridge({
             if (!summary.hasDoctype) reasons.push('Missing <!DOCTYPE> or <html> tag');
             if (!summary.hasMount) reasons.push('Missing mount point (<div id="root"> or <div id="app">)');
             if (summary.isFallback) reasons.push('Output contains error/fallback sentinel');
-            if (!stableHTMLRef.current || !isPreviewValid(stableHTMLRef.current)) {
-              setLiveCompiledHTML(ERROR_FALLBACK_HTML);
-              setStableHTML(ERROR_FALLBACK_HTML);
-            }
+            // LKG preserved — never overwrite with fallback HTML
             transitionCompileState('error', { message: 'Invalid preview HTML', errors: reasons.length ? reasons : ['Compiled HTML failed validation'] });
           }
         } else {
