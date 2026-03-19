@@ -284,3 +284,4 @@ export const SchemaDesigner = lz(() => import('./SchemaDesigner'), 'SchemaDesign
 export const DesignSystemPanel = lz(() => import('./DesignSystemPanel'), 'DesignSystemPanel');
 export const CollaborationPanel = lz(() => import('./CollaborationPanel'), 'CollaborationPanel');
 export const APIBuilderPanel = lz(() => import('./APIBuilderPanel'), 'APIBuilderPanel');
+export const ComponentIsolationPanel = lz(() => import('./ComponentIsolationPanel'), 'ComponentIsolationPanel');
