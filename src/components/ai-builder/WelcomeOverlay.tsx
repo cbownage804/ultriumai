@@ -53,7 +53,7 @@ const QUICK_ACTIONS = [
   { icon: '🔍', label: 'Add search', prompt: 'Add a global search feature with filtering and results' },
 ];
 
-export function WelcomeOverlay({ onDismiss, onQuickStart }: WelcomeOverlayProps) {
+export function WelcomeOverlay({ onDismiss, onQuickStart, hasSupabase }: WelcomeOverlayProps) {
   const [show, setShow] = useState(false);
   const [step, setStep] = useState<WelcomeStep>('hero');
 
