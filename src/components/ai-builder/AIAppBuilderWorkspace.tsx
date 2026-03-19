@@ -2369,6 +2369,17 @@ export function AIAppBuilderWorkspace() {
      setCompiledForHostingState(html);
    }, []);
 
+  // Listen for "Fix with AI" from preview error overlay
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === '__FIX_WITH_AI__' && e.data.message) {
+        handleFixError(`Runtime error in preview: ${e.data.message}`);
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [handleFixError]);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
