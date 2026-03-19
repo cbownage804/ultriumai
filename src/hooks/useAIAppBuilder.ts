@@ -100,22 +100,22 @@ function classifyError(status: number, errorMsg: string, err?: Error): Classifie
   };
 }
 
-/** Detect if the user wants to generate a brand-new image/logo/icon via AI */
+/** Detect if the user wants to generate or redesign an image/logo/icon via AI */
 export function detectImageGenerationIntent(input: string): { prompt: string; quality: 'standard' | 'high' } | null {
   const lowerInput = input.toLowerCase().trim();
   const hasImageNoun = /\b(logo|image|icon|illustration|graphic|picture|avatar|banner|mascot|badge|emblem)\b/.test(lowerInput);
   if (!hasImageNoun) return null;
 
   const hasExplicitGenerateVerb = /\b(generate|create|make|draw|produce)\b/.test(lowerInput);
-  const hasDesignVerb = /\bdesign\b/.test(lowerInput);
-  const referencesExistingAsset = /\b(redesign|update|edit|change|modify|refresh|revamp|improve|tweak|refine|iterate|replace)\b/.test(lowerInput)
-    || /\b(current|existing)\s+(logo|icon|image|brand|favicon)\b/.test(lowerInput)
-    || /\b(navbar|header|footer)\s+(logo|icon|brand)\b/.test(lowerInput)
-    || /\b(use|keep|reuse)\b.*\b(logo|icon|brand)\b/.test(lowerInput);
-  const wantsBrandNewAsset = /\b(new|fresh|original|from scratch|brand new|entirely new)\b/.test(lowerInput);
+  const hasDesignVerb = /\b(design|redesign)\b/.test(lowerInput);
+  const hasModifyVerb = /\b(update|change|modify|refresh|revamp|improve|replace|redo)\b/.test(lowerInput);
 
-  if (referencesExistingAsset) return null;
-  if (!hasExplicitGenerateVerb && !(hasDesignVerb && wantsBrandNewAsset)) return null;
+  // "keep / reuse / use the current logo" → NOT image generation, just code edit
+  const wantsToKeepExisting = /\b(use|keep|reuse)\b.*\b(logo|icon|brand)\b/.test(lowerInput);
+  if (wantsToKeepExisting) return null;
+
+  // Any verb that implies creating or changing an image asset triggers generation
+  if (!hasExplicitGenerateVerb && !hasDesignVerb && !hasModifyVerb) return null;
 
   const quality = /\b(high.?quality|detailed|premium|professional|hd|4k)\b/.test(lowerInput) ? 'high' as const : 'standard' as const;
   const prompt = input.replace(/\b(please|can you|could you|i want|i need|for my|for the|website|app|project|page)\b/gi, '').trim();
