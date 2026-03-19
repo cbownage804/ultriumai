@@ -223,7 +223,7 @@ export function useAgentMemory() {
       if (line.startsWith('- ') && currentSection !== 'userRules') {
         const value = line.slice(2).trim();
         if (value) {
-          (newMemory[currentSection] as ProjectMemoryEntry[]).push({
+          (newMemory[currentSection as keyof Pick<ProjectMemory, 'conventions' | 'preferences' | 'patterns' | 'errorFixes'>] as ProjectMemoryEntry[]).push({
             key: `${currentSection}:${value.slice(0, 30).toLowerCase().replace(/\s+/g, '-')}`,
             value, source: 'user', timestamp: now,
           });
