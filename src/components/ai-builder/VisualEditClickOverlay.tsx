@@ -16,6 +16,8 @@ export function VisualEditClickOverlay({ isActive, onToggle, iframeRef, onDirect
     tagName: string;
     text: string;
     rect: DOMRect;
+    sourceFile?: string | null;
+    sourceLine?: number | null;
   } | null>(null);
   const [editMode, setEditMode] = useState<'text' | 'prompt' | null>(null);
   const [editValue, setEditValue] = useState('');
