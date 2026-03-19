@@ -66,6 +66,9 @@ export function PublishPanel({ open, onClose, publishedUrl, previewUrl, projectN
   const [siteDescription, setSiteDescription] = useState('');
   const [rollingBack, setRollingBack] = useState<string | null>(null);
 
+  const [smokeTestState, setSmokeTestState] = useState<'idle' | 'running' | 'passed' | 'failed'>('idle');
+  const [smokeTestResults, setSmokeTestResults] = useState<DeployGateResult | null>(null);
+
   const hasIntegrations = !!(supabaseConfig || stripeConfig || (serviceKeys && serviceKeys.length > 0));
 
   // Compute deploy stats for preview
