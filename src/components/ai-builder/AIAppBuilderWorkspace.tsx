@@ -3282,13 +3282,20 @@ export function AIAppBuilderWorkspace() {
   // Auto-capture thumbnail after generation completes — use refs to avoid stale closure
   const wasGeneratingRef = useRef(false);
   useEffect(() => {
-    // Generation STARTING — clear LKG so stale golden template HTML doesn't mask compile failures
+    // Generation STARTING — keep LKG visible so the preview doesn't go blank.
+    // The old code cleared stableHTML + LKG here, causing the preview to disappear
+    // for the entire duration of generation + compilation (~15-30s).
+    // Instead, we keep the last preview visible. CompilationBridge will replace it
+    // once the new build succeeds, and the LKG fallback chain (line 3513) ensures
+    // something is always shown.
     if (!wasGeneratingRef.current && isGenerating) {
-      console.info('[Workspace] Generation starting — clearing LKG to prevent stale preview');
-      lastKnownGoodHTMLRef.current = null;
-      stableHTMLRef.current = null;
-      setStableHTML(null);
-      try { localStorage.removeItem('ai-builder-compiled-html'); } catch {}
+      console.info('[Workspace] Generation starting — keeping LKG preview visible during build');
+      // Only clear the golden-template flag, not the actual preview HTML
+      // so stale golden template HTML doesn't mask real compile failures
+      if (stableHTMLRef.current && !isPreviewValidFn(stableHTMLRef.current)) {
+        stableHTMLRef.current = null;
+        setStableHTML(null);
+      }
     }
     // Thumbnail capture is handled in handleStableHTML after Vite compilation completes.
     // Do NOT capture here — compiledForHostingRef may still hold stale/default HTML.
