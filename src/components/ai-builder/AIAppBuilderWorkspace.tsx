@@ -114,6 +114,11 @@ import {
 import { StreamingCodeEditor } from './StreamingCodeEditor';
 import { QuickSettingsBar } from './QuickSettingsBar';
 import { useSmartFileCreation } from './useSmartFileCreation';
+import { useConversationHistory } from '@/hooks/useConversationHistory';
+import { useElementSourceMapper } from './useElementSourceMapper';
+import { InlineChatWidget } from './InlineChatWidget';
+import { EnvironmentStatusBar } from './EnvironmentStatusBar';
+import { ConversationDrawer } from './ConversationDrawer';
 
 import {
   PromptHistoryPanel, UndoPreviewPopover, BuilderChatPanel, BuilderPreviewPanel,
@@ -1304,6 +1309,15 @@ export function AIAppBuilderWorkspace() {
   const fileScaffolding = useSmartFileScaffolding();
   const errorAnnotations = useInlineErrorAnnotations();
   const smartFileCreation = useSmartFileCreation();
+  const conversationHistory = useConversationHistory();
+  const elementSourceMapper = useElementSourceMapper(project.files);
+  const [showConversationDrawer, setShowConversationDrawer] = useState(false);
+  const [inlineChatOpen, setInlineChatOpen] = useState(false);
+  const [inlineChatPosition, setInlineChatPosition] = useState({ top: 0, left: 0 });
+  const [inlineChatCode, setInlineChatCode] = useState('');
+  const [inlineChatFile, setInlineChatFile] = useState('');
+  const [inlineChatStartLine, setInlineChatStartLine] = useState(0);
+  const [inlineChatEndLine, setInlineChatEndLine] = useState(0);
   const lkgDiff = useLKGDiff();
   const autoHeal = useAutoHealCompile();
   const errorPatterns = useErrorPatternLearning();
@@ -3199,9 +3213,13 @@ export function AIAppBuilderWorkspace() {
     setConfirmAction({
       title: 'Start new conversation?',
       description: 'This will clear all messages but keep your project files intact.',
-      onConfirm: () => { clearChat(); },
+      onConfirm: () => {
+        // Wave 9: Save current conversation before clearing
+        conversationHistory.saveCurrentConversation(messages, currentProjectId || undefined);
+        clearChat();
+      },
     });
-  }, [clearChat]);
+  }, [clearChat, messages, conversationHistory, currentProjectId]);
 
   const handleRename = async () => {
     const newName = editName.trim();
@@ -3772,6 +3790,17 @@ export function AIAppBuilderWorkspace() {
             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }}
         />
+        {/* Wave 9 Step 6: Environment Status Bar */}
+        <EnvironmentStatusBar
+          supabaseConnected={!!supabaseConfig?.url}
+          envVarCount={envVariables.filter(v => v.key && v.value).length}
+          edgeFunctionCount={edgeFunctions.length}
+          storageBucketCount={0}
+          onClickSupabase={() => openPanelByKey('showDatabase')}
+          onClickEnvVars={() => setShowEnvVars(true)}
+          onClickEdgeFunctions={() => setShowEdgeFunctions(true)}
+          onClickStorage={() => setShowStorage(true)}
+        />
         {/* Wave 8 Step 5: Quick Settings Bar */}
         <QuickSettingsBar
           soundEnabled={soundEnabled}
@@ -3784,7 +3813,7 @@ export function AIAppBuilderWorkspace() {
         <div className="flex-1 overflow-hidden">
           {isMobile ? (
             mobileTab === 'chat' ? (
-              <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} contextBudget={contextBudget} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} onReview={() => { projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)); projectReview.setShowPanel(true); }} supabaseConfig={supabaseConfig} onUpdateMessages={setMessages} streamingContentRef={streamingContentRef} onNewConversation={handleNewConversation} onShowSettings={() => setShowSettingsModal(true)} onShowHistory={() => setShowVersionHistory(true)} onShowKnowledge={() => setShowKnowledge(true)} onShowGitHub={() => setShowGitHubPanel(true)} conversationForks={conversationForks} activeForkId={activeForkId} onForkConversation={forkConversation} onSwitchFork={switchFork} onDeleteFork={deleteFork} isPreviewReady={isPreviewReady} compileState={compileState} isGoldenProject={isGoldenProject} buildErrors={parsedBuildErrors} questionsSlot={builderQuestions.pending ? (
+              <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} contextBudget={contextBudget} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} onReview={() => { projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)); projectReview.setShowPanel(true); }} supabaseConfig={supabaseConfig} onUpdateMessages={setMessages} streamingContentRef={streamingContentRef} onNewConversation={handleNewConversation} onShowSettings={() => setShowSettingsModal(true)} onShowHistory={() => setShowConversationDrawer(true)} onShowKnowledge={() => setShowKnowledge(true)} onShowGitHub={() => setShowGitHubPanel(true)} conversationForks={conversationForks} activeForkId={activeForkId} onForkConversation={forkConversation} onSwitchFork={switchFork} onDeleteFork={deleteFork} isPreviewReady={isPreviewReady} compileState={compileState} isGoldenProject={isGoldenProject} buildErrors={parsedBuildErrors} questionsSlot={builderQuestions.pending ? (
                 <div className="px-3 pt-2">
                   <QuestionsCard
                     questions={builderQuestions.pending.questions}
@@ -3856,7 +3885,7 @@ export function AIAppBuilderWorkspace() {
                 )}
                 <div className="flex-1 overflow-hidden flex flex-col">
                   <div className="flex-1 overflow-hidden">
-                    <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} contextBudget={contextBudget} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} onReview={() => { projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)); projectReview.setShowPanel(true); }} supabaseConfig={supabaseConfig} onUpdateMessages={setMessages} streamingContentRef={streamingContentRef} onNewConversation={handleNewConversation} onShowSettings={() => setShowSettingsModal(true)} onShowHistory={() => setShowVersionHistory(true)} onShowKnowledge={() => setShowKnowledge(true)} onShowGitHub={() => setShowGitHubPanel(true)} conversationForks={conversationForks} activeForkId={activeForkId} onForkConversation={forkConversation} onSwitchFork={switchFork} onDeleteFork={deleteFork} isPreviewReady={isPreviewReady} compileState={compileState} isGoldenProject={isGoldenProject} buildErrors={parsedBuildErrors} questionsSlot={builderQuestions.pending ? (
+                    <BuilderChatPanel messages={messages} isGenerating={isGenerating} fileCount={project.files.length} mode={mode} thinkingPhase={thinkingPhase} versions={versions} totalTokensUsed={totalTokensUsed} previousFiles={previousFiles} latestFiles={latestFiles} contextBudget={contextBudget} onModeChange={setMode} onSend={handleSend} onStop={stopGenerating} onClear={handleClear} onRestoreVersion={restoreVersion} onOpenTemplates={() => setShowTemplates(true)} onFixError={handleFixError} onForkFromMessage={handleForkFromMessage} onRevertToMessage={handleRevertToMessage} selectedModel={selectedModel} onModelChange={setSelectedModel} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} isVisualEditActive={isVisualEditActive} onOpenEditHistory={() => setShowEditHistory(true)} onSelectStarterTemplate={handleSelectStarterTemplate} onReview={() => { projectReview.startReview(project.files, (prompt) => sendMessage(prompt, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel)); projectReview.setShowPanel(true); }} supabaseConfig={supabaseConfig} onUpdateMessages={setMessages} streamingContentRef={streamingContentRef} onNewConversation={handleNewConversation} onShowSettings={() => setShowSettingsModal(true)} onShowHistory={() => setShowConversationDrawer(true)} onShowKnowledge={() => setShowKnowledge(true)} onShowGitHub={() => setShowGitHubPanel(true)} conversationForks={conversationForks} activeForkId={activeForkId} onForkConversation={forkConversation} onSwitchFork={switchFork} onDeleteFork={deleteFork} isPreviewReady={isPreviewReady} compileState={compileState} isGoldenProject={isGoldenProject} buildErrors={parsedBuildErrors} questionsSlot={builderQuestions.pending ? (
                       <div className="px-3 pt-2">
                         <QuestionsCard
                           questions={builderQuestions.pending.questions}
@@ -4457,6 +4486,46 @@ export function AIAppBuilderWorkspace() {
         changes={agentDiffChanges}
         onApproveSelected={(paths) => { setShowAgentDiffReview(false); diffResolverRef.current?.(paths); }}
         onRejectAll={() => { setShowAgentDiffReview(false); diffResolverRef.current?.(null); }}
+      />
+      {/* Wave 9 Step 1: Conversation Drawer */}
+      <ConversationDrawer
+        isOpen={showConversationDrawer}
+        onClose={() => setShowConversationDrawer(false)}
+        conversations={conversationHistory.conversations}
+        activeConversationId={conversationHistory.activeConversationId}
+        onSwitch={(id) => {
+          const msgs = conversationHistory.switchToConversation(id);
+          if (msgs) setMessages(msgs);
+        }}
+        onDelete={conversationHistory.deleteConversation}
+        onNew={() => {
+          conversationHistory.saveCurrentConversation(messages, currentProjectId || undefined);
+          clearChat();
+          setShowConversationDrawer(false);
+        }}
+      />
+      {/* Wave 9 Step 4: Inline Chat Widget */}
+      <InlineChatWidget
+        isOpen={inlineChatOpen}
+        position={inlineChatPosition}
+        selectedCode={inlineChatCode}
+        filePath={inlineChatFile}
+        isLoading={inlineAIEdit.inlineEdit.isLoading}
+        suggestion={inlineAIEdit.inlineEdit.suggestion}
+        onSubmit={(prompt) => inlineAIEdit.submitPrompt(prompt)}
+        onAccept={() => {
+          const result = inlineAIEdit.acceptSuggestion();
+          if (result && activeFile) {
+            const file = project.files.find(f => f.path === activeFile.path);
+            if (file) {
+              const lines = file.content.split('\n');
+              lines.splice(result.startLine - 1, result.endLine - result.startLine + 1, ...result.code.split('\n'));
+              upsertFile(file.path, lines.join('\n'));
+            }
+          }
+          setInlineChatOpen(false);
+        }}
+        onDismiss={() => { inlineAIEdit.dismissEdit(); setInlineChatOpen(false); }}
       />
     </TooltipProvider>
   );

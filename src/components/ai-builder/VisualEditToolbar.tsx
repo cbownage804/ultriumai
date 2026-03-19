@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { X, Type, Palette, MousePointer2, Move, Check, ImagePlus, Paperclip } from 'lucide-react';
+import { X, Type, Palette, MousePointer2, Move, Check, ImagePlus, Paperclip, Code2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -28,9 +28,11 @@ interface VisualEditToolbarProps {
   iframeRef: React.RefObject<HTMLIFrameElement | null>;
   onEditRequest: (selector: string, elementContext: string, prompt: string) => void;
   onDirectEdit: (selector: string, property: string, value: string) => void;
+  /** Wave 9 Step 2: Navigate to source code for selected element */
+  onViewSource?: (selector: string, textContent: string, tagName: string) => void;
 }
 
-export function VisualEditToolbar({ active, onToggle, iframeRef, onEditRequest, onDirectEdit }: VisualEditToolbarProps) {
+export function VisualEditToolbar({ active, onToggle, iframeRef, onEditRequest, onDirectEdit, onViewSource }: VisualEditToolbarProps) {
   const [selectedElement, setSelectedElement] = useState<SelectedElement | null>(null);
   const [editMode, setEditMode] = useState<'select' | 'text' | 'style' | 'image' | 'prompt'>('select');
   const [editText, setEditText] = useState('');
@@ -291,6 +293,18 @@ export function VisualEditToolbar({ active, onToggle, iframeRef, onEditRequest, 
               <Move className="h-3.5 w-3.5" />
               <span>AI Edit</span>
             </button>
+
+            {/* Wave 9 Step 2: View Source button */}
+            {onViewSource && (
+              <button
+                onClick={() => onViewSource(selectedElement.selector, selectedElement.textContent, selectedElement.tagName)}
+                className="h-7 px-2 rounded-lg flex items-center gap-1 transition-colors text-[10px] font-medium text-white/40 hover:text-white/70 hover:bg-white/10"
+                title="Jump to source code"
+              >
+                <Code2 className="h-3.5 w-3.5" />
+                <span>Source</span>
+              </button>
+            )}
 
             <div className="h-4 w-px bg-white/10" />
             <span className="text-[9px] text-white/25 font-mono">&lt;{selectedElement.tagName}&gt;</span>
