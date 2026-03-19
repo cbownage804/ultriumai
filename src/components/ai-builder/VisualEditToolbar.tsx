@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { X, Type, Palette, MousePointer2, Move, Check, ImagePlus, Paperclip } from 'lucide-react';
+import { X, Type, Palette, MousePointer2, Move, Check, ImagePlus, Paperclip, Code2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
