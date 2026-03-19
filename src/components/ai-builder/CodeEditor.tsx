@@ -21,6 +21,10 @@ interface CodeEditorProps {
   onInlineAIAction?: (action: string, selection: string, filePath: string) => void;
   /** Phase 65: Cmd+I inline edit trigger */
   onTriggerInlineEdit?: (filePath: string, selectedCode: string, startLine: number, endLine: number) => void;
+  /** All project files — used for go-to-definition */
+  projectFiles?: ProjectFile[];
+  /** Navigate to a file by path */
+  onNavigateToFile?: (path: string) => void;
 }
 
 const LANGUAGE_MAP: Record<string, string> = {
