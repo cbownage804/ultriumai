@@ -1303,6 +1303,7 @@ export function AIAppBuilderWorkspace() {
   const conflictDetection = useDependencyConflictDetection();
   const fileScaffolding = useSmartFileScaffolding();
   const errorAnnotations = useInlineErrorAnnotations();
+  const smartFileCreation = useSmartFileCreation();
   const lkgDiff = useLKGDiff();
   const autoHeal = useAutoHealCompile();
   const errorPatterns = useErrorPatternLearning();
