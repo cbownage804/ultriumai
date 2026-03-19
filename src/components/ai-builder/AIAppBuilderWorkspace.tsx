@@ -2304,10 +2304,11 @@ export function AIAppBuilderWorkspace() {
     if (isProjectSwitch) {
       compiledForHostingRef.current = null;
       setCompiledForHostingState(null);
+      stableHTMLRef.current = null;
+      lastKnownGoodHTMLRef.current = null;
+      setStableHTML(null);
       try { localStorage.removeItem('ai-builder-compiled-html'); } catch {}
-      // Note: stableHTMLRef / lastKnownGoodHTMLRef are NOT cleared here —
-      // the old preview stays visible while the new project's files recompile.
-      // They'll be naturally replaced once compilation succeeds.
+      try { sessionStorage.removeItem('ai-builder-lkg-preview'); } catch {}
     }
 
     (async () => {
@@ -2315,33 +2316,40 @@ export function AIAppBuilderWorkspace() {
       if (!loaded) return;
 
       const loadedFiles = (loaded.files as any[]) || [];
-      const nextPreviewSlug = loaded.name
-        ? loaded.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 30)
-        : '';
 
-      if (nextPreviewSlug) {
-        setPreviewSlug(nextPreviewSlug);
-        try {
-          const { data: previewRow, error: previewError } = await supabase
-            .from('app_builder_live_previews')
-            .select('compiled_html')
-            .eq('project_slug', nextPreviewSlug)
-            .maybeSingle();
+      // Attempt to restore this project's last compiled preview from the DB
+      // Only for projects that have been built before (skip for brand new ones)
+      if (loadedFiles.length > 0) {
+        const nextPreviewSlug = loaded.name
+          ? loaded.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 30)
+          : '';
 
-          if (previewError) throw previewError;
+        if (nextPreviewSlug) {
+          setPreviewSlug(nextPreviewSlug);
+          try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              const { data: previewRow } = await supabase
+                .from('app_builder_live_previews')
+                .select('compiled_html')
+                .eq('project_slug', nextPreviewSlug)
+                .eq('user_id', user.id)
+                .maybeSingle();
 
-          const restoredPreview = previewRow?.compiled_html;
-          if (typeof restoredPreview === 'string' && isPreviewValidFn(restoredPreview)) {
-            stableHTMLRef.current = restoredPreview;
-            lastKnownGoodHTMLRef.current = restoredPreview;
-            compiledForHostingRef.current = restoredPreview;
-            setStableHTML(restoredPreview);
-            setCompiledForHostingState(restoredPreview);
-            try { localStorage.setItem('ai-builder-compiled-html', restoredPreview); } catch {}
-            setPreviewRefreshKey(k => k + 1);
+              const restoredPreview = previewRow?.compiled_html;
+              if (typeof restoredPreview === 'string' && isPreviewValidFn(restoredPreview)) {
+                stableHTMLRef.current = restoredPreview;
+                lastKnownGoodHTMLRef.current = restoredPreview;
+                compiledForHostingRef.current = restoredPreview;
+                setStableHTML(restoredPreview);
+                setCompiledForHostingState(restoredPreview);
+                try { localStorage.setItem('ai-builder-compiled-html', restoredPreview); } catch {}
+                setPreviewRefreshKey(k => k + 1);
+              }
+            }
+          } catch (previewRestoreError) {
+            console.warn('[Workspace] Failed to restore project preview:', previewRestoreError);
           }
-        } catch (previewRestoreError) {
-          console.warn('[Workspace] Failed to restore project-specific preview snapshot:', previewRestoreError);
         }
       }
 
