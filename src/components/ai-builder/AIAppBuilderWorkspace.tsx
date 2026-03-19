@@ -1299,6 +1299,7 @@ export function AIAppBuilderWorkspace() {
   const errorAnnotations = useInlineErrorAnnotations();
   const lkgDiff = useLKGDiff();
   const autoHeal = useAutoHealCompile();
+  const errorPatterns = useErrorPatternLearning();
   const promptMemory = usePromptMemory();
   const lighthouseAudit = useLighthouseAudit(buildLog.addEntry);
   const bundleSize = useBundleSizeTracking(buildLog.addEntry);
