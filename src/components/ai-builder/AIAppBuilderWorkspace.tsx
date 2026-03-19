@@ -2286,9 +2286,30 @@ export function AIAppBuilderWorkspace() {
   // Auto-load project from URL ?project=<id> param
   const initialProjectId = searchParams.get('project');
   const hasAutoLoaded = useRef(false);
+  const lastLoadedProjectId = useRef<string | null>(null);
+
+  // Reset auto-load guard when the project ID changes (navigating between projects)
+  useEffect(() => {
+    if (initialProjectId && initialProjectId !== lastLoadedProjectId.current) {
+      hasAutoLoaded.current = false;
+    }
+  }, [initialProjectId]);
+
   useEffect(() => {
     if (!initialProjectId || hasAutoLoaded.current) return;
     hasAutoLoaded.current = true;
+
+    // Clear stale preview from previous project before loading new one
+    if (lastLoadedProjectId.current && lastLoadedProjectId.current !== initialProjectId) {
+      stableHTMLRef.current = null;
+      lastKnownGoodHTMLRef.current = null;
+      compiledForHostingRef.current = null;
+      setCompiledForHostingState(null);
+      setStableHTML(null);
+      try { localStorage.removeItem('ai-builder-compiled-html'); } catch {}
+    }
+    lastLoadedProjectId.current = initialProjectId;
+
     (async () => {
       const loaded = await loadProject(initialProjectId);
       if (loaded) {
