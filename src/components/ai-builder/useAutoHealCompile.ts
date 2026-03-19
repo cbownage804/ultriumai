@@ -61,11 +61,13 @@ export function useAutoHealCompile(config: Partial<AutoHealConfig> = {}) {
     return true;
   }, [mergedConfig]);
 
-  /** Build the auto-heal prompt for the AI */
+  /** Build the auto-heal prompt for the AI, including full file content for context */
   const buildHealPrompt = useCallback((
     errorMessage: string,
     errorDetails: string[],
     diffContext: string,
+    /** Full content of the failing file(s) for richer AI context */
+    failingFiles?: { path: string; content: string }[],
   ): string => {
     const attempt = attemptsRef.current.length + 1;
     
@@ -80,16 +82,26 @@ export function useAutoHealCompile(config: Partial<AutoHealConfig> = {}) {
     ];
 
     if (diffContext) {
-      lines.push(``, `**Context:**`, diffContext);
+      lines.push(``, `**Changes since last working build:**`, diffContext);
+    }
+
+    // Include full file content for files mentioned in errors (up to 3 files, 500 lines each)
+    if (failingFiles && failingFiles.length > 0) {
+      lines.push(``, `**Failing file contents:**`);
+      for (const f of failingFiles.slice(0, 3)) {
+        const truncated = f.content.split('\n').slice(0, 500).join('\n');
+        lines.push(``, `\`\`\`tsx`, `// ${f.path}`, truncated, `\`\`\``);
+      }
     }
 
     lines.push(
       ``,
       `Please fix the error. Only modify the files that need changes.`,
       `Do NOT add explanatory text — just output the corrected files.`,
+      attempt >= 2 ? `Previous fix attempts failed. Try a different approach — consider restructuring the component or simplifying the code.` : '',
     );
 
-    return lines.join('\n');
+    return lines.filter(Boolean).join('\n');
   }, [mergedConfig]);
 
   /** Record a heal attempt */
