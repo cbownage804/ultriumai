@@ -1779,14 +1779,29 @@ export function BuilderChatPanel({
                       </span>
                     )}
                     {msg.role === 'user' && !isGenerating && (
-                      <button
-                        onClick={() => onSend(msg.content, msg.imageUrls || (msg.imageUrl ? [msg.imageUrl] : null))}
-                        className="flex items-center gap-0.5 text-white/25 hover:text-white/60 transition-colors ml-1"
-                        title="Retry this message"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
-                        Retry
-                      </button>
+                      <>
+                        {/* Edit & Resend — truncates conversation to this point (Step 2: Conversation Branching) */}
+                        <button
+                          onClick={() => {
+                            setInput(msg.content);
+                            setEditingMessageId(msg.id);
+                            setTimeout(() => textareaRef.current?.focus(), 50);
+                          }}
+                          className="flex items-center gap-0.5 text-white/25 hover:text-white/60 transition-colors ml-1"
+                          title="Edit & resend (replaces subsequent messages)"
+                        >
+                          <Pencil className="h-2.5 w-2.5" />
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => onSend(msg.content, msg.imageUrls || (msg.imageUrl ? [msg.imageUrl] : null))}
+                          className="flex items-center gap-0.5 text-white/25 hover:text-white/60 transition-colors ml-1"
+                          title="Retry this message"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+                          Retry
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
