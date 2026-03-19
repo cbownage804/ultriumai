@@ -294,6 +294,18 @@ export function VisualEditToolbar({ active, onToggle, iframeRef, onEditRequest, 
               <span>AI Edit</span>
             </button>
 
+            {/* Wave 9 Step 2: View Source button */}
+            {onViewSource && (
+              <button
+                onClick={() => onViewSource(selectedElement.selector, selectedElement.textContent, selectedElement.tagName)}
+                className="h-7 px-2 rounded-lg flex items-center gap-1 transition-colors text-[10px] font-medium text-white/40 hover:text-white/70 hover:bg-white/10"
+                title="Jump to source code"
+              >
+                <Code2 className="h-3.5 w-3.5" />
+                <span>Source</span>
+              </button>
+            )}
+
             <div className="h-4 w-px bg-white/10" />
             <span className="text-[9px] text-white/25 font-mono">&lt;{selectedElement.tagName}&gt;</span>
           </>
