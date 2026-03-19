@@ -842,6 +842,7 @@ export function useAIAppBuilder() {
   const abortRef = useRef<AbortController | null>(null);
   const continuationCountRef = useRef(0);
   const accumulatedFilesRef = useRef<string[]>([]);
+  const fallbackRetryRef = useRef(false);
   const streaming = useStreamingPreview();
   const { deductCredits, totalRemaining } = useUserCredits();
   const { trimForContext } = useContextBudget({ maxChars: 120_000 });
