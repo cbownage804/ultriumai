@@ -516,6 +516,14 @@ export function BuilderChatPanel({
         })
       );
     }
+    // Step 2: Conversation branching — if editing a message, truncate after it first
+    if (editingMessageId) {
+      onUpdateMessages?.(prev => {
+        const idx = prev.findIndex(m => m.id === editingMessageId);
+        return idx >= 0 ? prev.slice(0, idx) : prev;
+      });
+      setEditingMessageId(null);
+    }
     onSend(input.trim(), finalImages);
     setInput('');
     setImagePreviews([]);
