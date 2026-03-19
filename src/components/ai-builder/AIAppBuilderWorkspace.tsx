@@ -84,6 +84,7 @@ import { SafePanel } from './SafePanel';
 import { buildAuthTemplate } from './authTemplates';
 import { isPreviewValid as isPreviewValidFn, previewDebugSummary } from './previewValidation';
 import { GOLDEN_FILES, getGoldenProjectFiles, PROTECTED_FILES, mergeOntoGolden, validateRequiredFiles, hasUserGeneratedFiles } from './goldenTemplate';
+import { generateMissingImportStubs } from './generateMissingImportStubs';
 import { BugReportModal } from '@/components/help/BugReportModal';
 import { usePluginRegistry } from '@/hooks/usePluginRegistry';
 import { useCollaborationEngine } from '@/hooks/useCollaborationEngine';
@@ -1416,15 +1417,33 @@ export function AIAppBuilderWorkspace() {
         const diffContext = lkgDiff.getErrorContext(project.files, error.message);
         
         // Extract failing file paths from error messages and include their full content
-        const failingFiles = error.errors
+        const failingFilePaths = error.errors
           .map(e => {
             const fileMatch = e.match(/^([^\s:]+\.[a-z]+)/i);
             return fileMatch ? fileMatch[1] : null;
           })
           .filter((p): p is string => !!p)
           .map(p => {
-            // Try with and without src/ prefix
             const file = project.files.find(f => f.path === p || f.path === `src/${p}` || f.path.endsWith(`/${p}`));
+            return file ? file.path : null;
+          })
+          .filter((p): p is string => !!p);
+
+        // Step A: Dependency-aware auto-heal — include files in the dependency graph
+        const depGraph = astBundler.buildDependencyGraph(project.files);
+        const relatedPaths = new Set<string>(failingFilePaths);
+        for (const fp of failingFilePaths) {
+          const node = depGraph.get(fp);
+          if (node) node.dependencies.forEach(d => relatedPaths.add(d));
+          // Also include reverse deps (files that import the failing file)
+          for (const [path, n] of depGraph) {
+            if (n.dependencies.includes(fp)) relatedPaths.add(path);
+          }
+        }
+
+        const failingFiles = [...relatedPaths]
+          .map(p => {
+            const file = project.files.find(f => f.path === p);
             return file ? { path: file.path, content: file.content } : null;
           })
           .filter((f): f is { path: string; content: string } => !!f);
@@ -1437,6 +1456,7 @@ export function AIAppBuilderWorkspace() {
           remaining: autoHeal.attemptsRemaining(),
           error: error.message,
           failingFiles: failingFiles.map(f => f.path),
+          depGraphFiles: relatedPaths.size,
         });
 
         // Delay slightly to let UI update, then send auto-fix prompt
@@ -1927,7 +1947,13 @@ export function AIAppBuilderWorkspace() {
         const modified = diffs.filter((d: any) => d.type !== 'added' && previousFiles.some(pf => pf.path === d.path)).map((d: any) => d.path);
         const deleted = previousFiles.filter(pf => !latestFiles.some(lf => lf.path === pf.path)).map(pf => pf.path);
         const totalLinesChanged = diffs.reduce((sum: number, d: any) => sum + (d.additions || 0) + (d.deletions || 0), 0);
-        const diffSummary = { added, modified, deleted, totalLinesChanged };
+        // Step E: Import graph validation — detect missing imports and auto-stub
+        const { stubs: missingImportStubs } = generateMissingImportStubs(latestFiles);
+        const missingImports = missingImportStubs.length > 0 ? missingImportStubs.map(s => s.split(' (stub')[0]) : [];
+        const diffSummary = { added, modified, deleted, totalLinesChanged, missingImports };
+        if (missingImports.length > 0) {
+          console.warn('[PostGen] Step E: Missing imports auto-stubbed:', missingImports);
+        }
         setMessages(prev => prev.map((m, i) => i === prev.length - 1 ? { ...m, commitMessage: commitMsg, diffSummary } : m));
       }
       // Post-gen analysis completely disabled to prevent browser freeze.

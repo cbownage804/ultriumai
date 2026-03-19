@@ -842,6 +842,7 @@ export function useAIAppBuilder() {
   const abortRef = useRef<AbortController | null>(null);
   const continuationCountRef = useRef(0);
   const accumulatedFilesRef = useRef<string[]>([]);
+  const fallbackRetryRef = useRef(false);
   const streaming = useStreamingPreview();
   const { deductCredits, totalRemaining } = useUserCredits();
   const { trimForContext } = useContextBudget({ maxChars: 120_000 });
@@ -1776,6 +1777,30 @@ ${JSON.stringify(brandingData.typography, null, 2)}` : ''}` });
     } catch (err: any) {
       console.error('AI Builder error:', err);
       const classified = classifyError(0, err.message || '', err);
+
+      // Step C: Smart model fallback — retry with alternate model on rate limit / server overload
+      const FALLBACK_MODELS: Record<string, string> = {
+        'google/gemini-3-flash-preview': 'anthropic/claude-sonnet',
+        'anthropic/claude-sonnet': 'google/gemini-3-flash-preview',
+        'openai/gpt-4o': 'anthropic/claude-sonnet',
+      };
+      const currentModel = model || 'google/gemini-3-flash-preview';
+      const fallbackModel = FALLBACK_MODELS[currentModel];
+      if (classified.retryable && fallbackModel && !fallbackRetryRef.current) {
+        fallbackRetryRef.current = true;
+        console.info('[AI Builder] Model fallback: %s → %s', currentModel, fallbackModel);
+        toast.info(`Primary model busy, retrying with fallback…`, { duration: 3000 });
+        setIsGenerating(false);
+        setThinkingPhase(null);
+        // Retry with fallback model after a short delay
+        setTimeout(() => {
+          fallbackRetryRef.current = false;
+          sendMessage(input, currentFiles, supabaseConfig, stripeConfig, serviceKeys, imageDataUrls, fallbackModel, undefined, isAutoFix);
+        }, classified.retryDelayMs || 2000);
+        return;
+      }
+      fallbackRetryRef.current = false;
+
       toast.error(`${classified.userMessage} ${classified.suggestion}`, { duration: 5000 });
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(), role: 'assistant' as const,
