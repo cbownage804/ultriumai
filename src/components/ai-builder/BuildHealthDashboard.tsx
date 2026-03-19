@@ -2,8 +2,8 @@ import { useCompileTelemetry, type CompileTelemetrySummary } from '@/hooks/useCo
 import { useBuildAnalytics } from '@/hooks/useBuildAnalytics';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { X, Activity, RefreshCw, Trash2, Clock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { X, Activity, RefreshCw, Trash2, Clock, CheckCircle, XCircle, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
 
 interface BuildHealthDashboardProps {
   onClose: () => void;
@@ -34,6 +34,23 @@ export function BuildHealthDashboard({ onClose }: BuildHealthDashboardProps) {
   const successRate = summary?.successRate ?? 100;
   const rateColor = successRate >= 90 ? 'text-green-400' : successRate >= 70 ? 'text-yellow-400' : 'text-red-400';
   const rateBarClass = successRate >= 90 ? '' : successRate >= 70 ? '[&>div]:bg-yellow-500' : '[&>div]:bg-red-500';
+
+  // Step 14: Compute timing breakdown and trend from last10
+  const timingBreakdown = useMemo(() => {
+    if (!summary || summary.last10.length === 0) return null;
+    const entries = summary.last10;
+    const fastest = Math.min(...entries.map(e => e.durationMs));
+    const slowest = Math.max(...entries.map(e => e.durationMs));
+    const median = [...entries].sort((a, b) => a.durationMs - b.durationMs)[Math.floor(entries.length / 2)]?.durationMs ?? 0;
+    // Trend: compare first half vs second half avg
+    const half = Math.floor(entries.length / 2);
+    const firstHalf = entries.slice(0, half);
+    const secondHalf = entries.slice(half);
+    const firstAvg = firstHalf.reduce((s, e) => s + e.durationMs, 0) / (firstHalf.length || 1);
+    const secondAvg = secondHalf.reduce((s, e) => s + e.durationMs, 0) / (secondHalf.length || 1);
+    const trend = secondAvg < firstAvg ? 'improving' : secondAvg > firstAvg * 1.2 ? 'degrading' : 'stable';
+    return { fastest, slowest, median, trend, firstAvg, secondAvg };
+  }, [summary]);
 
   return (
     <div className="fixed inset-y-0 right-0 w-96 bg-background border-l border-border z-50 flex flex-col">
@@ -87,6 +104,60 @@ export function BuildHealthDashboard({ onClose }: BuildHealthDashboardProps) {
             value="✓"
           />
         </div>
+
+        {/* Step 14: Timing Breakdown */}
+        {timingBreakdown && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Timing Breakdown</h3>
+              <div className="flex items-center gap-1">
+                {timingBreakdown.trend === 'improving' ? (
+                  <TrendingDown className="w-3 h-3 text-green-400" />
+                ) : timingBreakdown.trend === 'degrading' ? (
+                  <TrendingUp className="w-3 h-3 text-red-400" />
+                ) : (
+                  <Activity className="w-3 h-3 text-muted-foreground" />
+                )}
+                <span className={`text-[10px] capitalize ${
+                  timingBreakdown.trend === 'improving' ? 'text-green-400' :
+                  timingBreakdown.trend === 'degrading' ? 'text-red-400' : 'text-muted-foreground'
+                }`}>{timingBreakdown.trend}</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="bg-muted/30 rounded-lg p-2 text-center">
+                <p className="text-[9px] text-muted-foreground">Fastest</p>
+                <p className="text-xs font-semibold text-green-400">{(timingBreakdown.fastest / 1000).toFixed(1)}s</p>
+              </div>
+              <div className="bg-muted/30 rounded-lg p-2 text-center">
+                <p className="text-[9px] text-muted-foreground">Median</p>
+                <p className="text-xs font-semibold text-foreground">{(timingBreakdown.median / 1000).toFixed(1)}s</p>
+              </div>
+              <div className="bg-muted/30 rounded-lg p-2 text-center">
+                <p className="text-[9px] text-muted-foreground">Slowest</p>
+                <p className="text-xs font-semibold text-red-400">{(timingBreakdown.slowest / 1000).toFixed(1)}s</p>
+              </div>
+            </div>
+            {/* Mini bar chart of last 10 builds */}
+            <div className="flex items-end gap-0.5 h-12 px-1">
+              {(summary?.last10 ?? []).slice().reverse().map((entry, i) => {
+                const maxDur = timingBreakdown.slowest || 1;
+                const pct = Math.max((entry.durationMs / maxDur) * 100, 5);
+                return (
+                  <div key={entry.id} className="flex-1 flex flex-col items-center gap-0.5">
+                    <div
+                      className={`w-full rounded-t transition-all ${
+                        entry.success ? 'bg-emerald-500/60' : 'bg-red-500/60'
+                      }`}
+                      style={{ height: `${pct}%` }}
+                      title={`${(entry.durationMs / 1000).toFixed(1)}s — ${entry.success ? 'OK' : 'FAIL'}`}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Build Analytics */}
         {analytics && analytics.totalBuilds > 0 && (
