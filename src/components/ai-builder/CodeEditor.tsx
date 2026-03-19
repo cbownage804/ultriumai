@@ -21,6 +21,10 @@ interface CodeEditorProps {
   onInlineAIAction?: (action: string, selection: string, filePath: string) => void;
   /** Phase 65: Cmd+I inline edit trigger */
   onTriggerInlineEdit?: (filePath: string, selectedCode: string, startLine: number, endLine: number) => void;
+  /** All project files — used for go-to-definition */
+  projectFiles?: ProjectFile[];
+  /** Navigate to a file by path */
+  onNavigateToFile?: (path: string) => void;
 }
 
 const LANGUAGE_MAP: Record<string, string> = {
@@ -35,7 +39,7 @@ const AI_ACTIONS = [
   { id: 'fix', label: 'Fix', icon: Sparkles },
 ];
 
-export function CodeEditor({ file, onContentChange, remoteCursors = [], onCursorChange, onInlineAIAction, onTriggerInlineEdit }: CodeEditorProps) {
+export function CodeEditor({ file, onContentChange, remoteCursors = [], onCursorChange, onInlineAIAction, onTriggerInlineEdit, projectFiles = [], onNavigateToFile }: CodeEditorProps) {
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<any>(null);
   const decorationsRef = useRef<string[]>([]);
@@ -241,9 +245,81 @@ export function CodeEditor({ file, onContentChange, remoteCursors = [], onCursor
       },
     });
 
+    // ── Wave 4 Step 2: Go-to-definition provider ──
+    const defDisposable = monaco.languages.registerDefinitionProvider(['typescript', 'typescriptreact', 'javascript', 'javascriptreact'], {
+      provideDefinition: (model: any, position: any) => {
+        const wordInfo = model.getWordAtPosition(position);
+        if (!wordInfo) return null;
+        const line = model.getLineContent(position.lineNumber);
+        
+        // Check if this is an import statement
+        const importMatch = line.match(/from\s+['"]([^'"]+)['"]/);
+        if (importMatch) {
+          const importPath = importMatch[1];
+          if (importPath.startsWith('.') || importPath.startsWith('@/')) {
+            // Resolve relative/alias imports against project files
+            const resolvedPath = resolveImportPath(importPath, file?.path || '', projectFiles);
+            if (resolvedPath) {
+              onNavigateToFile?.(resolvedPath);
+              return null; // Navigate handled externally
+            }
+          }
+          return null;
+        }
+
+        // Check if word is a component/function defined in another file
+        const word = wordInfo.word;
+        for (const pf of projectFiles) {
+          if (pf.path === file?.path) continue;
+          // Check for exported symbol matching the word
+          const exportPattern = new RegExp(`export\\s+(?:default\\s+)?(?:function|const|class|interface|type)\\s+${word}\\b`);
+          if (exportPattern.test(pf.content)) {
+            onNavigateToFile?.(pf.path);
+            return null;
+          }
+        }
+        return null;
+      },
+    });
+
+    // ── Document symbol provider for breadcrumb/outline ──
+    const symDisposable = monaco.languages.registerDocumentSymbolProvider(['typescript', 'typescriptreact', 'javascript', 'javascriptreact'], {
+      provideDocumentSymbols: (model: any) => {
+        const symbols: any[] = [];
+        const content = model.getValue();
+        const lines = content.split('\n');
+        const patterns = [
+          { regex: /^(?:export\s+)?(?:default\s+)?function\s+(\w+)/m, kind: 11 }, // Function
+          { regex: /^(?:export\s+)?const\s+(\w+)\s*[:=]\s*(?:\(|function)/m, kind: 11 },
+          { regex: /^(?:export\s+)?(?:interface|type)\s+(\w+)/m, kind: 10 }, // Interface
+          { regex: /^(?:export\s+)?class\s+(\w+)/m, kind: 4 }, // Class
+        ];
+        for (let i = 0; i < lines.length; i++) {
+          for (const { regex, kind } of patterns) {
+            const match = lines[i].match(regex);
+            if (match) {
+              symbols.push({
+                name: match[1],
+                kind,
+                range: new monaco.Range(i + 1, 1, i + 1, lines[i].length + 1),
+                selectionRange: new monaco.Range(i + 1, 1, i + 1, lines[i].length + 1),
+              });
+            }
+          }
+        }
+        return symbols;
+      },
+    });
+
+    // Cleanup providers on unmount
+    editor.onDidDispose(() => {
+      defDisposable.dispose();
+      symDisposable.dispose();
+    });
+
     // Initial remote cursor render
     updateRemoteCursors();
-  }, [onCursorChange, updateRemoteCursors, onTriggerInlineEdit, file?.path]);
+  }, [onCursorChange, updateRemoteCursors, onTriggerInlineEdit, file?.path, projectFiles, onNavigateToFile]);
 
   const handleAIAction = useCallback((actionId: string) => {
     if (onInlineAIAction && file && selectedText) {
@@ -338,4 +414,32 @@ export function CodeEditor({ file, onContentChange, remoteCursors = [], onCursor
       )}
     </div>
   );
+}
+
+/** Resolve an import path to a project file path */
+function resolveImportPath(importPath: string, currentFilePath: string, projectFiles: ProjectFile[]): string | null {
+  // Handle @/ alias
+  let resolved = importPath;
+  if (resolved.startsWith('@/')) {
+    resolved = 'src/' + resolved.slice(2);
+  } else if (resolved.startsWith('./') || resolved.startsWith('../')) {
+    // Resolve relative to current file
+    const currentDir = currentFilePath.split('/').slice(0, -1).join('/');
+    const parts = (currentDir ? currentDir + '/' + resolved : resolved).split('/');
+    const normalized: string[] = [];
+    for (const part of parts) {
+      if (part === '.' || part === '') continue;
+      if (part === '..') { normalized.pop(); continue; }
+      normalized.push(part);
+    }
+    resolved = normalized.join('/');
+  }
+
+  // Try exact match, then with common extensions
+  const extensions = ['', '.ts', '.tsx', '.js', '.jsx', '/index.ts', '/index.tsx', '/index.js'];
+  for (const ext of extensions) {
+    const candidate = resolved + ext;
+    if (projectFiles.some(f => f.path === candidate)) return candidate;
+  }
+  return null;
 }

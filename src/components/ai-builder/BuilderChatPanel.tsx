@@ -5,7 +5,7 @@ import {
   X, Brain, Compass, Code2,
   LayoutGrid, Wrench, AlertTriangle, Copy, ChevronDown, Check, Pencil,
   Crosshair, Plus, Camera, Paperclip, AtSign, Rocket,
-  Settings, Clock, BookOpen, GitBranch, Eye,
+  Settings, Clock, BookOpen, GitBranch, Eye, Search as SearchIcon, Pin,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -415,6 +415,8 @@ export function BuilderChatPanel({
   const [imageResizes, setImageResizes] = useState<Record<number, number>>({}); // index → max width px
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [chatSearch, setChatSearch] = useState('');
+  const [showChatSearch, setShowChatSearch] = useState(false);
   
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [plusMenuOpen, setPlusMenuOpen] = useState(false);
@@ -470,7 +472,7 @@ export function BuilderChatPanel({
   }, [messages, isGenerating, localStreamContent]);
 
   const filteredMessages = useMemo(() => {
-    return displayMessages.filter((msg) => {
+    const visible = displayMessages.filter((msg) => {
       if (isInternalMessage(msg.content)) return false;
       if (msg.role === 'assistant') {
         const { text, fileNames } = getDisplayContent(msg);
@@ -479,7 +481,22 @@ export function BuilderChatPanel({
       }
       return true;
     });
-  }, [displayMessages]);
+    // Chat search filter
+    if (chatSearch.trim()) {
+      const lower = chatSearch.toLowerCase();
+      return visible.filter(m => m.content.toLowerCase().includes(lower));
+    }
+    return visible;
+  }, [displayMessages, chatSearch]);
+
+  // Pinned messages
+  const pinnedMessages = useMemo(() => {
+    return messages.filter(m => m.pinned);
+  }, [messages]);
+
+  const togglePin = useCallback((msgId: string) => {
+    onUpdateMessages?.(prev => prev.map(m => m.id === msgId ? { ...m, pinned: !m.pinned } : m));
+  }, [onUpdateMessages]);
 
   useEffect(() => {
     // ScrollArea's actual scrollable element is the Viewport child
@@ -1703,6 +1720,63 @@ export function BuilderChatPanel({
       )}
       {/* No visible header — Lovable style */}
 
+      {/* Chat search bar */}
+      {showChatSearch && (
+        <div className="px-3 pt-2 shrink-0">
+          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08]">
+            <SearchIcon className="h-3.5 w-3.5 text-white/30 shrink-0" />
+            <input
+              value={chatSearch}
+              onChange={e => setChatSearch(e.target.value)}
+              placeholder="Search messages..."
+              className="flex-1 bg-transparent text-xs text-white/80 placeholder:text-white/25 outline-none"
+              autoFocus
+            />
+            {chatSearch && (
+              <span className="text-[10px] text-white/30">{filteredMessages.length} results</span>
+            )}
+            <button onClick={() => { setShowChatSearch(false); setChatSearch(''); }} className="text-white/25 hover:text-white/50">
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Pinned messages section */}
+      {pinnedMessages.length > 0 && !showChatSearch && (
+        <div className="px-3 pt-2 shrink-0">
+          <div className="rounded-lg border border-amber-500/15 bg-amber-500/[0.03] p-2 space-y-1">
+            <div className="flex items-center gap-1.5 text-[10px] text-amber-400/60 font-medium uppercase tracking-wider">
+              <Pin className="h-2.5 w-2.5" />
+              Pinned ({pinnedMessages.length})
+            </div>
+            {pinnedMessages.slice(0, 3).map(m => (
+              <button
+                key={m.id}
+                onClick={() => {
+                  const el = document.getElementById(`msg-${m.id}`);
+                  el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }}
+                className="w-full text-left text-[11px] text-white/50 hover:text-white/80 truncate px-1 py-0.5 rounded hover:bg-white/[0.04] transition-colors"
+              >
+                {m.role === 'user' ? '👤 ' : '🤖 '}{getCleanUserContent(m.content).slice(0, 80)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Search toggle in top-right corner */}
+      {displayMessages.length > 3 && (
+        <button
+          onClick={() => setShowChatSearch(prev => !prev)}
+          className="absolute top-2 right-2 z-10 h-6 w-6 rounded-md flex items-center justify-center text-white/15 hover:text-white/40 hover:bg-white/[0.04] transition-colors"
+          title="Search messages (Ctrl+F)"
+        >
+          <SearchIcon className="h-3 w-3" />
+        </button>
+      )}
+
       {/* Messages */}
       <ScrollArea className="flex-1 min-h-0 overflow-hidden" ref={scrollRef}>
         <div className="p-4 space-y-4">
@@ -1851,6 +1925,16 @@ export function BuilderChatPanel({
                       )}>
                         {msg.mode === 'discuss' ? 'Chat' : 'Build'}
                       </span>
+                    )}
+                    {/* Pin toggle */}
+                    {onUpdateMessages && (
+                      <button
+                        onClick={() => togglePin(msg.id)}
+                        className={cn("flex items-center gap-0.5 transition-colors ml-1", msg.pinned ? "text-amber-400/70" : "text-white/25 hover:text-white/60")}
+                        title={msg.pinned ? "Unpin" : "Pin message"}
+                      >
+                        <Pin className="h-2.5 w-2.5" />
+                      </button>
                     )}
                     {msg.role === 'user' && !isGenerating && (
                       <>

@@ -2533,6 +2533,11 @@ export function AIAppBuilderWorkspace() {
     promptHistory.addEntry(input, selectedModel, project.files.length);
 
     const antiPatternCtx = errorPatterns.getAntiPatternPrompt();
+    // Wave 4 Step 5: Inject viewport mode into AI context
+    const viewportPreset = viewportMode !== 'desktop' ? `[VIEWPORT] User is currently previewing in ${viewportMode} mode. Optimize generated code for this viewport.` : '';
+    // Wave 4 Step 3: Inject installed packages context
+    const installedPkgs = project.files.find(f => f.path === 'package.json');
+    const pkgContext = installedPkgs ? (() => { try { const pkg = JSON.parse(installedPkgs.content); const deps = Object.keys(pkg.dependencies || {}); return deps.length > 0 ? `[INSTALLED PACKAGES] ${deps.join(', ')}. Use these when possible instead of adding new dependencies.` : ''; } catch { return ''; } })() : '';
     const knowledgeCtx = [
       knowledge.customInstructions || '',
       knowledge.contextFiles.length > 0 ? '\n\nContext files:\n' + knowledge.contextFiles.map(f => `--- ${f.name} ---\n${f.content}`).join('\n\n') : '',
@@ -2541,6 +2546,8 @@ export function AIAppBuilderWorkspace() {
       promptMemory.buildMemoryContext(),
       schemaIntrospection.getSchemaSummary() || '',
       antiPatternCtx,
+      viewportPreset,
+      pkgContext,
     ].filter(Boolean).join('\n') || undefined;
     
     const fullInput = contextPrefix + contextHint + input;
