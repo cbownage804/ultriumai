@@ -1041,22 +1041,37 @@ window.addEventListener('message', function(e) {
       )}
 
       {/* Preview */}
-      <div className="flex-1 min-h-0 flex items-stretch justify-center">
+      <div className="flex-1 min-h-0 flex items-stretch justify-center bg-[#0a0a10]">
         {displayHtml ? (
           <div
-            className="h-full transition-all duration-300 mx-auto w-full relative"
+            className={cn(
+              "h-full transition-all duration-300 mx-auto relative",
+              viewportWidth > 0 ? "shadow-[0_0_0_1px_rgba(255,255,255,0.06)]" : "w-full"
+            )}
             style={{
               width: viewportWidth > 0 ? `${viewportWidth}px` : '100%',
               maxWidth: '100%',
             }}
           >
+            {/* Device frame chrome for mobile/tablet */}
+            {viewportWidth > 0 && viewportWidth <= 834 && (
+              <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
+                <div className={cn(
+                  "bg-black/80 rounded-b-lg",
+                  viewportWidth <= 430 ? "w-20 h-4" : "w-10 h-3"
+                )} />
+              </div>
+            )}
             <iframe
               ref={iframeRef as React.RefObject<HTMLIFrameElement>}
               key={`iframe-${iframeKey}-${refreshKey ?? 0}`}
               title="App Preview"
               srcDoc={displayHtml}
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
-              className="w-full h-full border-0 bg-white"
+              className={cn(
+                "w-full h-full border-0 bg-white",
+                viewportWidth > 0 && viewportWidth <= 834 && "rounded-lg"
+              )}
               style={{ colorScheme: 'light' }}
             />
 
