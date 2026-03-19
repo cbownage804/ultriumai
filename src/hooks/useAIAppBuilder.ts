@@ -100,19 +100,26 @@ function classifyError(status: number, errorMsg: string, err?: Error): Classifie
   };
 }
 
-/** Detect if the user wants to generate an image/logo/icon via AI */
-function detectImageGenerationIntent(input: string): { prompt: string; quality: 'standard' | 'high' } | null {
-  const lowerInput = input.toLowerCase();
-  // Must contain a "generate/create/make" verb AND an image-related noun
-  const hasGenVerb = /\b(generate|create|make|design|draw|produce)\b/.test(lowerInput);
+/** Detect if the user wants to generate a brand-new image/logo/icon via AI */
+export function detectImageGenerationIntent(input: string): { prompt: string; quality: 'standard' | 'high' } | null {
+  const lowerInput = input.toLowerCase().trim();
   const hasImageNoun = /\b(logo|image|icon|illustration|graphic|picture|avatar|banner|mascot|badge|emblem)\b/.test(lowerInput);
-  if (!hasGenVerb || !hasImageNoun) return null;
+  if (!hasImageNoun) return null;
 
-  // Build a refined prompt for the image generation model
+  const hasExplicitGenerateVerb = /\b(generate|create|make|draw|produce)\b/.test(lowerInput);
+  const hasDesignVerb = /\bdesign\b/.test(lowerInput);
+  const referencesExistingAsset = /\b(redesign|update|edit|change|modify|refresh|revamp|improve|tweak|refine|iterate|replace)\b/.test(lowerInput)
+    || /\b(current|existing)\s+(logo|icon|image|brand|favicon)\b/.test(lowerInput)
+    || /\b(navbar|header|footer)\s+(logo|icon|brand)\b/.test(lowerInput)
+    || /\b(use|keep|reuse)\b.*\b(logo|icon|brand)\b/.test(lowerInput);
+  const wantsBrandNewAsset = /\b(new|fresh|original|from scratch|brand new|entirely new)\b/.test(lowerInput);
+
+  if (referencesExistingAsset) return null;
+  if (!hasExplicitGenerateVerb && !(hasDesignVerb && wantsBrandNewAsset)) return null;
+
   const quality = /\b(high.?quality|detailed|premium|professional|hd|4k)\b/.test(lowerInput) ? 'high' as const : 'standard' as const;
-  // Pass the user's original request as the image prompt, cleaned up
   const prompt = input.replace(/\b(please|can you|could you|i want|i need|for my|for the|website|app|project|page)\b/gi, '').trim();
-  return { prompt, quality };
+  return prompt ? { prompt, quality } : null;
 }
 
 /** Fast string hash (djb2) for change detection — not cryptographic */
@@ -1046,13 +1053,19 @@ export function useAIAppBuilder() {
       toast.info('Generating image...', { duration: 4000 });
       setThinkingPhase('analyzing');
       try {
-        const { data: imgData, error: imgError } = await supabase.functions.invoke('image-generation', {
-          body: { prompt: imageGenIntent.prompt, quality: imageGenIntent.quality },
-        });
+        const imageGenerationResult = await Promise.race([
+          supabase.functions.invoke('image-generation', {
+            body: { prompt: imageGenIntent.prompt, quality: imageGenIntent.quality },
+          }),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('Image generation timed out')), 12000)
+          ),
+        ]);
+
+        const { data: imgData, error: imgError } = imageGenerationResult;
         if (!imgError && imgData?.image) {
           generatedImageDataUrls = [...generatedImageDataUrls, imgData.image];
           toast.success('Image generated! Embedding in your project...');
-          // Inject context so the AI knows about the generated image
           systemParts.push(`[AI-GENERATED IMAGE]\nThe user asked to generate an image. An image has been generated and is attached as a data URL in this message.\nYou MUST use this generated image in the project by embedding the exact data URL in an <img> tag.\nPrompt used: "${imageGenIntent.prompt}"\n\nDo NOT generate a placeholder SVG or icon — use the ACTUAL generated image data URL provided.`);
         } else {
           console.warn('Image generation failed:', imgError);
