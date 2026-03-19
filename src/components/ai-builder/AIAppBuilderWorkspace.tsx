@@ -2428,6 +2428,23 @@ export function AIAppBuilderWorkspace() {
   }, [mode]);
 
   const handleSend = async (input: string, imageDataUrls?: string[] | null, skipQuestions?: boolean) => {
+    // ── Wave 8 Step 3: Smart file creation from chat ──
+    // Detect simple scaffolding intents and create files instantly
+    if (!imageDataUrls && !skipQuestions) {
+      const scaffold = smartFileCreation.detectIntent(input);
+      if (scaffold) {
+        upsertFile(scaffold.path, scaffold.content);
+        setActiveFile(scaffold.path);
+        setMessages(prev => [
+          ...prev,
+          { id: crypto.randomUUID(), role: 'user', content: input, timestamp: new Date() },
+          { id: crypto.randomUUID(), role: 'assistant', content: `✅ Created \`${scaffold.path}\` with a ${scaffold.name} template. You can now edit it in the code editor or ask me to customize it further.`, timestamp: new Date() },
+        ]);
+        dedupeToast('success', `Created ${scaffold.path}`);
+        return;
+      }
+    }
+
     // ── LIGHTWEIGHT CHAT PATH ──
     // When in discuss mode and auto-escalation doesn't trigger, bypass the entire
     // build pipeline and call vanguard-general-chat directly. This avoids:
