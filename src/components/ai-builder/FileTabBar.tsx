@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
-import { X, FileCode, FileText, Image, File } from 'lucide-react';
+import { X, FileCode, FileText, Image, File, Undo2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface FileTabBarProps {
   openPaths: string[];
@@ -11,6 +12,10 @@ interface FileTabBarProps {
   onSelect: (path: string) => void;
   onClose: (path: string) => void;
   onReorder?: (paths: string[]) => void;
+  /** Per-file undo — check if a file has undo history */
+  hasFileHistory?: (path: string) => boolean;
+  /** Per-file undo — revert a single file */
+  onUndoFile?: (path: string) => void;
 }
 
 function getTabIcon(path: string) {
@@ -27,7 +32,7 @@ function getTabIcon(path: string) {
   }
 }
 
-export function FileTabBar({ openPaths, activePath, dirtyFiles, streamingFilePath, onSelect, onClose, onReorder }: FileTabBarProps) {
+export function FileTabBar({ openPaths, activePath, dirtyFiles, streamingFilePath, onSelect, onClose, onReorder, hasFileHistory, onUndoFile }: FileTabBarProps) {
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const dragIndexRef = useRef<number | null>(null);
 
@@ -93,12 +98,29 @@ export function FileTabBar({ openPaths, activePath, dirtyFiles, streamingFilePat
             {isDirty && !isStreamingThis && (
               <div className="h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" />
             )}
+            {/* Per-file undo button */}
+            {hasFileHistory && onUndoFile && hasFileHistory(path) && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onUndoFile(path);
+                    }}
+                    className="ml-0.5 opacity-0 group-hover:opacity-100 hover:bg-amber-500/20 text-amber-400/60 hover:text-amber-400 rounded p-0.5 transition-all"
+                  >
+                    <Undo2 className="h-2.5 w-2.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-[10px]">Undo file changes</TooltipContent>
+              </Tooltip>
+            )}
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onClose(path);
               }}
-              className="ml-1 opacity-0 group-hover:opacity-100 hover:bg-white/10 rounded p-0.5 transition-opacity"
+              className="ml-0.5 opacity-0 group-hover:opacity-100 hover:bg-white/10 rounded p-0.5 transition-opacity"
             >
               <X className="h-2.5 w-2.5" />
             </button>
