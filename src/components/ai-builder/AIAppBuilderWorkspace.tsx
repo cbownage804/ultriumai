@@ -3514,6 +3514,16 @@ export function AIAppBuilderWorkspace() {
     return parseViteErrors(compileError.errors);
   }, [compileError]);
 
+  // Wave 8 Step 4: Build error markers for inline editor annotations
+  const buildErrorMarkers = useMemo(() => {
+    return errorAnnotations.annotations.map(a => ({
+      file: a.file,
+      line: a.line,
+      message: a.message,
+      severity: a.severity as 'error' | 'warning',
+    }));
+  }, [errorAnnotations.annotations]);
+
   // Track modified file paths from last generation
   const modifiedPathsRef = useRef<Set<string>>(new Set());
   const prevFileSnapshotRef = useRef<Map<string, string>>(new Map());
