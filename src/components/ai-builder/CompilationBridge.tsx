@@ -162,7 +162,7 @@ export function CompilationBridge({
   injectErrorOverlayRef.current = injectErrorOverlay;
 
   // ── CSS hot reload (sub-100ms style injection) ──
-  const { detectCSSOnlyChange, hotInjectCSS, snapshotCSS } = useCSSHotReload();
+  const { detectCSSOnlyChange, hotInjectCSS, snapshotCSS, hasCSSOnlyChanges } = useCSSHotReload();
 
   // ── Auto dependency resolver (bare import → esm.sh) ──
   const { resolveImports, injectImportMap, resetResolver: resetDepResolver } = useAutoDepResolver();
