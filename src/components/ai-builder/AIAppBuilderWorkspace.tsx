@@ -114,6 +114,11 @@ import {
 import { StreamingCodeEditor } from './StreamingCodeEditor';
 import { QuickSettingsBar } from './QuickSettingsBar';
 import { useSmartFileCreation } from './useSmartFileCreation';
+import { useConversationHistory } from '@/hooks/useConversationHistory';
+import { useElementSourceMapper } from './useElementSourceMapper';
+import { InlineChatWidget } from './InlineChatWidget';
+import { EnvironmentStatusBar } from './EnvironmentStatusBar';
+import { ConversationDrawer } from './ConversationDrawer';
 
 import {
   PromptHistoryPanel, UndoPreviewPopover, BuilderChatPanel, BuilderPreviewPanel,
