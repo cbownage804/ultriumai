@@ -154,7 +154,9 @@ export function VisualEditClickOverlay({ isActive, onToggle, iframeRef, onDirect
         <div className="absolute top-14 left-1/2 -translate-x-1/2 z-30 animate-in fade-in zoom-in-95 duration-200">
           <div className="bg-[#0d0d14] border border-white/[0.1] rounded-xl shadow-2xl px-2 py-1.5 flex items-center gap-1">
             <span className="text-[10px] text-white/30 px-1.5 font-mono truncate max-w-[120px]">
-              {selectedElement.tagName.toLowerCase()}
+              {selectedElement.sourceFile
+                ? `${selectedElement.sourceFile.split('/').pop()}:${selectedElement.sourceLine || '?'}`
+                : selectedElement.tagName.toLowerCase()}
             </span>
             <div className="h-4 w-px bg-white/[0.08]" />
             <button
