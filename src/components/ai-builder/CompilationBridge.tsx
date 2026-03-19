@@ -64,6 +64,8 @@ interface CompilationBridgeProps {
   onCompiledForHosting: (html: string | null) => void;
   onCompilingChange?: (compiling: boolean) => void;
   onCompileStateChange?: (state: CompileState, error?: CompileErrorInfo) => void;
+  /** Step 4: Granular compile phase callback */
+  onCompilePhaseChange?: (phase: CompilePhase) => void;
   skipNextCompileRef?: React.MutableRefObject<boolean>;
   externalStableHTMLRef?: React.RefObject<string | null>;
   onForceCompile?: (fn: () => void) => void;
