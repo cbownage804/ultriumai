@@ -3,6 +3,7 @@ import Editor, { OnMount } from '@monaco-editor/react';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import { Sparkles, Wand2, TestTube2, FileText, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { preCompileValidate } from './preCompileValidation';
 
 export interface RemoteCursor {
   userId: string;
@@ -38,6 +39,7 @@ export function CodeEditor({ file, onContentChange, remoteCursors = [], onCursor
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<any>(null);
   const decorationsRef = useRef<string[]>([]);
+  const lintTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
   const [showAIBar, setShowAIBar] = useState(false);
   const [aiBarPosition, setAIBarPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const [selectedText, setSelectedText] = useState('');
@@ -45,6 +47,26 @@ export function CodeEditor({ file, onContentChange, remoteCursors = [], onCursor
   const handleChange = useCallback((value: string | undefined) => {
     if (file && value !== undefined && onContentChange) {
       onContentChange(file.path, value);
+    }
+
+    // Wave 2 Step 5: Lint-on-type with 500ms debounce
+    if (file && value !== undefined && monacoRef.current && editorRef.current) {
+      if (lintTimerRef.current) clearTimeout(lintTimerRef.current);
+      lintTimerRef.current = setTimeout(() => {
+        const monaco = monacoRef.current;
+        const model = editorRef.current?.getModel();
+        if (!monaco || !model) return;
+        const issues = preCompileValidate([{ path: file.path, content: value, language: file.language }]);
+        const markers = issues.map(issue => ({
+          startLineNumber: 1,
+          startColumn: 1,
+          endLineNumber: 1,
+          endColumn: 1000,
+          message: issue.message,
+          severity: issue.severity === 'error' ? monaco.MarkerSeverity.Error : monaco.MarkerSeverity.Warning,
+        }));
+        monaco.editor.setModelMarkers(model, 'precompile-lint', markers);
+      }, 500);
     }
   }, [file, onContentChange]);
 

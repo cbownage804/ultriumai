@@ -69,6 +69,14 @@ interface BuilderChatPanelProps {
   onForkConversation?: () => void;
   onSwitchFork?: (forkId: string) => void;
   onDeleteFork?: (forkId: string) => void;
+  // Wave 2: Per-message revert
+  onRevertToMessage?: (messageId: string) => void;
+  onForkFromMessage?: (messageId: string) => void;
+  // Wave 2: Model selection
+  selectedModel?: string;
+  onModelChange?: (model: string) => void;
+  onOpenEditHistory?: () => void;
+  onReview?: () => void;
 }
 
 
@@ -395,6 +403,8 @@ export function BuilderChatPanel({
   streamingContentRef, onNewConversation,
   onShowSettings, onShowHistory, onShowKnowledge, onShowGitHub,
   conversationForks, activeForkId, onForkConversation, onSwitchFork, onDeleteFork,
+  onRevertToMessage, onForkFromMessage,
+  selectedModel, onModelChange, onOpenEditHistory, onReview,
 }: BuilderChatPanelProps) {
   const [input, setInput] = useState('');
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -1408,7 +1418,20 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Inline error recovery */}
+        {/* Wave 2 Step 2: Per-message revert button */}
+        {isCompleted && !isStreaming && msg.filesSnapshot && onRevertToMessage && (
+          <div className="flex items-center gap-1.5 mt-1">
+            <button
+              onClick={() => onRevertToMessage(msg.id)}
+              className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] text-white/30 hover:text-white/60 hover:bg-white/[0.04] border border-transparent hover:border-white/[0.08] transition-all"
+              title="Revert project to the state before this generation"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              Revert
+            </button>
+          </div>
+        )}
+
         {msg.inlineError && !isStreaming && (
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/[0.06] border border-red-500/20 text-xs">
             <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0" />
@@ -1920,6 +1943,44 @@ export function BuilderChatPanel({
               ));
             })()}
           </div>
+        </div>
+      )}
+
+      {/* Wave 2 Step 3: Context window indicator */}
+      {contextBudget && contextBudget.percentUsed > 30 && (
+        <div className="px-3 pt-2 shrink-0">
+          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+            <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-all duration-500",
+                  contextBudget.percentUsed > 85 ? "bg-red-400" : contextBudget.percentUsed > 60 ? "bg-amber-400" : "bg-emerald-400"
+                )}
+                style={{ width: `${Math.min(contextBudget.percentUsed, 100)}%` }}
+              />
+            </div>
+            <span className={cn(
+              "text-[9px] font-mono whitespace-nowrap",
+              contextBudget.percentUsed > 85 ? "text-red-400/70" : contextBudget.percentUsed > 60 ? "text-amber-400/60" : "text-white/25"
+            )}>
+              {Math.round(contextBudget.percentUsed)}% context
+            </span>
+            {contextBudget.percentUsed > 85 && onNewConversation && (
+              <button
+                onClick={onNewConversation}
+                className="text-[9px] text-red-400/70 hover:text-red-300 underline"
+              >
+                New chat
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Wave 2 Step 6: Token cost display */}
+      {isGenerating && totalTokensUsed > 0 && (
+        <div className="px-3 pt-1 shrink-0">
+          <span className="text-[9px] text-white/20 font-mono">~{(totalTokensUsed / 1000).toFixed(1)}k tokens</span>
         </div>
       )}
 
