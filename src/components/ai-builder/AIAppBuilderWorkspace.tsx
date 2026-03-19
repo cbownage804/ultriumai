@@ -1527,6 +1527,7 @@ export function AIAppBuilderWorkspace() {
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const pluginRegistry = usePluginRegistry();
   const [recentFiles, setRecentFiles] = useState<string[]>([]);
+  const [autoHealEnabled, setAutoHealEnabled] = useState(true);
   const collaborationEngine = useCollaborationEngine(currentProjectId);
   const apiBuilder = useAPIBuilder();
   const projectReview = useProjectReview();
