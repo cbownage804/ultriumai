@@ -648,13 +648,13 @@ export function CompilationBridge({
     // Skip streaming compiles for golden (untouched) projects
     if (isGoldenProject) return;
 
-    // Poll every 8s during generation to reduce droplet pressure
+    // Step B: Speculative pre-compilation — poll every 5s with lower file threshold
     streamingCompileTimerRef.current = setInterval(async () => {
       const partial = partialFilesRef.current;
       const completedCount = completedFileCountRef.current;
 
-      // Need at least 4 completed files and a change since last compile
-      if (completedCount < 4 || completedCount === lastStreamingCompileCountRef.current) return;
+      // Need at least 2 completed files and a change since last compile
+      if (completedCount < 2 || completedCount === lastStreamingCompileCountRef.current) return;
       if (streamingCompileInFlightRef.current) return;
       // Stop polling after too many failures
       if (streamingFailCountRef.current >= MAX_STREAMING_FAILURES) return;
