@@ -3772,6 +3772,14 @@ export function AIAppBuilderWorkspace() {
             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }}
         />
+        {/* Wave 8 Step 5: Quick Settings Bar */}
+        <QuickSettingsBar
+          soundEnabled={soundEnabled}
+          onSoundToggle={(v) => { setSoundEnabled(v); localStorage.setItem('builder-sound', String(v)); }}
+          autoHealEnabled={autoHealEnabled}
+          onAutoHealToggle={setAutoHealEnabled}
+          selectedModel={selectedModel}
+        />
         {/* ── Main Content ── */}
         <div className="flex-1 overflow-hidden">
           {isMobile ? (
