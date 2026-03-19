@@ -48,7 +48,7 @@ const AI_ACTIONS = [
   { id: 'fix', label: 'Fix', icon: Sparkles },
 ];
 
-export function CodeEditor({ file, onContentChange, remoteCursors = [], onCursorChange, onInlineAIAction, onTriggerInlineEdit, projectFiles = [], onNavigateToFile }: CodeEditorProps) {
+export function CodeEditor({ file, onContentChange, remoteCursors = [], onCursorChange, onInlineAIAction, onTriggerInlineEdit, projectFiles = [], onNavigateToFile, buildErrorMarkers = [] }: CodeEditorProps) {
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<any>(null);
   const decorationsRef = useRef<string[]>([]);
