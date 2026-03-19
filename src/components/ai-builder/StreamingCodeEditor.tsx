@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, type MutableRefObject } from 'react';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
-import type { RemoteCursor } from './CodeEditor';
+import type { RemoteCursor, BuildErrorMarker } from './CodeEditor';
 
 // Lazy import to avoid circular deps
 import { CodeEditor } from './CodeEditor';
@@ -16,6 +16,8 @@ interface StreamingCodeEditorProps {
   onInlineAIAction?: (action: string, selectedCode: string, filePath: string) => void;
   /** Callback to notify parent of the current streaming file path */
   onStreamingFileChange?: (path: string | null) => void;
+  /** Build error markers from compilation */
+  buildErrorMarkers?: BuildErrorMarker[];
 }
 
 /**
