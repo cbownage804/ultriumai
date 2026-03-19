@@ -45,4 +45,12 @@
 - ✅ **Step 5 — Responsive preview sync with chat**: Current viewport mode injected into AI prompt context for viewport-aware generation
 - ✅ **Step 6 — Quick actions from empty state**: WelcomeOverlay enhanced with contextual quick-action chips (Add landing page, Set up auth, etc.)
 
+### Completed (Phase 7: Lovable Parity — Wave 5)
+- ✅ **Step 1 — Conversation history sidebar**: useConversationHistory hook with IndexedDB persistence, save/switch/new conversation support
+- ✅ **Step 2 — Deployment history and rollback**: Already implemented via deployHistory prop + rollback in PublishPanel history tab
+- ✅ **Step 3 — AI follow-up suggestions after generation**: generateFollowUpSuggestions analyzes diffs/file types, renders contextual chips below completed generations
+- ✅ **Step 4 — Inline code actions (Refactor, Explain, Test)**: Monaco context menu actions registered in CodeEditor + existing floating AI bar
+- ✅ **Step 5 — Project health score dashboard**: Health grade badge (A-F) in WorkspaceTopBar based on TS coverage, tests, structure
+- ✅ **Step 6 — Smart prompt templates library**: Slash command system (/) in chat input with categorized searchable template dropdown
+
 ### All steps complete ✅
