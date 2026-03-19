@@ -408,6 +408,7 @@ export function BuilderChatPanel({
   conversationForks, activeForkId, onForkConversation, onSwitchFork, onDeleteFork,
   onRevertToMessage, onForkFromMessage,
   selectedModel, onModelChange, onOpenEditHistory, onReview,
+  buildErrors,
 }: BuilderChatPanelProps) {
   const [input, setInput] = useState('');
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
