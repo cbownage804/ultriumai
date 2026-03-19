@@ -1,11 +1,12 @@
 import { useCallback, useRef } from 'react';
+import type { ParsedViteError } from './parseViteErrors';
 
 /**
  * useAutoHealCompile — Automatically re-prompts the AI when compilation
  * fails, sending the error message + LKG diff context for self-correction.
  * 
- * Matches Lovable's "try to fix" behavior but is fully automatic (no user click).
- * Max 2 heal attempts per generation cycle.
+ * Step 1 (Lovable Parity): Error locality — extracts exact file:line from
+ * ParsedViteError and sends a ±20 line window instead of the full file.
  */
 
 export interface AutoHealAttempt {
@@ -25,6 +26,17 @@ const DEFAULT_CONFIG: AutoHealConfig = {
   maxAttempts: 3,
   cooldownMs: 2000,
 };
+
+/** Extract a ±windowSize line window around a specific line number */
+function extractLineWindow(content: string, targetLine: number, windowSize = 20): string {
+  const lines = content.split('\n');
+  const start = Math.max(0, targetLine - windowSize - 1);
+  const end = Math.min(lines.length, targetLine + windowSize);
+  return lines
+    .slice(start, end)
+    .map((l, i) => `${start + i + 1}: ${l}`)
+    .join('\n');
+}
 
 export function useAutoHealCompile(config: Partial<AutoHealConfig> = {}) {
   const mergedConfig = { ...DEFAULT_CONFIG, ...config };
@@ -61,13 +73,17 @@ export function useAutoHealCompile(config: Partial<AutoHealConfig> = {}) {
     return true;
   }, [mergedConfig]);
 
-  /** Build the auto-heal prompt for the AI, including full file content for context */
+  /** Build the auto-heal prompt for the AI, including error locality context */
   const buildHealPrompt = useCallback((
     errorMessage: string,
     errorDetails: string[],
     diffContext: string,
     /** Full content of the failing file(s) for richer AI context */
     failingFiles?: { path: string; content: string }[],
+    /** Parsed Vite errors with file:line info for locality */
+    parsedErrors?: ParsedViteError[],
+    /** Anti-pattern context from error learning */
+    antiPatternContext?: string,
   ): string => {
     const attempt = attemptsRef.current.length + 1;
     
@@ -81,17 +97,44 @@ export function useAutoHealCompile(config: Partial<AutoHealConfig> = {}) {
       `\`\`\``,
     ];
 
-    if (diffContext) {
-      lines.push(``, `**Changes since last working build:**`, diffContext);
-    }
-
-    // Include full file content for files mentioned in errors (up to 3 files, 500 lines each)
-    if (failingFiles && failingFiles.length > 0) {
+    // Step 1: Error locality — show ±20 line windows around error sites instead of full files
+    if (parsedErrors && parsedErrors.length > 0 && failingFiles) {
+      lines.push(``, `**Error locations:**`);
+      const shown = new Set<string>();
+      for (const pe of parsedErrors.slice(0, 5)) {
+        const key = `${pe.file}:${pe.line}`;
+        if (shown.has(key)) continue;
+        shown.add(key);
+        const file = failingFiles.find(f => f.path === pe.file || f.path.endsWith(`/${pe.file}`) || f.path === `src/${pe.file}`);
+        if (file) {
+          const window = extractLineWindow(file.content, pe.line);
+          lines.push(
+            ``,
+            `📍 \`${pe.file}:${pe.line}${pe.column ? `:${pe.column}` : ''}\` — ${pe.message}`,
+            `\`\`\`tsx`,
+            window,
+            `\`\`\``,
+          );
+        } else {
+          lines.push(`📍 \`${pe.file}:${pe.line}\` — ${pe.message}`);
+        }
+      }
+    } else if (failingFiles && failingFiles.length > 0) {
+      // Fallback: include full file content (up to 3 files, 500 lines each)
       lines.push(``, `**Failing file contents:**`);
       for (const f of failingFiles.slice(0, 3)) {
         const truncated = f.content.split('\n').slice(0, 500).join('\n');
         lines.push(``, `\`\`\`tsx`, `// ${f.path}`, truncated, `\`\`\``);
       }
+    }
+
+    if (diffContext) {
+      lines.push(``, `**Changes since last working build:**`, diffContext);
+    }
+
+    // Step 6: Inject anti-pattern context from error learning
+    if (antiPatternContext) {
+      lines.push(``, antiPatternContext);
     }
 
     lines.push(
