@@ -8,7 +8,6 @@ import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import type { SupabaseConfig, StripeConfig, ServiceKey, EnvVar } from './ProjectSettings';
 import type { DeploymentRecord } from '@/hooks/useProjectPersistence';
 import { runPrePublishReview, type ReviewResult, type ReviewIssue } from './prePublishReview';
-import type { DeploymentRecord } from '@/hooks/useProjectPersistence';
 
 interface CustomDomain {
   id: string;
