@@ -1,11 +1,13 @@
-import { useState, useCallback } from 'react';
-import { X, Globe, Rocket, Check, Copy, ExternalLink, Loader2, RefreshCw, Trash2, Plus, Shield, AlertCircle, Download, FileArchive, Container, Smartphone, Wifi, Package, ChevronLeft, Pencil, Users, FileText, Link, RotateCcw, Eye, FileCode, Zap } from 'lucide-react';
+import { useState, useCallback, useMemo } from 'react';
+import { X, Globe, Rocket, Check, Copy, ExternalLink, Loader2, RefreshCw, Trash2, Plus, Shield, AlertCircle, Download, FileArchive, Container, Smartphone, Wifi, Package, ChevronLeft, Pencil, Users, FileText, Link, RotateCcw, Eye, FileCode, Zap, ShieldAlert, Bug, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { exportProject, type ExportMode, type ExportContext, type EdgeFunctionMeta } from './exportProject';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import type { SupabaseConfig, StripeConfig, ServiceKey, EnvVar } from './ProjectSettings';
+import type { DeploymentRecord } from '@/hooks/useProjectPersistence';
+import { runPrePublishReview, type ReviewResult, type ReviewIssue } from './prePublishReview';
 import type { DeploymentRecord } from '@/hooks/useProjectPersistence';
 
 interface CustomDomain {
