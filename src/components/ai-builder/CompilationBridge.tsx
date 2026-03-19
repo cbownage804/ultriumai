@@ -373,6 +373,8 @@ export function CompilationBridge({
   // Track the filesDigest at compile start — if it changed by the time compile finishes, retrigger
   const compiledDigestRef = useRef<string>('');
   const recompileNeededRef = useRef(false);
+  // Step 2: Track last compiled digest + timestamp for dedup
+  const lastCompiledDigestRef = useRef<{ digest: string; timestamp: number }>({ digest: '', timestamp: 0 });
 
   // ── liveCompiledHTML (async, post-generation) ──
   const [liveCompiledHTML, setLiveCompiledHTML] = useState<string | null>(null);
