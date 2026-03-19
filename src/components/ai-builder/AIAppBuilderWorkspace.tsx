@@ -1448,7 +1448,12 @@ export function AIAppBuilderWorkspace() {
           })
           .filter((f): f is { path: string; content: string } => !!f);
 
-        const healPrompt = autoHeal.buildHealPrompt(error.message, error.errors, diffContext, failingFiles);
+        // Step 1: Parse Vite errors for error locality (file:line windows)
+        const { parseViteErrors } = await import('./parseViteErrors');
+        const parsedErrors = parseViteErrors(error.errors);
+        const antiPatternCtx = errorPatterns.getAntiPatternPrompt();
+
+        const healPrompt = autoHeal.buildHealPrompt(error.message, error.errors, diffContext, failingFiles, parsedErrors, antiPatternCtx);
         autoHeal.recordAttempt(error.message);
 
         console.info('[AutoHeal] Triggering auto-fix attempt', {
