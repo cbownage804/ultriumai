@@ -2,7 +2,7 @@
  * Quick Settings Toggle Bar — Wave 8 Step 5
  * Compact strip for frequently-toggled settings.
  */
-import { Volume2, VolumeX, Zap, ZapOff, Wrench, WrenchOff, ChevronDown, ChevronUp } from 'lucide-react';
+import { Volume2, VolumeX, Zap, ZapOff, Wrench, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
