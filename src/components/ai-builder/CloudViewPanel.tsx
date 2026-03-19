@@ -12,6 +12,7 @@ interface CloudViewPanelProps {
   onClose: () => void;
   supabaseConfig: any;
   onOpenPanel: (key: string) => void;
+  onRefreshTypes?: () => void;
 }
 
 type CloudTab = 'database' | 'users' | 'storage' | 'edge-functions' | 'secrets';
