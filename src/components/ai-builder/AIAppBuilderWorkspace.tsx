@@ -2312,19 +2312,50 @@ export function AIAppBuilderWorkspace() {
 
     (async () => {
       const loaded = await loadProject(initialProjectId);
-      if (loaded) {
-        setFiles((loaded.files as any[]) || []);
-        renameProject(loaded.name);
-        if (loaded.name && loaded.name !== 'Untitled Project') {
-          hasAutoNamed.current = true;
+      if (!loaded) return;
+
+      const loadedFiles = (loaded.files as any[]) || [];
+      const nextPreviewSlug = loaded.name
+        ? loaded.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 30)
+        : '';
+
+      if (nextPreviewSlug) {
+        setPreviewSlug(nextPreviewSlug);
+        try {
+          const { data: previewRow, error: previewError } = await supabase
+            .from('app_builder_live_previews')
+            .select('compiled_html')
+            .eq('project_slug', nextPreviewSlug)
+            .maybeSingle();
+
+          if (previewError) throw previewError;
+
+          const restoredPreview = previewRow?.compiled_html;
+          if (typeof restoredPreview === 'string' && isPreviewValidFn(restoredPreview)) {
+            stableHTMLRef.current = restoredPreview;
+            lastKnownGoodHTMLRef.current = restoredPreview;
+            compiledForHostingRef.current = restoredPreview;
+            setStableHTML(restoredPreview);
+            setCompiledForHostingState(restoredPreview);
+            try { localStorage.setItem('ai-builder-compiled-html', restoredPreview); } catch {}
+            setPreviewRefreshKey(k => k + 1);
+          }
+        } catch (previewRestoreError) {
+          console.warn('[Workspace] Failed to restore project-specific preview snapshot:', previewRestoreError);
         }
-        if (loaded.published_url) setPublishedUrl(loaded.published_url);
-        if (loaded.settings?.chatMessages) {
-          setMessages(loaded.settings.chatMessages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
-        }
-        if (loaded.settings?.versions) {
-          setVersions(loaded.settings.versions.map((v: any) => ({ ...v, timestamp: new Date(v.timestamp) })));
-        }
+      }
+
+      setFiles(loadedFiles);
+      renameProject(loaded.name);
+      if (loaded.name && loaded.name !== 'Untitled Project') {
+        hasAutoNamed.current = true;
+      }
+      if (loaded.published_url) setPublishedUrl(loaded.published_url);
+      if (loaded.settings?.chatMessages) {
+        setMessages(loaded.settings.chatMessages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
+      }
+      if (loaded.settings?.versions) {
+        setVersions(loaded.settings.versions.map((v: any) => ({ ...v, timestamp: new Date(v.timestamp) })));
       }
     })();
   }, [initialProjectId]); // eslint-disable-line react-hooks/exhaustive-deps
