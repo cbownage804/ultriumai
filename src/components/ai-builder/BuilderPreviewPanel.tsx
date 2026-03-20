@@ -902,7 +902,7 @@ window.addEventListener('message', function(e) {
       {(html || displayHtml) && (
         <div className="flex flex-col border-b border-white/[0.06] bg-[#0a0a10] shrink-0">
           {/* Address bar — Lovable-style single row */}
-          <div className="flex items-center gap-1.5 px-2 h-10">
+          <div className="flex items-center gap-1.5 px-2 h-9">
             <div className="flex items-center gap-0.5">
               <button
                 onClick={() => { if (canGoBack) { setHistoryIndex(i => i - 1); setCurrentUrl(urlHistory[historyIndex - 1]); } }}
