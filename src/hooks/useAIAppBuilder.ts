@@ -919,6 +919,12 @@ export function useAIAppBuilder() {
   const { trimForContext } = useContextBudget({ maxChars: 120_000 });
   const schemaFromNL = useSchemaFromNL();
   const aiConfidence = useAIConfidence();
+  // Wave 18 hooks
+  const { buildReuseContext } = useComponentReuseDetection();
+  const { getRelatedFiles } = useImportGraphContext();
+  const runtimeErrorFix = useRuntimeErrorFix();
+  const incrementalApply = useIncrementalApply();
+  const changelog = usePostGenerationChangelog();
 
   // Issue 27 fix: Use a ref to read messages inside sendMessage without including it in deps
   const messagesRef = useRef(messages);
