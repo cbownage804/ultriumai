@@ -2299,7 +2299,7 @@ export function AIAppBuilderWorkspace() {
     const isProjectSwitch = lastLoadedProjectId.current != null && lastLoadedProjectId.current !== initialProjectId;
     lastLoadedProjectId.current = initialProjectId;
 
-    if (isProjectSwitch) {
+    if (isProjectSwitch || initialProjectId) {
       clearRepairWatchdog();
       backgroundGen.resetState?.();
       setIsGeneratingOverride(false);
