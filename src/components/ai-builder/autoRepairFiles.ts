@@ -222,34 +222,33 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
         repairs.push(`${f.path}: replaced class= with className=`);
       }
 
-      // ── 6b. Fix mismatched/missing JSX closing tags (HTML + fragments) ──
-      const jsxBalance = fixJsxTagBalance(content);
-      if (jsxBalance.fixed) {
-        content = jsxBalance.content;
-        changed = true;
-        repairs.push(`${f.path}: ${jsxBalance.description}`);
-      }
-      // ── 6b2. Remove invalid </textarea> wrapping non-textarea JSX content ──
+      // ── 6b0. Remove orphaned </textarea> before JSX balance runs ──
       // AI sometimes generates `</textarea></div>` where `</textarea>` doesn't match an opening tag.
-      // This produces invalid JSX that esbuild rejects.
       {
         const textareaClosePattern = /<\/textarea\s*>/gi;
         const textareaOpenPattern = /<textarea\b/gi;
         const openCount = (content.match(textareaOpenPattern) || []).length;
         const closeCount = (content.match(textareaClosePattern) || []).length;
         if (closeCount > openCount) {
-          // Remove excess closing textarea tags (keep only as many as opens)
           let removed = 0;
-          content = content.replace(textareaClosePattern, (match) => {
+          content = content.replace(/<\/textarea\s*>/gi, (match) => {
             if (removed < openCount) {
               removed++;
-              return match; // keep this one
+              return match;
             }
-            return ''; // remove excess
+            return '';
           });
           changed = true;
           repairs.push(`${f.path}: removed ${closeCount - openCount} orphaned </textarea> tag(s)`);
         }
+      }
+
+      // ── 6b. Fix mismatched/missing JSX closing tags (HTML + fragments) ──
+      const jsxBalance = fixJsxTagBalance(content);
+      if (jsxBalance.fixed) {
+        content = jsxBalance.content;
+        changed = true;
+        repairs.push(`${f.path}: ${jsxBalance.description}`);
       }
     }
 

@@ -224,23 +224,26 @@ describe('autoRepairFiles duplicate block removal', () => {
   it('removes duplicate consecutive code blocks', () => {
     const files = [
       makeTsx('src/App.tsx', `import React from 'react';
-            </div>
-          </form>
-
-            </div>
-          </form>
-
-          <div className="space-y-4">
-            <h2>Items</h2>
-          </div>`),
+export default function App() {
+  return (
+    <div>
+      <p>Line A</p>
+      <p>Line B</p>
+      <p>Line C</p>
+      <p>Line A</p>
+      <p>Line B</p>
+      <p>Line C</p>
+      <p>Line D</p>
+    </div>
+  );
+}`),
     ];
 
     const { files: repairedFiles, repairs } = autoRepairFiles(files);
     const content = repairedFiles[0].content;
 
-    // The duplicate block should be removed
-    const formCloseCount = (content.match(/<\/form>/g) || []).length;
-    expect(formCloseCount).toBe(1);
+    const lineACount = (content.match(/<p>Line A<\/p>/g) || []).length;
+    expect(lineACount).toBe(1);
     expect(repairs.some(r => r.includes('duplicated line'))).toBe(true);
   });
 });
