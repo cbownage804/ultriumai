@@ -12,6 +12,8 @@ import { parseEdgeFunctionBlocks, stripEdgeFunctionBlocks, type EdgeFunctionBloc
 import { useSchemaFromNL } from './useSchemaFromNL';
 import { detectEdgeFunctionIntent, buildEdgeFunctionDirective } from '@/components/ai-builder/edgeFunctionScaffolds';
 import { parseAuthCommand } from '@/components/ai-builder/authFlowTemplates';
+// Wave 17 imports
+import { useAIConfidence, buildReasoningDirective } from './useAIConfidence';
 
 // ── Helper: Build branding context from Firecrawl branding response ──
 function buildBrandingContext(branding: any): string {
