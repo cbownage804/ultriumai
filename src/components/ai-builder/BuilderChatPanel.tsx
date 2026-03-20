@@ -6,6 +6,7 @@ import {
   LayoutGrid, Wrench, AlertTriangle, Copy, ChevronDown, Check, Pencil,
   Crosshair, Plus, Camera, Paperclip, AtSign, Rocket,
   Settings, Clock, BookOpen, GitBranch, Eye, Search as SearchIcon, Pin, Star,
+  ThumbsUp, ThumbsDown, MoreHorizontal, MessageSquare, Mic, PanelLeft,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
