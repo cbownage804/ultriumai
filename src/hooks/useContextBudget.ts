@@ -55,6 +55,33 @@ export function useContextBudget(options: ContextBudgetOptions = {}) {
     return h.toString(36);
   };
 
+  /** Estimate token count (~4 chars per token, with overhead for code). */
+  const estimateTokens = useCallback((text: string): number => {
+    return Math.ceil(text.length / 3.5); // Code is denser than prose
+  }, []);
+
+  /** Summarize old messages to save context budget. */
+  const summarizeMessages = useCallback((
+    messages: { role: string; content: string }[],
+    maxMessages: number,
+  ): { role: string; content: string }[] => {
+    if (messages.length <= maxMessages) return messages;
+
+    const keep = messages.slice(-maxMessages);
+    const old = messages.slice(0, -maxMessages);
+
+    // Compress old messages into a summary
+    const userMsgs = old.filter(m => m.role === 'user').map(m => m.content.slice(0, 80));
+    if (userMsgs.length === 0) return keep;
+
+    const summary = {
+      role: 'system',
+      content: `[CONVERSATION SUMMARY — ${old.length} earlier messages]\nPrevious topics: ${userMsgs.join('; ').slice(0, 500)}\n[/SUMMARY]`,
+    };
+
+    return [summary, ...keep];
+  }, []);
+
   /**
    * Trim project files to fit within the context budget.
    * Priority: activeFile > mentioned files > import-referenced > rest (skeleton/manifest)
@@ -87,7 +114,7 @@ export function useContextBudget(options: ContextBudgetOptions = {}) {
       const prevHash = fileHashesRef.current.get(f.path);
       if (!prevHash || prevHash !== hash(f.content)) score += 20;
       if (f.content.length < 2000) score += 10;
-      // Step 6: Deprioritize CSS and config files
+      // Deprioritize CSS and config files
       if (isCSS(f.path)) score -= 20;
       if (isConfig(f.path)) score -= 15;
       return { file: f, score };
@@ -100,24 +127,20 @@ export function useContextBudget(options: ContextBudgetOptions = {}) {
     let charBudget = maxChars;
 
     for (const { file, score } of scored) {
-      // Always include full content for high-priority files (active, mentioned)
       if (score >= 50) {
         included.push({ path: file.path, content: file.content });
         charBudget -= file.content.length;
         fileHashesRef.current.set(file.path, hash(file.content));
       } else if (charBudget >= file.content.length) {
-        // Fits in budget — include full
         included.push({ path: file.path, content: file.content });
         charBudget -= file.content.length;
         fileHashesRef.current.set(file.path, hash(file.content));
       } else if (file.content.length > 3000) {
-        // Step 6: Skeleton mode for large low-priority files
         const skeleton = skeletonize(file.content);
         included.push({ path: file.path, content: skeleton });
         charBudget -= skeleton.length;
         omitted.push(file.path);
       } else {
-        // Manifest mode: path + hash only
         included.push({
           path: file.path,
           content: `// [MANIFEST] File hash: ${hash(file.content)} (${file.content.length} chars) — content omitted to fit context budget`,
@@ -134,5 +157,15 @@ export function useContextBudget(options: ContextBudgetOptions = {}) {
     };
   }, [maxChars]);
 
-  return { trimForContext };
+  /** Get context usage as a percentage. */
+  const getContextUsage = useCallback((totalChars: number): { percent: number; label: string } => {
+    const percent = Math.round((totalChars / maxChars) * 100);
+    const tokens = estimateTokens(totalChars.toString().repeat(Math.ceil(totalChars / 10)));
+    return {
+      percent: Math.min(percent, 100),
+      label: `Context: ${percent}% (~${Math.round(totalChars / 3.5).toLocaleString()} tokens)`,
+    };
+  }, [maxChars, estimateTokens]);
+
+  return { trimForContext, estimateTokens, summarizeMessages, getContextUsage };
 }
