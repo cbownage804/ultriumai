@@ -1757,34 +1757,6 @@ export function BuilderChatPanel({
           </motion.div>
         )}
 
-        {/* Suggestion chips — contextual follow-ups */}
-        {!isStreaming && msg.suggestions && msg.suggestions.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 pt-1">
-            {msg.suggestions.map((suggestion, i) => {
-              const isStartBuilding = suggestion.includes('🚀') || suggestion.toLowerCase().includes('start building') || suggestion.toLowerCase().includes('ready to build');
-              return (
-                <button
-                  key={i}
-                  onClick={() => {
-                    if (isStartBuilding) {
-                      handleApproveAndBuild(msg);
-                    } else {
-                      onSend(suggestion.replace(/^🚀\s*/, ''));
-                    }
-                  }}
-                  className={cn(
-                    "px-3 py-1.5 rounded-lg text-[11px] transition-all",
-                    isStartBuilding
-                      ? "bg-teal-500/15 border border-teal-500/30 text-teal-300 hover:bg-teal-500/25 hover:border-teal-500/50 font-medium"
-                      : "bg-white/[0.04] border border-white/[0.06] text-white/50 hover:text-white/80 hover:bg-white/[0.08]"
-                  )}
-                >
-                  {suggestion}
-                </button>
-              );
-            })}
-          </div>
-        )}
 
         {/* Step 4: File-by-file streaming status with checkmarks */}
         {isStreaming && fileNames.length > 0 && (
