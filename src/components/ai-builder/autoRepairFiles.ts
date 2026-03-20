@@ -229,6 +229,28 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
         changed = true;
         repairs.push(`${f.path}: ${jsxBalance.description}`);
       }
+      // ── 6b2. Remove invalid </textarea> wrapping non-textarea JSX content ──
+      // AI sometimes generates `</textarea></div>` where `</textarea>` doesn't match an opening tag.
+      // This produces invalid JSX that esbuild rejects.
+      {
+        const textareaClosePattern = /<\/textarea\s*>/gi;
+        const textareaOpenPattern = /<textarea\b/gi;
+        const openCount = (content.match(textareaOpenPattern) || []).length;
+        const closeCount = (content.match(textareaClosePattern) || []).length;
+        if (closeCount > openCount) {
+          // Remove excess closing textarea tags (keep only as many as opens)
+          let removed = 0;
+          content = content.replace(textareaClosePattern, (match) => {
+            if (removed < openCount) {
+              removed++;
+              return match; // keep this one
+            }
+            return ''; // remove excess
+          });
+          changed = true;
+          repairs.push(`${f.path}: removed ${closeCount - openCount} orphaned </textarea> tag(s)`);
+        }
+      }
     }
 
     // ── 6c. Fix corrupted arrow functions: `= />` should be `=>` ──
