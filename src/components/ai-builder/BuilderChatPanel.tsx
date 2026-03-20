@@ -1396,11 +1396,7 @@ export function BuilderChatPanel({
 
         {/* Main prose content — always show conversational text like Lovable */}
         {(() => {
-          // For build messages with files, show only the closing/body text (intro already shown above)
-          // For discuss mode or no-file messages, show full text
-          const proseContent = isCompleted && (hasFiles || fileNames.length > 0)
-            ? (closingLines || bodyText || '').trim()
-            : (isCompleted ? bodyText || displayText : displayText);
+          const proseContent = bodyText || displayText;
           if (!proseContent && !isStreaming) return null;
           return (
             <StreamingText content={proseContent || ''} isStreaming={isStreaming}>
