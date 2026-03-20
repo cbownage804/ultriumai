@@ -3498,18 +3498,10 @@ export function AIAppBuilderWorkspace() {
   }, [project.files, upsertFile, deleteFile]);
 
   // ── Compilation is now isolated in CompilationBridge (fixes React Error #310) ──
-  // Restore cached compiled HTML from localStorage for instant preview on reload
+  // NEVER restore cached preview on mount — it causes stale previews from other projects.
+  // Preview is restored through proper channels: project load, draft restoration, or fresh compilation.
   const COMPILED_CACHE_KEY = 'ai-builder-compiled-html';
-  const [stableHTML, setStableHTML] = useState<string | null>(() => {
-    try {
-      const params = new URLSearchParams(window.location.search);
-      // Skip restoration for project switches AND new-app flows
-      if (params.has('project') || params.has('new') || isNewSessionPending()) return null;
-      const cached = localStorage.getItem(COMPILED_CACHE_KEY);
-      if (cached) return cached;
-    } catch { /* */ }
-    return null;
-  });
+  const [stableHTML, setStableHTML] = useState<string | null>(null);
   const stableHTMLRef = useRef<string | null>(stableHTML);
   const skipNextCompileRef = useRef(false);
   // ── LKG HTML ref — only updated when preview is valid; NEVER empty ──
