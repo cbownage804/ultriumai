@@ -1116,20 +1116,18 @@ export function useAIAppBuilder() {
     if (visualContext) systemParts.push(visualContext);
 
     // ── Image generation intent detection ──
-    // Instead of calling an edge function that may not exist (and risks freezing),
-    // instruct the AI to generate a styled SVG/CSS logo or use a quality placeholder.
-    // This avoids huge base64 data URLs that crash the browser.
+    // Instead of calling an edge function (risks freezing), instruct the AI to make a targeted edit.
     const imageGenIntent = (imageDataUrls?.length) ? null : detectImageGenerationIntent(input);
     if (imageGenIntent) {
       systemParts.push(
-        `[IMAGE REQUEST]\nThe user wants a new ${imageGenIntent.prompt}.\n` +
-        `Since we cannot generate raster images inline, create a beautiful, ` +
-        `modern SVG-based logo/icon component using clean vector paths, gradients, ` +
-        `and the project's color palette. Make it a reusable React component.\n` +
-        `Alternatively, use a high-quality icon from lucide-react styled to match the brand.\n` +
-        `Do NOT embed large base64 data URLs — they freeze the browser.`
+        `[IMAGE REQUEST — TARGETED EDIT ONLY]\nThe user wants a new ${imageGenIntent.prompt}.\n` +
+        `Create a beautiful SVG-based logo/icon using lucide-react icons + styled text, or clean inline SVG paths with gradients.\n` +
+        `CRITICAL: This is a SMALL, SURGICAL edit. ONLY change the logo/icon component or the section where it appears.\n` +
+        `Do NOT regenerate, restructure, or replace the entire site. Do NOT touch other pages, layouts, hero sections, or unrelated components.\n` +
+        `Use ===EDIT: path=== format to replace ONLY the logo portion of the relevant file(s).\n` +
+        `Do NOT embed base64 data URLs — they freeze the browser.`
       );
-      toast.info('AI will create a vector logo component for you.', { duration: 3000 });
+      toast.info('AI will create a vector logo for you.', { duration: 3000 });
     }
 
     // Use user-attached images only (no generation)
