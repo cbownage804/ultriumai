@@ -2247,7 +2247,7 @@ export function BuilderChatPanel({
       )}
 
       {/* Wave 10: Component extraction suggestion */}
-      {!isGenerating && componentExtractionCount && componentExtractionCount > 0 && componentExtractionPrompt && (
+      {!isGenerating && (componentExtractionCount ?? 0) > 0 && componentExtractionPrompt && (
         <div className="px-3 pt-2 shrink-0">
           <button
             onClick={() => onSend(componentExtractionPrompt)}
