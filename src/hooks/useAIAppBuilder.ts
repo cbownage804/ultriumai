@@ -14,6 +14,12 @@ import { detectEdgeFunctionIntent, buildEdgeFunctionDirective } from '@/componen
 import { parseAuthCommand } from '@/components/ai-builder/authFlowTemplates';
 // Wave 17 imports
 import { useAIConfidence, buildReasoningDirective } from './useAIConfidence';
+// Wave 18 imports
+import { useComponentReuseDetection } from './useComponentReuseDetection';
+import { useImportGraphContext } from './useImportGraphContext';
+import { useRuntimeErrorFix } from './useRuntimeErrorFix';
+import { useIncrementalApply } from './useIncrementalApply';
+import { usePostGenerationChangelog } from './usePostGenerationChangelog';
 
 // ── Helper: Build branding context from Firecrawl branding response ──
 function buildBrandingContext(branding: any): string {
