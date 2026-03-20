@@ -912,6 +912,7 @@ export function useAIAppBuilder() {
   const { deductCredits, totalRemaining } = useUserCredits();
   const { trimForContext } = useContextBudget({ maxChars: 120_000 });
   const schemaFromNL = useSchemaFromNL();
+  const aiConfidence = useAIConfidence();
 
   // Issue 27 fix: Use a ref to read messages inside sendMessage without including it in deps
   const messagesRef = useRef(messages);
