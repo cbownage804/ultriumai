@@ -8,6 +8,10 @@ import { useContextBudget } from './useContextBudget';
 import { detectSupabaseIntents, buildSupabaseContext, buildConversationMemory, buildErrorDiagnosisContext, analyzeConversationComplexity, generateProactiveSuggestions, compressConversationHistory, detectCommunicationStyle, extractUserPreferences, buildPreferencesContext, detectWorkflowIntent, buildEnhancedErrorContext, buildVisualIntelligenceContext, detectWebSearchIntent, buildWebSearchContext, detectURLCloneIntent, buildFileManifest, calculateContextBudget, type ContextBudgetInfo } from '@/components/ai-builder/SupabaseConversational';
 import { parseMigrationBlocks, stripMigrationBlocks, type MigrationBlock } from '@/components/ai-builder/MigrationApprovalCard';
 import { parseEdgeFunctionBlocks, stripEdgeFunctionBlocks, type EdgeFunctionBlock } from '@/components/ai-builder/EdgeFunctionCard';
+// Wave 16 imports
+import { useSchemaFromNL } from './useSchemaFromNL';
+import { detectEdgeFunctionIntent, buildEdgeFunctionDirective } from '@/components/ai-builder/edgeFunctionScaffolds';
+import { parseAuthCommand } from '@/components/ai-builder/authFlowTemplates';
 
 // ── Helper: Build branding context from Firecrawl branding response ──
 function buildBrandingContext(branding: any): string {
@@ -905,6 +909,7 @@ export function useAIAppBuilder() {
   const streaming = useStreamingPreview();
   const { deductCredits, totalRemaining } = useUserCredits();
   const { trimForContext } = useContextBudget({ maxChars: 120_000 });
+  const schemaFromNL = useSchemaFromNL();
 
   // Issue 27 fix: Use a ref to read messages inside sendMessage without including it in deps
   const messagesRef = useRef(messages);
@@ -1196,6 +1201,23 @@ export function useAIAppBuilder() {
           systemParts.push(`[DEPENDENCY MAP]\n${depImports.join('\n')}\n[/DEPENDENCY MAP]`);
         }
       } catch { /* ignore */ }
+    }
+
+    // ── Wave 16: NL→Schema directive injection ──
+    if (schemaFromNL.detectSchemaIntent(input) && supabaseConfig) {
+      systemParts.push(schemaFromNL.buildSchemaDirective(input));
+    }
+
+    // ── Wave 16: Edge function scaffold directive ──
+    const edgeFnIntent = detectEdgeFunctionIntent(input);
+    if (edgeFnIntent) {
+      systemParts.push(buildEdgeFunctionDirective(edgeFnIntent));
+    }
+
+    // ── Wave 16: Auth flow detection ──
+    const authTemplate = parseAuthCommand(input);
+    if (authTemplate) {
+      systemParts.push(`[AUTH SCAFFOLD DIRECTIVE]\nThe user requested auth scaffolding (template: ${authTemplate}). Generate complete auth files:\n- AuthProvider.tsx with useAuth hook\n- ProtectedRoute.tsx\n- LoginPage.tsx with ${authTemplate === 'magic-link' ? 'magic link' : authTemplate === 'oauth' ? 'OAuth' : 'email/password'} authentication\n- SignupPage.tsx\nUse Supabase Auth. Include proper loading states and error handling. Use semantic design tokens from the project's CSS.`);
     }
 
     // ── Scope constraint for iterative edits with focus-file detection ──
