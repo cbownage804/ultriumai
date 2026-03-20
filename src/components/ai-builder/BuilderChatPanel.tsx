@@ -1879,7 +1879,28 @@ export function BuilderChatPanel({
           </div>
         </div>
       )}
-      {/* No visible header — Lovable style */}
+      {/* Lovable-style header */}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-white/[0.06] shrink-0">
+        <button className="flex items-center gap-1.5 text-sm font-medium text-white/80 hover:text-white transition-colors">
+          <span>ultriumai</span>
+          <ChevronDown className="h-3 w-3 text-white/40" />
+        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={onShowHistory}
+            className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/[0.05] transition-colors"
+            title="History"
+          >
+            <Clock className="h-4 w-4" />
+          </button>
+          <button
+            className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/[0.05] transition-colors"
+            title="Toggle sidebar"
+          >
+            <PanelLeft className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
 
       {/* Chat search bar */}
       {showChatSearch && (
