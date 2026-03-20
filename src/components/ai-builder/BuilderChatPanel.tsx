@@ -6,6 +6,7 @@ import {
   LayoutGrid, Wrench, AlertTriangle, Copy, ChevronDown, Check, Pencil,
   Crosshair, Plus, Camera, Paperclip, AtSign, Rocket,
   Settings, Clock, BookOpen, GitBranch, Eye, Search as SearchIcon, Pin, Star,
+  ThumbsUp, ThumbsDown, MoreHorizontal, MessageSquare, Mic, PanelLeft,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -1616,30 +1617,67 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Bottom action bar — Copy + Restore (Lovable style) */}
-        {isCompleted && (
-          <div className="flex items-center gap-1.5 pt-1">
+        {/* Lovable-style message action buttons — always visible on completed messages */}
+        {!isStreaming && (
+          <div className="flex items-center gap-0.5 pt-1">
             <button
-              onClick={() => { navigator.clipboard.writeText(msg.content); toast.success('Copied'); }}
+              onClick={() => toast.success('Thanks for the feedback!')}
+              className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors"
+              title="Good response"
+            >
+              <ThumbsUp className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => toast('We\'ll improve this response', { icon: '📝' })}
+              className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors"
+              title="Bad response"
+            >
+              <ThumbsDown className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => { navigator.clipboard.writeText(displayText || msg.content); toast.success('Copied'); }}
               className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors"
               title="Copy"
             >
               <Copy className="h-3.5 w-3.5" />
             </button>
-            {onRevertToMessage && msg.filesSnapshot && (
-              <button
-                onClick={() => {
-                  if (confirm('Restore project files to this point? This cannot be undone.')) {
-                    onRevertToMessage(msg.id);
-                  }
-                }}
-                className="flex items-center gap-1.5 h-7 px-2.5 rounded-md text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors text-[11px]"
-                title="Restore files to this point"
-              >
-                <Clock className="h-3 w-3" />
-                Restore
-              </button>
-            )}
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors"
+                  title="More actions"
+                >
+                  <MoreHorizontal className="h-3.5 w-3.5" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent side="top" align="start" className="w-44 p-1 bg-[#1a1a22] border-white/[0.1] shadow-xl">
+                {onRevertToMessage && msg.filesSnapshot && (
+                  <button
+                    onClick={() => onRevertToMessage(msg.id)}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-[12px] text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    Revert to here
+                  </button>
+                )}
+                {onForkFromMessage && (
+                  <button
+                    onClick={() => onForkFromMessage(msg.id)}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-[12px] text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors"
+                  >
+                    <GitBranch className="h-3.5 w-3.5" />
+                    Fork from here
+                  </button>
+                )}
+                <button
+                  onClick={() => togglePin(msg.id)}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-[12px] text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors"
+                >
+                  <Pin className="h-3.5 w-3.5" />
+                  {msg.pinned ? 'Unpin' : 'Pin message'}
+                </button>
+              </PopoverContent>
+            </Popover>
           </div>
         )}
 
@@ -1841,7 +1879,28 @@ export function BuilderChatPanel({
           </div>
         </div>
       )}
-      {/* No visible header — Lovable style */}
+      {/* Lovable-style header */}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-white/[0.06] shrink-0">
+        <button className="flex items-center gap-1.5 text-sm font-medium text-white/80 hover:text-white transition-colors">
+          <span>ultriumai</span>
+          <ChevronDown className="h-3 w-3 text-white/40" />
+        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={onShowHistory}
+            className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/[0.05] transition-colors"
+            title="History"
+          >
+            <Clock className="h-4 w-4" />
+          </button>
+          <button
+            className="h-7 w-7 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/[0.05] transition-colors"
+            title="Toggle sidebar"
+          >
+            <PanelLeft className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
 
       {/* Chat search bar */}
       {showChatSearch && (
@@ -2265,7 +2324,7 @@ export function BuilderChatPanel({
         </div>
       )}
 
-      {/* Quick Actions + Context Indicator + Mode Toggle + Input */}
+      {/* Input area */}
       <div className="p-3 border-t border-white/[0.06] shrink-0 space-y-2" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))' }}>
         {/* Slash command suggestions */}
         {input.startsWith('/') && !isGenerating && (
@@ -2293,276 +2352,15 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Bottom suggestion chips removed — hero template cards handle this */}
 
-        {/* Lovable-style input area with integrated mode toggle */}
-        <div data-tour="chat-input" className={cn("rounded-xl border bg-white/[0.05] transition-all overflow-hidden shadow-lg focus-within:ring-2 focus-within:ring-offset-0", mode === 'build' ? "border-violet-500/30 shadow-violet-500/5 focus-within:ring-violet-500/40 focus-within:border-violet-500/50" : "border-teal-500/30 shadow-teal-500/5 focus-within:ring-teal-500/40 focus-within:border-teal-500/50")}>
-          <div className="flex items-end gap-2 px-3 py-2.5">
-            {/* Lovable-style Plus menu */}
-            <Popover open={plusMenuOpen} onOpenChange={setPlusMenuOpen}>
-              <PopoverTrigger asChild>
-                <button
-                  className="h-7 w-7 rounded-lg flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors shrink-0"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent side="top" align="start" className="w-56 p-1 bg-[#1a1a22] border-white/[0.1] shadow-xl">
-                {/* Navigation group */}
-                <button
-                  onClick={() => { setPlusMenuOpen(false); onShowSettings?.(); }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
-                >
-                  <Settings className="h-4 w-4 text-white/40" />
-                  <span className="flex-1 text-left">Project settings</span>
-                  <kbd className="text-[10px] text-white/25 font-mono">Ctrl+.</kbd>
-                </button>
-                <button
-                  onClick={() => { setPlusMenuOpen(false); onShowHistory?.(); }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
-                >
-                  <Clock className="h-4 w-4 text-white/40" />
-                  History
-                </button>
-                <button
-                  onClick={() => { setPlusMenuOpen(false); onShowKnowledge?.(); }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
-                >
-                  <BookOpen className="h-4 w-4 text-white/40" />
-                  Knowledge
-                </button>
-                <button
-                  onClick={() => { setPlusMenuOpen(false); onShowGitHub?.(); }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
-                >
-                  <GitBranch className="h-4 w-4 text-white/40" />
-                  GitHub
-                </button>
-                {onForkConversation && (
-                  <button
-                    onClick={() => { setPlusMenuOpen(false); onForkConversation(); }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
-                  >
-                    <GitBranch className="h-4 w-4 text-amber-400/60" />
-                    <span className="flex-1 text-left">Fork conversation</span>
-                    {conversationForks && conversationForks.length > 0 && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-medium">{conversationForks.length}</span>
-                    )}
-                  </button>
-                )}
-                {conversationForks && conversationForks.length > 0 && onSwitchFork && (
-                  <>
-                    <div className="border-t border-white/[0.06] my-1" />
-                    <div className="px-3 py-1 text-[9px] text-white/25 uppercase tracking-wider font-medium">Forks</div>
-                    {!activeForkId && (
-                      <button className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[12px] text-emerald-400 bg-emerald-500/[0.06]">
-                        <span>●</span> Main (active)
-                      </button>
-                    )}
-                    {activeForkId && (
-                      <button
-                        onClick={() => { setPlusMenuOpen(false); onSwitchFork('main'); }}
-                        className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[12px] text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors"
-                      >
-                        <span className="text-white/30">○</span> Main
-                      </button>
-                    )}
-                    {conversationForks.filter(f => f.id !== 'main').map(fork => (
-                      <button
-                        key={fork.id}
-                        onClick={() => { setPlusMenuOpen(false); onSwitchFork(fork.id); }}
-                        className={cn(
-                          "w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[12px] transition-colors",
-                          fork.id === activeForkId
-                            ? "text-amber-400 bg-amber-500/[0.06]"
-                            : "text-white/60 hover:text-white hover:bg-white/[0.06]"
-                        )}
-                      >
-                        <span className={fork.id === activeForkId ? "text-amber-400" : "text-white/30"}>
-                          {fork.id === activeForkId ? '●' : '○'}
-                        </span>
-                        {fork.label}
-                      </button>
-                    ))}
-                  </>
-                )}
-                {/* Separator */}
-                <div className="border-t border-white/[0.06] my-1" />
-                {/* Action group */}
-                <button
-                  onClick={async () => {
-                    setPlusMenuOpen(false);
-                    try {
-                      const iframe = document.querySelector('iframe[title="Preview"]') as HTMLIFrameElement | null;
-                      if (!iframe) { toast.error('No preview to capture'); return; }
-                      const html2canvas = (await import('html2canvas')).default;
-                      const canvas = await html2canvas(iframe.contentDocument?.body || iframe, {
-                        width: iframe.clientWidth, height: iframe.clientHeight,
-                        scale: 0.5, useCORS: true, allowTaint: true, backgroundColor: '#0a0a0a', logging: false,
-                      });
-                      const dataUrl = canvas.toDataURL('image/png', 0.8);
-                      setImagePreviews(prev => [...prev, dataUrl]);
-                      toast.success('Screenshot captured');
-                    } catch { toast.error('Could not capture screenshot'); }
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
-                >
-                  <Camera className="h-4 w-4 text-white/40" />
-                  Take a screenshot
-                </button>
-                <button
-                  onClick={() => { setPlusMenuOpen(false); fileInputRef.current?.click(); }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
-                >
-                  <AtSign className="h-4 w-4 text-white/40" />
-                  Add reference
-                </button>
-                <button
-                  onClick={() => { setPlusMenuOpen(false); fileInputRef.current?.click(); }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
-                >
-                  <Paperclip className="h-4 w-4 text-white/40" />
-                  Attach
-                </button>
-                {/* Prompt Templates */}
-                <div className="border-t border-white/[0.06] mt-1 pt-1">
-                  <div className="px-3 py-1 text-[9px] text-white/25 uppercase tracking-wider font-medium">Templates</div>
-                  {[
-                    { icon: '🔐', label: 'Add authentication', prompt: 'Add user authentication with login, signup, and protected routes' },
-                    { icon: '📱', label: 'Make responsive', prompt: 'Make the entire app fully responsive for mobile, tablet, and desktop' },
-                    { icon: '🌙', label: 'Add dark mode', prompt: 'Add a dark/light mode toggle with system preference detection' },
-                    { icon: '📊', label: 'Add dashboard', prompt: 'Create an analytics dashboard with charts and KPI cards' },
-                    { icon: '💳', label: 'Add payments', prompt: 'Integrate Stripe payments with a checkout flow' },
-                    { icon: '🔍', label: 'Add search', prompt: 'Add a global search feature with filtering and results highlighting' },
-                  ].map(t => (
-                    <button
-                      key={t.label}
-                      onClick={() => { setPlusMenuOpen(false); setInput(t.prompt); setTimeout(() => textareaRef.current?.focus(), 50); }}
-                      className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[12px] text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors"
-                    >
-                      <span>{t.icon}</span>
-                      {t.label}
-                    </button>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*,.pdf,.txt,.md,.json,.csv,.html,.css,.js,.ts,.tsx,.jsx"
-              multiple
-              onChange={handleImageUpload}
-              className="hidden"
-            />
-
-            {/* Visual Edit toggle — Lovable style */}
-            {onToggleVisualEdit && fileCount > 0 && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={onToggleVisualEdit}
-                    className={cn(
-                      "h-7 px-2 rounded-lg flex items-center gap-1.5 text-[11px] transition-all shrink-0 border",
-                      isVisualEditActive
-                        ? "text-cyan-400 bg-cyan-500/10 border-cyan-500/30"
-                        : "text-white/20 hover:text-white/50 hover:bg-white/5 border-transparent"
-                    )}
-                  >
-                    <Crosshair className="h-3 w-3" />
-                    <span className="hidden sm:inline">Edit</span>
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">Visual Edit Mode</TooltipContent>
-              </Tooltip>
-            )}
-
-            {/* Step 2: Editing indicator */}
-            {editingMessageId && (
-              <div className="flex items-center gap-1.5 text-[10px] text-amber-400/70 bg-amber-500/10 px-2 py-1 rounded-md">
-                <Pencil className="h-2.5 w-2.5" />
-                <span>Editing message — send will replace subsequent messages</span>
-                <button onClick={() => { setEditingMessageId(null); setInput(''); }} className="text-white/30 hover:text-white/60 ml-1">
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            )}
-
-            {/* Slash command dropdown */}
-            {input.startsWith('/') && !isGenerating && (
-              <div className="absolute bottom-full left-0 right-0 mb-1 mx-2 bg-[#1a1a22] border border-white/[0.1] rounded-xl shadow-2xl overflow-hidden z-50 max-h-[280px] overflow-y-auto">
-                <div className="px-3 py-2 border-b border-white/[0.06]">
-                  <span className="text-[10px] text-white/30 uppercase tracking-wider font-medium">Prompt Templates</span>
-                </div>
-                {(() => {
-                  const query = input.slice(1);
-                  const results = searchTemplates(query);
-                  if (results.length === 0) return <div className="px-3 py-4 text-[12px] text-white/30 text-center">No matching templates</div>;
-                  let lastCat = '';
-                  return results.map(t => {
-                    const showCat = t.category !== lastCat;
-                    lastCat = t.category;
-                    return (
-                      <div key={t.id}>
-                        {showCat && (
-                          <div className="px-3 py-1.5 text-[9px] text-white/25 uppercase tracking-wider font-medium bg-white/[0.02]">
-                            {TEMPLATE_CATEGORIES.find(c => c.id === t.category)?.icon} {t.category}
-                          </div>
-                        )}
-                        <button
-                          onClick={() => { setInput(t.prompt); setTimeout(() => textareaRef.current?.focus(), 50); }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors text-left"
-                        >
-                          <span>{t.icon}</span>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium">{t.label}</div>
-                            <div className="text-[10px] text-white/30 truncate">{t.prompt.slice(0, 60)}...</div>
-                          </div>
-                        </button>
-                      </div>
-                    );
-                  });
-                })()}
-              </div>
-            )}
-            {/* Wave 10: @-file mention autocomplete */}
-            {showFileMentions && fileMentionSuggestions.length > 0 && (
-              <div className="absolute bottom-full left-0 right-0 mb-1 mx-2 bg-[#1a1a22] border border-white/[0.1] rounded-xl shadow-2xl overflow-hidden z-50 max-h-[200px] overflow-y-auto">
-                <div className="px-3 py-1.5 border-b border-white/[0.06]">
-                  <span className="text-[10px] text-white/30 uppercase tracking-wider font-medium">Mention a file</span>
-                </div>
-                {fileMentionSuggestions.map(f => (
-                  <button
-                    key={f.path}
-                    onClick={() => handleFileMentionSelect(f.path)}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors text-left"
-                  >
-                    <FileCode className="h-3.5 w-3.5 text-white/30 shrink-0" />
-                    <span className="font-mono truncate">{f.shortName}</span>
-                    <span className="text-[10px] text-white/20 ml-auto truncate">{f.path}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-            {/* Wave 10: Mentioned file chips */}
-            {mentionedFilePaths.length > 0 && (
-              <div className="flex flex-wrap gap-1 mb-1.5 shrink-0">
-                {mentionedFilePaths.map(p => (
-                  <span key={p} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-cyan-500/10 border border-cyan-500/20 text-[10px] text-cyan-300 font-mono">
-                    @{p.split('/').pop()}
-                    <button onClick={() => setMentionedFilePaths(prev => prev.filter(x => x !== p))} className="text-cyan-400/50 hover:text-cyan-300">
-                      <X className="h-2.5 w-2.5" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
+        {/* Lovable-style input area */}
+        <div data-tour="chat-input" className="rounded-2xl border border-white/[0.12] bg-white/[0.04] transition-all overflow-hidden focus-within:border-white/[0.2]">
+          <div className="px-3 py-2.5">
             <textarea
               ref={textareaRef}
               value={input}
               onChange={(e) => {
                 setInput(e.target.value);
-                // Wave 10: Detect @-mention trigger
                 const cursorPos = e.target.selectionStart || 0;
                 const beforeCursor = e.target.value.slice(0, cursorPos);
                 const atIdx = beforeCursor.lastIndexOf('@');
@@ -2581,102 +2379,144 @@ export function BuilderChatPanel({
               }}
               onKeyDown={handleKeyDown}
               onPaste={handlePaste}
-              placeholder="Ask UltriumAI... (type / for templates, @ for files)"
-              rows={3}
-              className="flex-1 bg-transparent text-sm text-white/90 placeholder:text-white/35 resize-none outline-none focus:outline-none focus:ring-0 border-none min-h-[72px] max-h-[200px] py-0.5"
+              placeholder="Tell UltriumAI what to do..."
+              rows={2}
+              className="w-full bg-transparent text-sm text-white/90 placeholder:text-white/30 resize-none outline-none focus:outline-none focus:ring-0 border-none min-h-[48px] max-h-[200px]"
             />
+          </div>
+
+          {/* Mentioned file chips */}
+          {mentionedFilePaths.length > 0 && (
+            <div className="flex flex-wrap gap-1 px-3 pb-1.5">
+              {mentionedFilePaths.map(p => (
+                <span key={p} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-cyan-500/10 border border-cyan-500/20 text-[10px] text-cyan-300 font-mono">
+                  @{p.split('/').pop()}
+                  <button onClick={() => setMentionedFilePaths(prev => prev.filter(x => x !== p))} className="text-cyan-400/50 hover:text-cyan-300">
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* @-file mention autocomplete */}
+          {showFileMentions && fileMentionSuggestions.length > 0 && (
+            <div className="mx-2 mb-1 bg-[#1a1a22] border border-white/[0.1] rounded-xl shadow-2xl overflow-hidden max-h-[200px] overflow-y-auto">
+              <div className="px-3 py-1.5 border-b border-white/[0.06]">
+                <span className="text-[10px] text-white/30 uppercase tracking-wider font-medium">Mention a file</span>
+              </div>
+              {fileMentionSuggestions.map(f => (
+                <button key={f.path} onClick={() => handleFileMentionSelect(f.path)} className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors text-left">
+                  <FileCode className="h-3.5 w-3.5 text-white/30 shrink-0" />
+                  <span className="font-mono truncate">{f.shortName}</span>
+                  <span className="text-[10px] text-white/20 ml-auto truncate">{f.path}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Bottom toolbar — Lovable style: + Visual edits 💬 🎤 ⬆️ */}
+          <div className="flex items-center gap-1 px-2 py-1.5 border-t border-white/[0.06]">
+            <Popover open={plusMenuOpen} onOpenChange={setPlusMenuOpen}>
+              <PopoverTrigger asChild>
+                <button className="h-7 w-7 rounded-lg flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/[0.05] transition-colors shrink-0">
+                  <Plus className="h-4 w-4" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent side="top" align="start" className="w-56 p-1 bg-[#1a1a22] border-white/[0.1] shadow-xl">
+                <button onClick={() => { setPlusMenuOpen(false); onShowSettings?.(); }} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors">
+                  <Settings className="h-4 w-4 text-white/40" /> Project settings
+                </button>
+                <button onClick={() => { setPlusMenuOpen(false); onShowHistory?.(); }} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors">
+                  <Clock className="h-4 w-4 text-white/40" /> History
+                </button>
+                <button onClick={() => { setPlusMenuOpen(false); onShowKnowledge?.(); }} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors">
+                  <BookOpen className="h-4 w-4 text-white/40" /> Knowledge
+                </button>
+                <button onClick={() => { setPlusMenuOpen(false); onShowGitHub?.(); }} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors">
+                  <GitBranch className="h-4 w-4 text-white/40" /> GitHub
+                </button>
+                <div className="border-t border-white/[0.06] my-1" />
+                <button onClick={async () => { setPlusMenuOpen(false); try { const iframe = document.querySelector('iframe[title="Preview"]') as HTMLIFrameElement | null; if (!iframe) { toast.error('No preview'); return; } const html2canvas = (await import('html2canvas')).default; const canvas = await html2canvas(iframe.contentDocument?.body || iframe, { width: iframe.clientWidth, height: iframe.clientHeight, scale: 0.5, useCORS: true, allowTaint: true, backgroundColor: '#0a0a0a', logging: false }); setImagePreviews(prev => [...prev, canvas.toDataURL('image/png', 0.8)]); toast.success('Screenshot captured'); } catch { toast.error('Could not capture screenshot'); } }} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors">
+                  <Camera className="h-4 w-4 text-white/40" /> Screenshot
+                </button>
+                <button onClick={() => { setPlusMenuOpen(false); fileInputRef.current?.click(); }} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors">
+                  <Paperclip className="h-4 w-4 text-white/40" /> Attach
+                </button>
+              </PopoverContent>
+            </Popover>
+            <input ref={fileInputRef} type="file" accept="image/*,.pdf,.txt,.md,.json,.csv,.html,.css,.js,.ts,.tsx,.jsx" multiple onChange={handleImageUpload} className="hidden" />
+
+            {/* Visual Edits button */}
+            {onToggleVisualEdit && fileCount > 0 && (
+              <button onClick={onToggleVisualEdit} className={cn("flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-[12px] font-medium transition-all shrink-0", isVisualEditActive ? "text-cyan-400 bg-cyan-500/10" : "text-white/40 hover:text-white/60 hover:bg-white/[0.05]")}>
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>Visual edits</span>
+              </button>
+            )}
+
+            {editingMessageId && (
+              <div className="flex items-center gap-1.5 text-[10px] text-amber-400/70 bg-amber-500/10 px-2 py-1 rounded-md">
+                <Pencil className="h-2.5 w-2.5" /><span>Editing</span>
+                <button onClick={() => { setEditingMessageId(null); setInput(''); }} className="text-white/30 hover:text-white/60 ml-1"><X className="h-3 w-3" /></button>
+              </div>
+            )}
+
+            <div className="flex-1" />
+
+            {/* Chat/Build toggle */}
+            <button onClick={() => onModeChange(mode === 'discuss' ? 'build' : 'discuss')} className="h-7 w-7 rounded-lg flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/[0.05] transition-colors shrink-0" title={mode === 'discuss' ? 'Build mode' : 'Chat mode'}>
+              <MessageSquare className="h-4 w-4" />
+            </button>
+
+            {/* Mic */}
+            <button className="h-7 w-7 rounded-lg flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/[0.05] transition-colors shrink-0" onClick={() => toast('Voice input coming soon', { icon: '🎤' })}>
+              <Mic className="h-4 w-4" />
+            </button>
+
+            {/* Send / Stop */}
             {isGenerating ? (
-              <button
-                onClick={onStop}
-                className="h-7 w-7 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center hover:bg-red-500/30 transition-colors shrink-0"
-              >
+              <button onClick={onStop} className="h-8 w-8 rounded-full bg-white/10 text-white/60 flex items-center justify-center hover:bg-white/15 transition-colors shrink-0">
                 <Square className="h-3 w-3" />
               </button>
             ) : (
-              <button
-                onClick={handleSend}
-                disabled={!input.trim()}
-                className={cn(
-                  "h-8 w-8 rounded-lg flex items-center justify-center transition-all shrink-0",
-                  input.trim()
-                    ? "bg-white text-black hover:bg-white/90"
-                    : "bg-white/5 text-white/20"
-                )}
-              >
+              <button onClick={handleSend} disabled={!input.trim()} className={cn("h-8 w-8 rounded-full flex items-center justify-center transition-all shrink-0", input.trim() ? "bg-white text-black hover:bg-white/90" : "bg-white/[0.08] text-white/20")}>
                 <Send className="h-3.5 w-3.5" />
               </button>
             )}
           </div>
-          {/* Chat / Build mode toggle + Model picker */}
-          <div className="flex items-center gap-1.5 pt-1.5">
-            <button
-              onClick={() => onModeChange('discuss')}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all",
-                mode === 'discuss'
-                  ? "bg-teal-500/20 text-teal-400 ring-1 ring-teal-500/30"
-                  : "text-white/40 hover:text-white/60 hover:bg-white/5"
-              )}
-            >
-              Chat
-              <span className={cn(
-                "text-[10px] px-1.5 py-0.5 rounded-full font-semibold",
-                mode === 'discuss' ? "bg-teal-500/20 text-teal-300" : "bg-white/5 text-white/30"
-              )}>1cr</span>
-            </button>
-            <button
-              onClick={handleBuildModeClick}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all",
-                mode === 'build'
-                  ? "bg-violet-500/20 text-violet-400 ring-1 ring-violet-500/30"
-                  : "text-white/40 hover:text-white/60 hover:bg-white/5"
-              )}
-              title={mode === 'build' && input.trim() ? 'Build now' : 'Switch to build mode'}
-            >
-              Build
-              <span className={cn(
-                "text-[10px] px-1.5 py-0.5 rounded-full font-semibold",
-                mode === 'build' ? "bg-violet-500/20 text-violet-300" : "bg-white/5 text-white/30"
-              )}>3cr</span>
-            </button>
-
-            {/* Inline model picker */}
-            {selectedModel && onModelChange && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="ml-auto flex items-center gap-1 px-2 py-1 rounded-full text-[10px] text-white/30 hover:text-white/50 hover:bg-white/[0.04] transition-all border border-transparent hover:border-white/[0.08]">
-                    <span>{AI_MODELS.find(m => m.id === selectedModel)?.icon || '🤖'}</span>
-                    <span className="font-medium">{AI_MODELS.find(m => m.id === selectedModel)?.label || 'Model'}</span>
-                    <ChevronDown className="h-2.5 w-2.5" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent side="top" align="end" className="w-52 p-1 bg-[#1a1a22] border-white/[0.1]">
-                  <div className="px-2 py-1.5 text-[9px] text-white/25 uppercase tracking-wider font-medium">AI Model</div>
-                  {AI_MODELS.map(model => (
-                    <button
-                      key={model.id}
-                      onClick={() => onModelChange(model.id)}
-                      className={cn(
-                        "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[12px] transition-colors",
-                        selectedModel === model.id
-                          ? "bg-white/[0.08] text-white/90"
-                          : "text-white/60 hover:text-white hover:bg-white/[0.06]"
-                      )}
-                    >
-                      <span className="text-sm">{model.icon}</span>
-                      <div className="flex-1 text-left">
-                        <div className="font-medium">{model.label}</div>
-                        <div className="text-[10px] text-white/30">{model.desc}</div>
-                      </div>
-                      {selectedModel === model.id && <Check className="h-3 w-3 text-cyan-400" />}
-                    </button>
-                  ))}
-                </PopoverContent>
-              </Popover>
-            )}
-          </div>
         </div>
+
+        {/* Model picker + mode badge */}
+        {selectedModel && onModelChange && (
+          <div className="flex items-center justify-between">
+            <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium", mode === 'discuss' ? "bg-teal-500/15 text-teal-400" : "bg-violet-500/15 text-violet-400")}>
+              {mode === 'discuss' ? 'Chat · 1cr' : 'Build · 3cr'}
+            </span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="flex items-center gap-1 px-2 py-1 rounded-full text-[10px] text-white/30 hover:text-white/50 hover:bg-white/[0.04] transition-all border border-transparent hover:border-white/[0.08]">
+                  <span>{AI_MODELS.find(m => m.id === selectedModel)?.icon || '🤖'}</span>
+                  <span className="font-medium">{AI_MODELS.find(m => m.id === selectedModel)?.label || 'Model'}</span>
+                  <ChevronDown className="h-2.5 w-2.5" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent side="top" align="end" className="w-52 p-1 bg-[#1a1a22] border-white/[0.1]">
+                <div className="px-2 py-1.5 text-[9px] text-white/25 uppercase tracking-wider font-medium">AI Model</div>
+                {AI_MODELS.map(model => (
+                  <button key={model.id} onClick={() => onModelChange(model.id)} className={cn("w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[12px] transition-colors", selectedModel === model.id ? "bg-white/[0.08] text-white/90" : "text-white/60 hover:text-white hover:bg-white/[0.06]")}>
+                    <span className="text-sm">{model.icon}</span>
+                    <div className="flex-1 text-left">
+                      <div className="font-medium">{model.label}</div>
+                      <div className="text-[10px] text-white/30">{model.desc}</div>
+                    </div>
+                    {selectedModel === model.id && <Check className="h-3 w-3 text-cyan-400" />}
+                  </button>
+                ))}
+              </PopoverContent>
+            </Popover>
+          </div>
+        )}
       </div>
     </div>
   );
