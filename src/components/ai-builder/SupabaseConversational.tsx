@@ -228,9 +228,15 @@ export function buildErrorDiagnosisContext(
   sections.push(`Error: ${error.message}`);
   if (error.source) sections.push(`File: ${error.source}${error.line ? `:${error.line}` : ''}`);
 
-  // Classify error type for targeted fix
   const msg = error.message.toLowerCase();
-  if (msg.includes('undefined') || msg.includes('null')) {
+  const isReact299 = msg.includes('minified react error #299') || msg.includes('invariant=299');
+  const mountFiles = ['index.html', 'src/main.tsx', 'src/main.ts', 'src/App.tsx', 'src/App.ts'];
+
+  // Classify error type for targeted fix
+  if (isReact299) {
+    sections.push('Type: React mount/root error — React #299 means createRoot could not find the target DOM element. Check index.html for the root container and ensure main.tsx mounts to that exact id.');
+    sections.push('Decoded error: createRoot(...): Target container is not a DOM element.');
+  } else if (msg.includes('undefined') || msg.includes('null')) {
     sections.push('Type: Null/undefined reference — check variable initialization, optional chaining, and data loading states.');
   } else if (msg.includes('network') || msg.includes('fetch') || msg.includes('cors')) {
     sections.push('Type: Network/CORS error — check API URLs, CORS headers, and auth tokens.');
@@ -242,12 +248,12 @@ export function buildErrorDiagnosisContext(
     sections.push('Type: Type error — check data shapes, API response formats, and type assertions.');
   }
 
-  // Auto-inject the erroring file + related files
   if (projectFiles && projectFiles.length > 0) {
-    // Find the primary error file
-    const errorFile = error.source
-      ? projectFiles.find(f => error.source?.includes(f.path))
-      : null;
+    const errorFile = isReact299
+      ? null
+      : error.source
+        ? projectFiles.find(f => error.source?.includes(f.path))
+        : null;
 
     if (errorFile) {
       sections.push(`\n[PRIMARY ERROR FILE: ${errorFile.path}]`);
@@ -256,31 +262,39 @@ export function buildErrorDiagnosisContext(
       sections.push('```');
     }
 
-    // Find related files (files that import/reference the error file, or are imported by it)
+    if (isReact299) {
+      sections.push('\n[ROOT MOUNT FILES TO CHECK FIRST]');
+      for (const path of mountFiles) {
+        const file = projectFiles.find(f => f.path === path);
+        if (!file) continue;
+        sections.push(`--- ${file.path} ---`);
+        sections.push('```');
+        sections.push(file.content.length > 3000 ? file.content.slice(0, 3000) + '\n// ... (truncated)' : file.content);
+        sections.push('```');
+      }
+    }
+
     const errorFileName = errorFile?.path || error.source || '';
     const baseName = errorFileName.replace(/\.[^.]+$/, '').split('/').pop() || '';
-    if (baseName) {
+    if (!isReact299 && baseName) {
       const relatedFiles = projectFiles.filter(f => {
         if (f.path === errorFile?.path) return false;
-        // Files that reference the error file
         return f.content.includes(baseName) || 
                (errorFile && errorFile.content.includes(f.path.replace(/\.[^.]+$/, '').split('/').pop() || '___'));
-      }).slice(0, 3); // Max 3 related files to avoid token overflow
+      }).slice(0, 3);
 
       if (relatedFiles.length > 0) {
         sections.push('\n[RELATED FILES]');
         for (const rf of relatedFiles) {
           sections.push(`--- ${rf.path} ---`);
           sections.push('```');
-          // Truncate large files to avoid token explosion
           sections.push(rf.content.length > 3000 ? rf.content.slice(0, 3000) + '\n// ... (truncated)' : rf.content);
           sections.push('```');
         }
       }
     }
 
-    // If no specific file found, include all files (they're usually small in the builder)
-    if (!errorFile && projectFiles.length <= 6) {
+    if (!errorFile && !isReact299 && projectFiles.length <= 6) {
       sections.push('\n[ALL PROJECT FILES]');
       for (const f of projectFiles) {
         sections.push(`--- ${f.path} ---`);
@@ -291,18 +305,20 @@ export function buildErrorDiagnosisContext(
     }
   }
 
-  // Include recent console errors for additional context
   if (consoleErrors && consoleErrors.length > 0) {
     sections.push('\n[RECENT CONSOLE ERRORS]');
     sections.push(consoleErrors.slice(-10).join('\n'));
   }
 
-  // Include snippet of last AI response so it knows what it just generated
   if (lastAIResponse) {
     const trimmed = lastAIResponse.slice(0, 1500);
     sections.push('\n[LAST AI GENERATION (what you just produced)]');
     sections.push(trimmed);
     if (lastAIResponse.length > 1500) sections.push('// ... (truncated)');
+  }
+
+  if (isReact299) {
+    sections.push('\nROOT-CHECK RULE: Do not change styling first. Verify the preview still contains the root mount element and that ReactDOM.createRoot(document.getElementById(...)) uses the exact same id.');
   }
 
   sections.push('\nFIX RULES: You MUST output a 🔍 Diagnosis block (Symptom, Root cause, Fix approach) BEFORE any code. Diagnose the root cause, not just the symptom. Output only the changed files.');
