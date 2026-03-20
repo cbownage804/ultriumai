@@ -12,6 +12,8 @@ import { parseEdgeFunctionBlocks, stripEdgeFunctionBlocks, type EdgeFunctionBloc
 import { useSchemaFromNL } from './useSchemaFromNL';
 import { detectEdgeFunctionIntent, buildEdgeFunctionDirective } from '@/components/ai-builder/edgeFunctionScaffolds';
 import { parseAuthCommand } from '@/components/ai-builder/authFlowTemplates';
+// Wave 17 imports
+import { useAIConfidence, buildReasoningDirective } from './useAIConfidence';
 
 // ── Helper: Build branding context from Firecrawl branding response ──
 function buildBrandingContext(branding: any): string {
@@ -910,6 +912,7 @@ export function useAIAppBuilder() {
   const { deductCredits, totalRemaining } = useUserCredits();
   const { trimForContext } = useContextBudget({ maxChars: 120_000 });
   const schemaFromNL = useSchemaFromNL();
+  const aiConfidence = useAIConfidence();
 
   // Issue 27 fix: Use a ref to read messages inside sendMessage without including it in deps
   const messagesRef = useRef(messages);
@@ -1218,6 +1221,12 @@ export function useAIAppBuilder() {
     const authTemplate = parseAuthCommand(input);
     if (authTemplate) {
       systemParts.push(`[AUTH SCAFFOLD DIRECTIVE]\nThe user requested auth scaffolding (template: ${authTemplate}). Generate complete auth files:\n- AuthProvider.tsx with useAuth hook\n- ProtectedRoute.tsx\n- LoginPage.tsx with ${authTemplate === 'magic-link' ? 'magic link' : authTemplate === 'oauth' ? 'OAuth' : 'email/password'} authentication\n- SignupPage.tsx\nUse Supabase Auth. Include proper loading states and error handling. Use semantic design tokens from the project's CSS.`);
+    }
+
+    // ── Wave 17: Chain-of-thought reasoning for complex requests ──
+    const reasoningDirective = buildReasoningDirective(input, currentFiles);
+    if (reasoningDirective) {
+      systemParts.push(reasoningDirective);
     }
 
     // ── Scope constraint for iterative edits with focus-file detection ──
