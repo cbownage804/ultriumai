@@ -25,7 +25,14 @@ const OVERLAY_SCRIPT = `
     document.getElementById('__re-dismiss').onclick=function(){overlay.style.display='none'};
     document.getElementById('__re-fix').onclick=function(){
       var msgs=errorQueue.map(function(e){return e.msg}).join('; ');
-      window.parent.postMessage({type:'__FIX_WITH_AI__',message:msgs},'*');
+      var first=errorQueue[0]||{};
+      window.parent.postMessage({
+        type:'__FIX_WITH_AI__',
+        message:msgs,
+        source:first.source||'',
+        line:first.line||0,
+        errors:errorQueue
+      },'*');
       overlay.style.display='none';
     };
     return overlay;

@@ -26,6 +26,29 @@ interface FixAttempt {
 
 const MAX_AUTO_FIX_ATTEMPTS = 2;
 const COOLDOWN_MS = 10_000;
+const ROOT_MOUNT_FILES = ['index.html', 'src/main.tsx', 'src/main.ts', 'src/App.tsx', 'src/App.ts'];
+
+function decodeKnownRuntimeError(error: RuntimeError): {
+  decodedMessage?: string;
+  rootCause?: string;
+  targetFile?: string;
+  fixStrategy?: string;
+  relatedFiles?: string[];
+} {
+  const msg = error.message.toLowerCase();
+
+  if (msg.includes('minified react error #299') || msg.includes('invariant=299')) {
+    return {
+      decodedMessage: 'React error #299: createRoot target container is not a DOM element. The preview is missing the expected mount element or main.tsx is targeting the wrong container id.',
+      rootCause: 'missing-root-container',
+      targetFile: 'src/main.tsx',
+      fixStrategy: 'Ensure index.html contains a mount element like <div id="root"></div>, ensure main.tsx/createRoot targets that exact id, and avoid replacing/removing the root container inside rendered HTML.',
+      relatedFiles: ROOT_MOUNT_FILES,
+    };
+  }
+
+  return {};
+}
 
 /** Classify runtime error and determine if it's auto-fixable */
 function classifyRuntimeError(error: RuntimeError): {
@@ -33,9 +56,23 @@ function classifyRuntimeError(error: RuntimeError): {
   rootCause: string;
   targetFile?: string;
   fixStrategy: string;
+  relatedFiles?: string[];
+  decodedMessage?: string;
 } {
   const msg = error.message.toLowerCase();
   const src = error.source || '';
+  const decoded = decodeKnownRuntimeError(error);
+
+  if (decoded.rootCause) {
+    return {
+      fixable: true,
+      rootCause: decoded.rootCause,
+      targetFile: decoded.targetFile,
+      fixStrategy: decoded.fixStrategy || 'Fix the decoded runtime error',
+      relatedFiles: decoded.relatedFiles,
+      decodedMessage: decoded.decodedMessage,
+    };
+  }
 
   // Not fixable: network errors, CORS, third-party scripts
   if (msg.includes('cors') || msg.includes('network') || msg.includes('failed to fetch')) {
@@ -99,9 +136,24 @@ function classifyRuntimeError(error: RuntimeError): {
 }
 
 function extractFileFromSource(source: string): string | undefined {
-  // Match common patterns: /src/components/Foo.tsx:42:5
   const match = source.match(/(src\/[\w/.-]+\.\w+)/);
   return match?.[1];
+}
+
+function appendFileContext(parts: string[], files: ProjectFile[], filePath: string, errorLine?: number) {
+  const targetFile = files.find(f => f.path === filePath || f.path.endsWith(filePath));
+  if (!targetFile) return;
+
+  const lines = targetFile.content.split('\n');
+  const start = errorLine ? Math.max(0, errorLine - 10) : 0;
+  const end = errorLine ? Math.min(lines.length, errorLine + 10) : Math.min(lines.length, 80);
+  const snippet = lines.slice(start, end).map((l, i) => {
+    const lineNum = start + i + 1;
+    const marker = errorLine && lineNum === errorLine ? ' >>> ' : '     ';
+    return `${marker}${lineNum}: ${l}`;
+  }).join('\n');
+
+  parts.push(`\nRelevant code from ${targetFile.path}:\n${snippet}`);
 }
 
 /** Build a targeted fix prompt from a runtime error */
@@ -109,29 +161,24 @@ function buildFixPrompt(error: RuntimeError, classification: ReturnType<typeof c
   const parts: string[] = ['[AUTO-FIX: Runtime error detected in preview]'];
 
   parts.push(`Error: ${error.message}`);
+  if (classification.decodedMessage) parts.push(`Decoded: ${classification.decodedMessage}`);
   if (error.source) parts.push(`Source: ${error.source}${error.line ? `:${error.line}` : ''}`);
   if (error.stack) parts.push(`Stack (truncated):\n${error.stack.split('\n').slice(0, 5).join('\n')}`);
 
   parts.push(`\nRoot cause: ${classification.rootCause}`);
   parts.push(`Strategy: ${classification.fixStrategy}`);
 
-  // Include the target file content for context
   if (classification.targetFile) {
-    const targetFile = files.find(f => f.path === classification.targetFile || f.path.endsWith(classification.targetFile!));
-    if (targetFile) {
-      const lines = targetFile.content.split('\n');
-      const errorLine = error.line || 0;
-      const start = Math.max(0, errorLine - 10);
-      const end = Math.min(lines.length, errorLine + 10);
-      const snippet = lines.slice(start, end).map((l, i) => {
-        const lineNum = start + i + 1;
-        const marker = lineNum === errorLine ? ' >>> ' : '     ';
-        return `${marker}${lineNum}: ${l}`;
-      }).join('\n');
-      parts.push(`\nRelevant code from ${targetFile.path}:\n${snippet}`);
+    appendFileContext(parts, files, classification.targetFile, error.line);
+  }
+
+  for (const relatedFile of classification.relatedFiles || []) {
+    if (relatedFile !== classification.targetFile) {
+      appendFileContext(parts, files, relatedFile);
     }
   }
 
+  parts.push('\nCheck mount integrity first: verify index.html still has the root element and main.tsx mounts into that exact id.');
   parts.push(`\nFix ONLY the error above. Use ===EDIT: path=== for minimal changes. Do not restructure or restyle anything.`);
 
   return parts.join('\n');
