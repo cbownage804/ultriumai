@@ -1617,30 +1617,67 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Bottom action bar — Copy + Restore (Lovable style) */}
-        {isCompleted && (
-          <div className="flex items-center gap-1.5 pt-1">
+        {/* Lovable-style message action buttons — always visible on completed messages */}
+        {!isStreaming && (
+          <div className="flex items-center gap-0.5 pt-1">
             <button
-              onClick={() => { navigator.clipboard.writeText(msg.content); toast.success('Copied'); }}
+              onClick={() => toast.success('Thanks for the feedback!')}
+              className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors"
+              title="Good response"
+            >
+              <ThumbsUp className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => toast('We\'ll improve this response', { icon: '📝' })}
+              className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors"
+              title="Bad response"
+            >
+              <ThumbsDown className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => { navigator.clipboard.writeText(displayText || msg.content); toast.success('Copied'); }}
               className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors"
               title="Copy"
             >
               <Copy className="h-3.5 w-3.5" />
             </button>
-            {onRevertToMessage && msg.filesSnapshot && (
-              <button
-                onClick={() => {
-                  if (confirm('Restore project files to this point? This cannot be undone.')) {
-                    onRevertToMessage(msg.id);
-                  }
-                }}
-                className="flex items-center gap-1.5 h-7 px-2.5 rounded-md text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors text-[11px]"
-                title="Restore files to this point"
-              >
-                <Clock className="h-3 w-3" />
-                Restore
-              </button>
-            )}
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors"
+                  title="More actions"
+                >
+                  <MoreHorizontal className="h-3.5 w-3.5" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent side="top" align="start" className="w-44 p-1 bg-[#1a1a22] border-white/[0.1] shadow-xl">
+                {onRevertToMessage && msg.filesSnapshot && (
+                  <button
+                    onClick={() => onRevertToMessage(msg.id)}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-[12px] text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    Revert to here
+                  </button>
+                )}
+                {onForkFromMessage && (
+                  <button
+                    onClick={() => onForkFromMessage(msg.id)}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-[12px] text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors"
+                  >
+                    <GitBranch className="h-3.5 w-3.5" />
+                    Fork from here
+                  </button>
+                )}
+                <button
+                  onClick={() => togglePin(msg.id)}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-[12px] text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors"
+                >
+                  <Pin className="h-3.5 w-3.5" />
+                  {msg.pinned ? 'Unpin' : 'Pin message'}
+                </button>
+              </PopoverContent>
+            </Popover>
           </div>
         )}
 
