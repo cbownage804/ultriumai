@@ -1113,10 +1113,7 @@ export function BuilderChatPanel({
           </button>
         )}
 
-        {/* Intro text — always visible like Lovable */}
-        {introLine && (
-          <p className="text-[13px] text-white/70 leading-relaxed">{introLine}</p>
-        )}
+        {/* Intro line removed — full text shown in prose block below */}
 
         {/* Task breakdown checklist — Lovable style with DONE/WORKING/NEXT labels */}
         {planSteps && planSteps.length > 0 && (
