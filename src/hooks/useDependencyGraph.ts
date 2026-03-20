@@ -104,9 +104,51 @@ export function useDependencyGraph() {
     orphans: nodes.filter(n => !edges.some(e => e.source === n.id || e.target === n.id)).length,
   }), [nodes, edges, circularDeps]);
 
+  /** Wave 15: Build a concise dependency directive for AI context injection. */
+  const buildDependencyDirective = useCallback((files: Record<string, string>): string => {
+    const fileKeys = Object.keys(files);
+    if (fileKeys.length === 0) return '';
+
+    const imports: string[] = [];
+    const circularWarnings: string[] = [];
+
+    for (const filePath of fileKeys) {
+      const content = files[filePath];
+      const importRegex = /import\s+(?:(?:\{[^}]+\})|(?:\w+)|(?:\*\s+as\s+\w+))\s+from\s+['"]([^'"]+)['"]/g;
+      const resolvedImports: string[] = [];
+      let m;
+      while ((m = importRegex.exec(content)) !== null) {
+        const imp = m[1];
+        if (imp.startsWith('.') || imp.startsWith('@/')) {
+          const resolved = resolveImportPath(filePath, imp, fileKeys);
+          if (resolved) resolvedImports.push(resolved);
+        }
+      }
+      if (resolvedImports.length > 0) {
+        imports.push(`${filePath} → ${resolvedImports.join(', ')}`);
+      }
+    }
+
+    if (imports.length === 0) return '';
+
+    // Check for circulars
+    if (circularDeps.length > 0) {
+      for (const c of circularDeps.slice(0, 3)) {
+        circularWarnings.push(`  ⚠️ ${c.cycle.join(' → ')} → ${c.cycle[0]}`);
+      }
+    }
+
+    return [
+      '[DEPENDENCY MAP — Project import structure]',
+      ...imports,
+      ...(circularWarnings.length > 0 ? ['', 'CIRCULAR DEPENDENCIES (fix these):', ...circularWarnings] : []),
+      '[/DEPENDENCY MAP]',
+    ].join('\n');
+  }, [circularDeps]);
+
   return {
     nodes, edges, circularDeps, selectedNodeId, setSelectedNodeId, layout, setLayout,
-    analyzeFiles, getSelectedNode, getNodeDependencies, getStats,
+    analyzeFiles, getSelectedNode, getNodeDependencies, getStats, buildDependencyDirective,
   };
 }
 
