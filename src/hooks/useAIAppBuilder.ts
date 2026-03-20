@@ -1133,6 +1133,30 @@ export function useAIAppBuilder() {
     // Use user-attached images only (no generation)
     let effectiveImageDataUrls = imageDataUrls;
 
+    // ── Reference image detection ──
+    // Detect when the user is uploading a screenshot/mockup as visual reference
+    // (e.g., "fix this", "make it look like this") vs an asset to embed (e.g., "use this as logo").
+    const isReferenceImage = effectiveImageDataUrls?.length
+      ? /\b(fix|improve|change|update|adjust|tweak|redesign|restyle|looks?\s*(like|bad|wrong|off|broken|ugly|weird))\b/i.test(input)
+        || /\b(screenshot|mockup|wireframe|reference|example|inspiration|design|layout|this\s+page|the\s+page|current|preview)\b/i.test(input)
+        || /\b(make\s+it\s+look|should\s+look|want\s+it\s+to|style\s+it|match\s+this)\b/i.test(input)
+        || /\b(what['']?s\s+wrong|why\s+does|can\s+you\s+see)\b/i.test(input)
+      : false;
+
+    if (isReferenceImage && effectiveImageDataUrls?.length) {
+      systemParts.push(
+        `[IMAGE CONTEXT — VISUAL REFERENCE ONLY]\n` +
+        `The user has uploaded ${effectiveImageDataUrls.length} screenshot(s) or mockup(s) as VISUAL REFERENCE.\n` +
+        `These images show the current state of the app or a design the user wants to match.\n` +
+        `Do NOT embed these images in the code. Do NOT treat them as logos or assets.\n` +
+        `Instead, ANALYZE the image(s) to understand:\n` +
+        `- Layout issues, styling problems, or visual bugs the user wants fixed\n` +
+        `- Design patterns, color schemes, or UI elements to replicate\n` +
+        `- The current state of the app that needs improvement\n` +
+        `Then make the appropriate code changes based on what you see.`
+      );
+    }
+
     // Compress uploaded images before sending to AI — shrink below embed cap
     if (effectiveImageDataUrls?.length) {
       try {
@@ -1504,7 +1528,7 @@ ${JSON.stringify(brandingData.typography, null, 2)}` : ''}` });
     }
 
     // ASSET PRIORITY for logo intent even without URL clone
-    if (!urlClone.hasURL && effectiveImageDataUrls?.length) {
+    if (!urlClone.hasURL && effectiveImageDataUrls?.length && !isReferenceImage) {
       const isLogoIntentEarly = /\b(logo|icon|favicon|brand|nav\s*bar|header|footer)\b/i.test(input)
         || /\b(use\s*(this|it|that|the\s*attach))/i.test(input);
       if (isLogoIntentEarly) {
@@ -1730,9 +1754,9 @@ ${JSON.stringify(brandingData.typography, null, 2)}` : ''}` });
       // Vision models can "see" the image but cannot extract the data URL string from the image_url block.
       // BUT: cap data URL size to prevent token overflow (max ~50KB per image = ~67K chars base64)
       const MAX_DATA_URL_SIZE = 150000;
-      const isLogoIntent = !!imageGenIntent
+      const isLogoIntent = !isReferenceImage && (!!imageGenIntent
         || /\b(logo|icon|favicon|brand|nav\s*bar|header|footer)\b/i.test(input)
-        || /\b(use\s*(this|it|that|the\s*attach))/i.test(input);
+        || /\b(use\s*(this|it|that|the\s*attach))/i.test(input));
       if (rasterUrls.length > 0 && isLogoIntent) {
         const dataUrlRef = rasterUrls.map((url, i) => {
           if (!isLogoIntent && url.length > MAX_DATA_URL_SIZE) {
