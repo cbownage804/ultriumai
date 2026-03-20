@@ -457,6 +457,8 @@ export interface BuilderMessage {
   mode?: BuilderMode;
   /** Step 9: Post-generation diff summary */
   diffSummary?: { added: string[]; modified: string[]; deleted: string[]; totalLinesChanged: number };
+  /** Duration in ms that the AI took to generate this response */
+  generationDurationMs?: number;
 }
 
 export type BuilderMode = 'build' | 'discuss';

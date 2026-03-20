@@ -2001,7 +2001,7 @@ export function AIAppBuilderWorkspace() {
         // Estimate tokens from the assistant message content (~4 chars per token)
         const lastAssistantMsg = messages[messages.length - 1];
         const tokenEstimate = lastAssistantMsg?.role === 'assistant' ? Math.round(lastAssistantMsg.content.length / 4) : undefined;
-        setMessages(prev => prev.map((m, i) => i === prev.length - 1 ? { ...m, commitMessage: commitMsg, diffSummary, tokenEstimate } : m));
+        setMessages(prev => prev.map((m, i) => i === prev.length - 1 ? { ...m, commitMessage: commitMsg, diffSummary, tokenEstimate, generationDurationMs: duration } : m));
       }
       // Post-gen analysis completely disabled to prevent browser freeze.
       // These were running smoke tests, conflict detection, TS validation,
