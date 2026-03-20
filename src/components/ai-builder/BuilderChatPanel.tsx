@@ -2324,7 +2324,7 @@ export function BuilderChatPanel({
         </div>
       )}
 
-      {/* Quick Actions + Context Indicator + Mode Toggle + Input */}
+      {/* Input area */}
       <div className="p-3 border-t border-white/[0.06] shrink-0 space-y-2" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))' }}>
         {/* Slash command suggestions */}
         {input.startsWith('/') && !isGenerating && (
