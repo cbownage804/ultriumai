@@ -90,7 +90,7 @@ function checkImageOptimization(files: ProjectFile[]): PerformanceSuggestion[] {
         id: `inline-img-${f.path}`,
         severity: 'warning',
         title: 'Move large inline images to assets',
-        description: `${dataUrls.length} large base64 image(s) embedded inline (~${Math.round(dataUrls.reduce((s, d) => s + d.length, 0) / 1024)}KB). Move to separate files for caching.`,
+        description: `${dataUrls.length} large base64 image(s) embedded inline (~${Math.round(dataUrls.reduce((s: number, d: string) => s + d.length, 0) / 1024)}KB). Move to separate files for caching.`,
         file: f.path,
         autoFixable: false,
       });
