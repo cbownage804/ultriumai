@@ -2753,10 +2753,9 @@ export function AIAppBuilderWorkspace() {
     return lastAssistant?.content || '';
   }, [messages]);
 
-  const handleFixError = useCallback((errorPrompt: string) => {
-    // Enrich even simple fix requests with full project context
+  const handleFixError = useCallback((errorPrompt: string, errorMeta?: { source?: string; line?: number }) => {
     const diagnosisContext = buildErrorDiagnosisContext(
-      { message: errorPrompt },
+      { message: errorPrompt, source: errorMeta?.source, line: errorMeta?.line },
       project.files,
       undefined,
       getLastAIResponse(),
@@ -2768,7 +2767,10 @@ export function AIAppBuilderWorkspace() {
   useEffect(() => {
     const fixHandler = (e: MessageEvent) => {
       if (e.data?.type === '__FIX_WITH_AI__' && e.data.message) {
-        handleFixError(`Runtime error in preview: ${e.data.message}`);
+        handleFixError(`Runtime error in preview: ${e.data.message}`, {
+          source: e.data.source,
+          line: e.data.line,
+        });
       }
     };
     window.addEventListener('message', fixHandler);
