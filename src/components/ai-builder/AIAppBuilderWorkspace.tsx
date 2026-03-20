@@ -1249,8 +1249,19 @@ export function AIAppBuilderWorkspace() {
 
   // ── Recover background jobs on mount and tab return ──
   useEffect(() => {
+    const hasLocalDraft = (() => {
+      try {
+        const draft = loadDraft();
+        return !!draft && (draft.files.length > 0 || draft.messages.length > 0);
+      } catch {
+        return false;
+      }
+    })();
+
+    const hasRecoveryContext = !!searchParams.get('project') || hasLocalDraft;
+
     // Fresh sessions must never resurrect previous builds/jobs.
-    if (isNewProjectRef.current || isNewSessionPending()) {
+    if (isNewProjectRef.current || isNewSessionPending() || !hasRecoveryContext) {
       console.info('[BG Recovery] Skipped — fresh new project session');
       return;
     }
@@ -2179,6 +2190,7 @@ export function AIAppBuilderWorkspace() {
 
         // Synchronous: try localStorage first
         const draft = loadDraft();
+        const hasLocalDraft = !!draft && (draft.files.length > 0 || draft.messages.length > 0);
 
         if (draft && (draft.files.length > 0 || draft.messages.length > 0)) {
           const draftTime = draft.savedAt ? new Date(draft.savedAt).getTime() : 0;
@@ -2196,6 +2208,10 @@ export function AIAppBuilderWorkspace() {
         } else if (reactIsEmpty) {
           // localStorage is empty too — last resort: check IDB synchronously-ish
           console.warn('[Draft] Both React and localStorage empty, checking IDB...');
+        }
+
+        if (!hasLocalDraft) {
+          return;
         }
 
         // Also try IDB (larger capacity) — may contain more complete data
@@ -2404,6 +2420,13 @@ export function AIAppBuilderWorkspace() {
 
     // SYNC FIRST: Try localStorage immediately (no async delay)
     const lsDraft = loadDraft();
+    const hasLocalDraft = !!lsDraft && (lsDraft.files.length > 0 || lsDraft.messages.length > 0);
+
+    if (!hasLocalDraft) {
+      console.info('[Draft] Mount restore skipped — no local draft context');
+      return;
+    }
+
     if (lsDraft && (lsDraft.files.length > 0 || lsDraft.messages.length > 0)) {
       hasRestoredRef.current = true;
       setFiles(lsDraft.files);
