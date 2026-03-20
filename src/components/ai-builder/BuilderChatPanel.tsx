@@ -1470,31 +1470,6 @@ export function BuilderChatPanel({
         )}
 
 
-        {/* Step 4: File-by-file streaming status with checkmarks */}
-        {isStreaming && fileNames.length > 0 && (
-          <div className="space-y-1 mt-1">
-            {fileNames.map((name, i) => {
-              const isLast = i === fileNames.length - 1;
-              const isComplete = !isLast; // All but the last are complete
-              return (
-                <div key={name} className="flex items-center gap-1.5 text-[11px]">
-                  {isComplete ? (
-                    <CheckCircle2 className="h-3 w-3 text-emerald-400/70 shrink-0" />
-                  ) : (
-                    <Loader2 className="h-3 w-3 animate-spin text-cyan-400 shrink-0" />
-                  )}
-                  <span className={cn(
-                    "font-mono truncate",
-                    isComplete ? "text-white/40" : "text-white/60"
-                  )}>
-                    {name.split('/').pop()}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
         {/* Empty streaming state */}
         {isStreaming && !hasFiles && fileNames.length === 0 && !text && (
           <div className="flex items-center gap-2 text-white/50">
