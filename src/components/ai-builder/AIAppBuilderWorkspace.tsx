@@ -3608,7 +3608,7 @@ export function AIAppBuilderWorkspace() {
     const handleVisible = async () => {
       if (document.visibilityState !== 'visible') return;
 
-      const hasRecoveryContext = !!initialProjectId || project.files.length > 0 || project.messages.length > 0;
+      const hasRecoveryContext = !!initialProjectId || project.files.length > 0 || messages.length > 0;
 
       // If stableHTML is gone (browser evicted localStorage, long idle, etc.)
       // attempt recovery only when there is actual project/draft context.
