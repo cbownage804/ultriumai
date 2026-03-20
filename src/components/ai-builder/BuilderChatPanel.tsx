@@ -1090,9 +1090,9 @@ export function BuilderChatPanel({
           .trim()
       : text;
 
-    // Calculate elapsed time for "Thought for Xs" display
-    const elapsedSeconds = msg.timestamp ? Math.round((Date.now() - msg.timestamp.getTime()) / 1000) : 0;
-    const thoughtTime = elapsedSeconds > 0 && elapsedSeconds < 600 ? `${elapsedSeconds}s` : '';
+    // Calculate elapsed time for "Thought for Xs" display — prefer stored duration
+    const durationMs = msg.generationDurationMs || (msg.buildSummary?.durationMs);
+    const thoughtTime = durationMs ? `${Math.round(durationMs / 1000)}s` : '';
 
     // Extract first line as intro text (before numbered list or task card)
     const lines = displayText.split('\n').filter(l => l.trim());
