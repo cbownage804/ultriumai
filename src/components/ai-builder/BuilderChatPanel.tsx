@@ -1095,17 +1095,13 @@ export function BuilderChatPanel({
     const durationMs = msg.generationDurationMs || (msg.buildSummary?.durationMs);
     const thoughtTime = durationMs ? `${Math.round(durationMs / 1000)}s` : '';
 
-    // Split conversational text into intro (before code) and closing (after code)
-    // Lovable always shows conversational text alongside file cards
-    const lines = displayText.split('\n').filter(l => l.trim());
-    const introLine = lines.length > 0 && !lines[0].match(/^\d+\./) ? lines[0] : '';
-    const closingLines = introLine ? lines.slice(1).join('\n').trim() : '';
-    const bodyText = introLine ? displayText.replace(introLine, '').trim() : displayText;
+    // Lovable style: show full conversational text, no splitting
+    const bodyText = displayText;
 
     return (
       <div className={cn("flex gap-3", isChatMode && "")}>
         <AIAvatar className="mt-0.5 shrink-0" />
-        <div className={cn("flex-1 space-y-3 min-w-0", isChatMode && "border-l-2 border-teal-500/30 pl-3")}>
+        <div className="flex-1 space-y-3 min-w-0">
         {/* "Thought for Xs" — Lovable style collapsible */}
         {(isCompleted || isStreaming) && (
           <button
@@ -1117,297 +1113,9 @@ export function BuilderChatPanel({
           </button>
         )}
 
-        {/* Intro text — always visible like Lovable */}
-        {introLine && (
-          <p className="text-[13px] text-white/70 leading-relaxed">{introLine}</p>
-        )}
-
-        {/* Task breakdown checklist — Lovable style with DONE/WORKING/NEXT labels */}
-        {planSteps && planSteps.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl border border-white/[0.08] overflow-hidden bg-white/[0.02]"
-          >
-            {/* Editing header with file pill — only when files exist */}
-            {fileNames.length > 0 && (
-              <div className="px-4 py-3 border-b border-white/[0.06]">
-                <div className="flex items-center gap-2">
-                  <span className="text-[14px] font-semibold text-white/90">
-                    {isStreaming ? 'Editing' : 'Edited'}
-                  </span>
-                  <span className="text-[12px] font-mono px-2 py-0.5 rounded-md bg-white/[0.08] text-white/60 border border-white/[0.08]">
-                    {fileNames[0]?.split('/').pop()}
-                  </span>
-                  {fileNames.length > 1 && <span className="text-[11px] text-white/30">+{fileNames.length - 1}</span>}
-                  <ChevronDown className="h-3.5 w-3.5 text-white/25 ml-auto" />
-                </div>
-                {planSteps.find(s => s.status === 'active') && (
-                  <p className="text-[12px] text-white/40 mt-1">{planSteps.find(s => s.status === 'active')?.label}</p>
-                )}
-              </div>
-            )}
-            <div className="px-4 py-2.5 space-y-1">
-              {(() => {
-                const doneSteps = planSteps.filter(s => s.status === 'done');
-                const workingSteps = planSteps.filter(s => s.status === 'active');
-                const nextSteps = planSteps.filter(s => s.status === 'pending');
-                return (
-                  <>
-                    {doneSteps.length > 0 && (
-                      <>
-                        <div className="flex items-center gap-2 py-1">
-                          <div className="h-px flex-1 bg-white/[0.06]" />
-                          <span className="text-[10px] font-bold text-emerald-400/50 tracking-widest uppercase">Done</span>
-                          <div className="h-px flex-1 bg-white/[0.06]" />
-                        </div>
-                        {doneSteps.map((step, i) => (
-                          <div key={`d-${i}`} className="flex items-center gap-2.5 py-1">
-                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400/60 shrink-0" />
-                            <span className="text-[13px] text-white/40">{step.label}</span>
-                          </div>
-                        ))}
-                      </>
-                    )}
-                    {workingSteps.length > 0 && (
-                      <>
-                        <div className="flex items-center gap-2 py-1">
-                          <div className="h-px flex-1 bg-white/[0.06]" />
-                          <span className="text-[10px] font-bold text-white/30 tracking-widest uppercase">Working</span>
-                          <div className="h-px flex-1 bg-white/[0.06]" />
-                        </div>
-                        {workingSteps.map((step, i) => (
-                          <div key={`w-${i}`} className="flex items-center gap-2.5 py-1.5">
-                            <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-400 shrink-0" />
-                            <span className="text-[13px] text-white/80">{step.label}</span>
-                          </div>
-                        ))}
-                      </>
-                    )}
-                    {nextSteps.length > 0 && (
-                      <>
-                        <div className="flex items-center gap-2 py-1 mt-1">
-                          <div className="h-px flex-1 bg-white/[0.06]" />
-                          <span className="text-[10px] font-bold text-white/30 tracking-widest uppercase">Next</span>
-                          <div className="h-px flex-1 bg-white/[0.06]" />
-                        </div>
-                        {nextSteps.map((step, i) => (
-                          <div key={`n-${i}`} className="flex items-center gap-2.5 py-1.5">
-                            <div className="h-3.5 w-3.5 rounded-full border border-white/[0.12] shrink-0" />
-                            <span className="text-[13px] text-white/25">{step.label}</span>
-                          </div>
-                        ))}
-                      </>
-                    )}
-                  </>
-                );
-              })()}
-            </div>
-            {/* Bottom progress bar */}
-            <div className="px-4 pb-3">
-              <div className="flex gap-0.5">
-                {planSteps.map((step, i) => (
-                  <div key={i} className={cn("h-1 rounded-full flex-1 transition-all duration-500", step.status === 'done' ? 'bg-emerald-400' : step.status === 'active' ? 'bg-cyan-400 animate-pulse' : 'bg-white/[0.06]')} />
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Task card — Lovable style bordered card */}
-        {(hasFiles || fileNames.length > 0) && (
-          <motion.div
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl border border-white/[0.08] overflow-hidden bg-white/[0.02]"
-          >
-            {/* Lovable-style Editing header with file pill */}
-            <div className="px-4 py-3">
-              <div className="flex items-center gap-2">
-                <span className="text-[14px] font-semibold text-white/90">
-                  {isStreaming ? 'Editing' : 'Edited'}
-                </span>
-                {fileNames.length > 0 && (
-                  <span className="text-[12px] font-mono px-2 py-0.5 rounded-md bg-white/[0.08] text-white/60 border border-white/[0.08]">
-                    {fileNames[0]?.split('/').pop()}
-                  </span>
-                )}
-                {totalFiles > 1 && <span className="text-[11px] text-white/30">+{totalFiles - 1} more</span>}
-                <ChevronDown className="h-3.5 w-3.5 text-white/25 ml-auto" />
-              </div>
-            </div>
-
-            {/* File list inside card */}
-            <div className="px-4 pb-2 space-y-1">
-              {fileNames.slice(0, 4).map((name, i) => {
-                const shortName = name.split('/').pop() || name;
-                const isFileDone = !isStreaming;
-                return (
-                  <div key={i} className="flex items-center gap-2 py-1">
-                    {isFileDone ? (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                    ) : (
-                      <Loader2 className="h-4 w-4 animate-spin text-cyan-400 shrink-0" />
-                    )}
-                    <span className="text-[13px] text-white/60 truncate">{shortName}</span>
-                  </div>
-                );
-              })}
-              {fileNames.length > 4 && (
-                <span className="text-[11px] text-white/30 pl-6">+{fileNames.length - 4} more</span>
-              )}
-            </div>
-
-            {/* Card footer tabs — Details opens modal */}
-            <div className="flex border-t border-white/[0.08]">
-              <button
-                onClick={() => toggleBuildExpanded(msg.id)}
-                className="flex-1 text-center text-[12px] py-2.5 font-medium text-white/40 hover:text-white/60 transition-colors"
-              >
-                Details
-              </button>
-              <div className="w-px bg-white/[0.08]" />
-              <div className={cn(
-                "flex-1 text-center text-[12px] py-2.5 font-medium",
-                isStreaming
-                  ? "text-cyan-400 bg-cyan-500/[0.06]"
-                  : compileState === 'error'
-                    ? "text-red-300/80 bg-red-500/[0.08]"
-                    : isPreviewReady
-                      ? "text-emerald-400/70 bg-emerald-500/[0.04]"
-                      : isGoldenProject && compileState !== 'compiling'
-                        ? "text-white/50 bg-white/[0.03]"
-                        : "text-amber-400/70 bg-amber-500/[0.04]"
-              )}>
-                {isStreaming
-                  ? 'Loading preview...'
-                  : compileState === 'error'
-                    ? 'Preview failed'
-                    : isPreviewReady
-                      ? 'Preview ready'
-                      : isGoldenProject && compileState !== 'compiling'
-                        ? 'Ready to build'
-                        : 'Compiling...'}
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Prominent "Try to fix" button when preview fails — Lovable style */}
-        {compileState === 'error' && !isStreaming && isLast && !msg.inlineError && (
-          <motion.div
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-red-500/[0.06] border border-red-500/20"
-          >
-            <AlertTriangle className="h-4 w-4 text-red-400 shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] text-red-300/90 font-medium">Preview failed to compile</p>
-              {buildErrors && buildErrors.length > 0 && (
-                <p className="text-[11px] text-red-300/50 font-mono truncate mt-0.5">{buildErrors[0]?.message?.slice(0, 80)}</p>
-              )}
-            </div>
-            <button
-              onClick={() => {
-                const errorContext = buildErrors?.map(e => `${e.file || ''}:${e.line || ''} ${e.message}`).join('\n') || 'Preview failed to compile';
-                onFixError(`The preview is showing errors. Please fix these compile errors:\n${errorContext}`);
-              }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-cyan-500/15 text-cyan-400 hover:bg-cyan-500/25 transition-colors font-semibold text-[13px] shrink-0"
-            >
-              <Wrench className="h-3.5 w-3.5" />
-              Try to fix
-            </button>
-          </motion.div>
-        )}
-
-        {/* Step 9: Post-generation diff summary */}
-        {msg.diffSummary && !isStreaming && (
-          <motion.div
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl border border-white/[0.08] overflow-hidden bg-white/[0.02]"
-          >
-            <button
-              onClick={() => toggleBuildExpanded(`diff-${msg.id}`)}
-              className="w-full px-4 py-2.5 flex items-center gap-2 text-left hover:bg-white/[0.02] transition-colors"
-            >
-              <FileCode className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
-              <span className="text-[12px] font-medium text-white/60">
-                Changes: {msg.diffSummary.modified.length + msg.diffSummary.added.length} file{msg.diffSummary.modified.length + msg.diffSummary.added.length !== 1 ? 's' : ''}
-                {msg.diffSummary.deleted.length > 0 && `, ${msg.diffSummary.deleted.length} removed`}
-              </span>
-              <ChevronDown className={cn("h-3 w-3 text-white/25 ml-auto transition-transform", !expandedBuildMessages.has(`diff-${msg.id}`) && "-rotate-90")} />
-            </button>
-            {expandedBuildMessages.has(`diff-${msg.id}`) && (
-              <div className="px-4 pb-3 space-y-1 border-t border-white/[0.06]">
-                {msg.diffSummary.added.map(f => (
-                  <div key={f} className="flex items-center gap-2 py-0.5">
-                    <Plus className="h-3 w-3 text-emerald-400 shrink-0" />
-                    <span className="text-[11px] text-white/50 font-mono truncate">{f.split('/').pop()}</span>
-                  </div>
-                ))}
-                {msg.diffSummary.modified.map(f => (
-                  <div key={f} className="flex items-center gap-2 py-0.5">
-                    <Pencil className="h-3 w-3 text-amber-400 shrink-0" />
-                    <span className="text-[11px] text-white/50 font-mono truncate">{f.split('/').pop()}</span>
-                  </div>
-                ))}
-                {msg.diffSummary.deleted.map(f => (
-                  <div key={f} className="flex items-center gap-2 py-0.5">
-                    <X className="h-3 w-3 text-red-400 shrink-0" />
-                    <span className="text-[11px] text-white/50 font-mono truncate">{f.split('/').pop()}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </motion.div>
-        )}
-
-        {isBuildExpanded && (
-          <Dialog open={true} onOpenChange={() => toggleBuildExpanded(msg.id)}>
-            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-[#0c0c10] border-white/[0.1] text-white">
-              <DialogHeader>
-                <DialogTitle className="text-sm font-medium text-white/80">
-                  {totalFiles > 1 ? `Changes — ${totalFiles} files` : fileNames[0] || 'Code changes'}
-                </DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 mt-2">
-                <div className="space-y-1">
-                  {fileNames.map((name, i) => (
-                    <div key={i} className="flex items-center gap-2 py-1 px-2 rounded-md hover:bg-white/[0.03]">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                      <span className="text-[13px] text-white/60 font-mono truncate">{name}</span>
-                    </div>
-                  ))}
-                </div>
-                {!isStreaming && hasFiles && previousFiles.length > 0 && (
-                  <div className="space-y-3 border-t border-white/[0.08] pt-4">
-                    {latestFiles.map(file => {
-                      const prev = previousFiles.find(p => p.path === file.path);
-                      if (!prev) return null;
-                      return (
-                        <CodeDiffViewer
-                          key={file.path}
-                          oldContent={prev.content}
-                          newContent={file.content}
-                          fileName={file.path}
-                        />
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
-
-        {/* Main prose content — always show conversational text like Lovable */}
+        {/* Main prose content — Lovable style: conversational text FIRST */}
         {(() => {
-          // For build messages with files, show only the closing/body text (intro already shown above)
-          // For discuss mode or no-file messages, show full text
-          const proseContent = isCompleted && (hasFiles || fileNames.length > 0)
-            ? (closingLines || bodyText || '').trim()
-            : (isCompleted ? bodyText || displayText : displayText);
+          const proseContent = bodyText || displayText;
           if (!proseContent && !isStreaming) return null;
           return (
             <StreamingText content={proseContent || ''} isStreaming={isStreaming}>
@@ -1462,98 +1170,121 @@ export function BuilderChatPanel({
           );
         })()}
 
-        {/* Conversational summary text is now always shown above */}
-
-        {/* Build changes summary — created/modified/deleted */}
-        {isCompleted && fileNames.length > 0 && !isStreaming && (
-          <div className="flex flex-wrap gap-1.5 px-1">
-            {(() => {
-              const created = fileNames.filter(f => !previousFiles.some(p => p.path === f));
-              const modified = fileNames.filter(f => previousFiles.some(p => p.path === f));
-              return (
-                <>
-                  {created.length > 0 && <span className="text-[10px] text-emerald-400/60 flex items-center gap-1"><Plus className="h-2.5 w-2.5" />{created.length} created</span>}
-                  {modified.length > 0 && <span className="text-[10px] text-cyan-400/60 flex items-center gap-1"><Pencil className="h-2.5 w-2.5" />{modified.length} modified</span>}
-                </>
-              );
-            })()}
+        {/* Lovable-style simple "Edited X files" collapsible — replaces verbose task card */}
+        {(hasFiles || fileNames.length > 0) && !isStreaming && (
+          <div className="rounded-xl border border-white/[0.08] overflow-hidden bg-white/[0.02]">
+            <button
+              onClick={() => toggleBuildExpanded(msg.id)}
+              className="w-full px-4 py-2.5 flex items-center gap-2 text-left hover:bg-white/[0.02] transition-colors"
+            >
+              <FileCode className="h-3.5 w-3.5 text-white/40 shrink-0" />
+              <span className="text-[13px] font-medium text-white/60">
+                Edited {totalFiles} file{totalFiles !== 1 ? 's' : ''}
+              </span>
+              <ChevronDown className={cn("h-3.5 w-3.5 text-white/25 ml-auto transition-transform", !isBuildExpanded && "-rotate-90")} />
+            </button>
+            {isBuildExpanded && (
+              <div className="px-4 pb-3 space-y-1 border-t border-white/[0.06]">
+                {fileNames.map((name, i) => (
+                  <div key={i} className="flex items-center gap-2 py-1">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400/60 shrink-0" />
+                    <span className="text-[12px] text-white/50 font-mono truncate">{name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
-        {/* File Read Cards — shown when AI reads/analyzes project files */}
-        {!isStreaming && (() => {
-          const fileReads = extractFileReads(msg.content);
-          if (fileReads.length === 0) return null;
-          return (
-            <div className="space-y-1.5">
-              {fileReads.map((fr, i) => {
-                const key = `${msg.id}-read-${fr.fileName}`;
+        {/* Streaming progress — show during generation only */}
+        {isStreaming && fileNames.length > 0 && (
+          <div className="rounded-xl border border-white/[0.08] overflow-hidden bg-white/[0.02]">
+            <div className="px-4 py-3">
+              <div className="flex items-center gap-2">
+                <span className="text-[14px] font-semibold text-white/90">Editing</span>
+                <span className="text-[12px] font-mono px-2 py-0.5 rounded-md bg-white/[0.08] text-white/60 border border-white/[0.08]">
+                  {fileNames[0]?.split('/').pop()}
+                </span>
+                {fileNames.length > 1 && <span className="text-[11px] text-white/30">+{fileNames.length - 1}</span>}
+              </div>
+            </div>
+            <div className="px-4 pb-3 space-y-1">
+              {fileNames.slice(0, 4).map((name, i) => {
+                const isLast = i === fileNames.length - 1;
+                const isFileComplete = !isLast;
                 return (
-                  <FileReadCard
-                    key={key}
-                    fileName={fr.fileName}
-                    description={fr.description}
-                    isExpanded={expandedFileReads.has(key)}
-                    onToggle={() => toggleFileReadExpanded(key)}
-                  />
+                  <div key={i} className="flex items-center gap-2 py-1">
+                    {isFileComplete ? (
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400/60 shrink-0" />
+                    ) : (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-400 shrink-0" />
+                    )}
+                    <span className="text-[12px] text-white/50 font-mono truncate">{name.split('/').pop()}</span>
+                  </div>
                 );
               })}
             </div>
-          );
-        })()}
-
-        {/* Inline diffs — collapsible per file */}
-        {isCompleted && !isStreaming && previousFiles.length > 0 && fileNames.length > 0 && (
-          <div className="space-y-1">
-            {fileNames.map(name => {
-              const prev = previousFiles.find(p => p.path === name);
-              const curr = latestFiles.find(p => p.path === name);
-              if (!prev || !curr) return null;
-              const diffId = `${msg.id}-${name}`;
-              const isExpanded = expandedBuildMessages.has(diffId);
-              // Quick line count
-              const added = curr.content.split('\n').length - prev.content.split('\n').length;
-              return (
-                <div key={name} className="rounded-lg border border-white/[0.06] overflow-hidden">
-                  <button
-                    onClick={() => {
-                      setExpandedBuildMessages(s => {
-                        const n = new Set(s);
-                        if (n.has(diffId)) n.delete(diffId); else n.add(diffId);
-                        return n;
-                      });
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] text-white/40 hover:text-white/60 hover:bg-white/[0.02] transition-colors"
-                  >
-                    <ChevronDown className={cn("h-2.5 w-2.5 transition-transform", !isExpanded && "-rotate-90")} />
-                    <FileCode className="h-3 w-3" />
-                    <span className="font-mono truncate">{name.split('/').pop()}</span>
-                    <span className="ml-auto text-[9px]">
-                      {added >= 0 ? <span className="text-emerald-400/50">+{added}</span> : <span className="text-red-400/50">{added}</span>}
-                    </span>
-                  </button>
-                  {isExpanded && (
-                    <CodeDiffViewer oldContent={prev.content} newContent={curr.content} fileName={name} />
-                  )}
-                </div>
-              );
-            })}
           </div>
         )}
 
-        {/* Lovable-style Revert button — prominent, standalone */}
-        {isCompleted && !isStreaming && msg.filesSnapshot && onRevertToMessage && (
-          <div className="flex items-center gap-2 mt-1">
+        {/* Prominent "Try to fix" button when preview fails */}
+        {compileState === 'error' && !isStreaming && isLast && !msg.inlineError && (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-red-500/[0.06] border border-red-500/20"
+          >
+            <AlertTriangle className="h-4 w-4 text-red-400 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] text-red-300/90 font-medium">Preview failed to compile</p>
+              {buildErrors && buildErrors.length > 0 && (
+                <p className="text-[11px] text-red-300/50 font-mono truncate mt-0.5">{buildErrors[0]?.message?.slice(0, 80)}</p>
+              )}
+            </div>
             <button
-              onClick={() => onRevertToMessage(msg.id)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] text-white/40 hover:text-white/70 hover:bg-white/[0.06] border border-white/[0.06] hover:border-white/[0.12] transition-all"
-              title="Revert project to the state before this generation"
+              onClick={() => {
+                const errorContext = buildErrors?.map(e => `${e.file || ''}:${e.line || ''} ${e.message}`).join('\n') || 'Preview failed to compile';
+                onFixError(`The preview is showing errors. Please fix these compile errors:\n${errorContext}`);
+              }}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-cyan-500/15 text-cyan-400 hover:bg-cyan-500/25 transition-colors font-semibold text-[13px] shrink-0"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-              Revert
+              <Wrench className="h-3.5 w-3.5" />
+              Try to fix
             </button>
-          </div>
+          </motion.div>
         )}
+
+        {isBuildExpanded && previousFiles.length > 0 && fileNames.length > 0 && !isStreaming && (
+          <Dialog open={true} onOpenChange={() => toggleBuildExpanded(msg.id)}>
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-[#0c0c10] border-white/[0.1] text-white">
+              <DialogHeader>
+                <DialogTitle className="text-sm font-medium text-white/80">
+                  {totalFiles > 1 ? `Changes — ${totalFiles} files` : fileNames[0] || 'Code changes'}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-2">
+                {!isStreaming && hasFiles && previousFiles.length > 0 && (
+                  <div className="space-y-3">
+                    {latestFiles.map(file => {
+                      const prev = previousFiles.find(p => p.path === file.path);
+                      if (!prev) return null;
+                      return (
+                        <CodeDiffViewer
+                          key={file.path}
+                          oldContent={prev.content}
+                          newContent={file.content}
+                          fileName={file.path}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* Revert is accessible via the "..." popover menu */}
 
         {msg.inlineError && !isStreaming && (
           <div className="space-y-2">
@@ -1738,31 +1469,6 @@ export function BuilderChatPanel({
           </motion.div>
         )}
 
-
-        {/* Step 4: File-by-file streaming status with checkmarks */}
-        {isStreaming && fileNames.length > 0 && (
-          <div className="space-y-1 mt-1">
-            {fileNames.map((name, i) => {
-              const isLast = i === fileNames.length - 1;
-              const isComplete = !isLast; // All but the last are complete
-              return (
-                <div key={name} className="flex items-center gap-1.5 text-[11px]">
-                  {isComplete ? (
-                    <CheckCircle2 className="h-3 w-3 text-emerald-400/70 shrink-0" />
-                  ) : (
-                    <Loader2 className="h-3 w-3 animate-spin text-cyan-400 shrink-0" />
-                  )}
-                  <span className={cn(
-                    "font-mono truncate",
-                    isComplete ? "text-white/40" : "text-white/60"
-                  )}>
-                    {name.split('/').pop()}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        )}
 
         {/* Empty streaming state */}
         {isStreaming && !hasFiles && fileNames.length === 0 && !text && (
