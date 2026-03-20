@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { isNewSessionPending } from '@/lib/clearBuilderDraft';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import { detectReactProject } from '@/hooks/useReactCompiler';
 import { useWorkerCompiler } from '@/hooks/useWorkerCompiler';
