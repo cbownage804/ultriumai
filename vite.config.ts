@@ -16,8 +16,6 @@ export default defineConfig(({ mode }) => ({
         if (id.endsWith('.jsx') || id.endsWith('.mdx')) return { syntax: 'ecmascript', jsx: true };
       },
     }),
-    mode === 'development' &&
-    componentTagger(),
   ].filter(Boolean),
   optimizeDeps: {
     // Prebundle React entrypoints so Vite can provide correct ESM named exports (e.g. Fragment)
