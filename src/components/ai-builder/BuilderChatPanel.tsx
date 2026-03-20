@@ -1095,9 +1095,11 @@ export function BuilderChatPanel({
     const durationMs = msg.generationDurationMs || (msg.buildSummary?.durationMs);
     const thoughtTime = durationMs ? `${Math.round(durationMs / 1000)}s` : '';
 
-    // Extract first line as intro text (before numbered list or task card)
+    // Split conversational text into intro (before code) and closing (after code)
+    // Lovable always shows conversational text alongside file cards
     const lines = displayText.split('\n').filter(l => l.trim());
     const introLine = lines.length > 0 && !lines[0].match(/^\d+\./) ? lines[0] : '';
+    const closingLines = introLine ? lines.slice(1).join('\n').trim() : '';
     const bodyText = introLine ? displayText.replace(introLine, '').trim() : displayText;
 
     return (
@@ -1115,9 +1117,9 @@ export function BuilderChatPanel({
           </button>
         )}
 
-        {/* Collapsed thinking content */}
-        {!isThinkingCollapsed && introLine && (
-          <p className="text-[13px] text-white/50 leading-relaxed">{introLine}</p>
+        {/* Intro text — always visible like Lovable */}
+        {introLine && (
+          <p className="text-[13px] text-white/70 leading-relaxed">{introLine}</p>
         )}
 
         {/* Task breakdown checklist — Lovable style with DONE/WORKING/NEXT labels */}
@@ -1399,58 +1401,68 @@ export function BuilderChatPanel({
           </Dialog>
         )}
 
-        {/* Main prose content — only show when no files were generated (discuss mode) or still streaming */}
-        {displayText && (!isCompleted || !hasFiles && fileNames.length === 0) && (
-          <StreamingText content={isCompleted ? bodyText || displayText : displayText} isStreaming={isStreaming}>
-            {(displayedText) => (
-              <div className="prose prose-sm prose-invert max-w-none text-[13px] text-white/70 leading-relaxed [&_p]:mb-3 [&_ul]:mb-3 [&_ol]:mb-3 [&_ol]:space-y-2 [&_ul]:space-y-1 [&_li]:text-white/60 [&_strong]:text-white/90 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_ol>li]:pl-1">
-                <ReactMarkdown
-                  components={{
-                    code({ className, children, ...props }) {
-                      const isInline = !className;
-                      const codeStr = String(children).replace(/\n$/, '');
-                      const lang = className?.replace('language-', '') || '';
-                      
-                      // Phase 62: Detect SQL blocks and render InlineSQLRunner
-                      if (!isInline && lang === 'sql' && codeStr.length > 10) {
-                        return (
-                          <div className="my-2">
-                            <div className="relative group/code">
+        {/* Main prose content — always show conversational text like Lovable */}
+        {(() => {
+          // For build messages with files, show only the closing/body text (intro already shown above)
+          // For discuss mode or no-file messages, show full text
+          const proseContent = isCompleted && (hasFiles || fileNames.length > 0)
+            ? (closingLines || bodyText || '').trim()
+            : (isCompleted ? bodyText || displayText : displayText);
+          if (!proseContent && !isStreaming) return null;
+          return (
+            <StreamingText content={proseContent || ''} isStreaming={isStreaming}>
+              {(displayedText) => {
+                if (!displayedText) return null;
+                return (
+                  <div className="prose prose-sm prose-invert max-w-none text-[13px] text-white/70 leading-relaxed [&_p]:mb-3 [&_ul]:mb-3 [&_ol]:mb-3 [&_ol]:space-y-2 [&_ul]:space-y-1 [&_li]:text-white/60 [&_strong]:text-white/90 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_ol>li]:pl-1">
+                    <ReactMarkdown
+                      components={{
+                        code({ className, children, ...props }) {
+                          const isInline = !className;
+                          const codeStr = String(children).replace(/\n$/, '');
+                          const lang = className?.replace('language-', '') || '';
+                          
+                          if (!isInline && lang === 'sql' && codeStr.length > 10) {
+                            return (
+                              <div className="my-2">
+                                <div className="relative group/code">
+                                  <div className="flex items-center justify-between px-3 py-1 bg-white/[0.04] border border-white/[0.06] rounded-t-lg">
+                                    <span className="text-[9px] text-white/25 font-mono">sql</span>
+                                    <CopyCodeButton text={codeStr} />
+                                  </div>
+                                  <pre className="!mt-0 !rounded-t-none border border-t-0 border-white/[0.06] !bg-black/30"><code className={className} {...props}>{children}</code></pre>
+                                </div>
+                                <InlineSQLRunner sql={codeStr} supabaseUrl={supabaseConfig?.url} supabaseServiceKey={supabaseConfig?.anonKey} />
+                              </div>
+                            );
+                          }
+                          
+                          if (isInline) {
+                            return <code className="bg-white/[0.08] rounded px-1.5 py-0.5 text-[12px] font-mono text-cyan-300/80" {...props}>{children}</code>;
+                          }
+                          return (
+                            <div className="relative group/code my-2">
                               <div className="flex items-center justify-between px-3 py-1 bg-white/[0.04] border border-white/[0.06] rounded-t-lg">
-                                <span className="text-[9px] text-white/25 font-mono">sql</span>
+                                <span className="text-[9px] text-white/25 font-mono">{lang || 'code'}</span>
                                 <CopyCodeButton text={codeStr} />
                               </div>
                               <pre className="!mt-0 !rounded-t-none border border-t-0 border-white/[0.06] !bg-black/30"><code className={className} {...props}>{children}</code></pre>
                             </div>
-                            <InlineSQLRunner sql={codeStr} supabaseUrl={supabaseConfig?.url} supabaseServiceKey={supabaseConfig?.anonKey} />
-                          </div>
-                        );
-                      }
-                      
-                      if (isInline) {
-                        return <code className="bg-white/[0.08] rounded px-1.5 py-0.5 text-[12px] font-mono text-cyan-300/80" {...props}>{children}</code>;
-                      }
-                      return (
-                        <div className="relative group/code my-2">
-                          <div className="flex items-center justify-between px-3 py-1 bg-white/[0.04] border border-white/[0.06] rounded-t-lg">
-                            <span className="text-[9px] text-white/25 font-mono">{lang || 'code'}</span>
-                            <CopyCodeButton text={codeStr} />
-                          </div>
-                          <pre className="!mt-0 !rounded-t-none border border-t-0 border-white/[0.06] !bg-black/30"><code className={className} {...props}>{children}</code></pre>
-                        </div>
-                      );
-                    },
-                  }}
-                >
-                  {displayedText}
-                </ReactMarkdown>
-                <StreamingCursor visible={isStreaming && !!displayedText} />
-              </div>
-            )}
-          </StreamingText>
-        )}
+                          );
+                        },
+                      }}
+                    >
+                      {displayedText}
+                    </ReactMarkdown>
+                    <StreamingCursor visible={isStreaming && !!displayedText} />
+                  </div>
+                );
+              }}
+            </StreamingText>
+          );
+        })()}
 
-        {/* Removed: conversational summary text — task card is sufficient */}
+        {/* Conversational summary text is now always shown above */}
 
         {/* Build changes summary — created/modified/deleted */}
         {isCompleted && fileNames.length > 0 && !isStreaming && (
