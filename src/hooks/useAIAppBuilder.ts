@@ -14,6 +14,12 @@ import { detectEdgeFunctionIntent, buildEdgeFunctionDirective } from '@/componen
 import { parseAuthCommand } from '@/components/ai-builder/authFlowTemplates';
 // Wave 17 imports
 import { useAIConfidence, buildReasoningDirective } from './useAIConfidence';
+// Wave 18 imports
+import { useComponentReuseDetection } from './useComponentReuseDetection';
+import { useImportGraphContext } from './useImportGraphContext';
+import { useRuntimeErrorFix } from './useRuntimeErrorFix';
+import { useIncrementalApply } from './useIncrementalApply';
+import { usePostGenerationChangelog } from './usePostGenerationChangelog';
 
 // ── Helper: Build branding context from Firecrawl branding response ──
 function buildBrandingContext(branding: any): string {
@@ -913,6 +919,12 @@ export function useAIAppBuilder() {
   const { trimForContext } = useContextBudget({ maxChars: 120_000 });
   const schemaFromNL = useSchemaFromNL();
   const aiConfidence = useAIConfidence();
+  // Wave 18 hooks
+  const { buildReuseContext } = useComponentReuseDetection();
+  const { getRelatedFiles } = useImportGraphContext();
+  const runtimeErrorFix = useRuntimeErrorFix();
+  const incrementalApply = useIncrementalApply();
+  const changelog = usePostGenerationChangelog();
 
   // Issue 27 fix: Use a ref to read messages inside sendMessage without including it in deps
   const messagesRef = useRef(messages);
@@ -1227,6 +1239,21 @@ export function useAIAppBuilder() {
     const reasoningDirective = buildReasoningDirective(input, currentFiles);
     if (reasoningDirective) {
       systemParts.push(reasoningDirective);
+    }
+
+    // ── Wave 18: Component reuse & design token injection ──
+    if (currentFiles.length > 0) {
+      const reuseCtx = buildReuseContext(currentFiles);
+      if (reuseCtx) systemParts.push(reuseCtx);
+    }
+
+    // ── Wave 18: Import graph-aware dependency warnings ──
+    if (currentFiles.length > 1) {
+      const focusFiles = detectFocusFiles(input, currentFiles);
+      if (focusFiles.length > 0) {
+        const { graphSummary } = getRelatedFiles(focusFiles, currentFiles);
+        if (graphSummary) systemParts.push(graphSummary);
+      }
     }
 
     // ── Scope constraint for iterative edits with focus-file detection ──
@@ -2207,5 +2234,11 @@ ${JSON.stringify(brandingData.typography, null, 2)}` : ''}` });
     isStreamStalled: streaming.isStalled,
     // Ref-based streaming for chat panel (avoids workspace re-renders)
     streamingContentRef,
+    // Wave 18: Runtime error fix loop
+    runtimeErrorFix,
+    // Wave 18: Incremental streaming apply
+    incrementalApply,
+    // Wave 18: Post-generation changelog
+    changelog,
   };
 }
