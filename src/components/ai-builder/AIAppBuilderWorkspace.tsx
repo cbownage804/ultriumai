@@ -2753,9 +2753,12 @@ export function AIAppBuilderWorkspace() {
     return lastAssistant?.content || '';
   }, [messages]);
 
-  const handleFixError = useCallback((errorPrompt: string, errorMeta?: { source?: string; line?: number }) => {
+  const handleFixError = useCallback((errorPrompt: string, errorMeta?: { source?: string; line?: number; errors?: Array<{ msg?: string; source?: string; line?: number }> }) => {
+    const runtimeEvents = errorMeta?.errors?.length
+      ? `\n\n[REPORTED RUNTIME EVENTS]\n${errorMeta.errors.slice(0, 5).map((err, index) => `${index + 1}. ${err.msg || 'Unknown runtime error'}${err.source ? ` [${err.source}${err.line ? `:${err.line}` : ''}]` : ''}`).join('\n')}`
+      : '';
     const diagnosisContext = buildErrorDiagnosisContext(
-      { message: errorPrompt, source: errorMeta?.source, line: errorMeta?.line },
+      { message: `${errorPrompt}${runtimeEvents}`, source: errorMeta?.source, line: errorMeta?.line },
       project.files,
       undefined,
       getLastAIResponse(),
@@ -2770,6 +2773,7 @@ export function AIAppBuilderWorkspace() {
         handleFixError(`Runtime error in preview: ${e.data.message}`, {
           source: e.data.source,
           line: e.data.line,
+          errors: Array.isArray(e.data.errors) ? e.data.errors : undefined,
         });
       }
     };
