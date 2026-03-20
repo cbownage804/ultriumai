@@ -2234,5 +2234,11 @@ ${JSON.stringify(brandingData.typography, null, 2)}` : ''}` });
     isStreamStalled: streaming.isStalled,
     // Ref-based streaming for chat panel (avoids workspace re-renders)
     streamingContentRef,
+    // Wave 18: Runtime error fix loop
+    runtimeErrorFix,
+    // Wave 18: Incremental streaming apply
+    incrementalApply,
+    // Wave 18: Post-generation changelog
+    changelog,
   };
 }
