@@ -2299,7 +2299,7 @@ export function AIAppBuilderWorkspace() {
     const isProjectSwitch = lastLoadedProjectId.current != null && lastLoadedProjectId.current !== initialProjectId;
     lastLoadedProjectId.current = initialProjectId;
 
-    if (isProjectSwitch) {
+    if (isProjectSwitch || initialProjectId) {
       clearRepairWatchdog();
       backgroundGen.resetState?.();
       setIsGeneratingOverride(false);
@@ -3502,6 +3502,8 @@ export function AIAppBuilderWorkspace() {
   const COMPILED_CACHE_KEY = 'ai-builder-compiled-html';
   const [stableHTML, setStableHTML] = useState<string | null>(() => {
     try {
+      const hasProjectParam = new URLSearchParams(window.location.search).has('project');
+      if (hasProjectParam) return null;
       const cached = localStorage.getItem(COMPILED_CACHE_KEY);
       if (cached) return cached;
     } catch { /* */ }
