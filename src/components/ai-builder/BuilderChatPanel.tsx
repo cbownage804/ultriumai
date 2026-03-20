@@ -1528,15 +1528,15 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Wave 2 Step 2: Per-message revert button */}
+        {/* Lovable-style Revert button — prominent, standalone */}
         {isCompleted && !isStreaming && msg.filesSnapshot && onRevertToMessage && (
-          <div className="flex items-center gap-1.5 mt-1">
+          <div className="flex items-center gap-2 mt-1">
             <button
               onClick={() => onRevertToMessage(msg.id)}
-              className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] text-white/30 hover:text-white/60 hover:bg-white/[0.04] border border-transparent hover:border-white/[0.08] transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] text-white/40 hover:text-white/70 hover:bg-white/[0.06] border border-white/[0.06] hover:border-white/[0.12] transition-all"
               title="Revert project to the state before this generation"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
               Revert
             </button>
           </div>
