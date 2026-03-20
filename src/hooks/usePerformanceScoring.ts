@@ -230,8 +230,8 @@ function estimateBundleSize(files: ProjectFile[]): BundleSizeEstimate {
     }
 
     // Count inline images
-    const dataUrlSize = (f.content.match(/data:image\/[^"'\s]+/g) || [] as string[])
-      .reduce((s: number, d: string) => s + d.length, 0);
+    const dataUrlMatches: string[] = f.content.match(/data:image\/[^"'\s]+/g) || [];
+    const dataUrlSize = dataUrlMatches.reduce((s, d) => s + d.length, 0);
     imageKB += dataUrlSize / 1024;
   }
 
