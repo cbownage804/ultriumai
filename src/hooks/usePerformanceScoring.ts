@@ -84,13 +84,14 @@ function checkImageOptimization(files: ProjectFile[]): PerformanceSuggestion[] {
     }
 
     // Check for large inline data URLs
-    const dataUrls = f.content.match(/data:image\/[^"'\s]{1000,}/g) || [];
+    const dataUrls: string[] = f.content.match(/data:image\/[^"'\s]{1000,}/g) || [];
     if (dataUrls.length > 0) {
+      const totalSize = dataUrls.reduce((s, d) => s + d.length, 0);
       suggestions.push({
         id: `inline-img-${f.path}`,
         severity: 'warning',
         title: 'Move large inline images to assets',
-        description: `${dataUrls.length} large base64 image(s) embedded inline (~${Math.round(dataUrls.reduce((s: number, d: string) => s + d.length, 0) / 1024)}KB). Move to separate files for caching.`,
+        description: `${dataUrls.length} large base64 image(s) embedded inline (~${Math.round(totalSize / 1024)}KB). Move to separate files for caching.`,
         file: f.path,
         autoFixable: false,
       });
