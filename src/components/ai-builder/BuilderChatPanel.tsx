@@ -1095,9 +1095,11 @@ export function BuilderChatPanel({
     const durationMs = msg.generationDurationMs || (msg.buildSummary?.durationMs);
     const thoughtTime = durationMs ? `${Math.round(durationMs / 1000)}s` : '';
 
-    // Extract first line as intro text (before numbered list or task card)
+    // Split conversational text into intro (before code) and closing (after code)
+    // Lovable always shows conversational text alongside file cards
     const lines = displayText.split('\n').filter(l => l.trim());
     const introLine = lines.length > 0 && !lines[0].match(/^\d+\./) ? lines[0] : '';
+    const closingLines = introLine ? lines.slice(1).join('\n').trim() : '';
     const bodyText = introLine ? displayText.replace(introLine, '').trim() : displayText;
 
     return (
