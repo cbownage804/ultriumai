@@ -1223,6 +1223,12 @@ export function useAIAppBuilder() {
       systemParts.push(`[AUTH SCAFFOLD DIRECTIVE]\nThe user requested auth scaffolding (template: ${authTemplate}). Generate complete auth files:\n- AuthProvider.tsx with useAuth hook\n- ProtectedRoute.tsx\n- LoginPage.tsx with ${authTemplate === 'magic-link' ? 'magic link' : authTemplate === 'oauth' ? 'OAuth' : 'email/password'} authentication\n- SignupPage.tsx\nUse Supabase Auth. Include proper loading states and error handling. Use semantic design tokens from the project's CSS.`);
     }
 
+    // ── Wave 17: Chain-of-thought reasoning for complex requests ──
+    const reasoningDirective = buildReasoningDirective(input, currentFiles);
+    if (reasoningDirective) {
+      systemParts.push(reasoningDirective);
+    }
+
     // ── Scope constraint for iterative edits with focus-file detection ──
     const isIterativeEdit = currentFiles.length > 0;
     if (isIterativeEdit) {
