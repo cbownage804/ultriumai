@@ -2197,38 +2197,6 @@ export function BuilderChatPanel({
       {/* Questions slot — rendered right above the input like Lovable */}
       {questionsSlot}
 
-      {/* Contextual suggestion chips — shown when project has files and not generating */}
-      {!isGenerating && fileCount > 0 && displayMessages.length > 0 && (
-        <div className="px-3 pt-2 shrink-0">
-          <div className="flex flex-wrap gap-1.5 overflow-x-auto scrollbar-hide">
-            {(() => {
-              // Generate contextual suggestions based on project state
-              const chips: { label: string; prompt: string }[] = [];
-              const lastAssistant = [...messages].reverse().find(m => m.role === 'assistant');
-              const hasImages = latestFiles.some(f => /\.(png|jpg|jpeg|gif|svg|webp)$/i.test(f.path));
-              const hasAuth = latestFiles.some(f => f.content.includes('auth') || f.content.includes('login'));
-              const hasForm = latestFiles.some(f => f.content.includes('<form') || f.content.includes('onSubmit'));
-
-              if (!hasImages) chips.push({ label: 'Add a photo gallery', prompt: 'Add a photo gallery section with grid layout' });
-              if (!hasAuth && fileCount > 3) chips.push({ label: 'Add authentication', prompt: 'Add user authentication with login and signup' });
-              if (!hasForm) chips.push({ label: 'Add a contact form', prompt: 'Add a contact form with validation' });
-              chips.push({ label: 'Add customer reviews', prompt: 'Add a customer reviews/testimonials section' });
-              chips.push({ label: 'Make it responsive', prompt: 'Make the entire app fully responsive for all screen sizes' });
-              if (fileCount > 2) chips.push({ label: 'Test the site end-to-end', prompt: 'Review the site for bugs, accessibility issues, and broken links' });
-
-              return chips.slice(0, 4).map((chip, i) => (
-                <button
-                  key={i}
-                  onClick={() => onSend(chip.prompt)}
-                  className="px-3 py-1.5 rounded-lg text-[11px] bg-white/[0.04] border border-white/[0.08] text-white/50 hover:text-white/80 hover:bg-white/[0.08] hover:border-white/[0.15] transition-all whitespace-nowrap"
-                >
-                  {chip.label}
-                </button>
-              ));
-            })()}
-          </div>
-        </div>
-      )}
 
       {/* Wave 10: Component extraction suggestion */}
       {!isGenerating && (componentExtractionCount ?? 0) > 0 && componentExtractionPrompt && (
