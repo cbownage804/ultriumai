@@ -3922,25 +3922,7 @@ export function AIAppBuilderWorkspace() {
             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }}
         />
-        {/* Wave 9 Step 6: Environment Status Bar */}
-        <EnvironmentStatusBar
-          supabaseConnected={!!supabaseConfig?.url}
-          envVarCount={envVariables.filter(v => v.key && v.value).length}
-          edgeFunctionCount={edgeFunctions.length}
-          storageBucketCount={0}
-          onClickSupabase={() => openPanelByKey('showDatabase')}
-          onClickEnvVars={() => setShowEnvVars(true)}
-          onClickEdgeFunctions={() => setShowEdgeFunctions(true)}
-          onClickStorage={() => setShowStorage(true)}
-        />
-        {/* Wave 8 Step 5: Quick Settings Bar */}
-        <QuickSettingsBar
-          soundEnabled={soundEnabled}
-          onSoundToggle={(v) => { setSoundEnabled(v); localStorage.setItem('builder-sound', String(v)); }}
-          autoHealEnabled={autoHealEnabled}
-          onAutoHealToggle={setAutoHealEnabled}
-          selectedModel={selectedModel}
-        />
+        {/* Environment & Quick Settings merged into top bar area — removed separate strips to tighten layout */}
         {/* ── Main Content ── */}
         <div className="flex-1 overflow-hidden">
           {isMobile ? (
