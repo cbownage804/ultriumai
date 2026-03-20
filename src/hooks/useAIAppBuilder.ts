@@ -1116,49 +1116,36 @@ export function useAIAppBuilder() {
     if (visualContext) systemParts.push(visualContext);
 
     // ── Image generation intent detection ──
-    // If the user asks to "generate a logo/image/icon", call the image-generation edge function
-    // and pass the resulting data URL so the AI can embed it in code
-    // Skip if user already attached images — they want to USE those, not generate new ones
+    // Instead of calling an edge function that may not exist (and risks freezing),
+    // instruct the AI to generate a styled SVG/CSS logo or use a quality placeholder.
+    // This avoids huge base64 data URLs that crash the browser.
     const imageGenIntent = (imageDataUrls?.length) ? null : detectImageGenerationIntent(input);
-    let generatedImageDataUrls = imageDataUrls ? [...imageDataUrls] : [];
     if (imageGenIntent) {
-      toast.info('Generating image...', { duration: 4000 });
-      setThinkingPhase('analyzing');
-      try {
-        const imageGenerationResult = await Promise.race([
-          supabase.functions.invoke('image-generation', {
-            body: { prompt: imageGenIntent.prompt, quality: imageGenIntent.quality },
-          }),
-          new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('Image generation timed out')), 12000)
-          ),
-        ]);
-
-        const { data: imgData, error: imgError } = imageGenerationResult;
-        if (!imgError && imgData?.image) {
-          generatedImageDataUrls = [...generatedImageDataUrls, imgData.image];
-          toast.success('Image generated! Embedding in your project...');
-          systemParts.push(`[AI-GENERATED IMAGE]\nThe user asked to generate an image. An image has been generated and is attached as a data URL in this message.\nYou MUST use this generated image in the project by embedding the exact data URL in an <img> tag.\nPrompt used: "${imageGenIntent.prompt}"\n\nDo NOT generate a placeholder SVG or icon — use the ACTUAL generated image data URL provided.`);
-        } else {
-          console.warn('Image generation failed:', imgError);
-          toast.warning('Image generation failed — AI will use a placeholder instead.');
-        }
-      } catch (imgErr) {
-        console.warn('Image generation error:', imgErr);
-        toast.warning('Could not generate image — AI will use a placeholder instead.');
-      }
+      systemParts.push(
+        `[IMAGE REQUEST]\nThe user wants a new ${imageGenIntent.prompt}.\n` +
+        `Since we cannot generate raster images inline, create a beautiful, ` +
+        `modern SVG-based logo/icon component using clean vector paths, gradients, ` +
+        `and the project's color palette. Make it a reusable React component.\n` +
+        `Alternatively, use a high-quality icon from lucide-react styled to match the brand.\n` +
+        `Do NOT embed large base64 data URLs — they freeze the browser.`
+      );
+      toast.info('AI will create a vector logo component for you.', { duration: 3000 });
     }
-    // Replace imageDataUrls with potentially augmented version
-    let effectiveImageDataUrls = generatedImageDataUrls.length > 0 ? generatedImageDataUrls : imageDataUrls;
+
+    // Use user-attached images only (no generation)
+    let effectiveImageDataUrls = imageDataUrls;
 
     // Compress uploaded images before sending to AI — shrink below embed cap
     if (effectiveImageDataUrls?.length) {
       try {
         const { optimizeImage: optimizeImg } = await import('@/utils/imageOptimization');
+        const MAX_IMAGE_SIZE = 200_000; // 200KB cap to prevent browser freeze
         const compressed = await Promise.all(
-          effectiveImageDataUrls.map(url => optimizeImg(url, { maxWidth: 400, quality: 0.7, tryWebP: true }))
+          effectiveImageDataUrls.map(url => optimizeImg(url, { maxWidth: 300, quality: 0.6, tryWebP: true }))
         );
-        effectiveImageDataUrls = compressed.map(r => r.dataUrl);
+        effectiveImageDataUrls = compressed
+          .map(r => r.dataUrl)
+          .filter(url => url.length < MAX_IMAGE_SIZE); // drop oversized images
       } catch (compErr) {
         console.warn('Image compression failed, using originals:', compErr);
       }
