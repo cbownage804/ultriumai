@@ -474,15 +474,21 @@ export function BuilderChatPanel({
       setLocalStreamContent('');
       return;
     }
+    // Fast polling (300ms) for smooth token-by-token streaming feel
     const interval = setInterval(() => {
       const current = streamingContentRef.current;
-      // Skip updates for very large content -- only file names matter during streaming
-      if (current.length > 20_000) {
-        setLocalStreamContent(prev => prev ? '' : prev);
+      // For large content, only update periodically to avoid jank
+      if (current.length > 50_000) {
+        setLocalStreamContent(prev => {
+          // Still update file names by extracting them cheaply
+          const fileCount = (current.match(/===(?:FILE|EDIT):/g) || []).length;
+          const marker = `__files:${fileCount}__`;
+          return prev?.includes(marker) ? prev : current.slice(0, 2000) + marker;
+        });
         return;
       }
       setLocalStreamContent(prev => current !== prev ? current : prev);
-    }, 2500);
+    }, 300);
     return () => clearInterval(interval);
   }, [isGenerating, streamingContentRef]);
 
