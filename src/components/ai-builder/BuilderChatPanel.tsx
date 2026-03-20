@@ -1616,25 +1616,24 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Bottom action bar — Copy + Rollback */}
+        {/* Bottom action bar — Copy + Restore (Lovable style) */}
         {isCompleted && (
-          <div className="flex items-center gap-1 pt-1">
+          <div className="flex items-center gap-1.5 pt-1">
             <button
-              onClick={() => navigator.clipboard.writeText(msg.content)}
+              onClick={() => { navigator.clipboard.writeText(msg.content); toast.success('Copied'); }}
               className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors"
               title="Copy"
             >
               <Copy className="h-3.5 w-3.5" />
             </button>
-            {/* Wave 10: Restore to here */}
             {onRevertToMessage && msg.filesSnapshot && (
               <button
                 onClick={() => {
-                  if (confirm('Revert project files to this point? This cannot be undone.')) {
+                  if (confirm('Restore project files to this point? This cannot be undone.')) {
                     onRevertToMessage(msg.id);
                   }
                 }}
-                className="h-7 px-2 rounded-md flex items-center gap-1 text-white/20 hover:text-amber-400/80 hover:bg-amber-500/[0.08] transition-colors text-[10px]"
+                className="flex items-center gap-1.5 h-7 px-2.5 rounded-md text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors text-[11px]"
                 title="Restore files to this point"
               >
                 <Clock className="h-3 w-3" />
