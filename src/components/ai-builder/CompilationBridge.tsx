@@ -338,8 +338,32 @@ export function CompilationBridge({
     } catch { return null; }
   }, [openLKGDB]);
 
-  // On mount: restore LKG from sessionStorage (fast) then upgrade from IndexedDB (durable)
+  // On mount: restore LKG only when there is real recovery context.
+  // Never resurrect an old preview for a fresh blank /app-builder launch.
   useEffect(() => {
+    const hasProjectParam = (() => {
+      try {
+        return new URLSearchParams(window.location.search).has('project');
+      } catch {
+        return false;
+      }
+    })();
+
+    const hasRecoverableDraft = (() => {
+      try {
+        const raw = localStorage.getItem('ai-builder-draft');
+        if (!raw) return false;
+        const draft = JSON.parse(raw) as { files?: unknown[]; messages?: unknown[] };
+        return (draft.files?.length || 0) > 0 || (draft.messages?.length || 0) > 0;
+      } catch {
+        return false;
+      }
+    })();
+
+    if (isNewSessionPending() || (!hasProjectParam && !hasRecoverableDraft)) {
+      return;
+    }
+
     // Fast path: sessionStorage
     try {
       const cached = sessionStorage.getItem(LKG_STORAGE_KEY);
@@ -352,6 +376,7 @@ export function CompilationBridge({
         onCompilingChangeRef.current?.(false);
       }
     } catch {}
+
     // Slow path: IndexedDB (more durable, survives tab close)
     loadLKGFromIDB().then(idbHtml => {
       if (idbHtml && isPreviewValid(idbHtml) && !stableHTMLRef.current) {
@@ -363,7 +388,7 @@ export function CompilationBridge({
         onCompilingChangeRef.current?.(false);
       }
     });
-  }, []);
+  }, [loadLKGFromIDB, onStableHTML]);
 
   // ── stableHTML state ──
   const [stableHTML, setStableHTMLLocal] = useState<string | null>(null);
