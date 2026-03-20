@@ -1693,25 +1693,6 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Wave 5 Step 3: AI Follow-Up Suggestions after generation */}
-        {isCompleted && !isStreaming && isLast && (hasFiles || fileNames.length > 0) && (() => {
-          const followUps = generateFollowUpSuggestions(msg.diffSummary, fileNames);
-          if (followUps.length === 0) return null;
-          return (
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              {followUps.map((fu, i) => (
-                <button
-                  key={i}
-                  onClick={() => onSend(fu.prompt)}
-                  className="px-2.5 py-1.5 rounded-lg text-[11px] bg-white/[0.04] border border-white/[0.06] text-white/50 hover:text-white/80 hover:bg-white/[0.08] transition-all flex items-center gap-1.5"
-                >
-                  <span>{fu.icon}</span>
-                  {fu.label}
-                </button>
-              ))}
-            </div>
-          );
-        })()}
 
         {/* Lovable-style plan action bar — Approve, Edit, or Override */}
         {showApproveButton && (
