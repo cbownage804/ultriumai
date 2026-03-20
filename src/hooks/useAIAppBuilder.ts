@@ -8,6 +8,10 @@ import { useContextBudget } from './useContextBudget';
 import { detectSupabaseIntents, buildSupabaseContext, buildConversationMemory, buildErrorDiagnosisContext, analyzeConversationComplexity, generateProactiveSuggestions, compressConversationHistory, detectCommunicationStyle, extractUserPreferences, buildPreferencesContext, detectWorkflowIntent, buildEnhancedErrorContext, buildVisualIntelligenceContext, detectWebSearchIntent, buildWebSearchContext, detectURLCloneIntent, buildFileManifest, calculateContextBudget, type ContextBudgetInfo } from '@/components/ai-builder/SupabaseConversational';
 import { parseMigrationBlocks, stripMigrationBlocks, type MigrationBlock } from '@/components/ai-builder/MigrationApprovalCard';
 import { parseEdgeFunctionBlocks, stripEdgeFunctionBlocks, type EdgeFunctionBlock } from '@/components/ai-builder/EdgeFunctionCard';
+// Wave 16 imports
+import { useSchemaFromNL } from './useSchemaFromNL';
+import { detectEdgeFunctionIntent, buildEdgeFunctionDirective } from '@/components/ai-builder/edgeFunctionScaffolds';
+import { parseAuthCommand } from '@/components/ai-builder/authFlowTemplates';
 
 // ── Helper: Build branding context from Firecrawl branding response ──
 function buildBrandingContext(branding: any): string {
