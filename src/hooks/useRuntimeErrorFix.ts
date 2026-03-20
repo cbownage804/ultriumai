@@ -26,7 +26,70 @@ interface FixAttempt {
 
 const MAX_AUTO_FIX_ATTEMPTS = 2;
 const COOLDOWN_MS = 10_000;
-const ROOT_MOUNT_FILES = ['index.html', 'src/main.tsx', 'src/main.ts', 'src/App.tsx', 'src/App.ts'];
+const ROOT_MOUNT_FILES = [
+  'index.html',
+  'main.tsx',
+  'main.ts',
+  'src/main.tsx',
+  'src/main.ts',
+  'App.tsx',
+  'App.ts',
+  'src/App.tsx',
+  'src/App.ts',
+];
+
+function findProjectFile(files: ProjectFile[], filePath: string) {
+  const normalized = filePath.replace(/^\.?\//, '');
+  const baseName = normalized.split('/').pop();
+
+  return files.find(f => f.path === normalized)
+    ?? files.find(f => f.path.endsWith(`/${normalized}`))
+    ?? files.find(f => baseName ? f.path.split('/').pop() === baseName : false);
+}
+
+function extractMountIdsFromHtml(content: string): string[] {
+  const ids = new Set<string>();
+  const matches = content.matchAll(/<([a-z][^>]*?)\sid=["']([^"']+)["'][^>]*>/gi);
+  for (const match of matches) {
+    if (match[2]) ids.add(match[2]);
+  }
+  return Array.from(ids);
+}
+
+function extractCreateRootTargets(content: string): string[] {
+  const targets = new Set<string>();
+  const getElementMatches = content.matchAll(/document\.getElementById\((['"`])([^'"`]+)\1\)/g);
+  for (const match of getElementMatches) {
+    if (match[2]) targets.add(match[2]);
+  }
+  return Array.from(targets);
+}
+
+function buildMountIntegritySummary(files: ProjectFile[]): string[] {
+  const htmlFile = findProjectFile(files, 'index.html');
+  const entryFiles = ROOT_MOUNT_FILES
+    .filter(path => path !== 'index.html')
+    .map(path => findProjectFile(files, path))
+    .filter((file, index, arr): file is ProjectFile => Boolean(file) && arr.findIndex(candidate => candidate?.path === file?.path) === index);
+
+  const htmlIds = htmlFile ? extractMountIdsFromHtml(htmlFile.content) : [];
+  const entryTargets = entryFiles.flatMap(file => extractCreateRootTargets(file.content));
+  const uniqueTargets = Array.from(new Set(entryTargets));
+
+  const summary = [
+    `Mount element ids in index.html: ${htmlIds.length > 0 ? htmlIds.join(', ') : '(none found)'}`,
+    `createRoot/getElementById targets: ${uniqueTargets.length > 0 ? uniqueTargets.join(', ') : '(none found)'}`,
+  ];
+
+  if (htmlIds.length > 0 && uniqueTargets.length > 0) {
+    const mismatches = uniqueTargets.filter(target => !htmlIds.includes(target));
+    if (mismatches.length > 0) {
+      summary.push(`Mismatch detected: ${mismatches.join(', ')} ${mismatches.length === 1 ? 'is' : 'are'} targeted by React but missing from index.html.`);
+    }
+  }
+
+  return summary;
+}
 
 function decodeKnownRuntimeError(error: RuntimeError): {
   decodedMessage?: string;
@@ -42,7 +105,7 @@ function decodeKnownRuntimeError(error: RuntimeError): {
       decodedMessage: 'React error #299: createRoot target container is not a DOM element. The preview is missing the expected mount element or main.tsx is targeting the wrong container id.',
       rootCause: 'missing-root-container',
       targetFile: 'src/main.tsx',
-      fixStrategy: 'Ensure index.html contains a mount element like <div id="root"></div>, ensure main.tsx/createRoot targets that exact id, and avoid replacing/removing the root container inside rendered HTML.',
+      fixStrategy: 'Ensure index.html contains a mount element like <div id="root"></div> or <div id="app"></div>, ensure the real entry file targets that exact id, and avoid deleting or replacing that container.',
       relatedFiles: ROOT_MOUNT_FILES,
     };
   }
@@ -141,7 +204,7 @@ function extractFileFromSource(source: string): string | undefined {
 }
 
 function appendFileContext(parts: string[], files: ProjectFile[], filePath: string, errorLine?: number) {
-  const targetFile = files.find(f => f.path === filePath || f.path.endsWith(filePath));
+  const targetFile = findProjectFile(files, filePath);
   if (!targetFile) return;
 
   const lines = targetFile.content.split('\n');
@@ -172,13 +235,18 @@ function buildFixPrompt(error: RuntimeError, classification: ReturnType<typeof c
     appendFileContext(parts, files, classification.targetFile, error.line);
   }
 
+  if (classification.rootCause === 'missing-root-container') {
+    parts.push('\nMount integrity summary:');
+    parts.push(...buildMountIntegritySummary(files).map(line => `- ${line}`));
+  }
+
   for (const relatedFile of classification.relatedFiles || []) {
     if (relatedFile !== classification.targetFile) {
       appendFileContext(parts, files, relatedFile);
     }
   }
 
-  parts.push('\nCheck mount integrity first: verify index.html still has the root element and main.tsx mounts into that exact id.');
+  parts.push('\nCheck mount integrity first: verify index.html still has the root/app element and the actual entry file mounts into that exact id. Prefer fixing index.html + the real entry file only.');
   parts.push(`\nFix ONLY the error above. Use ===EDIT: path=== for minimal changes. Do not restructure or restyle anything.`);
 
   return parts.join('\n');

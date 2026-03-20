@@ -224,13 +224,41 @@ export function buildErrorDiagnosisContext(
   consoleErrors?: string[],
   lastAIResponse?: string,
 ): string {
+  const findProjectFile = (filePath: string) => {
+    if (!projectFiles) return undefined;
+    const normalized = filePath.replace(/^\.?\//, '');
+    const baseName = normalized.split('/').pop();
+
+    return projectFiles.find(f => f.path === normalized)
+      ?? projectFiles.find(f => f.path.endsWith(`/${normalized}`))
+      ?? projectFiles.find(f => baseName ? f.path.split('/').pop() === baseName : false);
+  };
+
+  const extractMountIdsFromHtml = (content: string) => {
+    const ids = new Set<string>();
+    const matches = content.matchAll(/<([a-z][^>]*?)\sid=["']([^"']+)["'][^>]*>/gi);
+    for (const match of matches) {
+      if (match[2]) ids.add(match[2]);
+    }
+    return Array.from(ids);
+  };
+
+  const extractCreateRootTargets = (content: string) => {
+    const targets = new Set<string>();
+    const matches = content.matchAll(/document\.getElementById\((['"`])([^'"`]+)\1\)/g);
+    for (const match of matches) {
+      if (match[2]) targets.add(match[2]);
+    }
+    return Array.from(targets);
+  };
+
   const sections: string[] = ['[ERROR DIAGNOSIS CONTEXT]'];
   sections.push(`Error: ${error.message}`);
   if (error.source) sections.push(`File: ${error.source}${error.line ? `:${error.line}` : ''}`);
 
   const msg = error.message.toLowerCase();
   const isReact299 = msg.includes('minified react error #299') || msg.includes('invariant=299');
-  const mountFiles = ['index.html', 'src/main.tsx', 'src/main.ts', 'src/App.tsx', 'src/App.ts'];
+  const mountFiles = ['index.html', 'main.tsx', 'main.ts', 'src/main.tsx', 'src/main.ts', 'App.tsx', 'App.ts', 'src/App.tsx', 'src/App.ts'];
 
   // Classify error type for targeted fix
   if (isReact299) {
@@ -263,9 +291,24 @@ export function buildErrorDiagnosisContext(
     }
 
     if (isReact299) {
+      const htmlFile = findProjectFile('index.html');
+      const mountTargets = mountFiles
+        .filter(path => path !== 'index.html')
+        .map(path => findProjectFile(path))
+        .filter((file, index, arr): file is { path: string; content: string } => Boolean(file) && arr.findIndex(candidate => candidate?.path === file?.path) === index);
+      const htmlIds = htmlFile ? extractMountIdsFromHtml(htmlFile.content) : [];
+      const createRootTargets = Array.from(new Set(mountTargets.flatMap(file => extractCreateRootTargets(file.content))));
+
       sections.push('\n[ROOT MOUNT FILES TO CHECK FIRST]');
+      sections.push(`Mount ids found in index.html: ${htmlIds.length > 0 ? htmlIds.join(', ') : '(none found)'}`);
+      sections.push(`createRoot targets found in entry files: ${createRootTargets.length > 0 ? createRootTargets.join(', ') : '(none found)'}`);
+      const mismatchedTargets = createRootTargets.filter(target => !htmlIds.includes(target));
+      if (mismatchedTargets.length > 0) {
+        sections.push(`Detected mismatch: ${mismatchedTargets.join(', ')} ${mismatchedTargets.length === 1 ? 'is' : 'are'} mounted by React but missing from index.html.`);
+      }
+
       for (const path of mountFiles) {
-        const file = projectFiles.find(f => f.path === path);
+        const file = findProjectFile(path);
         if (!file) continue;
         sections.push(`--- ${file.path} ---`);
         sections.push('```');
@@ -318,7 +361,7 @@ export function buildErrorDiagnosisContext(
   }
 
   if (isReact299) {
-    sections.push('\nROOT-CHECK RULE: Do not change styling first. Verify the preview still contains the root mount element and that ReactDOM.createRoot(document.getElementById(...)) uses the exact same id.');
+    sections.push('\nROOT-CHECK RULE: Do not change styling first. Verify the preview still contains the root/app mount element and that ReactDOM.createRoot(document.getElementById(...)) uses the exact same id. If ids mismatch, fix only index.html and the real entry file.');
   }
 
   sections.push('\nFIX RULES: You MUST output a 🔍 Diagnosis block (Symptom, Root cause, Fix approach) BEFORE any code. Diagnose the root cause, not just the symptom. Output only the changed files.');
