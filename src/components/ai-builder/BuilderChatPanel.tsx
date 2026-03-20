@@ -1101,7 +1101,7 @@ export function BuilderChatPanel({
     return (
       <div className={cn("flex gap-3", isChatMode && "")}>
         <AIAvatar className="mt-0.5 shrink-0" />
-        <div className={cn("flex-1 space-y-3 min-w-0", isChatMode && "border-l-2 border-teal-500/30 pl-3")}>
+        <div className="flex-1 space-y-3 min-w-0">
         {/* "Thought for Xs" — Lovable style collapsible */}
         {(isCompleted || isStreaming) && (
           <button
