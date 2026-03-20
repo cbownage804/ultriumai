@@ -1202,6 +1202,23 @@ export function useAIAppBuilder() {
       } catch { /* ignore */ }
     }
 
+    // ── Wave 16: NL→Schema directive injection ──
+    if (schemaFromNL.detectSchemaIntent(input) && supabaseConfig) {
+      systemParts.push(schemaFromNL.buildSchemaDirective(input));
+    }
+
+    // ── Wave 16: Edge function scaffold directive ──
+    const edgeFnIntent = detectEdgeFunctionIntent(input);
+    if (edgeFnIntent) {
+      systemParts.push(buildEdgeFunctionDirective(edgeFnIntent));
+    }
+
+    // ── Wave 16: Auth flow detection ──
+    const authTemplate = parseAuthCommand(input);
+    if (authTemplate) {
+      systemParts.push(`[AUTH SCAFFOLD DIRECTIVE]\nThe user requested auth scaffolding (template: ${authTemplate}). Generate complete auth files:\n- AuthProvider.tsx with useAuth hook\n- ProtectedRoute.tsx\n- LoginPage.tsx with ${authTemplate === 'magic-link' ? 'magic link' : authTemplate === 'oauth' ? 'OAuth' : 'email/password'} authentication\n- SignupPage.tsx\nUse Supabase Auth. Include proper loading states and error handling. Use semantic design tokens from the project's CSS.`);
+    }
+
     // ── Scope constraint for iterative edits with focus-file detection ──
     const isIterativeEdit = currentFiles.length > 0;
     if (isIterativeEdit) {
