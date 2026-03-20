@@ -2352,30 +2352,175 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Bottom suggestion chips removed — hero template cards handle this */}
 
-        {/* Lovable-style input area with integrated mode toggle */}
-        <div data-tour="chat-input" className={cn("rounded-xl border bg-white/[0.05] transition-all overflow-hidden shadow-lg focus-within:ring-2 focus-within:ring-offset-0", mode === 'build' ? "border-violet-500/30 shadow-violet-500/5 focus-within:ring-violet-500/40 focus-within:border-violet-500/50" : "border-teal-500/30 shadow-teal-500/5 focus-within:ring-teal-500/40 focus-within:border-teal-500/50")}>
-          <div className="flex items-end gap-2 px-3 py-2.5">
-            {/* Lovable-style Plus menu */}
+        {/* Lovable-style input area */}
+        <div data-tour="chat-input" className="rounded-2xl border border-white/[0.12] bg-white/[0.04] transition-all overflow-hidden focus-within:border-white/[0.2]">
+          <div className="px-3 py-2.5">
+            <textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => {
+                setInput(e.target.value);
+                const cursorPos = e.target.selectionStart || 0;
+                const beforeCursor = e.target.value.slice(0, cursorPos);
+                const atIdx = beforeCursor.lastIndexOf('@');
+                if (atIdx >= 0 && projectFiles) {
+                  const afterAt = beforeCursor.slice(atIdx + 1);
+                  if (!afterAt.includes(' ') && afterAt.length < 60) {
+                    setShowFileMentions(true);
+                    setFileMentionQuery(afterAt);
+                    setMentionCursorPos(cursorPos);
+                  } else {
+                    setShowFileMentions(false);
+                  }
+                } else {
+                  setShowFileMentions(false);
+                }
+              }}
+              onKeyDown={handleKeyDown}
+              onPaste={handlePaste}
+              placeholder="Tell UltriumAI what to do..."
+              rows={2}
+              className="w-full bg-transparent text-sm text-white/90 placeholder:text-white/30 resize-none outline-none focus:outline-none focus:ring-0 border-none min-h-[48px] max-h-[200px]"
+            />
+          </div>
+
+          {/* Mentioned file chips */}
+          {mentionedFilePaths.length > 0 && (
+            <div className="flex flex-wrap gap-1 px-3 pb-1.5">
+              {mentionedFilePaths.map(p => (
+                <span key={p} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-cyan-500/10 border border-cyan-500/20 text-[10px] text-cyan-300 font-mono">
+                  @{p.split('/').pop()}
+                  <button onClick={() => setMentionedFilePaths(prev => prev.filter(x => x !== p))} className="text-cyan-400/50 hover:text-cyan-300">
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* @-file mention autocomplete */}
+          {showFileMentions && fileMentionSuggestions.length > 0 && (
+            <div className="mx-2 mb-1 bg-[#1a1a22] border border-white/[0.1] rounded-xl shadow-2xl overflow-hidden max-h-[200px] overflow-y-auto">
+              <div className="px-3 py-1.5 border-b border-white/[0.06]">
+                <span className="text-[10px] text-white/30 uppercase tracking-wider font-medium">Mention a file</span>
+              </div>
+              {fileMentionSuggestions.map(f => (
+                <button key={f.path} onClick={() => handleFileMentionSelect(f.path)} className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors text-left">
+                  <FileCode className="h-3.5 w-3.5 text-white/30 shrink-0" />
+                  <span className="font-mono truncate">{f.shortName}</span>
+                  <span className="text-[10px] text-white/20 ml-auto truncate">{f.path}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Bottom toolbar — Lovable style: + Visual edits 💬 🎤 ⬆️ */}
+          <div className="flex items-center gap-1 px-2 py-1.5 border-t border-white/[0.06]">
             <Popover open={plusMenuOpen} onOpenChange={setPlusMenuOpen}>
               <PopoverTrigger asChild>
-                <button
-                  className="h-7 w-7 rounded-lg flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors shrink-0"
-                >
+                <button className="h-7 w-7 rounded-lg flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/[0.05] transition-colors shrink-0">
                   <Plus className="h-4 w-4" />
                 </button>
               </PopoverTrigger>
               <PopoverContent side="top" align="start" className="w-56 p-1 bg-[#1a1a22] border-white/[0.1] shadow-xl">
-                {/* Navigation group */}
-                <button
-                  onClick={() => { setPlusMenuOpen(false); onShowSettings?.(); }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
-                >
-                  <Settings className="h-4 w-4 text-white/40" />
-                  <span className="flex-1 text-left">Project settings</span>
-                  <kbd className="text-[10px] text-white/25 font-mono">Ctrl+.</kbd>
+                <button onClick={() => { setPlusMenuOpen(false); onShowSettings?.(); }} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors">
+                  <Settings className="h-4 w-4 text-white/40" /> Project settings
                 </button>
+                <button onClick={() => { setPlusMenuOpen(false); onShowHistory?.(); }} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors">
+                  <Clock className="h-4 w-4 text-white/40" /> History
+                </button>
+                <button onClick={() => { setPlusMenuOpen(false); onShowKnowledge?.(); }} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors">
+                  <BookOpen className="h-4 w-4 text-white/40" /> Knowledge
+                </button>
+                <button onClick={() => { setPlusMenuOpen(false); onShowGitHub?.(); }} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors">
+                  <GitBranch className="h-4 w-4 text-white/40" /> GitHub
+                </button>
+                <div className="border-t border-white/[0.06] my-1" />
+                <button onClick={async () => { setPlusMenuOpen(false); try { const iframe = document.querySelector('iframe[title="Preview"]') as HTMLIFrameElement | null; if (!iframe) { toast.error('No preview'); return; } const html2canvas = (await import('html2canvas')).default; const canvas = await html2canvas(iframe.contentDocument?.body || iframe, { width: iframe.clientWidth, height: iframe.clientHeight, scale: 0.5, useCORS: true, allowTaint: true, backgroundColor: '#0a0a0a', logging: false }); setImagePreviews(prev => [...prev, canvas.toDataURL('image/png', 0.8)]); toast.success('Screenshot captured'); } catch { toast.error('Could not capture screenshot'); } }} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors">
+                  <Camera className="h-4 w-4 text-white/40" /> Screenshot
+                </button>
+                <button onClick={() => { setPlusMenuOpen(false); fileInputRef.current?.click(); }} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors">
+                  <Paperclip className="h-4 w-4 text-white/40" /> Attach
+                </button>
+              </PopoverContent>
+            </Popover>
+            <input ref={fileInputRef} type="file" accept="image/*,.pdf,.txt,.md,.json,.csv,.html,.css,.js,.ts,.tsx,.jsx" multiple onChange={handleImageUpload} className="hidden" />
+
+            {/* Visual Edits button */}
+            {onToggleVisualEdit && fileCount > 0 && (
+              <button onClick={onToggleVisualEdit} className={cn("flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-[12px] font-medium transition-all shrink-0", isVisualEditActive ? "text-cyan-400 bg-cyan-500/10" : "text-white/40 hover:text-white/60 hover:bg-white/[0.05]")}>
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>Visual edits</span>
+              </button>
+            )}
+
+            {editingMessageId && (
+              <div className="flex items-center gap-1.5 text-[10px] text-amber-400/70 bg-amber-500/10 px-2 py-1 rounded-md">
+                <Pencil className="h-2.5 w-2.5" /><span>Editing</span>
+                <button onClick={() => { setEditingMessageId(null); setInput(''); }} className="text-white/30 hover:text-white/60 ml-1"><X className="h-3 w-3" /></button>
+              </div>
+            )}
+
+            <div className="flex-1" />
+
+            {/* Chat/Build toggle */}
+            <button onClick={() => onModeChange(mode === 'discuss' ? 'build' : 'discuss')} className="h-7 w-7 rounded-lg flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/[0.05] transition-colors shrink-0" title={mode === 'discuss' ? 'Build mode' : 'Chat mode'}>
+              <MessageSquare className="h-4 w-4" />
+            </button>
+
+            {/* Mic */}
+            <button className="h-7 w-7 rounded-lg flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/[0.05] transition-colors shrink-0" onClick={() => toast('Voice input coming soon', { icon: '🎤' })}>
+              <Mic className="h-4 w-4" />
+            </button>
+
+            {/* Send / Stop */}
+            {isGenerating ? (
+              <button onClick={onStop} className="h-8 w-8 rounded-full bg-white/10 text-white/60 flex items-center justify-center hover:bg-white/15 transition-colors shrink-0">
+                <Square className="h-3 w-3" />
+              </button>
+            ) : (
+              <button onClick={handleSend} disabled={!input.trim()} className={cn("h-8 w-8 rounded-full flex items-center justify-center transition-all shrink-0", input.trim() ? "bg-white text-black hover:bg-white/90" : "bg-white/[0.08] text-white/20")}>
+                <Send className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Model picker + mode badge */}
+        {selectedModel && onModelChange && (
+          <div className="flex items-center justify-between">
+            <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium", mode === 'discuss' ? "bg-teal-500/15 text-teal-400" : "bg-violet-500/15 text-violet-400")}>
+              {mode === 'discuss' ? 'Chat · 1cr' : 'Build · 3cr'}
+            </span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="flex items-center gap-1 px-2 py-1 rounded-full text-[10px] text-white/30 hover:text-white/50 hover:bg-white/[0.04] transition-all border border-transparent hover:border-white/[0.08]">
+                  <span>{AI_MODELS.find(m => m.id === selectedModel)?.icon || '🤖'}</span>
+                  <span className="font-medium">{AI_MODELS.find(m => m.id === selectedModel)?.label || 'Model'}</span>
+                  <ChevronDown className="h-2.5 w-2.5" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent side="top" align="end" className="w-52 p-1 bg-[#1a1a22] border-white/[0.1]">
+                <div className="px-2 py-1.5 text-[9px] text-white/25 uppercase tracking-wider font-medium">AI Model</div>
+                {AI_MODELS.map(model => (
+                  <button key={model.id} onClick={() => onModelChange(model.id)} className={cn("w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[12px] transition-colors", selectedModel === model.id ? "bg-white/[0.08] text-white/90" : "text-white/60 hover:text-white hover:bg-white/[0.06]")}>
+                    <span className="text-sm">{model.icon}</span>
+                    <div className="flex-1 text-left">
+                      <div className="font-medium">{model.label}</div>
+                      <div className="text-[10px] text-white/30">{model.desc}</div>
+                    </div>
+                    {selectedModel === model.id && <Check className="h-3 w-3 text-cyan-400" />}
+                  </button>
+                ))}
+              </PopoverContent>
+            </Popover>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
                 <button
                   onClick={() => { setPlusMenuOpen(false); onShowHistory?.(); }}
                   className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
