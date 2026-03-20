@@ -3542,13 +3542,12 @@ export function AIAppBuilderWorkspace() {
       compiledForHostingRef.current = html;
       // Delay to allow rendering to settle (fonts, images loading)
       setTimeout(() => {
-        const pid = currentProjectId; // captured via closure at call time - but we need latest
         // Read from the sessionIdRef which is always up-to-date
         const projectIdForCapture = sessionIdRef.current;
         if (projectIdForCapture && projectIdForCapture !== 'draft') {
           captureAndUpload(html, projectIdForCapture).catch(() => {});
         }
-      }, 5000);
+      }, 7000);
     }
   }, []);
 
