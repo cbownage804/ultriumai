@@ -1090,9 +1090,9 @@ export function BuilderChatPanel({
           .trim()
       : text;
 
-    // Calculate elapsed time for "Thought for Xs" display
-    const elapsedSeconds = msg.timestamp ? Math.round((Date.now() - msg.timestamp.getTime()) / 1000) : 0;
-    const thoughtTime = elapsedSeconds > 0 && elapsedSeconds < 600 ? `${elapsedSeconds}s` : '';
+    // Calculate elapsed time for "Thought for Xs" display — prefer stored duration
+    const durationMs = msg.generationDurationMs || (msg.buildSummary?.durationMs);
+    const thoughtTime = durationMs ? `${Math.round(durationMs / 1000)}s` : '';
 
     // Extract first line as intro text (before numbered list or task card)
     const lines = displayText.split('\n').filter(l => l.trim());
@@ -1528,15 +1528,15 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Wave 2 Step 2: Per-message revert button */}
+        {/* Lovable-style Revert button — prominent, standalone */}
         {isCompleted && !isStreaming && msg.filesSnapshot && onRevertToMessage && (
-          <div className="flex items-center gap-1.5 mt-1">
+          <div className="flex items-center gap-2 mt-1">
             <button
               onClick={() => onRevertToMessage(msg.id)}
-              className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] text-white/30 hover:text-white/60 hover:bg-white/[0.04] border border-transparent hover:border-white/[0.08] transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] text-white/40 hover:text-white/70 hover:bg-white/[0.06] border border-white/[0.06] hover:border-white/[0.12] transition-all"
               title="Revert project to the state before this generation"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
               Revert
             </button>
           </div>
@@ -1616,25 +1616,24 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Bottom action bar — Copy + Rollback */}
+        {/* Bottom action bar — Copy + Restore (Lovable style) */}
         {isCompleted && (
-          <div className="flex items-center gap-1 pt-1">
+          <div className="flex items-center gap-1.5 pt-1">
             <button
-              onClick={() => navigator.clipboard.writeText(msg.content)}
+              onClick={() => { navigator.clipboard.writeText(msg.content); toast.success('Copied'); }}
               className="h-7 w-7 rounded-md flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors"
               title="Copy"
             >
               <Copy className="h-3.5 w-3.5" />
             </button>
-            {/* Wave 10: Restore to here */}
             {onRevertToMessage && msg.filesSnapshot && (
               <button
                 onClick={() => {
-                  if (confirm('Revert project files to this point? This cannot be undone.')) {
+                  if (confirm('Restore project files to this point? This cannot be undone.')) {
                     onRevertToMessage(msg.id);
                   }
                 }}
-                className="h-7 px-2 rounded-md flex items-center gap-1 text-white/20 hover:text-amber-400/80 hover:bg-amber-500/[0.08] transition-colors text-[10px]"
+                className="flex items-center gap-1.5 h-7 px-2.5 rounded-md text-white/20 hover:text-white/50 hover:bg-white/[0.05] transition-colors text-[11px]"
                 title="Restore files to this point"
               >
                 <Clock className="h-3 w-3" />
