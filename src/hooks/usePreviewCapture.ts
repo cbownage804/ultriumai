@@ -14,13 +14,26 @@ export function usePreviewCapture() {
   const captureInProgress = useRef(false);
   const lastCapturedHash = useRef<string | null>(null);
 
-  /** Simple hash to deduplicate identical captures */
+  /** Simple hash to deduplicate identical captures — sample more of the content */
   const quickHash = (str: string): string => {
     let hash = 0;
-    for (let i = 0; i < Math.min(str.length, 2000); i++) {
+    const len = str.length;
+    // Sample start, middle, and end for better differentiation
+    const sampleSize = Math.min(len, 3000);
+    const startEnd = Math.min(1500, Math.floor(sampleSize / 2));
+    for (let i = 0; i < startEnd; i++) {
       hash = ((hash << 5) - hash) + str.charCodeAt(i);
       hash |= 0;
     }
+    // Also sample from the middle/end of the document
+    const midStart = Math.max(0, Math.floor(len / 2) - 500);
+    for (let i = midStart; i < Math.min(len, midStart + 1000); i++) {
+      hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      hash |= 0;
+    }
+    // Include length in hash for extra differentiation
+    hash = ((hash << 5) - hash) + len;
+    hash |= 0;
     return Math.abs(hash).toString(36);
   };
 
