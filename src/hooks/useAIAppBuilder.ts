@@ -1241,6 +1241,21 @@ export function useAIAppBuilder() {
       systemParts.push(reasoningDirective);
     }
 
+    // ── Wave 18: Component reuse & design token injection ──
+    if (currentFiles.length > 0) {
+      const reuseCtx = buildReuseContext(currentFiles);
+      if (reuseCtx) systemParts.push(reuseCtx);
+    }
+
+    // ── Wave 18: Import graph-aware dependency warnings ──
+    if (currentFiles.length > 1) {
+      const focusFiles = detectFocusFiles(input, currentFiles);
+      if (focusFiles.length > 0) {
+        const { graphSummary } = getRelatedFiles(focusFiles, currentFiles);
+        if (graphSummary) systemParts.push(graphSummary);
+      }
+    }
+
     // ── Scope constraint for iterative edits with focus-file detection ──
     const isIterativeEdit = currentFiles.length > 0;
     if (isIterativeEdit) {
