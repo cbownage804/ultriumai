@@ -219,3 +219,52 @@ export default function Navbar() {
     expect(repairs.some(r => r.includes('orphaned hook closure'))).toBe(true);
   });
 });
+
+describe('autoRepairFiles duplicate block removal', () => {
+  it('removes duplicate consecutive code blocks', () => {
+    const files = [
+      makeTsx('src/App.tsx', `import React from 'react';
+export default function App() {
+  return (
+    <div>
+      <p>Line A</p>
+      <p>Line B</p>
+      <p>Line C</p>
+      <p>Line A</p>
+      <p>Line B</p>
+      <p>Line C</p>
+      <p>Line D</p>
+    </div>
+  );
+}`),
+    ];
+
+    const { files: repairedFiles, repairs } = autoRepairFiles(files);
+    const content = repairedFiles[0].content;
+
+    const lineACount = (content.match(/<p>Line A<\/p>/g) || []).length;
+    expect(lineACount).toBe(1);
+    expect(repairs.some(r => r.includes('duplicated line'))).toBe(true);
+  });
+});
+
+describe('autoRepairFiles orphaned textarea', () => {
+  it('removes orphaned </textarea> without matching open', () => {
+    const files = [
+      makeTsx('src/App.tsx', `import React from 'react';
+export default function App() {
+  return (
+    <div>
+      <input placeholder="Item description..." />
+    </textarea></div>
+  );
+}`),
+    ];
+
+    const { files: repairedFiles, repairs } = autoRepairFiles(files);
+    const content = repairedFiles[0].content;
+
+    expect(content).not.toContain('</textarea>');
+    expect(repairs.some(r => r.includes('orphaned </textarea>'))).toBe(true);
+  });
+});

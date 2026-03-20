@@ -222,6 +222,27 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
         repairs.push(`${f.path}: replaced class= with className=`);
       }
 
+      // ── 6b0. Remove orphaned </textarea> before JSX balance runs ──
+      // AI sometimes generates `</textarea></div>` where `</textarea>` doesn't match an opening tag.
+      {
+        const textareaClosePattern = /<\/textarea\s*>/gi;
+        const textareaOpenPattern = /<textarea\b/gi;
+        const openCount = (content.match(textareaOpenPattern) || []).length;
+        const closeCount = (content.match(textareaClosePattern) || []).length;
+        if (closeCount > openCount) {
+          let removed = 0;
+          content = content.replace(/<\/textarea\s*>/gi, (match) => {
+            if (removed < openCount) {
+              removed++;
+              return match;
+            }
+            return '';
+          });
+          changed = true;
+          repairs.push(`${f.path}: removed ${closeCount - openCount} orphaned </textarea> tag(s)`);
+        }
+      }
+
       // ── 6b. Fix mismatched/missing JSX closing tags (HTML + fragments) ──
       const jsxBalance = fixJsxTagBalance(content);
       if (jsxBalance.fixed) {
@@ -266,7 +287,50 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
       }
     }
 
-    // ── 7. Fix broken import paths (missing extension or ./) ──
+    // ── 6e. Remove duplicate consecutive code blocks (truncation/retry artifact) ──
+    // AI sometimes duplicates a block of lines when retrying. Detect 3+ consecutive
+    // lines that appear again immediately after, and remove the duplicate.
+    {
+      const cLines = content.split('\n');
+      const minBlockSize = 3;
+      let i = 0;
+      const cleanedLines: string[] = [];
+      let dupRemoved = 0;
+
+      while (i < cLines.length) {
+        let foundDup = false;
+        for (let blockSize = Math.min(20, Math.floor((cLines.length - i) / 2)); blockSize >= minBlockSize; blockSize--) {
+          if (i + blockSize * 2 > cLines.length) continue;
+          let isMatch = true;
+          for (let j = 0; j < blockSize; j++) {
+            if (cLines[i + j].trim() !== cLines[i + blockSize + j].trim()) {
+              isMatch = false;
+              break;
+            }
+          }
+          if (isMatch) {
+            for (let j = 0; j < blockSize; j++) {
+              cleanedLines.push(cLines[i + j]);
+            }
+            i += blockSize * 2;
+            dupRemoved += blockSize;
+            foundDup = true;
+            break;
+          }
+        }
+        if (!foundDup) {
+          cleanedLines.push(cLines[i]);
+          i++;
+        }
+      }
+
+      if (dupRemoved > 0) {
+        content = cleanedLines.join('\n');
+        changed = true;
+        repairs.push(`${f.path}: removed ${dupRemoved} duplicated line(s) (retry artifact)`);
+      }
+    }
+
     if (['ts', 'tsx', 'js', 'jsx'].includes(ext)) {
       // Fix imports from '@components/...' → '@/components/...'
       const badAliasPattern = /from\s+['"]@(?!\/)([^'"]+)['"]/g;
