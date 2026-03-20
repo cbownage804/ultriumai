@@ -2179,18 +2179,6 @@ export function BuilderChatPanel({
       {questionsSlot}
 
 
-      {/* Wave 10: Component extraction suggestion */}
-      {!isGenerating && (componentExtractionCount ?? 0) > 0 && componentExtractionPrompt && (
-        <div className="px-3 pt-2 shrink-0">
-          <button
-            onClick={() => onSend(componentExtractionPrompt)}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-500/[0.06] border border-violet-500/20 text-[11px] text-violet-300 hover:bg-violet-500/[0.1] hover:border-violet-500/30 transition-all"
-          >
-            <Wrench className="h-3.5 w-3.5 shrink-0" />
-            <span>Extract {componentExtractionCount} inline component{componentExtractionCount > 1 ? 's' : ''} to separate files</span>
-          </button>
-        </div>
-      )}
 
       {/* Wave 2 Step 3: Context window indicator — Wave 10: Expandable */}
       {contextBudget && contextBudget.percentUsed > 30 && (
