@@ -66,7 +66,7 @@ export function WorkspaceTopBar({
   return (
     <>
       {/* Top Bar — Lovable-style clean layout */}
-      <div className="flex items-center justify-between px-3 h-12 border-b border-white/[0.06] bg-[#0c0c0c] shrink-0" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      <div className="flex items-center justify-between px-3 h-11 border-b border-white/[0.06] bg-[#0c0c0c] shrink-0" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         {/* LEFT: Logo + Project name + Undo/Redo */}
         <div className="flex items-center gap-2.5 min-w-0">
           <a href="/ai-studio" className="shrink-0 flex items-center justify-center h-7 w-7">
