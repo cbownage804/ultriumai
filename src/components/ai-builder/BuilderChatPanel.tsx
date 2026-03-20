@@ -941,7 +941,7 @@ export function BuilderChatPanel({
   const renderAssistantMessage = (msg: BuilderMessage, isLast: boolean) => {
     const isStreaming = isGenerating && isLast;
 
-     // During streaming, skip expensive getDisplayContent entirely — just extract file names cheaply
+     // During streaming, show conversational text + file progress (Lovable-style)
      if (isStreaming) {
        const fileNames: string[] = [];
        // Only scan first 5KB for file names to avoid CPU spikes on large content
@@ -953,27 +953,51 @@ export function BuilderChatPanel({
        const planContent = msg.content.length > 3000 ? msg.content.slice(0, 3000) : msg.content;
        const planSteps = msg.planSteps || extractPlanSteps(planContent, true, false);
 
+       // Extract conversational text before the first ===FILE: or ===EDIT: block
+       const firstFileIdx = msg.content.search(/^===(?:FILE|EDIT):/m);
+       const conversationalText = firstFileIdx > 0 
+         ? msg.content.slice(0, firstFileIdx).trim()
+         : !msg.content.includes('===FILE:') && !msg.content.includes('===EDIT:') && msg.content.length > 0
+           ? msg.content.trim()
+           : '';
+
     return (
       <div className="flex gap-3">
         <AIAvatar className="mt-0.5" />
         <div className="flex-1 space-y-3">
-          <button
-            onClick={() => setThinkingCollapsed(prev => ({ ...prev, [msg.id]: !(thinkingCollapsed[msg.id] ?? true) }))}
-            className="flex items-center gap-1.5 text-white/30 text-[13px] hover:text-white/50 transition-colors"
-          >
-            <ChevronDown className={cn("h-3 w-3 transition-transform", (thinkingCollapsed[msg.id] ?? true) && "-rotate-90")} />
-            <span>Thinking...</span>
-          </button>
+          {/* Conversational text — streams in real-time like Lovable */}
+          {conversationalText && (
+            <StreamingText content={conversationalText} isStreaming={true} speed={6}>
+              {(displayed) => (
+                <div className="text-[13px] text-white/70 leading-relaxed prose prose-invert prose-sm max-w-none">
+                  <ReactMarkdown>{displayed}</ReactMarkdown>
+                  <StreamingCursor visible={displayed.length < conversationalText.length} />
+                </div>
+              )}
+            </StreamingText>
+          )}
+
+          {/* Generation status bar */}
+          <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-4 py-3 max-w-[320px]">
+            <div className="flex items-center gap-3">
+              <Loader2 className="h-4 w-4 text-cyan-400 animate-spin shrink-0" />
+              <span className="text-[13px] font-medium text-white/80">
+                {fileNames.length > 0 ? `Writing ${fileNames.length} file${fileNames.length !== 1 ? 's' : ''}...` : 'Generating code'}
+              </span>
+              <ElapsedTimer isActive={isGenerating} />
+              <button onClick={onStop} className="ml-auto text-[12px] text-cyan-400 hover:text-cyan-300 font-medium transition-colors">Stop</button>
+            </div>
+          </div>
+
           {planSteps && planSteps.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-white/[0.08] overflow-hidden bg-white/[0.02]">
+            <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-white/[0.08] overflow-hidden bg-white/[0.02] max-w-[320px]">
               {/* Lovable-style Editing header with file pill */}
               {fileNames.length > 0 && (
                 <div className="px-4 py-3 border-b border-white/[0.06]">
                   <div className="flex items-center gap-2">
                     <span className="text-[14px] font-semibold text-white/90">Editing</span>
-                    <span className="text-[12px] font-mono px-2 py-0.5 rounded-md bg-white/[0.08] text-white/60 border border-white/[0.08]">{fileNames[0]?.split('/').pop()}</span>
+                    <span className="text-[12px] font-mono px-2 py-0.5 rounded-md bg-white/[0.08] text-white/60 border border-white/[0.08]">{fileNames[fileNames.length - 1]?.split('/').pop()}</span>
                     {fileNames.length > 1 && <span className="text-[11px] text-white/30">+{fileNames.length - 1}</span>}
-                    <ChevronDown className="h-3.5 w-3.5 text-white/25 ml-auto" />
                   </div>
                   <p className="text-[12px] text-white/40 mt-1">{planSteps.find(s => s.status === 'active')?.label || 'Working...'}</p>
                 </div>
@@ -981,41 +1005,29 @@ export function BuilderChatPanel({
               {/* WORKING / NEXT section labels */}
               <div className="px-4 py-2.5 space-y-1">
                 {(() => {
-                  const activeIdx = planSteps.findIndex(s => s.status === 'active');
                   const workingSteps = planSteps.filter(s => s.status === 'active');
                   const nextSteps = planSteps.filter(s => s.status === 'pending');
+                  const doneSteps = planSteps.filter(s => s.status === 'done');
                   return (
                     <>
-                      {workingSteps.length > 0 && (
-                        <>
-                          <div className="flex items-center gap-2 py-1">
-                            <div className="h-px flex-1 bg-white/[0.06]" />
-                            <span className="text-[10px] font-bold text-white/30 tracking-widest uppercase">Working</span>
-                            <div className="h-px flex-1 bg-white/[0.06]" />
-                          </div>
-                          {workingSteps.map((step, i) => (
-                            <div key={`w-${i}`} className="flex items-center gap-2.5 py-1.5">
-                              <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-400 shrink-0" />
-                              <span className="text-[13px] text-white/80">{step.label}</span>
-                            </div>
-                          ))}
-                        </>
-                      )}
-                      {nextSteps.length > 0 && (
-                        <>
-                          <div className="flex items-center gap-2 py-1 mt-1">
-                            <div className="h-px flex-1 bg-white/[0.06]" />
-                            <span className="text-[10px] font-bold text-white/30 tracking-widest uppercase">Next</span>
-                            <div className="h-px flex-1 bg-white/[0.06]" />
-                          </div>
-                          {nextSteps.map((step, i) => (
-                            <div key={`n-${i}`} className="flex items-center gap-2.5 py-1.5">
-                              <div className="h-3.5 w-3.5 rounded-full border border-white/[0.12] shrink-0" />
-                              <span className="text-[13px] text-white/25">{step.label}</span>
-                            </div>
-                          ))}
-                        </>
-                      )}
+                      {doneSteps.length > 0 && doneSteps.map((step, i) => (
+                        <div key={`d-${i}`} className="flex items-center gap-2.5 py-1">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400/60 shrink-0" />
+                          <span className="text-[13px] text-white/40">{step.label}</span>
+                        </div>
+                      ))}
+                      {workingSteps.length > 0 && workingSteps.map((step, i) => (
+                        <div key={`w-${i}`} className="flex items-center gap-2.5 py-1.5">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-400 shrink-0" />
+                          <span className="text-[13px] text-white/80">{step.label}</span>
+                        </div>
+                      ))}
+                      {nextSteps.length > 0 && nextSteps.map((step, i) => (
+                        <div key={`n-${i}`} className="flex items-center gap-2.5 py-1.5">
+                          <div className="h-3.5 w-3.5 rounded-full border border-white/[0.12] shrink-0" />
+                          <span className="text-[13px] text-white/25">{step.label}</span>
+                        </div>
+                      ))}
                     </>
                   );
                 })()}
@@ -1031,10 +1043,21 @@ export function BuilderChatPanel({
             </motion.div>
           )}
           {fileNames.length > 0 && (!planSteps || planSteps.length === 0) && (
-            <div className="rounded-2xl border border-white/[0.08] px-4 py-3 bg-white/[0.02]">
-              <div className="flex items-center gap-2.5">
-                <FileCode className="h-4 w-4 text-cyan-400" />
-                <span className="text-[13px] text-white/70 font-medium">{fileNames.length} file{fileNames.length !== 1 ? 's' : ''} in progress...</span>
+            <div className="rounded-2xl border border-white/[0.08] px-4 py-3 bg-white/[0.02] max-w-[320px]">
+              <div className="space-y-1.5">
+                {fileNames.slice(-3).map((name, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    {i < fileNames.slice(-3).length - 1 ? (
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400/60 shrink-0" />
+                    ) : (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-400 shrink-0" />
+                    )}
+                    <span className="text-[12px] text-white/60 font-mono truncate">{name.split('/').pop()}</span>
+                  </div>
+                ))}
+                {fileNames.length > 3 && (
+                  <span className="text-[11px] text-white/30 pl-5">+{fileNames.length - 3} more</span>
+                )}
               </div>
             </div>
           )}
