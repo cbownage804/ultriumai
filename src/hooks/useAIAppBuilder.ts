@@ -1166,6 +1166,38 @@ export function useAIAppBuilder() {
         }
       }
     } catch { /* ignore */ }
+
+    // ── Wave 15: Inject dependency map for import-aware generation ──
+    if (currentFiles.length > 1 && currentFiles.length <= 50) {
+      try {
+        const depImports: string[] = [];
+        const allPaths = currentFiles.map(f => f.path);
+        for (const f of currentFiles) {
+          if (!/\.(tsx?|jsx?)$/.test(f.path)) continue;
+          const depRegex = /import\s+(?:(?:\{[^}]+\})|(?:\w+)|(?:\*\s+as\s+\w+))\s+from\s+['"]([^'"]+)['"]/g;
+          const resolved: string[] = [];
+          let dm;
+          while ((dm = depRegex.exec(f.content)) !== null) {
+            const imp = dm[1];
+            if (!imp.startsWith('.') && !imp.startsWith('@/')) continue;
+            let res = imp;
+            if (res.startsWith('@/')) res = 'src/' + res.slice(2);
+            else {
+              const dir = f.path.substring(0, f.path.lastIndexOf('/'));
+              res = dir + '/' + res.replace(/^\.\//, '');
+            }
+            const exts = ['', '.ts', '.tsx', '.js', '.jsx', '/index.ts', '/index.tsx'];
+            const found = exts.map(e => res + e).find(c => allPaths.includes(c));
+            if (found) resolved.push(found);
+          }
+          if (resolved.length > 0) depImports.push(`${f.path} → ${resolved.join(', ')}`);
+        }
+        if (depImports.length > 0) {
+          systemParts.push(`[DEPENDENCY MAP]\n${depImports.join('\n')}\n[/DEPENDENCY MAP]`);
+        }
+      } catch { /* ignore */ }
+    }
+
     // ── Scope constraint for iterative edits with focus-file detection ──
     const isIterativeEdit = currentFiles.length > 0;
     if (isIterativeEdit) {
