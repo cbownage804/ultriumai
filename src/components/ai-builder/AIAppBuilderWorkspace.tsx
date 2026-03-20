@@ -2358,7 +2358,9 @@ export function AIAppBuilderWorkspace() {
         ? loaded.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 30)
         : '';
 
-      if (loadedFiles.length > 0 && nextPreviewSlug) {
+      const hasPersistedProjectContext = loadedFiles.length > 0 && nextPreviewSlug;
+
+      if (hasPersistedProjectContext) {
         setPreviewSlug(nextPreviewSlug);
         try {
           const { data: { user } } = await supabase.auth.getUser();
@@ -3606,9 +3608,16 @@ export function AIAppBuilderWorkspace() {
     const handleVisible = async () => {
       if (document.visibilityState !== 'visible') return;
 
+      const hasRecoveryContext = !!initialProjectId || project.files.length > 0 || messages.length > 0;
+
       // If stableHTML is gone (browser evicted localStorage, long idle, etc.)
-      // attempt recovery from IndexedDB LKG before remounting
+      // attempt recovery only when there is actual project/draft context.
       if (!stableHTMLRef.current) {
+        if (!hasRecoveryContext || isNewSessionPending()) {
+          console.info('[Workspace] Skipping preview cache recovery for untouched fresh session');
+          return;
+        }
+
         console.info('[Workspace] Tab visible but stableHTML is null — attempting IDB LKG recovery');
         try {
           const db = await new Promise<IDBDatabase>((resolve, reject) => {
