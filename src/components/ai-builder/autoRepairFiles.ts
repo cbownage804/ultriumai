@@ -222,24 +222,32 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
         repairs.push(`${f.path}: replaced class= with className=`);
       }
 
-      // ── 6b0. Remove orphaned </textarea> before JSX balance runs ──
-      // AI sometimes generates `</textarea></div>` where `</textarea>` doesn't match an opening tag.
+      // ── 6b0. Remove orphaned/out-of-order </textarea> before JSX balance runs ──
+      // AI sometimes generates `</textarea></div>` after an <input> or other node,
+      // which can still have equal open/close counts but is structurally invalid.
       {
-        const textareaClosePattern = /<\/textarea\s*>/gi;
-        const textareaOpenPattern = /<textarea\b/gi;
-        const openCount = (content.match(textareaOpenPattern) || []).length;
-        const closeCount = (content.match(textareaClosePattern) || []).length;
-        if (closeCount > openCount) {
-          let removed = 0;
-          content = content.replace(/<\/textarea\s*>/gi, (match) => {
-            if (removed < openCount) {
-              removed++;
-              return match;
-            }
-            return '';
-          });
+        const originalContent = content;
+        let openTextareaDepth = 0;
+        let removedCount = 0;
+
+        content = content.replace(/<textarea\b[^>]*>|<\/textarea\s*>/gi, (match) => {
+          if (/^<textarea\b/i.test(match)) {
+            openTextareaDepth += 1;
+            return match;
+          }
+
+          if (openTextareaDepth > 0) {
+            openTextareaDepth -= 1;
+            return match;
+          }
+
+          removedCount += 1;
+          return '';
+        });
+
+        if (removedCount > 0 && content !== originalContent) {
           changed = true;
-          repairs.push(`${f.path}: removed ${closeCount - openCount} orphaned </textarea> tag(s)`);
+          repairs.push(`${f.path}: removed ${removedCount} orphaned </textarea> tag(s)`);
         }
       }
 
