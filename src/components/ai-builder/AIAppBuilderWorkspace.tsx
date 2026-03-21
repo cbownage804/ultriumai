@@ -2005,9 +2005,8 @@ export function AIAppBuilderWorkspace() {
   useEffect(() => {
     if (prevIsGeneratingRef.current && !isGenerating && latestFiles.length > 0) {
       const duration = buildStartTimeRef.current ? Date.now() - buildStartTimeRef.current : 0;
-      dedupeToast('success', `Generated ${latestFiles.length} file${latestFiles.length > 1 ? 's' : ''}`, {
-        action: { label: 'View', onClick: () => setRightTab('preview') },
-      });
+      // Don't toast "Generated X files" here — the deferred "Build complete" toast
+      // in handleCompileStateChange will fire once compilation actually succeeds.
       setBuildNotifications(prev => [{
         id: crypto.randomUUID(),
         type: 'success' as const,
