@@ -492,6 +492,13 @@ export function AIAppBuilderWorkspace() {
   const componentExtractor = useComponentExtractor(project.files);
   // Ref for project.files — used in commandActions to avoid re-renders on file changes
   const projectFilesRef = useSyncRef(project.files);
+  // O(1) file lookups — replaces ~80 linear project.files.find() scans
+  const fileMap = useMemo(() => {
+    const map = new Map<string, ProjectFile>();
+    for (const f of project.files) map.set(f.path, f);
+    return map;
+  }, [project.files]);
+  const fileMapRef = useSyncRef(fileMap);
   // showPromptHistory now managed by usePanelManager
   const {
     branches, activeBranch, activeBranchName,
