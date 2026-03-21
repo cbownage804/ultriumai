@@ -3582,28 +3582,47 @@ export function AIAppBuilderWorkspace() {
     const pending = pendingPostBuildRef.current;
     if (!pending) return;
 
-    setBuildNotifications(prev => [{
-      id: crypto.randomUUID(),
-      type: 'success' as const,
-      title: `Generated ${pending.latestFileCount} file${pending.latestFileCount > 1 ? 's' : ''}`,
-      timestamp: new Date(),
-      read: false,
-    }, ...prev].slice(0, 50));
-    buildLog.logBuildComplete(pending.latestFileCount, pending.duration);
-    buildChime.onGeneratingChange(false);
-    setBuildCount(prev => {
-      const newBuildCount = prev + 1;
-      if ([10, 25, 50, 100].includes(newBuildCount)) {
-        import('canvas-confetti').then(m => m.default({ particleCount: 100, spread: 70, origin: { y: 0.6 } }));
-        dedupeToast('success', `🔥 ${newBuildCount} builds today! You're on fire!`);
-      }
-      return newBuildCount;
-    });
-    hotRecovery.markAsGood([...files]);
-    conflictResolver.setBaseSnapshot([...files]);
-    versionTimeline.addSnapshot(`AI: ${pending.promptLabel}`, [...files], 'ai-generation', undefined, pending.commitMsg);
-    pendingPostBuildRef.current = null;
-  }, [buildChime, buildLog, conflictResolver, hotRecovery, lkgDiff, versionTimeline]);
+    const runPostBuildTasks = () => {
+      setBuildNotifications(prev => [{
+        id: crypto.randomUUID(),
+        type: 'success' as const,
+        title: `Generated ${pending.latestFileCount} file${pending.latestFileCount > 1 ? 's' : ''}`,
+        timestamp: new Date(),
+        read: false,
+      }, ...prev].slice(0, 50));
+      buildLog.logBuildComplete(pending.latestFileCount, pending.duration);
+      buildChime.onGeneratingChange(false);
+      setBuildCount(prev => {
+        const newBuildCount = prev + 1;
+        if ([10, 25, 50, 100].includes(newBuildCount)) {
+          import('canvas-confetti').then(m => m.default({ particleCount: 100, spread: 70, origin: { y: 0.6 } }));
+          dedupeToast('success', `🔥 ${newBuildCount} builds today! You're on fire!`);
+        }
+        return newBuildCount;
+      });
+      hotRecovery.markAsGood([...files]);
+      conflictResolver.setBaseSnapshot([...files]);
+      versionTimeline.addSnapshot(`AI: ${pending.promptLabel}`, [...files], 'ai-generation', undefined, pending.commitMsg);
+      buildAnalytics.recordBuild({
+        type: 'build',
+        durationMs: pending.duration,
+        filesGenerated: pending.latestFileCount,
+        creditsUsed: pending.actualCredits,
+        success: true,
+        errorCount: 0,
+        validationScore: 100,
+        promptLength: pending.promptLength,
+      });
+      pendingPostBuildRef.current = null;
+      postBuildIdleRef.current = null;
+    };
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      postBuildIdleRef.current = (window as Window & { requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number }).requestIdleCallback?.(() => runPostBuildTasks(), { timeout: 1500 }) ?? null;
+    } else {
+      window.setTimeout(runPostBuildTasks, 0);
+    }
+  }, [buildAnalytics, buildChime, buildLog, conflictResolver, hotRecovery, lkgDiff, versionTimeline]);
 
   const handleStableHTML = useCallback((html: string | null) => {
     const changed = html !== stableHTMLRef.current;
