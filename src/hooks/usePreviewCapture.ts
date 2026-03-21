@@ -10,9 +10,12 @@ const RETRY_DELAYS = [2000, 4000]; // exponential backoff
  * Uses an offscreen iframe for reliable same-origin rendering + html2canvas.
  * Includes retry with exponential backoff and deduplication.
  */
+const THROTTLE_MS = 60_000; // Only allow one capture per 60s to protect main thread
+
 export function usePreviewCapture() {
   const captureInProgress = useRef(false);
   const lastCapturedHash = useRef<string | null>(null);
+  const lastCaptureTime = useRef(0);
 
   /** Simple hash to deduplicate identical captures — sample more of the content */
   const quickHash = (str: string): string => {

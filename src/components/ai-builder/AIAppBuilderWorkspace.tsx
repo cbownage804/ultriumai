@@ -3659,18 +3659,10 @@ export function AIAppBuilderWorkspace() {
     if (html && changed) {
       setPreviewRefreshKey(k => k + 1);
     }
-    // ── Auto-capture thumbnail when valid compiled HTML arrives ──
-    // Use refs to avoid stale closure (handleStableHTML has [] deps)
+    // Just update the ref for hosting — thumbnail capture is handled ONCE
+    // in the post-generation effect to avoid duplicate html2canvas runs
     if (html && changed && isPreviewValidFn(html)) {
       compiledForHostingRef.current = html;
-      // Delay to allow rendering to settle (fonts, images loading)
-      setTimeout(() => {
-        // Read from the sessionIdRef which is always up-to-date
-        const projectIdForCapture = sessionIdRef.current;
-        if (projectIdForCapture && projectIdForCapture !== 'draft') {
-          captureAndUpload(html, projectIdForCapture).catch(() => {});
-        }
-      }, 7000);
     }
   }, []);
 
