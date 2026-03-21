@@ -1510,6 +1510,19 @@ export function AIAppBuilderWorkspace() {
         const parsedErrors = parseViteErrors(error!.errors);
         const antiPatternCtx = errorPatterns.getAntiPatternPrompt();
 
+        // Fallback: if no failing files were identified from error messages,
+        // include all project files so the AI has full context to fix syntax issues.
+        // Without this, the AI gets zero file content and produces broken/generic output.
+        if (failingFiles.length === 0 && project.files.length > 0) {
+          const coreExts = ['.tsx', '.ts', '.jsx', '.js', '.css', '.html'];
+          for (const f of project.files) {
+            if (coreExts.some(ext => f.path.endsWith(ext))) {
+              failingFiles.push({ path: f.path, content: f.content });
+            }
+          }
+          console.info('[AutoHeal] No specific failing file found — including all', failingFiles.length, 'project files');
+        }
+
         const healPrompt = autoHeal.buildHealPrompt(error!.message, error!.errors, diffContext, failingFiles, parsedErrors, antiPatternCtx);
         autoHeal.recordAttempt(error!.message);
 
