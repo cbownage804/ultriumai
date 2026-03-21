@@ -2233,33 +2233,7 @@ export function AIAppBuilderWorkspace() {
     }
   }, [isGenerating, isInRecentProjectLoadCooldown]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-save to IndexedDB (Phase 10 — fast local persistence)
-  const sessionId = currentProjectId || 'draft';
-  useEffect(() => {
-    if (isGenerating) return;
-    // Defer saves for 3s after generation to avoid cascading with cloud save
-    const elapsed = Date.now() - postGenTimestampRef.current;
-    if (elapsed < 3000) {
-      const timer = setTimeout(() => {
-        idbPersistence.saveToIDB(sessionId, project.name, project.files, messages);
-      }, 3000 - elapsed);
-      return () => clearTimeout(timer);
-    }
-    idbPersistence.saveToIDB(sessionId, project.name, project.files, messages);
-  }, [project.files, project.name, messages, sessionId, isGenerating]);
-
-  // Auto-save draft to localStorage (survives refresh)
-  useEffect(() => {
-    if (isGenerating) return;
-    const elapsed = Date.now() - postGenTimestampRef.current;
-    if (elapsed < 3000) {
-      const timer = setTimeout(() => {
-        saveDraft(project.name, project.files, messages);
-      }, 3000 - elapsed);
-      return () => clearTimeout(timer);
-    }
-    saveDraft(project.name, project.files, messages);
-  }, [project.files, project.name, messages, saveDraft, isGenerating]);
+  // (IDB + localStorage auto-save consolidated into Step 3 orchestrated effect above)
 
   // Immediately persist draft when user switches tabs or navigates away
   // Issue 21 fix: Assign properties directly instead of allocating a new object per render
