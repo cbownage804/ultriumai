@@ -1083,13 +1083,48 @@ window.addEventListener('message', function(e) {
               </div>
             )}
           </div>
-        ) : (isGenerating || isCompiling || compileState === 'error') ? (
+        ) : (isGenerating || isCompiling) ? (
           <SkeletonPreview
             projectFiles={projectFiles}
             completedFileCount={completedFileCount}
             isGenerating={isGenerating}
-            isCompiling={isCompiling || compileState === 'error'}
+            isCompiling={isCompiling}
           />
+        ) : compileState === 'error' ? (
+          <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden">
+            <img
+              src={previewBgNeon}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover opacity-20"
+              aria-hidden="true"
+            />
+            <div className="absolute inset-0 bg-black/50" />
+            <div className="relative z-10 space-y-4 px-6 max-w-md">
+              <div className="h-3 w-3 rounded-full bg-red-400 mx-auto animate-pulse" />
+              <h3 className="font-semibold text-lg text-red-300/90 tracking-tight">
+                Preview failed to compile
+              </h3>
+              <p className="text-sm text-white/60 leading-relaxed">
+                {compileError?.message || 'The latest changes could not be compiled into a preview.'}
+              </p>
+              {compileError?.errors?.length ? (
+                <div className="rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-left text-xs text-white/45 max-h-32 overflow-auto">
+                  {compileError.errors.slice(0, 4).map((errorLine, index) => (
+                    <div key={`${index}-${errorLine}`} className="font-mono leading-relaxed">
+                      {errorLine}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+              <button
+                onClick={onRetryCompile}
+                className="px-4 py-2 rounded-lg bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-medium transition-colors"
+              >
+                <RefreshCw className="h-3 w-3 inline mr-1.5" />
+                Retry compile
+              </button>
+            </div>
+          </div>
         ) : projectFiles.length > 0 && !isGoldenProject ? (
           <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden">
             <img
