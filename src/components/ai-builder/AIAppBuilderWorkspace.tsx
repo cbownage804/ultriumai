@@ -2147,13 +2147,13 @@ export function AIAppBuilderWorkspace() {
   // Auto-save to IndexedDB (Phase 10 — fast local persistence)
   const sessionId = currentProjectId || 'draft';
   useEffect(() => {
-    if (isGenerating) return; // skip during streaming to prevent browser freeze
-    // Issue 13 fix: Defer save for 1s after generation ends to let compilation take priority
+    if (isGenerating) return;
+    // Defer saves for 3s after generation to avoid cascading with cloud save
     const elapsed = Date.now() - postGenTimestampRef.current;
-    if (elapsed < 1000) {
+    if (elapsed < 3000) {
       const timer = setTimeout(() => {
         idbPersistence.saveToIDB(sessionId, project.name, project.files, messages);
-      }, 1000 - elapsed);
+      }, 3000 - elapsed);
       return () => clearTimeout(timer);
     }
     idbPersistence.saveToIDB(sessionId, project.name, project.files, messages);
@@ -2161,13 +2161,12 @@ export function AIAppBuilderWorkspace() {
 
   // Auto-save draft to localStorage (survives refresh)
   useEffect(() => {
-    if (isGenerating) return; // skip during streaming to prevent browser freeze
-    // Issue 13 fix: Defer save for 1s after generation ends
+    if (isGenerating) return;
     const elapsed = Date.now() - postGenTimestampRef.current;
-    if (elapsed < 1000) {
+    if (elapsed < 3000) {
       const timer = setTimeout(() => {
         saveDraft(project.name, project.files, messages);
-      }, 1000 - elapsed);
+      }, 3000 - elapsed);
       return () => clearTimeout(timer);
     }
     saveDraft(project.name, project.files, messages);
