@@ -1452,15 +1452,25 @@ export function AIAppBuilderWorkspace() {
     console.info('[Workspace] compileState →', state, error ? error.message : '');
 
     // ── Auto-heal: on compile error, automatically re-prompt AI to fix ──
-    // Use refs to avoid stale closures — runtime errors can fire after generation
-    // completes but before React re-renders the callback with updated state.
-    const isRuntime = error?.message?.startsWith('Runtime error:');
-    const healDelay = isRuntime ? 2500 : 1500; // extra delay for runtime errors to let generation state settle
+    // IMPORTANT: Only handle COMPILE errors here. Runtime errors are handled
+    // separately by handleAutoFixError (via onAutoFixError from the preview).
+    // Running both causes duplicate sendMessage calls that cascade and freeze the page.
+    const isRuntime = error?.message?.startsWith('Runtime error:') || error?.message?.includes('runtime');
+    if (isRuntime) {
+      console.info('[AutoHeal] Skipping compile-path heal for runtime error (handled by handleAutoFixError)');
+      return;
+    }
+    const healDelay = 1500;
 
     const tryAutoHeal = () => {
       // Re-check generation state via refs (not stale closure values)
       if (isGeneratingRef.current || isGeneratingOverrideRef.current) {
         console.info('[AutoHeal] Skipped — generation still active');
+        return;
+      }
+      // Coordinate with handleAutoFixError's in-flight guard
+      if (autoFixInFlightRef.current) {
+        console.info('[AutoHeal] Skipped — autoFixInFlight from another fix system');
         return;
       }
       errorPatterns.recordError(error!.message);
@@ -1508,9 +1518,10 @@ export function AIAppBuilderWorkspace() {
           remaining: autoHeal.attemptsRemaining(),
           error: error!.message,
           failingFiles: failingFiles.map(f => f.path),
-          depGraphFiles: relatedPaths.size,
+          depGraphFiles: relatedPaths?.size ?? 0,
         });
 
+        autoFixInFlightRef.current = true;
         sendMessage(healPrompt, project.files, supabaseConfig, stripeConfig, serviceKeys, undefined, selectedModel, undefined, true);
       }
     };
