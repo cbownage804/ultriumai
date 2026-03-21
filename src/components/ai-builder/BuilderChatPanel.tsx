@@ -436,6 +436,7 @@ export function BuilderChatPanel({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const contextWarningShown = useRef(false);
+  const isComposerLocked = isGenerating && compileState !== 'error';
 
   // Wave 10: File mention autocomplete suggestions
   const fileMentionSuggestions = useMemo(() => {
@@ -573,7 +574,7 @@ export function BuilderChatPanel({
   }, []);
 
   const handleSend = async () => {
-    if (!input.trim() || isGenerating) return;
+    if (!input.trim() || isComposerLocked) return;
     // Apply any pending resizes before sending
     let finalImages: string[] | null = null;
     if (imagePreviews.length > 0) {
@@ -608,10 +609,10 @@ export function BuilderChatPanel({
       return;
     }
 
-    if (input.trim() && !isGenerating) {
+    if (input.trim() && !isComposerLocked) {
       void handleSend();
     }
-  }, [handleSend, input, isGenerating, mode, onModeChange]);
+  }, [handleSend, input, isComposerLocked, mode, onModeChange]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // Phase 106: Cmd/Ctrl+Enter to send, plain Enter for newlines
@@ -1799,7 +1800,7 @@ export function BuilderChatPanel({
                         <Star className={cn("h-2.5 w-2.5", favoritePromptIds?.has(msg.id) && "fill-current")} />
                       </button>
                     )}
-                    {msg.role === 'user' && !isGenerating && (
+                    {msg.role === 'user' && !isComposerLocked && (
                       <>
                         {/* Edit & Resend — truncates conversation to this point (Step 2: Conversation Branching) */}
                         <button
@@ -1945,7 +1946,7 @@ export function BuilderChatPanel({
       )}
 
       {/* Wave 2 Step 6: Token cost display */}
-      {isGenerating && totalTokensUsed > 0 && (
+      {isComposerLocked && totalTokensUsed > 0 && (
         <div className="px-3 pt-1 shrink-0">
           <span className="text-[9px] text-white/20 font-mono">~{(totalTokensUsed / 1000).toFixed(1)}k tokens</span>
         </div>
@@ -1954,7 +1955,7 @@ export function BuilderChatPanel({
       {/* Input area */}
       <div className="p-3 border-t border-white/[0.06] shrink-0 space-y-2" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))' }}>
         {/* Slash command suggestions */}
-        {input.startsWith('/') && !isGenerating && (
+        {input.startsWith('/') && !isComposerLocked && (
           <div className="flex flex-wrap gap-1">
             {[
               { cmd: '/landing', desc: 'Generate a landing page', icon: '🚀' },
@@ -2102,7 +2103,7 @@ export function BuilderChatPanel({
             </button>
 
             {/* Send / Stop */}
-            {isGenerating ? (
+            {isComposerLocked ? (
               <button onClick={onStop} className="h-8 w-8 rounded-full bg-white/10 text-white/60 flex items-center justify-center hover:bg-white/15 transition-colors shrink-0">
                 <Square className="h-3 w-3" />
               </button>
