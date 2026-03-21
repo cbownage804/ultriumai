@@ -1414,8 +1414,7 @@ export function AIAppBuilderWorkspace() {
       return '';
     }
   }, [astBundler, incrementalCompiler]);
-  const bundleForBrowserRef = useRef(bundleForBrowser);
-  bundleForBrowserRef.current = bundleForBrowser;
+  const bundleForBrowserRef = useSyncRef(bundleForBrowser);
   const [remoteCursors, setRemoteCursors] = useState<RemoteCursor[]>([]);
   const channelRef = useRef<any>(null);
   const [isChatCollapsed, setIsChatCollapsed] = useState(false);
