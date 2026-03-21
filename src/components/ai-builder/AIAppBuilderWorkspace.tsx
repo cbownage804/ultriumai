@@ -1631,8 +1631,7 @@ export function AIAppBuilderWorkspace() {
   const commitMessages = useAICommitMessages();
   const workspaceContainerRef = useRef<HTMLDivElement>(null);
   const [linkedGPT, setLinkedGPT] = useState<LinkedGPTConfig | null>(null);
-  const linkedGPTRef = useRef(linkedGPT);
-  linkedGPTRef.current = linkedGPT;
+  const linkedGPTRef = useSyncRef(linkedGPT);
   const buildAnalytics = useBuildAnalytics();
   const outputValidation = useOutputValidation();
   outputValidationRef.current = outputValidation;
