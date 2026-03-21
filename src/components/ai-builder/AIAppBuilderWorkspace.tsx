@@ -1466,6 +1466,10 @@ export function AIAppBuilderWorkspace() {
       // Clear pending success signals — auto-heal will handle the error
       pendingBuildToastRef.current = null;
       pendingPostBuildRef.current = null;
+      if (postBuildIdleRef.current !== null && typeof window !== 'undefined' && 'cancelIdleCallback' in window) {
+        (window as Window & { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback?.(postBuildIdleRef.current);
+      }
+      postBuildIdleRef.current = null;
     }
 
     // ── Auto-heal: on compile error, automatically re-prompt AI to fix ──
