@@ -3626,7 +3626,7 @@ export function AIAppBuilderWorkspace() {
   }, [upsertFile]);
 
   const handleRenameFile = useCallback((oldPath: string, newPath: string) => {
-    const file = project.files.find(f => f.path === oldPath);
+    const file = fileMapRef.current.get(oldPath);
     if (!file) return;
     upsertFile(newPath, file.content);
     deleteFile(oldPath);
