@@ -1974,12 +1974,17 @@ export function AIAppBuilderWorkspace() {
       // Log files to build log
       latestFiles.forEach(f => buildLog.logFileWrite(f.path));
       // Issue 30 fix: Removed isCompiling flicker (was set true then immediately false next frame)
-      // Defer code smell analysis — skip for large projects to prevent freeze
+      // Defer code smell analysis — skip for large projects and use idle callback
       if (latestFiles.length < 50) {
-        setTimeout(() => {
+        const runAnalysis = () => {
           const smells = codeSmellDetector.analyzeFiles([...project.files, ...latestFiles]);
           if (smells.length > 0) setCodeSuggestions(smells);
-        }, 2000);
+        };
+        if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+          (window as any).requestIdleCallback(runAnalysis, { timeout: 8000 });
+        } else {
+          setTimeout(runAnalysis, 5000);
+        }
       }
     }
   }, [latestFiles]);
@@ -2082,18 +2087,20 @@ export function AIAppBuilderWorkspace() {
   const saveInProgressRef = useRef(false);
 
   // Auto-save (cloud) — includes chat messages + versions for persistence
+  // Uses a longer 4s debounce to avoid cascading with other post-gen effects
   useEffect(() => {
     if (isGenerating) return; // skip during streaming to prevent browser freeze
     if (project.files.length === 0) return;
-    // Phase 50: Debounce with 2s delay, cancel pending saves
+    // Defer longer after generation ends to avoid main-thread contention
+    const elapsed = Date.now() - postGenTimestampRef.current;
+    const delay = elapsed < 3000 ? 4000 : 2000;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(() => {
       if (saveInProgressRef.current) return;
       saveInProgressRef.current = true;
       scheduleAutoSave(project.name, project.files, messages, { versions });
-      // Reset flag after a short delay (scheduleAutoSave is itself debounced)
       setTimeout(() => { saveInProgressRef.current = false; }, 500);
-    }, 2000);
+    }, delay);
     return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
   }, [project.files, project.name, messages, versions, scheduleAutoSave, isGenerating]);
 
@@ -2113,22 +2120,31 @@ export function AIAppBuilderWorkspace() {
         hasAutoNamed.current = true;
       }
 
-      // Immediately save to cloud when generation finishes so project appears in recents
+      // Defer cloud save to idle time to prevent browser freeze
+      // The draft save is fast (localStorage) and happens first for tab-switch safety
       if (project.files.length > 0) {
-        saveProject(saveName, project.files, undefined, undefined, messages, { versions })
-          .then((projectId) => {
-            // Capture thumbnail after save ensures projectId exists
-            if (projectId) {
-              setTimeout(() => {
-                const html = compiledForHostingRef.current || stableHTMLRef.current;
-                if (html) {
-                  captureAndUpload(html, projectId).catch(() => {});
-                }
-              }, 4000);
-            }
-          });
-        // Force immediate localStorage draft save so tab-switch doesn't lose data
+        // Minimal synchronous work: just the fast localStorage draft
         saveDraftImmediate(saveName, project.files, messages);
+
+        // Heavy cloud save + thumbnail capture deferred to idle callback
+        const runCloudSave = () => {
+          saveProject(saveName, project.files, undefined, undefined, messages, { versions })
+            .then((projectId) => {
+              if (projectId) {
+                setTimeout(() => {
+                  const html = compiledForHostingRef.current || stableHTMLRef.current;
+                  if (html) {
+                    captureAndUpload(html, projectId).catch(() => {});
+                  }
+                }, 5000);
+              }
+            });
+        };
+        if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+          (window as any).requestIdleCallback(runCloudSave, { timeout: 5000 });
+        } else {
+          setTimeout(runCloudSave, 2000);
+        }
       }
     }
   }, [isGenerating]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -2136,13 +2152,13 @@ export function AIAppBuilderWorkspace() {
   // Auto-save to IndexedDB (Phase 10 — fast local persistence)
   const sessionId = currentProjectId || 'draft';
   useEffect(() => {
-    if (isGenerating) return; // skip during streaming to prevent browser freeze
-    // Issue 13 fix: Defer save for 1s after generation ends to let compilation take priority
+    if (isGenerating) return;
+    // Defer saves for 3s after generation to avoid cascading with cloud save
     const elapsed = Date.now() - postGenTimestampRef.current;
-    if (elapsed < 1000) {
+    if (elapsed < 3000) {
       const timer = setTimeout(() => {
         idbPersistence.saveToIDB(sessionId, project.name, project.files, messages);
-      }, 1000 - elapsed);
+      }, 3000 - elapsed);
       return () => clearTimeout(timer);
     }
     idbPersistence.saveToIDB(sessionId, project.name, project.files, messages);
@@ -2150,13 +2166,12 @@ export function AIAppBuilderWorkspace() {
 
   // Auto-save draft to localStorage (survives refresh)
   useEffect(() => {
-    if (isGenerating) return; // skip during streaming to prevent browser freeze
-    // Issue 13 fix: Defer save for 1s after generation ends
+    if (isGenerating) return;
     const elapsed = Date.now() - postGenTimestampRef.current;
-    if (elapsed < 1000) {
+    if (elapsed < 3000) {
       const timer = setTimeout(() => {
         saveDraft(project.name, project.files, messages);
-      }, 1000 - elapsed);
+      }, 3000 - elapsed);
       return () => clearTimeout(timer);
     }
     saveDraft(project.name, project.files, messages);
