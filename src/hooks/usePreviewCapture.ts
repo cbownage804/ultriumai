@@ -177,6 +177,7 @@ export function usePreviewCapture() {
       const result = await attemptCapture(compiledHtml, projectId, user.id);
       if (result) {
         lastCapturedHash.current = hash;
+        lastCaptureTime.current = Date.now();
       }
       return result;
     } catch (err) {
