@@ -4055,7 +4055,7 @@ export function AIAppBuilderWorkspace() {
                   <PanelLeftClose className="h-3.5 w-3.5" />
                 </button>
                 {/* Agent mode step tracker */}
-                <AgentModePanel run={agentRun} taskQueue={agentTaskQueue} pendingApproval={agentPendingApproval} onCancel={cancelAgent} onCancelTask={cancelAgentTask} onRetryTask={retryAgentTask} onClearCompleted={clearAgentCompleted} onReorderQueue={reorderAgentQueue} onApprovePlan={() => respondToAgentPlan(true)} onRejectPlan={() => respondToAgentPlan(false)} onRollbackToStep={(stepId) => { const step = agentRun?.steps.find(s => s.id === stepId); if (step?.preSnapshot) { rollbackToSnapshot(step.preSnapshot, (snapshotFiles) => setFiles(snapshotFiles)); } }} streamingContent={streamingContentRef?.current || undefined} />
+                <AgentModePanel run={agentRun} taskQueue={agentTaskQueue} pendingApproval={agentPendingApproval} compileState={compileState} isUsingLKG={isUsingLKG} onCancel={cancelAgent} onCancelTask={cancelAgentTask} onRetryTask={retryAgentTask} onClearCompleted={clearAgentCompleted} onReorderQueue={reorderAgentQueue} onApprovePlan={() => respondToAgentPlan(true)} onRejectPlan={() => respondToAgentPlan(false)} onRollbackToStep={(stepId) => { const step = agentRun?.steps.find(s => s.id === stepId); if (step?.preSnapshot) { rollbackToSnapshot(step.preSnapshot, (snapshotFiles) => setFiles(snapshotFiles)); } }} streamingContent={streamingContentRef?.current || undefined} />
                 {phasePlanner.activePlan && (
                   <div data-phase-planner>
                     <PhasePlannerPanel

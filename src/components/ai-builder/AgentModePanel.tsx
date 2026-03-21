@@ -117,6 +117,8 @@ interface AgentModePanelProps {
   run: AgentRun | null;
   taskQueue: AgentTask[];
   pendingApproval?: { taskId: string; plan: AgentPlan } | null;
+  compileState?: 'idle' | 'compiling' | 'success' | 'error';
+  isUsingLKG?: boolean;
   onCancel?: () => void;
   onCancelTask?: (taskId: string) => void;
   onRetryTask?: (taskId: string) => void;
@@ -128,7 +130,7 @@ interface AgentModePanelProps {
   streamingContent?: string;
 }
 
-export function AgentModePanel({ run, taskQueue, pendingApproval, onCancel, onCancelTask, onRetryTask, onClearCompleted, onApprovePlan, onRejectPlan, onRollbackToStep, streamingContent }: AgentModePanelProps) {
+export function AgentModePanel({ run, taskQueue, pendingApproval, compileState, isUsingLKG, onCancel, onCancelTask, onRetryTask, onClearCompleted, onApprovePlan, onRejectPlan, onRollbackToStep, streamingContent }: AgentModePanelProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const hasActiveContent = run || taskQueue.some(t => ['queued', 'running', 'awaiting_approval'].includes(t.status));
@@ -141,7 +143,9 @@ export function AgentModePanel({ run, taskQueue, pendingApproval, onCancel, onCa
   const finishedTasks = taskQueue.filter(t => ['completed', 'failed', 'cancelled'].includes(t.status));
   const activeStep = run?.steps.find(s => s.status === 'running');
   const completedSteps = run?.steps.filter(s => s.status === 'done') || [];
-  const allDone = run?.status === 'completed' && !isRunning;
+  const hasBuildFailure = !isRunning && (compileState === 'error' || !!isUsingLKG);
+  const allDone = run?.status === 'completed' && !isRunning && !hasBuildFailure;
+  const hasFailed = (!isAwaitingApproval && !isRunning) && (run?.status === 'failed' || hasBuildFailure);
 
   const activeLabel = isAwaitingApproval
     ? 'Awaiting approval…'
@@ -209,7 +213,7 @@ export function AgentModePanel({ run, taskQueue, pendingApproval, onCancel, onCa
                 "text-[11px] font-medium truncate",
                 isAwaitingApproval ? "text-violet-300/80" : isRunning ? "text-white/70" : allDone ? "text-white/40" : "text-red-300/60"
               )}>
-                {isAwaitingApproval ? 'Awaiting approval' : isRunning ? activeLabel : allDone ? 'Task complete' : 'Task failed'}
+                {isAwaitingApproval ? 'Awaiting approval' : isRunning ? activeLabel : allDone ? 'Task complete' : hasFailed ? 'Build failed' : 'Task failed'}
               </span>
               {activeStep && (
                 <span className="text-[9px] text-white/20 font-mono tabular-nums shrink-0">
