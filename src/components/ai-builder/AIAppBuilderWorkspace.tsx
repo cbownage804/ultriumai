@@ -1452,15 +1452,23 @@ export function AIAppBuilderWorkspace() {
     console.info('[Workspace] compileState →', state, error ? error.message : '');
 
     // ── Auto-heal: on compile error, automatically re-prompt AI to fix ──
-    if (state === 'error' && error && !(isGenerating || isGeneratingOverride)) {
-      // Record error pattern for anti-pattern injection
-      errorPatterns.recordError(error.message);
+    // Use refs to avoid stale closures — runtime errors can fire after generation
+    // completes but before React re-renders the callback with updated state.
+    const isRuntime = error?.message?.startsWith('Runtime error:');
+    const healDelay = isRuntime ? 2500 : 1500; // extra delay for runtime errors to let generation state settle
 
-      if (autoHealEnabled && autoHeal.shouldAutoHeal(error.message)) {
-        const diffContext = lkgDiff.getErrorContext(project.files, error.message);
+    const tryAutoHeal = () => {
+      // Re-check generation state via refs (not stale closure values)
+      if (isGeneratingRef.current || isGeneratingOverrideRef.current) {
+        console.info('[AutoHeal] Skipped — generation still active');
+        return;
+      }
+      errorPatterns.recordError(error!.message);
+
+      if (autoHealEnabled && autoHeal.shouldAutoHeal(error!.message)) {
+        const diffContext = lkgDiff.getErrorContext(project.files, error!.message);
         
-        // Extract failing file paths from error messages and include their full content
-        const failingFilePaths = error.errors
+        const failingFilePaths = error!.errors
           .map(e => {
             const fileMatch = e.match(/^([^\s:]+\.[a-z]+)/i);
             return fileMatch ? fileMatch[1] : null;
@@ -1472,13 +1480,11 @@ export function AIAppBuilderWorkspace() {
           })
           .filter((p): p is string => !!p);
 
-        // Step A: Dependency-aware auto-heal — include files in the dependency graph
         const depGraph = astBundler.buildDependencyGraph(project.files);
         const relatedPaths = new Set<string>(failingFilePaths);
         for (const fp of failingFilePaths) {
           const node = depGraph.get(fp);
           if (node) node.dependencies.forEach(d => relatedPaths.add(d));
-          // Also include reverse deps (files that import the failing file)
           for (const [path, n] of depGraph) {
             if (n.dependencies.includes(fp)) relatedPaths.add(path);
           }
@@ -1491,26 +1497,26 @@ export function AIAppBuilderWorkspace() {
           })
           .filter((f): f is { path: string; content: string } => !!f);
 
-        // Step 1: Parse Vite errors for error locality (file:line windows)
-        const parsedErrors = parseViteErrors(error.errors);
+        const parsedErrors = parseViteErrors(error!.errors);
         const antiPatternCtx = errorPatterns.getAntiPatternPrompt();
 
-        const healPrompt = autoHeal.buildHealPrompt(error.message, error.errors, diffContext, failingFiles, parsedErrors, antiPatternCtx);
-        autoHeal.recordAttempt(error.message);
+        const healPrompt = autoHeal.buildHealPrompt(error!.message, error!.errors, diffContext, failingFiles, parsedErrors, antiPatternCtx);
+        autoHeal.recordAttempt(error!.message);
 
         console.info('[AutoHeal] Triggering auto-fix attempt', {
           attempt: autoHeal.getAttempts().length,
           remaining: autoHeal.attemptsRemaining(),
-          error: error.message,
+          error: error!.message,
           failingFiles: failingFiles.map(f => f.path),
           depGraphFiles: relatedPaths.size,
         });
 
-        // Delay slightly to let UI update, then send auto-fix prompt
-        setTimeout(() => {
-          sendMessage(healPrompt);
-        }, 1500);
+        sendMessage(healPrompt);
       }
+    };
+
+    if (state === 'error' && error) {
+      setTimeout(tryAutoHeal, healDelay);
     }
 
     // On success, mark heal as resolved
@@ -1518,7 +1524,7 @@ export function AIAppBuilderWorkspace() {
       autoHeal.completeHeal(true);
       console.info('[AutoHeal] ✅ Auto-fix resolved the build error');
     }
-  }, [autoHeal, lkgDiff, errorPatterns, project.files, isGenerating, isGeneratingOverride, sendMessage]);
+  }, [autoHeal, lkgDiff, errorPatterns, project.files, sendMessage]);
   useEffect(() => {
     isCompilingRef.current = isCompiling;
     compileStateRef.current = compileState;
