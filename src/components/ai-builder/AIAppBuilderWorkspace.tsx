@@ -2128,23 +2128,54 @@ export function AIAppBuilderWorkspace() {
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveInProgressRef = useRef(false);
 
-  // Auto-save (cloud) — includes chat messages + versions for persistence
-  // Uses a longer 4s debounce to avoid cascading with other post-gen effects
+  // Step 3: SINGLE orchestrated auto-save effect — replaces 3 separate effects
+  // T+0ms: localStorage draft (sync, fast)
+  // T+3s (idle): IDB save
+  // T+4s (idle): Cloud save
+  // T+8s (idle): Thumbnail capture
   useEffect(() => {
-    if (isGenerating) return; // skip during streaming to prevent browser freeze
+    if (isGenerating) return;
     if (project.files.length === 0) return;
-    // Defer longer after generation ends to avoid main-thread contention
+    // Step 6: Suppress during project load cooldown
+    if (isInRecentProjectLoadCooldown()) return;
+
     const elapsed = Date.now() - postGenTimestampRef.current;
     const delay = elapsed < 3000 ? 4000 : 2000;
+
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(() => {
-      if (saveInProgressRef.current) return;
-      saveInProgressRef.current = true;
-      scheduleAutoSave(project.name, project.files, messages, { versions });
-      setTimeout(() => { saveInProgressRef.current = false; }, 500);
+      // T+0: Fast localStorage draft
+      saveDraft(project.name, project.files, messages);
+
+      // T+3s: IDB save via idle callback
+      const scheduleIDB = () => {
+        setTimeout(() => {
+          if (isInRecentProjectLoadCooldown()) return;
+          idbPersistence.saveToIDB(sessionId, project.name, project.files, messages);
+        }, 3000);
+      };
+
+      // T+4s: Cloud save via idle callback
+      const scheduleCloud = () => {
+        setTimeout(() => {
+          if (saveInProgressRef.current || isInRecentProjectLoadCooldown()) return;
+          saveInProgressRef.current = true;
+          scheduleAutoSave(project.name, project.files, messages, { versions });
+          setTimeout(() => { saveInProgressRef.current = false; }, 500);
+        }, 4000);
+      };
+
+      if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+        (window as any).requestIdleCallback(scheduleIDB, { timeout: 5000 });
+        (window as any).requestIdleCallback(scheduleCloud, { timeout: 8000 });
+      } else {
+        scheduleIDB();
+        scheduleCloud();
+      }
     }, delay);
+
     return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
-  }, [project.files, project.name, messages, versions, scheduleAutoSave, isGenerating]);
+  }, [project.files, project.name, messages, versions, scheduleAutoSave, isGenerating, isInRecentProjectLoadCooldown, saveDraft, sessionId]);
 
   // Issue 13 fix: Track post-generation transition to defer saves
   const postGenTimestampRef = useRef<number>(0);
@@ -2168,32 +2199,31 @@ export function AIAppBuilderWorkspace() {
       }
 
       // Defer cloud save to idle time to prevent browser freeze
-      // The draft save is fast (localStorage) and happens first for tab-switch safety
       if (project.files.length > 0) {
         // Minimal synchronous work: just the fast localStorage draft
         saveDraftImmediate(saveName, project.files, messages);
 
-        // Heavy cloud save + thumbnail capture deferred to idle callback
-        // and suppressed right after loading a recent project to avoid freezing the tab.
+        // Heavy cloud save + thumbnail deferred and suppressed during load cooldown
         if (!isInRecentProjectLoadCooldown()) {
           const runCloudSave = () => {
             saveProject(saveName, project.files, undefined, undefined, messages, { versions })
               .then((projectId) => {
                 if (projectId && !isInRecentProjectLoadCooldown()) {
+                  // T+8s: thumbnail capture — furthest deferred
                   setTimeout(() => {
                     if (isInRecentProjectLoadCooldown()) return;
                     const html = compiledForHostingRef.current || stableHTMLRef.current;
                     if (html) {
                       captureAndUpload(html, projectId).catch(() => {});
                     }
-                  }, 5000);
+                  }, 8000);
                 }
               });
           };
           if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-            (window as any).requestIdleCallback(runCloudSave, { timeout: 5000 });
+            (window as any).requestIdleCallback(runCloudSave, { timeout: 6000 });
           } else {
-            setTimeout(runCloudSave, 2000);
+            setTimeout(runCloudSave, 4000);
           }
         }
       }
