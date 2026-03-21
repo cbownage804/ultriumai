@@ -154,6 +154,13 @@ export function usePreviewCapture() {
   ): Promise<string | null> => {
     if (!compiledHtml || !projectId || captureInProgress.current) return null;
 
+    // Throttle: max one capture per 60s to prevent main-thread freezes
+    const now = Date.now();
+    if (now - lastCaptureTime.current < THROTTLE_MS) {
+      console.log('Thumbnail: throttled (last capture was %ds ago)', Math.round((now - lastCaptureTime.current) / 1000));
+      return null;
+    }
+
     // Deduplicate: skip if same content was just captured
     const hash = quickHash(compiledHtml);
     if (hash === lastCapturedHash.current) {
