@@ -2008,25 +2008,8 @@ export function AIAppBuilderWorkspace() {
   useEffect(() => {
     if (prevIsGeneratingRef.current && !isGenerating && latestFiles.length > 0) {
       const duration = buildStartTimeRef.current ? Date.now() - buildStartTimeRef.current : 0;
-      // Don't toast "Generated X files" here — the deferred "Build complete" toast
-      // in handleCompileStateChange will fire once compilation actually succeeds.
-      setBuildNotifications(prev => [{
-        id: crypto.randomUUID(),
-        type: 'success' as const,
-        title: `Generated ${latestFiles.length} file${latestFiles.length > 1 ? 's' : ''}`,
-        timestamp: new Date(),
-        read: false,
-      }, ...prev].slice(0, 50));
-      buildLog.logBuildComplete(latestFiles.length, duration);
-      // Build chime + counter
-      buildChime.onGeneratingChange(false);
-      const newBuildCount = buildCount + 1;
-      setBuildCount(newBuildCount);
-      // Confetti milestones
-      if ([10, 25, 50, 100].includes(newBuildCount)) {
-        import('canvas-confetti').then(m => m.default({ particleCount: 100, spread: 70, origin: { y: 0.6 } }));
-        dedupeToast('success', `🔥 ${newBuildCount} builds today! You're on fire!`);
-      }
+      // Do not mark the run as successful here.
+      // Success is finalized only after CompilationBridge verifies a fresh preview build.
       // Auto commit message
       const diffs = commitMessages.computeDiffs(previousFiles, latestFiles);
       let commitMsg = '';
