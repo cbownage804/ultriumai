@@ -1384,16 +1384,11 @@ export function AIAppBuilderWorkspace() {
   const [assets, setAssets] = useState<ProjectAsset[]>([]);
   const [cdnPackages, setCdnPackages] = useState<CDNPackage[]>([]);
   // Phase 6: Refs to avoid stale closures in handleBgComplete
-  const supabaseConfigRef = useRef(supabaseConfig);
-  supabaseConfigRef.current = supabaseConfig;
-  const stripeConfigRef = useRef(stripeConfig);
-  stripeConfigRef.current = stripeConfig;
-  const envVarsRef = useRef(envVars);
-  envVarsRef.current = envVars;
-  const serviceKeysRef = useRef(serviceKeys);
-  serviceKeysRef.current = serviceKeys;
-  const cdnPackagesRef = useRef(cdnPackages);
-  cdnPackagesRef.current = cdnPackages;
+  const supabaseConfigRef = useSyncRef(supabaseConfig);
+  const stripeConfigRef = useSyncRef(stripeConfig);
+  const envVarsRef = useSyncRef(envVars);
+  const serviceKeysRef = useSyncRef(serviceKeys);
+  const cdnPackagesRef = useSyncRef(cdnPackages);
   const { findReferencedFiles } = useProjectBundler();
   const { compileReactProject } = useWorkerCompiler();
   const compileReactProjectRef = useRef(compileReactProject);
