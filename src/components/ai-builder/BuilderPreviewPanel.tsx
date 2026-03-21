@@ -1083,13 +1083,6 @@ window.addEventListener('message', function(e) {
               </div>
             )}
           </div>
-        ) : (isGenerating || isCompiling) ? (
-          <SkeletonPreview
-            projectFiles={projectFiles}
-            completedFileCount={completedFileCount}
-            isGenerating={isGenerating}
-            isCompiling={isCompiling}
-          />
         ) : compileState === 'error' ? (
           <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden">
             <img
@@ -1125,6 +1118,13 @@ window.addEventListener('message', function(e) {
               </button>
             </div>
           </div>
+        ) : (isGenerating || isCompiling) ? (
+          <SkeletonPreview
+            projectFiles={projectFiles}
+            completedFileCount={completedFileCount}
+            isGenerating={isGenerating}
+            isCompiling={isCompiling}
+          />
         ) : projectFiles.length > 0 && !isGoldenProject ? (
           <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden">
             <img
