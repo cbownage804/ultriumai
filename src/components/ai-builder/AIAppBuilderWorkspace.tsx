@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef, Suspense, useMemo } from 'react';
+import { useDeferredMount, useSyncRef } from '@/hooks/useDeferredHook';
 import { useAIAppBuilder } from '@/hooks/useAIAppBuilder';
 import { useProjectFileSystem, type ProjectFile } from '@/hooks/useProjectFileSystem';
 import { useAgentMode } from '@/hooks/useAgentMode';
@@ -488,8 +489,7 @@ export function AIAppBuilderWorkspace() {
   const docGenerator = useDocGenerator();
   const componentExtractor = useComponentExtractor(project.files);
   // Ref for project.files — used in commandActions to avoid re-renders on file changes
-  const projectFilesRef = useRef(project.files);
-  projectFilesRef.current = project.files;
+  const projectFilesRef = useSyncRef(project.files);
   // showPromptHistory now managed by usePanelManager
   const {
     branches, activeBranch, activeBranchName,
@@ -530,10 +530,8 @@ export function AIAppBuilderWorkspace() {
 
   // Refs for draft persistence inside handleBgComplete (declared before callback, assigned later)
   const saveDraftImmediateRef = useRef<(name: string, files: ProjectFile[], messages: any[]) => void>(() => {});
-  const latestFilesRef = useRef<ProjectFile[]>(project.files);
-  latestFilesRef.current = project.files;
-  const latestMessagesRef = useRef<any[]>(messages);
-  latestMessagesRef.current = messages;
+  const latestFilesRef = useSyncRef(project.files);
+  const latestMessagesRef = useSyncRef(messages);
 
   // Refs for UI state needed inside handleBgComplete (declared before callback, assigned later)
   const rightTabRef = useRef<'preview' | 'code' | 'split'>('preview');
@@ -542,8 +540,7 @@ export function AIAppBuilderWorkspace() {
   const setMobileTabRef = useRef<(tab: 'chat' | 'preview' | 'editor') => void>(() => {});
   const outputValidationRef = useRef<ReturnType<typeof useOutputValidation>>({ validate: () => ({ isValid: true, issues: [], score: 100 }) });
   const pendingValidationFixRef = useRef<{ errorSummary: string; files: ProjectFile[] } | null>(null);
-  const setActiveFileRef = useRef(setActiveFile);
-  setActiveFileRef.current = setActiveFile;
+  const setActiveFileRef = useSyncRef(setActiveFile);
 
   // ── Transactional build + bounded repair refs ──
   const pendingFilesRef = useRef<ProjectFile[] | null>(null);
@@ -1386,20 +1383,14 @@ export function AIAppBuilderWorkspace() {
   const [assets, setAssets] = useState<ProjectAsset[]>([]);
   const [cdnPackages, setCdnPackages] = useState<CDNPackage[]>([]);
   // Phase 6: Refs to avoid stale closures in handleBgComplete
-  const supabaseConfigRef = useRef(supabaseConfig);
-  supabaseConfigRef.current = supabaseConfig;
-  const stripeConfigRef = useRef(stripeConfig);
-  stripeConfigRef.current = stripeConfig;
-  const envVarsRef = useRef(envVars);
-  envVarsRef.current = envVars;
-  const serviceKeysRef = useRef(serviceKeys);
-  serviceKeysRef.current = serviceKeys;
-  const cdnPackagesRef = useRef(cdnPackages);
-  cdnPackagesRef.current = cdnPackages;
+  const supabaseConfigRef = useSyncRef(supabaseConfig);
+  const stripeConfigRef = useSyncRef(stripeConfig);
+  const envVarsRef = useSyncRef(envVars);
+  const serviceKeysRef = useSyncRef(serviceKeys);
+  const cdnPackagesRef = useSyncRef(cdnPackages);
   const { findReferencedFiles } = useProjectBundler();
   const { compileReactProject } = useWorkerCompiler();
-  const compileReactProjectRef = useRef(compileReactProject);
-  compileReactProjectRef.current = compileReactProject;
+  const compileReactProjectRef = useSyncRef(compileReactProject);
   const astBundler = useASTBundler();
   const incrementalCompiler = useIncrementalCompiler();
   const tsValidator = useTypeScriptValidator();
@@ -1422,18 +1413,15 @@ export function AIAppBuilderWorkspace() {
       return '';
     }
   }, [astBundler, incrementalCompiler]);
-  const bundleForBrowserRef = useRef(bundleForBrowser);
-  bundleForBrowserRef.current = bundleForBrowser;
+  const bundleForBrowserRef = useSyncRef(bundleForBrowser);
   const [remoteCursors, setRemoteCursors] = useState<RemoteCursor[]>([]);
   const channelRef = useRef<any>(null);
   const [isChatCollapsed, setIsChatCollapsed] = useState(false);
   const [dirtyFiles, setDirtyFiles] = useState<Set<string>>(new Set());
   const [cursorPosition, setCursorPosition] = useState<{ line: number; column: number }>({ line: 1, column: 1 });
   const prevIsGeneratingRef = useRef(isGenerating);
-  const isGeneratingRef = useRef(isGenerating);
-  const isGeneratingOverrideRef = useRef(isGeneratingOverride);
-  useEffect(() => { isGeneratingRef.current = isGenerating; }, [isGenerating]);
-  useEffect(() => { isGeneratingOverrideRef.current = isGeneratingOverride; }, [isGeneratingOverride]);
+  const isGeneratingRef = useSyncRef(isGenerating);
+  const isGeneratingOverrideRef = useSyncRef(isGeneratingOverride);
   const [fixAttemptCount, setFixAttemptCount] = useState(0);
   const [lastFixError, setLastFixError] = useState<string | null>(null);
   const MAX_FIX_ATTEMPTS = 3;
@@ -1612,10 +1600,10 @@ export function AIAppBuilderWorkspace() {
       console.info('[AutoHeal] ✅ Auto-fix resolved the build error');
     }
   }, [autoHeal, lkgDiff, errorPatterns, project.files, sendMessage, setIsCompiling]);
-  useEffect(() => {
-    isCompilingRef.current = isCompiling;
-    compileStateRef.current = compileState;
-  }, [isCompiling, compileState]);
+  const isCompilingAndStateRef = useSyncRef({ isCompiling, compileState });
+  // Keep individual refs for backward compat in guards
+  isCompilingRef.current = isCompiling;
+  compileStateRef.current = compileState;
   const [selectedModel, setSelectedModel] = useState('google/gemini-3-flash-preview');
   const [previewSlug, setPreviewSlug] = useState<string | null>(null);
   const [pendingConflicts, setPendingConflicts] = useState<{ path: string; userContent: string; aiContent: string }[] | null>(null);
@@ -1642,8 +1630,7 @@ export function AIAppBuilderWorkspace() {
   const commitMessages = useAICommitMessages();
   const workspaceContainerRef = useRef<HTMLDivElement>(null);
   const [linkedGPT, setLinkedGPT] = useState<LinkedGPTConfig | null>(null);
-  const linkedGPTRef = useRef(linkedGPT);
-  linkedGPTRef.current = linkedGPT;
+  const linkedGPTRef = useSyncRef(linkedGPT);
   const buildAnalytics = useBuildAnalytics();
   const outputValidation = useOutputValidation();
   outputValidationRef.current = outputValidation;
@@ -1653,7 +1640,9 @@ export function AIAppBuilderWorkspace() {
   const pluginRegistry = usePluginRegistry();
   const [recentFiles, setRecentFiles] = useState<string[]>([]);
   const [autoHealEnabled, setAutoHealEnabled] = useState(true);
-  const collaborationEngine = useCollaborationEngine(currentProjectId);
+  // ── Deferred hooks: initialize non-critical hooks after first paint ──
+  const _deferredReady = useDeferredMount(3000);
+  const collaborationEngine = useCollaborationEngine(_deferredReady ? currentProjectId : null);
   const apiBuilder = useAPIBuilder();
   const projectReview = useProjectReview();
   const supabaseConnection = useSupabaseConnection();
@@ -1922,8 +1911,9 @@ export function AIAppBuilderWorkspace() {
     }
   }, [envVariables]);
 
-  // Fetch schema when Supabase config changes (deferred 2s to unblock first paint)
+  // Fetch schema when Supabase config changes (deferred until hooks are ready)
   useEffect(() => {
+    if (!_deferredReady) return;
     if (supabaseConfig?.url && serviceKeys.length > 0) {
       const timer = setTimeout(() => {
         const serviceKey = serviceKeys.find(k => k.serviceId === 'supabase_service_role');
@@ -1938,11 +1928,11 @@ export function AIAppBuilderWorkspace() {
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [supabaseConfig?.url, serviceKeys]);
+  }, [_deferredReady, supabaseConfig?.url, serviceKeys]);
 
-  // Collaborative cursor broadcasting via Supabase Realtime (gated on active file)
+  // Collaborative cursor broadcasting via Supabase Realtime (deferred + gated on active file)
   useEffect(() => {
-    if (!currentProjectId || !activeFile) return;
+    if (!_deferredReady || !currentProjectId || !activeFile) return;
     const channel = supabase.channel(`cursors:${currentProjectId}`);
     channelRef.current = channel;
 
