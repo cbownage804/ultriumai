@@ -1429,6 +1429,10 @@ export function AIAppBuilderWorkspace() {
   const [dirtyFiles, setDirtyFiles] = useState<Set<string>>(new Set());
   const [cursorPosition, setCursorPosition] = useState<{ line: number; column: number }>({ line: 1, column: 1 });
   const prevIsGeneratingRef = useRef(isGenerating);
+  const isGeneratingRef = useRef(isGenerating);
+  const isGeneratingOverrideRef = useRef(isGeneratingOverride);
+  useEffect(() => { isGeneratingRef.current = isGenerating; }, [isGenerating]);
+  useEffect(() => { isGeneratingOverrideRef.current = isGeneratingOverride; }, [isGeneratingOverride]);
   const [fixAttemptCount, setFixAttemptCount] = useState(0);
   const [lastFixError, setLastFixError] = useState<string | null>(null);
   const MAX_FIX_ATTEMPTS = 3;
