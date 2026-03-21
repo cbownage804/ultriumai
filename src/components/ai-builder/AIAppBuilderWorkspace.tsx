@@ -1391,8 +1391,7 @@ export function AIAppBuilderWorkspace() {
   const cdnPackagesRef = useSyncRef(cdnPackages);
   const { findReferencedFiles } = useProjectBundler();
   const { compileReactProject } = useWorkerCompiler();
-  const compileReactProjectRef = useRef(compileReactProject);
-  compileReactProjectRef.current = compileReactProject;
+  const compileReactProjectRef = useSyncRef(compileReactProject);
   const astBundler = useASTBundler();
   const incrementalCompiler = useIncrementalCompiler();
   const tsValidator = useTypeScriptValidator();
