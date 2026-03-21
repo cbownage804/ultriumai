@@ -267,4 +267,27 @@ export default function App() {
     expect(content).not.toContain('</textarea>');
     expect(repairs.some(r => r.includes('orphaned </textarea>'))).toBe(true);
   });
+
+  it('removes out-of-order </textarea> even when open/close counts match', () => {
+    const files = [
+      makeTsx('src/App.tsx', `import React from 'react';
+export default function App() {
+  return (
+    <div>
+      <textarea defaultValue="hello" />
+      <div>
+        <input placeholder="Item description..." />
+      </div>
+      </textarea></div>
+  );
+}`),
+    ];
+
+    const { files: repairedFiles, repairs } = autoRepairFiles(files);
+    const content = repairedFiles[0].content;
+
+    expect(content).toContain('<textarea defaultValue="hello" />');
+    expect(content).not.toContain('</textarea></div>');
+    expect(repairs.some(r => r.includes('orphaned </textarea>'))).toBe(true);
+  });
 });
