@@ -1596,6 +1596,7 @@ export function AIAppBuilderWorkspace() {
           depGraphFiles: relatedPaths?.size ?? 0,
         });
 
+        consumeAutoFixAttempt();
         autoFixInFlightRef.current = true;
         sendMessage(healPrompt, project.files, supabaseConfig, stripeConfig, serviceKeys, undefined, selectedModel, undefined, true);
       }
