@@ -3859,7 +3859,6 @@ export function AIAppBuilderWorkspace() {
   // Preserve explicit error state so failed generations don't fall back to the empty placeholder.
   useEffect(() => {
     if (!isGoldenProject || isGenerating || isCompiling) return;
-    if (compileState === 'compiling') return; // Don't interfere with active compilation
     if (compileState === 'error') return; // Keep error visible until user retries/resets
     if (compileState !== 'idle' || compileError) {
       setIsCompiling(false);
