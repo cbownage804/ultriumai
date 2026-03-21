@@ -1931,9 +1931,9 @@ export function AIAppBuilderWorkspace() {
     }
   }, [_deferredReady, supabaseConfig?.url, serviceKeys]);
 
-  // Collaborative cursor broadcasting via Supabase Realtime (gated on active file)
+  // Collaborative cursor broadcasting via Supabase Realtime (deferred + gated on active file)
   useEffect(() => {
-    if (!currentProjectId || !activeFile) return;
+    if (!_deferredReady || !currentProjectId || !activeFile) return;
     const channel = supabase.channel(`cursors:${currentProjectId}`);
     channelRef.current = channel;
 
