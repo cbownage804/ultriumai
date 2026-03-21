@@ -2443,6 +2443,11 @@ export function AIAppBuilderWorkspace() {
       try { sessionStorage.removeItem('ai-builder-lkg-preview'); } catch {}
     }
 
+    // Activate cooldown BEFORE the async load completes — this suppresses
+    // auto-heal, code analysis, thumbnail capture, and other heavy ops
+    // that would otherwise fire the moment setFiles() triggers re-renders.
+    recentProjectLoadCooldownUntilRef.current = Date.now() + 20_000;
+
     (async () => {
       const loaded = await loadProject(initialProjectId);
       if (!loaded) return;
@@ -2528,6 +2533,7 @@ export function AIAppBuilderWorkspace() {
 
     if (lsDraft && (lsDraft.files.length > 0 || lsDraft.messages.length > 0)) {
       hasRestoredRef.current = true;
+      recentProjectLoadCooldownUntilRef.current = Date.now() + 20_000;
       setFiles(lsDraft.files);
       renameProject(lsDraft.name);
       if (lsDraft.messages.length > 0) {
