@@ -3992,7 +3992,7 @@ export function AIAppBuilderWorkspace() {
       { id: 'doc-file', label: 'Document Current File', icon: FileCode, category: 'run', action: () => { if (activeFile) { const prompt = docGenerator.generateDocPrompt(activeFile); handleSend(prompt); } else { dedupeToast('error', 'Open a file first'); } }, keywords: ['jsdoc', 'comment', 'document'] },
     ];
     return [...coreActions, ...staticRegistryActions];
-  }, [handleSave, handleUndo, handleRedo, handlePublish, codeSmellDetector, docGenerator, project.name, activeFile, handleSend, staticRegistryActions]);
+  }, [handleSave, handleUndo, handleRedo, handlePublish, codeAnalysisWorker, docGenerator, project.name, activeFile, handleSend, staticRegistryActions]);
 
   // Sidebar removed — all tools accessible via ⌘K command palette (Lovable-style)
 
