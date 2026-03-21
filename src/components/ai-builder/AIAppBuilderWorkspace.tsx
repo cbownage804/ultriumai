@@ -1448,18 +1448,21 @@ export function AIAppBuilderWorkspace() {
     setCompilationToastGate(v);
   }, []);
   const pendingBuildToastRef = useRef<string | null>(null);
+  const pendingPostBuildRef = useRef<{
+    latestFileCount: number;
+    duration: number;
+    commitMsg: string;
+    promptLabel: string;
+  } | null>(null);
   const handleCompileStateChange = useCallback((state: CompileState, error?: CompileErrorInfo) => {
     setCompileStateRaw(state);
     setCompileError(state === 'error' && error ? error : null);
     console.info('[Workspace] compileState →', state, error ? error.message : '');
 
-    // Fire deferred "Build complete" toast only when compilation actually succeeds
-    if (state === 'success' && pendingBuildToastRef.current) {
-      dedupeToast('success', pendingBuildToastRef.current, { duration: 5000 });
+    if (state === 'error') {
+      // Clear pending success signals — auto-heal will handle the error
       pendingBuildToastRef.current = null;
-    } else if (state === 'error') {
-      // Clear pending toast — auto-heal will handle the error
-      pendingBuildToastRef.current = null;
+      pendingPostBuildRef.current = null;
     }
 
     // ── Auto-heal: on compile error, automatically re-prompt AI to fix ──
@@ -2005,25 +2008,8 @@ export function AIAppBuilderWorkspace() {
   useEffect(() => {
     if (prevIsGeneratingRef.current && !isGenerating && latestFiles.length > 0) {
       const duration = buildStartTimeRef.current ? Date.now() - buildStartTimeRef.current : 0;
-      // Don't toast "Generated X files" here — the deferred "Build complete" toast
-      // in handleCompileStateChange will fire once compilation actually succeeds.
-      setBuildNotifications(prev => [{
-        id: crypto.randomUUID(),
-        type: 'success' as const,
-        title: `Generated ${latestFiles.length} file${latestFiles.length > 1 ? 's' : ''}`,
-        timestamp: new Date(),
-        read: false,
-      }, ...prev].slice(0, 50));
-      buildLog.logBuildComplete(latestFiles.length, duration);
-      // Build chime + counter
-      buildChime.onGeneratingChange(false);
-      const newBuildCount = buildCount + 1;
-      setBuildCount(newBuildCount);
-      // Confetti milestones
-      if ([10, 25, 50, 100].includes(newBuildCount)) {
-        import('canvas-confetti').then(m => m.default({ particleCount: 100, spread: 70, origin: { y: 0.6 } }));
-        dedupeToast('success', `🔥 ${newBuildCount} builds today! You're on fire!`);
-      }
+      // Do not mark the run as successful here.
+      // Success is finalized only after CompilationBridge verifies a fresh preview build.
       // Auto commit message
       const diffs = commitMessages.computeDiffs(previousFiles, latestFiles);
       let commitMsg = '';
@@ -2056,10 +2042,12 @@ export function AIAppBuilderWorkspace() {
       // file generation — all synchronous and blocking the main thread.
       // The compilation itself (in CompilationBridge) handles preview rendering.
       console.info('[PostGen] Skipping all post-gen analysis to prevent freeze');
-      // Mark preview as good for hot recovery & update conflict resolver base snapshot
-      hotRecovery.markAsGood([...project.files]);
-      conflictResolver.setBaseSnapshot([...project.files]);
-      versionTimeline.addSnapshot(`AI: ${messages[messages.length - 2]?.content?.slice(0, 40) || 'generation'}`, [...project.files], 'ai-generation', undefined, commitMsg);
+      pendingPostBuildRef.current = {
+        latestFileCount: latestFiles.length,
+        duration,
+        commitMsg,
+        promptLabel: messages[messages.length - 2]?.content?.slice(0, 40) || 'generation',
+      };
 
       // Record build analytics (Phase 60: compute actual credit cost based on mode)
       const lastMsg = messages[messages.length - 1];
@@ -3586,6 +3574,40 @@ export function AIAppBuilderWorkspace() {
   const MINIMAL_MOUNT_HTML = '<!DOCTYPE html><html><body><div id="root"></div></body></html>';
   const lastKnownGoodHTMLRef = useRef<string | null>(stableHTML && isPreviewValidFn(stableHTML) ? stableHTML : null);
 
+  const handleVerifiedBuildSuccess = useCallback((files: ProjectFile[]) => {
+    lkgDiff.saveSnapshot(files);
+
+    if (pendingBuildToastRef.current) {
+      dedupeToast('success', pendingBuildToastRef.current, { duration: 5000 });
+      pendingBuildToastRef.current = null;
+    }
+
+    const pending = pendingPostBuildRef.current;
+    if (!pending) return;
+
+    setBuildNotifications(prev => [{
+      id: crypto.randomUUID(),
+      type: 'success' as const,
+      title: `Generated ${pending.latestFileCount} file${pending.latestFileCount > 1 ? 's' : ''}`,
+      timestamp: new Date(),
+      read: false,
+    }, ...prev].slice(0, 50));
+    buildLog.logBuildComplete(pending.latestFileCount, pending.duration);
+    buildChime.onGeneratingChange(false);
+    setBuildCount(prev => {
+      const newBuildCount = prev + 1;
+      if ([10, 25, 50, 100].includes(newBuildCount)) {
+        import('canvas-confetti').then(m => m.default({ particleCount: 100, spread: 70, origin: { y: 0.6 } }));
+        dedupeToast('success', `🔥 ${newBuildCount} builds today! You're on fire!`);
+      }
+      return newBuildCount;
+    });
+    hotRecovery.markAsGood([...files]);
+    conflictResolver.setBaseSnapshot([...files]);
+    versionTimeline.addSnapshot(`AI: ${pending.promptLabel}`, [...files], 'ai-generation', undefined, pending.commitMsg);
+    pendingPostBuildRef.current = null;
+  }, [buildChime, buildLog, conflictResolver, hotRecovery, lkgDiff, versionTimeline]);
+
   const handleStableHTML = useCallback((html: string | null) => {
     const changed = html !== stableHTMLRef.current;
     stableHTMLRef.current = html;
@@ -3939,7 +3961,7 @@ export function AIAppBuilderWorkspace() {
               annotations.filter(a => a.severity === 'error'),
             );
           }}
-          onBuildSuccess={(files) => lkgDiff.saveSnapshot(files)}
+          onBuildSuccess={handleVerifiedBuildSuccess}
           onCompilePhaseChange={setCompilePhase}
         />
       </PanelErrorBoundary>
