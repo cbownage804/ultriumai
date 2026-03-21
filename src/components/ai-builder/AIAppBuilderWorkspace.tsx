@@ -2082,18 +2082,20 @@ export function AIAppBuilderWorkspace() {
   const saveInProgressRef = useRef(false);
 
   // Auto-save (cloud) — includes chat messages + versions for persistence
+  // Uses a longer 4s debounce to avoid cascading with other post-gen effects
   useEffect(() => {
     if (isGenerating) return; // skip during streaming to prevent browser freeze
     if (project.files.length === 0) return;
-    // Phase 50: Debounce with 2s delay, cancel pending saves
+    // Defer longer after generation ends to avoid main-thread contention
+    const elapsed = Date.now() - postGenTimestampRef.current;
+    const delay = elapsed < 3000 ? 4000 : 2000;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(() => {
       if (saveInProgressRef.current) return;
       saveInProgressRef.current = true;
       scheduleAutoSave(project.name, project.files, messages, { versions });
-      // Reset flag after a short delay (scheduleAutoSave is itself debounced)
       setTimeout(() => { saveInProgressRef.current = false; }, 500);
-    }, 2000);
+    }, delay);
     return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
   }, [project.files, project.name, messages, versions, scheduleAutoSave, isGenerating]);
 
