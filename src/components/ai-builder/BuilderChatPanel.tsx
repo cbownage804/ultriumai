@@ -1749,17 +1749,18 @@ export function BuilderChatPanel({
               </motion.div>
             </div>
           ) : (
-            {hiddenMessageCount > 0 && (
-              <div className="flex justify-center pb-1">
-                <button
-                  onClick={() => setVisibleMessageCount(prev => Math.min(filteredMessages.length, prev + LOAD_MORE_MESSAGE_COUNT))}
-                  className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-[11px] text-white/55 transition-colors hover:bg-white/[0.06] hover:text-white/85"
-                >
-                  Load {Math.min(LOAD_MORE_MESSAGE_COUNT, hiddenMessageCount)} earlier message{hiddenMessageCount === 1 ? '' : 's'}
-                </button>
-              </div>
-            )}
-            renderedMessages.map((msg, idx) => {
+            <>
+              {hiddenMessageCount > 0 && (
+                <div className="flex justify-center pb-1">
+                  <button
+                    onClick={() => setVisibleMessageCount(prev => Math.min(filteredMessages.length, prev + LOAD_MORE_MESSAGE_COUNT))}
+                    className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-[11px] text-white/55 transition-colors hover:bg-white/[0.06] hover:text-white/85"
+                  >
+                    Load {Math.min(LOAD_MORE_MESSAGE_COUNT, hiddenMessageCount)} earlier message{hiddenMessageCount === 1 ? '' : 's'}
+                  </button>
+                </div>
+              )}
+              {renderedMessages.map((msg, idx) => {
               const isLast = idx === renderedMessages.length - 1;
               const Wrapper = isLast ? motion.div : 'div' as any;
               const wrapperProps = isLast ? {
@@ -1861,7 +1862,8 @@ export function BuilderChatPanel({
                   </div>
                 </div>
               </Wrapper>
-              );})
+              );})}
+            </>
           )}
 
           {/* Thinking / typing indicator — only show when no content is streaming yet */}
