@@ -3620,7 +3620,7 @@ export function AIAppBuilderWorkspace() {
     if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
       postBuildIdleRef.current = (window as Window & { requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number }).requestIdleCallback?.(() => runPostBuildTasks(), { timeout: 1500 }) ?? null;
     } else {
-      window.setTimeout(runPostBuildTasks, 0);
+      setTimeout(runPostBuildTasks, 0);
     }
   }, [buildAnalytics, buildChime, buildLog, conflictResolver, hotRecovery, lkgDiff, versionTimeline]);
 
