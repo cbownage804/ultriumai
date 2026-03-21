@@ -2110,6 +2110,11 @@ export function AIAppBuilderWorkspace() {
 
   // Issue 13 fix: Track post-generation transition to defer saves
   const postGenTimestampRef = useRef<number>(0);
+  const recentProjectLoadCooldownUntilRef = useRef<number>(0);
+
+  const isInRecentProjectLoadCooldown = useCallback(() => {
+    return Date.now() < recentProjectLoadCooldownUntilRef.current;
+  }, []);
   useEffect(() => {
     if (prevIsGeneratingRef.current && !isGenerating) {
       postGenTimestampRef.current = Date.now();
@@ -2131,27 +2136,31 @@ export function AIAppBuilderWorkspace() {
         saveDraftImmediate(saveName, project.files, messages);
 
         // Heavy cloud save + thumbnail capture deferred to idle callback
-        const runCloudSave = () => {
-          saveProject(saveName, project.files, undefined, undefined, messages, { versions })
-            .then((projectId) => {
-              if (projectId) {
-                setTimeout(() => {
-                  const html = compiledForHostingRef.current || stableHTMLRef.current;
-                  if (html) {
-                    captureAndUpload(html, projectId).catch(() => {});
-                  }
-                }, 5000);
-              }
-            });
-        };
-        if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-          (window as any).requestIdleCallback(runCloudSave, { timeout: 5000 });
-        } else {
-          setTimeout(runCloudSave, 2000);
+        // and suppressed right after loading a recent project to avoid freezing the tab.
+        if (!isInRecentProjectLoadCooldown()) {
+          const runCloudSave = () => {
+            saveProject(saveName, project.files, undefined, undefined, messages, { versions })
+              .then((projectId) => {
+                if (projectId && !isInRecentProjectLoadCooldown()) {
+                  setTimeout(() => {
+                    if (isInRecentProjectLoadCooldown()) return;
+                    const html = compiledForHostingRef.current || stableHTMLRef.current;
+                    if (html) {
+                      captureAndUpload(html, projectId).catch(() => {});
+                    }
+                  }, 5000);
+                }
+              });
+          };
+          if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+            (window as any).requestIdleCallback(runCloudSave, { timeout: 5000 });
+          } else {
+            setTimeout(runCloudSave, 2000);
+          }
         }
       }
     }
-  }, [isGenerating]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isGenerating, isInRecentProjectLoadCooldown]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-save to IndexedDB (Phase 10 — fast local persistence)
   const sessionId = currentProjectId || 'draft';
@@ -3512,6 +3521,7 @@ export function AIAppBuilderWorkspace() {
   const handleLoadProject = useCallback(async (projectId: string) => {
     const loaded = await loadProject(projectId);
     if (loaded) {
+      recentProjectLoadCooldownUntilRef.current = Date.now() + 20_000;
       setFiles(loaded.files as any[]);
       renameProject(loaded.name);
       if (loaded.published_url) setPublishedUrl(loaded.published_url);
