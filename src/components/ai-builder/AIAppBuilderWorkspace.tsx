@@ -489,8 +489,7 @@ export function AIAppBuilderWorkspace() {
   const docGenerator = useDocGenerator();
   const componentExtractor = useComponentExtractor(project.files);
   // Ref for project.files — used in commandActions to avoid re-renders on file changes
-  const projectFilesRef = useRef(project.files);
-  projectFilesRef.current = project.files;
+  const projectFilesRef = useSyncRef(project.files);
   // showPromptHistory now managed by usePanelManager
   const {
     branches, activeBranch, activeBranchName,
