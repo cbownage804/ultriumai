@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { usePromptHistory } from '@/hooks/usePromptHistory';
 import { useCodeSmellDetector } from '@/hooks/useCodeSmellDetector';
+import { useCodeAnalysisWorker } from '@/hooks/useCodeAnalysisWorker';
 import { useDocGenerator } from '@/hooks/useDocGenerator';
 import { useAutoFixLoop } from '@/hooks/useAutoFixLoop';
 import { useGithubSync } from '@/hooks/useGithubSync';
