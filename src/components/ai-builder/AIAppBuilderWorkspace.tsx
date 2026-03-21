@@ -2008,17 +2008,10 @@ export function AIAppBuilderWorkspace() {
       // Log files to build log
       latestFiles.forEach(f => buildLog.logFileWrite(f.path));
       // Issue 30 fix: Removed isCompiling flicker (was set true then immediately false next frame)
-      // Defer code smell analysis — skip for large projects and use idle callback
+      // Code smell analysis — offloaded to Web Worker (non-blocking)
       if (latestFiles.length < 50) {
-        const runAnalysis = () => {
-          const smells = codeSmellDetector.analyzeFiles([...project.files, ...latestFiles]);
-          if (smells.length > 0) setCodeSuggestions(smells);
-        };
-        if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-          (window as any).requestIdleCallback(runAnalysis, { timeout: 8000 });
-        } else {
-          setTimeout(runAnalysis, 5000);
-        }
+        codeAnalysisWorker.analyzeFiles([...project.files, ...latestFiles])
+          .then(smells => { if (smells.length > 0) setCodeSuggestions(smells); });
       }
     }
   }, [latestFiles]);
