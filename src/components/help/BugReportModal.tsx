@@ -9,7 +9,7 @@ import { Bug, Camera, Loader2, Send, CheckCircle, AlertTriangle, Monitor, MapPin
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import html2canvas from 'html2canvas';
+// html2canvas is lazy-loaded on demand to keep it out of the critical bundle
 import { cn } from '@/lib/utils';
 
 interface BugReportModalProps {
