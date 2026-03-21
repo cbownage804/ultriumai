@@ -1,57 +1,122 @@
 
 
-# Builder Improvements — Wave 14
+# App Builder Stability Hardening Plan
 
-Four improvements covering smarter error recovery, prompt templates, AI memory, and export/deployment polish.
+## Problem Summary
+The app builder suffers from browser freezes and stuck states caused by:
+1. **html2canvas thumbnail capture** running on main thread (creates offscreen iframe + renders full page)
+2. **Cascading auto-fix loops** — compile errors trigger auto-heal, which triggers compile, which triggers auto-heal again
+3. **Massive component file** (4800 lines, ~100 hooks initialized on mount) creating heavy render cycles
+4. **State desync** between `isCompiling`, `isGenerating`, `compileState` leaving UI stuck on spinners
+5. **Post-generation storm** — multiple effects fire simultaneously (cloud save, IDB save, localStorage save, thumbnail capture, code analysis)
+
+## Plan
+
+### Step 1: Kill html2canvas — Use Server-Side Thumbnail Capture
+The `usePreviewCapture` hook creates a hidden 1280x800 iframe, writes full HTML, waits 4-8 seconds, then runs `html2canvas` on the main thread. This is the single biggest freeze source.
+
+**Changes:**
+- **`src/hooks/usePreviewCapture.ts`** — Replace `html2canvas` with a lightweight approach: capture the existing preview iframe using `OffscreenCanvas` or simply skip client-side capture entirely and use the hosted preview URL with an edge function screenshot service
+- As an immediate fix: wrap the entire `attemptCapture` in a `setTimeout(0)` yielding pattern, reduce canvas scale to 0.25, and add a hard 10-second abort timer that kills the iframe if capture hangs
+- Remove retry logic (MAX_RETRIES=2 with exponential backoff causes up to 3 captures × 4-8s wait = 24s of main-thread work)
+
+### Step 2: Cap Auto-Heal Cascade with a Single Gate
+Currently there are THREE separate auto-fix systems that can fire simultaneously:
+- `handleCompileStateChange` → `tryAutoHeal()` (compile errors)
+- `handleAutoFixError` (runtime errors from preview)
+- Validation repair pipeline (`pendingValidationFixRef`)
+
+**Changes:**
+- **`src/components/ai-builder/AIAppBuilderWorkspace.tsx`** — Consolidate into a single `autoFixGateRef` with a global cooldown (minimum 5s between ANY fix attempt). Add a hard cap of 3 total fix attempts per user interaction. Wire all three paths through the same gate.
+- Add `requestIdleCallback` wrapper around the auto-heal `sendMessage` call so it never blocks user input
+
+### Step 3: Debounce the Post-Generation Effect Storm
+After `isGenerating` transitions to `false`, at least 5 effects fire in the same tick:
+- Cloud save (`saveProject`)
+- Draft save (localStorage)
+- IDB save
+- Code smell analysis
+- Commit message generation
+- Thumbnail capture
+
+**Changes:**
+- **`src/components/ai-builder/AIAppBuilderWorkspace.tsx`** — Stagger these into a single orchestrated sequence using `requestIdleCallback`:
+  - T+0ms: localStorage draft (sync, fast)
+  - T+2s (idle): IDB save
+  - T+4s (idle): Cloud save
+  - T+8s (idle): Thumbnail capture (if still on same project)
+- Remove the duplicate save effects (lines ~2095-2191 have 3 separate useEffects that all trigger on `[project.files, messages]`)
+
+### Step 4: Fix Compile State Machine Desync
+The `isCompiling` boolean and `compileState` enum can get out of sync because multiple code paths set them independently.
+
+**Changes:**
+- **`src/components/ai-builder/AIAppBuilderWorkspace.tsx`** — Make `isCompiling` derived from `compileState` (i.e., `const isCompiling = compileState === 'compiling'`) instead of maintaining it as separate state. Remove `setIsCompilingRaw` and `setIsCompiling` — only use `setCompileStateRaw`.
+- **`src/components/ai-builder/CompilationBridge.tsx`** — Remove `onCompilingChange` callback entirely; parent derives it from `compileState`
+
+### Step 5: Add Global Error Boundary with Recovery
+When the workspace crashes (React error #299, hook errors), the entire page freezes with no recovery path.
+
+**Changes:**
+- **`src/components/ai-builder/PanelErrorBoundary.tsx`** — Enhance to catch workspace-level crashes and offer "Reset workspace" button that clears all refs and forces a fresh mount
+- **`src/pages/AIAppBuilderWorkspacePage.tsx`** — Add a `key` prop tied to a recovery counter so the error boundary can force-remount the entire workspace
+
+### Step 6: Guard Project Load from Triggering Heavy Operations
+Loading a recent project currently triggers compilation, thumbnail capture, and save effects all at once.
+
+**Changes:**
+- **`src/components/ai-builder/AIAppBuilderWorkspace.tsx`** — Extend the existing `recentProjectLoadCooldownUntilRef` (20s) to also suppress:
+  - Auto-heal attempts
+  - Code smell analysis
+  - All save effects except the initial file restore
+  - Compilation (when preview HTML was successfully restored from DB)
+
+### Step 7: Reduce Hook Count on Initial Mount
+The workspace initializes ~60+ custom hooks on mount, many of which are never used in a typical session.
+
+**Changes:**
+- **`src/components/ai-builder/AIAppBuilderWorkspace.tsx`** — Wrap non-critical hooks with the existing `useDeferredMount` pattern:
+  - `useCodeSmellDetector`, `useDocGenerator`, `useLighthouseAudit`, `useBundleSizeTracking`, `useDeleteButtonAutoPatcher`, `usePromptPhasePlanner`, `useErrorPatternLearning`, `useDeployGate`, `useCollaborationEngine`, `useAPIBuilder`, `useProjectReview`, `useSchemaIntrospection`, `usePromptChains`, `useAICodeReview`, `useTestGenerator`, `useMultiCursorEditor`, `useMinimapHeatZones`, `useSymbolNavigator`
+  - These return no-op stubs until `useDeferredMount()` returns `true`
 
 ---
 
-## 1. Cascading Error Recovery with Root-Cause Analysis
+## Technical Details
 
-**Problem**: The current auto-fix loop (3 retries) sends the raw error message back to the AI, but doesn't analyze whether the error is a symptom of a deeper issue (e.g., a missing import causes 3 different "undefined" errors).
+```text
+Freeze Sources (ranked by severity):
 
-**What it does**: Before retrying, group related errors by file and deduplicate. Extract the root cause (e.g., "missing import" vs "undefined variable") and send a single consolidated fix prompt instead of fixing symptoms one-by-one. On the 2nd retry, include a diff of what changed since the last working state (from `useLKGDiff`) so the AI can see exactly what broke.
+1. html2canvas in usePreviewCapture
+   └─ Creates hidden 1280×800 iframe
+   └─ Renders full HTML + waits 4-8s
+   └─ Runs html2canvas (synchronous DOM walk)
+   └─ Up to 3 retries = 24s main-thread block
 
-**Files**: `useAutoFixLoop.ts` (add error grouping + LKG diff injection), `useErrorPatternLearning.ts` (feed successful fixes back as positive patterns)
+2. Auto-heal cascade
+   └─ Compile error → sendMessage → compile → error → sendMessage...
+   └─ Three independent fix systems can fire simultaneously
+   └─ No global cooldown between fix attempts
 
----
+3. Post-generation effect storm
+   └─ 5+ effects fire in same React commit
+   └─ Each does synchronous work (JSON.stringify, file iteration)
+   └─ Cloud save + IDB save + localStorage save all race
 
-## 2. Expanded Prompt Templates with Context-Aware Suggestions
+4. State desync (isCompiling vs compileState)
+   └─ Multiple code paths set isCompiling independently
+   └─ UI shows spinner when compile already finished
 
-**Problem**: The slash command templates exist but are static — they don't adapt to what's already in the project (e.g., suggesting "Add Auth" when auth is already implemented).
+5. 60+ hooks initialized on mount
+   └─ Each hook allocates refs, state, effects
+   └─ Many never used in typical session
+```
 
-**What it does**: Before showing templates, scan the project files to detect which features already exist (auth, routing, dark mode, etc.). Mark implemented templates as "✓ Done" and surface only relevant ones. Add new template categories: "Optimize" (performance, SEO, accessibility), "Polish" (animations, loading states, error boundaries), and "Scale" (pagination, caching, lazy loading).
-
-**Files**: `promptTemplates.ts` (add new templates + feature detection), `BuilderChatPanel.tsx` (wire context-aware filtering into slash menu)
-
----
-
-## 3. Persistent AI Memory with Correction Learning
-
-**Problem**: `useAgentMemory` tracks conventions and preferences in localStorage, but doesn't learn from user corrections (e.g., "I told you not to change the background" should permanently stick).
-
-**What it does**: After each generation, detect correction patterns in user follow-ups ("don't change X", "always use Y", "keep Z"). Auto-extract these as hard rules and inject them into future system prompts as `[USER RULES]`. Show a "Memory" indicator in the chat header with a count of learned rules, and let users view/edit/delete them.
-
-**Files**: `useAgentMemory.ts` (add correction detection + rule extraction), `useAIAppBuilder.ts` (inject rules into system prompt), `BuilderChatPanel.tsx` (add memory indicator UI)
-
----
-
-## 4. One-Click GitHub Export with Production Config
-
-**Problem**: Export exists but produces a raw ZIP. Users who want to push to GitHub and deploy still need to manually add package.json scripts, environment configs, and build settings.
-
-**What it does**: Enhance the "Full-Stack" export to generate a production-ready repository with: proper `package.json` (with `build`, `dev`, `preview` scripts), `.env.example` with all required variables listed, a GitHub Actions CI/CD workflow file (`.github/workflows/deploy.yml`), and a `netlify.toml` / `vercel.json` for one-click platform deploys. Add a "Push to GitHub" button that uses the existing GitHub sync to create a repo with these files included.
-
-**Files**: `exportProject.ts` (add CI/CD config generation, .env.example, platform configs), `PublishPanel.tsx` (add GitHub export button)
-
----
-
-## Priority
-
-| Step | Area | Impact | Effort |
-|------|------|--------|--------|
-| 3 — Correction learning | AI memory | High | Low |
-| 1 — Root-cause recovery | Error recovery | High | Medium |
-| 2 — Context-aware templates | Prompt shortcuts | Medium | Low |
-| 4 — GitHub export | Deployment | Medium | Medium |
+## Implementation Order
+1. Step 1 (thumbnail) — highest impact, isolated change
+2. Step 2 (auto-heal gate) — prevents cascade freezes
+3. Step 4 (state desync) — prevents stuck UI
+4. Step 3 (effect storm) — prevents post-gen freeze
+5. Step 6 (project load guard) — prevents load freeze
+6. Step 7 (deferred hooks) — reduces baseline overhead
+7. Step 5 (error boundary) — safety net for remaining issues
 
