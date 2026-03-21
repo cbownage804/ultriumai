@@ -1544,7 +1544,7 @@ export function AIAppBuilderWorkspace() {
           })
           .filter((p): p is string => !!p)
           .map(p => {
-            const file = project.files.find(f => f.path === p || f.path === `src/${p}` || f.path.endsWith(`/${p}`));
+            const file = fileMapRef.current.get(p) || fileMapRef.current.get(`src/${p}`) || project.files.find(f => f.path.endsWith(`/${p}`));
             return file ? file.path : null;
           })
           .filter((p): p is string => !!p);
