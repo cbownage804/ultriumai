@@ -118,6 +118,25 @@ import { StreamingCodeEditor } from './StreamingCodeEditor';
 import { QuickSettingsBar } from './QuickSettingsBar';
 import { useSmartFileCreation } from './useSmartFileCreation';
 import { useConversationHistory } from '@/hooks/useConversationHistory';
+
+const HISTORY_MESSAGE_BATCH_SIZE = 20;
+const HISTORY_VERSION_BATCH_SIZE = 10;
+
+function scheduleIdleTask(task: () => void, timeout = 1500): () => void {
+  if (typeof window === 'undefined') return () => {};
+
+  if ('requestIdleCallback' in window) {
+    const id = (window as any).requestIdleCallback(task, { timeout });
+    return () => {
+      if ('cancelIdleCallback' in window) {
+        (window as any).cancelIdleCallback(id);
+      }
+    };
+  }
+
+  const id = globalThis.setTimeout(task, 0);
+  return () => globalThis.clearTimeout(id);
+}
 import { useElementSourceMapper } from './useElementSourceMapper';
 import { InlineChatWidget } from './InlineChatWidget';
 import { EnvironmentStatusBar } from './EnvironmentStatusBar';
@@ -2234,6 +2253,7 @@ export function AIAppBuilderWorkspace() {
   latestRef.current.files = project.files;
   latestRef.current.messages = messages;
   const lastSaveTimestampRef = useRef<number>(0);
+  const historyHydrationCleanupRef = useRef<(() => void) | null>(null);
 
   // Use a ref for saveToIDB so the effect doesn't depend on the idbPersistence object
   // (which changes identity every render due to syncStatus state)
@@ -2241,6 +2261,66 @@ export function AIAppBuilderWorkspace() {
   saveToIDBRef.current = idbPersistence.saveToIDB;
   const saveToIDBImmediateRef = useRef(idbPersistence.saveToIDBImmediate);
   saveToIDBImmediateRef.current = idbPersistence.saveToIDBImmediate;
+
+  const cancelHistoryHydration = useCallback(() => {
+    historyHydrationCleanupRef.current?.();
+    historyHydrationCleanupRef.current = null;
+  }, []);
+
+  const hydrateRestoredHistory = useCallback((rawMessages?: any[] | null, rawVersions?: any[] | null) => {
+    cancelHistoryHydration();
+
+    const normalizedMessages: BuilderMessage[] = (rawMessages || []).map((m: any) => ({
+      ...m,
+      timestamp: new Date(m.timestamp),
+    }));
+    const normalizedVersions = (rawVersions || []).map((v: any) => ({
+      ...v,
+      timestamp: new Date(v.timestamp),
+    }));
+
+    setMessages([]);
+    setVersions([]);
+
+    if (normalizedMessages.length === 0 && normalizedVersions.length === 0) {
+      return;
+    }
+
+    let cancelled = false;
+    let messageIndex = 0;
+    let versionIndex = 0;
+    let frameId: number | null = null;
+
+    const appendBatch = () => {
+      if (cancelled) return;
+
+      if (messageIndex < normalizedMessages.length) {
+        const nextMessages = normalizedMessages.slice(messageIndex, messageIndex + HISTORY_MESSAGE_BATCH_SIZE);
+        messageIndex += HISTORY_MESSAGE_BATCH_SIZE;
+        setMessages(prev => [...prev, ...nextMessages]);
+      }
+
+      if (versionIndex < normalizedVersions.length) {
+        const nextVersions = normalizedVersions.slice(versionIndex, versionIndex + HISTORY_VERSION_BATCH_SIZE);
+        versionIndex += HISTORY_VERSION_BATCH_SIZE;
+        setVersions(prev => [...prev, ...nextVersions]);
+      }
+
+      if (messageIndex < normalizedMessages.length || versionIndex < normalizedVersions.length) {
+        frameId = window.requestAnimationFrame(appendBatch);
+      }
+    };
+
+    const cancelIdle = scheduleIdleTask(() => {
+      if (!cancelled) appendBatch();
+    }, 2000);
+
+    historyHydrationCleanupRef.current = () => {
+      cancelled = true;
+      cancelIdle();
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+    };
+  }, [cancelHistoryHydration, setMessages, setVersions]);
 
   // Use a ref to track the sessionId so the effect doesn't re-run (and re-register listeners)
   // when currentProjectId changes during normal usage.
@@ -2297,9 +2377,7 @@ export function AIAppBuilderWorkspace() {
               reactIsEmpty, draft.files.length, draft.savedAt);
             setFiles(draft.files);
             renameProject(draft.name);
-            if (draft.messages.length > 0) {
-              setMessages(draft.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
-            }
+            hydrateRestoredHistory(draft.messages, null);
             lastSaveTimestampRef.current = draftTime;
           }
         } else if (reactIsEmpty) {
@@ -2323,9 +2401,7 @@ export function AIAppBuilderWorkspace() {
                 console.info('[Draft] IDB restore: %d files, time=%s', idbSession.files.length, idbSession.savedAt);
                 setFiles(idbSession.files);
                 renameProject(idbSession.name);
-                if (idbSession.messages && idbSession.messages.length > 0) {
-                  setMessages(idbSession.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
-                }
+                hydrateRestoredHistory(idbSession.messages, null);
                 lastSaveTimestampRef.current = idbTime;
               }
             }
@@ -2356,7 +2432,7 @@ export function AIAppBuilderWorkspace() {
       } catch { /* best-effort — don't block navigation */ }
     };
     // Intentionally stable deps — refs handle changing values
-  }, [saveDraftImmediate, loadDraft, setFiles, renameProject, setMessages]);
+  }, [saveDraftImmediate, loadDraft, setFiles, renameProject, hydrateRestoredHistory]);
 
   // Capture ?new=true once via isNewProjectRef above before stripping it from the URL
 
@@ -2505,12 +2581,7 @@ export function AIAppBuilderWorkspace() {
         hasAutoNamed.current = true;
       }
       if (loaded.published_url) setPublishedUrl(loaded.published_url);
-      if (loaded.settings?.chatMessages) {
-        setMessages(loaded.settings.chatMessages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
-      }
-      if (loaded.settings?.versions) {
-        setVersions(loaded.settings.versions.map((v: any) => ({ ...v, timestamp: new Date(v.timestamp) })));
-      }
+      hydrateRestoredHistory(loaded.settings?.chatMessages, loaded.settings?.versions);
     })();
   }, [initialProjectId]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -2536,9 +2607,7 @@ export function AIAppBuilderWorkspace() {
       recentProjectLoadCooldownUntilRef.current = Date.now() + 20_000;
       setFiles(lsDraft.files);
       renameProject(lsDraft.name);
-      if (lsDraft.messages.length > 0) {
-        setMessages(lsDraft.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
-      }
+      hydrateRestoredHistory(lsDraft.messages, null);
       // Mark the timestamp so visibility handler doesn't overwrite with older data
       const lsTime = lsDraft.savedAt ? new Date(lsDraft.savedAt).getTime() : Date.now();
       lastSaveTimestampRef.current = lsTime;
@@ -2556,14 +2625,15 @@ export function AIAppBuilderWorkspace() {
           hasRestoredRef.current = true;
           setFiles(idbSession.files);
           renameProject(idbSession.name);
-          if (idbSession.messages.length > 0) {
-            setMessages(idbSession.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
-          }
+          hydrateRestoredHistory(idbSession.messages, null);
         }
       } catch { /* IDB unavailable */ }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      cancelHistoryHydration();
+    };
   }, []); // intentionally run once on mount
 
   // Handle recovery dialog actions
@@ -2572,12 +2642,10 @@ export function AIAppBuilderWorkspace() {
     if (!session) return;
     setFiles(session.files);
     renameProject(session.name);
-    if (session.messages.length > 0) {
-      setMessages(session.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
-    }
+    hydrateRestoredHistory(session.messages, null);
     setShowRecoveryDialog(false);
     dedupeToast('success', 'Session restored');
-  }, [idbPersistence.recoverableSession, setFiles, renameProject, setMessages]);
+  }, [idbPersistence.recoverableSession, setFiles, renameProject, hydrateRestoredHistory]);
 
   const handleDiscardSession = useCallback(() => {
     idbPersistence.clearSession();
@@ -2587,11 +2655,9 @@ export function AIAppBuilderWorkspace() {
     if (draft && (draft.files.length > 0 || draft.messages.length > 0)) {
       setFiles(draft.files);
       renameProject(draft.name);
-      if (draft.messages.length > 0) {
-        setMessages(draft.messages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
-      }
+      hydrateRestoredHistory(draft.messages, null);
     }
-  }, [idbPersistence, loadDraft, setFiles, renameProject, setMessages]);
+  }, [idbPersistence, loadDraft, setFiles, renameProject, hydrateRestoredHistory]);
 
   // Draft clearing for new projects is now handled in the strip ?new=true effect above
 
