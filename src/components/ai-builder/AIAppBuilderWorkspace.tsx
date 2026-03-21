@@ -1601,10 +1601,10 @@ export function AIAppBuilderWorkspace() {
       console.info('[AutoHeal] ✅ Auto-fix resolved the build error');
     }
   }, [autoHeal, lkgDiff, errorPatterns, project.files, sendMessage, setIsCompiling]);
-  useEffect(() => {
-    isCompilingRef.current = isCompiling;
-    compileStateRef.current = compileState;
-  }, [isCompiling, compileState]);
+  const isCompilingAndStateRef = useSyncRef({ isCompiling, compileState });
+  // Keep individual refs for backward compat in guards
+  isCompilingRef.current = isCompiling;
+  compileStateRef.current = compileState;
   const [selectedModel, setSelectedModel] = useState('google/gemini-3-flash-preview');
   const [previewSlug, setPreviewSlug] = useState<string | null>(null);
   const [pendingConflicts, setPendingConflicts] = useState<{ path: string; userContent: string; aiContent: string }[] | null>(null);
