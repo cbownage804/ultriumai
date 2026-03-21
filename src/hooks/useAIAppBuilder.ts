@@ -913,6 +913,7 @@ export function useAIAppBuilder() {
   const [contextBudget, setContextBudget] = useState<ContextBudgetInfo | null>(null);
   const [continuationRound, setContinuationRound] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
+  const isGeneratingRef = useRef(false);
   const continuationCountRef = useRef(0);
   const accumulatedFilesRef = useRef<string[]>([]);
   const fallbackRetryRef = useRef(false);
@@ -931,6 +932,7 @@ export function useAIAppBuilder() {
   // Issue 27 fix: Use a ref to read messages inside sendMessage without including it in deps
   const messagesRef = useRef(messages);
   messagesRef.current = messages;
+  isGeneratingRef.current = isGenerating;
 
   const sendMessage = useCallback(async (
     input: string,
@@ -944,7 +946,11 @@ export function useAIAppBuilder() {
     /** When true, skip credit deduction (used for auto-fix / self-correction) */
     isAutoFix?: boolean,
   ) => {
-    if (!input.trim() || isGenerating) return;
+    if (!input.trim()) return;
+    if (isGeneratingRef.current && !isAutoFix) {
+      console.info('[AI Builder] sendMessage blocked — generation already active');
+      return;
+    }
 
     // Phase 52: Cap messages at 200 entries to prevent sluggish re-renders
     const currentMessages = messagesRef.current;
@@ -2036,6 +2042,7 @@ ${JSON.stringify(brandingData.typography, null, 2)}` : ''}` });
 
   const stopGenerating = useCallback(() => {
     abortRef.current?.abort();
+    isGeneratingRef.current = false;
     setIsGenerating(false);
     setThinkingPhase(null);
   }, []);
