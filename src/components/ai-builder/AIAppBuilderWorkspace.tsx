@@ -4306,7 +4306,7 @@ export function AIAppBuilderWorkspace() {
                 />
                 </SafePanel>
                 <SafePanel show={!!panels.showCodeIntel} name="Code Intelligence">
-                  <AICodeIntelligence open={!!panels.showCodeIntel} onClose={() => setShowCodeIntel(false)} suggestions={codeSuggestions} onApplySuggestion={(s) => { if (s.code && activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + s.code); dedupeToast('success', 'Applied suggestion'); } }} onDismiss={(id) => setCodeSuggestions(prev => prev.filter(s => s.id !== id))} onRefresh={() => { const smells = codeSmellDetector.analyzeFiles(project.files); setCodeSuggestions(smells); dedupeToast('success', `Found ${smells.length} suggestions`); }} activeFilePath={project.activeFilePath} />
+                  <AICodeIntelligence open={!!panels.showCodeIntel} onClose={() => setShowCodeIntel(false)} suggestions={codeSuggestions} onApplySuggestion={(s) => { if (s.code && activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + s.code); dedupeToast('success', 'Applied suggestion'); } }} onDismiss={(id) => setCodeSuggestions(prev => prev.filter(s => s.id !== id))} onRefresh={() => { codeAnalysisWorker.analyzeFiles(project.files).then(smells => { setCodeSuggestions(smells); dedupeToast('success', `Found ${smells.length} suggestions`); }); }} activeFilePath={project.activeFilePath} />
                 </SafePanel>
                 <SafePanel show={!!panels.showDbExplorer} name="Database Explorer">
                   <DatabaseExplorer open={!!panels.showDbExplorer} onClose={() => setShowDbExplorer(false)} supabaseConfig={supabaseConfig} />
