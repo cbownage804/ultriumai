@@ -239,6 +239,7 @@ export function CompilationBridge({
     return () => {
       cleanup();
       window.removeEventListener('message', runtimeErrorHandler);
+      if (runtimeErrorTimer) clearTimeout(runtimeErrorTimer);
     };
   }, [startMonitoring, onHealthIssue]);
 
