@@ -1453,7 +1453,10 @@ export function AIAppBuilderWorkspace() {
     duration: number;
     commitMsg: string;
     promptLabel: string;
+    actualCredits: number;
+    promptLength: number;
   } | null>(null);
+  const postBuildIdleRef = useRef<number | null>(null);
   const handleCompileStateChange = useCallback((state: CompileState, error?: CompileErrorInfo) => {
     setCompileStateRaw(state);
     setCompileError(state === 'error' && error ? error : null);
