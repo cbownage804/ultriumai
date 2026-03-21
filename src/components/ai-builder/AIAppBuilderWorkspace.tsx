@@ -3574,6 +3574,40 @@ export function AIAppBuilderWorkspace() {
   const MINIMAL_MOUNT_HTML = '<!DOCTYPE html><html><body><div id="root"></div></body></html>';
   const lastKnownGoodHTMLRef = useRef<string | null>(stableHTML && isPreviewValidFn(stableHTML) ? stableHTML : null);
 
+  const handleVerifiedBuildSuccess = useCallback((files: ProjectFile[]) => {
+    lkgDiff.saveSnapshot(files);
+
+    if (pendingBuildToastRef.current) {
+      dedupeToast('success', pendingBuildToastRef.current, { duration: 5000 });
+      pendingBuildToastRef.current = null;
+    }
+
+    const pending = pendingPostBuildRef.current;
+    if (!pending) return;
+
+    setBuildNotifications(prev => [{
+      id: crypto.randomUUID(),
+      type: 'success' as const,
+      title: `Generated ${pending.latestFileCount} file${pending.latestFileCount > 1 ? 's' : ''}`,
+      timestamp: new Date(),
+      read: false,
+    }, ...prev].slice(0, 50));
+    buildLog.logBuildComplete(pending.latestFileCount, pending.duration);
+    buildChime.onGeneratingChange(false);
+    setBuildCount(prev => {
+      const newBuildCount = prev + 1;
+      if ([10, 25, 50, 100].includes(newBuildCount)) {
+        import('canvas-confetti').then(m => m.default({ particleCount: 100, spread: 70, origin: { y: 0.6 } }));
+        dedupeToast('success', `🔥 ${newBuildCount} builds today! You're on fire!`);
+      }
+      return newBuildCount;
+    });
+    hotRecovery.markAsGood([...files]);
+    conflictResolver.setBaseSnapshot([...files]);
+    versionTimeline.addSnapshot(`AI: ${pending.promptLabel}`, [...files], 'ai-generation', undefined, pending.commitMsg);
+    pendingPostBuildRef.current = null;
+  }, [buildChime, buildLog, conflictResolver, hotRecovery, lkgDiff, versionTimeline]);
+
   const handleStableHTML = useCallback((html: string | null) => {
     const changed = html !== stableHTMLRef.current;
     stableHTMLRef.current = html;
