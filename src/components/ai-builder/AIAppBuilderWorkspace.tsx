@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { usePromptHistory } from '@/hooks/usePromptHistory';
 import { useCodeSmellDetector } from '@/hooks/useCodeSmellDetector';
+import { useCodeAnalysisWorker } from '@/hooks/useCodeAnalysisWorker';
 import { useDocGenerator } from '@/hooks/useDocGenerator';
 import { useAutoFixLoop } from '@/hooks/useAutoFixLoop';
 import { useGithubSync } from '@/hooks/useGithubSync';
@@ -486,6 +487,7 @@ export function AIAppBuilderWorkspace() {
   const { undoStack, redoStack, canUndo, canRedo, pushUndo, undo, redo } = useUndoRedo();
   const promptHistory = usePromptHistory();
   const codeSmellDetector = useCodeSmellDetector();
+  const codeAnalysisWorker = useCodeAnalysisWorker();
   const docGenerator = useDocGenerator();
   const componentExtractor = useComponentExtractor(project.files);
   // Ref for project.files — used in commandActions to avoid re-renders on file changes
@@ -2006,17 +2008,10 @@ export function AIAppBuilderWorkspace() {
       // Log files to build log
       latestFiles.forEach(f => buildLog.logFileWrite(f.path));
       // Issue 30 fix: Removed isCompiling flicker (was set true then immediately false next frame)
-      // Defer code smell analysis — skip for large projects and use idle callback
+      // Code smell analysis — offloaded to Web Worker (non-blocking)
       if (latestFiles.length < 50) {
-        const runAnalysis = () => {
-          const smells = codeSmellDetector.analyzeFiles([...project.files, ...latestFiles]);
-          if (smells.length > 0) setCodeSuggestions(smells);
-        };
-        if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-          (window as any).requestIdleCallback(runAnalysis, { timeout: 8000 });
-        } else {
-          setTimeout(runAnalysis, 5000);
-        }
+        codeAnalysisWorker.analyzeFiles([...project.files, ...latestFiles])
+          .then(smells => { if (smells.length > 0) setCodeSuggestions(smells); });
       }
     }
   }, [latestFiles]);
@@ -3992,14 +3987,52 @@ export function AIAppBuilderWorkspace() {
       { id: 'console', label: 'Toggle Console', icon: Activity, category: 'panel', action: () => setShowConsole(c => !c) },
       { id: 'shortcuts', label: 'Keyboard Shortcuts', icon: Keyboard, category: 'panel', shortcut: '⌘/', action: () => setShowShortcuts(true) },
       { id: 'prompt-history', label: 'Prompt History', icon: Clock, category: 'panel', action: () => setShowPromptHistory(true), keywords: ['history', 'prompts', 'favorites'] },
-      { id: 'code-smells', label: 'Analyze Code Quality', icon: Zap, category: 'run', action: () => { const smells = codeSmellDetector.analyzeFiles(projectFilesRef.current); setCodeSuggestions(smells); setShowCodeIntel(true); dedupeToast('success', `Found ${smells.length} suggestions`); }, keywords: ['lint', 'quality', 'refactor', 'smell'] },
+      { id: 'code-smells', label: 'Analyze Code Quality', icon: Zap, category: 'run', action: () => { codeAnalysisWorker.analyzeFiles(projectFilesRef.current).then(smells => { setCodeSuggestions(smells); setShowCodeIntel(true); dedupeToast('success', `Found ${smells.length} suggestions`); }); }, keywords: ['lint', 'quality', 'refactor', 'smell'] },
       { id: 'gen-readme', label: 'Generate README', icon: BookOpen, category: 'run', action: () => { const prompt = docGenerator.generateReadmePrompt(projectFilesRef.current, project.name); handleSend(prompt); }, keywords: ['doc', 'readme', 'documentation'] },
       { id: 'doc-file', label: 'Document Current File', icon: FileCode, category: 'run', action: () => { if (activeFile) { const prompt = docGenerator.generateDocPrompt(activeFile); handleSend(prompt); } else { dedupeToast('error', 'Open a file first'); } }, keywords: ['jsdoc', 'comment', 'document'] },
     ];
     return [...coreActions, ...staticRegistryActions];
-  }, [handleSave, handleUndo, handleRedo, handlePublish, codeSmellDetector, docGenerator, project.name, activeFile, handleSend, staticRegistryActions]);
+  }, [handleSave, handleUndo, handleRedo, handlePublish, codeAnalysisWorker, docGenerator, project.name, activeFile, handleSend, staticRegistryActions]);
 
   // Sidebar removed — all tools accessible via ⌘K command palette (Lovable-style)
+
+  // ── Memoized stable callbacks for child components ──
+  const toggleVisualEdit = useCallback(() => setIsVisualEditActive(prev => !prev), []);
+  const navigateToFile = useCallback((path: string) => { setActiveFile(path); }, [setActiveFile]);
+
+  // Memoized preview panel props — avoids creating new objects on every render
+  const previewPanelProps = useMemo(() => ({
+    html: compiledHTML,
+    compileState,
+    isGenerating,
+    isCompiling,
+    refreshKey: previewRefreshKey,
+    onFixError: handleFixError,
+    onSmartFixError: handleSmartFixError,
+    onAIEditRequest: handleAIEditRequest,
+    isProcessingAIEdit: isGenerating,
+    projectFiles: project.files,
+    isStreamingPreview,
+    completedFileCount: completedFileCountRef.current,
+    isVisualEditActive,
+    onToggleVisualEdit: toggleVisualEdit,
+    onAutoFixError: handleAutoFixError,
+    onVisualEdit: handleVisualEdit,
+    externalIframeRef: previewIframeRef,
+    externalViewportMode: viewportMode,
+    onExternalViewportChange: setViewportMode,
+    onUrlChange: setPreviewCurrentUrl,
+    repairFailed,
+    repairErrors,
+    onRetryRepair: handleRetryRepair,
+    onDiscardChanges: handleDiscardChanges,
+    compileError,
+    onRetryCompile: handleRetryCompile,
+    isGoldenProject,
+    onResetToGolden: handleResetToGolden,
+    isUsingLKG,
+    autoHealSummary,
+  }), [compiledHTML, compileState, isGenerating, isCompiling, previewRefreshKey, project.files, isStreamingPreview, isVisualEditActive, viewportMode, repairFailed, repairErrors, compileError, isGoldenProject, isUsingLKG, autoHealSummary, toggleVisualEdit, handleFixError, handleSmartFixError, handleAIEditRequest, handleAutoFixError, handleVisualEdit, handleRetryRepair, handleDiscardChanges, handleRetryCompile, handleResetToGolden]);
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -4311,7 +4344,7 @@ export function AIAppBuilderWorkspace() {
                 />
                 </SafePanel>
                 <SafePanel show={!!panels.showCodeIntel} name="Code Intelligence">
-                  <AICodeIntelligence open={!!panels.showCodeIntel} onClose={() => setShowCodeIntel(false)} suggestions={codeSuggestions} onApplySuggestion={(s) => { if (s.code && activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + s.code); dedupeToast('success', 'Applied suggestion'); } }} onDismiss={(id) => setCodeSuggestions(prev => prev.filter(s => s.id !== id))} onRefresh={() => { const smells = codeSmellDetector.analyzeFiles(project.files); setCodeSuggestions(smells); dedupeToast('success', `Found ${smells.length} suggestions`); }} activeFilePath={project.activeFilePath} />
+                  <AICodeIntelligence open={!!panels.showCodeIntel} onClose={() => setShowCodeIntel(false)} suggestions={codeSuggestions} onApplySuggestion={(s) => { if (s.code && activeFile) { upsertFile(activeFile.path, activeFile.content + '\n' + s.code); dedupeToast('success', 'Applied suggestion'); } }} onDismiss={(id) => setCodeSuggestions(prev => prev.filter(s => s.id !== id))} onRefresh={() => { codeAnalysisWorker.analyzeFiles(project.files).then(smells => { setCodeSuggestions(smells); dedupeToast('success', `Found ${smells.length} suggestions`); }); }} activeFilePath={project.activeFilePath} />
                 </SafePanel>
                 <SafePanel show={!!panels.showDbExplorer} name="Database Explorer">
                   <DatabaseExplorer open={!!panels.showDbExplorer} onClose={() => setShowDbExplorer(false)} supabaseConfig={supabaseConfig} />
@@ -4514,7 +4547,7 @@ export function AIAppBuilderWorkspace() {
                               <ResizablePanelGroup direction="horizontal" className="h-full">
                                 <ResizablePanel defaultSize={50} minSize={30}>
                                   <div data-tour="preview" className="h-full">
-                                    <BuilderPreviewPanel html={compiledHTML} compileState={compileState} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl} repairFailed={repairFailed} repairErrors={repairErrors} onRetryRepair={handleRetryRepair} onDiscardChanges={handleDiscardChanges} compileError={compileError} onRetryCompile={handleRetryCompile} isGoldenProject={isGoldenProject} onResetToGolden={handleResetToGolden} isUsingLKG={isUsingLKG} autoHealSummary={autoHealSummary}>
+                                    <BuilderPreviewPanel {...previewPanelProps}>
                                       <GeneratingOverlay isGenerating={isGenerating} isCompiling={isCompiling} phase={thinkingPhase} partialFilesRef={partialFilesRef} completedFileCountRef={completedFileCountRef} continuationRound={continuationRound} />
                                     </BuilderPreviewPanel>
                                   </div>
@@ -4522,7 +4555,7 @@ export function AIAppBuilderWorkspace() {
                                 <ResizableHandle className="w-px bg-white/[0.06] hover:bg-cyan-500/30 transition-colors" />
                                 <ResizablePanel defaultSize={50} minSize={30}>
                                   <div data-tour="code-editor" className="h-full flex flex-col bg-[#0d0d14]">
-                                    <FileBreadcrumb file={editorFile} allFiles={project.files} onNavigate={(path) => { setActiveFile(path); }} />
+                                    <FileBreadcrumb file={editorFile} allFiles={project.files} onNavigate={navigateToFile} />
                                     <div className="flex-1 overflow-hidden">
                                       <StreamingCodeEditor isStreamingPreview={isStreamingPreview} partialFilesRef={partialFilesRef} activeFile={activeFile} activeFilePath={project.activeFilePath} onContentChange={handleContentChange} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} onInlineAIAction={handleInlineAIAction} onStreamingFileChange={handleStreamingFileChange} buildErrorMarkers={buildErrorMarkers} />
                                     </div>
@@ -4531,13 +4564,13 @@ export function AIAppBuilderWorkspace() {
                               </ResizablePanelGroup>
                             ) : rightTab === 'preview' || !hasFiles ? (
                               <div data-tour="preview" className="h-full">
-                                <BuilderPreviewPanel html={compiledHTML} compileState={compileState} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl} repairFailed={repairFailed} repairErrors={repairErrors} onRetryRepair={handleRetryRepair} onDiscardChanges={handleDiscardChanges} compileError={compileError} onRetryCompile={handleRetryCompile} isGoldenProject={isGoldenProject} onResetToGolden={handleResetToGolden} isUsingLKG={isUsingLKG} autoHealSummary={autoHealSummary}>
+                                <BuilderPreviewPanel {...previewPanelProps}>
                                   <GeneratingOverlay isGenerating={isGenerating} isCompiling={isCompiling} phase={thinkingPhase} partialFilesRef={partialFilesRef} completedFileCountRef={completedFileCountRef} continuationRound={continuationRound} />
                                 </BuilderPreviewPanel>
                               </div>
                             ) : (
                               <div data-tour="code-editor" className="h-full flex flex-col bg-[#0d0d14]">
-                                <FileBreadcrumb file={editorFile} allFiles={project.files} onNavigate={(path) => { setActiveFile(path); }} />
+                                <FileBreadcrumb file={editorFile} allFiles={project.files} onNavigate={navigateToFile} />
                                 <div className="flex-1 overflow-hidden">
                                   <StreamingCodeEditor isStreamingPreview={isStreamingPreview} partialFilesRef={partialFilesRef} activeFile={activeFile} activeFilePath={project.activeFilePath} onContentChange={handleContentChange} remoteCursors={remoteCursors} onCursorChange={handleCursorChange} onInlineAIAction={handleInlineAIAction} onStreamingFileChange={handleStreamingFileChange} buildErrorMarkers={buildErrorMarkers} />
                                 </div>
