@@ -530,10 +530,8 @@ export function AIAppBuilderWorkspace() {
 
   // Refs for draft persistence inside handleBgComplete (declared before callback, assigned later)
   const saveDraftImmediateRef = useRef<(name: string, files: ProjectFile[], messages: any[]) => void>(() => {});
-  const latestFilesRef = useRef<ProjectFile[]>(project.files);
-  latestFilesRef.current = project.files;
-  const latestMessagesRef = useRef<any[]>(messages);
-  latestMessagesRef.current = messages;
+  const latestFilesRef = useSyncRef(project.files);
+  const latestMessagesRef = useSyncRef(messages);
 
   // Refs for UI state needed inside handleBgComplete (declared before callback, assigned later)
   const rightTabRef = useRef<'preview' | 'code' | 'split'>('preview');
