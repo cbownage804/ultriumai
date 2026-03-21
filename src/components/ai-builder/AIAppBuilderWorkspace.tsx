@@ -1912,8 +1912,9 @@ export function AIAppBuilderWorkspace() {
     }
   }, [envVariables]);
 
-  // Fetch schema when Supabase config changes (deferred 2s to unblock first paint)
+  // Fetch schema when Supabase config changes (deferred until hooks are ready)
   useEffect(() => {
+    if (!_deferredReady) return;
     if (supabaseConfig?.url && serviceKeys.length > 0) {
       const timer = setTimeout(() => {
         const serviceKey = serviceKeys.find(k => k.serviceId === 'supabase_service_role');
@@ -1928,7 +1929,7 @@ export function AIAppBuilderWorkspace() {
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [supabaseConfig?.url, serviceKeys]);
+  }, [_deferredReady, supabaseConfig?.url, serviceKeys]);
 
   // Collaborative cursor broadcasting via Supabase Realtime (gated on active file)
   useEffect(() => {
