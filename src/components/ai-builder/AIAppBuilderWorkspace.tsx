@@ -540,8 +540,7 @@ export function AIAppBuilderWorkspace() {
   const setMobileTabRef = useRef<(tab: 'chat' | 'preview' | 'editor') => void>(() => {});
   const outputValidationRef = useRef<ReturnType<typeof useOutputValidation>>({ validate: () => ({ isValid: true, issues: [], score: 100 }) });
   const pendingValidationFixRef = useRef<{ errorSummary: string; files: ProjectFile[] } | null>(null);
-  const setActiveFileRef = useRef(setActiveFile);
-  setActiveFileRef.current = setActiveFile;
+  const setActiveFileRef = useSyncRef(setActiveFile);
 
   // ── Transactional build + bounded repair refs ──
   const pendingFilesRef = useRef<ProjectFile[] | null>(null);
