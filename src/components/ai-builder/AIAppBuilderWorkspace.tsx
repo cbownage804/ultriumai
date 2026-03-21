@@ -3961,7 +3961,7 @@ export function AIAppBuilderWorkspace() {
               annotations.filter(a => a.severity === 'error'),
             );
           }}
-          onBuildSuccess={(files) => lkgDiff.saveSnapshot(files)}
+          onBuildSuccess={handleVerifiedBuildSuccess}
           onCompilePhaseChange={setCompilePhase}
         />
       </PanelErrorBoundary>
