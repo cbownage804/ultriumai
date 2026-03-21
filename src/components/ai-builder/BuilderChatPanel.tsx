@@ -102,6 +102,25 @@ const THINKING_LABELS: Record<string, { icon: typeof Brain; label: string; color
 const INITIAL_VISIBLE_MESSAGE_COUNT = 8;
 const LOAD_MORE_MESSAGE_COUNT = 20;
 
+// Cache getDisplayContent results — keyed by msg.id + content length.
+// Content is immutable for completed messages; only the streaming message changes.
+const displayContentCache = new Map<string, { text: string; fileNames: string[] }>();
+const DISPLAY_CONTENT_CACHE_MAX = 500;
+
+function getCachedDisplayContent(msg: BuilderMessage): { text: string; fileNames: string[] } {
+  const key = msg.id + ':' + msg.content.length;
+  const cached = displayContentCache.get(key);
+  if (cached) return cached;
+  const result = getDisplayContent(msg);
+  // Evict oldest entries if cache is too large
+  if (displayContentCache.size > DISPLAY_CONTENT_CACHE_MAX) {
+    const firstKey = displayContentCache.keys().next().value;
+    if (firstKey) displayContentCache.delete(firstKey);
+  }
+  displayContentCache.set(key, result);
+  return result;
+}
+
 function getDisplayContent(msg: BuilderMessage): { text: string; fileNames: string[] } {
   if (msg.role === 'user') return { text: msg.content, fileNames: [] };
 
@@ -520,7 +539,7 @@ export function BuilderChatPanel({
     const visible = displayMessages.filter((msg) => {
       if (isInternalMessage(msg.content)) return false;
       if (msg.role === 'assistant') {
-        const { text, fileNames } = getDisplayContent(msg);
+        const { text, fileNames } = getCachedDisplayContent(msg);
         const hasFiles = msg.filesGenerated && msg.filesGenerated > 0;
         if (!text && fileNames.length === 0 && !hasFiles) return false;
       }
@@ -966,25 +985,25 @@ export function BuilderChatPanel({
   const renderAssistantMessage = (msg: BuilderMessage, isLast: boolean) => {
     const isStreaming = isGenerating && isLast;
 
-     // During streaming, show conversational text + file progress (Lovable-style)
+    // During streaming, show conversational text + file progress (Lovable-style)
      if (isStreaming) {
-       const fileNames: string[] = [];
-       // Only scan first 5KB for file names to avoid CPU spikes on large content
-       const scanContent = msg.content.length > 5000 ? msg.content.slice(0, 5000) : msg.content;
+      const fileNames: string[] = [];
+      // Only scan first 5KB for file names to avoid CPU spikes on large content
+      const scanContent = msg.content.length > 5000 ? msg.content.slice(0, 5000) : msg.content;
         for (const match of scanContent.matchAll(/^===(?:FILE|EDIT):\s*(.+?)===$/gm)) {
           fileNames.push(match[1].trim());
         }
-       // Only extract plan steps from first 3KB to avoid regex backtracking on large content
-       const planContent = msg.content.length > 3000 ? msg.content.slice(0, 3000) : msg.content;
-       const planSteps = msg.planSteps || extractPlanSteps(planContent, true, false);
+      // Only extract plan steps from first 3KB to avoid regex backtracking on large content
+      const planContent = msg.content.length > 3000 ? msg.content.slice(0, 3000) : msg.content;
+      const planSteps = msg.planSteps || extractPlanSteps(planContent, true, false);
 
-       // Extract conversational text before the first ===FILE: or ===EDIT: block
-       const firstFileIdx = msg.content.search(/^===(?:FILE|EDIT):/m);
-       const conversationalText = firstFileIdx > 0 
-         ? msg.content.slice(0, firstFileIdx).trim()
-         : !msg.content.includes('===FILE:') && !msg.content.includes('===EDIT:') && msg.content.length > 0
-           ? msg.content.trim()
-           : '';
+      // Extract conversational text before the first ===FILE: or ===EDIT: block
+      const firstFileIdx = msg.content.search(/^===(?:FILE|EDIT):/m);
+      const conversationalText = firstFileIdx > 0 
+        ? msg.content.slice(0, firstFileIdx).trim()
+        : !msg.content.includes('===FILE:') && !msg.content.includes('===EDIT:') && msg.content.length > 0
+          ? msg.content.trim()
+          : '';
 
     return (
       <div className="flex gap-3">
@@ -1091,7 +1110,7 @@ export function BuilderChatPanel({
       );
     }
 
-    const { text, fileNames } = getDisplayContent(msg);
+    const { text, fileNames } = getCachedDisplayContent(msg);
     const hasFiles = msg.filesGenerated && msg.filesGenerated > 0;
     const isBuildExpanded = expandedBuildMessages.has(msg.id);
     const totalFiles = hasFiles ? msg.filesGenerated! : fileNames.length;
