@@ -337,12 +337,12 @@ export function buildErrorDiagnosisContext(
       }
     }
 
-    if (!errorFile && !isReact299 && projectFiles.length <= 6) {
+    if (!errorFile && !isReact299 && projectFiles.length <= 15) {
       sections.push('\n[ALL PROJECT FILES]');
       for (const f of projectFiles) {
         sections.push(`--- ${f.path} ---`);
         sections.push('```');
-        sections.push(f.content.length > 3000 ? f.content.slice(0, 3000) + '\n// ... (truncated)' : f.content);
+        sections.push(f.content.length > 2000 ? f.content.slice(0, 2000) + '\n// ... (truncated)' : f.content);
         sections.push('```');
       }
     }
