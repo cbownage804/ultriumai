@@ -1025,7 +1025,8 @@ export function AIAppBuilderWorkspace() {
           `Build: ${totalChanges} files${edits.length ? ` (${edits.length} patched)` : ''}`,
           mergedFiles, 'ai-generation'
         );
-        dedupeToast('success', `Build complete — ${totalChanges} files updated`, { duration: 5000 });
+        // Defer success toast until compilation actually succeeds — don't declare victory before compile
+        pendingBuildToastRef.current = `Build complete — ${totalChanges} files updated`;
       } else {
         // Commit files even with validation errors so isGoldenProject becomes false
         // (prevents "Live Preview" placeholder from showing instead of error/retry UI).
