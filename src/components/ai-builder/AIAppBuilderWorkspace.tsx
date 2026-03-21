@@ -1641,7 +1641,9 @@ export function AIAppBuilderWorkspace() {
   const pluginRegistry = usePluginRegistry();
   const [recentFiles, setRecentFiles] = useState<string[]>([]);
   const [autoHealEnabled, setAutoHealEnabled] = useState(true);
-  const collaborationEngine = useCollaborationEngine(currentProjectId);
+  // ── Deferred hooks: initialize non-critical hooks after first paint ──
+  const _deferredReady = useDeferredMount(3000);
+  const collaborationEngine = useCollaborationEngine(_deferredReady ? currentProjectId : null);
   const apiBuilder = useAPIBuilder();
   const projectReview = useProjectReview();
   const supabaseConnection = useSupabaseConnection();
