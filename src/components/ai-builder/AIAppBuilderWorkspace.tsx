@@ -134,8 +134,8 @@ function scheduleIdleTask(task: () => void, timeout = 1500): () => void {
     };
   }
 
-  const id = window.setTimeout(task, 0);
-  return () => window.clearTimeout(id);
+  const id = globalThis.setTimeout(task, 0);
+  return () => globalThis.clearTimeout(id);
 }
 import { useElementSourceMapper } from './useElementSourceMapper';
 import { InlineChatWidget } from './InlineChatWidget';
