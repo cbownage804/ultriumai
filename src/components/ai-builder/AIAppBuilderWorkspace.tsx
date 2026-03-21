@@ -1437,15 +1437,47 @@ export function AIAppBuilderWorkspace() {
   const [fixAttemptCount, setFixAttemptCount] = useState(0);
   const [lastFixError, setLastFixError] = useState<string | null>(null);
   const MAX_FIX_ATTEMPTS = 3;
-  const [isCompiling, setIsCompilingRaw] = useState(false);
   const [compileState, setCompileStateRaw] = useState<CompileState>('idle');
+  // Step 4: isCompiling is now DERIVED from compileState — single source of truth
+  const isCompiling = compileState === 'compiling';
   const [compilePhase, setCompilePhase] = useState<CompilePhase>(null);
   const [compileError, setCompileError] = useState<CompileErrorInfo | null>(null);
   const isCompilingRef = useRef(false);
   const compileStateRef = useRef<CompileState>('idle');
   const setIsCompiling = useCallback((v: boolean) => {
-    setIsCompilingRaw(v);
+    // Legacy compatibility: translate boolean into state machine transition
+    if (v) {
+      setCompileStateRaw('compiling');
+    }
+    // Don't set to 'idle' on false — let the state machine handle success/error transitions
     setCompilationToastGate(v);
+  }, []);
+
+  // Step 2: Unified auto-fix gate — single cooldown for ALL fix systems
+  const autoFixGateRef = useRef({
+    lastAttemptTime: 0,
+    attemptsThisInteraction: 0,
+    cooldownMs: 5000,
+    maxAttempts: 3,
+  });
+  const canAutoFix = useCallback((): boolean => {
+    const gate = autoFixGateRef.current;
+    const now = Date.now();
+    // Respect project load cooldown
+    if (now < recentProjectLoadCooldownUntilRef.current) return false;
+    // Cooldown between attempts
+    if (now - gate.lastAttemptTime < gate.cooldownMs) return false;
+    // Hard cap per interaction
+    if (gate.attemptsThisInteraction >= gate.maxAttempts) return false;
+    return true;
+  }, []);
+  const consumeAutoFixAttempt = useCallback(() => {
+    autoFixGateRef.current.lastAttemptTime = Date.now();
+    autoFixGateRef.current.attemptsThisInteraction++;
+  }, []);
+  const resetAutoFixGate = useCallback(() => {
+    autoFixGateRef.current.attemptsThisInteraction = 0;
+    autoFixGateRef.current.lastAttemptTime = 0;
   }, []);
   const pendingBuildToastRef = useRef<string | null>(null);
   const pendingPostBuildRef = useRef<{
@@ -1491,6 +1523,11 @@ export function AIAppBuilderWorkspace() {
       // Re-check generation state via refs (not stale closure values)
       if (isGeneratingRef.current || isGeneratingOverrideRef.current) {
         console.info('[AutoHeal] Skipped — generation still active');
+        return;
+      }
+      // Step 2: Unified gate check (cooldown + attempt cap + load guard)
+      if (!canAutoFix()) {
+        console.info('[AutoHeal] Skipped — unified gate blocked (cooldown/cap/load)');
         return;
       }
       // Coordinate with handleAutoFixError's in-flight guard
@@ -1559,6 +1596,7 @@ export function AIAppBuilderWorkspace() {
           depGraphFiles: relatedPaths?.size ?? 0,
         });
 
+        consumeAutoFixAttempt();
         autoFixInFlightRef.current = true;
         sendMessage(healPrompt, project.files, supabaseConfig, stripeConfig, serviceKeys, undefined, selectedModel, undefined, true);
       }
@@ -2090,24 +2128,6 @@ export function AIAppBuilderWorkspace() {
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveInProgressRef = useRef(false);
 
-  // Auto-save (cloud) — includes chat messages + versions for persistence
-  // Uses a longer 4s debounce to avoid cascading with other post-gen effects
-  useEffect(() => {
-    if (isGenerating) return; // skip during streaming to prevent browser freeze
-    if (project.files.length === 0) return;
-    // Defer longer after generation ends to avoid main-thread contention
-    const elapsed = Date.now() - postGenTimestampRef.current;
-    const delay = elapsed < 3000 ? 4000 : 2000;
-    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-    autoSaveTimerRef.current = setTimeout(() => {
-      if (saveInProgressRef.current) return;
-      saveInProgressRef.current = true;
-      scheduleAutoSave(project.name, project.files, messages, { versions });
-      setTimeout(() => { saveInProgressRef.current = false; }, 500);
-    }, delay);
-    return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
-  }, [project.files, project.name, messages, versions, scheduleAutoSave, isGenerating]);
-
   // Issue 13 fix: Track post-generation transition to defer saves
   const postGenTimestampRef = useRef<number>(0);
   const recentProjectLoadCooldownUntilRef = useRef<number>(0);
@@ -2115,6 +2135,58 @@ export function AIAppBuilderWorkspace() {
   const isInRecentProjectLoadCooldown = useCallback(() => {
     return Date.now() < recentProjectLoadCooldownUntilRef.current;
   }, []);
+
+  // Auto-save to IndexedDB (Phase 10 — fast local persistence)
+  const sessionId = currentProjectId || 'draft';
+
+  // Step 3: SINGLE orchestrated auto-save effect — replaces 3 separate effects
+  // T+0ms: localStorage draft (sync, fast)
+  // T+3s (idle): IDB save
+  // T+4s (idle): Cloud save
+  // T+8s (idle): Thumbnail capture
+  useEffect(() => {
+    if (isGenerating) return;
+    if (project.files.length === 0) return;
+    // Step 6: Suppress during project load cooldown
+    if (isInRecentProjectLoadCooldown()) return;
+
+    const elapsed = Date.now() - postGenTimestampRef.current;
+    const delay = elapsed < 3000 ? 4000 : 2000;
+
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      // T+0: Fast localStorage draft
+      saveDraft(project.name, project.files, messages);
+
+      // T+3s: IDB save via idle callback
+      const scheduleIDB = () => {
+        setTimeout(() => {
+          if (isInRecentProjectLoadCooldown()) return;
+          idbPersistence.saveToIDB(sessionId, project.name, project.files, messages);
+        }, 3000);
+      };
+
+      // T+4s: Cloud save via idle callback
+      const scheduleCloud = () => {
+        setTimeout(() => {
+          if (saveInProgressRef.current || isInRecentProjectLoadCooldown()) return;
+          saveInProgressRef.current = true;
+          scheduleAutoSave(project.name, project.files, messages, { versions });
+          setTimeout(() => { saveInProgressRef.current = false; }, 500);
+        }, 4000);
+      };
+
+      if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+        (window as any).requestIdleCallback(scheduleIDB, { timeout: 5000 });
+        (window as any).requestIdleCallback(scheduleCloud, { timeout: 8000 });
+      } else {
+        scheduleIDB();
+        scheduleCloud();
+      }
+    }, delay);
+
+    return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
+  }, [project.files, project.name, messages, versions, scheduleAutoSave, isGenerating, isInRecentProjectLoadCooldown, saveDraft, sessionId]);
   useEffect(() => {
     if (prevIsGeneratingRef.current && !isGenerating) {
       postGenTimestampRef.current = Date.now();
@@ -2130,65 +2202,38 @@ export function AIAppBuilderWorkspace() {
       }
 
       // Defer cloud save to idle time to prevent browser freeze
-      // The draft save is fast (localStorage) and happens first for tab-switch safety
       if (project.files.length > 0) {
         // Minimal synchronous work: just the fast localStorage draft
         saveDraftImmediate(saveName, project.files, messages);
 
-        // Heavy cloud save + thumbnail capture deferred to idle callback
-        // and suppressed right after loading a recent project to avoid freezing the tab.
+        // Heavy cloud save + thumbnail deferred and suppressed during load cooldown
         if (!isInRecentProjectLoadCooldown()) {
           const runCloudSave = () => {
             saveProject(saveName, project.files, undefined, undefined, messages, { versions })
               .then((projectId) => {
                 if (projectId && !isInRecentProjectLoadCooldown()) {
+                  // T+8s: thumbnail capture — furthest deferred
                   setTimeout(() => {
                     if (isInRecentProjectLoadCooldown()) return;
                     const html = compiledForHostingRef.current || stableHTMLRef.current;
                     if (html) {
                       captureAndUpload(html, projectId).catch(() => {});
                     }
-                  }, 5000);
+                  }, 8000);
                 }
               });
           };
           if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-            (window as any).requestIdleCallback(runCloudSave, { timeout: 5000 });
+            (window as any).requestIdleCallback(runCloudSave, { timeout: 6000 });
           } else {
-            setTimeout(runCloudSave, 2000);
+            setTimeout(runCloudSave, 4000);
           }
         }
       }
     }
   }, [isGenerating, isInRecentProjectLoadCooldown]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-save to IndexedDB (Phase 10 — fast local persistence)
-  const sessionId = currentProjectId || 'draft';
-  useEffect(() => {
-    if (isGenerating) return;
-    // Defer saves for 3s after generation to avoid cascading with cloud save
-    const elapsed = Date.now() - postGenTimestampRef.current;
-    if (elapsed < 3000) {
-      const timer = setTimeout(() => {
-        idbPersistence.saveToIDB(sessionId, project.name, project.files, messages);
-      }, 3000 - elapsed);
-      return () => clearTimeout(timer);
-    }
-    idbPersistence.saveToIDB(sessionId, project.name, project.files, messages);
-  }, [project.files, project.name, messages, sessionId, isGenerating]);
-
-  // Auto-save draft to localStorage (survives refresh)
-  useEffect(() => {
-    if (isGenerating) return;
-    const elapsed = Date.now() - postGenTimestampRef.current;
-    if (elapsed < 3000) {
-      const timer = setTimeout(() => {
-        saveDraft(project.name, project.files, messages);
-      }, 3000 - elapsed);
-      return () => clearTimeout(timer);
-    }
-    saveDraft(project.name, project.files, messages);
-  }, [project.files, project.name, messages, saveDraft, isGenerating]);
+  // (IDB + localStorage auto-save consolidated into Step 3 orchestrated effect above)
 
   // Immediately persist draft when user switches tabs or navigates away
   // Issue 21 fix: Assign properties directly instead of allocating a new object per render
@@ -2770,6 +2815,7 @@ export function AIAppBuilderWorkspace() {
     totalFixAttemptsRef.current = 0;
     autoFixInFlightRef.current = false;
     autoHeal.resetHealState();
+    resetAutoFixGate();
 
     // Agent mode: enqueue task and let the auto-process useEffect handle execution
     // Note: mode may have been auto-escalated above, so re-check current value
@@ -3024,6 +3070,11 @@ export function AIAppBuilderWorkspace() {
         error.message?.includes('Edge function returned')) return;
     // Skip during generation or compilation
     if (isGenerating || isCompiling) return;
+    // Step 2: Unified gate check (cooldown + attempt cap + load guard)
+    if (!canAutoFix()) {
+      console.info('[AutoFix] Blocked by unified gate');
+      return;
+    }
     // In-flight guard: skip if a fix generation is already pending
     if (autoFixInFlightRef.current) return;
     // Global circuit breaker: max 3 total fix attempts per user message
@@ -3037,6 +3088,7 @@ export function AIAppBuilderWorkspace() {
     if (Date.now() - compilationEndedAt.current < 8000) return;
 
     // Increment global fix counter and set in-flight guard
+    consumeAutoFixAttempt();
     totalFixAttemptsRef.current++;
     autoFixInFlightRef.current = true;
 
@@ -3827,7 +3879,6 @@ export function AIAppBuilderWorkspace() {
   // Preserve explicit error state so failed generations don't fall back to the empty placeholder.
   useEffect(() => {
     if (!isGoldenProject || isGenerating || isCompiling) return;
-    if (compileState === 'compiling') return; // Don't interfere with active compilation
     if (compileState === 'error') return; // Keep error visible until user retries/resets
     if (compileState !== 'idle' || compileError) {
       setIsCompiling(false);
