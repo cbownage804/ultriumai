@@ -1525,6 +1525,11 @@ export function AIAppBuilderWorkspace() {
         console.info('[AutoHeal] Skipped — generation still active');
         return;
       }
+      // Step 2: Unified gate check (cooldown + attempt cap + load guard)
+      if (!canAutoFix()) {
+        console.info('[AutoHeal] Skipped — unified gate blocked (cooldown/cap/load)');
+        return;
+      }
       // Coordinate with handleAutoFixError's in-flight guard
       if (autoFixInFlightRef.current) {
         console.info('[AutoHeal] Skipped — autoFixInFlight from another fix system');
