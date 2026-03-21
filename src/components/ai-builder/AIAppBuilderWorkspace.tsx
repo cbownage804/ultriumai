@@ -1437,15 +1437,47 @@ export function AIAppBuilderWorkspace() {
   const [fixAttemptCount, setFixAttemptCount] = useState(0);
   const [lastFixError, setLastFixError] = useState<string | null>(null);
   const MAX_FIX_ATTEMPTS = 3;
-  const [isCompiling, setIsCompilingRaw] = useState(false);
   const [compileState, setCompileStateRaw] = useState<CompileState>('idle');
+  // Step 4: isCompiling is now DERIVED from compileState — single source of truth
+  const isCompiling = compileState === 'compiling';
   const [compilePhase, setCompilePhase] = useState<CompilePhase>(null);
   const [compileError, setCompileError] = useState<CompileErrorInfo | null>(null);
   const isCompilingRef = useRef(false);
   const compileStateRef = useRef<CompileState>('idle');
   const setIsCompiling = useCallback((v: boolean) => {
-    setIsCompilingRaw(v);
+    // Legacy compatibility: translate boolean into state machine transition
+    if (v) {
+      setCompileStateRaw('compiling');
+    }
+    // Don't set to 'idle' on false — let the state machine handle success/error transitions
     setCompilationToastGate(v);
+  }, []);
+
+  // Step 2: Unified auto-fix gate — single cooldown for ALL fix systems
+  const autoFixGateRef = useRef({
+    lastAttemptTime: 0,
+    attemptsThisInteraction: 0,
+    cooldownMs: 5000,
+    maxAttempts: 3,
+  });
+  const canAutoFix = useCallback((): boolean => {
+    const gate = autoFixGateRef.current;
+    const now = Date.now();
+    // Respect project load cooldown
+    if (now < recentProjectLoadCooldownUntilRef.current) return false;
+    // Cooldown between attempts
+    if (now - gate.lastAttemptTime < gate.cooldownMs) return false;
+    // Hard cap per interaction
+    if (gate.attemptsThisInteraction >= gate.maxAttempts) return false;
+    return true;
+  }, []);
+  const consumeAutoFixAttempt = useCallback(() => {
+    autoFixGateRef.current.lastAttemptTime = Date.now();
+    autoFixGateRef.current.attemptsThisInteraction++;
+  }, []);
+  const resetAutoFixGate = useCallback(() => {
+    autoFixGateRef.current.attemptsThisInteraction = 0;
+    autoFixGateRef.current.lastAttemptTime = 0;
   }, []);
   const pendingBuildToastRef = useRef<string | null>(null);
   const pendingPostBuildRef = useRef<{
