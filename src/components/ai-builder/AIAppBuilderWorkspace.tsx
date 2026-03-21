@@ -1448,18 +1448,21 @@ export function AIAppBuilderWorkspace() {
     setCompilationToastGate(v);
   }, []);
   const pendingBuildToastRef = useRef<string | null>(null);
+  const pendingPostBuildRef = useRef<{
+    latestFileCount: number;
+    duration: number;
+    commitMsg: string;
+    promptLabel: string;
+  } | null>(null);
   const handleCompileStateChange = useCallback((state: CompileState, error?: CompileErrorInfo) => {
     setCompileStateRaw(state);
     setCompileError(state === 'error' && error ? error : null);
     console.info('[Workspace] compileState →', state, error ? error.message : '');
 
-    // Fire deferred "Build complete" toast only when compilation actually succeeds
-    if (state === 'success' && pendingBuildToastRef.current) {
-      dedupeToast('success', pendingBuildToastRef.current, { duration: 5000 });
+    if (state === 'error') {
+      // Clear pending success signals — auto-heal will handle the error
       pendingBuildToastRef.current = null;
-    } else if (state === 'error') {
-      // Clear pending toast — auto-heal will handle the error
-      pendingBuildToastRef.current = null;
+      pendingPostBuildRef.current = null;
     }
 
     // ── Auto-heal: on compile error, automatically re-prompt AI to fix ──
