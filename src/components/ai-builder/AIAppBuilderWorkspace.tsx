@@ -492,6 +492,13 @@ export function AIAppBuilderWorkspace() {
   const componentExtractor = useComponentExtractor(project.files);
   // Ref for project.files — used in commandActions to avoid re-renders on file changes
   const projectFilesRef = useSyncRef(project.files);
+  // O(1) file lookups — replaces ~80 linear project.files.find() scans
+  const fileMap = useMemo(() => {
+    const map = new Map<string, ProjectFile>();
+    for (const f of project.files) map.set(f.path, f);
+    return map;
+  }, [project.files]);
+  const fileMapRef = useSyncRef(fileMap);
   // showPromptHistory now managed by usePanelManager
   const {
     branches, activeBranch, activeBranchName,
@@ -1537,7 +1544,7 @@ export function AIAppBuilderWorkspace() {
           })
           .filter((p): p is string => !!p)
           .map(p => {
-            const file = project.files.find(f => f.path === p || f.path === `src/${p}` || f.path.endsWith(`/${p}`));
+            const file = fileMapRef.current.get(p) || fileMapRef.current.get(`src/${p}`) || project.files.find(f => f.path.endsWith(`/${p}`));
             return file ? file.path : null;
           })
           .filter((p): p is string => !!p);
@@ -1554,7 +1561,7 @@ export function AIAppBuilderWorkspace() {
 
         const failingFiles = [...relatedPaths]
           .map(p => {
-            const file = project.files.find(f => f.path === p);
+            const file = fileMapRef.current.get(p);
             return file ? { path: file.path, content: file.content } : null;
           })
           .filter((f): f is { path: string; content: string } => !!f);
@@ -2777,7 +2784,7 @@ export function AIAppBuilderWorkspace() {
     // Wave 4 Step 5: Inject viewport mode into AI context
     const viewportPreset = viewportMode !== 'desktop' ? `[VIEWPORT] User is currently previewing in ${viewportMode} mode. Optimize generated code for this viewport.` : '';
     // Wave 4 Step 3: Inject installed packages context
-    const installedPkgs = project.files.find(f => f.path === 'package.json');
+    const installedPkgs = fileMap.get('package.json');
     const pkgContext = installedPkgs ? (() => { try { const pkg = JSON.parse(installedPkgs.content); const deps = Object.keys(pkg.dependencies || {}); return deps.length > 0 ? `[INSTALLED PACKAGES] ${deps.join(', ')}. Use these when possible instead of adding new dependencies.` : ''; } catch { return ''; } })() : '';
     const knowledgeCtx = [
       knowledge.customInstructions || '',
@@ -3619,12 +3626,12 @@ export function AIAppBuilderWorkspace() {
   }, [upsertFile]);
 
   const handleRenameFile = useCallback((oldPath: string, newPath: string) => {
-    const file = project.files.find(f => f.path === oldPath);
+    const file = fileMapRef.current.get(oldPath);
     if (!file) return;
     upsertFile(newPath, file.content);
     deleteFile(oldPath);
     dedupeToast('success', `Renamed to ${newPath.split('/').pop()}`);
-  }, [project.files, upsertFile, deleteFile]);
+  }, [upsertFile, deleteFile]);
 
   // ── Compilation is now isolated in CompilationBridge (fixes React Error #310) ──
   // NEVER restore cached preview on mount — it causes stale previews from other projects.
