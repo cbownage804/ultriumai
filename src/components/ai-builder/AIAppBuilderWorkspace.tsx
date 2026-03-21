@@ -2808,6 +2808,7 @@ export function AIAppBuilderWorkspace() {
     totalFixAttemptsRef.current = 0;
     autoFixInFlightRef.current = false;
     autoHeal.resetHealState();
+    resetAutoFixGate();
 
     // Agent mode: enqueue task and let the auto-process useEffect handle execution
     // Note: mode may have been auto-escalated above, so re-check current value
