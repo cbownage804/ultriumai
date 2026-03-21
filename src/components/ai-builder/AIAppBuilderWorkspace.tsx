@@ -2115,22 +2115,31 @@ export function AIAppBuilderWorkspace() {
         hasAutoNamed.current = true;
       }
 
-      // Immediately save to cloud when generation finishes so project appears in recents
+      // Defer cloud save to idle time to prevent browser freeze
+      // The draft save is fast (localStorage) and happens first for tab-switch safety
       if (project.files.length > 0) {
-        saveProject(saveName, project.files, undefined, undefined, messages, { versions })
-          .then((projectId) => {
-            // Capture thumbnail after save ensures projectId exists
-            if (projectId) {
-              setTimeout(() => {
-                const html = compiledForHostingRef.current || stableHTMLRef.current;
-                if (html) {
-                  captureAndUpload(html, projectId).catch(() => {});
-                }
-              }, 4000);
-            }
-          });
-        // Force immediate localStorage draft save so tab-switch doesn't lose data
+        // Minimal synchronous work: just the fast localStorage draft
         saveDraftImmediate(saveName, project.files, messages);
+
+        // Heavy cloud save + thumbnail capture deferred to idle callback
+        const runCloudSave = () => {
+          saveProject(saveName, project.files, undefined, undefined, messages, { versions })
+            .then((projectId) => {
+              if (projectId) {
+                setTimeout(() => {
+                  const html = compiledForHostingRef.current || stableHTMLRef.current;
+                  if (html) {
+                    captureAndUpload(html, projectId).catch(() => {});
+                  }
+                }, 5000);
+              }
+            });
+        };
+        if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+          (window as any).requestIdleCallback(runCloudSave, { timeout: 5000 });
+        } else {
+          setTimeout(runCloudSave, 2000);
+        }
       }
     }
   }, [isGenerating]); // eslint-disable-line react-hooks/exhaustive-deps
