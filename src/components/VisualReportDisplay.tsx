@@ -102,6 +102,7 @@ export const VisualReportDisplay = ({ reportData, onDownload, onRefresh }: Visua
       });
 
       // Capture the visual report
+      const html2canvas = (await import('html2canvas')).default;
       const canvas = await html2canvas(reportElement, {
         backgroundColor: '#ffffff',
         scale: 2,
