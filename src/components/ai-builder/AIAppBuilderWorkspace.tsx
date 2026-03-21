@@ -2042,10 +2042,12 @@ export function AIAppBuilderWorkspace() {
       // file generation — all synchronous and blocking the main thread.
       // The compilation itself (in CompilationBridge) handles preview rendering.
       console.info('[PostGen] Skipping all post-gen analysis to prevent freeze');
-      // Mark preview as good for hot recovery & update conflict resolver base snapshot
-      hotRecovery.markAsGood([...project.files]);
-      conflictResolver.setBaseSnapshot([...project.files]);
-      versionTimeline.addSnapshot(`AI: ${messages[messages.length - 2]?.content?.slice(0, 40) || 'generation'}`, [...project.files], 'ai-generation', undefined, commitMsg);
+      pendingPostBuildRef.current = {
+        latestFileCount: latestFiles.length,
+        duration,
+        commitMsg,
+        promptLabel: messages[messages.length - 2]?.content?.slice(0, 40) || 'generation',
+      };
 
       // Record build analytics (Phase 60: compute actual credit cost based on mode)
       const lastMsg = messages[messages.length - 1];
