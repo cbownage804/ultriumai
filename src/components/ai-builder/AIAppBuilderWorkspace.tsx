@@ -3063,6 +3063,11 @@ export function AIAppBuilderWorkspace() {
         error.message?.includes('Edge function returned')) return;
     // Skip during generation or compilation
     if (isGenerating || isCompiling) return;
+    // Step 2: Unified gate check (cooldown + attempt cap + load guard)
+    if (!canAutoFix()) {
+      console.info('[AutoFix] Blocked by unified gate');
+      return;
+    }
     // In-flight guard: skip if a fix generation is already pending
     if (autoFixInFlightRef.current) return;
     // Global circuit breaker: max 3 total fix attempts per user message
@@ -3076,6 +3081,7 @@ export function AIAppBuilderWorkspace() {
     if (Date.now() - compilationEndedAt.current < 8000) return;
 
     // Increment global fix counter and set in-flight guard
+    consumeAutoFixAttempt();
     totalFixAttemptsRef.current++;
     autoFixInFlightRef.current = true;
 
