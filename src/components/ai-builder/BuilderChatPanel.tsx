@@ -99,6 +99,9 @@ const THINKING_LABELS: Record<string, { icon: typeof Brain; label: string; color
   writing: { icon: Code2, label: 'Writing code...', color: 'text-emerald-400' },
 };
 
+const INITIAL_VISIBLE_MESSAGE_COUNT = 8;
+const LOAD_MORE_MESSAGE_COUNT = 20;
+
 function getDisplayContent(msg: BuilderMessage): { text: string; fileNames: string[] } {
   if (msg.role === 'user') return { text: msg.content, fileNames: [] };
 
@@ -425,6 +428,7 @@ export function BuilderChatPanel({
   const [showChatSearch, setShowChatSearch] = useState(false);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [plusMenuOpen, setPlusMenuOpen] = useState(false);
+  const [visibleMessageCount, setVisibleMessageCount] = useState(INITIAL_VISIBLE_MESSAGE_COUNT);
   // Wave 10: @-file mention autocomplete
   const [showFileMentions, setShowFileMentions] = useState(false);
   const [fileMentionQuery, setFileMentionQuery] = useState('');
@@ -530,6 +534,25 @@ export function BuilderChatPanel({
     return visible;
   }, [displayMessages, chatSearch]);
 
+  useEffect(() => {
+    setVisibleMessageCount((prev) => {
+      if (chatSearch.trim()) return Math.max(prev, filteredMessages.length);
+      if (filteredMessages.length <= INITIAL_VISIBLE_MESSAGE_COUNT) {
+        return INITIAL_VISIBLE_MESSAGE_COUNT;
+      }
+      return Math.min(Math.max(prev, INITIAL_VISIBLE_MESSAGE_COUNT), filteredMessages.length);
+    });
+  }, [filteredMessages.length, chatSearch]);
+
+  const renderedMessages = useMemo(() => {
+    if (chatSearch.trim()) return filteredMessages;
+    return filteredMessages.slice(-visibleMessageCount);
+  }, [filteredMessages, chatSearch, visibleMessageCount]);
+
+  const hiddenMessageCount = chatSearch.trim()
+    ? 0
+    : Math.max(0, filteredMessages.length - renderedMessages.length);
+
   // Pinned messages
   const pinnedMessages = useMemo(() => {
     return messages.filter(m => m.pinned);
@@ -549,7 +572,7 @@ export function BuilderChatPanel({
         target.scrollTop = target.scrollHeight;
       });
     }
-  }, [displayMessages, thinkingPhase]);
+  }, [renderedMessages, thinkingPhase]);
 
   // Resize an image data URL to a target max width
   const resizeImageDataUrl = useCallback((dataUrl: string, maxWidth: number): Promise<string> => {
@@ -1726,8 +1749,18 @@ export function BuilderChatPanel({
               </motion.div>
             </div>
           ) : (
-            filteredMessages.map((msg, idx) => {
-              const isLast = idx === filteredMessages.length - 1;
+            {hiddenMessageCount > 0 && (
+              <div className="flex justify-center pb-1">
+                <button
+                  onClick={() => setVisibleMessageCount(prev => Math.min(filteredMessages.length, prev + LOAD_MORE_MESSAGE_COUNT))}
+                  className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-[11px] text-white/55 transition-colors hover:bg-white/[0.06] hover:text-white/85"
+                >
+                  Load {Math.min(LOAD_MORE_MESSAGE_COUNT, hiddenMessageCount)} earlier message{hiddenMessageCount === 1 ? '' : 's'}
+                </button>
+              </div>
+            )}
+            renderedMessages.map((msg, idx) => {
+              const isLast = idx === renderedMessages.length - 1;
               const Wrapper = isLast ? motion.div : 'div' as any;
               const wrapperProps = isLast ? {
                 initial: { opacity: 0, y: 10 },
@@ -1753,7 +1786,7 @@ export function BuilderChatPanel({
                     )}
                   >
                     {msg.role === 'assistant' ? (
-                      renderAssistantMessage(msg, idx === filteredMessages.length - 1)
+                      renderAssistantMessage(msg, idx === renderedMessages.length - 1)
                     ) : (
                       <div>
                         {(msg.imageUrls || (msg.imageUrl ? [msg.imageUrl] : [])).map((url, i) => (
