@@ -3635,18 +3635,13 @@ export function AIAppBuilderWorkspace() {
   }, [phasePlanner.forceAnalyzePrompt, setMessages]);
 
   const handleLoadProject = useCallback(async (projectId: string) => {
+    recentProjectLoadCooldownUntilRef.current = Date.now() + 20_000;
     const loaded = await loadProject(projectId);
     if (loaded) {
-      recentProjectLoadCooldownUntilRef.current = Date.now() + 20_000;
       setFiles(loaded.files as any[]);
       renameProject(loaded.name);
       if (loaded.published_url) setPublishedUrl(loaded.published_url);
-      if (loaded.settings?.chatMessages) {
-        setMessages(loaded.settings.chatMessages.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
-      }
-      if (loaded.settings?.versions) {
-        setVersions(loaded.settings.versions.map((v: any) => ({ ...v, timestamp: new Date(v.timestamp) })));
-      }
+      hydrateRestoredHistory(loaded.settings?.chatMessages, loaded.settings?.versions);
       if (loaded.settings?.linkedGPT) {
         setLinkedGPT(loaded.settings.linkedGPT);
       } else {
@@ -3654,7 +3649,7 @@ export function AIAppBuilderWorkspace() {
       }
       dedupeToast('success', `Loaded "${loaded.name}"`);
     }
-  }, [loadProject, setFiles, renameProject, setMessages, setVersions]);
+  }, [loadProject, setFiles, renameProject, hydrateRestoredHistory]);
 
   // Phase 4: Make handlePublish async-safe — reuse compiledForHosting instead of synchronous getCompiledHTML
   const handlePublish = useCallback(async () => {
