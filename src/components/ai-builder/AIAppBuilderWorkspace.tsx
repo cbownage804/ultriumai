@@ -1453,7 +1453,10 @@ export function AIAppBuilderWorkspace() {
     duration: number;
     commitMsg: string;
     promptLabel: string;
+    actualCredits: number;
+    promptLength: number;
   } | null>(null);
+  const postBuildIdleRef = useRef<number | null>(null);
   const handleCompileStateChange = useCallback((state: CompileState, error?: CompileErrorInfo) => {
     setCompileStateRaw(state);
     setCompileError(state === 'error' && error ? error : null);
@@ -1463,6 +1466,10 @@ export function AIAppBuilderWorkspace() {
       // Clear pending success signals — auto-heal will handle the error
       pendingBuildToastRef.current = null;
       pendingPostBuildRef.current = null;
+      if (postBuildIdleRef.current !== null && typeof window !== 'undefined' && 'cancelIdleCallback' in window) {
+        (window as Window & { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback?.(postBuildIdleRef.current);
+      }
+      postBuildIdleRef.current = null;
     }
 
     // ── Auto-heal: on compile error, automatically re-prompt AI to fix ──
@@ -2042,27 +2049,17 @@ export function AIAppBuilderWorkspace() {
       // file generation — all synchronous and blocking the main thread.
       // The compilation itself (in CompilationBridge) handles preview rendering.
       console.info('[PostGen] Skipping all post-gen analysis to prevent freeze');
+      const lastMsg = messages[messages.length - 1];
+      const isAutoFixBuild = lastMsg?.content?.startsWith('Auto-fix error:') || false;
+      const actualCredits = isAutoFixBuild ? 0 : (mode === 'build' ? 3 : 1);
       pendingPostBuildRef.current = {
         latestFileCount: latestFiles.length,
         duration,
         commitMsg,
         promptLabel: messages[messages.length - 2]?.content?.slice(0, 40) || 'generation',
-      };
-
-      // Record build analytics (Phase 60: compute actual credit cost based on mode)
-      const lastMsg = messages[messages.length - 1];
-      const isAutoFixBuild = lastMsg?.content?.startsWith('Auto-fix error:') || false;
-      const actualCredits = isAutoFixBuild ? 0 : (mode === 'build' ? 3 : 1);
-      buildAnalytics.recordBuild({
-        type: 'build',
-        durationMs: duration,
-        filesGenerated: latestFiles.length,
-        creditsUsed: actualCredits,
-        success: true,
-        errorCount: 0, // validation now deferred; updated async
-        validationScore: 100,
+        actualCredits,
         promptLength: lastMsg?.content?.length || 0,
-      });
+      };
 
       // Auto-naming moved to post-generation save effect to avoid race condition
     }
@@ -3585,28 +3582,47 @@ export function AIAppBuilderWorkspace() {
     const pending = pendingPostBuildRef.current;
     if (!pending) return;
 
-    setBuildNotifications(prev => [{
-      id: crypto.randomUUID(),
-      type: 'success' as const,
-      title: `Generated ${pending.latestFileCount} file${pending.latestFileCount > 1 ? 's' : ''}`,
-      timestamp: new Date(),
-      read: false,
-    }, ...prev].slice(0, 50));
-    buildLog.logBuildComplete(pending.latestFileCount, pending.duration);
-    buildChime.onGeneratingChange(false);
-    setBuildCount(prev => {
-      const newBuildCount = prev + 1;
-      if ([10, 25, 50, 100].includes(newBuildCount)) {
-        import('canvas-confetti').then(m => m.default({ particleCount: 100, spread: 70, origin: { y: 0.6 } }));
-        dedupeToast('success', `🔥 ${newBuildCount} builds today! You're on fire!`);
-      }
-      return newBuildCount;
-    });
-    hotRecovery.markAsGood([...files]);
-    conflictResolver.setBaseSnapshot([...files]);
-    versionTimeline.addSnapshot(`AI: ${pending.promptLabel}`, [...files], 'ai-generation', undefined, pending.commitMsg);
-    pendingPostBuildRef.current = null;
-  }, [buildChime, buildLog, conflictResolver, hotRecovery, lkgDiff, versionTimeline]);
+    const runPostBuildTasks = () => {
+      setBuildNotifications(prev => [{
+        id: crypto.randomUUID(),
+        type: 'success' as const,
+        title: `Generated ${pending.latestFileCount} file${pending.latestFileCount > 1 ? 's' : ''}`,
+        timestamp: new Date(),
+        read: false,
+      }, ...prev].slice(0, 50));
+      buildLog.logBuildComplete(pending.latestFileCount, pending.duration);
+      buildChime.onGeneratingChange(false);
+      setBuildCount(prev => {
+        const newBuildCount = prev + 1;
+        if ([10, 25, 50, 100].includes(newBuildCount)) {
+          import('canvas-confetti').then(m => m.default({ particleCount: 100, spread: 70, origin: { y: 0.6 } }));
+          dedupeToast('success', `🔥 ${newBuildCount} builds today! You're on fire!`);
+        }
+        return newBuildCount;
+      });
+      hotRecovery.markAsGood([...files]);
+      conflictResolver.setBaseSnapshot([...files]);
+      versionTimeline.addSnapshot(`AI: ${pending.promptLabel}`, [...files], 'ai-generation', undefined, pending.commitMsg);
+      buildAnalytics.recordBuild({
+        type: 'build',
+        durationMs: pending.duration,
+        filesGenerated: pending.latestFileCount,
+        creditsUsed: pending.actualCredits,
+        success: true,
+        errorCount: 0,
+        validationScore: 100,
+        promptLength: pending.promptLength,
+      });
+      pendingPostBuildRef.current = null;
+      postBuildIdleRef.current = null;
+    };
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      postBuildIdleRef.current = (window as Window & { requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number }).requestIdleCallback?.(() => runPostBuildTasks(), { timeout: 1500 }) ?? null;
+    } else {
+      setTimeout(runPostBuildTasks, 0);
+    }
+  }, [buildAnalytics, buildChime, buildLog, conflictResolver, hotRecovery, lkgDiff, versionTimeline]);
 
   const handleStableHTML = useCallback((html: string | null) => {
     const changed = html !== stableHTMLRef.current;
