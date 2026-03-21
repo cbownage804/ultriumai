@@ -232,7 +232,9 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
 
         content = content.replace(/<textarea\b[^>]*>|<\/textarea\s*>/gi, (match) => {
           if (/^<textarea\b/i.test(match)) {
-            openTextareaDepth += 1;
+            if (!/\/\s*>$/.test(match)) {
+              openTextareaDepth += 1;
+            }
             return match;
           }
 
