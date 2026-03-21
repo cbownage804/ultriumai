@@ -1458,6 +1458,10 @@ export function AIAppBuilderWorkspace() {
   } | null>(null);
   const postBuildIdleRef = useRef<number | null>(null);
   const handleCompileStateChange = useCallback((state: CompileState, error?: CompileErrorInfo) => {
+    // Keep the boolean compiling flag in lockstep with the state machine.
+    // Some async error paths only reported compileState, which could leave
+    // the UI stuck showing a fake "compiling" overlay after a failure.
+    setIsCompiling(state === 'compiling');
     setCompileStateRaw(state);
     setCompileError(state === 'error' && error ? error : null);
     console.info('[Workspace] compileState →', state, error ? error.message : '');
@@ -1569,7 +1573,7 @@ export function AIAppBuilderWorkspace() {
       autoHeal.completeHeal(true);
       console.info('[AutoHeal] ✅ Auto-fix resolved the build error');
     }
-  }, [autoHeal, lkgDiff, errorPatterns, project.files, sendMessage]);
+  }, [autoHeal, lkgDiff, errorPatterns, project.files, sendMessage, setIsCompiling]);
   useEffect(() => {
     isCompilingRef.current = isCompiling;
     compileStateRef.current = compileState;

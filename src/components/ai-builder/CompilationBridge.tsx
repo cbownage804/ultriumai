@@ -195,6 +195,7 @@ export function CompilationBridge({
     const cleanup = startMonitoring();
     onHealthIssue((issue) => {
       console.warn('[CompilationBridge] Preview health issue:', issue.type, issue.message);
+      onCompilingChangeRef.current?.(false);
       if (issue.type === 'blank_screen') {
         onCompileStateChangeRef.current?.('error', {
           message: 'Blank screen detected — app rendered but nothing is visible',
@@ -224,6 +225,7 @@ export function CompilationBridge({
         runtimeErrorTimer = setTimeout(() => {
           const err = pendingRuntimeError!;
           pendingRuntimeError = null;
+          onCompilingChangeRef.current?.(false);
           onCompileStateChangeRef.current?.('error', {
             message: `Runtime error: ${err.message}`,
             errors: [
