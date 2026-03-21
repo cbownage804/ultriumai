@@ -487,6 +487,7 @@ export function AIAppBuilderWorkspace() {
   const { undoStack, redoStack, canUndo, canRedo, pushUndo, undo, redo } = useUndoRedo();
   const promptHistory = usePromptHistory();
   const codeSmellDetector = useCodeSmellDetector();
+  const codeAnalysisWorker = useCodeAnalysisWorker();
   const docGenerator = useDocGenerator();
   const componentExtractor = useComponentExtractor(project.files);
   // Ref for project.files — used in commandActions to avoid re-renders on file changes
