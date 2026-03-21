@@ -1561,7 +1561,7 @@ export function AIAppBuilderWorkspace() {
 
         const failingFiles = [...relatedPaths]
           .map(p => {
-            const file = project.files.find(f => f.path === p);
+            const file = fileMapRef.current.get(p);
             return file ? { path: file.path, content: file.content } : null;
           })
           .filter((f): f is { path: string; content: string } => !!f);
