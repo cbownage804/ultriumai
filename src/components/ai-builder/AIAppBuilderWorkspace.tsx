@@ -3631,7 +3631,7 @@ export function AIAppBuilderWorkspace() {
     upsertFile(newPath, file.content);
     deleteFile(oldPath);
     dedupeToast('success', `Renamed to ${newPath.split('/').pop()}`);
-  }, [project.files, upsertFile, deleteFile]);
+  }, [upsertFile, deleteFile]);
 
   // ── Compilation is now isolated in CompilationBridge (fixes React Error #310) ──
   // NEVER restore cached preview on mount — it causes stale previews from other projects.
