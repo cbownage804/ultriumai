@@ -10,9 +10,12 @@ const RETRY_DELAYS = [2000, 4000]; // exponential backoff
  * Uses an offscreen iframe for reliable same-origin rendering + html2canvas.
  * Includes retry with exponential backoff and deduplication.
  */
+const THROTTLE_MS = 60_000; // Only allow one capture per 60s to protect main thread
+
 export function usePreviewCapture() {
   const captureInProgress = useRef(false);
   const lastCapturedHash = useRef<string | null>(null);
+  const lastCaptureTime = useRef(0);
 
   /** Simple hash to deduplicate identical captures — sample more of the content */
   const quickHash = (str: string): string => {
@@ -151,6 +154,13 @@ export function usePreviewCapture() {
   ): Promise<string | null> => {
     if (!compiledHtml || !projectId || captureInProgress.current) return null;
 
+    // Throttle: max one capture per 60s to prevent main-thread freezes
+    const now = Date.now();
+    if (now - lastCaptureTime.current < THROTTLE_MS) {
+      console.log('Thumbnail: throttled (last capture was %ds ago)', Math.round((now - lastCaptureTime.current) / 1000));
+      return null;
+    }
+
     // Deduplicate: skip if same content was just captured
     const hash = quickHash(compiledHtml);
     if (hash === lastCapturedHash.current) {
@@ -167,6 +177,7 @@ export function usePreviewCapture() {
       const result = await attemptCapture(compiledHtml, projectId, user.id);
       if (result) {
         lastCapturedHash.current = hash;
+        lastCaptureTime.current = Date.now();
       }
       return result;
     } catch (err) {
