@@ -139,6 +139,9 @@ export function useAutoHealCompile(config: Partial<AutoHealConfig> = {}) {
 
     lines.push(
       ``,
+      `This is a REPAIR of the CURRENT project, not a new app request.`,
+      `Do NOT regenerate the app from scratch or replace it with a generic landing page/template.`,
+      `Preserve the user's requested product, content, layout, and styling unless directly required to fix the error.`,
       `Please fix the error. Only modify the files that need changes.`,
       `Do NOT add explanatory text — just output the corrected files.`,
       attempt >= 2 ? `Previous fix attempts failed. Try a different approach — consider restructuring the component or simplifying the code.` : '',
