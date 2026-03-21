@@ -209,20 +209,30 @@ export function CompilationBridge({
     });
 
     // ── Runtime error forwarding: capture iframe errors and surface to auto-heal ──
+    // Debounce runtime errors to avoid flooding auto-heal with duplicates
+    let runtimeErrorTimer: ReturnType<typeof setTimeout> | null = null;
+    let pendingRuntimeError: { message: string; source: string; line: number } | null = null;
     const runtimeErrorHandler = (event: MessageEvent) => {
       if (event.data?.type !== '__RUNTIME_ERROR__') return;
       const { message, source, line } = event.data;
       // Ignore noisy errors
       if (/ResizeObserver|Script error|Loading chunk/i.test(message)) return;
       console.warn('[CompilationBridge] Runtime error from preview:', message, source, line);
-      // Surface as compile error so auto-heal can pick it up
-      onCompileStateChangeRef.current?.('error', {
-        message: `Runtime error: ${message}`,
-        errors: [
-          source && line ? `${source}:${line}: ${message}` : message,
-          'The app compiled successfully but crashed at runtime.',
-        ],
-      });
+      // Debounce: only fire once per 1s window (first error wins)
+      if (!pendingRuntimeError) {
+        pendingRuntimeError = { message, source, line };
+        runtimeErrorTimer = setTimeout(() => {
+          const err = pendingRuntimeError!;
+          pendingRuntimeError = null;
+          onCompileStateChangeRef.current?.('error', {
+            message: `Runtime error: ${err.message}`,
+            errors: [
+              err.source && err.line ? `${err.source}:${err.line}: ${err.message}` : err.message,
+              'The app compiled successfully but crashed at runtime.',
+            ],
+          });
+        }, 1000);
+      }
     };
     window.addEventListener('message', runtimeErrorHandler);
 
