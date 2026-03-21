@@ -2049,27 +2049,17 @@ export function AIAppBuilderWorkspace() {
       // file generation — all synchronous and blocking the main thread.
       // The compilation itself (in CompilationBridge) handles preview rendering.
       console.info('[PostGen] Skipping all post-gen analysis to prevent freeze');
+      const lastMsg = messages[messages.length - 1];
+      const isAutoFixBuild = lastMsg?.content?.startsWith('Auto-fix error:') || false;
+      const actualCredits = isAutoFixBuild ? 0 : (mode === 'build' ? 3 : 1);
       pendingPostBuildRef.current = {
         latestFileCount: latestFiles.length,
         duration,
         commitMsg,
         promptLabel: messages[messages.length - 2]?.content?.slice(0, 40) || 'generation',
-      };
-
-      // Record build analytics (Phase 60: compute actual credit cost based on mode)
-      const lastMsg = messages[messages.length - 1];
-      const isAutoFixBuild = lastMsg?.content?.startsWith('Auto-fix error:') || false;
-      const actualCredits = isAutoFixBuild ? 0 : (mode === 'build' ? 3 : 1);
-      buildAnalytics.recordBuild({
-        type: 'build',
-        durationMs: duration,
-        filesGenerated: latestFiles.length,
-        creditsUsed: actualCredits,
-        success: true,
-        errorCount: 0, // validation now deferred; updated async
-        validationScore: 100,
+        actualCredits,
         promptLength: lastMsg?.content?.length || 0,
-      });
+      };
 
       // Auto-naming moved to post-generation save effect to avoid race condition
     }
