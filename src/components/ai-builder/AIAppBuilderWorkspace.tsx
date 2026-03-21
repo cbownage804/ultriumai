@@ -1025,7 +1025,8 @@ export function AIAppBuilderWorkspace() {
           `Build: ${totalChanges} files${edits.length ? ` (${edits.length} patched)` : ''}`,
           mergedFiles, 'ai-generation'
         );
-        dedupeToast('success', `Build complete — ${totalChanges} files updated`, { duration: 5000 });
+        // Defer success toast until compilation actually succeeds — don't declare victory before compile
+        pendingBuildToastRef.current = `Build complete — ${totalChanges} files updated`;
       } else {
         // Commit files even with validation errors so isGoldenProject becomes false
         // (prevents "Live Preview" placeholder from showing instead of error/retry UI).
@@ -1446,10 +1447,20 @@ export function AIAppBuilderWorkspace() {
     setIsCompilingRaw(v);
     setCompilationToastGate(v);
   }, []);
+  const pendingBuildToastRef = useRef<string | null>(null);
   const handleCompileStateChange = useCallback((state: CompileState, error?: CompileErrorInfo) => {
     setCompileStateRaw(state);
     setCompileError(state === 'error' && error ? error : null);
     console.info('[Workspace] compileState →', state, error ? error.message : '');
+
+    // Fire deferred "Build complete" toast only when compilation actually succeeds
+    if (state === 'success' && pendingBuildToastRef.current) {
+      dedupeToast('success', pendingBuildToastRef.current, { duration: 5000 });
+      pendingBuildToastRef.current = null;
+    } else if (state === 'error') {
+      // Clear pending toast — auto-heal will handle the error
+      pendingBuildToastRef.current = null;
+    }
 
     // ── Auto-heal: on compile error, automatically re-prompt AI to fix ──
     // IMPORTANT: Only handle COMPILE errors here. Runtime errors are handled
@@ -1994,9 +2005,8 @@ export function AIAppBuilderWorkspace() {
   useEffect(() => {
     if (prevIsGeneratingRef.current && !isGenerating && latestFiles.length > 0) {
       const duration = buildStartTimeRef.current ? Date.now() - buildStartTimeRef.current : 0;
-      dedupeToast('success', `Generated ${latestFiles.length} file${latestFiles.length > 1 ? 's' : ''}`, {
-        action: { label: 'View', onClick: () => setRightTab('preview') },
-      });
+      // Don't toast "Generated X files" here — the deferred "Build complete" toast
+      // in handleCompileStateChange will fire once compilation actually succeeds.
       setBuildNotifications(prev => [{
         id: crypto.randomUUID(),
         type: 'success' as const,
