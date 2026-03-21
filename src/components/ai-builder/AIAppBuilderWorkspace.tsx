@@ -3987,7 +3987,7 @@ export function AIAppBuilderWorkspace() {
       { id: 'console', label: 'Toggle Console', icon: Activity, category: 'panel', action: () => setShowConsole(c => !c) },
       { id: 'shortcuts', label: 'Keyboard Shortcuts', icon: Keyboard, category: 'panel', shortcut: '⌘/', action: () => setShowShortcuts(true) },
       { id: 'prompt-history', label: 'Prompt History', icon: Clock, category: 'panel', action: () => setShowPromptHistory(true), keywords: ['history', 'prompts', 'favorites'] },
-      { id: 'code-smells', label: 'Analyze Code Quality', icon: Zap, category: 'run', action: () => { const smells = codeSmellDetector.analyzeFiles(projectFilesRef.current); setCodeSuggestions(smells); setShowCodeIntel(true); dedupeToast('success', `Found ${smells.length} suggestions`); }, keywords: ['lint', 'quality', 'refactor', 'smell'] },
+      { id: 'code-smells', label: 'Analyze Code Quality', icon: Zap, category: 'run', action: () => { codeAnalysisWorker.analyzeFiles(projectFilesRef.current).then(smells => { setCodeSuggestions(smells); setShowCodeIntel(true); dedupeToast('success', `Found ${smells.length} suggestions`); }); }, keywords: ['lint', 'quality', 'refactor', 'smell'] },
       { id: 'gen-readme', label: 'Generate README', icon: BookOpen, category: 'run', action: () => { const prompt = docGenerator.generateReadmePrompt(projectFilesRef.current, project.name); handleSend(prompt); }, keywords: ['doc', 'readme', 'documentation'] },
       { id: 'doc-file', label: 'Document Current File', icon: FileCode, category: 'run', action: () => { if (activeFile) { const prompt = docGenerator.generateDocPrompt(activeFile); handleSend(prompt); } else { dedupeToast('error', 'Open a file first'); } }, keywords: ['jsdoc', 'comment', 'document'] },
     ];
