@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef, Suspense, useMemo } from 'react';
+import { useDeferredMount, useSyncRef } from '@/hooks/useDeferredHook';
 import { useAIAppBuilder } from '@/hooks/useAIAppBuilder';
 import { useProjectFileSystem, type ProjectFile } from '@/hooks/useProjectFileSystem';
 import { useAgentMode } from '@/hooks/useAgentMode';
