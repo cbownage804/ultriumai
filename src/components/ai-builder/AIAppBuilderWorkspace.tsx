@@ -2128,6 +2128,17 @@ export function AIAppBuilderWorkspace() {
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveInProgressRef = useRef(false);
 
+  // Issue 13 fix: Track post-generation transition to defer saves
+  const postGenTimestampRef = useRef<number>(0);
+  const recentProjectLoadCooldownUntilRef = useRef<number>(0);
+
+  const isInRecentProjectLoadCooldown = useCallback(() => {
+    return Date.now() < recentProjectLoadCooldownUntilRef.current;
+  }, []);
+
+  // Auto-save to IndexedDB (Phase 10 — fast local persistence)
+  const sessionId = currentProjectId || 'draft';
+
   // Step 3: SINGLE orchestrated auto-save effect — replaces 3 separate effects
   // T+0ms: localStorage draft (sync, fast)
   // T+3s (idle): IDB save
@@ -2176,14 +2187,6 @@ export function AIAppBuilderWorkspace() {
 
     return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
   }, [project.files, project.name, messages, versions, scheduleAutoSave, isGenerating, isInRecentProjectLoadCooldown, saveDraft, sessionId]);
-
-  // Issue 13 fix: Track post-generation transition to defer saves
-  const postGenTimestampRef = useRef<number>(0);
-  const recentProjectLoadCooldownUntilRef = useRef<number>(0);
-
-  const isInRecentProjectLoadCooldown = useCallback(() => {
-    return Date.now() < recentProjectLoadCooldownUntilRef.current;
-  }, []);
   useEffect(() => {
     if (prevIsGeneratingRef.current && !isGenerating) {
       postGenTimestampRef.current = Date.now();
