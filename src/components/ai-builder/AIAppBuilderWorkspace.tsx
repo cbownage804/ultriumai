@@ -2533,6 +2533,7 @@ export function AIAppBuilderWorkspace() {
 
     if (lsDraft && (lsDraft.files.length > 0 || lsDraft.messages.length > 0)) {
       hasRestoredRef.current = true;
+      recentProjectLoadCooldownUntilRef.current = Date.now() + 20_000;
       setFiles(lsDraft.files);
       renameProject(lsDraft.name);
       if (lsDraft.messages.length > 0) {
