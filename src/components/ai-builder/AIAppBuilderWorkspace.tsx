@@ -3996,6 +3996,44 @@ export function AIAppBuilderWorkspace() {
 
   // Sidebar removed — all tools accessible via ⌘K command palette (Lovable-style)
 
+  // ── Memoized stable callbacks for child components ──
+  const toggleVisualEdit = useCallback(() => setIsVisualEditActive(prev => !prev), []);
+  const navigateToFile = useCallback((path: string) => { setActiveFile(path); }, [setActiveFile]);
+
+  // Memoized preview panel props — avoids creating new objects on every render
+  const previewPanelProps = useMemo(() => ({
+    html: compiledHTML,
+    compileState,
+    isGenerating,
+    isCompiling,
+    refreshKey: previewRefreshKey,
+    onFixError: handleFixError,
+    onSmartFixError: handleSmartFixError,
+    onAIEditRequest: handleAIEditRequest,
+    isProcessingAIEdit: isGenerating,
+    projectFiles: project.files,
+    isStreamingPreview,
+    completedFileCount: completedFileCountRef.current,
+    isVisualEditActive,
+    onToggleVisualEdit: toggleVisualEdit,
+    onAutoFixError: handleAutoFixError,
+    onVisualEdit: handleVisualEdit,
+    externalIframeRef: previewIframeRef,
+    externalViewportMode: viewportMode,
+    onExternalViewportChange: setViewportMode,
+    onUrlChange: setPreviewCurrentUrl,
+    repairFailed,
+    repairErrors,
+    onRetryRepair: handleRetryRepair,
+    onDiscardChanges: handleDiscardChanges,
+    compileError,
+    onRetryCompile: handleRetryCompile,
+    isGoldenProject,
+    onResetToGolden: handleResetToGolden,
+    isUsingLKG,
+    autoHealSummary,
+  }), [compiledHTML, compileState, isGenerating, isCompiling, previewRefreshKey, project.files, isStreamingPreview, isVisualEditActive, viewportMode, repairFailed, repairErrors, compileError, isGoldenProject, isUsingLKG, autoHealSummary, toggleVisualEdit, handleFixError, handleSmartFixError, handleAIEditRequest, handleAutoFixError, handleVisualEdit, handleRetryRepair, handleDiscardChanges, handleRetryCompile, handleResetToGolden]);
+
   return (
     <TooltipProvider delayDuration={300}>
       <div className="h-full w-full flex flex-col bg-[#09090b] overflow-hidden relative">
