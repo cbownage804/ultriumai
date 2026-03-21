@@ -36,7 +36,7 @@ import {
   Loader2
 } from "lucide-react";
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+// html2canvas is lazy-loaded on demand to keep it out of the critical bundle
 
 interface ReportData {
   type: 'security' | 'rmm' | 'system_health' | 'threat_status';

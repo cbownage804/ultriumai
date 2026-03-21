@@ -58,6 +58,7 @@ export function BugReportModal({ open, onOpenChange }: BugReportModalProps) {
       // Capture screenshot
       let screenshot: string | null = null;
       try {
+        const html2canvas = (await import('html2canvas')).default;
         const canvas = await html2canvas(document.body, {
           useCORS: true,
           allowTaint: true,
