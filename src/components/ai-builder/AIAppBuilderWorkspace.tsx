@@ -1511,7 +1511,7 @@ export function AIAppBuilderWorkspace() {
           depGraphFiles: relatedPaths.size,
         });
 
-        sendMessage(healPrompt);
+        sendMessage(healPrompt, project.files, supabaseConfig, stripeConfig, serviceKeys, undefined, selectedModel, undefined, true);
       }
     };
 
