@@ -33,6 +33,7 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
   const selectedOverlayRef = useRef<HTMLDivElement | null>(null);
   const selectedElRef = useRef<HTMLElement | null>(null);
   const [iframeBounds, setIframeBounds] = useState<DOMRect | null>(null);
+  const pointerCaptureRef = useRef<{ x: number; y: number; pointerId: number } | null>(null);
 
   const getCompactElementContext = useCallback((el: HTMLElement) => {
     const textNodes = Array.from(el.childNodes)
@@ -168,6 +169,47 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
     setEditMode(null);
   }, [getCompactElementContext, getSafeElementText, iframeRef, resolveEditableTarget, updateOverlay]);
 
+  const suppressPreviewPointerEvent = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleOverlayPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    suppressPreviewPointerEvent(e);
+    pointerCaptureRef.current = { x: e.clientX, y: e.clientY, pointerId: e.pointerId };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }, [suppressPreviewPointerEvent]);
+
+  const handleOverlayPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    suppressPreviewPointerEvent(e);
+
+    const capture = pointerCaptureRef.current;
+    pointerCaptureRef.current = null;
+
+    if (capture && capture.pointerId === e.pointerId) {
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch {
+        // Ignore release errors when pointer capture has already been cleared.
+      }
+    }
+
+    const iframe = iframeRef.current;
+    const iframeDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
+    if (!iframe || !iframeDoc || !iframeBounds) return;
+
+    const origin = capture ?? { x: e.clientX, y: e.clientY };
+    const moved = Math.abs(e.clientX - origin.x) > 6 || Math.abs(e.clientY - origin.y) > 6;
+    if (moved) return;
+
+    const x = e.clientX - iframeBounds.left;
+    const y = e.clientY - iframeBounds.top;
+    const target = iframeDoc.elementFromPoint(x, y);
+    if (!(target instanceof HTMLElement)) return;
+
+    selectEditableElement(target);
+  }, [iframeBounds, iframeRef, selectEditableElement, suppressPreviewPointerEvent]);
+
   const handleAIImageAttach = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -236,6 +278,7 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
     iframe.contentWindow?.addEventListener('resize', onScrollOrResize);
 
     return () => {
+      pointerCaptureRef.current = null;
       window.removeEventListener('resize', onScrollOrResize);
       window.removeEventListener('scroll', onScrollOrResize, true);
       iframe.contentWindow?.removeEventListener('scroll', onScrollOrResize, true);
@@ -346,21 +389,15 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
             width: iframeBounds.width,
             height: iframeBounds.height,
             cursor: 'crosshair',
+            touchAction: 'none',
           }}
+          onPointerDown={handleOverlayPointerDown}
+          onPointerMove={suppressPreviewPointerEvent}
+          onPointerUp={handleOverlayPointerUp}
+          onPointerCancel={() => { pointerCaptureRef.current = null; }}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-
-            const iframe = iframeRef.current;
-            const iframeDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
-            if (!iframe || !iframeDoc || !iframeBounds) return;
-
-            const x = e.clientX - iframeBounds.left;
-            const y = e.clientY - iframeBounds.top;
-            const target = iframeDoc.elementFromPoint(x, y);
-            if (!(target instanceof HTMLElement)) return;
-
-            selectEditableElement(target);
           }}
         />
       )}
