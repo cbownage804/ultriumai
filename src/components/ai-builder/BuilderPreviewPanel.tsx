@@ -597,20 +597,15 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
     ? `https://${previewSlug}.apps.ultriumai.com`
     : null;
 
-  // Track a version counter to force iframe reload when compiled HTML changes
-  const crossOriginVersionRef = useRef(0);
-  useEffect(() => {
-    if (crossOriginPreviewUrl && displayHtml) {
-      crossOriginVersionRef.current = Date.now();
-    }
-  }, [crossOriginPreviewUrl, displayHtml]);
-
   const isCrossOriginReady = !!crossOriginPreviewUrl && !!displayHtml;
+  const crossOriginCacheBust = isCrossOriginReady
+    ? `${refreshKey ?? 0}-${iframeKey}-${displayHtml?.length ?? 0}`
+    : null;
 
   // Legacy SW path: only used if no previewSlug available
   const isIsolatedPreviewReady = !shouldUseSrcdocPreview && !crossOriginPreviewUrl && !!swReady && !!previewUrl && !!displayHtml;
   const iframePreviewSrc = isCrossOriginReady
-    ? `${crossOriginPreviewUrl}?_t=${crossOriginVersionRef.current}`
+    ? `${crossOriginPreviewUrl}?_t=${crossOriginCacheBust}`
     : isIsolatedPreviewReady && previewUrl
       ? `${previewUrl}?v=${swVersion || 0}`
       : undefined;
