@@ -515,11 +515,80 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
 }
 
 function buildSelector(el: HTMLElement): string {
-  if (el.id) return `#${el.id}`;
-  const parent = el.parentElement;
-  if (!parent) return el.tagName.toLowerCase();
-  const siblings = Array.from(parent.children).filter(c => c.tagName === el.tagName);
-  const index = siblings.indexOf(el);
-  const parentSelector = buildSelector(parent);
-  return `${parentSelector} > ${el.tagName.toLowerCase()}${siblings.length > 1 ? `:nth-child(${index + 1})` : ''}`;
+  if (el.id) return `#${CSS.escape(el.id)}`;
+
+  const directStableSelector = getStableElementSelector(el);
+  if (directStableSelector) return directStableSelector;
+
+  const segments: string[] = [];
+  let current: HTMLElement | null = el;
+  let depth = 0;
+
+  while (current && depth < 5) {
+    if (current.id) {
+      segments.unshift(`#${CSS.escape(current.id)}`);
+      break;
+    }
+
+    const stableSelector = getStableElementSelector(current);
+    if (stableSelector && current !== el) {
+      segments.unshift(stableSelector);
+      break;
+    }
+
+    const tagName = current.tagName.toLowerCase();
+    const parent = current.parentElement;
+    if (!parent) {
+      segments.unshift(tagName);
+      break;
+    }
+
+    const sameTagSiblings = Array.from(parent.children).filter(
+      child => child.tagName === current?.tagName,
+    );
+    const siblingIndex = sameTagSiblings.indexOf(current);
+    segments.unshift(
+      sameTagSiblings.length > 1 ? `${tagName}:nth-of-type(${siblingIndex + 1})` : tagName,
+    );
+
+    current = parent;
+    depth += 1;
+  }
+
+  return segments.join(' > ') || el.tagName.toLowerCase();
+}
+
+function getStableElementSelector(el: HTMLElement): string | null {
+  const attrCandidates: Array<[string, string | null]> = [
+    ['data-testid', el.getAttribute('data-testid')],
+    ['data-test', el.getAttribute('data-test')],
+    ['data-cy', el.getAttribute('data-cy')],
+    ['name', el.getAttribute('name')],
+    ['aria-label', el.getAttribute('aria-label')],
+    ['role', el.getAttribute('role')],
+  ];
+
+  for (const [attr, value] of attrCandidates) {
+    if (value && value.trim()) {
+      return `${el.tagName.toLowerCase()}[${attr}="${cssEscape(value.trim())}"]`;
+    }
+  }
+
+  const classList = Array.from(el.classList)
+    .filter(token => token && token.length < 40 && !/^(__|hover|active|selected|focus|group|peer)/.test(token))
+    .slice(0, 2);
+
+  if (classList.length > 0) {
+    return `${el.tagName.toLowerCase()}.${classList.map(cssEscape).join('.')}`;
+  }
+
+  return null;
+}
+
+function cssEscape(value: string): string {
+  if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
+    return CSS.escape(value);
+  }
+
+  return value.replace(/([!"#$%&'()*+,./:;<=>?@[\\\]^`{|}~\s])/g, '\\$1');
 }
