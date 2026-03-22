@@ -312,6 +312,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
   const viewportMode = externalViewportMode ?? internalViewportMode;
   const setViewportMode = onExternalViewportChange ?? setInternalViewportMode;
   const [iframeKey, setIframeKey] = useState(0);
+  const [emergencyPreviewHtml, setEmergencyPreviewHtml] = useState<string | null>(null);
 
   // Sandpack compiles internally — no need to remount on external compile state changes.
   // Only remount on explicit refreshKey change (user-triggered refresh).
@@ -328,7 +329,11 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
   const iframeRef = externalIframeRef || internalIframeRef;
 
   // Gap 4: Service Worker preview — real browsing context
-  const { isReady: swReady, previewUrl, updatePreview, version: swVersion, softReload: swSoftReload } = usePreviewServiceWorker();
+  // Use SW mode for normal preview so the iframe runs in an isolated browsing context.
+  // Keep srcdoc only for Visual Edit and emergency fallback pages that require direct DOM access.
+  const { isReady: swReady, previewUrl, updatePreview, version: swVersion, softReload: swSoftReload } = usePreviewServiceWorker({
+    useSrcdoc: !!externalVisualEdit,
+  });
 
   const [isLandscape, setIsLandscape] = useState(false);
   const [customWidth, setCustomWidth] = useState(400);
@@ -619,6 +624,19 @@ window.addEventListener('message', function(e) {
       ? lastGoodPreviewHtmlRef.current
       : previewDocumentHtml // fall back to whatever we have, including fallback HTML
   );
+  const shouldUseSrcdocPreview = !!externalVisualEdit || !swReady || !previewUrl || !!emergencyPreviewHtml;
+  const iframePreviewSrc = !shouldUseSrcdocPreview && previewUrl
+    ? `${previewUrl}?v=${swVersion || 0}`
+    : undefined;
+  const iframePreviewSrcDoc = shouldUseSrcdocPreview
+    ? (emergencyPreviewHtml ?? displayHtml ?? undefined)
+    : undefined;
+
+  useEffect(() => {
+    if (previewDocumentHtml && !isCurrentFallback) {
+      setEmergencyPreviewHtml(null);
+    }
+  }, [previewDocumentHtml, isCurrentFallback]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -630,7 +648,7 @@ window.addEventListener('message', function(e) {
 
   // Only reload iframe for SUBSEQUENT updates — initial load is handled by src attribute
   // Gap 4: Push compiled HTML to Service Worker (for soft reloads/HMR)
-  // Always use srcDoc for rendering — no src switch to avoid race conditions
+  // Push compiled HTML to the Service Worker so isolated preview mode can render it.
   const prevSwHtmlRef = useRef<string | null>(null);
   useEffect(() => {
     if (swReady && htmlWithErrorCapture) {
@@ -789,9 +807,7 @@ window.addEventListener('message', function(e) {
           console.warn('[PreviewPanel] Circuit breaker TRIPPED — too many errors');
 
           // Show crash page
-          if (iframeRef.current) {
-            iframeRef.current.srcdoc = crashPageHtml('Too many errors in a short time.');
-          }
+          setEmergencyPreviewHtml(crashPageHtml('Too many errors in a short time.'));
 
           // Detach for cooldown
           detachListener();
@@ -800,12 +816,13 @@ window.addEventListener('message', function(e) {
             breakerOpenRef.current = false;
             errorTimestampsRef.current = [];
             attachListener();
-            // Restore LKG
-            if (iframeRef.current && previewDocumentHtml) {
+            // Restore the normal preview renderer after cooldown.
+            if (previewDocumentHtml) {
               const sid = newSessionId();
               sessionIdRef.current = sid;
-              iframeRef.current.srcdoc = injectSessionId(previewDocumentHtml, sid);
+              injectSessionId(previewDocumentHtml, sid);
             }
+            setEmergencyPreviewHtml(null);
           }, 5000);
 
           return;
@@ -1147,9 +1164,9 @@ window.addEventListener('message', function(e) {
             )}
             <iframe
               ref={iframeRef as React.RefObject<HTMLIFrameElement>}
-              key={`iframe-${iframeKey}-${refreshKey ?? 0}-${externalVisualEdit ? 'visual-edit' : 'isolated'}`}
+              key={`iframe-${iframeKey}-${refreshKey ?? 0}-${externalVisualEdit ? 'visual-edit' : 'preview'}-${shouldUseSrcdocPreview ? 'srcdoc' : 'sw'}`}
               title="App Preview"
-              srcDoc={displayHtml}
+              {...(shouldUseSrcdocPreview ? { srcDoc: iframePreviewSrcDoc } : { src: iframePreviewSrc })}
               sandbox={previewSandbox}
               loading="eager"
               className={cn(
