@@ -32,6 +32,7 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
   const imgReplaceInputRef = useRef<HTMLInputElement>(null);
   const selectedOverlayRef = useRef<HTMLDivElement | null>(null);
   const selectedElRef = useRef<HTMLElement | null>(null);
+  const [iframeBounds, setIframeBounds] = useState<DOMRect | null>(null);
 
   const getCompactElementContext = useCallback((el: HTMLElement) => {
     const textNodes = Array.from(el.childNodes)
@@ -82,6 +83,90 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
 
     return directText.slice(0, 120);
   }, []);
+
+  const updateIframeBounds = useCallback(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) {
+      setIframeBounds(null);
+      return;
+    }
+
+    const rect = iframe.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) {
+      setIframeBounds(null);
+      return;
+    }
+
+    setIframeBounds(new DOMRect(rect.x, rect.y, rect.width, rect.height));
+  }, [iframeRef]);
+
+  const resolveEditableTarget = useCallback((target: EventTarget | null, selectedOverlay?: HTMLDivElement | null) => {
+    const el = target instanceof HTMLElement ? target : null;
+    if (!el) return null;
+    if (selectedOverlay && el === selectedOverlay) return null;
+
+    const ownerDoc = el.ownerDocument;
+    if (!ownerDoc) return null;
+    if (el === ownerDoc.documentElement || el === ownerDoc.body) return null;
+
+    return el;
+  }, []);
+
+  const updateOverlay = useCallback((overlay: HTMLDivElement | null, el: HTMLElement | null, iframeDoc?: Document | null) => {
+    const doc = iframeDoc || iframeRef.current?.contentDocument || iframeRef.current?.contentWindow?.document;
+    if (!overlay || !el || !doc?.contains(el)) {
+      if (overlay) overlay.style.display = 'none';
+      return;
+    }
+
+    const rect = el.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) {
+      overlay.style.display = 'none';
+      return;
+    }
+
+    overlay.style.display = 'block';
+    overlay.style.left = `${rect.left}px`;
+    overlay.style.top = `${rect.top}px`;
+    overlay.style.width = `${rect.width}px`;
+    overlay.style.height = `${rect.height}px`;
+  }, [iframeRef]);
+
+  const selectEditableElement = useCallback((el: HTMLElement) => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!iframeDoc) return;
+
+    const overlayTarget = resolveEditableTarget(el, selectedOverlayRef.current);
+    if (!overlayTarget) return;
+
+    const safeText = getSafeElementText(overlayTarget);
+    const selector = buildSelector(overlayTarget);
+    const iframeRect = iframe.getBoundingClientRect();
+    const elRect = overlayTarget.getBoundingClientRect();
+
+    selectedElRef.current = overlayTarget;
+    updateOverlay(selectedOverlayRef.current, overlayTarget, iframeDoc);
+
+    setSelectedElement({
+      tagName: overlayTarget.tagName.toLowerCase(),
+      text: safeText.slice(0, 50),
+      selector,
+      rect: new DOMRect(
+        elRect.x + iframeRect.x,
+        elRect.y + iframeRect.y,
+        elRect.width,
+        elRect.height,
+      ),
+      outerHTML: getCompactElementContext(overlayTarget),
+      parentHTML: overlayTarget.parentElement ? getCompactElementContext(overlayTarget.parentElement) : '',
+    });
+    setEditValue(safeText);
+    setAIPrompt('');
+    setEditMode(null);
+  }, [getCompactElementContext, getSafeElementText, iframeRef, resolveEditableTarget, updateOverlay]);
 
   const handleAIImageAttach = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -139,88 +224,29 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
     iframeDoc.body.appendChild(selectedOverlay);
     selectedOverlayRef.current = selectedOverlay;
 
-    const updateOverlay = (overlay: HTMLDivElement | null, el: HTMLElement | null) => {
-      if (!overlay || !el || !iframeDoc.contains(el)) {
-        if (overlay) overlay.style.display = 'none';
-        return;
-      }
-
-      const rect = el.getBoundingClientRect();
-      if (rect.width <= 0 || rect.height <= 0) {
-        overlay.style.display = 'none';
-        return;
-      }
-
-      overlay.style.display = 'block';
-      overlay.style.left = `${rect.left}px`;
-      overlay.style.top = `${rect.top}px`;
-      overlay.style.width = `${rect.width}px`;
-      overlay.style.height = `${rect.height}px`;
-    };
-
-    const resolveEditableTarget = (target: EventTarget | null) => {
-      const el = target instanceof HTMLElement ? target : null;
-      if (!el) return null;
-      if (el === selectedOverlay) return null;
-      if (el === iframeDoc.documentElement || el === iframeDoc.body) return null;
-      return el;
-    };
-
-    const onClick = (e: MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const el = resolveEditableTarget(e.target);
-      if (!el) return;
-
-      const safeText = getSafeElementText(el);
-
-      selectedElRef.current = el;
-      updateOverlay(selectedOverlayRef.current, el);
-
-      const selector = buildSelector(el);
-      const iframeRect = iframe.getBoundingClientRect();
-      const elRect = el.getBoundingClientRect();
-
-      // Capture compact context only — avoid cloning large DOM subtrees on click.
-      const outerHTML = getCompactElementContext(el);
-      const parentHTML = el.parentElement ? getCompactElementContext(el.parentElement) : '';
-      
-      setSelectedElement({
-        tagName: el.tagName.toLowerCase(),
-        text: safeText.slice(0, 50),
-        selector,
-        rect: new DOMRect(
-          elRect.x + iframeRect.x,
-          elRect.y + iframeRect.y,
-          elRect.width,
-          elRect.height
-        ),
-        outerHTML,
-        parentHTML,
-      });
-      setEditValue(safeText);
-      setAIPrompt('');
-      setEditMode(null);
-    };
-
     const onScrollOrResize = () => {
-      updateOverlay(selectedOverlayRef.current, selectedElRef.current);
+      updateIframeBounds();
+      updateOverlay(selectedOverlayRef.current, selectedElRef.current, iframeDoc);
     };
 
-    iframeDoc.addEventListener('click', onClick, true);
+    updateIframeBounds();
+    window.addEventListener('resize', onScrollOrResize);
+    window.addEventListener('scroll', onScrollOrResize, true);
     iframe.contentWindow?.addEventListener('scroll', onScrollOrResize, true);
     iframe.contentWindow?.addEventListener('resize', onScrollOrResize);
 
     return () => {
-      iframeDoc.removeEventListener('click', onClick, true);
+      window.removeEventListener('resize', onScrollOrResize);
+      window.removeEventListener('scroll', onScrollOrResize, true);
       iframe.contentWindow?.removeEventListener('scroll', onScrollOrResize, true);
       iframe.contentWindow?.removeEventListener('resize', onScrollOrResize);
       iframeDoc.getElementById('__visual-edit-styles__')?.remove();
       selectedOverlayRef.current?.remove();
       selectedOverlayRef.current = null;
       selectedElRef.current = null;
+      setIframeBounds(null);
     };
-  }, [getCompactElementContext, getSafeElementText, isActive, iframeRef]);
+  }, [iframeRef, isActive, updateIframeBounds, updateOverlay]);
 
   const applyEdit = useCallback(() => {
     if (!selectedElement || !editMode) return;
@@ -310,6 +336,34 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
         <span>Editing</span>
         <X className="h-2.5 w-2.5" />
       </button>
+
+      {iframeBounds && (
+        <div
+          className="fixed z-40"
+          style={{
+            top: iframeBounds.top,
+            left: iframeBounds.left,
+            width: iframeBounds.width,
+            height: iframeBounds.height,
+            cursor: 'crosshair',
+          }}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const iframe = iframeRef.current;
+            const iframeDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
+            if (!iframe || !iframeDoc || !iframeBounds) return;
+
+            const x = e.clientX - iframeBounds.left;
+            const y = e.clientY - iframeBounds.top;
+            const target = iframeDoc.elementFromPoint(x, y);
+            if (!(target instanceof HTMLElement)) return;
+
+            selectEditableElement(target);
+          }}
+        />
+      )}
 
       {/* Edit toolbar for selected element */}
       {selectedElement && !editMode && (
