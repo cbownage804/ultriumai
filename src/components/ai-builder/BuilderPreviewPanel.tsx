@@ -297,6 +297,17 @@ function __previewFormatConsoleArgs(argsLike) {
 }
 
 export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole = false, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey, repairFailed, repairErrors, onRetryRepair, onDiscardChanges, compileError, onRetryCompile, isGoldenProject, onResetToGolden, isUsingLKG, autoHealSummary }: BuilderPreviewPanelProps) {
+  // ── Deferred initial render: prevent freeze from restored preview HTML blocking main thread ──
+  const mountDeferredRef = useRef(true);
+  const [mountDeferred, setMountDeferred] = useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      mountDeferredRef.current = false;
+      setMountDeferred(false);
+    }, 1800);
+    return () => clearTimeout(timer);
+  }, []);
+
   const [internalViewportMode, setInternalViewportMode] = useState<ViewportMode>('desktop');
   const viewportMode = externalViewportMode ?? internalViewportMode;
   const setViewportMode = onExternalViewportChange ?? setInternalViewportMode;
@@ -1132,11 +1143,12 @@ window.addEventListener('message', function(e) {
               title="App Preview"
               srcDoc={displayHtml}
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
+              loading="eager"
               className={cn(
                 "w-full h-full border-0 bg-white",
                 viewportWidth > 0 && viewportWidth <= 834 && "rounded-lg"
               )}
-              style={{ colorScheme: 'light' }}
+              style={{ colorScheme: 'light', display: mountDeferred ? 'none' : undefined }}
             />
 
             {/* LKG fallback banner — subtle, non-blocking */}
