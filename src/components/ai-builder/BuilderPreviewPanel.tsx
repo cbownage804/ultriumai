@@ -334,6 +334,9 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
   const [customWidth, setCustomWidth] = useState(400);
   const [customHeight, setCustomHeight] = useState(700);
   const viewportWidth = getViewportWidth(viewportMode, customWidth, isLandscape);
+  const previewSandbox = externalVisualEdit
+    ? 'allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads'
+    : 'allow-scripts allow-forms allow-popups allow-modals allow-downloads';
 
   // Phase 4: Never remount iframe on HTML content changes.
   // Browser handles srcdoc updates natively — no need to force remount via key.
@@ -860,13 +863,18 @@ window.addEventListener('message', function(e) {
     }
     setErrors([]); setCurrentUrl('/'); setUrlHistory(['/']); setHistoryIndex(0);
     // Phase 36: Reset scroll position on new build
-    if (iframeRef.current?.contentWindow) iframeRef.current.contentWindow.scrollTo(0, 0);
+    try {
+      iframeRef.current?.contentWindow?.scrollTo(0, 0);
+    } catch {
+      // Cross-origin isolated preview intentionally blocks direct window access.
+    }
     // srcDoc handles rendering — just log for diagnostics
     console.info('[PreviewPanel] HTML updated for srcDoc rendering', {
       htmlLength: htmlWithErrorCapture.length,
       hasDoctype: /<!doctype|<html/i.test(htmlWithErrorCapture),
+      isolated: !externalVisualEdit,
     });
-  }, [htmlWithErrorCapture, isGenerating, isCompiling]);
+  }, [htmlWithErrorCapture, isGenerating, isCompiling, externalVisualEdit, iframeRef]);
 
   // Phase 2: Also clear stale errors when generation completes (isGenerating: true→false)
   const prevIsGeneratingRef = useRef(isGenerating);
@@ -1139,10 +1147,10 @@ window.addEventListener('message', function(e) {
             )}
             <iframe
               ref={iframeRef as React.RefObject<HTMLIFrameElement>}
-              key={`iframe-${iframeKey}-${refreshKey ?? 0}`}
+              key={`iframe-${iframeKey}-${refreshKey ?? 0}-${externalVisualEdit ? 'visual-edit' : 'isolated'}`}
               title="App Preview"
               srcDoc={displayHtml}
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
+              sandbox={previewSandbox}
               loading="eager"
               className={cn(
                 "w-full h-full border-0 bg-white",
