@@ -94,6 +94,9 @@ export function ConsolePanel({ open, onToggle, onFixError, onNavigateToFile, ifr
 
   useEffect(() => {
     const handler = (e: MessageEvent) => {
+      const previewWindow = iframeRef?.current?.contentWindow;
+      if (previewWindow && e.source !== previewWindow) return;
+
       if (e.data?.type === '__CONSOLE_LOG__') {
         setEntries(prev => [...prev.slice(-199), {
           id: crypto.randomUUID(), type: e.data.level || 'log', message: e.data.message,
@@ -115,7 +118,7 @@ export function ConsolePanel({ open, onToggle, onFixError, onNavigateToFile, ifr
     };
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, []);
+  }, [iframeRef]);
 
   // Build output when file count changes
   const prevFileCountRef = useRef(fileCount);

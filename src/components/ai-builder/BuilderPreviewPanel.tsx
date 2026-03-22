@@ -298,6 +298,147 @@ function __previewFormatConsoleArgs(argsLike) {
 `;
 }
 
+function injectIntoHead(html: string, script: string): string {
+  const headCloseIdx = html.indexOf('</head>');
+  if (headCloseIdx !== -1) {
+    return html.slice(0, headCloseIdx) + script + html.slice(headCloseIdx);
+  }
+  return script + html;
+}
+
+function buildLightweightPreviewBridgeScript(serializationScript: string): string {
+  return `<script>
+${serializationScript}
+(function(){
+  var errorWindowStart = 0;
+  var errorCount = 0;
+  var recentErrors = Object.create(null);
+
+  function postToParent(payload) {
+    try {
+      window.parent.postMessage(payload, '*');
+    } catch (err) {}
+  }
+
+  function canSendError(message) {
+    var now = Date.now();
+    if (!errorWindowStart || now - errorWindowStart > 2000) {
+      errorWindowStart = now;
+      errorCount = 0;
+      recentErrors = Object.create(null);
+    }
+
+    if (errorCount >= 12) return false;
+
+    var key = String(message || '').slice(0, 320);
+    var lastSeen = recentErrors[key] || 0;
+    if (lastSeen && now - lastSeen < 1000) return false;
+
+    recentErrors[key] = now;
+    errorCount++;
+    return true;
+  }
+
+  var __wsBlockCount = 0;
+  var OrigWebSocket = window.WebSocket;
+  if (OrigWebSocket) {
+    function WrappedWebSocket(url, protocols) {
+      var urlStr = String(url || '');
+      if (/vite|hmr|__vite|hot-update|localhost:\d{4}/i.test(urlStr)) {
+        __wsBlockCount++;
+        return {
+          readyState: 3,
+          send: function(){},
+          close: function(){},
+          addEventListener: function(){},
+          removeEventListener: function(){},
+          dispatchEvent: function(){ return false; },
+          onopen: null,
+          onclose: null,
+          onerror: null,
+          onmessage: null,
+          CONNECTING: 0,
+          OPEN: 1,
+          CLOSING: 2,
+          CLOSED: 3,
+          url: urlStr,
+          protocol: '',
+          extensions: '',
+          bufferedAmount: 0,
+          binaryType: 'blob'
+        };
+      }
+      return protocols !== undefined ? new OrigWebSocket(url, protocols) : new OrigWebSocket(url);
+    }
+
+    WrappedWebSocket.prototype = OrigWebSocket.prototype;
+    WrappedWebSocket.CONNECTING = 0;
+    WrappedWebSocket.OPEN = 1;
+    WrappedWebSocket.CLOSING = 2;
+    WrappedWebSocket.CLOSED = 3;
+    window.WebSocket = WrappedWebSocket;
+  }
+
+  window.addEventListener('error', function(e) {
+    var message = e && e.message ? e.message : 'Unknown runtime error';
+    if (!canSendError(message)) return;
+    postToParent({
+      type: '__PREVIEW_ERROR__',
+      message: message,
+      source: e && e.filename ? e.filename : '',
+      line: e && e.lineno ? e.lineno : 0,
+      col: e && e.colno ? e.colno : 0,
+    });
+  }, { passive: true });
+
+  window.addEventListener('unhandledrejection', function(e) {
+    var reason = e && e.reason;
+    var message = reason && reason.message ? reason.message : String(reason || 'Unknown promise rejection');
+    if (!canSendError(message)) return;
+    postToParent({
+      type: '__PREVIEW_ERROR__',
+      message: 'Unhandled Promise: ' + message,
+      source: '',
+      line: 0,
+      col: 0,
+    });
+  });
+
+  document.addEventListener('click', function(e) {
+    var target = e.target;
+    if (!target || !target.closest) return;
+    var anchor = target.closest('a');
+    if (!anchor) return;
+    var href = anchor.getAttribute('href');
+    if (!href) return;
+    if (href.startsWith('javascript:') || href.startsWith('blob:') || href.startsWith('data:') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
+    if (href.startsWith('#')) {
+      e.preventDefault();
+      try {
+        var hashTarget = document.querySelector(href);
+        if (hashTarget) hashTarget.scrollIntoView({ behavior: 'smooth' });
+      } catch (err) {}
+      return;
+    }
+    e.preventDefault();
+    postToParent({ type: '__PREVIEW_NAV__', href: href });
+  }, true);
+
+  document.addEventListener('submit', function(e) {
+    var form = e.target;
+    if (form && form.tagName === 'FORM' && form.getAttribute('action')) {
+      e.preventDefault();
+    }
+  }, true);
+
+  window.open = function(url) {
+    postToParent({ type: '__PREVIEW_NAV__', href: url, newTab: true });
+    return null;
+  };
+})();
+</script>`;
+}
+
 export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole = false, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey, repairFailed, repairErrors, onRetryRepair, onDiscardChanges, compileError, onRetryCompile, isGoldenProject, onResetToGolden, isUsingLKG, autoHealSummary, previewSlug }: BuilderPreviewPanelProps) {
   // ── Deferred initial render: prevent freeze from restored preview HTML blocking main thread ──
   const mountDeferredRef = useRef(true);
@@ -329,6 +470,10 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
   const containerRef = useRef<HTMLDivElement>(null);
   const internalIframeRef = useRef<HTMLIFrameElement>(null);
   const iframeRef = externalIframeRef || internalIframeRef;
+  const isEventFromActivePreview = useCallback((event: MessageEvent) => {
+    const previewWindow = iframeRef.current?.contentWindow;
+    return !previewWindow || event.source === previewWindow;
+  }, [iframeRef]);
 
   // Gap 4: Service Worker preview — real browsing context
   // Use SW mode for normal preview so the iframe runs in an isolated browsing context.
@@ -399,199 +544,14 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
     });
   }, [html, normalizedHtml, isCompiling, compileError]);
 
-  const htmlWithInjections = normalizedHtml ? (
-    normalizedHtml.includes('__builderInjected')
-      ? normalizedHtml.replace(
-          '</head>',
-          `<script>
-${previewSafeSerializationScript}
-// === WEBSOCKET SUPPRESSION: Block Vite HMR websockets inherited from parent origin ===
-var __wsBlockCount = 0;
-var OrigWebSocket = window.WebSocket;
-window.WebSocket = function(url, protocols) {
-  var urlStr = String(url || '');
-  if (/vite|hmr|__vite|hot-update|localhost:\d{4}/i.test(urlStr)) {
-    __wsBlockCount++;
-    if (__wsBlockCount <= 5) {
-      console.info('[Preview] Blocked inherited HMR websocket (' + __wsBlockCount + '/5): ' + urlStr);
-    }
-    var dummy = { readyState: 3, send: function(){}, close: function(){},
-                  addEventListener: function(){}, removeEventListener: function(){},
-                  dispatchEvent: function(){ return false; },
-                  onopen: null, onclose: null, onerror: null, onmessage: null,
-                  CONNECTING: 0, OPEN: 1, CLOSING: 2, CLOSED: 3,
-                  url: urlStr, protocol: '', extensions: '', bufferedAmount: 0, binaryType: 'blob' };
-    return dummy;
-  }
-  if (protocols !== undefined) return new OrigWebSocket(url, protocols);
-  return new OrigWebSocket(url);
-};
-window.WebSocket.prototype = OrigWebSocket.prototype;
-window.WebSocket.CONNECTING = 0;
-window.WebSocket.OPEN = 1;
-window.WebSocket.CLOSING = 2;
-window.WebSocket.CLOSED = 3;
-// === LIVE PREVIEW HOT-PATCH LISTENER ===
-window.addEventListener('message', function(e) {
-  if (!e.data || e.data.type !== '__LIVE_PATCH__') return;
-  var patches = e.data.patches || [];
-  for (var i = 0; i < patches.length; i++) {
-    var p = patches[i];
-    if (p.kind === 'css') {
-      var styleId = '__hotcss_' + p.path.replace(/[^a-z0-9]/gi, '_');
-      var existing = document.getElementById(styleId);
-      if (existing) { existing.textContent = p.content; }
-      else { var style = document.createElement('style'); style.id = styleId; style.textContent = p.content; document.head.appendChild(style); }
-    } else if (p.kind === 'html-body') { document.body.innerHTML = p.content; }
-  }
-  window.parent.postMessage({ type: '__LIVE_PATCH_ACK__', count: patches.length }, '*');
-});
-// Phase 20: Capture unhandled promise rejections (also in __builderInjected path)
-window.addEventListener('unhandledrejection', function(e) {
-  window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: 'Unhandled Promise: ' + (e.reason?.message || e.reason || 'Unknown'), source: '', line: 0, critical: false }, '*');
-});
-// === IFRAME NAVIGATION GUARD ===
-document.addEventListener('click', function(e) {
-  var anchor = e.target.closest ? e.target.closest('a') : null;
-  if (!anchor) return;
-  var href = anchor.getAttribute('href');
-  if (!href) return;
-  if (href.startsWith('javascript:') || href.startsWith('blob:') || href.startsWith('data:') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
-  if (href.startsWith('#')) { e.preventDefault(); try { var target = document.querySelector(href); if (target) target.scrollIntoView({ behavior: 'smooth' }); } catch(err) {} return; }
-  e.preventDefault();
-  window.parent.postMessage({ type: '__PREVIEW_NAV__', href: href }, '*');
-});
-document.addEventListener('submit', function(e) { var form = e.target; if (form && form.tagName === 'FORM' && form.getAttribute('action')) { e.preventDefault(); } });
-window.open = function(url) { window.parent.postMessage({ type: '__PREVIEW_NAV__', href: url, newTab: true }, '*'); return null; };
-// === HMR STATE PRESERVATION (Gap 5) ===
-window.addEventListener('message', function(e) {
-  if (!e.data || e.data.type !== '__SAVE_STATE_FOR_HMR__') return;
-  try {
-    var state = { scrollX: window.scrollX, scrollY: window.scrollY, inputs: [], openDetails: [] };
-    document.querySelectorAll('input, textarea, select').forEach(function(el, i) {
-      var sel = el.id ? '#' + el.id : (el.name ? '[name="' + el.name + '"]' : el.tagName.toLowerCase() + ':nth-of-type(' + (i+1) + ')');
-      if (el.type === 'checkbox' || el.type === 'radio') { state.inputs.push({ selector: sel, type: el.type, checked: el.checked }); }
-      else { state.inputs.push({ selector: sel, type: el.type || 'text', value: el.value }); }
-    });
-    document.querySelectorAll('details[open]').forEach(function(el, i) {
-      state.openDetails.push(el.id ? '#' + el.id : 'details:nth-of-type(' + (i+1) + ')');
-    });
-    sessionStorage.setItem('__hmr_state__', JSON.stringify(state));
-  } catch(err) {}
-});
-</script>
-</head>`
-        )
-      : normalizedHtml.replace(
-          '</head>',
-          `<script>
-${previewSafeSerializationScript}
-// === WEBSOCKET SUPPRESSION: Block Vite HMR websockets inherited from parent origin ===
-var __wsBlockCount = 0;
-var OrigWebSocket = window.WebSocket;
-window.WebSocket = function(url, protocols) {
-  var urlStr = String(url || '');
-  if (/vite|hmr|__vite|hot-update|localhost:\d{4}/i.test(urlStr)) {
-    __wsBlockCount++;
-    if (__wsBlockCount <= 5) {
-      console.info('[Preview] Blocked inherited HMR websocket (' + __wsBlockCount + '/5): ' + urlStr);
-    }
-    var dummy = { readyState: 3, send: function(){}, close: function(){},
-                  addEventListener: function(){}, removeEventListener: function(){},
-                  dispatchEvent: function(){ return false; },
-                  onopen: null, onclose: null, onerror: null, onmessage: null,
-                  CONNECTING: 0, OPEN: 1, CLOSING: 2, CLOSED: 3,
-                  url: urlStr, protocol: '', extensions: '', bufferedAmount: 0, binaryType: 'blob' };
-    return dummy;
-  }
-  if (protocols !== undefined) return new OrigWebSocket(url, protocols);
-  return new OrigWebSocket(url);
-};
-window.WebSocket.prototype = OrigWebSocket.prototype;
-window.WebSocket.CONNECTING = 0;
-window.WebSocket.OPEN = 1;
-window.WebSocket.CLOSING = 2;
-window.WebSocket.CLOSED = 3;
-window.addEventListener('error', function(e) {
-  window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: e.message, source: e.filename, line: e.lineno, col: e.colno }, '*');
-});
-window.addEventListener('message', function(e) {
-  if (!e.data || e.data.type !== '__LIVE_PATCH__') return;
-  var patches = e.data.patches || [];
-  for (var i = 0; i < patches.length; i++) {
-    var p = patches[i];
-    if (p.kind === 'css') {
-      var styleId = '__hotcss_' + p.path.replace(/[^a-z0-9]/gi, '_');
-      var existing = document.getElementById(styleId);
-      if (existing) { existing.textContent = p.content; }
-      else { var style = document.createElement('style'); style.id = styleId; style.textContent = p.content; document.head.appendChild(style); }
-    } else if (p.kind === 'html-body') { document.body.innerHTML = p.content; }
-  }
-  window.parent.postMessage({ type: '__LIVE_PATCH_ACK__', count: patches.length }, '*');
-});
-window.addEventListener('unhandledrejection', function(e) {
-  window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: 'Unhandled Promise: ' + (e.reason?.message || e.reason || 'Unknown'), source: '', line: 0 }, '*');
-});
-['log','info','warn','error'].forEach(function(level) {
-  var orig = console[level];
-  console[level] = function() {
-    var msg = __previewFormatConsoleArgs(arguments);
-    window.parent.postMessage({ type: '__CONSOLE_LOG__', level: level, message: msg, source: 'console.' + level, line: 0 }, '*');
-    if (level === 'error' || level === 'warn') {
-      window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: msg, source: 'console.' + level, line: 0, isWarning: level === 'warn' }, '*');
-    }
-    orig.apply(console, arguments);
-  };
-});
-document.addEventListener('click', function(e) {
-  var anchor = e.target.closest ? e.target.closest('a') : null;
-  if (!anchor) return;
-  var href = anchor.getAttribute('href');
-  if (!href) return;
-  if (href.startsWith('javascript:') || href.startsWith('blob:') || href.startsWith('data:') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
-  if (href.startsWith('#')) { e.preventDefault(); try { var target = document.querySelector(href); if (target) target.scrollIntoView({ behavior: 'smooth' }); } catch(err) {} return; }
-  e.preventDefault();
-  window.parent.postMessage({ type: '__PREVIEW_NAV__', href: href }, '*');
-});
-document.addEventListener('submit', function(e) { var form = e.target; if (form && form.tagName === 'FORM' && form.getAttribute('action')) { e.preventDefault(); } });
-window.open = function(url) { window.parent.postMessage({ type: '__PREVIEW_NAV__', href: url, newTab: true }, '*'); return null; };
-window.addEventListener('beforeunload', function(e) { /* no-op: prevent iframe from triggering parent leave dialog */ });
-(function() {
-  var origFetch = window.fetch;
-  window.fetch = function() {
-    var url = arguments[0]; if (typeof url === 'object' && url.url) url = url.url;
-    var method = (arguments[1] && arguments[1].method) || 'GET';
-    var start = performance.now();
-    return origFetch.apply(this, arguments).then(function(resp) {
-      var body = ''; try { body = (arguments[1] && arguments[1].body) ? String(arguments[1].body).slice(0, 500) : ''; } catch(e){}
-      window.parent.postMessage({ type: '__NETWORK_LOG__', method: method, url: String(url), status: resp.status, duration: Math.round(performance.now() - start), body }, '*');
-      return resp;
-    }).catch(function(err) {
-      window.parent.postMessage({ type: '__NETWORK_LOG__', method: method, url: String(url), status: 0, duration: Math.round(performance.now() - start) }, '*');
-      throw err;
-    });
-  };
-})();
-// === HMR STATE PRESERVATION (Gap 5) ===
-window.addEventListener('message', function(e) {
-  if (!e.data || e.data.type !== '__SAVE_STATE_FOR_HMR__') return;
-  try {
-    var state = { scrollX: window.scrollX, scrollY: window.scrollY, inputs: [], openDetails: [] };
-    document.querySelectorAll('input, textarea, select').forEach(function(el, i) {
-      var sel = el.id ? '#' + el.id : (el.name ? '[name="' + el.name + '"]' : el.tagName.toLowerCase() + ':nth-of-type(' + (i+1) + ')');
-      if (el.type === 'checkbox' || el.type === 'radio') { state.inputs.push({ selector: sel, type: el.type, checked: el.checked }); }
-      else { state.inputs.push({ selector: sel, type: el.type || 'text', value: el.value }); }
-    });
-    document.querySelectorAll('details[open]').forEach(function(el, i) {
-      state.openDetails.push(el.id ? '#' + el.id : 'details:nth-of-type(' + (i+1) + ')');
-    });
-    sessionStorage.setItem('__hmr_state__', JSON.stringify(state));
-  } catch(err) {}
-});
-</script>
-</head>`
-        )
-  ) : null;
+  const previewBridgeScript = useMemo(
+    () => buildLightweightPreviewBridgeScript(previewSafeSerializationScript),
+    [previewSafeSerializationScript]
+  );
+
+  const htmlWithInjections = normalizedHtml
+    ? injectIntoHead(normalizedHtml, previewBridgeScript)
+    : null;
 
   // === Preview document rendering: externalize inline scripts to avoid </script> parser breakout ===
   const jsBlobUrlsRef = useRef<string[]>([]);
@@ -816,6 +776,7 @@ window.addEventListener('message', function(e) {
 
   useEffect(() => {
     const handler = (e: MessageEvent) => {
+      if (!isEventFromActivePreview(e)) return;
       if (e.data?.type === '__PREVIEW_ERROR__' || e.data?.type === '__PREVIEW_CRITICAL_ERROR__') {
         // Session guard: ignore messages from stale iframes
         const msgSession = e.data?.previewSessionId;
@@ -900,7 +861,7 @@ window.addEventListener('message', function(e) {
       window.removeEventListener('message', handler);
       listenerAttachedRef.current = false;
     };
-  }, [onAutoFixError, isGenerating, previewDocumentHtml, crashPageHtml, detachListener, attachListener, newSessionId, injectSessionId]);
+  }, [onAutoFixError, isGenerating, previewDocumentHtml, crashPageHtml, detachListener, attachListener, newSessionId, injectSessionId, isEventFromActivePreview]);
 
   useEffect(() => {
     if (!htmlWithErrorCapture) {
@@ -935,6 +896,7 @@ window.addEventListener('message', function(e) {
   // Listen for navigation messages from iframe
   useEffect(() => {
     const handler = (e: MessageEvent) => {
+      if (!isEventFromActivePreview(e)) return;
       if (e.data?.type === '__NAV_CHANGE__' && e.data.url) {
         setCurrentUrl(e.data.url);
         onUrlChange?.(e.data.url);
@@ -961,7 +923,7 @@ window.addEventListener('message', function(e) {
     };
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, [historyIndex, onUrlChange]);
+  }, [historyIndex, onUrlChange, isEventFromActivePreview]);
 
   // Extract routes from project files for the route dropdown
   const detectedRoutes = useMemo(() => {

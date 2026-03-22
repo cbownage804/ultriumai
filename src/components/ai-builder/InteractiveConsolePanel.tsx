@@ -56,6 +56,8 @@ export function InteractiveConsolePanel({
   // Listen for console and network messages from iframe
   useEffect(() => {
     const handler = (e: MessageEvent) => {
+      const previewWindow = iframeRef?.current?.contentWindow;
+      if (previewWindow && e.source !== previewWindow) return;
       if (!e.data?.type) return;
 
       if (e.data.type === '__CONSOLE_LOG__') {
@@ -101,7 +103,7 @@ export function InteractiveConsolePanel({
 
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, []);
+  }, [iframeRef]);
 
   // Auto-scroll to bottom
   useEffect(() => {
