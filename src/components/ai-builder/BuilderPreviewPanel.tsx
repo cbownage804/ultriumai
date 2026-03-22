@@ -72,6 +72,8 @@ interface BuilderPreviewPanelProps {
   isUsingLKG?: boolean;
   /** Auto-heal summary info */
   autoHealSummary?: { attempts: number; maxAttempts: number; lastError?: string; resolved: boolean } | null;
+  /** Preview slug for cross-origin isolation (slug.apps.ultriumai.com) */
+  previewSlug?: string | null;
 }
 /**
  * Externalize ONLY risky inline <script> blocks into JS Blob URLs.
