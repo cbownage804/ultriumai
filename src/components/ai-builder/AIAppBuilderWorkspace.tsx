@@ -4102,6 +4102,12 @@ export function AIAppBuilderWorkspace() {
   const toggleVisualEdit = useCallback(() => setIsVisualEditActive(prev => !prev), []);
   const navigateToFile = useCallback((path: string) => { setActiveFile(path); }, [setActiveFile]);
 
+  useEffect(() => {
+    if (!isVisualEditActive) return;
+    if (!isGenerating && !isCompiling) return;
+    setIsVisualEditActive(false);
+  }, [isVisualEditActive, isGenerating, isCompiling]);
+
   // Memoized preview panel props — avoids creating new objects on every render
   const previewPanelProps = useMemo(() => ({
     html: compiledHTML,

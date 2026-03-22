@@ -30,11 +30,8 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
   const aiInputRef = useRef<HTMLInputElement>(null);
   const aiImgInputRef = useRef<HTMLInputElement>(null);
   const imgReplaceInputRef = useRef<HTMLInputElement>(null);
-  const hoverOverlayRef = useRef<HTMLDivElement | null>(null);
   const selectedOverlayRef = useRef<HTMLDivElement | null>(null);
-  const hoveredElRef = useRef<HTMLElement | null>(null);
   const selectedElRef = useRef<HTMLElement | null>(null);
-  const hoverFrameRef = useRef<number | null>(null);
 
   const getCompactElementContext = useCallback((el: HTMLElement) => {
     const textNodes = Array.from(el.childNodes)
@@ -98,7 +95,7 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
     style.id = '__visual-edit-styles__';
     style.textContent = `
       html, body { cursor: crosshair !important; }
-      #__ve-hover-overlay, #__ve-selected-overlay {
+      #__ve-selected-overlay {
         position: fixed;
         pointer-events: none;
         z-index: 2147483646;
@@ -106,21 +103,12 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
         border-radius: 4px;
         box-sizing: border-box;
       }
-      #__ve-hover-overlay {
-        border: 2px dashed rgba(6, 182, 212, 0.55);
-        background: rgba(6, 182, 212, 0.08);
-      }
       #__ve-selected-overlay {
         border: 2px solid rgba(6, 182, 212, 0.85);
         background: rgba(6, 182, 212, 0.12);
       }
     `;
     iframeDoc.head.appendChild(style);
-
-    const hoverOverlay = iframeDoc.createElement('div');
-    hoverOverlay.id = '__ve-hover-overlay';
-    iframeDoc.body.appendChild(hoverOverlay);
-    hoverOverlayRef.current = hoverOverlay;
 
     const selectedOverlay = iframeDoc.createElement('div');
     selectedOverlay.id = '__ve-selected-overlay';
@@ -149,26 +137,9 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
     const resolveEditableTarget = (target: EventTarget | null) => {
       const el = target instanceof HTMLElement ? target : null;
       if (!el) return null;
-      if (el === hoverOverlay || el === selectedOverlay) return null;
+      if (el === selectedOverlay) return null;
       if (el === iframeDoc.documentElement || el === iframeDoc.body) return null;
       return el;
-    };
-
-    const onMouseMove = (e: MouseEvent) => {
-      const nextEl = resolveEditableTarget(e.target);
-      if (nextEl === hoveredElRef.current) return;
-      hoveredElRef.current = nextEl;
-
-      if (hoverFrameRef.current !== null) return;
-      hoverFrameRef.current = iframe.contentWindow?.requestAnimationFrame(() => {
-        hoverFrameRef.current = null;
-        updateOverlay(hoverOverlayRef.current, hoveredElRef.current);
-      }) ?? null;
-    };
-
-    const onMouseLeave = () => {
-      hoveredElRef.current = null;
-      updateOverlay(hoverOverlayRef.current, null);
     };
 
     const onClick = (e: MouseEvent) => {
@@ -207,32 +178,20 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
     };
 
     const onScrollOrResize = () => {
-      updateOverlay(hoverOverlayRef.current, hoveredElRef.current);
       updateOverlay(selectedOverlayRef.current, selectedElRef.current);
     };
 
-    iframeDoc.addEventListener('mousemove', onMouseMove, true);
-    iframeDoc.addEventListener('mouseleave', onMouseLeave, true);
     iframeDoc.addEventListener('click', onClick, true);
     iframe.contentWindow?.addEventListener('scroll', onScrollOrResize, true);
     iframe.contentWindow?.addEventListener('resize', onScrollOrResize);
 
     return () => {
-      if (hoverFrameRef.current !== null) {
-        iframe.contentWindow?.cancelAnimationFrame(hoverFrameRef.current);
-        hoverFrameRef.current = null;
-      }
-      iframeDoc.removeEventListener('mousemove', onMouseMove, true);
-      iframeDoc.removeEventListener('mouseleave', onMouseLeave, true);
       iframeDoc.removeEventListener('click', onClick, true);
       iframe.contentWindow?.removeEventListener('scroll', onScrollOrResize, true);
       iframe.contentWindow?.removeEventListener('resize', onScrollOrResize);
       iframeDoc.getElementById('__visual-edit-styles__')?.remove();
-      hoverOverlayRef.current?.remove();
       selectedOverlayRef.current?.remove();
-      hoverOverlayRef.current = null;
       selectedOverlayRef.current = null;
-      hoveredElRef.current = null;
       selectedElRef.current = null;
     };
   }, [getCompactElementContext, isActive, iframeRef]);
