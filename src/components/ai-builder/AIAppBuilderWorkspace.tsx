@@ -4140,7 +4140,8 @@ export function AIAppBuilderWorkspace() {
     onResetToGolden: handleResetToGolden,
     isUsingLKG,
     autoHealSummary,
-  }), [compiledHTML, compileState, isGenerating, isCompiling, previewRefreshKey, project.files, isStreamingPreview, isVisualEditActive, viewportMode, repairFailed, repairErrors, compileError, isGoldenProject, isUsingLKG, autoHealSummary, toggleVisualEdit, handleFixError, handleSmartFixError, handleAIEditRequest, handleAutoFixError, handleVisualEdit, handleRetryRepair, handleDiscardChanges, handleRetryCompile, handleResetToGolden]);
+    previewSlug,
+  }), [compiledHTML, compileState, isGenerating, isCompiling, previewRefreshKey, project.files, isStreamingPreview, isVisualEditActive, viewportMode, repairFailed, repairErrors, compileError, isGoldenProject, isUsingLKG, autoHealSummary, previewSlug, toggleVisualEdit, handleFixError, handleSmartFixError, handleAIEditRequest, handleAutoFixError, handleVisualEdit, handleRetryRepair, handleDiscardChanges, handleRetryCompile, handleResetToGolden]);
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -4270,7 +4271,7 @@ export function AIAppBuilderWorkspace() {
                 </div>
               ) : undefined} />
             ) : mobileTab === 'preview' ? (
-                <BuilderPreviewPanel html={compiledHTML} compileState={compileState} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl} repairFailed={repairFailed} repairErrors={repairErrors} onRetryRepair={handleRetryRepair} onDiscardChanges={handleDiscardChanges} compileError={compileError} onRetryCompile={handleRetryCompile} isGoldenProject={isGoldenProject} onResetToGolden={handleResetToGolden} isUsingLKG={isUsingLKG} autoHealSummary={autoHealSummary}>
+                <BuilderPreviewPanel html={compiledHTML} compileState={compileState} isGenerating={isGenerating} isCompiling={isCompiling} refreshKey={previewRefreshKey} onFixError={handleFixError} onSmartFixError={handleSmartFixError} onAIEditRequest={handleAIEditRequest} isProcessingAIEdit={isGenerating} projectFiles={project.files} isStreamingPreview={isStreamingPreview} completedFileCount={completedFileCountRef.current} isVisualEditActive={isVisualEditActive} onToggleVisualEdit={() => setIsVisualEditActive(prev => !prev)} onAutoFixError={handleAutoFixError} onVisualEdit={handleVisualEdit} externalIframeRef={previewIframeRef} externalViewportMode={viewportMode} onExternalViewportChange={setViewportMode} onUrlChange={setPreviewCurrentUrl} repairFailed={repairFailed} repairErrors={repairErrors} onRetryRepair={handleRetryRepair} onDiscardChanges={handleDiscardChanges} compileError={compileError} onRetryCompile={handleRetryCompile} isGoldenProject={isGoldenProject} onResetToGolden={handleResetToGolden} isUsingLKG={isUsingLKG} autoHealSummary={autoHealSummary} previewSlug={previewSlug}>
                   <GeneratingOverlay isGenerating={isGenerating} isCompiling={isCompiling} phase={thinkingPhase} partialFilesRef={partialFilesRef} completedFileCountRef={completedFileCountRef} continuationRound={continuationRound} />
                 </BuilderPreviewPanel>
             ) : (

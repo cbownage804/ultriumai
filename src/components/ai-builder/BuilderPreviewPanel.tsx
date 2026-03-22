@@ -72,6 +72,8 @@ interface BuilderPreviewPanelProps {
   isUsingLKG?: boolean;
   /** Auto-heal summary info */
   autoHealSummary?: { attempts: number; maxAttempts: number; lastError?: string; resolved: boolean } | null;
+  /** Preview slug for cross-origin isolation (slug.apps.ultriumai.com) */
+  previewSlug?: string | null;
 }
 /**
  * Externalize ONLY risky inline <script> blocks into JS Blob URLs.
@@ -296,7 +298,7 @@ function __previewFormatConsoleArgs(argsLike) {
 `;
 }
 
-export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole = false, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey, repairFailed, repairErrors, onRetryRepair, onDiscardChanges, compileError, onRetryCompile, isGoldenProject, onResetToGolden, isUsingLKG, autoHealSummary }: BuilderPreviewPanelProps) {
+export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole = false, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey, repairFailed, repairErrors, onRetryRepair, onDiscardChanges, compileError, onRetryCompile, isGoldenProject, onResetToGolden, isUsingLKG, autoHealSummary, previewSlug }: BuilderPreviewPanelProps) {
   // ── Deferred initial render: prevent freeze from restored preview HTML blocking main thread ──
   const mountDeferredRef = useRef(true);
   const [mountDeferred, setMountDeferred] = useState(true);
@@ -627,10 +629,31 @@ window.addEventListener('message', function(e) {
   );
   const isInteractionGuardEnabled = !externalVisualEdit && !isPreviewInteractionEnabled;
   const shouldUseSrcdocPreview = !!externalVisualEdit || !!emergencyPreviewHtml;
-  const isIsolatedPreviewReady = !shouldUseSrcdocPreview && !!swReady && !!previewUrl && !!displayHtml;
-  const iframePreviewSrc = isIsolatedPreviewReady && previewUrl
-    ? `${previewUrl}?v=${swVersion || 0}`
-    : undefined;
+
+  // Cross-origin preview: use the hosted URL for true process isolation (like Lovable does).
+  // The compiled HTML is already uploaded to app_builder_live_previews and served at slug.apps.ultriumai.com.
+  // Only fall back to srcdoc for Visual Edit mode (which needs same-origin DOM access).
+  const crossOriginPreviewUrl = previewSlug && !shouldUseSrcdocPreview
+    ? `https://${previewSlug}.apps.ultriumai.com`
+    : null;
+
+  // Track a version counter to force iframe reload when compiled HTML changes
+  const crossOriginVersionRef = useRef(0);
+  useEffect(() => {
+    if (crossOriginPreviewUrl && displayHtml) {
+      crossOriginVersionRef.current = Date.now();
+    }
+  }, [crossOriginPreviewUrl, displayHtml]);
+
+  const isCrossOriginReady = !!crossOriginPreviewUrl && !!displayHtml;
+
+  // Legacy SW path: only used if no previewSlug available
+  const isIsolatedPreviewReady = !shouldUseSrcdocPreview && !crossOriginPreviewUrl && !!swReady && !!previewUrl && !!displayHtml;
+  const iframePreviewSrc = isCrossOriginReady
+    ? `${crossOriginPreviewUrl}?_t=${crossOriginVersionRef.current}`
+    : isIsolatedPreviewReady && previewUrl
+      ? `${previewUrl}?v=${swVersion || 0}`
+      : undefined;
   const iframePreviewSrcDoc = shouldUseSrcdocPreview
     ? (emergencyPreviewHtml ?? displayHtml ?? undefined)
     : undefined;
@@ -1183,13 +1206,16 @@ window.addEventListener('message', function(e) {
                 )} />
               </div>
             )}
-            {shouldUseSrcdocPreview || isIsolatedPreviewReady ? (
+            {shouldUseSrcdocPreview || isCrossOriginReady || isIsolatedPreviewReady ? (
               <iframe
                 ref={iframeRef as React.RefObject<HTMLIFrameElement>}
-                key={`iframe-${iframeKey}-${refreshKey ?? 0}-${externalVisualEdit ? 'visual-edit' : 'preview'}-${shouldUseSrcdocPreview ? 'srcdoc' : 'sw'}`}
+                key={`iframe-${iframeKey}-${refreshKey ?? 0}-${externalVisualEdit ? 'visual-edit' : 'preview'}-${isCrossOriginReady ? 'xorigin' : shouldUseSrcdocPreview ? 'srcdoc' : 'sw'}`}
                 title="App Preview"
                 {...(shouldUseSrcdocPreview ? { srcDoc: iframePreviewSrcDoc } : { src: iframePreviewSrc })}
-                sandbox={previewSandbox}
+                sandbox={isCrossOriginReady
+                  ? 'allow-scripts allow-forms allow-popups allow-modals allow-downloads'
+                  : previewSandbox
+                }
                 loading="eager"
                 className={cn(
                   "w-full h-full border-0 bg-white",
@@ -1204,7 +1230,7 @@ window.addEventListener('message', function(e) {
                   <div className="h-5 w-5 rounded-full border-2 border-white/10 border-t-cyan-400 animate-spin" />
                   <div>
                     <p className="text-sm text-white/70 font-medium">Preparing isolated preview</p>
-                    <p className="text-xs text-white/35 mt-1">Waiting for the preview worker to attach safely.</p>
+                    <p className="text-xs text-white/35 mt-1">Setting up cross-origin sandbox for safe rendering.</p>
                   </div>
                 </div>
               </div>
