@@ -629,10 +629,31 @@ window.addEventListener('message', function(e) {
   );
   const isInteractionGuardEnabled = !externalVisualEdit && !isPreviewInteractionEnabled;
   const shouldUseSrcdocPreview = !!externalVisualEdit || !!emergencyPreviewHtml;
-  const isIsolatedPreviewReady = !shouldUseSrcdocPreview && !!swReady && !!previewUrl && !!displayHtml;
-  const iframePreviewSrc = isIsolatedPreviewReady && previewUrl
-    ? `${previewUrl}?v=${swVersion || 0}`
-    : undefined;
+
+  // Cross-origin preview: use the hosted URL for true process isolation (like Lovable does).
+  // The compiled HTML is already uploaded to app_builder_live_previews and served at slug.apps.ultriumai.com.
+  // Only fall back to srcdoc for Visual Edit mode (which needs same-origin DOM access).
+  const crossOriginPreviewUrl = previewSlug && !shouldUseSrcdocPreview
+    ? `https://${previewSlug}.apps.ultriumai.com`
+    : null;
+
+  // Track a version counter to force iframe reload when compiled HTML changes
+  const crossOriginVersionRef = useRef(0);
+  useEffect(() => {
+    if (crossOriginPreviewUrl && displayHtml) {
+      crossOriginVersionRef.current = Date.now();
+    }
+  }, [crossOriginPreviewUrl, displayHtml]);
+
+  const isCrossOriginReady = !!crossOriginPreviewUrl && !!displayHtml;
+
+  // Legacy SW path: only used if no previewSlug available
+  const isIsolatedPreviewReady = !shouldUseSrcdocPreview && !crossOriginPreviewUrl && !!swReady && !!previewUrl && !!displayHtml;
+  const iframePreviewSrc = isCrossOriginReady
+    ? `${crossOriginPreviewUrl}?_t=${crossOriginVersionRef.current}`
+    : isIsolatedPreviewReady && previewUrl
+      ? `${previewUrl}?v=${swVersion || 0}`
+      : undefined;
   const iframePreviewSrcDoc = shouldUseSrcdocPreview
     ? (emergencyPreviewHtml ?? displayHtml ?? undefined)
     : undefined;
