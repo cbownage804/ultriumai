@@ -862,13 +862,46 @@ window.ENV = ${JSON.stringify(envObj)};
   (function(){
     if(window.__builderInjected) return;
     window.__builderInjected = true;
+    function __previewSerializeArg(value, depth, seen) {
+      if (value == null) return String(value);
+      var type = typeof value;
+      if (type === 'string') return value;
+      if (type === 'number' || type === 'boolean' || type === 'bigint') return String(value);
+      if (type === 'function') return '[Function ' + (value.name || 'anonymous') + ']';
+      if (type === 'symbol') return value.toString();
+      if (typeof Event !== 'undefined' && value instanceof Event) return '[Event ' + value.type + ' target=' + ((value.target && value.target.tagName) || 'unknown') + ']';
+      if (typeof Node !== 'undefined' && value instanceof Node) return '[DOM ' + value.nodeName + ']';
+      if (typeof Window !== 'undefined' && value instanceof Window) return '[Window]';
+      if (seen.has(value)) return '[Circular]';
+      if (depth >= 2) return Array.isArray(value) ? '[Array(' + value.length + ')]' : '[Object]';
+      seen.add(value);
+      try {
+        if (Array.isArray(value)) {
+          return '[' + value.slice(0, 10).map(function(item){ return __previewSerializeArg(item, depth + 1, seen); }).join(', ') + (value.length > 10 ? ', …' : '') + ']';
+        }
+        var keys = Object.keys(value).slice(0, 12);
+        var out = keys.map(function(key){ return key + ': ' + __previewSerializeArg(value[key], depth + 1, seen); }).join(', ');
+        return '{' + out + (Object.keys(value).length > 12 ? ', …' : '') + '}';
+      } catch (err) {
+        return '[Unserializable ' + ((value && value.constructor && value.constructor.name) || 'Object') + ']';
+      } finally {
+        seen.delete(value);
+      }
+    }
+    function __previewFormatConsoleArgs(argsLike) {
+      try {
+        return Array.prototype.slice.call(argsLike).map(function(arg){ return __previewSerializeArg(arg, 0, new WeakSet()); }).join(' ').slice(0, 4000);
+      } catch (err) {
+        return '[console serialization failed: ' + (err && err.message ? err.message : 'unknown') + ']';
+      }
+    }
     var origConsole = { log: console.log, warn: console.warn, error: console.error, info: console.info, debug: console.debug };
     var seenMessages = {};
     ['log','warn','error','info','debug'].forEach(function(level){
       console[level] = function(){
         origConsole[level].apply(console, arguments);
         try {
-          var msg = Array.prototype.slice.call(arguments).map(function(a){ return typeof a === 'object' ? JSON.stringify(a,null,2) : String(a); }).join(' ');
+          var msg = __previewFormatConsoleArgs(arguments);
           var key = level + ':' + msg;
           var now = Date.now();
           if (seenMessages[key] && now - seenMessages[key] < 500) return;
