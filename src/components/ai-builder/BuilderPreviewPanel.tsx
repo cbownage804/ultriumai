@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import {
   RefreshCw,
-  ArrowLeft, ArrowRight, Lock, ChevronDown,
+  ArrowLeft, ArrowRight, Lock, ChevronDown, MousePointerClick,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import previewBgNeon from '@/assets/preview-bg-neon.jpg';
@@ -338,6 +338,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
   const [isLandscape, setIsLandscape] = useState(false);
   const [customWidth, setCustomWidth] = useState(400);
   const [customHeight, setCustomHeight] = useState(700);
+  const [isPreviewInteractionEnabled, setIsPreviewInteractionEnabled] = useState(false);
   const viewportWidth = getViewportWidth(viewportMode, customWidth, isLandscape);
   const previewSandbox = externalVisualEdit
     ? 'allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads'
@@ -624,6 +625,7 @@ window.addEventListener('message', function(e) {
       ? lastGoodPreviewHtmlRef.current
       : previewDocumentHtml // fall back to whatever we have, including fallback HTML
   );
+  const isInteractionGuardEnabled = !externalVisualEdit && !isPreviewInteractionEnabled;
   const shouldUseSrcdocPreview = !!externalVisualEdit || !!emergencyPreviewHtml;
   const isIsolatedPreviewReady = !shouldUseSrcdocPreview && !!swReady && !!previewUrl && !!displayHtml;
   const iframePreviewSrc = isIsolatedPreviewReady && previewUrl
@@ -638,6 +640,10 @@ window.addEventListener('message', function(e) {
       setEmergencyPreviewHtml(null);
     }
   }, [previewDocumentHtml, isCurrentFallback]);
+
+  useEffect(() => {
+    setIsPreviewInteractionEnabled(false);
+  }, [displayHtml, externalVisualEdit]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -1117,6 +1123,20 @@ window.addEventListener('message', function(e) {
                 isLandscape={isLandscape}
                 onToggleLandscape={() => setIsLandscape(prev => !prev)}
               />
+              <button
+                type="button"
+                onClick={() => setIsPreviewInteractionEnabled(prev => !prev)}
+                className={cn(
+                  "h-7 px-2 rounded-md flex items-center gap-1.5 text-[11px] font-medium transition-all",
+                  isPreviewInteractionEnabled
+                    ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/25"
+                    : "text-amber-300/80 hover:text-amber-200 bg-amber-500/10 border border-amber-500/20"
+                )}
+                title={isPreviewInteractionEnabled ? 'Disable live preview clicks' : 'Enable live preview clicks'}
+              >
+                <MousePointerClick className="h-3 w-3" />
+                {isPreviewInteractionEnabled ? 'Interactive' : 'Safe'}
+              </button>
               {/* Visual Edit toggle */}
               <VisualEditOverlay
                 isActive={!!externalVisualEdit}
@@ -1173,6 +1193,7 @@ window.addEventListener('message', function(e) {
                 loading="eager"
                 className={cn(
                   "w-full h-full border-0 bg-white",
+                  isInteractionGuardEnabled && "pointer-events-none select-none",
                   viewportWidth > 0 && viewportWidth <= 834 && "rounded-lg"
                 )}
                 style={{ colorScheme: 'light', display: mountDeferred ? 'none' : undefined }}
@@ -1185,6 +1206,39 @@ window.addEventListener('message', function(e) {
                     <p className="text-sm text-white/70 font-medium">Preparing isolated preview</p>
                     <p className="text-xs text-white/35 mt-1">Waiting for the preview worker to attach safely.</p>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {displayHtml && isInteractionGuardEnabled && !mountDeferred && (
+              <div
+                className="absolute inset-0 z-10"
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+              >
+                <div className="absolute right-3 top-3 max-w-[260px] rounded-lg border border-amber-500/20 bg-[#0a0a10]/88 px-3 py-2 shadow-2xl backdrop-blur-sm">
+                  <p className="text-[11px] font-medium text-amber-200">Safe preview is on</p>
+                  <p className="mt-1 text-[10px] leading-relaxed text-white/50">
+                    Clicks are blocked to keep the App Builder responsive.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsPreviewInteractionEnabled(true);
+                    }}
+                    className="mt-2 inline-flex items-center gap-1 rounded-md border border-emerald-500/25 bg-emerald-500/10 px-2 py-1 text-[10px] font-medium text-emerald-300 transition-colors hover:bg-emerald-500/15"
+                  >
+                    <MousePointerClick className="h-3 w-3" />
+                    Enable clicks
+                  </button>
                 </div>
               </div>
             )}
