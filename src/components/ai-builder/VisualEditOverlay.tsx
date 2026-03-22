@@ -30,12 +30,13 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
   const aiInputRef = useRef<HTMLInputElement>(null);
   const aiImgInputRef = useRef<HTMLInputElement>(null);
   const imgReplaceInputRef = useRef<HTMLInputElement>(null);
+  const hoverOverlayRef = useRef<HTMLDivElement | null>(null);
+  const selectedOverlayRef = useRef<HTMLDivElement | null>(null);
+  const hoveredElRef = useRef<HTMLElement | null>(null);
+  const selectedElRef = useRef<HTMLElement | null>(null);
+  const hoverFrameRef = useRef<number | null>(null);
 
   const getCompactElementContext = useCallback((el: HTMLElement) => {
-    const cleanEl = el.cloneNode(false) as HTMLElement;
-    cleanEl.classList.remove('__ve-hover', '__ve-selected');
-    if (cleanEl.className === '') cleanEl.removeAttribute('class');
-
     const textNodes = Array.from(el.childNodes)
       .filter(node => node.nodeType === Node.TEXT_NODE)
       .map(node => node.textContent?.trim() || '')
@@ -96,32 +97,88 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
     const style = iframeDoc.createElement('style');
     style.id = '__visual-edit-styles__';
     style.textContent = `
-      .__ve-hover { outline: 2px dashed rgba(6, 182, 212, 0.5) !important; outline-offset: 2px; cursor: crosshair !important; }
-      .__ve-selected { outline: 2px solid rgba(6, 182, 212, 0.8) !important; outline-offset: 2px; }
+      html, body { cursor: crosshair !important; }
+      #__ve-hover-overlay, #__ve-selected-overlay {
+        position: fixed;
+        pointer-events: none;
+        z-index: 2147483646;
+        display: none;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+      #__ve-hover-overlay {
+        border: 2px dashed rgba(6, 182, 212, 0.55);
+        background: rgba(6, 182, 212, 0.08);
+      }
+      #__ve-selected-overlay {
+        border: 2px solid rgba(6, 182, 212, 0.85);
+        background: rgba(6, 182, 212, 0.12);
+      }
     `;
     iframeDoc.head.appendChild(style);
 
-    let hoveredEl: HTMLElement | null = null;
+    const hoverOverlay = iframeDoc.createElement('div');
+    hoverOverlay.id = '__ve-hover-overlay';
+    iframeDoc.body.appendChild(hoverOverlay);
+    hoverOverlayRef.current = hoverOverlay;
 
-    const onMouseOver = (e: MouseEvent) => {
-      const el = e.target as HTMLElement;
-      if (el === hoveredEl) return;
-      hoveredEl?.classList.remove('__ve-hover');
-      hoveredEl = el;
-      el.classList.add('__ve-hover');
+    const selectedOverlay = iframeDoc.createElement('div');
+    selectedOverlay.id = '__ve-selected-overlay';
+    iframeDoc.body.appendChild(selectedOverlay);
+    selectedOverlayRef.current = selectedOverlay;
+
+    const updateOverlay = (overlay: HTMLDivElement | null, el: HTMLElement | null) => {
+      if (!overlay || !el || !iframeDoc.contains(el)) {
+        if (overlay) overlay.style.display = 'none';
+        return;
+      }
+
+      const rect = el.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) {
+        overlay.style.display = 'none';
+        return;
+      }
+
+      overlay.style.display = 'block';
+      overlay.style.left = `${rect.left}px`;
+      overlay.style.top = `${rect.top}px`;
+      overlay.style.width = `${rect.width}px`;
+      overlay.style.height = `${rect.height}px`;
     };
 
-    const onMouseOut = (e: MouseEvent) => {
-      (e.target as HTMLElement).classList.remove('__ve-hover');
+    const resolveEditableTarget = (target: EventTarget | null) => {
+      const el = target instanceof HTMLElement ? target : null;
+      if (!el) return null;
+      if (el === hoverOverlay || el === selectedOverlay) return null;
+      if (el === iframeDoc.documentElement || el === iframeDoc.body) return null;
+      return el;
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      const nextEl = resolveEditableTarget(e.target);
+      if (nextEl === hoveredElRef.current) return;
+      hoveredElRef.current = nextEl;
+
+      if (hoverFrameRef.current !== null) return;
+      hoverFrameRef.current = iframe.contentWindow?.requestAnimationFrame(() => {
+        hoverFrameRef.current = null;
+        updateOverlay(hoverOverlayRef.current, hoveredElRef.current);
+      }) ?? null;
+    };
+
+    const onMouseLeave = () => {
+      hoveredElRef.current = null;
+      updateOverlay(hoverOverlayRef.current, null);
     };
 
     const onClick = (e: MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      const el = e.target as HTMLElement;
-      
-      iframeDoc.querySelectorAll('.__ve-selected').forEach(sel => sel.classList.remove('__ve-selected'));
-      el.classList.add('__ve-selected');
+      const el = resolveEditableTarget(e.target);
+      if (!el) return;
+
+      selectedElRef.current = el;
+      updateOverlay(selectedOverlayRef.current, el);
 
       const selector = buildSelector(el);
       const iframeRect = iframe.getBoundingClientRect();
@@ -149,18 +206,34 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
       setEditMode(null);
     };
 
-    iframeDoc.addEventListener('mouseover', onMouseOver, true);
-    iframeDoc.addEventListener('mouseout', onMouseOut, true);
+    const onScrollOrResize = () => {
+      updateOverlay(hoverOverlayRef.current, hoveredElRef.current);
+      updateOverlay(selectedOverlayRef.current, selectedElRef.current);
+    };
+
+    iframeDoc.addEventListener('mousemove', onMouseMove, true);
+    iframeDoc.addEventListener('mouseleave', onMouseLeave, true);
     iframeDoc.addEventListener('click', onClick, true);
+    iframe.contentWindow?.addEventListener('scroll', onScrollOrResize, true);
+    iframe.contentWindow?.addEventListener('resize', onScrollOrResize);
 
     return () => {
-      iframeDoc.removeEventListener('mouseover', onMouseOver, true);
-      iframeDoc.removeEventListener('mouseout', onMouseOut, true);
+      if (hoverFrameRef.current !== null) {
+        iframe.contentWindow?.cancelAnimationFrame(hoverFrameRef.current);
+        hoverFrameRef.current = null;
+      }
+      iframeDoc.removeEventListener('mousemove', onMouseMove, true);
+      iframeDoc.removeEventListener('mouseleave', onMouseLeave, true);
       iframeDoc.removeEventListener('click', onClick, true);
+      iframe.contentWindow?.removeEventListener('scroll', onScrollOrResize, true);
+      iframe.contentWindow?.removeEventListener('resize', onScrollOrResize);
       iframeDoc.getElementById('__visual-edit-styles__')?.remove();
-      iframeDoc.querySelectorAll('.__ve-hover, .__ve-selected').forEach(el => {
-        el.classList.remove('__ve-hover', '__ve-selected');
-      });
+      hoverOverlayRef.current?.remove();
+      selectedOverlayRef.current?.remove();
+      hoverOverlayRef.current = null;
+      selectedOverlayRef.current = null;
+      hoveredElRef.current = null;
+      selectedElRef.current = null;
     };
   }, [getCompactElementContext, isActive, iframeRef]);
 
