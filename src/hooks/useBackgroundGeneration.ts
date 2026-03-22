@@ -68,6 +68,40 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
   onStreamDeltaRef.current = onStreamDelta;
   activeJobRef.current = activeJob;
 
+  // ── Throttled state flush for streaming deltas ──
+  // During SSE streaming, setActiveJob fires on EVERY token. Each call
+  // re-renders the 5000-line workspace with 165+ effects — causing a browser freeze.
+  // Instead: accumulate in a ref and flush to state at most every 2s.
+  const pendingJobRef = useRef<BackgroundJob | null>(null);
+  const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flushActiveJob = useCallback(() => {
+    if (pendingJobRef.current) {
+      setActiveJob(pendingJobRef.current);
+      pendingJobRef.current = null;
+    }
+  }, []);
+  const throttledSetActiveJob = useCallback((updater: BackgroundJob | ((prev: BackgroundJob | null) => BackgroundJob | null)) => {
+    // For terminal states, flush immediately
+    const job = typeof updater === 'function' ? updater(activeJobRef.current) : updater;
+    if (!job) return;
+    const isTerminal = job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled';
+    if (isTerminal) {
+      if (flushTimerRef.current) { clearTimeout(flushTimerRef.current); flushTimerRef.current = null; }
+      pendingJobRef.current = null;
+      setActiveJob(job);
+      return;
+    }
+    // For streaming/progress: accumulate in ref, flush every 2s
+    pendingJobRef.current = job;
+    activeJobRef.current = job; // keep ref in sync for callbacks
+    if (!flushTimerRef.current) {
+      flushTimerRef.current = setTimeout(() => {
+        flushTimerRef.current = null;
+        flushActiveJob();
+      }, 2000);
+    }
+  }, [flushActiveJob]);
+
   // ── Pending queue for messages sent during active builds ──
   const pendingQueueRef = useRef<Array<{
     params: any;
@@ -191,13 +225,13 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
               streamedContentRef.current += data.content;
               onStreamDeltaRef.current?.(data.content, streamedContentRef.current);
               // Update active job with progressive content
-              setActiveJob(prev => prev ? {
+              throttledSetActiveJob(prev => prev ? {
                 ...prev,
                 output_content: streamedContentRef.current,
                 progress_percent: data.progress || prev.progress_percent,
               } : null);
             } else if (data.type === 'progress') {
-              setActiveJob(prev => prev ? { ...prev, progress_percent: data.progress } : null);
+              throttledSetActiveJob(prev => prev ? { ...prev, progress_percent: data.progress } : null);
             } else if (data.type === 'complete') {
               // Final status will come via Realtime/polling
             } else if (data.type === 'error') {
