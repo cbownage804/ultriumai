@@ -1206,13 +1206,16 @@ window.addEventListener('message', function(e) {
                 )} />
               </div>
             )}
-            {shouldUseSrcdocPreview || isIsolatedPreviewReady ? (
+            {shouldUseSrcdocPreview || isCrossOriginReady || isIsolatedPreviewReady ? (
               <iframe
                 ref={iframeRef as React.RefObject<HTMLIFrameElement>}
-                key={`iframe-${iframeKey}-${refreshKey ?? 0}-${externalVisualEdit ? 'visual-edit' : 'preview'}-${shouldUseSrcdocPreview ? 'srcdoc' : 'sw'}`}
+                key={`iframe-${iframeKey}-${refreshKey ?? 0}-${externalVisualEdit ? 'visual-edit' : 'preview'}-${isCrossOriginReady ? 'xorigin' : shouldUseSrcdocPreview ? 'srcdoc' : 'sw'}`}
                 title="App Preview"
                 {...(shouldUseSrcdocPreview ? { srcDoc: iframePreviewSrcDoc } : { src: iframePreviewSrc })}
-                sandbox={previewSandbox}
+                sandbox={isCrossOriginReady
+                  ? 'allow-scripts allow-forms allow-popups allow-modals allow-downloads'
+                  : previewSandbox
+                }
                 loading="eager"
                 className={cn(
                   "w-full h-full border-0 bg-white",
@@ -1227,7 +1230,7 @@ window.addEventListener('message', function(e) {
                   <div className="h-5 w-5 rounded-full border-2 border-white/10 border-t-cyan-400 animate-spin" />
                   <div>
                     <p className="text-sm text-white/70 font-medium">Preparing isolated preview</p>
-                    <p className="text-xs text-white/35 mt-1">Waiting for the preview worker to attach safely.</p>
+                    <p className="text-xs text-white/35 mt-1">Setting up cross-origin sandbox for safe rendering.</p>
                   </div>
                 </div>
               </div>
