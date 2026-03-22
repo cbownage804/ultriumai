@@ -235,6 +235,67 @@ function findRealScriptClose(html: string, start: number): number {
   return -1;
 }
 
+function buildPreviewSafeSerializationScript(): string {
+  return `
+function __previewSerializeArg(value, depth, seen) {
+  if (value == null) return String(value);
+  var type = typeof value;
+  if (type === 'string') return value;
+  if (type === 'number' || type === 'boolean' || type === 'bigint') return String(value);
+  if (type === 'function') return '[Function ' + (value.name || 'anonymous') + ']';
+  if (type === 'symbol') return value.toString();
+
+  if (typeof Event !== 'undefined' && value instanceof Event) {
+    return '[Event ' + value.type + ' target=' + ((value.target && value.target.tagName) || 'unknown') + ']';
+  }
+
+  if (typeof Node !== 'undefined' && value instanceof Node) {
+    return '[DOM ' + value.nodeName + ']';
+  }
+
+  if (typeof Window !== 'undefined' && value instanceof Window) {
+    return '[Window]';
+  }
+
+  if (seen.has(value)) return '[Circular]';
+  if (depth >= 2) {
+    if (Array.isArray(value)) return '[Array(' + value.length + ')]';
+    return '[Object]';
+  }
+
+  seen.add(value);
+
+  try {
+    if (Array.isArray(value)) {
+      return '[' + value.slice(0, 10).map(function(item) {
+        return __previewSerializeArg(item, depth + 1, seen);
+      }).join(', ') + (value.length > 10 ? ', …' : '') + ']';
+    }
+
+    var keys = Object.keys(value).slice(0, 12);
+    var out = keys.map(function(key) {
+      return key + ': ' + __previewSerializeArg(value[key], depth + 1, seen);
+    }).join(', ');
+    return '{' + out + (Object.keys(value).length > 12 ? ', …' : '') + '}';
+  } catch (err) {
+    return '[Unserializable ' + ((value && value.constructor && value.constructor.name) || 'Object') + ']';
+  } finally {
+    seen.delete(value);
+  }
+}
+
+function __previewFormatConsoleArgs(argsLike) {
+  try {
+    return Array.prototype.slice.call(argsLike).map(function(arg) {
+      return __previewSerializeArg(arg, 0, new WeakSet());
+    }).join(' ').slice(0, 4000);
+  } catch (err) {
+    return '[console serialization failed: ' + (err && err.message ? err.message : 'unknown') + ']';
+  }
+}
+`;
+}
+
 export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole = false, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey, repairFailed, repairErrors, onRetryRepair, onDiscardChanges, compileError, onRetryCompile, isGoldenProject, onResetToGolden, isUsingLKG, autoHealSummary }: BuilderPreviewPanelProps) {
   const [internalViewportMode, setInternalViewportMode] = useState<ViewportMode>('desktop');
   const viewportMode = externalViewportMode ?? internalViewportMode;
@@ -302,6 +363,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
   }, []);
 
   const normalizedHtml = html ? ensureFullDocument(html) : null;
+  const previewSafeSerializationScript = useMemo(() => buildPreviewSafeSerializationScript(), []);
 
   // Debug: log actual HTML length to diagnose blank previews
   useEffect(() => {
@@ -320,6 +382,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
       ? normalizedHtml.replace(
           '</head>',
           `<script>
+${previewSafeSerializationScript}
 // === WEBSOCKET SUPPRESSION: Block Vite HMR websockets inherited from parent origin ===
 var __wsBlockCount = 0;
 var OrigWebSocket = window.WebSocket;
@@ -400,6 +463,7 @@ window.addEventListener('message', function(e) {
       : normalizedHtml.replace(
           '</head>',
           `<script>
+${previewSafeSerializationScript}
 // === WEBSOCKET SUPPRESSION: Block Vite HMR websockets inherited from parent origin ===
 var __wsBlockCount = 0;
 var OrigWebSocket = window.WebSocket;
@@ -449,7 +513,7 @@ window.addEventListener('unhandledrejection', function(e) {
 ['log','info','warn','error'].forEach(function(level) {
   var orig = console[level];
   console[level] = function() {
-    var msg = Array.from(arguments).map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' ');
+    var msg = __previewFormatConsoleArgs(arguments);
     window.parent.postMessage({ type: '__CONSOLE_LOG__', level: level, message: msg, source: 'console.' + level, line: 0 }, '*');
     if (level === 'error' || level === 'warn') {
       window.parent.postMessage({ type: '__PREVIEW_ERROR__', message: msg, source: 'console.' + level, line: 0, isWarning: level === 'warn' }, '*');
