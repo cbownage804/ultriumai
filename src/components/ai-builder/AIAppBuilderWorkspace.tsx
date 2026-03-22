@@ -675,6 +675,8 @@ export function AIAppBuilderWorkspace() {
       });
     }
 
+    const isRepairOutput = repairInFlightRef.current && repairJobIdRef.current === job.id;
+
     // ── Truncation recovery: auto-continue when stream was cut off ──
     if (!integrity.hasEndMarker && hasFileMarkers && incompleteParsedFiles.length > 0) {
       const lastTruncatedPath = incompleteParsedFiles[incompleteParsedFiles.length - 1]?.path || 'unknown';
@@ -711,6 +713,32 @@ export function AIAppBuilderWorkspace() {
       setIsGeneratingOverride(false);
       clearRepairWatchdog();
       finalize('truncation-recovery');
+      return;
+    }
+
+    if (isRepairOutput && incompleteParsedFiles.length > 0) {
+      const lastTruncatedPath = incompleteParsedFiles[incompleteParsedFiles.length - 1]?.path || 'unknown';
+      const truncatedSummary = [
+        `Repair output was truncated before completion.`,
+        `Truncated file: ${lastTruncatedPath}`,
+        `Do not leave files partial. Re-output the full file and end with ===END===.`,
+      ].join('\n');
+
+      console.warn('[handleBgComplete] Repair response truncated — routing back into bounded repair loop', {
+        jobId: job.id,
+        truncated: incompleteParsedFiles.map(f => f.path),
+      });
+
+      repairInFlightRef.current = false;
+      repairJobIdRef.current = null;
+      awaitingRepairJobStartRef.current = false;
+      pendingValidationFixRef.current = {
+        errorSummary: truncatedSummary,
+        files: pendingFilesRef.current || project.files,
+      };
+      setRepairTrigger(t => t + 1);
+      clearRepairWatchdog();
+      finalize('repair-truncated');
       return;
     }
 

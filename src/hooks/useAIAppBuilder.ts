@@ -167,6 +167,9 @@ function classifyError(status: number, errorMsg: string, err?: Error): Classifie
 /** Detect if the user wants to generate or redesign an image/logo/icon via AI */
 export function detectImageGenerationIntent(input: string): { prompt: string; quality: 'standard' | 'high' } | null {
   const lowerInput = input.toLowerCase().trim();
+  const isRepairOrErrorContext = /\b(auto-fix|repair|compile error|compilation error|preview failed|build failed|runtime error|stack trace|diagnosis|diagnostic|truncated|continue from where you left off|validation failed)\b/.test(lowerInput);
+  if (isRepairOrErrorContext) return null;
+
   const hasImageNoun = /\b(logo|image|icon|illustration|graphic|picture|avatar|banner|mascot|badge|emblem)\b/.test(lowerInput);
   if (!hasImageNoun) return null;
 
@@ -1125,7 +1128,7 @@ export function useAIAppBuilder() {
 
     // ── Image generation intent detection ──
     // Instead of calling an edge function (risks freezing), instruct the AI to make a targeted edit.
-    const imageGenIntent = (imageDataUrls?.length) ? null : detectImageGenerationIntent(input);
+    const imageGenIntent = (imageDataUrls?.length || isAutoFix) ? null : detectImageGenerationIntent(input);
     if (imageGenIntent) {
       systemParts.push(
         `[IMAGE REQUEST — TARGETED EDIT ONLY]\nThe user wants a new ${imageGenIntent.prompt}.\n` +
