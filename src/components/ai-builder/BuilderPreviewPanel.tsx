@@ -776,6 +776,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
 
   useEffect(() => {
     const handler = (e: MessageEvent) => {
+      if (!isEventFromActivePreview(e)) return;
       if (e.data?.type === '__PREVIEW_ERROR__' || e.data?.type === '__PREVIEW_CRITICAL_ERROR__') {
         // Session guard: ignore messages from stale iframes
         const msgSession = e.data?.previewSessionId;
@@ -860,7 +861,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
       window.removeEventListener('message', handler);
       listenerAttachedRef.current = false;
     };
-  }, [onAutoFixError, isGenerating, previewDocumentHtml, crashPageHtml, detachListener, attachListener, newSessionId, injectSessionId]);
+  }, [onAutoFixError, isGenerating, previewDocumentHtml, crashPageHtml, detachListener, attachListener, newSessionId, injectSessionId, isEventFromActivePreview]);
 
   useEffect(() => {
     if (!htmlWithErrorCapture) {
