@@ -624,8 +624,9 @@ window.addEventListener('message', function(e) {
       ? lastGoodPreviewHtmlRef.current
       : previewDocumentHtml // fall back to whatever we have, including fallback HTML
   );
-  const shouldUseSrcdocPreview = !!externalVisualEdit || !swReady || !previewUrl || !!emergencyPreviewHtml;
-  const iframePreviewSrc = !shouldUseSrcdocPreview && previewUrl
+  const shouldUseSrcdocPreview = !!externalVisualEdit || !!emergencyPreviewHtml;
+  const isIsolatedPreviewReady = !shouldUseSrcdocPreview && !!swReady && !!previewUrl && !!displayHtml;
+  const iframePreviewSrc = isIsolatedPreviewReady && previewUrl
     ? `${previewUrl}?v=${swVersion || 0}`
     : undefined;
   const iframePreviewSrcDoc = shouldUseSrcdocPreview
@@ -1162,19 +1163,31 @@ window.addEventListener('message', function(e) {
                 )} />
               </div>
             )}
-            <iframe
-              ref={iframeRef as React.RefObject<HTMLIFrameElement>}
-              key={`iframe-${iframeKey}-${refreshKey ?? 0}-${externalVisualEdit ? 'visual-edit' : 'preview'}-${shouldUseSrcdocPreview ? 'srcdoc' : 'sw'}`}
-              title="App Preview"
-              {...(shouldUseSrcdocPreview ? { srcDoc: iframePreviewSrcDoc } : { src: iframePreviewSrc })}
-              sandbox={previewSandbox}
-              loading="eager"
-              className={cn(
-                "w-full h-full border-0 bg-white",
-                viewportWidth > 0 && viewportWidth <= 834 && "rounded-lg"
-              )}
-              style={{ colorScheme: 'light', display: mountDeferred ? 'none' : undefined }}
-            />
+            {shouldUseSrcdocPreview || isIsolatedPreviewReady ? (
+              <iframe
+                ref={iframeRef as React.RefObject<HTMLIFrameElement>}
+                key={`iframe-${iframeKey}-${refreshKey ?? 0}-${externalVisualEdit ? 'visual-edit' : 'preview'}-${shouldUseSrcdocPreview ? 'srcdoc' : 'sw'}`}
+                title="App Preview"
+                {...(shouldUseSrcdocPreview ? { srcDoc: iframePreviewSrcDoc } : { src: iframePreviewSrc })}
+                sandbox={previewSandbox}
+                loading="eager"
+                className={cn(
+                  "w-full h-full border-0 bg-white",
+                  viewportWidth > 0 && viewportWidth <= 834 && "rounded-lg"
+                )}
+                style={{ colorScheme: 'light', display: mountDeferred ? 'none' : undefined }}
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center bg-[#0a0a10]">
+                <div className="flex flex-col items-center gap-3 text-center px-6">
+                  <div className="h-5 w-5 rounded-full border-2 border-white/10 border-t-cyan-400 animate-spin" />
+                  <div>
+                    <p className="text-sm text-white/70 font-medium">Preparing isolated preview</p>
+                    <p className="text-xs text-white/35 mt-1">Waiting for the preview worker to attach safely.</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* LKG fallback banner — subtle, non-blocking */}
             {isUsingLKG && !isGenerating && !isCompiling && (
