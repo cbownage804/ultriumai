@@ -74,12 +74,16 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
   // Instead: accumulate in a ref and flush to state at most every 2s.
   const pendingJobRef = useRef<BackgroundJob | null>(null);
   const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const commitActiveJob = useCallback((job: BackgroundJob | null) => {
+    activeJobRef.current = job;
+    setActiveJob(job);
+  }, []);
   const flushActiveJob = useCallback(() => {
     if (pendingJobRef.current) {
-      setActiveJob(pendingJobRef.current);
+      commitActiveJob(pendingJobRef.current);
       pendingJobRef.current = null;
     }
-  }, []);
+  }, [commitActiveJob]);
   const throttledSetActiveJob = useCallback((updater: BackgroundJob | ((prev: BackgroundJob | null) => BackgroundJob | null)) => {
     // For terminal states, flush immediately
     const job = typeof updater === 'function' ? updater(activeJobRef.current) : updater;
@@ -88,7 +92,7 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
     if (isTerminal) {
       if (flushTimerRef.current) { clearTimeout(flushTimerRef.current); flushTimerRef.current = null; }
       pendingJobRef.current = null;
-      setActiveJob(job);
+      commitActiveJob(job);
       return;
     }
     // For streaming/progress: accumulate in ref, flush every 2s
@@ -100,7 +104,7 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
         flushActiveJob();
       }, 2000);
     }
-  }, [flushActiveJob]);
+  }, [commitActiveJob, flushActiveJob]);
 
   // ── Pending queue for messages sent during active builds ──
   const pendingQueueRef = useRef<Array<{
@@ -121,6 +125,11 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
       sseAbortRef.current.abort();
       sseAbortRef.current = null;
     }
+    if (flushTimerRef.current) {
+      clearTimeout(flushTimerRef.current);
+      flushTimerRef.current = null;
+    }
+    pendingJobRef.current = null;
     setIsPolling(false);
   }, []);
 
@@ -146,7 +155,12 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
 
   /** Handle a job status update */
   const handleJobUpdate = useCallback((job: BackgroundJob) => {
-    setActiveJob(job);
+    const isTerminal = job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled';
+    if (isTerminal) {
+      commitActiveJob(job);
+    } else {
+      throttledSetActiveJob(job);
+    }
 
     if (job.status === 'streaming' || job.status === 'processing') {
       onProgressRef.current?.(job);
@@ -171,7 +185,7 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
       console.info('[BG] Job cancelled:', job.id);
       processQueue();
     }
-  }, [cleanup, processQueue]);
+  }, [cleanup, commitActiveJob, processQueue, throttledSetActiveJob]);
 
   /** Start SSE stream for live token updates */
   const startSSEStream = useCallback(async (jobId: string) => {
@@ -341,7 +355,7 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
       }
 
       console.info('[BG] Job submitted:', jobId);
-      setActiveJob({ id: jobId, status: 'pending' });
+      commitActiveJob({ id: jobId, status: 'pending' });
       startWatching(jobId);
       return jobId;
     } catch (err) {
@@ -361,11 +375,11 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
         body: { action: 'cancel', jobId: id },
       });
       cleanup();
-      setActiveJob(prev => prev ? { ...prev, status: 'cancelled' } : null);
+      throttledSetActiveJob(prev => prev ? { ...prev, status: 'cancelled' } : null);
     } catch (err) {
       console.error('[BG] Cancel error:', err);
     }
-  }, [activeJob?.id, cleanup]);
+  }, [activeJob?.id, cleanup, throttledSetActiveJob]);
 
   /** Fetch build history from the server */
   const fetchBuildHistory = useCallback(async (userId: string, limit = 20) => {
@@ -426,7 +440,7 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
         }
         console.info('[BG] Found active job from previous session:', job.id);
         toast.info('Resuming your build from where it left off...', { duration: 4000 });
-        setActiveJob({ id: job.id, status: job.status as BackgroundJob['status'], progress_percent: job.progress_percent ?? undefined });
+        commitActiveJob({ id: job.id, status: job.status as BackgroundJob['status'], progress_percent: job.progress_percent ?? undefined });
         startWatching(job.id);
         return { type: 'active' as const, id: job.id };
       }
@@ -458,7 +472,7 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
           .single();
         
         if (fullJob) {
-          setActiveJob(fullJob as unknown as BackgroundJob);
+          commitActiveJob(fullJob as unknown as BackgroundJob);
           onCompleteRef.current?.(fullJob as unknown as BackgroundJob);
           return { type: 'completed' as const, id: job.id };
         }
@@ -474,10 +488,10 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
   /** Reset local watcher/runtime state for a true fresh-session start */
   const resetState = useCallback(() => {
     cleanup();
-    setActiveJob(null);
+    commitActiveJob(null);
     setBuildQueue([]);
     streamedContentRef.current = '';
-  }, [cleanup]);
+  }, [cleanup, commitActiveJob]);
 
   /** Get streamed content ref for incremental file parsing */
   const getStreamedContent = useCallback(() => streamedContentRef.current, []);
