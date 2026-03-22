@@ -470,6 +470,10 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
   const containerRef = useRef<HTMLDivElement>(null);
   const internalIframeRef = useRef<HTMLIFrameElement>(null);
   const iframeRef = externalIframeRef || internalIframeRef;
+  const isEventFromActivePreview = useCallback((event: MessageEvent) => {
+    const previewWindow = iframeRef.current?.contentWindow;
+    return !previewWindow || event.source === previewWindow;
+  }, [iframeRef]);
 
   // Gap 4: Service Worker preview — real browsing context
   // Use SW mode for normal preview so the iframe runs in an isolated browsing context.
