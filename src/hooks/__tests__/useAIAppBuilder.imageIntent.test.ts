@@ -27,4 +27,9 @@ describe('detectImageGenerationIntent', () => {
     expect(detectImageGenerationIntent('redesign the homepage')).toBeNull();
     expect(detectImageGenerationIntent('update the navbar color')).toBeNull();
   });
+
+  it('does not trigger during repair or compile-fix prompts', () => {
+    expect(detectImageGenerationIntent('Auto-fix error: Preview failed to compile because the logo component was truncated')).toBeNull();
+    expect(detectImageGenerationIntent('Repair output was truncated before completion. Re-output the full icon file and end with ===END===.')).toBeNull();
+  });
 });
