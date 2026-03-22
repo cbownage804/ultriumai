@@ -298,6 +298,147 @@ function __previewFormatConsoleArgs(argsLike) {
 `;
 }
 
+function injectIntoHead(html: string, script: string): string {
+  const headCloseIdx = html.indexOf('</head>');
+  if (headCloseIdx !== -1) {
+    return html.slice(0, headCloseIdx) + script + html.slice(headCloseIdx);
+  }
+  return script + html;
+}
+
+function buildLightweightPreviewBridgeScript(serializationScript: string): string {
+  return `<script>
+${serializationScript}
+(function(){
+  var errorWindowStart = 0;
+  var errorCount = 0;
+  var recentErrors = Object.create(null);
+
+  function postToParent(payload) {
+    try {
+      window.parent.postMessage(payload, '*');
+    } catch (err) {}
+  }
+
+  function canSendError(message) {
+    var now = Date.now();
+    if (!errorWindowStart || now - errorWindowStart > 2000) {
+      errorWindowStart = now;
+      errorCount = 0;
+      recentErrors = Object.create(null);
+    }
+
+    if (errorCount >= 12) return false;
+
+    var key = String(message || '').slice(0, 320);
+    var lastSeen = recentErrors[key] || 0;
+    if (lastSeen && now - lastSeen < 1000) return false;
+
+    recentErrors[key] = now;
+    errorCount++;
+    return true;
+  }
+
+  var __wsBlockCount = 0;
+  var OrigWebSocket = window.WebSocket;
+  if (OrigWebSocket) {
+    function WrappedWebSocket(url, protocols) {
+      var urlStr = String(url || '');
+      if (/vite|hmr|__vite|hot-update|localhost:\d{4}/i.test(urlStr)) {
+        __wsBlockCount++;
+        return {
+          readyState: 3,
+          send: function(){},
+          close: function(){},
+          addEventListener: function(){},
+          removeEventListener: function(){},
+          dispatchEvent: function(){ return false; },
+          onopen: null,
+          onclose: null,
+          onerror: null,
+          onmessage: null,
+          CONNECTING: 0,
+          OPEN: 1,
+          CLOSING: 2,
+          CLOSED: 3,
+          url: urlStr,
+          protocol: '',
+          extensions: '',
+          bufferedAmount: 0,
+          binaryType: 'blob'
+        };
+      }
+      return protocols !== undefined ? new OrigWebSocket(url, protocols) : new OrigWebSocket(url);
+    }
+
+    WrappedWebSocket.prototype = OrigWebSocket.prototype;
+    WrappedWebSocket.CONNECTING = 0;
+    WrappedWebSocket.OPEN = 1;
+    WrappedWebSocket.CLOSING = 2;
+    WrappedWebSocket.CLOSED = 3;
+    window.WebSocket = WrappedWebSocket;
+  }
+
+  window.addEventListener('error', function(e) {
+    var message = e && e.message ? e.message : 'Unknown runtime error';
+    if (!canSendError(message)) return;
+    postToParent({
+      type: '__PREVIEW_ERROR__',
+      message: message,
+      source: e && e.filename ? e.filename : '',
+      line: e && e.lineno ? e.lineno : 0,
+      col: e && e.colno ? e.colno : 0,
+    });
+  }, { passive: true });
+
+  window.addEventListener('unhandledrejection', function(e) {
+    var reason = e && e.reason;
+    var message = reason && reason.message ? reason.message : String(reason || 'Unknown promise rejection');
+    if (!canSendError(message)) return;
+    postToParent({
+      type: '__PREVIEW_ERROR__',
+      message: 'Unhandled Promise: ' + message,
+      source: '',
+      line: 0,
+      col: 0,
+    });
+  });
+
+  document.addEventListener('click', function(e) {
+    var target = e.target;
+    if (!target || !target.closest) return;
+    var anchor = target.closest('a');
+    if (!anchor) return;
+    var href = anchor.getAttribute('href');
+    if (!href) return;
+    if (href.startsWith('javascript:') || href.startsWith('blob:') || href.startsWith('data:') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
+    if (href.startsWith('#')) {
+      e.preventDefault();
+      try {
+        var hashTarget = document.querySelector(href);
+        if (hashTarget) hashTarget.scrollIntoView({ behavior: 'smooth' });
+      } catch (err) {}
+      return;
+    }
+    e.preventDefault();
+    postToParent({ type: '__PREVIEW_NAV__', href: href });
+  }, true);
+
+  document.addEventListener('submit', function(e) {
+    var form = e.target;
+    if (form && form.tagName === 'FORM' && form.getAttribute('action')) {
+      e.preventDefault();
+    }
+  }, true);
+
+  window.open = function(url) {
+    postToParent({ type: '__PREVIEW_NAV__', href: url, newTab: true });
+    return null;
+  };
+})();
+</script>`;
+}
+
 export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole = false, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey, repairFailed, repairErrors, onRetryRepair, onDiscardChanges, compileError, onRetryCompile, isGoldenProject, onResetToGolden, isUsingLKG, autoHealSummary, previewSlug }: BuilderPreviewPanelProps) {
   // ── Deferred initial render: prevent freeze from restored preview HTML blocking main thread ──
   const mountDeferredRef = useRef(true);
