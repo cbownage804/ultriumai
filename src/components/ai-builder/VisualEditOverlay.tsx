@@ -31,6 +31,36 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
   const aiImgInputRef = useRef<HTMLInputElement>(null);
   const imgReplaceInputRef = useRef<HTMLInputElement>(null);
 
+  const getCompactElementContext = useCallback((el: HTMLElement) => {
+    const cleanEl = el.cloneNode(false) as HTMLElement;
+    cleanEl.classList.remove('__ve-hover', '__ve-selected');
+    if (cleanEl.className === '') cleanEl.removeAttribute('class');
+
+    const textNodes = Array.from(el.childNodes)
+      .filter(node => node.nodeType === Node.TEXT_NODE)
+      .map(node => node.textContent?.trim() || '')
+      .filter(Boolean)
+      .join(' ')
+      .slice(0, 200);
+
+    const childTags = Array.from(el.children)
+      .slice(0, 8)
+      .map(child => child.tagName.toLowerCase())
+      .join(', ');
+
+    const attrSummary = Array.from(el.attributes)
+      .filter(attr => !attr.name.startsWith('style') && !attr.name.startsWith('data-'))
+      .slice(0, 8)
+      .map(attr => `${attr.name}="${attr.value.slice(0, 80)}"`)
+      .join(' ');
+
+    return [
+      `<${el.tagName.toLowerCase()}${attrSummary ? ` ${attrSummary}` : ''}>`,
+      textNodes ? `text: ${textNodes}` : '',
+      childTags ? `children: ${childTags}` : '',
+    ].filter(Boolean).join('\n');
+  }, []);
+
   const handleAIImageAttach = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -97,19 +127,9 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
       const iframeRect = iframe.getBoundingClientRect();
       const elRect = el.getBoundingClientRect();
 
-      // Capture element context for AI edits — strip visual edit classes
-      const cleanEl = el.cloneNode(true) as HTMLElement;
-      cleanEl.classList.remove('__ve-hover', '__ve-selected');
-      if (cleanEl.className === '') cleanEl.removeAttribute('class');
-      const outerHTML = cleanEl.outerHTML.slice(0, 500);
-      const parentClone = el.parentElement?.cloneNode(true) as HTMLElement | null;
-      if (parentClone) {
-        parentClone.querySelectorAll('.__ve-hover, .__ve-selected').forEach(c => {
-          c.classList.remove('__ve-hover', '__ve-selected');
-          if ((c as HTMLElement).className === '') c.removeAttribute('class');
-        });
-      }
-      const parentHTML = parentClone?.innerHTML.slice(0, 1000) || '';
+      // Capture compact context only — avoid cloning large DOM subtrees on click.
+      const outerHTML = getCompactElementContext(el);
+      const parentHTML = el.parentElement ? getCompactElementContext(el.parentElement) : '';
       
       setSelectedElement({
         tagName: el.tagName.toLowerCase(),
@@ -142,7 +162,7 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
         el.classList.remove('__ve-hover', '__ve-selected');
       });
     };
-  }, [isActive, iframeRef]);
+  }, [getCompactElementContext, isActive, iframeRef]);
 
   const applyEdit = useCallback(() => {
     if (!selectedElement || !editMode) return;
