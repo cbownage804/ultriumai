@@ -59,6 +59,30 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
     ].filter(Boolean).join('\n');
   }, []);
 
+  const getSafeElementText = useCallback((el: HTMLElement) => {
+    const attrText = [
+      el.getAttribute('aria-label'),
+      el.getAttribute('title'),
+      el.getAttribute('alt'),
+      el.getAttribute('placeholder'),
+    ].find((value): value is string => !!value?.trim());
+
+    if (attrText) return attrText.trim().slice(0, 120);
+
+    if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+      return (el.value || el.placeholder || '').trim().slice(0, 120);
+    }
+
+    const directText = Array.from(el.childNodes)
+      .filter((node): node is Text => node.nodeType === Node.TEXT_NODE)
+      .map((node) => node.textContent?.replace(/\s+/g, ' ').trim() || '')
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+
+    return directText.slice(0, 120);
+  }, []);
+
   const handleAIImageAttach = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -148,6 +172,8 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
       const el = resolveEditableTarget(e.target);
       if (!el) return;
 
+      const safeText = getSafeElementText(el);
+
       selectedElRef.current = el;
       updateOverlay(selectedOverlayRef.current, el);
 
@@ -161,7 +187,7 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
       
       setSelectedElement({
         tagName: el.tagName.toLowerCase(),
-        text: el.textContent?.slice(0, 50) || '',
+        text: safeText.slice(0, 50),
         selector,
         rect: new DOMRect(
           elRect.x + iframeRect.x,
@@ -172,7 +198,7 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
         outerHTML,
         parentHTML,
       });
-      setEditValue(el.textContent || '');
+      setEditValue(safeText);
       setAIPrompt('');
       setEditMode(null);
     };
@@ -194,7 +220,7 @@ export function VisualEditOverlay({ isActive, onToggle, onEditApply, onAIEditReq
       selectedOverlayRef.current = null;
       selectedElRef.current = null;
     };
-  }, [getCompactElementContext, isActive, iframeRef]);
+  }, [getCompactElementContext, getSafeElementText, isActive, iframeRef]);
 
   const applyEdit = useCallback(() => {
     if (!selectedElement || !editMode) return;
