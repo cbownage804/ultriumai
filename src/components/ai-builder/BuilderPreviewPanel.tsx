@@ -896,6 +896,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
   // Listen for navigation messages from iframe
   useEffect(() => {
     const handler = (e: MessageEvent) => {
+      if (!isEventFromActivePreview(e)) return;
       if (e.data?.type === '__NAV_CHANGE__' && e.data.url) {
         setCurrentUrl(e.data.url);
         onUrlChange?.(e.data.url);
@@ -922,7 +923,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
     };
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, [historyIndex, onUrlChange]);
+  }, [historyIndex, onUrlChange, isEventFromActivePreview]);
 
   // Extract routes from project files for the route dropdown
   const detectedRoutes = useMemo(() => {
