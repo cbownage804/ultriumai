@@ -215,11 +215,26 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
         }
       }
 
-      // Fix className="" with class="" (common non-JSX habit)
-      if (/\bclass=/i.test(content) && !content.includes('className=')) {
-        content = content.replace(/\bclass=/g, 'className=');
+      // Fix class= with className= (common non-JSX habit)
+      if (/\bclass\s*=/i.test(content)) {
+        // Replace `class=` but NOT `className=` — and not inside strings
+        const classFixed = content.replace(/\bclass(\s*=)/g, (match, eq, offset) => {
+          // Don't replace if already className
+          if (content.slice(Math.max(0, offset - 5), offset + match.length).includes('className')) return match;
+          return 'className' + eq;
+        });
+        if (classFixed !== content) {
+          content = classFixed;
+          changed = true;
+          repairs.push(`${f.path}: replaced class= with className=`);
+        }
+      }
+
+      // Fix for= with htmlFor= on labels (common non-JSX habit)
+      if (/\bfor\s*=\s*["']/.test(content) && /<label/i.test(content)) {
+        content = content.replace(/\bfor(\s*=\s*["'])/g, 'htmlFor$1');
         changed = true;
-        repairs.push(`${f.path}: replaced class= with className=`);
+        repairs.push(`${f.path}: replaced for= with htmlFor=`);
       }
 
       // ── 6b0. Remove orphaned/out-of-order </textarea> before JSX balance runs ──
