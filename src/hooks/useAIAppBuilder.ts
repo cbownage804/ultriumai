@@ -1207,7 +1207,18 @@ export function useAIAppBuilder() {
       }
     } catch { /* ignore */ }
 
-    // ── Wave 15: Inject dependency map for import-aware generation ──
+    // ── Template baseline anchor — inject structural reference for iterative edits ──
+    try {
+      const baselineRaw = localStorage.getItem(`template-baseline-${currentFiles.length > 0 ? 'default' : 'default'}`);
+      if (baselineRaw) {
+        const baseline = JSON.parse(baselineRaw);
+        if (baseline.templateName && Date.now() - baseline.timestamp < 24 * 60 * 60 * 1000) {
+          const fileList = baseline.files?.map((f: any) => f.path).join(', ') || '';
+          systemParts.push(`[TEMPLATE BASELINE — "${baseline.templateName}"]\nThis project was initialized from the "${baseline.templateName}" template.\nOriginal structure: ${fileList}\nPreserve the template's architectural patterns (routing, component hierarchy, styling approach) unless the user explicitly asks for restructuring.\n[/TEMPLATE BASELINE]`);
+        }
+      }
+    } catch { /* ignore */ }
+
     if (currentFiles.length > 1 && currentFiles.length <= 50) {
       try {
         const depImports: string[] = [];
