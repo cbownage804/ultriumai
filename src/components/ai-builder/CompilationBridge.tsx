@@ -484,12 +484,19 @@ export function CompilationBridge({
       preparedFiles = twFiles;
     }
 
+    // Tailwind class validation — warn about invalid classes before compile
+    const tailwindIssues = validateTailwindClasses(preparedFiles);
+    if (tailwindIssues.length > 0) {
+      console.info('[CompilationBridge] Tailwind class warnings:', tailwindIssues.slice(0, 10).map(i => `${i.file}:${i.line} — ${i.message}`));
+    }
+
     return {
       files: preparedFiles,
       repairs,
       stubs,
       scaffolded,
       lintIssues,
+      tailwindIssues,
     };
   }, []);
 
