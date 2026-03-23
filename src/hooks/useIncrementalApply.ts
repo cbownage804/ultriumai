@@ -1,11 +1,16 @@
 import { useCallback, useRef } from 'react';
 import type { ProjectFile } from './useProjectFileSystem';
+import { preCompileValidate } from '@/components/ai-builder/preCompileValidation';
+import { autoFixTrivialIssues } from '@/components/ai-builder/preCompileValidation';
 
 /**
  * Wave 18: Incremental Streaming Apply
  * Applies files to the preview as they complete during streaming,
  * instead of waiting for the full generation to finish.
  * Uses a debounce to batch rapid file completions into single compile triggers.
+ * 
+ * Enhanced: Per-file validation — each file is validated and auto-fixed
+ * as it streams in, rejecting bad files before they hit the compiler.
  */
 
 interface AppliedFile {
