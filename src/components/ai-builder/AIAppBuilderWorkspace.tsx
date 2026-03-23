@@ -1642,7 +1642,8 @@ export function AIAppBuilderWorkspace() {
 
         consumeAutoFixAttempt();
         autoFixInFlightRef.current = true;
-        sendMessage(healPrompt, project.files, supabaseConfig, stripeConfig, serviceKeys, undefined, selectedModel, undefined, true);
+        // Pass anti-pattern context as knowledgeCtx so the AI avoids repeating the same mistakes
+        sendMessage(healPrompt, project.files, supabaseConfig, stripeConfig, serviceKeys, undefined, selectedModel, antiPatternCtx, true);
       }
     };
 
