@@ -1166,38 +1166,6 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
               </div>
             )}
 
-            {displayHtml && isInteractionGuardEnabled && !mountDeferred && (
-              <div
-                className="absolute inset-0 z-10"
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
-              >
-                <div className="absolute right-3 top-3 max-w-[260px] rounded-lg border border-amber-500/20 bg-[#0a0a10]/88 px-3 py-2 shadow-2xl backdrop-blur-sm">
-                  <p className="text-[11px] font-medium text-amber-200">Safe preview is on</p>
-                  <p className="mt-1 text-[10px] leading-relaxed text-white/50">
-                    Clicks are blocked to keep the App Builder responsive.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setIsPreviewInteractionEnabled(true);
-                    }}
-                    className="mt-2 inline-flex items-center gap-1 rounded-md border border-emerald-500/25 bg-emerald-500/10 px-2 py-1 text-[10px] font-medium text-emerald-300 transition-colors hover:bg-emerald-500/15"
-                  >
-                    <MousePointerClick className="h-3 w-3" />
-                    Enable clicks
-                  </button>
-                </div>
-              </div>
-            )}
 
             {/* LKG fallback banner — subtle, non-blocking */}
             {isUsingLKG && !isGenerating && !isCompiling && (
