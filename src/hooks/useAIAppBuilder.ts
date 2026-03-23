@@ -1207,7 +1207,18 @@ export function useAIAppBuilder() {
       }
     } catch { /* ignore */ }
 
-    // ── Wave 15: Inject dependency map for import-aware generation ──
+    // ── Template baseline anchor — inject structural reference for iterative edits ──
+    try {
+      const baselineRaw = localStorage.getItem(`template-baseline-${currentFiles.length > 0 ? 'default' : 'default'}`);
+      if (baselineRaw) {
+        const baseline = JSON.parse(baselineRaw);
+        if (baseline.templateName && Date.now() - baseline.timestamp < 24 * 60 * 60 * 1000) {
+          const fileList = baseline.files?.map((f: any) => f.path).join(', ') || '';
+          systemParts.push(`[TEMPLATE BASELINE — "${baseline.templateName}"]\nThis project was initialized from the "${baseline.templateName}" template.\nOriginal structure: ${fileList}\nPreserve the template's architectural patterns (routing, component hierarchy, styling approach) unless the user explicitly asks for restructuring.\n[/TEMPLATE BASELINE]`);
+        }
+      }
+    } catch { /* ignore */ }
+
     if (currentFiles.length > 1 && currentFiles.length <= 50) {
       try {
         const depImports: string[] = [];
@@ -1423,6 +1434,65 @@ You are editing an EXISTING project. ONLY make the changes the user explicitly a
   useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
 - Highlight the active navigation link using the current route/hash.
 - For sticky/fixed navbars, add a subtle shadow on scroll: use a scroll event listener to toggle a shadow class.`);
+
+    // ── Golden Output Example — concrete reference pattern for error-free output ──
+    systemParts.push(`[GOLDEN OUTPUT EXAMPLE — Follow this pattern for error-free React components]
+\`\`\`tsx
+// src/components/ExampleCard.tsx
+import React, { useState, useCallback } from 'react';
+import { motion } from 'framer-motion';
+import { Heart, Share2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+
+interface ExampleCardProps {
+  title: string;
+  description: string;
+  imageUrl?: string;
+  className?: string;
+}
+
+const ExampleCard: React.FC<ExampleCardProps> = ({ title, description, imageUrl, className }) => {
+  const [liked, setLiked] = useState(false);
+
+  const handleLike = useCallback(() => {
+    setLiked(prev => !prev);
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={cn("rounded-xl border border-border bg-card p-6 shadow-sm", className)}
+    >
+      {imageUrl && (
+        <img src={imageUrl} alt={title} className="w-full h-48 object-cover rounded-lg mb-4" loading="lazy" />
+      )}
+      <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+      <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+      <div className="mt-4 flex items-center gap-2">
+        <Button variant="ghost" size="sm" onClick={handleLike}>
+          <Heart className={cn("h-4 w-4", liked && "fill-red-500 text-red-500")} />
+        </Button>
+        <Button variant="ghost" size="sm">
+          <Share2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </motion.div>
+  );
+};
+
+export default ExampleCard;
+\`\`\`
+KEY PATTERNS to follow:
+- ALL imports at top, complete and self-contained
+- TypeScript interface for props
+- Semantic design tokens (text-foreground, bg-card, border-border, text-muted-foreground)
+- cn() utility for conditional classes
+- Proper null checks (imageUrl &&)
+- useCallback for event handlers
+- loading="lazy" on images
+- Default export at bottom`);
 
     // ── Conversational response directive ──
     systemParts.push(`[CONVERSATIONAL RESPONSE — MANDATORY]

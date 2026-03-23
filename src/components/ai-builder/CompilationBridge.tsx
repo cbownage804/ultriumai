@@ -14,6 +14,7 @@ import { generateMissingImportStubs } from './generateMissingImportStubs';
 import { scaffoldTailwindConfig } from './scaffoldTailwindConfig';
 import { preCompileValidate } from './preCompileValidation';
 import { postGenerationLint } from './postGenerationLint';
+import { validateTailwindClasses } from './tailwindClassValidator';
 import { parseViteErrors, mergeErrorSources } from './parseViteErrors';
 import type { ParsedViteError } from './parseViteErrors';
 import { useCompileTelemetry, classifyFailure } from '@/hooks/useCompileTelemetry';
@@ -483,12 +484,19 @@ export function CompilationBridge({
       preparedFiles = twFiles;
     }
 
+    // Tailwind class validation — warn about invalid classes before compile
+    const tailwindIssues = validateTailwindClasses(preparedFiles);
+    if (tailwindIssues.length > 0) {
+      console.info('[CompilationBridge] Tailwind class warnings:', tailwindIssues.slice(0, 10).map(i => `${i.file}:${i.line} — ${i.message}`));
+    }
+
     return {
       files: preparedFiles,
       repairs,
       stubs,
       scaffolded,
       lintIssues,
+      tailwindIssues,
     };
   }, []);
 
