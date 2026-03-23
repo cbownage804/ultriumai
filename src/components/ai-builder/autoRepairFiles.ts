@@ -422,6 +422,118 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
       }
     }
 
+    // ── 11. Auto-add missing React hook imports ──
+    if (['ts', 'tsx', 'js', 'jsx'].includes(ext)) {
+      const hookUsageMap: Record<string, RegExp> = {
+        useState: /\buseState\b/,
+        useEffect: /\buseEffect\b/,
+        useCallback: /\buseCallback\b/,
+        useMemo: /\buseMemo\b/,
+        useRef: /\buseRef\b/,
+        useContext: /\buseContext\b/,
+        useReducer: /\buseReducer\b/,
+      };
+      const usedHooks: string[] = [];
+      for (const [hook, pattern] of Object.entries(hookUsageMap)) {
+        if (pattern.test(content)) usedHooks.push(hook);
+      }
+      if (usedHooks.length > 0) {
+        // Check if these hooks are already imported
+        const existingReactImport = content.match(/import\s+(?:React,?\s*)?\{([^}]+)\}\s+from\s+['"]react['"]/);
+        const importedHooks = existingReactImport
+          ? existingReactImport[1].split(',').map(h => h.trim())
+          : [];
+        const missingHooks = usedHooks.filter(h => !importedHooks.includes(h));
+        // Also check for standalone `import React from 'react'` without destructured hooks
+        const hasReactDefaultOnly = /import\s+React\s+from\s+['"]react['"]/.test(content) &&
+          !existingReactImport;
+
+        if (missingHooks.length > 0) {
+          if (existingReactImport) {
+            // Add missing hooks to existing import
+            const allHooks = [...new Set([...importedHooks, ...missingHooks])].sort();
+            content = content.replace(
+              /import\s+(?:React,?\s*)?\{[^}]+\}\s+from\s+['"]react['"]/,
+              `import React, { ${allHooks.join(', ')} } from 'react'`
+            );
+            changed = true;
+            repairs.push(`${f.path}: added missing hooks to React import: ${missingHooks.join(', ')}`);
+          } else if (hasReactDefaultOnly) {
+            // Upgrade `import React from 'react'` to include hooks
+            content = content.replace(
+              /import\s+React\s+from\s+['"]react['"]/,
+              `import React, { ${missingHooks.join(', ')} } from 'react'`
+            );
+            changed = true;
+            repairs.push(`${f.path}: added missing hooks to React import: ${missingHooks.join(', ')}`);
+          } else if (!content.includes("from 'react'") && !content.includes('from "react"')) {
+            // No React import at all — add one
+            content = `import React, { ${missingHooks.join(', ')} } from 'react';\n${content}`;
+            changed = true;
+            repairs.push(`${f.path}: added React import with hooks: ${missingHooks.join(', ')}`);
+          }
+        }
+      }
+    }
+
+    // ── 12. Auto-add missing react-router-dom imports ──
+    if (['ts', 'tsx', 'js', 'jsx'].includes(ext)) {
+      const routerComponents: Record<string, RegExp> = {
+        BrowserRouter: /\bBrowserRouter\b/,
+        Routes: /\bRoutes\b/,
+        Route: /\bRoute\b/,
+        Link: /\b<Link\b/,
+        NavLink: /\b<NavLink\b/,
+        useNavigate: /\buseNavigate\b/,
+        useParams: /\buseParams\b/,
+        useLocation: /\buseLocation\b/,
+        Navigate: /\b<Navigate\b/,
+        Outlet: /\b<Outlet\b/,
+      };
+      const usedRouterItems: string[] = [];
+      for (const [name, pattern] of Object.entries(routerComponents)) {
+        if (pattern.test(content)) usedRouterItems.push(name);
+      }
+      if (usedRouterItems.length > 0 && !content.includes("from 'react-router-dom'") && !content.includes('from "react-router-dom"')) {
+        content = `import { ${usedRouterItems.join(', ')} } from 'react-router-dom';\n${content}`;
+        changed = true;
+        repairs.push(`${f.path}: added missing react-router-dom import: ${usedRouterItems.join(', ')}`);
+      }
+    }
+
+    // ── 13. Auto-add missing lucide-react imports ──
+    if (['tsx', 'jsx'].includes(ext)) {
+      const lucideUsage = content.match(/<([A-Z][a-zA-Z]+)\s[^>]*(?:className|size|strokeWidth)/g);
+      if (lucideUsage && content.includes('lucide-react')) {
+        // Already has a lucide import — check for missing icons
+        const existingLucideImport = content.match(/import\s+\{([^}]+)\}\s+from\s+['"]lucide-react['"]/);
+        if (existingLucideImport) {
+          const importedIcons = existingLucideImport[1].split(',').map(s => s.trim());
+          const usedIcons = new Set<string>();
+          const iconUsagePattern = /<([A-Z][a-zA-Z]+)\s/g;
+          let iconMatch;
+          while ((iconMatch = iconUsagePattern.exec(content)) !== null) {
+            usedIcons.add(iconMatch[1]);
+          }
+          // Filter to only icons that look like lucide icons (not regular components)
+          const missingIcons = [...usedIcons].filter(icon => 
+            !importedIcons.includes(icon) && 
+            // Heuristic: lucide icons are multi-word PascalCase like ChevronRight, ArrowLeft
+            /^[A-Z][a-z]+[A-Z]/.test(icon)
+          );
+          if (missingIcons.length > 0 && missingIcons.length <= 10) {
+            const allIcons = [...new Set([...importedIcons, ...missingIcons])];
+            content = content.replace(
+              /import\s+\{[^}]+\}\s+from\s+['"]lucide-react['"]/,
+              `import { ${allIcons.join(', ')} } from 'lucide-react'`
+            );
+            changed = true;
+            repairs.push(`${f.path}: added missing lucide-react icons: ${missingIcons.join(', ')}`);
+          }
+        }
+      }
+    }
+
     if (!changed) return f;
     return { ...f, content };
   });
