@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react';
 import type { ParsedViteError } from './parseViteErrors';
+import { classifyCompileError } from './compileErrorClassifier';
 
 /**
  * useAutoHealCompile — Automatically re-prompts the AI when compilation
