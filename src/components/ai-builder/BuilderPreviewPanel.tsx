@@ -1150,14 +1150,14 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
                 )} />
               </div>
             )}
-            {shouldUseSrcdocPreview || isCrossOriginReady || isIsolatedPreviewReady ? (
+            {shouldUseSrcdocPreview || isIsolatedPreviewReady ? (
               <iframe
                 ref={iframeRef as React.RefObject<HTMLIFrameElement>}
-                key={`iframe-${iframeKey}-${refreshKey ?? 0}-${externalVisualEdit ? 'visual-edit' : 'preview'}-${isCrossOriginReady ? 'xorigin' : shouldUseSrcdocPreview ? 'srcdoc' : 'sw'}`}
+                key={`iframe-${iframeKey}-${refreshKey ?? 0}-${externalVisualEdit ? 'visual-edit' : 'preview'}-srcdoc`}
                 title="App Preview"
-                {...(shouldUseSrcdocPreview ? { srcDoc: iframePreviewSrcDoc } : { src: iframePreviewSrc })}
-                sandbox={isCrossOriginReady
-                  ? 'allow-scripts allow-forms allow-popups allow-modals allow-downloads'
+                srcDoc={iframePreviewSrcDoc}
+                sandbox={externalVisualEdit
+                  ? 'allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads'
                   : previewSandbox
                 }
                 loading="eager"
