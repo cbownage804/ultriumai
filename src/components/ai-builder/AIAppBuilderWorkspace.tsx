@@ -3225,8 +3225,8 @@ export function AIAppBuilderWorkspace() {
   const handleSelectStarterTemplate = useCallback((template: import('./AppStarterTemplates').AppStarterTemplate) => {
     pushUndo('Before template', project.files);
     // Merge template files onto the golden template to ensure all boot files exist
-    const { mergeOntoGolden } = require('./goldenTemplate');
     const mergedFiles = mergeOntoGolden(template.files);
+    setFiles(mergedFiles);
     setFiles(mergedFiles);
     sendMessage(
       `I've loaded the "${template.name}" starter template. ${template.aiContext}\n\nThe project now has these files: ${mergedFiles.map((ft: any) => ft.path).join(', ')}. Please acknowledge and wait for my next instruction on how to customize it.`,
