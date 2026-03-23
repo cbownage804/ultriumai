@@ -13,6 +13,7 @@ import { autoRepairFiles } from './autoRepairFiles';
 import { generateMissingImportStubs } from './generateMissingImportStubs';
 import { scaffoldTailwindConfig } from './scaffoldTailwindConfig';
 import { preCompileValidate } from './preCompileValidation';
+import { postGenerationLint } from './postGenerationLint';
 import { parseViteErrors, mergeErrorSources } from './parseViteErrors';
 import type { ParsedViteError } from './parseViteErrors';
 import { useCompileTelemetry, classifyFailure } from '@/hooks/useCompileTelemetry';
@@ -462,6 +463,16 @@ export function CompilationBridge({
       preparedFiles = repairedFiles;
     }
 
+    // Post-generation lint pass — catches semantic issues (missing keys, unused imports, etc.)
+    const { fixedFiles, issues: lintIssues, fixCount } = postGenerationLint(preparedFiles);
+    if (fixCount > 0) {
+      preparedFiles = fixedFiles;
+      console.info('[CompilationBridge] Post-gen lint auto-fixed', fixCount, 'issues');
+    }
+    if (lintIssues.length > 0) {
+      console.info('[CompilationBridge] Post-gen lint warnings:', lintIssues.map(i => `${i.file}: ${i.message}`));
+    }
+
     const { files: stubbedFiles, stubs } = generateMissingImportStubs(preparedFiles);
     if (stubs.length > 0) {
       preparedFiles = stubbedFiles;
@@ -477,6 +488,7 @@ export function CompilationBridge({
       repairs,
       stubs,
       scaffolded,
+      lintIssues,
     };
   }, []);
 

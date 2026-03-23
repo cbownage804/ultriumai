@@ -1174,6 +1174,22 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
                 <span className="text-[10px] text-amber-300/80 font-medium">Showing previous working version</span>
               </div>
             )}
+
+            {/* Compile error overlay on LKG preview — show compact error banner instead of full error screen */}
+            {compileState === 'error' && !isGenerating && !isCompiling && !isUsingLKG && (
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/15 border border-red-500/25 backdrop-blur-sm max-w-[90%]">
+                <div className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse shrink-0" />
+                <span className="text-[10px] text-red-300/80 font-medium truncate">
+                  {compileError?.message || 'Build failed'} — auto-fix in progress
+                </span>
+                <button
+                  onClick={onRetryCompile}
+                  className="shrink-0 px-2 py-0.5 rounded bg-red-500/20 hover:bg-red-500/30 text-[10px] text-red-300 font-medium transition-colors"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
           </div>
         ) : compileState === 'error' ? (
           <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden">
