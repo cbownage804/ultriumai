@@ -14,6 +14,7 @@ import { generateMissingImportStubs } from './generateMissingImportStubs';
 import { scaffoldTailwindConfig } from './scaffoldTailwindConfig';
 import { preCompileValidate } from './preCompileValidation';
 import { postGenerationLint } from './postGenerationLint';
+import { validateTailwindClasses } from './tailwindClassValidator';
 import { parseViteErrors, mergeErrorSources } from './parseViteErrors';
 import type { ParsedViteError } from './parseViteErrors';
 import { useCompileTelemetry, classifyFailure } from '@/hooks/useCompileTelemetry';
