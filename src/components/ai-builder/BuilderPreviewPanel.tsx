@@ -588,29 +588,16 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
       : previewDocumentHtml // fall back to whatever we have, including fallback HTML
   );
   const isInteractionGuardEnabled = !externalVisualEdit && !isPreviewInteractionEnabled;
-  const shouldUseSrcdocPreview = !!externalVisualEdit || !!emergencyPreviewHtml;
+  // Always use srcdoc for workspace preview — instant rendering, no race conditions
+  // with cross-origin upload timing. Cross-origin URLs are only for hosted/shared previews.
+  const shouldUseSrcdocPreview = true;
 
-  // Cross-origin preview: use the hosted URL for true process isolation (like Lovable does).
-  // The compiled HTML is already uploaded to app_builder_live_previews and served at slug.apps.ultriumai.com.
-  // Only fall back to srcdoc for Visual Edit mode (which needs same-origin DOM access).
-  const crossOriginPreviewUrl = previewSlug && !shouldUseSrcdocPreview
-    ? `https://${previewSlug}.apps.ultriumai.com`
-    : null;
-
-  const isCrossOriginReady = !!crossOriginPreviewUrl && !!displayHtml;
-  const crossOriginCacheBust = isCrossOriginReady
-    ? `${refreshKey ?? 0}-${iframeKey}-${displayHtml?.length ?? 0}`
-    : null;
-
-  // Legacy SW path: only used if no previewSlug available
-  const isIsolatedPreviewReady = !shouldUseSrcdocPreview && !crossOriginPreviewUrl && !!swReady && !!previewUrl && !!displayHtml;
-  const iframePreviewSrc = isCrossOriginReady
-    ? `${crossOriginPreviewUrl}?_t=${crossOriginCacheBust}`
-    : isIsolatedPreviewReady && previewUrl
-      ? `${previewUrl}?v=${swVersion || 0}`
-      : undefined;
-  const iframePreviewSrcDoc = shouldUseSrcdocPreview
-    ? (emergencyPreviewHtml ?? displayHtml ?? undefined)
+  // Cross-origin flags disabled for workspace preview (kept for reference)
+  const isCrossOriginReady = false;
+  const isIsolatedPreviewReady = false;
+  const iframePreviewSrc = undefined;
+  const iframePreviewSrcDoc = displayHtml
+    ? (emergencyPreviewHtml ?? displayHtml)
     : undefined;
 
   useEffect(() => {
