@@ -34,13 +34,25 @@ export function autoFixTrivialIssues(files: ProjectFile[]): ProjectFile[] {
       const hasReactImport = /import\s+.*\bReact\b.*from\s+['"]react['"]/.test(content);
       if (hasJSX && !hasReactImport && !content.includes('/** @jsxImportSource')) {
         content = `import React from 'react';\n${content}`;
-        return { ...file, content };
+      }
+
+      // Fix 3: class= → className= in JSX
+      if (/\bclass\s*=\s*["'{]/.test(content)) {
+        content = content.replace(/\bclass(\s*=\s*["'{])/g, 'className$1');
+      }
+
+      // Fix 4: for= → htmlFor= on labels
+      if (/\bfor\s*=\s*["']/.test(content) && /<label/i.test(content)) {
+        content = content.replace(/\bfor(\s*=\s*["'])/g, 'htmlFor$1');
       }
     }
 
-    // Fix 3: Escaped forward slashes in JSX (<\/div> → </div>)
+    // Fix 5: Escaped forward slashes in JSX (<\/div> → </div>)
     if (['tsx', 'jsx'].includes(ext) && /\\\//.test(content)) {
       content = content.replace(/\\\//g, '/');
+    }
+
+    if (content !== file.content) {
       return { ...file, content };
     }
 
