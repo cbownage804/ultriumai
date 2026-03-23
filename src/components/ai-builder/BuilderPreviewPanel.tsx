@@ -587,7 +587,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
       ? lastGoodPreviewHtmlRef.current
       : previewDocumentHtml // fall back to whatever we have, including fallback HTML
   );
-  const isInteractionGuardEnabled = !externalVisualEdit && !isPreviewInteractionEnabled;
+  const isInteractionGuardEnabled = false;
   // Always use srcdoc for workspace preview — instant rendering, no race conditions
   // with cross-origin upload timing. Cross-origin URLs are only for hosted/shared previews.
   const shouldUseSrcdocPreview = true;
