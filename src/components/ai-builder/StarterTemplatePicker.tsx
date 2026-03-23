@@ -12,6 +12,7 @@ const CATEGORIES = [
   { id: 'app', label: 'Apps' },
   { id: 'site', label: 'Sites' },
   { id: 'tool', label: 'Tools' },
+  { id: 'react', label: 'React' },
 ];
 
 export function StarterTemplatePicker({ onSelect }: StarterTemplatePickerProps) {
