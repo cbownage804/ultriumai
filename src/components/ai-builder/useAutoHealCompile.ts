@@ -87,15 +87,21 @@ export function useAutoHealCompile(config: Partial<AutoHealConfig> = {}) {
     antiPatternContext?: string,
   ): string => {
     const attempt = attemptsRef.current.length + 1;
+
+    // Classify the error for specialized fix instructions
+    const classified = classifyCompileError(errorMessage, errorDetails);
     
     const lines = [
-      `🔧 **Auto-fix (attempt ${attempt}/${mergedConfig.maxAttempts})**`,
+      `🔧 **Auto-fix (attempt ${attempt}/${mergedConfig.maxAttempts})** — ${classified.label} (confidence: ${Math.round(classified.confidence * 100)}%)`,
       ``,
       `The build failed with the following error:`,
       `\`\`\``,
       errorMessage,
       ...errorDetails.slice(0, 5).map(d => `  ${d}`),
       `\`\`\``,
+      ``,
+      `[SPECIALIZED FIX INSTRUCTIONS for ${classified.category.toUpperCase()}]`,
+      classified.specializedPrompt,
     ];
 
     // Step 1: Error locality — show ±20 line windows around error sites instead of full files
