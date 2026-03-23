@@ -1090,20 +1090,6 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
                 isLandscape={isLandscape}
                 onToggleLandscape={() => setIsLandscape(prev => !prev)}
               />
-              <button
-                type="button"
-                onClick={() => setIsPreviewInteractionEnabled(prev => !prev)}
-                className={cn(
-                  "h-7 px-2 rounded-md flex items-center gap-1.5 text-[11px] font-medium transition-all",
-                  isPreviewInteractionEnabled
-                    ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/25"
-                    : "text-amber-300/80 hover:text-amber-200 bg-amber-500/10 border border-amber-500/20"
-                )}
-                title={isPreviewInteractionEnabled ? 'Disable live preview clicks' : 'Enable live preview clicks'}
-              >
-                <MousePointerClick className="h-3 w-3" />
-                {isPreviewInteractionEnabled ? 'Interactive' : 'Safe'}
-              </button>
               {/* Visual Edit toggle */}
               <VisualEditOverlay
                 isActive={!!externalVisualEdit}
