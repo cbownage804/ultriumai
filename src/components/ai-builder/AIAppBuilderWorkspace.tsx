@@ -3229,11 +3229,18 @@ export function AIAppBuilderWorkspace() {
     const mergedFiles = mergeOntoGolden(template.files);
     setFiles(mergedFiles);
     setFiles(mergedFiles);
+
+    // Save template snapshot as an anchor — iterative edits can reference this baseline
+    try {
+      const snapshot = { templateId: template.id, templateName: template.name, files: mergedFiles.map((f: any) => ({ path: f.path, content: f.content })), timestamp: Date.now() };
+      localStorage.setItem(`template-baseline-${project.name || 'default'}`, JSON.stringify(snapshot));
+    } catch { /* quota exceeded — ignore */ }
+
     sendMessage(
       `I've loaded the "${template.name}" starter template. ${template.aiContext}\n\nThe project now has these files: ${mergedFiles.map((ft: any) => ft.path).join(', ')}. Please acknowledge and wait for my next instruction on how to customize it.`,
       mergedFiles, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel
     );
-  }, [pushUndo, project.files, setFiles, sendMessage, supabaseConfig, stripeConfig, serviceKeys, selectedModel]);
+  }, [pushUndo, project.files, setFiles, sendMessage, supabaseConfig, stripeConfig, serviceKeys, selectedModel, project.name]);
 
   const handleGenerateAuthPages = useCallback((providers: string[]) => {
     const isReact = project.files.some(f => f.path.endsWith('.tsx') || f.path.endsWith('.jsx'));
