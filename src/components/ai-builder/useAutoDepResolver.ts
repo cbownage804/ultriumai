@@ -1,5 +1,13 @@
 import { useCallback, useRef } from 'react';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
+import { DEFAULT_PACKAGES } from '@/workers/packageData';
+
+// Registry-aware lookup so well-known packages (lucide-react, recharts, etc.)
+// use their tested ?bundle/?external URLs instead of bare ?latest, which often
+// drops named exports (e.g. lucide-react Instagram icon).
+const REGISTRY_URLS: Record<string, string> = Object.fromEntries(
+  DEFAULT_PACKAGES.map(p => [p.name, p.cdnUrl]),
+);
 
 /**
  * useAutoDepResolver — Scans project files for bare npm imports and
@@ -80,11 +88,17 @@ function resolveToEsmSh(pkg: string): string {
   const parts = pkg.split('/');
   const basePkg = parts[0].startsWith('@') ? parts.slice(0, 2).join('/') : parts[0];
   const subpath = parts[0].startsWith('@') ? parts.slice(2).join('/') : parts.slice(1).join('/');
-  
+
+  // Prefer registry-pinned URLs (with ?bundle/?external as needed).
+  const registered = REGISTRY_URLS[pkg] || REGISTRY_URLS[basePkg];
+  if (registered) {
+    return subpath ? `${registered}/${subpath}` : registered;
+  }
+
   const version = KNOWN_PACKAGES[pkg] || KNOWN_PACKAGES[basePkg] || 'latest';
   const versionedPkg = `${basePkg}@${version}`;
   const fullPath = subpath ? `${versionedPkg}/${subpath}` : versionedPkg;
-  
+
   return `https://esm.sh/${fullPath}`;
 }
 
