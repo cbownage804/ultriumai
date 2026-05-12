@@ -20,6 +20,7 @@ import { useImportGraphContext } from './useImportGraphContext';
 import { useRuntimeErrorFix } from './useRuntimeErrorFix';
 import { useIncrementalApply } from './useIncrementalApply';
 import { usePostGenerationChangelog } from './usePostGenerationChangelog';
+import { SCAFFOLD_LOCK_PROMPT } from '@/lib/ai-builder/scaffoldLock';
 
 // ── Helper: Build branding context from Firecrawl branding response ──
 function buildBrandingContext(branding: any): string {
@@ -1314,6 +1315,9 @@ You are editing an EXISTING project. ONLY make the changes the user explicitly a
 - NEVER change backgrounds, gradients, or color schemes unless explicitly asked.
 - NEVER add new sections, images, or animations unless explicitly asked.${focusDirective}`);
     }
+
+    // ── Scaffold Lock: prevent AI from regenerating boot/config files ──
+    systemParts.push(SCAFFOLD_LOCK_PROMPT);
 
     // ── Step 7: Smarter EDIT vs FILE selection ──
     systemParts.push(`[EDIT vs FILE SELECTION — MANDATORY]
