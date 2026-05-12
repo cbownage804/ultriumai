@@ -136,7 +136,7 @@ export function useAutoHealCompile(config: Partial<AutoHealConfig> = {}) {
     return true;
   }, [mergedConfig]);
 
-  /** Build the auto-heal prompt for the AI, including error locality context */
+  /** Build the auto-heal prompt for the AI, including error locality + diff-only repair context */
   const buildHealPrompt = useCallback((
     errorMessage: string,
     errorDetails: string[],
@@ -147,12 +147,14 @@ export function useAutoHealCompile(config: Partial<AutoHealConfig> = {}) {
     parsedErrors?: ParsedViteError[],
     /** Anti-pattern context from error learning */
     antiPatternContext?: string,
+    /** All project files — used to compute diff-only importer context */
+    allFiles?: ProjectFile[],
   ): string => {
     const attempt = attemptsRef.current.length + 1;
 
     // Classify the error for specialized fix instructions
     const classified = classifyCompileError(errorMessage, errorDetails);
-    
+
     const lines = [
       `🔧 **Auto-fix (attempt ${attempt}/${mergedConfig.maxAttempts})** — ${classified.label} (confidence: ${Math.round(classified.confidence * 100)}%)`,
       ``,
@@ -165,6 +167,19 @@ export function useAutoHealCompile(config: Partial<AutoHealConfig> = {}) {
       `[SPECIALIZED FIX INSTRUCTIONS for ${classified.category.toUpperCase()}]`,
       classified.specializedPrompt,
     ];
+
+    // Diff-only repair context: include direct importers of broken files so the AI
+    // understands the call sites without seeing the entire project.
+    if (allFiles && parsedErrors && parsedErrors.length > 0) {
+      const ctx = buildRepairContext(parsedErrors, allFiles, 5);
+      if (ctx.importerFiles.length > 0) {
+        lines.push(``, `**Importers of broken files (read-only context — do NOT modify unless required):**`);
+        for (const imp of ctx.importerFiles) {
+          const head = imp.content.split('\n').slice(0, 60).join('\n');
+          lines.push(``, `\`\`\`tsx`, `// ${imp.path} (first 60 lines)`, head, `\`\`\``);
+        }
+      }
+    }
 
     // Step 1: Error locality — show ±20 line windows around error sites instead of full files
     if (parsedErrors && parsedErrors.length > 0 && failingFiles) {
@@ -220,10 +235,12 @@ export function useAutoHealCompile(config: Partial<AutoHealConfig> = {}) {
   }, [mergedConfig]);
 
   /** Record a heal attempt */
-  const recordAttempt = useCallback((errorMessage: string): AutoHealAttempt => {
+  const recordAttempt = useCallback((errorMessage: string, errorDetails: string[] = []): AutoHealAttempt => {
+    const classified = classifyCompileError(errorMessage, errorDetails);
     const attempt: AutoHealAttempt = {
       attemptNumber: attemptsRef.current.length + 1,
       errorMessage,
+      category: classified.category,
       timestamp: Date.now(),
       resolved: false,
     };
@@ -246,6 +263,10 @@ export function useAutoHealCompile(config: Partial<AutoHealConfig> = {}) {
     recordAttempt,
     completeHeal,
     resetHealState,
+    noteGenerationSuccess,
+    noteGenerationFailure,
+    overrideAutoPin,
+    isAutoPinned: () => autoPinnedRef.current,
     isHealing: () => isHealingRef.current,
     getAttempts: () => [...attemptsRef.current],
     attemptsRemaining: () => mergedConfig.maxAttempts - attemptsRef.current.length,
