@@ -11,6 +11,8 @@ import type { CDNPackageEntry } from '@/workers/packageData';
 import { supabase } from '@/integrations/supabase/client';
 import { hashFileSet, getCachedCompile, setCachedCompile } from '@/components/ai-builder/sandboxResponseCache';
 import { probeSandboxHealth, invalidateHealthProbe } from '@/components/ai-builder/sandboxHealth';
+import { getOrCreateSession, rotateSession } from '@/lib/ai-builder/sandboxSession';
+import { recordFailure } from '@/lib/ai-builder/failureTelemetry';
 
 export interface WorkerCompilerResult {
   html: string;
@@ -73,6 +75,8 @@ async function compileViaViteSandbox(
     stripeConfig?: { publishableKey: string } | null;
     envVars?: { key: string; value: string }[];
     userPackages?: CDNPackageEntry[];
+    projectId?: string;
+    sessionId?: string;
   },
   signal?: AbortSignal,
 ): Promise<WorkerCompilerResult> {
@@ -84,6 +88,9 @@ async function compileViaViteSandbox(
   const { data, error } = await supabase.functions.invoke('compile-vite', {
     body: {
       files: files.map(f => ({ path: f.path, content: f.content, language: f.language })),
+      // #9 — persistent sandbox session; server may keep dev-server warm per session
+      sessionId: options?.sessionId,
+      projectId: options?.projectId,
       options: options ? {
         supabaseConfig: options.supabaseConfig || undefined,
         stripeConfig: options.stripeConfig || undefined,
@@ -230,9 +237,12 @@ export function useWorkerCompiler() {
       envVars?: { key: string; value: string }[];
       userPackages?: CDNPackageEntry[];
       localOnly?: boolean;
+      projectId?: string;
     }
   ): Promise<WorkerCompilerResult> => {
     const useLocalLane = options?.localOnly === true;
+    // #9 — derive a stable per-project sandbox session id
+    const sessionId = options?.projectId ? getOrCreateSession(options.projectId) : undefined;
     const abortRef = useLocalLane ? localAbortRef : activeAbortRef;
 
     // Abort only prior work on the same lane.
@@ -277,7 +287,7 @@ export function useWorkerCompiler() {
             lane: useLocalLane ? 'local' : 'primary',
           });
           const result = await Promise.race([
-            compileViaViteSandbox(files, options, signal),
+            compileViaViteSandbox(files, { ...options, sessionId }, signal),
             new Promise<never>((_, reject) =>
               setTimeout(() => reject(new Error(`Vite sandbox timeout (${VITE_TIMEOUT_MS / 1000}s)`)), VITE_TIMEOUT_MS)
             ),
@@ -291,12 +301,26 @@ export function useWorkerCompiler() {
           }
           lastError = err instanceof Error ? err : new Error(String(err));
 
+          // #9 — rotate the persistent session if the server reports it is gone
+          if (/session[_ ]?expired|unknown[_ ]?session/i.test(lastError.message) && options?.projectId) {
+            console.warn('[Compiler] 🔁 Sandbox session expired — rotating');
+            rotateSession(options.projectId);
+            continue;
+          }
           // Only retry on transient errors
           if (attempt < MAX_TRANSIENT_RETRIES && isTransientError(lastError)) {
             console.warn(`[Compiler] ⚠️ Transient failure (attempt ${attempt + 1}):`, lastError.message);
             invalidateHealthProbe();
             continue;
           }
+          // #10 — record terminal failure
+          recordFailure({
+            projectId: options?.projectId,
+            phase: 'compile',
+            category: 'compile_failed',
+            errorMessage: lastError.message.slice(0, 500),
+            attempt,
+          });
           break;
         }
       }

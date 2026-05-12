@@ -583,6 +583,51 @@ export type Database = {
           },
         ]
       }
+      ai_builder_failures: {
+        Row: {
+          attempt: number | null
+          category: string
+          created_at: string
+          error_message: string
+          file_path: string | null
+          id: string
+          model_used: string | null
+          phase: string
+          project_id: string | null
+          prompt_version: string | null
+          resolved: boolean
+          user_id: string | null
+        }
+        Insert: {
+          attempt?: number | null
+          category: string
+          created_at?: string
+          error_message: string
+          file_path?: string | null
+          id?: string
+          model_used?: string | null
+          phase: string
+          project_id?: string | null
+          prompt_version?: string | null
+          resolved?: boolean
+          user_id?: string | null
+        }
+        Update: {
+          attempt?: number | null
+          category?: string
+          created_at?: string
+          error_message?: string
+          file_path?: string | null
+          id?: string
+          model_used?: string | null
+          phase?: string
+          project_id?: string | null
+          prompt_version?: string | null
+          resolved?: boolean
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       ai_credit_ledger: {
         Row: {
           conversation_id: string | null
