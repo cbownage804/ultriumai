@@ -68,6 +68,10 @@ export function useAutoHealCompile(config: Partial<AutoHealConfig> = {}) {
   const attemptsRef = useRef<AutoHealAttempt[]>([]);
   const isHealingRef = useRef(false);
   const lastHealTimeRef = useRef(0);
+  /** Counts consecutive failed generations across resets — for LKG auto-pin */
+  const consecutiveFailedGenerationsRef = useRef(0);
+  /** When true, auto-heal is paused until user explicitly retries */
+  const autoPinnedRef = useRef(false);
 
   /** Reset heal state — call when a new generation starts */
   const resetHealState = useCallback(() => {
@@ -76,13 +80,47 @@ export function useAutoHealCompile(config: Partial<AutoHealConfig> = {}) {
     lastHealTimeRef.current = 0;
   }, []);
 
+  /** Called when an entire generation succeeds — clears the auto-pin counter */
+  const noteGenerationSuccess = useCallback(() => {
+    consecutiveFailedGenerationsRef.current = 0;
+    autoPinnedRef.current = false;
+  }, []);
+
+  /** Called when an entire generation fails (max attempts exhausted) */
+  const noteGenerationFailure = useCallback(() => {
+    consecutiveFailedGenerationsRef.current++;
+    if (consecutiveFailedGenerationsRef.current >= mergedConfig.autoPinThreshold) {
+      autoPinnedRef.current = true;
+      console.warn(`[AutoHeal] 🔒 LKG auto-pin engaged after ${consecutiveFailedGenerationsRef.current} consecutive failed generations`);
+    }
+  }, [mergedConfig]);
+
+  /** User explicitly opted to continue past the auto-pin */
+  const overrideAutoPin = useCallback(() => {
+    autoPinnedRef.current = false;
+    consecutiveFailedGenerationsRef.current = 0;
+  }, []);
+
   /** Check if auto-heal should trigger for this error */
-  const shouldAutoHeal = useCallback((errorMessage: string): boolean => {
+  const shouldAutoHeal = useCallback((errorMessage: string, errorDetails: string[] = []): boolean => {
+    // Don't heal if LKG is auto-pinned
+    if (autoPinnedRef.current) {
+      console.info('[AutoHeal] Skipped — LKG is auto-pinned (user must explicitly retry)');
+      return false;
+    }
+
     // Don't heal if already healing
     if (isHealingRef.current) return false;
 
-    // Don't heal if max attempts reached
-    if (attemptsRef.current.length >= mergedConfig.maxAttempts) return false;
+    // Per-category retry budget: high-confidence errors get more attempts,
+    // unknown/low-confidence get capped to prevent runaway loops.
+    const classified = classifyCompileError(errorMessage, errorDetails);
+    const categoryBudget = CATEGORY_BUDGETS[classified.category] ?? mergedConfig.maxAttempts;
+    const effectiveLimit = Math.min(categoryBudget, mergedConfig.maxAttempts + 1);
+    if (attemptsRef.current.length >= effectiveLimit) {
+      console.info(`[AutoHeal] Budget exhausted for ${classified.category} (${attemptsRef.current.length}/${effectiveLimit})`);
+      return false;
+    }
 
     // Cooldown check
     if (Date.now() - lastHealTimeRef.current < mergedConfig.cooldownMs) return false;
