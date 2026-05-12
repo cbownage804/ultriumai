@@ -116,6 +116,17 @@ export function useIncrementalApply() {
       for (const f of validNewFiles) mergedMap.set(f.path, f);
       const mergedFiles = Array.from(mergedMap.values());
 
+      // Final batch guard: AST + invariant validation. If it fails, skip this
+      // intermediate apply — wait for the next chunk to bring the project back
+      // to a valid state instead of breaking the preview mid-stream.
+      const batch = safeBatchApply(existingFiles, validNewFiles);
+      if (!batch.ok) {
+        console.warn('[IncrementalApply] Batch guard rejected mid-stream apply:', batch.reason, batch.feedback);
+        // Don't advance counter — let next chunk retry
+        lastApplyCountRef.current = prevCount;
+        return;
+      }
+
       onApply(mergedFiles);
     }, debounceMs);
   }, []);
