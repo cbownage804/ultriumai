@@ -2,6 +2,7 @@ import { useCallback, useRef } from 'react';
 import type { ParsedViteError } from './parseViteErrors';
 import { classifyCompileError, type CompileErrorCategory } from './compileErrorClassifier';
 import { buildRepairContext } from './repairContextBuilder';
+import { recordFailure, recordResolution } from '@/lib/ai-builder/failureTelemetry';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 
 /**
