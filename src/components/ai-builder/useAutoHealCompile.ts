@@ -1,18 +1,24 @@
 import { useCallback, useRef } from 'react';
 import type { ParsedViteError } from './parseViteErrors';
-import { classifyCompileError } from './compileErrorClassifier';
+import { classifyCompileError, type CompileErrorCategory } from './compileErrorClassifier';
+import { buildRepairContext } from './repairContextBuilder';
+import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 
 /**
  * useAutoHealCompile — Automatically re-prompts the AI when compilation
  * fails, sending the error message + LKG diff context for self-correction.
- * 
- * Step 1 (Lovable Parity): Error locality — extracts exact file:line from
- * ParsedViteError and sends a ±20 line window instead of the full file.
+ *
+ * Enhancements:
+ * - Per-category retry budget (high-confidence errors get more attempts)
+ * - LKG auto-pin: after 2 consecutive failed generations, pin LKG and
+ *   require explicit user confirmation before next attempt
+ * - Diff-only repair: send only broken files + their direct importers
  */
 
 export interface AutoHealAttempt {
   attemptNumber: number;
   errorMessage: string;
+  category: CompileErrorCategory;
   timestamp: number;
   resolved: boolean;
 }
@@ -21,11 +27,29 @@ export interface AutoHealConfig {
   maxAttempts: number;
   /** Minimum time between heal attempts (ms) */
   cooldownMs: number;
+  /** Number of consecutive failed generations before LKG auto-pin engages */
+  autoPinThreshold: number;
 }
 
 const DEFAULT_CONFIG: AutoHealConfig = {
   maxAttempts: 3,
   cooldownMs: 2000,
+  autoPinThreshold: 2,
+};
+
+// Per-category retry budgets — high-confidence errors get more attempts,
+// low-confidence (unknown) errors get capped to avoid runaway loops.
+const CATEGORY_BUDGETS: Partial<Record<CompileErrorCategory, number>> = {
+  missing_import: 4,
+  jsx_error: 4,
+  missing_module: 4,
+  duplicate_export: 3,
+  syntax_error: 3,
+  null_access: 3,
+  hook_violation: 3,
+  type_error: 2,
+  runtime_crash: 2,
+  unknown: 1,
 };
 
 /** Extract a ±windowSize line window around a specific line number */
