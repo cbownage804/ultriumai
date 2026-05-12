@@ -2,6 +2,7 @@ import { useCallback, useRef } from 'react';
 import type { ProjectFile } from './useProjectFileSystem';
 import { preCompileValidate } from '@/components/ai-builder/preCompileValidation';
 import { autoFixTrivialIssues } from '@/components/ai-builder/preCompileValidation';
+import { safeBatchApply } from '@/lib/ai-builder/atomicBatchApply';
 
 /**
  * Wave 18: Incremental Streaming Apply
