@@ -123,6 +123,15 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
+
+    // ── Health probe short-circuit (no sandbox call) ──
+    if (body && body.__healthcheck === true) {
+      return new Response(
+        JSON.stringify({ ok: true, sandbox: !!SANDBOX_URL, ts: Date.now() }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { files, options } = body;
 
     if (!files || !Array.isArray(files) || files.length === 0) {
