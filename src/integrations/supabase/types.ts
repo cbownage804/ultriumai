@@ -35829,6 +35829,7 @@ export type Database = {
         Returns: undefined
       }
       is_admin_user: { Args: never; Returns: boolean }
+      is_comanaged_org_member: { Args: { _org_id: string }; Returns: boolean }
       is_current_user_admin: { Args: never; Returns: boolean }
       is_msp_or_mssp: { Args: { _user_id: string }; Returns: boolean }
       is_msp_user: { Args: { check_user_id: string }; Returns: boolean }
@@ -35919,6 +35920,24 @@ export type Database = {
         Returns: {
           connector_id: string
           is_valid: boolean
+          user_id: string
+        }[]
+      }
+      validate_portal_reset_token: {
+        Args: { _token_hash: string }
+        Returns: {
+          expires_at: string
+          id: string
+          portal_user_id: string
+        }[]
+      }
+      validate_vanguard_survey_token: {
+        Args: { _token: string }
+        Returns: {
+          expires_at: string
+          id: string
+          is_used: boolean
+          ticket_id: string
           user_id: string
         }[]
       }
