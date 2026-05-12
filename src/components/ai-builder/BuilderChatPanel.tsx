@@ -1676,7 +1676,7 @@ export function BuilderChatPanel({
       {/* Messages */}
       <ScrollArea className="flex-1 min-h-0 overflow-hidden" ref={scrollRef}>
         <div className="p-4 space-y-4">
-          {displayMessages.length === 0 ? (
+          {displayMessages.length === 0 && fileCount === 0 ? (
             <div className="flex flex-col items-center justify-center h-full min-h-[400px] space-y-8 relative">
               {/* Ambient glow */}
               <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[360px] h-[240px] rounded-full bg-gradient-to-br from-cyan-500/[0.06] to-violet-500/[0.04] blur-[80px] pointer-events-none" />
