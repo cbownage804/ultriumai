@@ -248,6 +248,13 @@ export function useAutoHealCompile(config: Partial<AutoHealConfig> = {}) {
     attemptsRef.current.push(attempt);
     isHealingRef.current = true;
     lastHealTimeRef.current = Date.now();
+    // Telemetry — fire-and-forget; never throws.
+    recordFailure({
+      phase: 'compile',
+      category: classified.category,
+      errorMessage: errorMessage.slice(0, 1000),
+      attempt: attempt.attemptNumber,
+    });
     return attempt;
   }, []);
 
