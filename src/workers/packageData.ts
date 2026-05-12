@@ -17,7 +17,9 @@ export interface CDNPackageEntry {
 
 /** Well-known packages with tested ESM CDN compatibility */
 export const DEFAULT_PACKAGES: CDNPackageEntry[] = [
-  { name: 'lucide-react', version: '0.462.0', cdnUrl: `${ESM_SH}/lucide-react@0.462.0?external=react`, peerDeps: ['react'] },
+  // ?bundle inlines all icon named exports so `import { Instagram, ... } from 'lucide-react'` resolves.
+  // Without bundle, esm.sh returns a facade module that omits many icon named exports under ?external.
+  { name: 'lucide-react', version: '0.462.0', cdnUrl: `${ESM_SH}/lucide-react@0.462.0?bundle&external=react`, peerDeps: ['react'] },
   { name: 'date-fns', version: '3.6.0', cdnUrl: `${ESM_SH}/date-fns@3.6.0` },
   { name: 'recharts', version: '3.1.0', cdnUrl: `${ESM_SH}/recharts@3.1.0?external=react,react-dom`, peerDeps: ['react', 'react-dom'] },
   { name: 'framer-motion', version: '12.23.0', cdnUrl: `${ESM_SH}/framer-motion@12.23.0?external=react,react-dom`, peerDeps: ['react', 'react-dom'] },
