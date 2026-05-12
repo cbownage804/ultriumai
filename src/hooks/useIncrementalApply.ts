@@ -60,32 +60,45 @@ export function useIncrementalApply() {
 
     // Debounce: wait for more files to complete before applying
     debounceTimerRef.current = setTimeout(() => {
-      const newFiles = completedFiles.slice(lastApplyCountRef.current);
-      lastApplyCountRef.current = newCount;
+      const prevCount = lastApplyCountRef.current;
+      const newFiles = completedFiles.slice(prevCount);
 
       // Per-file validation: auto-fix trivial issues before applying
       const fixedNewFiles = autoFixTrivialIssues(newFiles);
-      
-      // Validate each file — reject files with critical syntax errors
-      const validFiles: ProjectFile[] = [];
+
+      // Validate each new file — defer (don't advance counter for) ones with errors
+      const validNewFiles: ProjectFile[] = [];
       const rejectedFiles: string[] = [];
       for (const file of fixedNewFiles) {
         const issues = preCompileValidate([file]);
         const hasErrors = issues.some(i => i.severity === 'error');
         if (hasErrors) {
           rejectedFiles.push(file.path);
-          console.warn(`[IncrementalApply] Rejected "${file.path}":`, issues.filter(i => i.severity === 'error').map(i => i.message));
+          console.warn(`[IncrementalApply] Deferred "${file.path}":`, issues.filter(i => i.severity === 'error').map(i => i.message));
         } else {
-          validFiles.push(file);
+          validNewFiles.push(file);
         }
       }
-      
-      if (rejectedFiles.length > 0) {
-        console.info(`[IncrementalApply] ${rejectedFiles.length} file(s) failed per-file validation — will retry after full stream`);
+
+      // Only advance the counter if we have nothing left pending OR everything was valid.
+      // If some files were rejected, keep prevCount so they get re-tried next pass
+      // (when their content may have grown to be syntactically complete).
+      if (rejectedFiles.length === 0) {
+        lastApplyCountRef.current = newCount;
+      } else {
+        // Advance past contiguous valid prefix only
+        let advance = prevCount;
+        for (const f of fixedNewFiles) {
+          const issues = preCompileValidate([f]);
+          if (issues.some(i => i.severity === 'error')) break;
+          advance++;
+        }
+        lastApplyCountRef.current = advance;
+        console.info(`[IncrementalApply] ${rejectedFiles.length} file(s) deferred — will retry on next stream chunk`);
       }
 
-      // Track what we applied (only valid files)
-      for (const f of validFiles) {
+      // Track applied
+      for (const f of validNewFiles) {
         appliedFilesRef.current.push({
           path: f.path,
           appliedAt: Date.now(),
@@ -93,12 +106,13 @@ export function useIncrementalApply() {
         });
       }
 
-      // Merge: valid streaming files override existing ones
+      if (validNewFiles.length === 0) return;
+
+      // Merge: existing files + all previously-applied valid files + new valid files
       const mergedMap = new Map<string, ProjectFile>();
       for (const f of existingFiles) mergedMap.set(f.path, f);
-      // Apply all completed files that passed validation
-      for (const f of completedFiles.slice(0, lastApplyCountRef.current - newFiles.length)) mergedMap.set(f.path, f);
-      for (const f of validFiles) mergedMap.set(f.path, f);
+      for (const f of completedFiles.slice(0, prevCount)) mergedMap.set(f.path, f);
+      for (const f of validNewFiles) mergedMap.set(f.path, f);
       const mergedFiles = Array.from(mergedMap.values());
 
       onApply(mergedFiles);
