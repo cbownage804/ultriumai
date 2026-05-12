@@ -1316,6 +1316,9 @@ You are editing an EXISTING project. ONLY make the changes the user explicitly a
 - NEVER add new sections, images, or animations unless explicitly asked.${focusDirective}`);
     }
 
+    // ── Scaffold Lock: prevent AI from regenerating boot/config files ──
+    systemParts.push(SCAFFOLD_LOCK_PROMPT);
+
     // ── Step 7: Smarter EDIT vs FILE selection ──
     systemParts.push(`[EDIT vs FILE SELECTION — MANDATORY]
 - For changes affecting LESS THAN 20% of a file, use ===EDIT: path=== with unified diff hunks instead of ===FILE: path=== full rewrites.
