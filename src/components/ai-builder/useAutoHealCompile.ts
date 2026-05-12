@@ -1,18 +1,24 @@
 import { useCallback, useRef } from 'react';
 import type { ParsedViteError } from './parseViteErrors';
-import { classifyCompileError } from './compileErrorClassifier';
+import { classifyCompileError, type CompileErrorCategory } from './compileErrorClassifier';
+import { buildRepairContext } from './repairContextBuilder';
+import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 
 /**
  * useAutoHealCompile — Automatically re-prompts the AI when compilation
  * fails, sending the error message + LKG diff context for self-correction.
- * 
- * Step 1 (Lovable Parity): Error locality — extracts exact file:line from
- * ParsedViteError and sends a ±20 line window instead of the full file.
+ *
+ * Enhancements:
+ * - Per-category retry budget (high-confidence errors get more attempts)
+ * - LKG auto-pin: after 2 consecutive failed generations, pin LKG and
+ *   require explicit user confirmation before next attempt
+ * - Diff-only repair: send only broken files + their direct importers
  */
 
 export interface AutoHealAttempt {
   attemptNumber: number;
   errorMessage: string;
+  category: CompileErrorCategory;
   timestamp: number;
   resolved: boolean;
 }
@@ -21,11 +27,29 @@ export interface AutoHealConfig {
   maxAttempts: number;
   /** Minimum time between heal attempts (ms) */
   cooldownMs: number;
+  /** Number of consecutive failed generations before LKG auto-pin engages */
+  autoPinThreshold: number;
 }
 
 const DEFAULT_CONFIG: AutoHealConfig = {
   maxAttempts: 3,
   cooldownMs: 2000,
+  autoPinThreshold: 2,
+};
+
+// Per-category retry budgets — high-confidence errors get more attempts,
+// low-confidence (unknown) errors get capped to avoid runaway loops.
+const CATEGORY_BUDGETS: Partial<Record<CompileErrorCategory, number>> = {
+  missing_import: 4,
+  jsx_error: 4,
+  missing_module: 4,
+  duplicate_export: 3,
+  syntax_error: 3,
+  null_access: 3,
+  hook_violation: 3,
+  type_error: 2,
+  runtime_crash: 2,
+  unknown: 1,
 };
 
 /** Extract a ±windowSize line window around a specific line number */
@@ -44,6 +68,10 @@ export function useAutoHealCompile(config: Partial<AutoHealConfig> = {}) {
   const attemptsRef = useRef<AutoHealAttempt[]>([]);
   const isHealingRef = useRef(false);
   const lastHealTimeRef = useRef(0);
+  /** Counts consecutive failed generations across resets — for LKG auto-pin */
+  const consecutiveFailedGenerationsRef = useRef(0);
+  /** When true, auto-heal is paused until user explicitly retries */
+  const autoPinnedRef = useRef(false);
 
   /** Reset heal state — call when a new generation starts */
   const resetHealState = useCallback(() => {
@@ -52,13 +80,47 @@ export function useAutoHealCompile(config: Partial<AutoHealConfig> = {}) {
     lastHealTimeRef.current = 0;
   }, []);
 
+  /** Called when an entire generation succeeds — clears the auto-pin counter */
+  const noteGenerationSuccess = useCallback(() => {
+    consecutiveFailedGenerationsRef.current = 0;
+    autoPinnedRef.current = false;
+  }, []);
+
+  /** Called when an entire generation fails (max attempts exhausted) */
+  const noteGenerationFailure = useCallback(() => {
+    consecutiveFailedGenerationsRef.current++;
+    if (consecutiveFailedGenerationsRef.current >= mergedConfig.autoPinThreshold) {
+      autoPinnedRef.current = true;
+      console.warn(`[AutoHeal] 🔒 LKG auto-pin engaged after ${consecutiveFailedGenerationsRef.current} consecutive failed generations`);
+    }
+  }, [mergedConfig]);
+
+  /** User explicitly opted to continue past the auto-pin */
+  const overrideAutoPin = useCallback(() => {
+    autoPinnedRef.current = false;
+    consecutiveFailedGenerationsRef.current = 0;
+  }, []);
+
   /** Check if auto-heal should trigger for this error */
-  const shouldAutoHeal = useCallback((errorMessage: string): boolean => {
+  const shouldAutoHeal = useCallback((errorMessage: string, errorDetails: string[] = []): boolean => {
+    // Don't heal if LKG is auto-pinned
+    if (autoPinnedRef.current) {
+      console.info('[AutoHeal] Skipped — LKG is auto-pinned (user must explicitly retry)');
+      return false;
+    }
+
     // Don't heal if already healing
     if (isHealingRef.current) return false;
 
-    // Don't heal if max attempts reached
-    if (attemptsRef.current.length >= mergedConfig.maxAttempts) return false;
+    // Per-category retry budget: high-confidence errors get more attempts,
+    // unknown/low-confidence get capped to prevent runaway loops.
+    const classified = classifyCompileError(errorMessage, errorDetails);
+    const categoryBudget = CATEGORY_BUDGETS[classified.category] ?? mergedConfig.maxAttempts;
+    const effectiveLimit = Math.min(categoryBudget, mergedConfig.maxAttempts + 1);
+    if (attemptsRef.current.length >= effectiveLimit) {
+      console.info(`[AutoHeal] Budget exhausted for ${classified.category} (${attemptsRef.current.length}/${effectiveLimit})`);
+      return false;
+    }
 
     // Cooldown check
     if (Date.now() - lastHealTimeRef.current < mergedConfig.cooldownMs) return false;
@@ -74,7 +136,7 @@ export function useAutoHealCompile(config: Partial<AutoHealConfig> = {}) {
     return true;
   }, [mergedConfig]);
 
-  /** Build the auto-heal prompt for the AI, including error locality context */
+  /** Build the auto-heal prompt for the AI, including error locality + diff-only repair context */
   const buildHealPrompt = useCallback((
     errorMessage: string,
     errorDetails: string[],
@@ -85,12 +147,14 @@ export function useAutoHealCompile(config: Partial<AutoHealConfig> = {}) {
     parsedErrors?: ParsedViteError[],
     /** Anti-pattern context from error learning */
     antiPatternContext?: string,
+    /** All project files — used to compute diff-only importer context */
+    allFiles?: ProjectFile[],
   ): string => {
     const attempt = attemptsRef.current.length + 1;
 
     // Classify the error for specialized fix instructions
     const classified = classifyCompileError(errorMessage, errorDetails);
-    
+
     const lines = [
       `🔧 **Auto-fix (attempt ${attempt}/${mergedConfig.maxAttempts})** — ${classified.label} (confidence: ${Math.round(classified.confidence * 100)}%)`,
       ``,
@@ -103,6 +167,19 @@ export function useAutoHealCompile(config: Partial<AutoHealConfig> = {}) {
       `[SPECIALIZED FIX INSTRUCTIONS for ${classified.category.toUpperCase()}]`,
       classified.specializedPrompt,
     ];
+
+    // Diff-only repair context: include direct importers of broken files so the AI
+    // understands the call sites without seeing the entire project.
+    if (allFiles && parsedErrors && parsedErrors.length > 0) {
+      const ctx = buildRepairContext(parsedErrors, allFiles, 5);
+      if (ctx.importerFiles.length > 0) {
+        lines.push(``, `**Importers of broken files (read-only context — do NOT modify unless required):**`);
+        for (const imp of ctx.importerFiles) {
+          const head = imp.content.split('\n').slice(0, 60).join('\n');
+          lines.push(``, `\`\`\`tsx`, `// ${imp.path} (first 60 lines)`, head, `\`\`\``);
+        }
+      }
+    }
 
     // Step 1: Error locality — show ±20 line windows around error sites instead of full files
     if (parsedErrors && parsedErrors.length > 0 && failingFiles) {
@@ -158,10 +235,12 @@ export function useAutoHealCompile(config: Partial<AutoHealConfig> = {}) {
   }, [mergedConfig]);
 
   /** Record a heal attempt */
-  const recordAttempt = useCallback((errorMessage: string): AutoHealAttempt => {
+  const recordAttempt = useCallback((errorMessage: string, errorDetails: string[] = []): AutoHealAttempt => {
+    const classified = classifyCompileError(errorMessage, errorDetails);
     const attempt: AutoHealAttempt = {
       attemptNumber: attemptsRef.current.length + 1,
       errorMessage,
+      category: classified.category,
       timestamp: Date.now(),
       resolved: false,
     };
@@ -184,6 +263,10 @@ export function useAutoHealCompile(config: Partial<AutoHealConfig> = {}) {
     recordAttempt,
     completeHeal,
     resetHealState,
+    noteGenerationSuccess,
+    noteGenerationFailure,
+    overrideAutoPin,
+    isAutoPinned: () => autoPinnedRef.current,
     isHealing: () => isHealingRef.current,
     getAttempts: () => [...attemptsRef.current],
     attemptsRemaining: () => mergedConfig.maxAttempts - attemptsRef.current.length,

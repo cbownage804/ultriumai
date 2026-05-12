@@ -9,6 +9,8 @@ import { useCallback, useRef } from 'react';
 import type { ProjectFile } from './useProjectFileSystem';
 import type { CDNPackageEntry } from '@/workers/packageData';
 import { supabase } from '@/integrations/supabase/client';
+import { hashFileSet, getCachedCompile, setCachedCompile } from '@/components/ai-builder/sandboxResponseCache';
+import { probeSandboxHealth, invalidateHealthProbe } from '@/components/ai-builder/sandboxHealth';
 
 export interface WorkerCompilerResult {
   html: string;
@@ -242,6 +244,13 @@ export function useWorkerCompiler() {
     abortRef.current = ac;
     const { signal } = ac;
 
+    // ── Sandbox response cache: skip round-trip if same file set was just compiled ──
+    const cacheKey = hashFileSet(files);
+    const cached = getCachedCompile(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     let lastError: Error | null = null;
 
     try {
@@ -252,6 +261,14 @@ export function useWorkerCompiler() {
             // Brief backoff before retry
             await new Promise(r => setTimeout(r, 1000 * attempt));
             if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
+          }
+
+          // ── Pre-flight health probe (cached 5s) — skip if known degraded ──
+          if (attempt === 0) {
+            const health = await probeSandboxHealth();
+            if (!health.healthy) {
+              console.warn('[Compiler] ⚠️ Sandbox unhealthy — will still attempt:', health.reason);
+            }
           }
 
           console.info('[Compiler] ⏱ Compiling via Vite Sandbox', {
@@ -266,6 +283,7 @@ export function useWorkerCompiler() {
             ),
           ]);
           console.info('[Compiler] ✅ Vite Sandbox compiled:', result.html?.length, 'chars');
+          setCachedCompile(cacheKey, result);
           return result;
         } catch (err: any) {
           if (signal.aborted && ac !== abortRef.current) {
@@ -276,6 +294,7 @@ export function useWorkerCompiler() {
           // Only retry on transient errors
           if (attempt < MAX_TRANSIENT_RETRIES && isTransientError(lastError)) {
             console.warn(`[Compiler] ⚠️ Transient failure (attempt ${attempt + 1}):`, lastError.message);
+            invalidateHealthProbe();
             continue;
           }
           break;
