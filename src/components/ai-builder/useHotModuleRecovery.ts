@@ -1,10 +1,15 @@
 import { useCallback, useRef } from 'react';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import type { BuildLogEntry } from './BuildLogPanel';
+import { hasUserGeneratedFiles } from './goldenTemplate';
 
 /**
  * Hot Module Recovery: When the preview iframe crashes (unresponsive or white-screen),
  * automatically roll back to the last known-good snapshot.
+ *
+ * Safety rule: we ONLY snapshot / restore states that contain user-generated content.
+ * Rolling back to the empty golden scaffold would silently destroy the user's work
+ * (e.g. wipe a generated barbershop site back to "Welcome to your app").
  */
 export function useHotModuleRecovery(
   addBuildLogEntry: (type: BuildLogEntry['type'], message: string) => void,
@@ -15,7 +20,8 @@ export function useHotModuleRecovery(
 
   /** Mark the current files as "known good" (call after a successful preview render). */
   const markAsGood = useCallback((files: ProjectFile[]) => {
-    if (files.length > 0) {
+    // Refuse to snapshot the empty golden welcome — restoring it would wipe user work.
+    if (files.length > 0 && hasUserGeneratedFiles(files)) {
       lastGoodSnapshot.current = files.map(f => ({ ...f }));
       crashCount.current = 0;
     }
@@ -26,7 +32,11 @@ export function useHotModuleRecovery(
     crashCount.current += 1;
     addBuildLogEntry('error', `🔥 Preview crash #${crashCount.current}: ${errorMessage.slice(0, 120)}`);
 
-    if (crashCount.current >= MAX_CRASHES_BEFORE_ROLLBACK && lastGoodSnapshot.current) {
+    if (
+      crashCount.current >= MAX_CRASHES_BEFORE_ROLLBACK &&
+      lastGoodSnapshot.current &&
+      hasUserGeneratedFiles(lastGoodSnapshot.current)
+    ) {
       addBuildLogEntry('info', `🔄 Auto-rolling back to last working snapshot (${lastGoodSnapshot.current.length} files)`);
       crashCount.current = 0;
       return lastGoodSnapshot.current;
