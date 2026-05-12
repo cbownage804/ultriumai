@@ -9,6 +9,8 @@ import { useCallback, useRef } from 'react';
 import type { ProjectFile } from './useProjectFileSystem';
 import type { CDNPackageEntry } from '@/workers/packageData';
 import { supabase } from '@/integrations/supabase/client';
+import { hashFileSet, getCachedCompile, setCachedCompile } from '@/components/ai-builder/sandboxResponseCache';
+import { probeSandboxHealth, invalidateHealthProbe } from '@/components/ai-builder/sandboxHealth';
 
 export interface WorkerCompilerResult {
   html: string;
