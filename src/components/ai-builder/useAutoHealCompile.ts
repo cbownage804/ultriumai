@@ -2,6 +2,7 @@ import { useCallback, useRef } from 'react';
 import type { ParsedViteError } from './parseViteErrors';
 import { classifyCompileError, type CompileErrorCategory } from './compileErrorClassifier';
 import { buildRepairContext } from './repairContextBuilder';
+import { recordFailure, recordResolution } from '@/lib/ai-builder/failureTelemetry';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 
 /**
@@ -247,6 +248,13 @@ export function useAutoHealCompile(config: Partial<AutoHealConfig> = {}) {
     attemptsRef.current.push(attempt);
     isHealingRef.current = true;
     lastHealTimeRef.current = Date.now();
+    // Telemetry — fire-and-forget; never throws.
+    recordFailure({
+      phase: 'compile',
+      category: classified.category,
+      errorMessage: errorMessage.slice(0, 1000),
+      attempt: attempt.attemptNumber,
+    });
     return attempt;
   }, []);
 
@@ -254,7 +262,17 @@ export function useAutoHealCompile(config: Partial<AutoHealConfig> = {}) {
   const completeHeal = useCallback((resolved: boolean) => {
     isHealingRef.current = false;
     const last = attemptsRef.current[attemptsRef.current.length - 1];
-    if (last) last.resolved = resolved;
+    if (last) {
+      last.resolved = resolved;
+      if (resolved) {
+        recordResolution({
+          phase: 'repair',
+          category: last.category,
+          errorMessage: last.errorMessage.slice(0, 1000),
+          attempt: last.attemptNumber,
+        });
+      }
+    }
   }, []);
 
   return {
