@@ -20,6 +20,7 @@ import { useImportGraphContext } from './useImportGraphContext';
 import { useRuntimeErrorFix } from './useRuntimeErrorFix';
 import { useIncrementalApply } from './useIncrementalApply';
 import { usePostGenerationChangelog } from './usePostGenerationChangelog';
+import { SCAFFOLD_LOCK_PROMPT } from '@/lib/ai-builder/scaffoldLock';
 
 // ── Helper: Build branding context from Firecrawl branding response ──
 function buildBrandingContext(branding: any): string {
