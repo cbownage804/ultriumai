@@ -1209,13 +1209,21 @@ export function useAIAppBuilder() {
 
     // ── Template baseline anchor — inject structural reference for iterative edits ──
     try {
-      const baselineRaw = localStorage.getItem(`template-baseline-${currentFiles.length > 0 ? 'default' : 'default'}`);
-      if (baselineRaw) {
-        const baseline = JSON.parse(baselineRaw);
-        if (baseline.templateName && Date.now() - baseline.timestamp < 24 * 60 * 60 * 1000) {
-          const fileList = baseline.files?.map((f: any) => f.path).join(', ') || '';
-          systemParts.push(`[TEMPLATE BASELINE — "${baseline.templateName}"]\nThis project was initialized from the "${baseline.templateName}" template.\nOriginal structure: ${fileList}\nPreserve the template's architectural patterns (routing, component hierarchy, styling approach) unless the user explicitly asks for restructuring.\n[/TEMPLATE BASELINE]`);
-        }
+      // Find the most recent template-baseline-* entry (key includes project name)
+      let latest: { templateName: string; timestamp: number; files?: Array<{ path: string }> } | null = null;
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key || !key.startsWith('template-baseline-')) continue;
+        try {
+          const parsed = JSON.parse(localStorage.getItem(key) || '');
+          if (parsed?.templateName && typeof parsed.timestamp === 'number') {
+            if (!latest || parsed.timestamp > latest.timestamp) latest = parsed;
+          }
+        } catch { /* ignore */ }
+      }
+      if (latest && Date.now() - latest.timestamp < 24 * 60 * 60 * 1000) {
+        const fileList = latest.files?.map(f => f.path).join(', ') || '';
+        systemParts.push(`[TEMPLATE BASELINE — "${latest.templateName}"]\nThis project was initialized from the "${latest.templateName}" template.\nOriginal structure: ${fileList}\nPreserve the template's architectural patterns (routing, component hierarchy, styling approach) unless the user explicitly asks for restructuring.\n[/TEMPLATE BASELINE]`);
       }
     } catch { /* ignore */ }
 
