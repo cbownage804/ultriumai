@@ -172,6 +172,11 @@ export function useProjectPersistence() {
         });
         return currentProjectId;
       } else {
+        // Guard: never auto-create a new project row when there is no real user content.
+        // Prevents stray "Untitled Project" rows from spawning on each session/rollback.
+        if (!hasUserGeneratedFiles(files)) {
+          return null;
+        }
         const { data, error } = await supabase
           .from('builder_projects')
           .insert(projectData)
