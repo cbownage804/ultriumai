@@ -216,8 +216,8 @@ export function validateTailwindClasses(files: ProjectFile[]): TailwindIssue[] {
           for (const cls of classes) {
             // Skip template literal expressions
             if (cls.includes('${') || cls === '$') continue;
-            // Skip conditional classes
-            if (cls.includes('?') || cls.includes(':') && !cls.includes(':')) continue;
+            // Skip conditional/ternary fragments
+            if (cls.includes('?')) continue;
 
             const issue = validateClass(cls);
             if (issue) {
