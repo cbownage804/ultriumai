@@ -1,5 +1,13 @@
 import { useCallback, useRef } from 'react';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
+import { DEFAULT_PACKAGES } from '@/workers/packageData';
+
+// Registry-aware lookup so well-known packages (lucide-react, recharts, etc.)
+// use their tested ?bundle/?external URLs instead of bare ?latest, which often
+// drops named exports (e.g. lucide-react Instagram icon).
+const REGISTRY_URLS: Record<string, string> = Object.fromEntries(
+  DEFAULT_PACKAGES.map(p => [p.name, p.cdnUrl]),
+);
 
 /**
  * useAutoDepResolver — Scans project files for bare npm imports and
