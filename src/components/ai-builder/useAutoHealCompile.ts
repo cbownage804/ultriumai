@@ -262,7 +262,17 @@ export function useAutoHealCompile(config: Partial<AutoHealConfig> = {}) {
   const completeHeal = useCallback((resolved: boolean) => {
     isHealingRef.current = false;
     const last = attemptsRef.current[attemptsRef.current.length - 1];
-    if (last) last.resolved = resolved;
+    if (last) {
+      last.resolved = resolved;
+      if (resolved) {
+        recordResolution({
+          phase: 'repair',
+          category: last.category,
+          errorMessage: last.errorMessage.slice(0, 1000),
+          attempt: last.attemptNumber,
+        });
+      }
+    }
   }, []);
 
   return {
