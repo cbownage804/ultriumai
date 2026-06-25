@@ -22,7 +22,10 @@ export interface WorkerCompilerResult {
   errorMessage?: string;
 }
 
-const VITE_TIMEOUT_MS = 25_000; // Single path — generous but bounded
+// Keep this above the Edge Function's worst-case sandbox path (30s + retry/backoff).
+// The old 25s budget could abort a healthy build while the sandbox was still working,
+// which surfaced in-browser as "Failed to send a request to the Edge Function".
+const VITE_TIMEOUT_MS = 75_000;
 const MAX_TRANSIENT_RETRIES = 1; // Retry once on transient failures
 
 type CompileVitePayload = {
@@ -89,27 +92,41 @@ async function readJsonResponse(response: Response): Promise<unknown> {
   }
 }
 
-async function directCompileViteFetch(payload: CompileVitePayload, signal?: AbortSignal): Promise<unknown> {
+async function fetchCompileVite(
+  payload: CompileVitePayload,
+  signal: AbortSignal | undefined,
+  authenticated: boolean,
+): Promise<unknown> {
   const controller = new AbortController();
   const abortFromCaller = () => controller.abort();
+  if (signal?.aborted) controller.abort();
   signal?.addEventListener('abort', abortFromCaller, { once: true });
 
   const timeout = setTimeout(() => controller.abort(), VITE_TIMEOUT_MS);
   try {
+    const body = JSON.stringify(payload);
     const response = await fetch(`${SUPABASE_URL}/functions/v1/compile-vite`, {
       method: 'POST',
       mode: 'cors',
       credentials: 'omit',
-      headers: {
-        'Content-Type': 'application/json',
-        apikey: SUPABASE_PUBLISHABLE_KEY,
-        Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
-      },
-      body: JSON.stringify(payload),
+      // Primary path intentionally uses a CORS "simple request" (text/plain + no
+      // auth headers) because compile-vite has verify_jwt=false. This avoids the
+      // browser preflight request that was failing for some Firefox sessions.
+      headers: authenticated
+        ? {
+            'Content-Type': 'application/json',
+            apikey: SUPABASE_PUBLISHABLE_KEY,
+            Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+          }
+        : { 'Content-Type': 'text/plain' },
+      body,
       signal: controller.signal,
     });
 
     const json = await readJsonResponse(response);
+    if (!response.ok && !authenticated && (response.status === 401 || response.status === 403)) {
+      throw new Error(`compile-vite auth required (${response.status})`);
+    }
     if (!response.ok) {
       const message = typeof (json as any)?.error === 'string'
         ? (json as any).error
@@ -120,6 +137,21 @@ async function directCompileViteFetch(payload: CompileVitePayload, signal?: Abor
   } finally {
     clearTimeout(timeout);
     signal?.removeEventListener('abort', abortFromCaller);
+  }
+}
+
+async function directCompileViteFetch(payload: CompileVitePayload, signal?: AbortSignal): Promise<unknown> {
+  try {
+    return await fetchCompileVite(payload, signal, false);
+  } catch (publicErr) {
+    const publicMessage = publicErr instanceof Error ? publicErr.message : String(publicErr);
+    console.warn('[ViteSandbox] Public simple compile request failed; retrying authenticated direct fetch:', publicMessage);
+    try {
+      return await fetchCompileVite(payload, signal, true);
+    } catch (authErr) {
+      const authMessage = authErr instanceof Error ? authErr.message : String(authErr);
+      throw new Error(`${publicMessage}; authenticated retry failed: ${authMessage}`);
+    }
   }
 }
 
