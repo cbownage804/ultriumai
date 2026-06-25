@@ -3025,7 +3025,10 @@ export function AIAppBuilderWorkspace() {
       return;
     }
 
-    // Keep current error visible until CompilationBridge transitions state.
+    // Clear stale transport errors immediately so Retry cannot appear frozen while
+    // the bridge debounce/network retry path starts a fresh compile.
+    setCompileError(null);
+    setCompileStateRaw('compiling');
     forceCompileRef.current?.();
   }, [project.files]);
 

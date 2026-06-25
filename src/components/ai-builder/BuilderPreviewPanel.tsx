@@ -5,7 +5,6 @@ import {
   ArrowLeft, ArrowRight, Lock, ChevronDown, MousePointerClick,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import previewBgNeon from '@/assets/preview-bg-neon.jpg';
 import { VisualEditOverlay } from './VisualEditOverlay';
 interface PreviewError {
   id: string;
@@ -529,7 +528,10 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
 </html>`;
   }, []);
 
-  const normalizedHtml = html ? ensureFullDocument(html) : null;
+  const normalizedHtml = useMemo(
+    () => (html ? ensureFullDocument(html) : null),
+    [html, ensureFullDocument],
+  );
   const previewSafeSerializationScript = useMemo(() => buildPreviewSafeSerializationScript(), []);
 
   // Debug: log actual HTML length to diagnose blank previews
@@ -549,9 +551,10 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
     [previewSafeSerializationScript]
   );
 
-  const htmlWithInjections = normalizedHtml
-    ? injectIntoHead(normalizedHtml, previewBridgeScript)
-    : null;
+  const htmlWithInjections = useMemo(
+    () => normalizedHtml ? injectIntoHead(normalizedHtml, previewBridgeScript) : null,
+    [normalizedHtml, previewBridgeScript],
+  );
 
   // === Preview document rendering: externalize inline scripts to avoid </script> parser breakout ===
   const jsBlobUrlsRef = useRef<string[]>([]);
@@ -582,11 +585,13 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
   // If current HTML is a fallback/error page but we have a real last-good, prefer showing the real one
   const isCurrentFallback = previewDocumentHtml && (previewDocumentHtml.includes('ai-builder-fallback') || previewDocumentHtml.includes('Compilation Error'));
   const effectiveCurrentHtml = isCurrentFallback ? null : previewDocumentHtml;
-  const displayHtml = effectiveCurrentHtml ?? (
-    lastGoodPreviewHtmlRef.current && (isGenerating || isCompiling || compileState === 'error' || isCurrentFallback)
-      ? lastGoodPreviewHtmlRef.current
-      : previewDocumentHtml // fall back to whatever we have, including fallback HTML
-  );
+  const displayHtml = useMemo(() => (
+    effectiveCurrentHtml ?? (
+      lastGoodPreviewHtmlRef.current && (isGenerating || isCompiling || compileState === 'error' || isCurrentFallback)
+        ? lastGoodPreviewHtmlRef.current
+        : previewDocumentHtml // fall back to whatever we have, including fallback HTML
+    )
+  ), [effectiveCurrentHtml, isGenerating, isCompiling, compileState, isCurrentFallback, previewDocumentHtml]);
   const isInteractionGuardEnabled = false;
   // Always use srcdoc for workspace preview — instant rendering, no race conditions
   // with cross-origin upload timing. Cross-origin URLs are only for hosted/shared previews.
@@ -1170,7 +1175,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
 
             {/* LKG fallback banner — subtle, non-blocking */}
             {isUsingLKG && !isGenerating && !isCompiling && (
-              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/15 border border-amber-500/25 backdrop-blur-sm">
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/85 border border-amber-500/25">
                 <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
                 <span className="text-[10px] text-amber-300/80 font-medium">Showing previous working version</span>
               </div>
@@ -1178,7 +1183,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
 
             {/* Compile error overlay on LKG preview — show compact error banner instead of full error screen */}
             {compileState === 'error' && !isGenerating && !isCompiling && !isUsingLKG && (
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/15 border border-red-500/25 backdrop-blur-sm max-w-[90%]">
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-2 rounded-lg bg-black/90 border border-red-500/25 max-w-[90%]">
                 <div className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse shrink-0" />
                 <span className="text-[10px] text-red-300/80 font-medium truncate">
                   {compileError?.message || 'Build failed'} — auto-fix in progress
@@ -1193,14 +1198,8 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
             )}
           </div>
         ) : compileState === 'error' ? (
-          <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden">
-            <img
-              src={previewBgNeon}
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover opacity-20"
-              aria-hidden="true"
-            />
-            <div className="absolute inset-0 bg-black/50" />
+          <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden bg-[radial-gradient(circle_at_center,rgba(127,29,29,0.18),rgba(10,10,16,1)_58%)]">
+            <div className="absolute inset-0 bg-black/40" />
             <div className="relative z-10 space-y-4 px-6 max-w-md">
               <div className="h-3 w-3 rounded-full bg-red-400 mx-auto animate-pulse" />
               <h3 className="font-semibold text-lg text-red-300/90 tracking-tight">
@@ -1235,14 +1234,8 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
             isCompiling={isCompiling}
           />
         ) : projectFiles && projectFiles.length > 0 && !isGoldenProject ? (
-          <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden">
-            <img
-              src={previewBgNeon}
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover opacity-20"
-              aria-hidden="true"
-            />
-            <div className="absolute inset-0 bg-black/50" />
+          <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.14),rgba(10,10,16,1)_58%)]">
+            <div className="absolute inset-0 bg-black/40" />
             <div className="relative z-10 space-y-4 px-6 max-w-md">
               <div className="h-3 w-3 rounded-full bg-amber-400 mx-auto animate-pulse" />
               <h3 className="font-semibold text-lg text-amber-300/90 tracking-tight">
@@ -1261,14 +1254,8 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
             </div>
           </div>
         ) : (
-          <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden">
-            <img
-              src={previewBgNeon}
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover opacity-30"
-              aria-hidden="true"
-            />
-            <div className="absolute inset-0 bg-black/40" />
+          <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden bg-[radial-gradient(circle_at_center,rgba(6,182,212,0.14),rgba(10,10,16,1)_58%)]">
+            <div className="absolute inset-0 bg-black/35" />
             <div className="relative z-10 space-y-4 px-6">
               <h3 className="font-semibold text-xl text-cyan-300/90 tracking-tight drop-shadow-[0_0_12px_rgba(6,182,212,0.3)]">
                 Live Preview

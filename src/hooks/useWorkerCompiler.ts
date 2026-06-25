@@ -8,7 +8,7 @@
 import { useCallback, useRef } from 'react';
 import type { ProjectFile } from './useProjectFileSystem';
 import type { CDNPackageEntry } from '@/workers/packageData';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '@/integrations/supabase/client';
 import { hashFileSet, getCachedCompile, setCachedCompile } from '@/components/ai-builder/sandboxResponseCache';
 import { probeSandboxHealth, invalidateHealthProbe } from '@/components/ai-builder/sandboxHealth';
 import { getOrCreateSession, rotateSession } from '@/lib/ai-builder/sandboxSession';
@@ -22,8 +22,23 @@ export interface WorkerCompilerResult {
   errorMessage?: string;
 }
 
-const VITE_TIMEOUT_MS = 25_000; // Single path — generous but bounded
+// Keep this above the Edge Function's worst-case sandbox path (30s + retry/backoff).
+// The old 25s budget could abort a healthy build while the sandbox was still working,
+// which surfaced in-browser as "Failed to send a request to the Edge Function".
+const VITE_TIMEOUT_MS = 75_000;
 const MAX_TRANSIENT_RETRIES = 1; // Retry once on transient failures
+
+type CompileVitePayload = {
+  files: { path: string; content: string; language?: string }[];
+  sessionId?: string;
+  projectId?: string;
+  options?: {
+    supabaseConfig?: { url: string; anonKey: string };
+    stripeConfig?: { publishableKey: string };
+    envVars?: { key: string; value: string }[];
+    userPackages?: CDNPackageEntry[];
+  };
+};
 
 function isTransientError(err: Error): boolean {
   const msg = err.message?.toLowerCase() || '';
@@ -67,6 +82,79 @@ function hasUnmappedBareImportsInModuleScripts(html: string): boolean {
   return false;
 }
 
+async function readJsonResponse(response: Response): Promise<unknown> {
+  const text = await response.text();
+  if (!text.trim()) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { error: text.slice(0, 1000), fallback: true };
+  }
+}
+
+async function fetchCompileVite(
+  payload: CompileVitePayload,
+  signal: AbortSignal | undefined,
+  authenticated: boolean,
+): Promise<unknown> {
+  const controller = new AbortController();
+  const abortFromCaller = () => controller.abort();
+  if (signal?.aborted) controller.abort();
+  signal?.addEventListener('abort', abortFromCaller, { once: true });
+
+  const timeout = setTimeout(() => controller.abort(), VITE_TIMEOUT_MS);
+  try {
+    const body = JSON.stringify(payload);
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/compile-vite`, {
+      method: 'POST',
+      mode: 'cors',
+      credentials: 'omit',
+      // Primary path intentionally uses a CORS "simple request" (text/plain + no
+      // auth headers) because compile-vite has verify_jwt=false. This avoids the
+      // browser preflight request that was failing for some Firefox sessions.
+      headers: authenticated
+        ? {
+            'Content-Type': 'application/json',
+            apikey: SUPABASE_PUBLISHABLE_KEY,
+            Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+          }
+        : { 'Content-Type': 'text/plain' },
+      body,
+      signal: controller.signal,
+    });
+
+    const json = await readJsonResponse(response);
+    if (!response.ok && !authenticated && (response.status === 401 || response.status === 403)) {
+      throw new Error(`compile-vite auth required (${response.status})`);
+    }
+    if (!response.ok) {
+      const message = typeof (json as any)?.error === 'string'
+        ? (json as any).error
+        : `compile-vite returned HTTP ${response.status}`;
+      return { error: message, fallback: true };
+    }
+    return json;
+  } finally {
+    clearTimeout(timeout);
+    signal?.removeEventListener('abort', abortFromCaller);
+  }
+}
+
+async function directCompileViteFetch(payload: CompileVitePayload, signal?: AbortSignal): Promise<unknown> {
+  try {
+    return await fetchCompileVite(payload, signal, false);
+  } catch (publicErr) {
+    const publicMessage = publicErr instanceof Error ? publicErr.message : String(publicErr);
+    console.warn('[ViteSandbox] Public simple compile request failed; retrying authenticated direct fetch:', publicMessage);
+    try {
+      return await fetchCompileVite(payload, signal, true);
+    } catch (authErr) {
+      const authMessage = authErr instanceof Error ? authErr.message : String(authErr);
+      throw new Error(`${publicMessage}; authenticated retry failed: ${authMessage}`);
+    }
+  }
+}
+
 // ── Vite Sandbox compilation (true Vite on Droplet) ──
 async function compileViaViteSandbox(
   files: ProjectFile[],
@@ -85,30 +173,51 @@ async function compileViaViteSandbox(
 
   if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
 
-  const { data, error } = await supabase.functions.invoke('compile-vite', {
-    body: {
-      files: files.map(f => ({ path: f.path, content: f.content, language: f.language })),
-      // #9 — persistent sandbox session; server may keep dev-server warm per session
-      sessionId: options?.sessionId,
-      projectId: options?.projectId,
-      options: options ? {
-        supabaseConfig: options.supabaseConfig || undefined,
-        stripeConfig: options.stripeConfig || undefined,
-        envVars: options.envVars,
-        userPackages: options.userPackages,
-      } : undefined,
-    },
-  });
+  const payload: CompileVitePayload = {
+    files: files.map(f => ({ path: f.path, content: f.content, language: f.language })),
+    // #9 — persistent sandbox session; server may keep dev-server warm per session
+    sessionId: options?.sessionId,
+    projectId: options?.projectId,
+    options: options ? {
+      supabaseConfig: options.supabaseConfig || undefined,
+      stripeConfig: options.stripeConfig || undefined,
+      envVars: options.envVars,
+      userPackages: options.userPackages,
+    } : undefined,
+  };
+
+  let data: unknown = null;
+  let error: { message?: string } | null = null;
+
+  try {
+    // Use a direct fetch first. The Supabase SDK invoke path can fail in-browser
+    // when auth/cookie state is stale even though the Edge Function is healthy.
+    data = await directCompileViteFetch(payload, signal);
+  } catch (directErr) {
+    const directMessage = directErr instanceof Error ? directErr.message : String(directErr);
+    error = { message: directMessage };
+  }
 
   if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
 
 
   if (error) {
-    throw new Error(`Vite sandbox error: ${error.message}`);
+    const directMessage = error.message || 'Direct compile request failed';
+    console.warn('[ViteSandbox] Direct compile request failed; retrying through Supabase SDK:', directMessage);
+    try {
+      const sdkResult = await supabase.functions.invoke('compile-vite', { body: payload });
+      data = sdkResult.data;
+      error = sdkResult.error ? { message: sdkResult.error.message } : null;
+      if (error) throw new Error(error.message || 'Supabase SDK invoke failed');
+      error = null;
+    } catch (sdkErr) {
+      const sdkMessage = sdkErr instanceof Error ? sdkErr.message : String(sdkErr);
+      throw new Error(`Vite sandbox request failed: ${directMessage}; SDK retry failed: ${sdkMessage}`);
+    }
   }
 
   // Handle case where data is a raw string (Supabase SDK parsing issue)
-  let parsedData = data;
+  let parsedData: any = data;
   if (typeof data === 'string') {
     try {
       parsedData = JSON.parse(data);
@@ -155,7 +264,7 @@ async function compileViaViteSandbox(
       return {
         html: '',
         isReactProject: true,
-        componentCount: data?.componentCount || 0,
+        componentCount: parsedData?.componentCount || 0,
         errors: processedErrors,
         errorMessage: processedErrors[0],
       };
@@ -173,7 +282,7 @@ async function compileViaViteSandbox(
   return {
     html,
     isReactProject: true,
-    componentCount: data.componentCount || 0,
+    componentCount: parsedData?.componentCount || 0,
     errors: processedErrors,
   };
 }

@@ -1585,7 +1585,7 @@ export function BuilderChatPanel({
     >
       {/* Drop overlay */}
       {isDragOver && (
-        <div className="absolute inset-0 z-50 bg-cyan-500/[0.06] backdrop-blur-sm flex items-center justify-center pointer-events-none">
+        <div className="absolute inset-0 z-50 bg-cyan-500/[0.08] flex items-center justify-center pointer-events-none">
           <div className="flex flex-col items-center gap-2 px-6 py-4 rounded-xl border-2 border-dashed border-cyan-500/40 bg-[#0a0a0f]/80">
             <Paperclip className="h-8 w-8 text-cyan-400" />
             <span className="text-sm font-medium text-cyan-300">Drop images here</span>
@@ -1678,9 +1678,8 @@ export function BuilderChatPanel({
         <div className="p-4 space-y-4">
           {displayMessages.length === 0 && fileCount === 0 ? (
             <div className="flex flex-col items-center justify-center h-full min-h-[400px] space-y-8 relative">
-              {/* Ambient glow */}
-              <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[360px] h-[240px] rounded-full bg-gradient-to-br from-cyan-500/[0.06] to-violet-500/[0.04] blur-[80px] pointer-events-none" />
-              <div className="absolute bottom-1/3 right-1/4 w-[200px] h-[200px] rounded-full bg-violet-500/[0.03] blur-[60px] pointer-events-none" />
+              {/* Static low-cost background tint */}
+              <div className="absolute inset-x-8 top-20 h-40 rounded-full bg-gradient-to-br from-cyan-500/[0.04] to-violet-500/[0.03] pointer-events-none" />
               
               {/* Hero empty state */}
               <div className="text-center space-y-3 relative z-10">
@@ -1688,7 +1687,7 @@ export function BuilderChatPanel({
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.5, ease: 'easeOut' }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-cyan-500/10 to-violet-500/10 border border-white/[0.08] mb-3 backdrop-blur-sm shadow-lg shadow-cyan-500/5"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-cyan-500/10 to-violet-500/10 border border-white/[0.08] mb-3 shadow-lg shadow-cyan-500/5"
                 >
                   <Sparkles className="h-3.5 w-3.5 text-cyan-400/70" />
                   <span className="text-[11px] text-white/50 font-medium tracking-wide">AI-Powered Builder</span>
@@ -1724,7 +1723,7 @@ export function BuilderChatPanel({
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.3, delay: 0.3 + i * 0.05 }}
                     onClick={() => onSend(`${prompt.label}: ${prompt.desc}`)}
-                    className={cn("w-full text-left px-3.5 py-3 rounded-xl border text-sm transition-all duration-300 group backdrop-blur-sm hover:shadow-lg active:scale-[0.98]", prompt.color, prompt.hover)}
+                    className={cn("w-full text-left px-3.5 py-3 rounded-xl border text-sm transition-all duration-300 group hover:shadow-lg active:scale-[0.98]", prompt.color, prompt.hover)}
                   >
                     <div className="flex items-center gap-3">
                       <span className={cn("text-base h-9 w-9 rounded-lg bg-gradient-to-br border flex items-center justify-center shrink-0 shadow-sm", prompt.iconBg)}>{prompt.icon}</span>
