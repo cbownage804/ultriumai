@@ -99,12 +99,12 @@ function injectImportMapIfNeeded(html: string, detectedPackages: Set<string>): s
 
   // Inject before the first <script type="module"> (case-insensitive, quote-agnostic).
   const moduleScriptRe = /<script\b[^>]*type\s*=\s*["']module["'][^>]*>/i;
-  const match = html.match(moduleScriptRe);
-  if (!match || match.index === undefined) {
+  const moduleScriptMatch = html.match(moduleScriptRe);
+  if (!moduleScriptMatch || moduleScriptMatch.index === undefined) {
     // Fallback: inject in <head>
     return html.replace(/<\/head>/i, `${importmapScript}\n</head>`);
   }
-  return html.slice(0, match.index) + importmapScript + '\n' + html.slice(match.index);
+  return html.slice(0, moduleScriptMatch.index) + importmapScript + '\n' + html.slice(moduleScriptMatch.index);
 }
 
 serve(async (req) => {
