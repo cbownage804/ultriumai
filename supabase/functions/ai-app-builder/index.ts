@@ -83,13 +83,10 @@ CRUD: Every item needs Create/Read/Update/Delete. Delete: .filter() not splice()
 FIX MODE: 🔍 Diagnosis block (symptom/root cause/files/fix). Attempt 2: rewrite function. Attempt 3+: rewrite file.
 
 REACT: .tsx, functional components+hooks, App.tsx entry, Tailwind.
-ICONS: Do NOT import from 'lucide-react'. Instead, create inline SVG icons as React components:
-  const ChevronIcon = (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m9 18 6-6-6-6"/></svg>;
-ANIMATIONS: Do NOT import 'framer-motion'. Use CSS transitions and @keyframes instead:
-  className="transition-all duration-300 hover:scale-105"
-  For complex animations, use CSS @keyframes in a <style> block.
-PACKAGES YOU MAY USE (these are pre-loaded): recharts, date-fns, clsx, tailwind-merge, class-variance-authority, zustand, zod, uuid, react-router-dom
-PACKAGES TO AVOID (cause CDN loading failures): lucide-react, framer-motion, @radix-ui/*, cmdk, react-hot-toast, @heroicons/*, react-icons. Use native HTML/CSS alternatives instead.
+ICONS: Use lucide-react named imports, e.g. import { ChevronRight, Instagram } from 'lucide-react'. Do NOT inline SVG markup.
+ANIMATIONS: Prefer Tailwind transitions (transition-all duration-300 hover:scale-105). framer-motion is available if you need orchestrated animations.
+PACKAGES YOU MAY USE (pre-loaded): react, react-dom, react-router-dom, lucide-react, framer-motion, recharts, date-fns, clsx, tailwind-merge, class-variance-authority, zustand, zod, uuid.
+PACKAGES TO AVOID (cause CDN loading failures): @radix-ui/*, cmdk, react-hot-toast, @heroicons/*, react-icons.
 
 IMPORTS: Always use ESM (import/export). Always destructure React hooks: import { useState, useEffect } from 'react'. Never use require(). Never mix import and require in the same project.
 
@@ -500,8 +497,9 @@ serve(async (req) => {
           if (block.type === 'image_url' && block.image_url?.url) {
             const url = block.image_url.url;
             if (url.startsWith('data:') && url.length > 2_000_000) {
-              console.log(`[${requestId}] Truncating oversized image block (${Math.round(url.length / 1024)}KB)`);
-              return { ...block, image_url: { ...block.image_url, url: url.slice(0, 1_000_000) } };
+              console.log(`[${requestId}] Dropping oversized image block (${Math.round(url.length / 1024)}KB)`);
+              // Truncating base64 mid-stream produces invalid data URLs; drop instead.
+              return { type: 'text', text: '[image omitted — exceeded 2MB upload limit]' };
             }
           }
           return block;
@@ -515,6 +513,7 @@ serve(async (req) => {
     const VALID_MODELS = new Set([
       'google/gemini-3-flash-preview',
       'google/gemini-2.5-flash',
+      'google/gemini-2.5-pro',
       'google/gemini-2.0-flash',
       'anthropic/claude-sonnet-4',
       'anthropic/claude-3.5-sonnet',
@@ -732,7 +731,7 @@ CAPABILITIES:
         console.error(`[${requestId}] AI gateway 400:`, parsedMsg);
 
         // Auto-retry with reduced context if token limit exceeded
-        const FALLBACK_MODEL = "openai/gpt-5-mini";
+        const FALLBACK_MODEL = "google/gemini-2.5-flash";
         if (/token|exceeds|maximum/i.test(parsedMsg)) {
           console.log(`[${requestId}] Token limit exceeded — retrying with reduced context + fallback model`);
           const reducedMessages = trimMessagesToFit(sanitizedMessages, 400_000);

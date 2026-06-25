@@ -210,6 +210,7 @@ export function useProjectPersistence() {
       setCurrentProjectId(projectId);
       setLastSaved(new Date(data.updated_at));
       setTabConflict(false);
+      hasUnsavedRef.current = false; // freshly loaded → no local pending changes
       return data as unknown as SavedProject;
     } catch (err) {
       console.error('Load failed:', err);
@@ -408,10 +409,13 @@ export function useProjectPersistence() {
   }, []);
 
   const scheduleAutoSave = useCallback((name: string, files: ProjectFile[], chatMessages?: any[], extraSettings?: Record<string, any>) => {
+    // Never schedule an autosave for golden-template-only / empty state — this previously
+    // overwrote real projects with the "Welcome" scaffold after a rollback.
+    if (!hasUserGeneratedFiles(files)) return;
     hasUnsavedRef.current = true;
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = setTimeout(() => {
-      if (files.length > 0) {
+      if (hasUserGeneratedFiles(files)) {
         saveProject(name, files, undefined, undefined, chatMessages, extraSettings);
       }
     }, 5000); // Save after 5s of inactivity so projects appear in recents quickly
