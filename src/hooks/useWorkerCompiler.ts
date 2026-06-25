@@ -120,7 +120,24 @@ async function compileViaViteSandbox(
   }
 
   if (parsedData?.fallback) {
-    throw new Error(parsedData.error || 'Vite sandbox unavailable');
+    const errText: string = parsedData.error || 'Vite sandbox unavailable';
+    // Some "fallback" responses actually carry a user-code build error in the message
+    // (legacy compile-vite behavior). If the text looks like a real build diagnostic,
+    // promote it to a normal sandbox error so the user sees it and auto-heal can act.
+    const looksLikeBuildError =
+      /\.(?:tsx?|jsx?|css|html)\b/i.test(errText) ||
+      /\b(?:ERROR:|error TS|Unexpected|Unterminated|Cannot find|Module not found|is not exported|Transform failed|Expected|SyntaxError)\b/i.test(errText);
+    if (looksLikeBuildError) {
+      const processed = extractActionableError(errText);
+      return {
+        html: '',
+        isReactProject: true,
+        componentCount: 0,
+        errors: [processed],
+        errorMessage: processed,
+      };
+    }
+    throw new Error(errText);
   }
 
   const sandboxErrors = Array.isArray(parsedData?.errors)
