@@ -2,7 +2,7 @@
  * Sandbox Health Probe — lightweight check before each compile to detect
  * a degraded warm pool. Cached for 5s so we don't ping on every call.
  */
-import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '@/integrations/supabase/client';
+import { SUPABASE_URL } from '@/integrations/supabase/client';
 
 interface HealthState {
   healthy: boolean;
@@ -11,7 +11,7 @@ interface HealthState {
 }
 
 const PROBE_TTL_MS = 5_000;
-const PROBE_TIMEOUT_MS = 2_000;
+const PROBE_TIMEOUT_MS = 3_500;
 let lastProbe: HealthState | null = null;
 let inFlight: Promise<HealthState> | null = null;
 
@@ -24,11 +24,9 @@ async function doProbe(): Promise<HealthState> {
       method: 'POST',
       mode: 'cors',
       credentials: 'omit',
-      headers: {
-        'Content-Type': 'application/json',
-        apikey: SUPABASE_PUBLISHABLE_KEY,
-        Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
-      },
+      // compile-vite is public (verify_jwt=false). Keep the probe a CORS simple
+      // request so a flaky browser preflight cannot falsely mark the sandbox down.
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ __healthcheck: true }),
       signal: controller.signal,
     }).finally(() => clearTimeout(timeoutId));
