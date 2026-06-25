@@ -496,14 +496,23 @@ serve(async (req) => {
       const errText = result?.error || 'Unknown error';
       console.error(`[compile-vite] Sandbox error (${response!.status}):`, errText);
 
-      // Graceful degradation: ALWAYS return 200 with fallback:true so the client
-      // can immediately switch to worker compilation instead of surfacing a hard
-      // runtime error (503/504). This covers both toolchain issues AND build errors.
+      // Distinguish infrastructure failure vs. user-code build error so the client
+      // can show the real diagnostic to the user / auto-heal instead of treating
+      // every non-200 as "sandbox unavailable".
+      const isBuildError =
+        /\.(?:tsx?|jsx?|css|html)\b/i.test(errText) ||
+        /\b(?:ERROR:|error TS|Unexpected|Unterminated|Cannot find|Module not found|is not exported|Transform failed|Expected|SyntaxError)\b/i.test(errText);
+
+      if (isBuildError) {
+        return new Response(
+          JSON.stringify({ html: '', errors: [errText] }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // True infrastructure failure (sandbox down, toolchain missing, etc.)
       return new Response(
-        JSON.stringify({
-          error: errText,
-          fallback: true,
-        }),
+        JSON.stringify({ error: errText, fallback: true }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
