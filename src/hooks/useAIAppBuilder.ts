@@ -969,9 +969,7 @@ export function useAIAppBuilder() {
       accumulatedFilesRef.current = [];
       setContinuationRound(0);
     }
-    // Fix: Hard 3-minute cap across ALL continuation rounds combined
-    const totalBuildStart = Date.now();
-    const TOTAL_BUILD_MAX_MS = 180_000; // 3 minutes
+    // (Hard 3-minute cap is enforced inside the build path via TOTAL_BUILD_MAX_MS near the background-job listener.)
     // ── Phase 8: Request deduplication (exempt retries/auto-fix) ──
     const fingerprint = hashString(input + (imageDataUrls?.join('') || ''));
     const now = Date.now();
@@ -1027,7 +1025,7 @@ export function useAIAppBuilder() {
       }
       const recentHistory = messagesRef.current.slice(-20).map(m => ({
         role: m.role,
-        content: m.role === 'assistant' ? m.content.slice(0, 500) : m.content.slice(0, 2000),
+        content: m.role === 'assistant' ? m.content.slice(0, 2000) : m.content.slice(0, 2000),
       }));
       chatMessages.push(...recentHistory);
       chatMessages.push({ role: 'user', content: input });
@@ -1672,7 +1670,15 @@ ${JSON.stringify(brandingData.typography, null, 2)}` : ''}` });
       // Strip file content AND image data URLs from old messages to save tokens
       let content = m.content;
       if (m.role === 'assistant') {
-        content = content.replace(/===FILE:[\s\S]*?(?====FILE:|$)/g, '[file content omitted]').slice(0, 500);
+        // Strip heavy file/edit/delete blocks but preserve surrounding explanation so the
+        // model retains architectural memory across turns.
+        content = content
+          .replace(/===FILE:[\s\S]*?===END:[^\n]*===?/g, '[file omitted]')
+          .replace(/===EDIT:[\s\S]*?===END:[^\n]*===?/g, '[edit omitted]')
+          .replace(/===DELETE:[^\n]*/g, '[delete omitted]')
+          .replace(/===FILE:[\s\S]*$/g, '[file omitted]') // unterminated tail
+          .trim()
+          .slice(0, 2000);
       } else {
         // Strip base64 data URLs from old user messages (these are huge)
         content = content.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]{100,}/g, '[image data omitted]');

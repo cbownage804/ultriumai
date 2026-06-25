@@ -793,9 +793,10 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
             if (previewDocumentHtml) {
               const sid = newSessionId();
               sessionIdRef.current = sid;
-              injectSessionId(previewDocumentHtml, sid);
+              setEmergencyPreviewHtml(injectSessionId(previewDocumentHtml, sid));
+            } else {
+              setEmergencyPreviewHtml(null);
             }
-            setEmergencyPreviewHtml(null);
           }, 5000);
 
           return;

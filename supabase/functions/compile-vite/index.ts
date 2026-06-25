@@ -97,13 +97,14 @@ function injectImportMapIfNeeded(html: string, detectedPackages: Set<string>): s
 
   const importmapScript = `<script type="importmap">\n${JSON.stringify({ imports }, null, 2)}\n</script>`;
 
-  // Inject before the first <script type="module">
-  const firstModuleScript = html.indexOf('<script type="module"');
-  if (firstModuleScript === -1) {
+  // Inject before the first <script type="module"> (case-insensitive, quote-agnostic).
+  const moduleScriptRe = /<script\b[^>]*type\s*=\s*["']module["'][^>]*>/i;
+  const match = html.match(moduleScriptRe);
+  if (!match || match.index === undefined) {
     // Fallback: inject in <head>
-    return html.replace('</head>', `${importmapScript}\n</head>`);
+    return html.replace(/<\/head>/i, `${importmapScript}\n</head>`);
   }
-  return html.slice(0, firstModuleScript) + importmapScript + '\n' + html.slice(firstModuleScript);
+  return html.slice(0, match.index) + importmapScript + '\n' + html.slice(match.index);
 }
 
 serve(async (req) => {

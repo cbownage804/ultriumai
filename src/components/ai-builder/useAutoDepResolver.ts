@@ -92,7 +92,11 @@ function resolveToEsmSh(pkg: string): string {
   // Prefer registry-pinned URLs (with ?bundle/?external as needed).
   const registered = REGISTRY_URLS[pkg] || REGISTRY_URLS[basePkg];
   if (registered) {
-    return subpath ? `${registered}/${subpath}` : registered;
+    if (!subpath) return registered;
+    // Append subpath BEFORE the query string so esm.sh resolves /react-dom@x/client correctly.
+    const qIdx = registered.indexOf('?');
+    if (qIdx === -1) return `${registered}/${subpath}`;
+    return `${registered.slice(0, qIdx)}/${subpath}${registered.slice(qIdx)}`;
   }
 
   const version = KNOWN_PACKAGES[pkg] || KNOWN_PACKAGES[basePkg] || 'latest';

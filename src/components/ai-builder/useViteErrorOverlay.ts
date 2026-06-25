@@ -141,7 +141,7 @@ export function useViteErrorOverlay() {
   /** Inject the error overlay script into compiled HTML */
   const injectErrorOverlay = useCallback((html: string): string => {
     if (html.includes('data-error-overlay')) return html;
-    if (html.includes('Compilation Error')) return html;
+    if (html.includes('ai-builder-fallback')) return html;
 
     const headIdx = html.indexOf('</head>');
     if (headIdx !== -1) {
