@@ -5,7 +5,7 @@
  *
  * Step 4: Now accepts compilePhase for granular progress messages.
  */
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import type { CompilePhase } from './CompilationBridge';
 
@@ -68,21 +68,6 @@ export function SkeletonPreview({
   isCompiling = false,
   compilePhase,
 }: SkeletonPreviewProps) {
-  const [tipIndex, setTipIndex] = useState(0);
-  const [tipFading, setTipFading] = useState(false);
-
-  // Rotate tips
-  useEffect(() => {
-    const iv = setInterval(() => {
-      setTipFading(true);
-      setTimeout(() => {
-        setTipIndex(p => (p + 1) % TIPS.length);
-        setTipFading(false);
-      }, 300);
-    }, 5000);
-    return () => clearInterval(iv);
-  }, []);
-
   const totalFiles = projectFiles?.length ?? 0;
   const progress = totalFiles > 0 ? Math.round((completedFileCount / totalFiles) * 100) : 0;
 
@@ -92,9 +77,9 @@ export function SkeletonPreview({
     for (let i = 0; i < 6; i++) {
       const startIdx = (i * 3) % CODE_LINES.length;
       cols.push({
-        left: 8 + i * 15 + Math.random() * 5,
+        left: 8 + i * 15 + ((i * 7) % 5),
         delay: i * 0.8,
-        duration: 12 + Math.random() * 6,
+        duration: 12 + ((i * 5) % 6),
         lines: CODE_LINES.slice(startIdx, startIdx + 4),
       });
     }
@@ -121,10 +106,7 @@ export function SkeletonPreview({
     <div className="flex flex-col items-center justify-center h-full w-full bg-[#09090b] relative overflow-hidden select-none">
 
       {/* ── Ambient background glows ── */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[20%] left-[10%] w-[500px] h-[500px] rounded-full bg-violet-500/[0.04] blur-[150px]" />
-        <div className="absolute bottom-[10%] right-[15%] w-[400px] h-[400px] rounded-full bg-cyan-500/[0.03] blur-[120px]" />
-      </div>
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_25%_25%,rgba(139,92,246,0.08),transparent_34%),radial-gradient(circle_at_78%_72%,rgba(34,211,238,0.06),transparent_30%)]" />
 
       {/* ── Code rain columns ── */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -183,7 +165,6 @@ export function SkeletonPreview({
       <div className="relative z-10 flex flex-col items-center gap-6 px-6 max-w-[400px]">
         {/* Spinner */}
         <div className="relative">
-          <div className="absolute inset-0 rounded-full bg-cyan-400/15 blur-xl animate-pulse scale-[2]" />
           <svg className="h-11 w-11 skeleton-spin" viewBox="0 0 44 44" fill="none">
             <circle cx="22" cy="22" r="19" stroke="white" strokeOpacity="0.06" strokeWidth="2.5" />
             <path
@@ -293,8 +274,8 @@ export function SkeletonPreview({
 
         {/* Tip */}
         <div className="h-8 flex items-center justify-center mt-2">
-          <p className={`text-[10px] text-white/15 text-center leading-relaxed max-w-[260px] transition-opacity duration-300 ${tipFading ? 'opacity-0' : 'opacity-100'}`}>
-            💡 {TIPS[tipIndex]}
+          <p className="text-[10px] text-white/15 text-center leading-relaxed max-w-[260px]">
+            💡 {TIPS[0]}
           </p>
         </div>
       </div>

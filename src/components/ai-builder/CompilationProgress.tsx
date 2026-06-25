@@ -12,16 +12,12 @@ export function CompilationProgress({ fileCount }: CompilationProgressProps) {
   return (
     <div className="flex flex-col items-center justify-center h-full w-full bg-[#111119] animate-fade-in select-none">
       {/* Subtle background glow */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/3 left-1/3 w-[300px] h-[300px] rounded-full bg-cyan-500/[0.05] blur-[100px] animate-pulse" />
-        <div className="absolute bottom-1/3 right-1/3 w-[200px] h-[200px] rounded-full bg-violet-500/[0.04] blur-[80px] animate-pulse" style={{ animationDelay: '1s' }} />
-      </div>
+      <div className="absolute inset-0 pointer-events-none overflow-hidden bg-[radial-gradient(circle_at_35%_35%,rgba(6,182,212,0.08),transparent_32%),radial-gradient(circle_at_70%_65%,rgba(139,92,246,0.06),transparent_28%)]" />
 
       <div className="relative z-10 flex flex-col items-center gap-6 px-6">
         {/* Spinner */}
         <div className="relative">
           <div className="h-10 w-10 rounded-full border-2 border-white/[0.08] border-t-cyan-400/70 animate-spin" />
-          <div className="absolute inset-0 rounded-full bg-cyan-400/10 blur-xl animate-pulse" />
         </div>
 
         {/* Label */}

@@ -16,7 +16,7 @@ const ERROR_OVERLAY_SCRIPT = `
     
     var overlay = document.createElement('div');
     overlay.id = '__vite_error_overlay__';
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.85);backdrop-filter:blur(4px);overflow-y:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,monospace;color:#e5e5e5;padding:24px;';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.92);overflow-y:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,monospace;color:#e5e5e5;padding:24px;';
     
     var container = document.createElement('div');
     container.style.cssText = 'max-width:800px;margin:0 auto;';
