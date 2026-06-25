@@ -43,8 +43,8 @@ export interface CompileErrorInfo {
   errors: string[];
 }
 
-const COMPILE_TIMEOUT_MS = 30_000; // Single-path Vite Sandbox budget
-const COMPILE_SAFETY_TIMEOUT_MS = 40_000; // Hard safety net beyond normal timeout
+const COMPILE_TIMEOUT_MS = 90_000; // Single-path Vite Sandbox budget, including cold starts/retries
+const COMPILE_SAFETY_TIMEOUT_MS = 100_000; // Hard safety net beyond normal timeout
 const COMPILE_HARD_TIMEOUT_MS = COMPILE_SAFETY_TIMEOUT_MS;
 interface CompilationBridgeProps {
   files: ProjectFile[];
@@ -556,7 +556,7 @@ export function CompilationBridge({
     let result: string | null = null;
     let compileError: Error | null = null;
     const compileT0 = performance.now();
-    const BRIDGE_TIMEOUT = 30_000;
+    const BRIDGE_TIMEOUT = COMPILE_TIMEOUT_MS;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     setCompilePhase('bundling');
@@ -707,7 +707,13 @@ export function CompilationBridge({
     // Skip streaming compiles for golden (untouched) projects
     if (isGoldenProject) return;
 
-    // Step B: Speculative pre-compilation — poll every 5s with lower file threshold
+    // Speculative streaming compiles looked nice, but they created extra sandbox
+    // requests while the AI was still writing files. On slower Firefox sessions this
+    // could starve the final compile and make the page appear frozen. Keep the UI
+    // lightweight during generation; compile once when output is complete.
+    return;
+
+    // Step B: Speculative pre-compilation — disabled by the early return above.
     streamingCompileTimerRef.current = setInterval(async () => {
       const partial = partialFilesRef.current;
       const completedCount = completedFileCountRef.current;
