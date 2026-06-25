@@ -198,8 +198,8 @@ function hasUnterminatedString(code: string): boolean {
       if (escaped) { escaped = false; continue; }
       const ch = line[i];
       if (ch === '\\') { escaped = true; continue; }
-      // Skip template literals (multi-line OK)
-      if (ch === '`') return false; // Can't check multi-line
+      // Skip template literals (multi-line); skip the rest of THIS line only, keep scanning siblings.
+      if (ch === '`') { inStr = null; break; }
       if (inStr) {
         if (ch === inStr) inStr = null;
       } else {

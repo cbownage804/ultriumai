@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
           'X-Preview-Updated': livePreview.updated_at,
           'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
           'X-Content-Type-Options': 'nosniff',
-          'X-Frame-Options': 'SAMEORIGIN',
+          'Content-Security-Policy': "frame-ancestors *",
           'Referrer-Policy': 'strict-origin-when-cross-origin',
         },
       })
@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
         'X-Served-By': 'ultrium-preview-storage',
         'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
         'X-Content-Type-Options': 'nosniff',
-        'X-Frame-Options': 'SAMEORIGIN',
+        'Content-Security-Policy': "frame-ancestors *",
         'Referrer-Policy': 'strict-origin-when-cross-origin',
       },
     })

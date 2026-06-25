@@ -45,7 +45,7 @@ export interface CompileErrorInfo {
 
 const COMPILE_TIMEOUT_MS = 30_000; // Single-path Vite Sandbox budget
 const COMPILE_SAFETY_TIMEOUT_MS = 40_000; // Hard safety net beyond normal timeout
-const COMPILE_HARD_TIMEOUT_MS = COMPILE_TIMEOUT_MS;
+const COMPILE_HARD_TIMEOUT_MS = COMPILE_SAFETY_TIMEOUT_MS;
 interface CompilationBridgeProps {
   files: ProjectFile[];
   isGenerating: boolean;
@@ -752,7 +752,7 @@ export function CompilationBridge({
         if (result && isPreviewValid(result) && result !== lastStreamingHTMLRef.current) {
           lastStreamingHTMLRef.current = result;
           console.info('[StreamingPreview] ✅ Intermediate preview ready (%d chars)', result.length);
-          setStableHTMLLocal(result);
+          setStableHTML(result);
           transitionCompileState('success');
         } else if (!result) {
           streamingFailCountRef.current++;
