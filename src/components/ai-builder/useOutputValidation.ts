@@ -433,9 +433,10 @@ export function sanitizeStagedFiles(files: ProjectFile[]): { files: ProjectFile[
       return `${ret} (\n    ${jsx}`;
     });
 
-    if (!changed) return f;
-    return { ...f, content };
+    if (!changed) return [f];
+    return [{ ...f, content }];
   });
+
 
   return { files: sanitized, fixes };
 }
