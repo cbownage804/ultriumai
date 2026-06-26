@@ -1751,21 +1751,21 @@ export function AIAppBuilderWorkspace() {
           if (nextCount > 2) {
             console.warn('[Workspace] Deterministic repair repeated without success — escalating to AI repair instead of looping');
           } else {
-          console.warn('[Workspace] Deterministic compile repair applied before AI retry:', repairs.slice(0, 8));
-          pendingValidationFixRef.current = null;
-          validationFixInFlightRef.current = false;
-          repairInFlightRef.current = false;
-          awaitingRepairJobStartRef.current = false;
-          setRepairFailed(false);
-          setRepairErrors([]);
-          setFiles(repairedFiles);
-          latestFilesRef.current = repairedFiles;
-          setCompileStateRaw('compiling');
-          setCompileError({
-            message: 'Repairing generated syntax before preview compile',
-            errors: repairs.slice(0, 5),
-          });
-          return;
+            console.warn('[Workspace] Deterministic compile repair applied before AI retry:', repairs.slice(0, 8));
+            pendingValidationFixRef.current = null;
+            validationFixInFlightRef.current = false;
+            repairInFlightRef.current = false;
+            awaitingRepairJobStartRef.current = false;
+            setRepairFailed(false);
+            setRepairErrors([]);
+            setFiles(repairedFiles);
+            latestFilesRef.current = repairedFiles;
+            setCompileStateRaw('compiling');
+            setCompileError({
+              message: 'Repairing generated syntax before preview compile',
+              errors: repairs.slice(0, 5),
+            });
+            return;
           }
         }
       }
