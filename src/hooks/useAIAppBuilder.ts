@@ -122,7 +122,8 @@ function buildVisualStyleFixContext(input: string, files: ProjectFile[]): string
     const hitIndexes = new Set<number>();
 
     normalizedLines.forEach((line, index) => {
-      if (normalizedPhrases.some(phrase => phrase && line.includes(phrase))) hitIndexes.add(index);
+      const localWindow = normalizedLines.slice(index, Math.min(normalizedLines.length, index + 5)).join(' ');
+      if (normalizedPhrases.some(phrase => phrase && (line.includes(phrase) || localWindow.includes(phrase)))) hitIndexes.add(index);
     });
 
     if (hitIndexes.size === 0 && /\b(button|cta)\b/i.test(input)) {
