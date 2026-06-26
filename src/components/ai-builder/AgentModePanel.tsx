@@ -164,11 +164,9 @@ export function AgentModePanel({ run, taskQueue, pendingApproval, compileState, 
       {/* Avatar column */}
       <div className="h-8 w-8 mt-0.5 rounded-full bg-violet-500/15 flex items-center justify-center shrink-0">
         {isAwaitingApproval ? (
-          <Shield className="h-4 w-4 text-violet-400 animate-pulse" />
+          <Shield className="h-4 w-4 text-violet-400" />
         ) : isRunning ? (
-          <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}>
-            <Brain className="h-4 w-4 text-violet-400" />
-          </motion.div>
+          <Brain className="h-4 w-4 text-violet-400" />
         ) : allDone ? (
           <CheckCircle2 className="h-4 w-4 text-emerald-400/70" />
         ) : (
