@@ -559,6 +559,21 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
       }
     }
 
+    // Final syntax shield for a real failure mode seen in generated output:
+    // the model completes the component, writes `export default App;`, then
+    // streams a tail of orphan JSX closers such as
+    // `</div></div></section></main></div>`. Even if JSX balancing missed the
+    // earlier structure, JSX after a terminal export statement can never be
+    // valid module syntax, so prune it before Vite/esbuild sees it.
+    if (['tsx', 'jsx'].includes(ext)) {
+      const trailingJsx = stripDanglingJsxAfterDefaultExport(content);
+      if (trailingJsx.fixed) {
+        content = trailingJsx.content;
+        changed = true;
+        repairs.push(`${f.path}: ${trailingJsx.description}`);
+      }
+    }
+
     if (!changed) return f;
     return { ...f, content };
   });
@@ -801,6 +816,62 @@ function parseMotionTokenAt(content: string, index: number):
 
 function removeBareFramerMotionClosers(content: string): string {
   return content.replace(/<\/motion\s*>/gi, '');
+}
+
+function stripDanglingJsxAfterDefaultExport(content: string): { content: string; fixed: boolean; description: string } {
+  const exportLineRe = /^[ \t]*export\s+default\s+[A-Za-z_$][\w$]*\s*;?[ \t]*(?:\/\/.*)?$/gm;
+  let match: RegExpExecArray | null;
+  let lastMatch: RegExpExecArray | null = null;
+
+  while ((match = exportLineRe.exec(content)) !== null) {
+    lastMatch = match;
+  }
+
+  if (!lastMatch || lastMatch.index === undefined) {
+    return { content, fixed: false, description: '' };
+  }
+
+  const lineEnd = content.indexOf('\n', lastMatch.index);
+  const suffixStart = lineEnd === -1 ? content.length : lineEnd + 1;
+  const suffix = content.slice(suffixStart);
+  if (!looksLikeDanglingJsxSuffix(suffix)) {
+    return { content, fixed: false, description: '' };
+  }
+
+  return {
+    content: `${content.slice(0, suffixStart).trimEnd()}\n`,
+    fixed: true,
+    description: 'removed dangling JSX emitted after terminal export default',
+  };
+}
+
+function looksLikeDanglingJsxSuffix(suffix: string): boolean {
+  const trimmed = suffix.trim();
+  if (!trimmed) return false;
+  if (!/^<\/?(?:[a-z][\w-]*|motion(?:\.[A-Za-z][\w-]*)?|>|\s)/i.test(trimmed)) return false;
+
+  let rest = trimmed;
+  const tagRe = /^(?:<\/?[a-z][\w-]*(?:\s[^<>]*)?>|<\/?motion(?:\.[A-Za-z][\w-]*)?\s*>|<>|<\/>)\s*/i;
+  let tagCount = 0;
+
+  while (rest.length > 0) {
+    const tag = rest.match(tagRe);
+    if (tag) {
+      tagCount++;
+      rest = rest.slice(tag[0].length).trimStart();
+      continue;
+    }
+
+    const punctuation = rest.match(/^[);,]+\s*/);
+    if (punctuation) {
+      rest = rest.slice(punctuation[0].length).trimStart();
+      continue;
+    }
+
+    return false;
+  }
+
+  return tagCount > 0;
 }
 
 function findJsxTagEnd(content: string, start: number): number {
