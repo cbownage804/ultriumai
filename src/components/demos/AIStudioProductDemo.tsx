@@ -788,7 +788,6 @@ While I'm a demo assistant with limited responses, the full version can answer a
                             const safe = DOMPurify.sanitize(parsed, { ALLOWED_TAGS: ['strong', 'code'], ALLOWED_ATTR: ['class'] });
                             return <p key={i} dangerouslySetInnerHTML={{ __html: safe }} />;
                           })}
-                          })}
                         </div>
                       </div>
                       {message.role === 'user' && (
