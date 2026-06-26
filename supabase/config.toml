@@ -405,4 +405,13 @@ verify_jwt = false
 
 # Real Terminal Execution (sandboxed command runner)
 [functions.terminal-exec]
-verify_jwt = false
+verify_jwt = true
+
+[functions.admin-audit-logger]
+verify_jwt = true
+
+[functions.admin-list-users]
+verify_jwt = true
+
+[functions.ai-builder-migrate]
+verify_jwt = true

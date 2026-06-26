@@ -4,6 +4,7 @@ Ultrium RMM Agent
 A lightweight Python agent for remote monitoring and management.
 """
 
+import os
 import requests
 import subprocess
 import platform
@@ -27,8 +28,13 @@ except ImportError:
 # ============================
 
 # Update these values for your deployment
-SUPABASE_FUNCTIONS_BASE = "https://nsyobmjpdpvesjwdphlh.functions.supabase.co"
-API_KEY = "ultrium_rmm_7K9mP3xQ8vN2wR5tY6uI1oE4aS9dF7gH2jK5lM8nB3vC6xZ"  # Your Ultrium API key
+SUPABASE_FUNCTIONS_BASE = os.environ.get("ULTRIUM_FUNCTIONS_BASE", "https://nsyobmjpdpvesjwdphlh.functions.supabase.co")
+# API key must be provided via the ULTRIUM_API_KEY environment variable or a per-device
+# provisioning token. Do NOT hardcode a shared key in source — that allows anyone with
+# code access to impersonate an agent.
+API_KEY = os.environ.get("ULTRIUM_API_KEY", "")
+if not API_KEY:
+    raise SystemExit("ULTRIUM_API_KEY environment variable is required. Provision a per-device key via the Vanguard agent provisioning flow.")
 HOSTNAME = socket.gethostname()
 POLL_INTERVAL = 60  # seconds
 COMMAND_TIMEOUT = 300  # 5 minutes max per command
