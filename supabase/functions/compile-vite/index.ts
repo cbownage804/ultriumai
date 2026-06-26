@@ -66,6 +66,14 @@ function injectImportMapIfNeeded(html: string, detectedPackages: Set<string>): s
 
   if (barePackages.size === 0) return html;
 
+  // Seed React baseline so externalized packages (framer-motion, recharts,
+  // react-router-dom, sonner, ...) can resolve their internal
+  // `react/jsx-runtime` reference. Without this, the browser throws
+  // "The specifier 'react/jsx-runtime' was a bare specifier" at runtime.
+  for (const baseline of ['react', 'react-dom', 'react-dom/client', 'react/jsx-runtime', 'react/jsx-dev-runtime']) {
+    barePackages.add(baseline);
+  }
+
   // Build importmap with esm.sh CDN URLs
   // Use a pinned React version for consistency
   const REACT_VERSION = '18.3.1';
