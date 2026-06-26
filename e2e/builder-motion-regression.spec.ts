@@ -162,6 +162,22 @@ export default function App() {
 `,
     expectContains: ['</motion.header>', '</motion.main>'],
   },
+  {
+    name: 'terminal export default followed by stray brace',
+    code: `import React from 'react';
+const Navbar = () => <nav>D'Taylor Barbershop</nav>;
+export default Navbar;
+}`,
+    expectContains: ['export default Navbar;'],
+  },
+  {
+    name: 'terminal export default followed by stray closing punctuation',
+    code: `import React from 'react';
+const Navbar = () => <nav>D'Taylor Barbershop</nav>;
+export default Navbar;
+};`,
+    expectContains: ['export default Navbar;'],
+  },
 ];
 
 const MAIN_TSX = "import App from './App'; export default App;";
@@ -211,6 +227,7 @@ test.describe('App Builder — Framer Motion repair regression', () => {
 
       // No bare </motion> may survive — only </motion.X> is valid JSX.
       expect(result.content, `case: ${c.name}`).not.toMatch(/<\/motion>(?!\.)/);
+      expect(result.content, `case: ${c.name} left syntax after export`).not.toMatch(/export\s+default\s+[A-Za-z_$][\w$]*\s*;\s*[}\])]/);
 
       for (const needle of c.expectContains ?? []) {
         expect(result.content, `case: ${c.name} missing ${needle}`).toContain(needle);
