@@ -3013,8 +3013,8 @@ export function AIAppBuilderWorkspace() {
   }, []);
 
   const handleRetryCompile = useCallback(() => {
-    if (isGeneratingRef.current || isGeneratingOverrideRef.current) {
-      dedupeToast('info', 'Wait for code writing/verification to finish before retrying compile.');
+    if (isGeneratingRef.current || isGeneratingOverrideRef.current || isCompiling) {
+      dedupeToast('info', 'Wait for the current build step to finish before retrying compile.');
       return;
     }
 
@@ -3048,7 +3048,7 @@ export function AIAppBuilderWorkspace() {
     setCompileError(null);
     setCompileStateRaw('compiling');
     forceCompileRef.current?.();
-  }, [project.files, compileError, handleFixError]);
+  }, [project.files, compileError, handleFixError, isCompiling]);
 
   const handleDiscardChanges = useCallback(() => {
     clearRepairWatchdog();
