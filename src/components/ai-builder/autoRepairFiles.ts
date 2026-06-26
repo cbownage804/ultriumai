@@ -24,7 +24,7 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
     let changed = false;
 
     // ── 1. Fix truncated files (missing closing braces/parens) ──
-    const result = fixBracketBalance(content);
+    const result = fixBracketBalance(content, { jsx: ['tsx', 'jsx'].includes(ext) });
     if (result.fixed) {
       content = result.content;
       changed = true;
@@ -1027,7 +1027,7 @@ function fixJsxTagBalance(content: string): { content: string; fixed: boolean; d
  * Fix unbalanced brackets by trimming trailing unexpected closers and
  * appending missing closers for small EOF truncation cases.
  */
-function fixBracketBalance(content: string): { content: string; fixed: boolean; description: string } {
+function fixBracketBalance(content: string, options: { jsx?: boolean } = {}): { content: string; fixed: boolean; description: string } {
   const fixes: string[] = [];
   let working = content;
 
@@ -1037,7 +1037,7 @@ function fixBracketBalance(content: string): { content: string; fixed: boolean; 
     const trimmed = working.trimEnd();
     if (!trimmed || !/[\]\)}]$/.test(trimmed)) break;
 
-    const analysis = analyzeBracketSyntax(trimmed);
+    const analysis = analyzeBracketSyntax(trimmed, options);
     const lastIndex = trimmed.length - 1;
     if (!analysis.issue || analysis.issue.index !== lastIndex) break;
 
@@ -1045,9 +1045,9 @@ function fixBracketBalance(content: string): { content: string; fixed: boolean; 
     fixes.push(`removed trailing unexpected "${analysis.issue.char}"`);
   }
 
-  const unterminatedLiteral = detectUnterminatedLiteral(working);
+  const unterminatedLiteral = detectUnterminatedLiteral(working, options);
   const analysisTarget = unterminatedLiteral ? `${working}${unterminatedLiteral}` : working;
-  const analysis = analyzeBracketSyntax(analysisTarget);
+  const analysis = analyzeBracketSyntax(analysisTarget, options);
   let suffix = '';
 
   if (unterminatedLiteral) {
@@ -1100,13 +1100,17 @@ function fixBracketBalance(content: string): { content: string; fixed: boolean; 
  *   `` }` ``  – close one open `${...}` expression, then the template literal
  *   `` }}` `` – close two nested `${...}` expressions, then the literal
  */
-function detectUnterminatedLiteral(content: string): string | null {
+function detectUnterminatedLiteral(content: string, options: { jsx?: boolean } = {}): string | null {
   let inString: '"' | "'" | null = null;
   let inTemplateLiteral = false;
   let templateExpressionDepth = 0; // depth of ${...} nesting inside template literals
   let inLineComment = false;
   let inBlockComment = false;
   let escaped = false;
+  let jsxDepth = 0;
+  let inJsxTag = false;
+  let jsxTagQuote: '"' | "'" | null = null;
+  let pendingJsxTag: 'open' | 'close' | 'self' | null = null;
   // Track brace depth within template expressions to distinguish
   // `${ obj.x }` from `${ {a:1} }` (object literal inside expression)
   const templateBraceStack: number[] = []; // stack of brace depths per ${} level
@@ -1124,6 +1128,63 @@ function detectUnterminatedLiteral(content: string): string | null {
       if (ch === '*' && next === '/') {
         inBlockComment = false;
         i++;
+      }
+      continue;
+    }
+
+    if (options.jsx && (inJsxTag || jsxDepth > 0)) {
+      if (inJsxTag) {
+        if (jsxTagQuote) {
+          if (escaped) {
+            escaped = false;
+            continue;
+          }
+          if (ch === '\\') {
+            escaped = true;
+            continue;
+          }
+          if (ch === jsxTagQuote) jsxTagQuote = null;
+          continue;
+        }
+        if (ch === '"' || ch === "'") {
+          jsxTagQuote = ch;
+          continue;
+        }
+        if (ch === '/' && next === '>') {
+          if (pendingJsxTag === 'open') jsxDepth = Math.max(0, jsxDepth - 1);
+          inJsxTag = false;
+          pendingJsxTag = null;
+          i++;
+          continue;
+        }
+        if (ch === '>') {
+          if (pendingJsxTag === 'close') jsxDepth = Math.max(0, jsxDepth - 1);
+          inJsxTag = false;
+          pendingJsxTag = null;
+          continue;
+        }
+        continue;
+      }
+
+      // JSX text: apostrophes/quotes are plain text, not JS string delimiters.
+      if (ch === '<') {
+        if (next === '/') {
+          inJsxTag = true;
+          pendingJsxTag = 'close';
+          i++;
+          continue;
+        }
+        if (next === '>' || /[A-Za-z]/.test(next || '')) {
+          inJsxTag = true;
+          pendingJsxTag = next === '>' ? 'self' : 'open';
+          if (pendingJsxTag === 'open') jsxDepth++;
+          if (next === '>') {
+            inJsxTag = false;
+            pendingJsxTag = null;
+            i++;
+          }
+          continue;
+        }
       }
       continue;
     }
@@ -1221,6 +1282,18 @@ function detectUnterminatedLiteral(content: string): string | null {
     }
 
     // Top-level code (not in any string/template/comment)
+    if (options.jsx && ch === '<' && (next === '>' || /[A-Za-z]/.test(next || ''))) {
+      inJsxTag = true;
+      pendingJsxTag = next === '>' ? 'self' : 'open';
+      if (pendingJsxTag === 'open') jsxDepth++;
+      if (next === '>') {
+        inJsxTag = false;
+        pendingJsxTag = null;
+        i++;
+      }
+      continue;
+    }
+
     if (ch === '/' && next === '/') {
       inLineComment = true;
       i++;
@@ -1260,7 +1333,7 @@ function detectUnterminatedLiteral(content: string): string | null {
   return null;
 }
 
-function analyzeBracketSyntax(code: string): {
+function analyzeBracketSyntax(code: string, options: { jsx?: boolean } = {}): {
   issue: { char: string; index: number } | null;
   stack: string[];
 } {
@@ -1271,6 +1344,10 @@ function analyzeBracketSyntax(code: string): {
   let inLineComment = false;
   let inBlockComment = false;
   let inTemplateLiteral = false;
+  let jsxDepth = 0;
+  let inJsxTag = false;
+  let jsxTagQuote: string | null = null;
+  let pendingJsxTag: 'open' | 'close' | 'self' | null = null;
 
   for (let i = 0; i < code.length; i++) {
     const ch = code[i];
@@ -1285,6 +1362,64 @@ function analyzeBracketSyntax(code: string): {
       if (ch === '*' && next === '/') {
         inBlockComment = false;
         i++;
+      }
+      continue;
+    }
+
+    if (options.jsx && (inJsxTag || jsxDepth > 0)) {
+      if (inJsxTag) {
+        if (jsxTagQuote) {
+          if (escaped) {
+            escaped = false;
+            continue;
+          }
+          if (ch === '\\') {
+            escaped = true;
+            continue;
+          }
+          if (ch === jsxTagQuote) jsxTagQuote = null;
+          continue;
+        }
+        if (ch === '"' || ch === "'") {
+          jsxTagQuote = ch;
+          continue;
+        }
+        if (ch === '/' && next === '>') {
+          if (pendingJsxTag === 'open') jsxDepth = Math.max(0, jsxDepth - 1);
+          inJsxTag = false;
+          pendingJsxTag = null;
+          i++;
+          continue;
+        }
+        if (ch === '>') {
+          if (pendingJsxTag === 'close') jsxDepth = Math.max(0, jsxDepth - 1);
+          inJsxTag = false;
+          pendingJsxTag = null;
+          continue;
+        }
+        continue;
+      }
+
+      // JSX text can contain quotes, braces, and parens as plain content.
+      // Only tag boundaries matter for returning to normal JS parsing.
+      if (ch === '<') {
+        if (next === '/') {
+          inJsxTag = true;
+          pendingJsxTag = 'close';
+          i++;
+          continue;
+        }
+        if (next === '>' || /[A-Za-z]/.test(next || '')) {
+          inJsxTag = true;
+          pendingJsxTag = next === '>' ? 'self' : 'open';
+          if (pendingJsxTag === 'open') jsxDepth++;
+          if (next === '>') {
+            inJsxTag = false;
+            pendingJsxTag = null;
+            i++;
+          }
+          continue;
+        }
       }
       continue;
     }
@@ -1324,6 +1459,18 @@ function analyzeBracketSyntax(code: string): {
     if (ch === '/' && next === '*') {
       inBlockComment = true;
       i++;
+      continue;
+    }
+
+    if (options.jsx && ch === '<' && (next === '>' || /[A-Za-z]/.test(next || ''))) {
+      inJsxTag = true;
+      pendingJsxTag = next === '>' ? 'self' : 'open';
+      if (pendingJsxTag === 'open') jsxDepth++;
+      if (next === '>') {
+        inJsxTag = false;
+        pendingJsxTag = null;
+        i++;
+      }
       continue;
     }
 
