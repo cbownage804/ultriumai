@@ -1209,33 +1209,33 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
               </div>
             )}
 
-            {/* Compile error overlay on LKG preview — show compact error banner instead of full error screen */}
+            {/* Compile repair banner on LKG preview — never replace preview with a compile-failure wall */}
             {compileState === 'error' && !isGenerating && !isCompiling && !isUsingLKG && (
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-2 rounded-lg bg-black/90 border border-red-500/25 max-w-[90%]">
-                <div className="h-1.5 w-1.5 rounded-full bg-red-400 shrink-0" />
-                <span className="text-[10px] text-red-300/80 font-medium truncate">
-                  {compileError?.message || 'Build failed'} — auto-fix in progress
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-2 rounded-lg bg-black/90 border border-amber-500/25 max-w-[90%]">
+                <div className="h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" />
+                <span className="text-[10px] text-amber-300/80 font-medium truncate">
+                  Repairing latest changes — keeping preview stable
                 </span>
                 <button
                   onClick={handleRetryCompileClick}
                   disabled={retryDisabled}
-                  className="shrink-0 px-2 py-0.5 rounded bg-red-500/20 hover:bg-red-500/30 text-[10px] text-red-300 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="shrink-0 px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-[10px] text-amber-300 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Retry
+                  Repair now
                 </button>
               </div>
             )}
           </div>
         ) : compileState === 'error' ? (
-          <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden bg-[radial-gradient(circle_at_center,rgba(127,29,29,0.18),rgba(10,10,16,1)_58%)]">
+          <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.14),rgba(10,10,16,1)_58%)]">
             <div className="absolute inset-0 bg-black/40" />
             <div className="relative z-10 space-y-4 px-6 max-w-md">
-              <div className="h-3 w-3 rounded-full bg-red-400 mx-auto" />
-              <h3 className="font-semibold text-lg text-red-300/90 tracking-tight">
-                Preview failed to compile
+              <div className="h-3 w-3 rounded-full bg-amber-400 mx-auto" />
+              <h3 className="font-semibold text-lg text-amber-300/90 tracking-tight">
+                Repairing preview
               </h3>
               <p className="text-sm text-white/60 leading-relaxed">
-                {compileError?.message || 'The latest changes could not be compiled into a preview.'}
+                The builder found invalid generated code and is repairing it automatically.
               </p>
               {compileError?.errors?.length ? (
                 <div className="rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-left text-xs text-white/45 max-h-32 overflow-auto">
@@ -1252,7 +1252,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
                 className="px-4 py-2 rounded-lg bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <RefreshCw className="h-3 w-3 inline mr-1.5" />
-                Retry compile
+                Repair now
               </button>
             </div>
           </div>

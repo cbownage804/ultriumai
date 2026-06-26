@@ -1270,7 +1270,7 @@ export function BuilderChatPanel({
           </div>
         )}
 
-        {/* Prominent "Try to fix" button when preview fails */}
+        {/* Prominent repair button when preview needs code repair */}
         {compileState === 'error' && !isStreaming && isLast && !msg.inlineError && (
           <motion.div
             initial={{ opacity: 0, y: 4 }}
@@ -1279,20 +1279,20 @@ export function BuilderChatPanel({
           >
             <AlertTriangle className="h-4 w-4 text-red-400 shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-[13px] text-red-300/90 font-medium">Preview failed to compile</p>
+              <p className="text-[13px] text-amber-300/90 font-medium">Repairing preview</p>
               {buildErrors && buildErrors.length > 0 && (
                 <p className="text-[11px] text-red-300/50 font-mono truncate mt-0.5">{buildErrors[0]?.message?.slice(0, 80)}</p>
               )}
             </div>
             <button
               onClick={() => {
-                const errorContext = buildErrors?.map(e => `${e.file || ''}:${e.line || ''} ${e.message}`).join('\n') || 'Preview failed to compile';
+                const errorContext = buildErrors?.map(e => `${e.file || ''}:${e.line || ''} ${e.message}`).join('\n') || 'Preview needs repair';
                 onFixError(`The preview is showing errors. Please fix these compile errors:\n${errorContext}`);
               }}
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-cyan-500/15 text-cyan-400 hover:bg-cyan-500/25 transition-colors font-semibold text-[13px] shrink-0"
             >
               <Wrench className="h-3.5 w-3.5" />
-              Try to fix
+              Repair now
             </button>
           </motion.div>
         )}

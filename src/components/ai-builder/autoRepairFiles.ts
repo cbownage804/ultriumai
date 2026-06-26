@@ -240,43 +240,13 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
       // ── 6a. Fix malformed framer-motion closing tags: `</motion>` → `</motion.X>` ──
       // AI frequently drops the `.div`/`.section`/etc. on the closing tag, producing
       // `</motion></div>` which esbuild rejects ("Syntax error near </motion>").
-      {
-        const motionOpenRe = /<motion\.([A-Za-z][\w-]*)\b[^>]*?(\/?)>/g;
-        const stack: string[] = [];
-        const events: Array<{ index: number; length: number; replacement: string }> = [];
-        const tokenRe = /<motion\.([A-Za-z][\w-]*)\b[^>]*?(\/?)>|<\/motion(?:\.([A-Za-z][\w-]*))?\s*>/g;
-        void motionOpenRe;
-        let tk: RegExpExecArray | null;
-        while ((tk = tokenRe.exec(content)) !== null) {
-          const fullMatch = tk[0];
-          const openTag = tk[1];
-          const selfClose = tk[2];
-          const closeTag = tk[3];
-          if (openTag) {
-            if (selfClose !== '/') stack.push(openTag);
-            continue;
-          }
-          // Closing tag
-          const expected = stack.pop();
-          if (!closeTag && expected) {
-            // Bare `</motion>` — repair to `</motion.expected>`
-            events.push({
-              index: tk.index,
-              length: fullMatch.length,
-              replacement: `</motion.${expected}>`,
-            });
-          }
-          // If closeTag exists and matches, fine. If mismatch we leave for general balancer.
-        }
-        if (events.length > 0) {
-          // Apply from end → start to preserve indices
-          for (let i = events.length - 1; i >= 0; i--) {
-            const e = events[i];
-            content = content.slice(0, e.index) + e.replacement + content.slice(e.index + e.length);
-          }
-          changed = true;
-          repairs.push(`${f.path}: repaired ${events.length} malformed framer-motion closing tag(s)`);
-        }
+      // This parser intentionally does NOT use `[^>]*` for opening tags because JSX
+      // attributes can contain comparisons/arrows (`count > 0`, `() => ...`).
+      const motionRepair = fixFramerMotionTagBalance(content);
+      if (motionRepair.fixed) {
+        content = motionRepair.content;
+        changed = true;
+        repairs.push(`${f.path}: ${motionRepair.description}`);
       }
 
       // ── 6b0. Remove orphaned/out-of-order </textarea> before JSX balance runs ──
@@ -576,6 +546,19 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
       }
     }
 
+    // Absolute last-line shield: bare </motion> is never valid JSX and has
+    // repeatedly surfaced as a preview-blocking esbuild syntax error. Run this
+    // after every other pass so later JSX balancing cannot leave it behind.
+    if (['ts', 'tsx', 'js', 'jsx'].includes(ext)) {
+      const beforeBareMotionShield = content;
+      content = removeBareFramerMotionClosers(content);
+      if (content !== beforeBareMotionShield) {
+        changed = true;
+        const removed = (beforeBareMotionShield.match(/<\/motion\s*>/gi) || []).length;
+        repairs.push(`${f.path}: removed ${removed} invalid bare framer-motion closing tag${removed === 1 ? '' : 's'} in final shield`);
+      }
+    }
+
     if (!changed) return f;
     return { ...f, content };
   });
@@ -686,11 +669,207 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
 }
 
 /**
+ * Repair malformed framer-motion JSX tags without being confused by `>` inside
+ * JSX attribute expressions. This specifically prevents generated code like
+ * `</motion></div>` or `</motion.div></motion></div>` from ever reaching Vite.
+ */
+function fixFramerMotionTagBalance(content: string): { content: string; fixed: boolean; description: string } {
+  const events: Array<{ index: number; length: number; replacement: string }> = [];
+  const stack: string[] = [];
+  let repairedBare = 0;
+  let removedBare = 0;
+  let removedMember = 0;
+
+  let i = 0;
+  while (i < content.length) {
+    const openIndex = content.indexOf('<', i);
+    if (openIndex === -1) break;
+
+    const parsed = parseMotionTokenAt(content, openIndex);
+    if (!parsed) {
+      i = openIndex + 1;
+      continue;
+    }
+
+    if (parsed.kind === 'open') {
+      if (!parsed.selfClosing) stack.push(parsed.tag);
+      i = parsed.end;
+      continue;
+    }
+
+    const closeTag = parsed.tag;
+    const expected = stack[stack.length - 1];
+
+    if (!closeTag) {
+      if (expected) {
+        // Bare `</motion>` while a specific motion tag is open: preserve the
+        // generated structure by rewriting to the expected member close.
+        stack.pop();
+        events.push({
+          index: openIndex,
+          length: parsed.end - openIndex,
+          replacement: `</motion.${expected}>`,
+        });
+        repairedBare++;
+      } else {
+        // Bare `</motion>` with no corresponding opener is never legal JSX.
+        events.push({ index: openIndex, length: parsed.end - openIndex, replacement: '' });
+        removedBare++;
+      }
+      i = parsed.end;
+      continue;
+    }
+
+    if (expected === closeTag) {
+      stack.pop();
+    } else {
+      const matchingIndex = stack.lastIndexOf(closeTag);
+      if (matchingIndex >= 0) {
+        // Close any unclosed inner motion tags first, then consume this close.
+        stack.length = matchingIndex;
+      } else {
+        // Extra `</motion.div>` with no corresponding opener is invalid JSX.
+        events.push({ index: openIndex, length: parsed.end - openIndex, replacement: '' });
+        removedMember++;
+      }
+    }
+    i = parsed.end;
+  }
+
+  // Absolute last line of defense: no bare `</motion>` token is valid JSX. If
+  // one escaped structural parsing (for example after malformed neighboring
+  // markup), remove it before Vite/esbuild can choke on it.
+  const alreadyHandled = new Set(events.map(e => e.index));
+  const bareCloseRe = /<\/motion\s*>/g;
+  let bareMatch: RegExpExecArray | null;
+  while ((bareMatch = bareCloseRe.exec(content)) !== null) {
+    if (alreadyHandled.has(bareMatch.index)) continue;
+    events.push({ index: bareMatch.index, length: bareMatch[0].length, replacement: '' });
+    removedBare++;
+  }
+
+  if (events.length === 0) {
+    return { content, fixed: false, description: '' };
+  }
+
+  events.sort((a, b) => b.index - a.index);
+  let output = content;
+  for (const event of events) {
+    output = output.slice(0, event.index) + event.replacement + output.slice(event.index + event.length);
+  }
+
+  const parts: string[] = [];
+  if (repairedBare > 0) parts.push(`rewrote ${repairedBare} bare framer-motion closing tag${repairedBare === 1 ? '' : 's'}`);
+  if (removedBare > 0) parts.push(`removed ${removedBare} orphaned bare framer-motion closing tag${removedBare === 1 ? '' : 's'}`);
+  if (removedMember > 0) parts.push(`removed ${removedMember} orphaned framer-motion member closing tag${removedMember === 1 ? '' : 's'}`);
+
+  return {
+    content: output,
+    fixed: true,
+    description: parts.join(', ') || `repaired ${events.length} framer-motion closing tag${events.length === 1 ? '' : 's'}`,
+  };
+}
+
+function parseMotionTokenAt(content: string, index: number):
+  | { kind: 'open'; tag: string; end: number; selfClosing: boolean }
+  | { kind: 'close'; tag: string | null; end: number }
+  | null {
+  const rest = content.slice(index);
+  const closeMatch = rest.match(/^<\/motion(?:\.([A-Za-z][\w-]*))?\s*>/);
+  if (closeMatch) {
+    return {
+      kind: 'close',
+      tag: closeMatch[1] || null,
+      end: index + closeMatch[0].length,
+    };
+  }
+
+  const openMatch = rest.match(/^<motion\.([A-Za-z][\w-]*)(?=[\s/>])/);
+  if (!openMatch) return null;
+
+  const tagEnd = findJsxTagEnd(content, index + openMatch[0].length);
+  if (tagEnd === -1) return null;
+
+  const tagText = content.slice(index, tagEnd + 1);
+  return {
+    kind: 'open',
+    tag: openMatch[1],
+    end: tagEnd + 1,
+    selfClosing: /\/\s*>$/.test(tagText),
+  };
+}
+
+function removeBareFramerMotionClosers(content: string): string {
+  return content.replace(/<\/motion\s*>/gi, '');
+}
+
+function findJsxTagEnd(content: string, start: number): number {
+  let quote: '"' | "'" | '`' | null = null;
+  let escaped = false;
+  let braceDepth = 0;
+  let parenDepth = 0;
+  let bracketDepth = 0;
+
+  for (let i = start; i < content.length; i++) {
+    const ch = content[i];
+
+    if (quote) {
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (ch === '\\') {
+        escaped = true;
+        continue;
+      }
+      if (ch === quote) quote = null;
+      continue;
+    }
+
+    if (ch === '"' || ch === "'" || ch === '`') {
+      quote = ch;
+      continue;
+    }
+
+    if (ch === '{') {
+      braceDepth++;
+      continue;
+    }
+    if (ch === '}' && braceDepth > 0) {
+      braceDepth--;
+      continue;
+    }
+    if (ch === '(' && braceDepth > 0) {
+      parenDepth++;
+      continue;
+    }
+    if (ch === ')' && braceDepth > 0 && parenDepth > 0) {
+      parenDepth--;
+      continue;
+    }
+    if (ch === '[' && braceDepth > 0) {
+      bracketDepth++;
+      continue;
+    }
+    if (ch === ']' && braceDepth > 0 && bracketDepth > 0) {
+      bracketDepth--;
+      continue;
+    }
+
+    if (ch === '>' && braceDepth === 0 && parenDepth === 0 && bracketDepth === 0) {
+      return i;
+    }
+  }
+
+  return -1;
+}
+
+/**
  * Fix JSX tag balance for lowercase HTML tags + fragments.
  * Designed to be conservative (avoids uppercase tags to prevent TS generic false-positives).
  */
 function fixJsxTagBalance(content: string): { content: string; fixed: boolean; description: string } {
-  const tokenRegex = /<\/>|<>|<\/[a-z][a-z0-9]*\s*>|<[a-z][a-z0-9]*\b[^>]*>/g;
+  const tokenRegex = /<\/>|<>|<\/[a-z][a-z0-9]*\s*>|<[a-z][a-z0-9]*(?=[\s/>])[^>]*>/g;
   const voidTags = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
   const stack: Array<{ tag: string; isFragment: boolean }> = [];
 

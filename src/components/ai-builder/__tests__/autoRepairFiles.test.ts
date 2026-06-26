@@ -176,6 +176,89 @@ export default function App() {
 
     expect(repairs.some(r => r.includes('template expression') || r.includes('template literal'))).toBe(true);
   });
+
+  it('repairs bare framer-motion closing tags before Vite sees them', () => {
+    const files = [
+      makeTsx('src/App.tsx', `import { motion } from 'framer-motion';
+export default function App() {
+  return (
+    <motion.div className="p-4">
+      <h1>Hi</h1>
+    </motion></div>
+  );
+}`),
+    ];
+
+    const { files: repairedFiles, repairs } = autoRepairFiles(files);
+    const content = repairedFiles[0].content;
+
+    expect(content).toContain('</motion.div>');
+    expect(content).not.toMatch(/<\/motion>(?!\.)/);
+    expect(repairs.some(r => r.includes('framer-motion closing tag'))).toBe(true);
+  });
+
+  it('removes orphaned framer-motion closing tags after a valid close', () => {
+    const files = [
+      makeTsx('src/App.tsx', `import { motion } from 'framer-motion';
+export default function App() {
+  return <div><motion.section>Ready</motion.section></motion></div>;
+}`),
+    ];
+
+    const { files: repairedFiles, repairs } = autoRepairFiles(files);
+    const content = repairedFiles[0].content;
+
+    expect(content).toContain('<motion.section>Ready</motion.section>');
+    expect(content).toContain('</div>');
+    expect(content).not.toMatch(/<\/motion>(?!\.)/);
+    expect(repairs.some(r => r.includes('framer-motion closing tag'))).toBe(true);
+  });
+
+  it('removes the exact orphaned </motion></div> sequence reported by preview compile', () => {
+    const files = [
+      makeTsx('src/App.tsx', `import { motion } from 'framer-motion';
+export default function App() {
+  return (
+    <div>
+      <motion.div>
+        <p>Gentleman Fade</p>
+      </motion.div>
+      </motion></div>
+  );
+}`),
+    ];
+
+    const { files: repairedFiles, repairs } = autoRepairFiles(files);
+    const content = repairedFiles[0].content;
+
+    expect(content).toContain('</motion.div>');
+    expect(content).toContain('</div>');
+    expect(content).not.toMatch(/<\/motion\s*>/);
+    expect(repairs.some(r => r.includes('framer-motion closing tag'))).toBe(true);
+  });
+
+  it('repairs framer-motion tags with > characters inside JSX attributes', () => {
+    const files = [
+      makeTsx('src/App.tsx', `import { motion } from 'framer-motion';
+export default function App() {
+  const items = [1, 2, 3];
+  return (
+    <motion.div animate={{ opacity: items.length > 0 ? 1 : 0 }} onClick={() => items.length > 1 && console.log('x')}>
+      Ready
+    </motion></div>
+  );
+}`),
+    ];
+
+    const { files: repairedFiles, repairs } = autoRepairFiles(files);
+    const content = repairedFiles[0].content;
+
+    expect(content).toContain('</motion.div>');
+    expect(content).not.toMatch(/<\/motion\s*>/);
+    expect(content).toContain('items.length > 0');
+    expect(content).toContain('items.length > 1');
+    expect(repairs.some(r => r.includes('framer-motion closing tag'))).toBe(true);
+  });
 });
 
 describe('autoRepairFiles corrupted arrow functions', () => {
