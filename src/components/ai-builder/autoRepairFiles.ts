@@ -546,6 +546,19 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
       }
     }
 
+    // Absolute last-line shield: bare </motion> is never valid JSX and has
+    // repeatedly surfaced as a preview-blocking esbuild syntax error. Run this
+    // after every other pass so later JSX balancing cannot leave it behind.
+    if (['ts', 'tsx', 'js', 'jsx'].includes(ext)) {
+      const beforeBareMotionShield = content;
+      content = removeBareFramerMotionClosers(content);
+      if (content !== beforeBareMotionShield) {
+        changed = true;
+        const removed = (beforeBareMotionShield.match(/<\/motion\s*>/gi) || []).length;
+        repairs.push(`${f.path}: removed ${removed} invalid bare framer-motion closing tag${removed === 1 ? '' : 's'} in final shield`);
+      }
+    }
+
     if (!changed) return f;
     return { ...f, content };
   });
@@ -784,6 +797,10 @@ function parseMotionTokenAt(content: string, index: number):
     end: tagEnd + 1,
     selfClosing: /\/\s*>$/.test(tagText),
   };
+}
+
+function removeBareFramerMotionClosers(content: string): string {
+  return content.replace(/<\/motion\s*>/gi, '');
 }
 
 function findJsxTagEnd(content: string, start: number): number {
