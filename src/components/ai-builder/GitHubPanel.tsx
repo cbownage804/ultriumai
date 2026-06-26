@@ -60,7 +60,7 @@ const PAT_KEY = 'app-builder-github-pat';
 const REPO_KEY = 'app-builder-github-repo';
 
 export function GitHubPanel({ open, onClose, projectName, files, onFilesImported, githubSync }: GitHubPanelProps) {
-  const [token, setToken] = useState(() => localStorage.getItem(PAT_KEY) || '');
+  const [token, setToken] = useState(() => sessionStorage.getItem(PAT_KEY) || '');
   const [connected, setConnected] = useState(false);
   const [username, setUsername] = useState('');
   const [activeTab, setActiveTab] = useState<'connect' | 'repo' | 'branches' | 'push' | 'pull'>('connect');
@@ -103,7 +103,7 @@ export function GitHubPanel({ open, onClose, projectName, files, onFilesImported
       const user = await resp.json();
       setUsername(user.login);
       setConnected(true);
-      localStorage.setItem(PAT_KEY, token);
+      sessionStorage.setItem(PAT_KEY, token);
       // Also connect the githubSync hook if available
       if (githubSync) {
         const savedRepo = localStorage.getItem(REPO_KEY);
@@ -121,7 +121,7 @@ export function GitHubPanel({ open, onClose, projectName, files, onFilesImported
     setToken('');
     setRepos([]);
     setSelectedRepo(null);
-    localStorage.removeItem(PAT_KEY);
+    sessionStorage.removeItem(PAT_KEY);
     setActiveTab('connect');
     githubSync?.disconnectGitHub();
   };
@@ -274,7 +274,7 @@ export function GitHubPanel({ open, onClose, projectName, files, onFilesImported
 
   // Auto-connect on mount
   useEffect(() => {
-    const saved = localStorage.getItem(PAT_KEY);
+    const saved = sessionStorage.getItem(PAT_KEY);
     if (saved && !connected) { setToken(saved); }
   }, []);
 
