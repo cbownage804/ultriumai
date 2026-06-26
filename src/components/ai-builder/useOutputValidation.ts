@@ -321,9 +321,28 @@ export function sanitizeStagedFiles(files: ProjectFile[]): { files: ProjectFile[
     error: 'AlertCircle', danger: 'AlertCircle',
   };
 
-  const sanitized = files.map(f => {
+  const sanitized = files.flatMap(f => {
+    // ── Guard: package.json must parse as valid JSON, otherwise drop the edit
+    // entirely so the previously-good lockfile/dep manifest is preserved. A
+    // broken package.json causes silent blank-preview failures because the
+    // sandbox can't resolve deps.
+    if (f.path === 'package.json' || f.path.endsWith('/package.json')) {
+      try {
+        const parsed = JSON.parse(f.content);
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+          fixes.push(`${f.path}: dropped — not a JSON object`);
+          return [];
+        }
+      } catch (err: any) {
+        fixes.push(`${f.path}: dropped invalid JSON (${err?.message || 'parse error'}) — kept previous manifest`);
+        return [];
+      }
+      return [f];
+    }
+
     let content = f.content;
     let changed = false;
+
 
     // Strip protocol-marker artifacts that should never exist inside real file contents.
     const markerArtifactRegex = /^\s*===(?:END|FILE:\s*.+?|EDIT:\s*.+?|DELETE:\s*.+?|MODE:\s*.+?|MIGRATION(?::\s*.+?)?|EDGE_FUNCTION:\s*.+?)===\s*$/gm;
