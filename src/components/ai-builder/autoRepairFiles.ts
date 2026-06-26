@@ -1150,6 +1150,14 @@ function detectUnterminatedLiteral(content: string, options: { jsx?: boolean } =
           jsxTagQuote = ch;
           continue;
         }
+        if (ch === '`') {
+          // Template literals inside JSX attributes still need normal JS repair
+          // when the stream cuts off before the closing `}` / tag `>`.
+          inTemplateLiteral = true;
+          inJsxTag = false;
+          pendingJsxTag = null;
+          continue;
+        }
         if (ch === '/' && next === '>') {
           if (pendingJsxTag === 'open') jsxDepth = Math.max(0, jsxDepth - 1);
           inJsxTag = false;
@@ -1383,6 +1391,12 @@ function analyzeBracketSyntax(code: string, options: { jsx?: boolean } = {}): {
         }
         if (ch === '"' || ch === "'") {
           jsxTagQuote = ch;
+          continue;
+        }
+        if (ch === '`') {
+          inTemplateLiteral = true;
+          inJsxTag = false;
+          pendingJsxTag = null;
           continue;
         }
         if (ch === '/' && next === '>') {
