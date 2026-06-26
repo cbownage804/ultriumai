@@ -222,6 +222,15 @@ test.describe('App Builder — Framer Motion repair regression', () => {
         // eslint-disable-next-line no-console
         console.warn(`[motion-regression][${c.name}] compile reported:`, result.compileError);
       }
+
+      // Preview must NOT show the compile-failed / "Repairing preview" wall
+      // for any case. The repaired output is valid JSX, so the panel should
+      // remain in idle/compiling/success — never in the error state.
+      const failedWallVisible = await page
+        .getByText('Repairing preview', { exact: false })
+        .isVisible()
+        .catch(() => false);
+      expect(failedWallVisible, `case: ${c.name} entered compile-failed state`).toBe(false);
     }
 
     // Heartbeat must have advanced across the full sweep — proves no freeze.
