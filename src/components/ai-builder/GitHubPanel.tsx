@@ -272,8 +272,11 @@ export function GitHubPanel({ open, onClose, projectName, files, onFilesImported
     }
   };
 
-  // Auto-connect on mount
+  // Auto-connect on mount; PAT is stored in sessionStorage (cleared on tab close)
   useEffect(() => {
+    // Migrate any legacy localStorage PAT to sessionStorage, then clear
+    const legacy = localStorage.getItem(PAT_KEY);
+    if (legacy) { sessionStorage.setItem(PAT_KEY, legacy); localStorage.removeItem(PAT_KEY); }
     const saved = sessionStorage.getItem(PAT_KEY);
     if (saved && !connected) { setToken(saved); }
   }, []);
