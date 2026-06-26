@@ -398,4 +398,59 @@ export default App;
     expect(afterExport.trim()).toBe('');
     expect(repairs.some(r => r.includes('dangling JSX emitted after terminal export default'))).toBe(true);
   });
+
+  it('removes stray closing brace emitted after terminal export default', () => {
+    const files = [
+      makeTsx('src/components/Navbar.tsx', `import React from 'react';
+
+const Navbar = () => <nav>D'Taylor Barbershop</nav>;
+
+export default Navbar;
+}`),
+    ];
+
+    const { files: repairedFiles, repairs } = autoRepairFiles(files);
+    const content = repairedFiles[0].content;
+    const afterExport = content.slice(content.lastIndexOf('export default Navbar;') + 'export default Navbar;'.length);
+
+    expect(afterExport.trim()).toBe('');
+    expect(repairs.some(r => r.includes('removed trailing unexpected "}"'))).toBe(true);
+  });
+
+  it('removes stray closing punctuation emitted after terminal export default', () => {
+    const files = [
+      makeTsx('src/components/Navbar.tsx', `import React from 'react';
+
+const Navbar = () => <nav>D'Taylor Barbershop</nav>;
+
+export default Navbar;
+};`),
+    ];
+
+    const { files: repairedFiles, repairs } = autoRepairFiles(files);
+    const content = repairedFiles[0].content;
+    const afterExport = content.slice(content.lastIndexOf('export default Navbar;') + 'export default Navbar;'.length);
+
+    expect(afterExport.trim()).toBe('');
+    expect(repairs.some(r => r.includes('dangling JSX emitted after terminal export default'))).toBe(true);
+  });
+
+  it('removes stray markdown backtick and brace emitted after terminal export default', () => {
+    const files = [
+      makeTsx('src/components/Navbar.tsx', `import React from 'react';
+
+const Navbar = () => <nav>D'Taylor Barbershop</nav>;
+
+export default Navbar;
+\`
+}`),
+    ];
+
+    const { files: repairedFiles, repairs } = autoRepairFiles(files);
+    const content = repairedFiles[0].content;
+    const afterExport = content.slice(content.lastIndexOf('export default Navbar;') + 'export default Navbar;'.length);
+
+    expect(afterExport.trim()).toBe('');
+    expect(repairs.some(r => r.includes('dangling JSX emitted after terminal export default'))).toBe(true);
+  });
 });
