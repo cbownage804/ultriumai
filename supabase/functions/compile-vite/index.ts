@@ -272,6 +272,54 @@ function repairFramerMotionClosers(content: string): { content: string; count: n
   return { content: output, count: events.length };
 }
 
+function stripDanglingJsxAfterDefaultExport(content: string): { content: string; fixed: boolean } {
+  const exportLineRe = /^[ \t]*export\s+default\s+[A-Za-z_$][\w$]*\s*;?[ \t]*(?:\/\/.*)?$/gm;
+  let match: RegExpExecArray | null;
+  let lastMatch: RegExpExecArray | null = null;
+
+  while ((match = exportLineRe.exec(content)) !== null) {
+    lastMatch = match;
+  }
+
+  if (!lastMatch || lastMatch.index === undefined) return { content, fixed: false };
+
+  const lineEnd = content.indexOf('\n', lastMatch.index);
+  const suffixStart = lineEnd === -1 ? content.length : lineEnd + 1;
+  const suffix = content.slice(suffixStart);
+  if (!looksLikeDanglingJsxSuffix(suffix)) return { content, fixed: false };
+
+  return { content: `${content.slice(0, suffixStart).trimEnd()}\n`, fixed: true };
+}
+
+function looksLikeDanglingJsxSuffix(suffix: string): boolean {
+  const trimmed = suffix.trim();
+  if (!trimmed) return false;
+  if (!/^<\/?(?:[a-z][\w-]*|motion(?:\.[A-Za-z][\w-]*)?|>|\s)/i.test(trimmed)) return false;
+
+  let rest = trimmed;
+  const tagRe = /^(?:<\/?[a-z][\w-]*(?:\s[^<>]*)?>|<\/?motion(?:\.[A-Za-z][\w-]*)?\s*>|<>|<\/>)\s*/i;
+  let tagCount = 0;
+
+  while (rest.length > 0) {
+    const tag = rest.match(tagRe);
+    if (tag) {
+      tagCount++;
+      rest = rest.slice(tag[0].length).trimStart();
+      continue;
+    }
+
+    const punctuation = rest.match(/^[);,]+\s*/);
+    if (punctuation) {
+      rest = rest.slice(punctuation[0].length).trimStart();
+      continue;
+    }
+
+    return false;
+  }
+
+  return tagCount > 0;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -332,6 +380,18 @@ serve(async (req) => {
       f.content = f.content.replace(/<\/motion\s*>/gi, '');
       if (f.content !== before) {
         console.log(`[compile-vite] Removed invalid bare </motion> closer from ${f.path}`);
+      }
+    }
+
+    // Final edge shield for malformed streamed output where orphan JSX closing
+    // tags appear after `export default App;`. Such suffixes are always invalid
+    // module syntax and can cause esbuild to fail before client repair can run.
+    for (const f of files) {
+      if (!/\.(tsx|jsx)$/.test(f.path) || typeof f.content !== 'string') continue;
+      const stripped = stripDanglingJsxAfterDefaultExport(f.content);
+      if (stripped.fixed) {
+        f.content = stripped.content;
+        console.log(`[compile-vite] Removed dangling JSX after export default from ${f.path}`);
       }
     }
 
