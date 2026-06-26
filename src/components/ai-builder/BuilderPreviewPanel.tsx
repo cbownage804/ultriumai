@@ -459,8 +459,13 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
   const [iframeKey, setIframeKey] = useState(0);
   const [emergencyPreviewHtml, setEmergencyPreviewHtml] = useState<string | null>(null);
   const retryClickLockRef = useRef(false);
+  const retryDisabled = isGenerating || isCompiling;
 
   const handleRetryCompileClick = useCallback(() => {
+    if (retryDisabled) {
+      toast.info('Wait for the current build step to finish first.', { duration: 1600 });
+      return;
+    }
     if (!onRetryCompile || retryClickLockRef.current) return;
     retryClickLockRef.current = true;
     toast.info('Retrying compile…', { duration: 1600 });
@@ -477,7 +482,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
         }
       }, 0);
     });
-  }, [onRetryCompile]);
+  }, [onRetryCompile, retryDisabled]);
 
   // Sandpack compiles internally — no need to remount on external compile state changes.
   // Only remount on explicit refreshKey change (user-triggered refresh).
@@ -1213,7 +1218,8 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
                 </span>
                 <button
                   onClick={handleRetryCompileClick}
-                  className="shrink-0 px-2 py-0.5 rounded bg-red-500/20 hover:bg-red-500/30 text-[10px] text-red-300 font-medium transition-colors"
+                  disabled={retryDisabled}
+                  className="shrink-0 px-2 py-0.5 rounded bg-red-500/20 hover:bg-red-500/30 text-[10px] text-red-300 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Retry
                 </button>
@@ -1242,7 +1248,8 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
               ) : null}
               <button
                 onClick={handleRetryCompileClick}
-                className="px-4 py-2 rounded-lg bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-medium transition-colors"
+                disabled={retryDisabled}
+                className="px-4 py-2 rounded-lg bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <RefreshCw className="h-3 w-3 inline mr-1.5" />
                 Retry compile
@@ -1270,7 +1277,8 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
               </p>
               <button
                 onClick={handleRetryCompileClick}
-                className="px-4 py-2 rounded-lg bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-medium transition-colors"
+                disabled={retryDisabled}
+                className="px-4 py-2 rounded-lg bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <RefreshCw className="h-3 w-3 inline mr-1.5" />
                 Retry compile
