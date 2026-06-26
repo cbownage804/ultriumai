@@ -604,6 +604,7 @@ const DELETE_DELIMITER = /^\s*===DELETE:\s*(.+?)===\s*$/;
 const EDIT_DELIMITER = /^\s*===EDIT:\s*(.+?)===\s*$/;
 const OUTPUT_END_DELIMITER = /^\s*===END===\s*$/;
 const HUNK_HEADER = /^@@\s*(\d+)-(\d+)\s*@@$/;
+const SIMPLE_COUNT_HUNK_HEADER = /^@@\s*(\d+),(\d+)\s*@@$/;
 const UNIFIED_HUNK_HEADER = /^@@\s*-(\d+)(?:,(\d+))?\s*\+(\d+)(?:,(\d+))?\s*@@/;
 // AI model format: @@oldStart,oldCount +newStart,newCount @@ (no leading -)
 const AI_HUNK_HEADER = /^@@\s*(\d+),(\d+)\s*\+(\d+),(\d+)\s*@@/;
@@ -685,6 +686,8 @@ function parseEditBlocks(raw: string): EditBlock[] {
   let hasDiffMarkers = false;
   /** Whether the current hunk uses unified diff (+/- prefixed lines) */
   let isUnifiedDiffHunk = false;
+  /** Legacy AI format: @@start,count@@ — may contain unified +/- lines or raw replacement lines */
+  let isSimpleCountHunk = false;
 
   const flushHunk = () => {
     if (inHunk && currentHunkStart > 0) {
@@ -695,7 +698,10 @@ function parseEditBlocks(raw: string): EditBlock[] {
       // - Lines starting with '-' (not '---') → removed content (skip)
       // - Lines starting with ' ' → context (strip leading space)
       // - Other lines → keep as-is (content)
-      if (isUnifiedDiffHunk) {
+      const shouldTreatAsUnified = isUnifiedDiffHunk
+        || (isSimpleCountHunk && currentHunkLines.some(l => /^[-+](?![-+])/.test(l) || l === '-' || l === '+'));
+
+      if (shouldTreatAsUnified) {
         finalLines = [];
         for (const l of currentHunkLines) {
           if (/^-[^-]/.test(l) || (l === '-')) {
@@ -732,6 +738,7 @@ function parseEditBlocks(raw: string): EditBlock[] {
     currentHunkLines = [];
     inHunk = false;
     isUnifiedDiffHunk = false;
+    isSimpleCountHunk = false;
   };
 
   const flushEdit = () => {
@@ -769,6 +776,21 @@ function parseEditBlocks(raw: string): EditBlock[] {
         currentHunkEnd = parseInt(hunkMatch[2]);
         inHunk = true;
         isUnifiedDiffHunk = false;
+        isSimpleCountHunk = false;
+        continue;
+      }
+
+      // Legacy model format used by the server prompt: @@start,count@@
+      // This may be followed by +/- unified-diff lines OR by raw replacement lines.
+      const simpleCountMatch = line.match(SIMPLE_COUNT_HUNK_HEADER);
+      if (simpleCountMatch) {
+        flushHunk();
+        currentHunkStart = parseInt(simpleCountMatch[1]);
+        const oldCount = parseInt(simpleCountMatch[2] || '1');
+        currentHunkEnd = currentHunkStart + oldCount - 1;
+        inHunk = true;
+        isUnifiedDiffHunk = false;
+        isSimpleCountHunk = true;
         continue;
       }
 
@@ -781,6 +803,7 @@ function parseEditBlocks(raw: string): EditBlock[] {
         currentHunkEnd = currentHunkStart + oldCount - 1;
         inHunk = true;
         isUnifiedDiffHunk = true; // AI format uses +/- prefixed lines
+        isSimpleCountHunk = false;
         continue;
       }
 
@@ -793,6 +816,7 @@ function parseEditBlocks(raw: string): EditBlock[] {
         currentHunkEnd = currentHunkStart + oldCount - 1;
         inHunk = true;
         isUnifiedDiffHunk = true; // Unified diffs use +/- prefixed lines
+        isSimpleCountHunk = false;
         continue;
       }
 
