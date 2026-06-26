@@ -3025,12 +3025,25 @@ export function AIAppBuilderWorkspace() {
       return;
     }
 
+    const currentErrorText = [compileError?.message, ...(compileError?.errors ?? [])].filter(Boolean).join('\n');
+    const isDeterministicCodeError = /syntax error|unexpected token|parse error|unterminated|adjacent jsx|expected.*<\//i.test(currentErrorText);
+    if (isDeterministicCodeError && !isGeneratingRef.current && !isGeneratingOverrideRef.current) {
+      // Re-running Vite against unchanged syntax-broken files only re-enters the same
+      // expensive failure path. Treat Retry as a focused repair for deterministic code
+      // errors, which is what the user expects from a builder-style retry button.
+      dedupeToast('info', 'Retry found a code error — sending it to AI to fix instead.');
+      setCompileStateRaw('idle');
+      setCompileError(null);
+      handleFixError(`Compile error: ${currentErrorText || 'The preview failed to compile.'}`);
+      return;
+    }
+
     // Clear stale transport errors immediately so Retry cannot appear frozen while
     // the bridge debounce/network retry path starts a fresh compile.
     setCompileError(null);
     setCompileStateRaw('compiling');
     forceCompileRef.current?.();
-  }, [project.files]);
+  }, [project.files, compileError, handleFixError]);
 
   const handleDiscardChanges = useCallback(() => {
     clearRepairWatchdog();
