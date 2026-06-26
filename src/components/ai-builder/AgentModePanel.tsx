@@ -195,9 +195,9 @@ export function AgentModePanel({ run, taskQueue, pendingApproval, compileState, 
         >
           <div className="relative shrink-0">
             {isAwaitingApproval ? (
-              <Shield className="h-3.5 w-3.5 text-violet-400 animate-pulse" />
+              <Shield className="h-3.5 w-3.5 text-violet-400" />
             ) : isRunning ? (
-              <Loader2 className="h-3.5 w-3.5 text-cyan-400 animate-spin" />
+              <Loader2 className="h-3.5 w-3.5 text-cyan-400" />
             ) : allDone ? (
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400/60" />
             ) : (
@@ -316,7 +316,7 @@ export function AgentModePanel({ run, taskQueue, pendingApproval, compileState, 
                           isParallel && "ml-3 border-l-2 border-violet-500/20 pl-2",
                         )}>
                           {isActive ? (
-                            <Loader2 className="h-3 w-3 text-cyan-400 animate-spin shrink-0" />
+                            <Loader2 className="h-3 w-3 text-cyan-400 shrink-0" />
                           ) : isDone ? (
                             <CheckCircle2 className="h-3 w-3 text-emerald-400/60 shrink-0" />
                           ) : isError ? (
