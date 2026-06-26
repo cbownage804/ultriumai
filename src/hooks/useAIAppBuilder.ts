@@ -1820,6 +1820,10 @@ ${JSON.stringify(brandingData.typography, null, 2)}` : ''}` });
       // Fresh project shortcut — skip all context machinery
       if (files.length === 0) return userInput;
 
+      const focusFiles = detectFocusFiles(userInput, files);
+      const focusPathSet = new Set(focusFiles);
+      const visualFixContext = buildVisualStyleFixContext(userInput, files);
+
       // Phase 75: Use proactive context budget trimming
       const activeFilePath = files[0]?.path || null;
       const trimResult = trimForContext(files, activeFilePath, userInput);
