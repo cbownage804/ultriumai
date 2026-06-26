@@ -4128,6 +4128,7 @@ export function AIAppBuilderWorkspace() {
     compileState,
     isGenerating,
     isCompiling,
+    compilePhase,
     refreshKey: previewRefreshKey,
     onFixError: handleFixError,
     onSmartFixError: handleSmartFixError,
@@ -4155,7 +4156,7 @@ export function AIAppBuilderWorkspace() {
     isUsingLKG,
     autoHealSummary,
     previewSlug,
-  }), [compiledHTML, compileState, isGenerating, isCompiling, previewRefreshKey, project.files, isStreamingPreview, isVisualEditActive, viewportMode, repairFailed, repairErrors, compileError, isGoldenProject, isUsingLKG, autoHealSummary, previewSlug, toggleVisualEdit, handleFixError, handleSmartFixError, handleAIEditRequest, handleAutoFixError, handleVisualEdit, handleRetryRepair, handleDiscardChanges, handleRetryCompile, handleResetToGolden]);
+  }), [compiledHTML, compileState, isGenerating, isCompiling, compilePhase, previewRefreshKey, project.files, isStreamingPreview, isVisualEditActive, viewportMode, repairFailed, repairErrors, compileError, isGoldenProject, isUsingLKG, autoHealSummary, previewSlug, toggleVisualEdit, handleFixError, handleSmartFixError, handleAIEditRequest, handleAutoFixError, handleVisualEdit, handleRetryRepair, handleDiscardChanges, handleRetryCompile, handleResetToGolden]);
 
   return (
     <TooltipProvider delayDuration={300}>
