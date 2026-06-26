@@ -75,6 +75,7 @@ import { useDeleteButtonAutoPatcher } from './useDeleteButtonAutoPatcher';
 import { usePromptPhasePlanner } from './usePromptPhasePlanner';
 import { useBuilderQuestions } from './useBuilderQuestions';
 import { useOutputValidation, sanitizeStagedFiles } from './useOutputValidation';
+import { autoRepairFiles } from './autoRepairFiles';
 import { useBuildAnalytics } from '@/hooks/useBuildAnalytics';
 import { detectSupabaseIntents, buildSupabaseContext, buildErrorDiagnosisContext, analyzeConversationComplexity } from './SupabaseConversational';
 import { PANEL_REGISTRY } from './panelRegistry';
@@ -392,6 +393,17 @@ function validateBootIntegrity(files: ProjectFile[]): { errors: string[]; repair
   }
 
   return { errors, repairedFiles: needsRepair ? repairedFiles : null };
+}
+
+function isDeterministicCompileSyntaxError(error?: CompileErrorInfo | null): boolean {
+  const text = [error?.message, ...(error?.errors ?? [])].filter(Boolean).join('\n');
+  return /syntax error|unexpected token|parse error|unterminated|adjacent jsx|expected.*<\/|jsx|closing tag/i.test(text);
+}
+
+function didProjectFilesChange(before: ProjectFile[], after: ProjectFile[]): boolean {
+  if (before.length !== after.length) return true;
+  const afterMap = new Map(after.map(file => [file.path, file.content]));
+  return before.some(file => afterMap.get(file.path) !== file.content);
 }
 
 /** Check if the user's latest message explicitly requests changing a protected file */
