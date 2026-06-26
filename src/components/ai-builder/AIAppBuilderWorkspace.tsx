@@ -57,6 +57,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePostBuildSmokeTest } from './usePostBuildSmokeTest';
+import { installBuilderTestHook } from './__testHooks__/builderTestHook';
 import { useVersionTimeline } from '@/hooks/useVersionTimeline';
 import { useBuildLog } from '@/hooks/useBuildLog';
 import { useHotModuleRecovery } from './useHotModuleRecovery';
@@ -1447,6 +1448,16 @@ export function AIAppBuilderWorkspace() {
   const { findReferencedFiles } = useProjectBundler();
   const { compileReactProject } = useWorkerCompiler();
   const compileReactProjectRef = useSyncRef(compileReactProject);
+  // Dev-only E2E test hook (tree-shaken from production).
+  const setFilesRef = useSyncRef(setFiles);
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    return installBuilderTestHook({
+      setFiles: (files) => setFilesRef.current(files),
+      getFiles: () => projectFilesRef.current,
+      compileReactProject: (files) => compileReactProjectRef.current(files),
+    });
+  }, [compileReactProjectRef, projectFilesRef, setFilesRef]);
   const astBundler = useASTBundler();
   const incrementalCompiler = useIncrementalCompiler();
   const tsValidator = useTypeScriptValidator();

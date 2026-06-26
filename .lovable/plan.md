@@ -1,69 +1,47 @@
+# Builder Auto-Repair Smoke Test
 
+Add a Playwright-driven smoke test that loads the App Builder, injects a known-broken project (the `</motion></div>` bug), runs it through the auto-repair → compile pipeline, and asserts the UI thread never freezes.
 
-# Move Thumbnail Capture Server-Side
+## Approach
 
-## Current Problem
-There are **6 separate places** using `html2canvas` on the main thread:
+Avoid the full AI generation path (slow, non-deterministic, requires auth + credits). Instead, exercise the deterministic pipeline directly in the browser:
 
-1. **`usePreviewCapture.ts`** — Project thumbnails (auto, after every build)
-2. **`useGPTPreviewCapture.ts`** — GPT widget thumbnails (no hardening at all)
-3. **`usePreviewScreenshot.ts`** — User-triggered screenshot/download
-4. **`useVisualDiff.ts`** — Before/after visual comparison snapshots
-5. **`BugReportModal.tsx`** — Bug report screenshot of the page
-6. **`BuilderChatPanel.tsx`** — Inline "Screenshot" button in chat plus menu
+1. Load `/ai-studio/app-builder` with the managed Supabase session (already injected via `LOVABLE_BROWSER_SUPABASE_*`).
+2. Seed a broken `App.tsx` into the in-memory project store via a `window.__BUILDER_TEST__` hook (new, dev-only).
+3. Invoke the auto-repair + compile flow through the same hook.
+4. Continuously poll a main-thread liveness heartbeat from the page; fail if any gap exceeds 1.5s (freeze threshold).
+5. Assert: repaired file contains `</motion.div>`, preview iframe loads, no error overlay, heartbeat never stalled.
 
-Items 3-6 are user-triggered and tolerable. Items 1 and 2 are **automatic** and are the freeze sources. The key insight: the compiled HTML is already uploaded to `app_builder_live_previews` and available at `https://{slug}.apps.ultriumai.com`. A server-side edge function can screenshot that URL instead of blocking the browser.
+## Files
 
-## Plan
-
-### Step 1: Create `capture-thumbnail` Edge Function
-A new Supabase edge function that:
-- Accepts `{ projectId, url }` (the live preview URL)
-- Uses a lightweight screenshot API (e.g., `screenshotone.com` or similar service via fetch) to capture a 320x200 screenshot
-- Uploads the result to `project-thumbnails` storage bucket
-- Updates `builder_projects.thumbnail_url`
-- Returns the new URL
-
-This removes html2canvas entirely from the automatic thumbnail path.
-
-### Step 2: Rewrite `usePreviewCapture.ts` to Call the Edge Function
-Replace the iframe + html2canvas logic with a simple `supabase.functions.invoke('capture-thumbnail', { body: { projectId, url } })` call. Keep the 90s throttle and content-hash dedup. The hook becomes ~30 lines.
-
-### Step 3: Harden `useGPTPreviewCapture.ts`
-Add the same protections as usePreviewCapture (abort timer, throttle, scale reduction) since this hook has zero safeguards and directly imports html2canvas at the top level (not even lazy-loaded).
-
-### Step 4: Lazy-load html2canvas Everywhere Else
-The remaining 4 user-triggered usages (screenshot, visual diff, bug report, chat screenshot) should all use `await import('html2canvas')` instead of top-level imports. Currently `BugReportModal.tsx` and `useGPTPreviewCapture.ts` use static imports, which means html2canvas is in the critical bundle path even if never used.
+- `src/components/ai-builder/__testHooks__/builderTestHook.ts` (new) — dev-only `window.__BUILDER_TEST__` exposing `seedFiles`, `runAutoRepair`, `runCompile`, `getState`. Gated on `import.meta.env.DEV`.
+- `src/components/ai-builder/AIAppBuilderWorkspace.tsx` — mount the test hook in a `useEffect` when `DEV`.
+- `tests/e2e/builder-autorepair-smoke.spec.ts` (new) — Playwright test.
+- `playwright.config.ts` (new, if absent) — minimal config: chromium, `http://localhost:8080`, 60s timeout.
+- `package.json` — add `test:e2e` script: `playwright test`.
 
 ## Technical Details
 
-```text
-Before (automatic thumbnail):
-  Browser main thread:
-  ├── Create 1280×800 hidden iframe
-  ├── Write full compiled HTML
-  ├── Wait 3s for render
-  ├── Run html2canvas (synchronous DOM walk) — 2-8s freeze
-  ├── Convert to blob
-  └── Upload to storage
+**Liveness heartbeat:** test hook spawns a `setInterval(() => { window.__HEARTBEAT__ = performance.now() }, 100)`. Playwright polls `window.__HEARTBEAT__` every 200ms for 30s; max delta must stay < 1500ms.
 
-After (server-side):
-  Browser main thread:
-  └── fetch('capture-thumbnail', { projectId, url })  — 0ms freeze
-
-  Edge function (server):
-  ├── Call screenshot API with live preview URL
-  ├── Upload to storage
-  └── Update DB
+**Broken fixture:**
+```tsx
+import { motion } from 'framer-motion';
+export default function App() {
+  return (<motion.div><h1>Hi</h1></motion></div>);
+}
 ```
+Expected post-repair: bare `</motion>` rewritten to `</motion.div>`.
 
-### Files Changed
-- **New:** `supabase/functions/capture-thumbnail/index.ts`
-- **Rewrite:** `src/hooks/usePreviewCapture.ts` — replace html2canvas with edge function call
-- **Edit:** `src/hooks/useGPTPreviewCapture.ts` — add abort timer, throttle, lazy import
-- **Edit:** `src/components/help/BugReportModal.tsx` — change to dynamic import
-- **Edit:** `src/components/ai-builder/BuilderChatPanel.tsx` — already uses dynamic import, no change needed
+**Assertions:**
+- `result.repairs` includes `"repaired 1 malformed framer-motion closing tag"`.
+- Preview iframe `#builder-preview-iframe` reaches `readyState === 'complete'`.
+- No `[role="alert"]` with text matching `/failed to compile/i`.
+- Heartbeat gap < 1500ms throughout.
 
-### Secret Required
-A screenshot service API key (e.g., `SCREENSHOT_API_KEY`) will need to be added to Supabase edge function secrets. Alternatively, if no external service is desired, the edge function can use a simple approach: fetch the HTML from the DB and return a placeholder/favicon-based thumbnail, avoiding the need for a headless browser entirely.
+**Scope guardrails:** hook is `DEV`-only (stripped from prod bundle), no network calls bypassed, no auth changes.
 
+## Out of Scope
+
+- Real AI generation E2E (separate, slower suite).
+- CI wiring (left for follow-up).
