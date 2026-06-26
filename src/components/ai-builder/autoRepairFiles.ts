@@ -1158,6 +1158,7 @@ function detectUnterminatedLiteral(content: string, options: { jsx?: boolean } =
           continue;
         }
         if (ch === '>') {
+          if (pendingJsxTag === 'open') jsxDepth++;
           if (pendingJsxTag === 'close') jsxDepth = Math.max(0, jsxDepth - 1);
           inJsxTag = false;
           pendingJsxTag = null;
@@ -1176,9 +1177,9 @@ function detectUnterminatedLiteral(content: string, options: { jsx?: boolean } =
         }
         if (next === '>' || /[A-Za-z]/.test(next || '')) {
           inJsxTag = true;
-          pendingJsxTag = next === '>' ? 'self' : 'open';
-          if (pendingJsxTag === 'open') jsxDepth++;
+          pendingJsxTag = 'open';
           if (next === '>') {
+            jsxDepth++;
             inJsxTag = false;
             pendingJsxTag = null;
             i++;
@@ -1284,9 +1285,9 @@ function detectUnterminatedLiteral(content: string, options: { jsx?: boolean } =
     // Top-level code (not in any string/template/comment)
     if (options.jsx && ch === '<' && (next === '>' || /[A-Za-z]/.test(next || ''))) {
       inJsxTag = true;
-      pendingJsxTag = next === '>' ? 'self' : 'open';
-      if (pendingJsxTag === 'open') jsxDepth++;
+      pendingJsxTag = 'open';
       if (next === '>') {
+        jsxDepth++;
         inJsxTag = false;
         pendingJsxTag = null;
         i++;
@@ -1392,6 +1393,7 @@ function analyzeBracketSyntax(code: string, options: { jsx?: boolean } = {}): {
           continue;
         }
         if (ch === '>') {
+          if (pendingJsxTag === 'open') jsxDepth++;
           if (pendingJsxTag === 'close') jsxDepth = Math.max(0, jsxDepth - 1);
           inJsxTag = false;
           pendingJsxTag = null;
@@ -1411,9 +1413,9 @@ function analyzeBracketSyntax(code: string, options: { jsx?: boolean } = {}): {
         }
         if (next === '>' || /[A-Za-z]/.test(next || '')) {
           inJsxTag = true;
-          pendingJsxTag = next === '>' ? 'self' : 'open';
-          if (pendingJsxTag === 'open') jsxDepth++;
+          pendingJsxTag = 'open';
           if (next === '>') {
+            jsxDepth++;
             inJsxTag = false;
             pendingJsxTag = null;
             i++;
@@ -1464,9 +1466,9 @@ function analyzeBracketSyntax(code: string, options: { jsx?: boolean } = {}): {
 
     if (options.jsx && ch === '<' && (next === '>' || /[A-Za-z]/.test(next || ''))) {
       inJsxTag = true;
-      pendingJsxTag = next === '>' ? 'self' : 'open';
-      if (pendingJsxTag === 'open') jsxDepth++;
+      pendingJsxTag = 'open';
       if (next === '>') {
+        jsxDepth++;
         inJsxTag = false;
         pendingJsxTag = null;
         i++;
