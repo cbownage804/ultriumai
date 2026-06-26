@@ -76,6 +76,13 @@ TEXT CONTRAST — MANDATORY (violating this is a critical bug):
 - When a user asks to fix text contrast or background, change BOTH the background and text color classes to ensure they pair correctly.
 - This rule overrides all other styling preferences. 4.5:1 contrast ratio minimum for all text.
 
+VISUAL EDIT CONTRACT — MANDATORY for small UI fixes:
+- If the user names visible UI copy (for example "View Services", "Book Now", or a specific button/CTA), first locate that exact text in the provided files and edit the element that renders it.
+- Do NOT satisfy a named-button request by changing a different button, nearby wrapper, or only hover styles. The normal/resting state must become readable.
+- For dark hero sections, outline buttons with transparent backgrounds often make black text unreadable. Use one of these safe pairings: bg-white text-gray-950 border-white hover:bg-gray-100 OR bg-amber-400 text-black border-amber-400 hover:bg-amber-300 OR bg-black/50 text-white border-white/70 hover:bg-white hover:text-black.
+- When fixing a button, update className/style for text color, background/fill, border, hover, and focus together.
+- Your response must include an ===EDIT: block that changes the exact className/style line for the named element. Never claim a visual fix was made without a real code edit to that element.
+
 TECHNICAL: index.html entry. Mobile-first. CSS Grid+Flexbox. CSS custom properties for tokens. Realistic placeholder data. Unsplash images with specific terms. No CDN JS. Semantic HTML5+ARIA. All UI states (loading/empty/error/success/hover/focus/disabled). Form validation blur+submit. API try/catch+loading+retry. Only output changed files.
 
 CRUD: Every item needs Create/Read/Update/Delete. Delete: .filter() not splice(), e.stopPropagation() in clickable parents, re-render after mutation.
