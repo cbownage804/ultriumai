@@ -899,7 +899,9 @@ function stabilizeFinalSyntax(path: string, content: string, ext: string): { con
   }
 
   const initialParse = parseFile(path, content);
-  if (initialParse.ok) return { content, fixed: false, description: '' };
+  if (initialParse.ok && !hasSuspiciousFinalSyntax(content)) {
+    return { content, fixed: false, description: '' };
+  }
 
   let working = content;
   const fixes: string[] = [];
@@ -915,6 +917,12 @@ function stabilizeFinalSyntax(path: string, content: string, ext: string): { con
     }
 
     if (isJsx) {
+      const interleaved = moveJsClosersBeforeFollowingJsxClosers(working);
+      if (interleaved.moved > 0) {
+        working = interleaved.content;
+        fixes.push(`moved ${interleaved.moved} JSX closer run${interleaved.moved === 1 ? '' : 's'} before premature JS closers`);
+      }
+
       const reordered = moveTrailingJsxClosersBeforeJsClosers(working);
       if (reordered.moved > 0) {
         working = reordered.content;
@@ -938,6 +946,12 @@ function stabilizeFinalSyntax(path: string, content: string, ext: string): { con
         working = reorderedAfterJsx.content;
         fixes.push(`moved ${reorderedAfterJsx.moved} generated JSX closer${reorderedAfterJsx.moved === 1 ? '' : 's'} before JS closers`);
       }
+
+      const interleavedAfterJsx = moveJsClosersBeforeFollowingJsxClosers(working);
+      if (interleavedAfterJsx.moved > 0) {
+        working = interleavedAfterJsx.content;
+        fixes.push(`moved ${interleavedAfterJsx.moved} generated JSX closer run${interleavedAfterJsx.moved === 1 ? '' : 's'} before premature JS closers`);
+      }
     }
 
     const bracketRepair = fixBracketBalance(working, { jsx: isJsx });
@@ -950,6 +964,12 @@ function stabilizeFinalSyntax(path: string, content: string, ext: string): { con
     if (exportSuffixRepair.fixed) {
       working = exportSuffixRepair.content;
       fixes.push(exportSuffixRepair.description);
+    }
+
+    const deduped = collapseDuplicateTerminalJsClosers(working);
+    if (deduped.removed > 0) {
+      working = deduped.content;
+      fixes.push(`removed ${deduped.removed} duplicate terminal JS closer${deduped.removed === 1 ? '' : 's'}`);
     }
 
     if (parseFile(path, working).ok) {
@@ -974,6 +994,12 @@ function uniqueDescriptions(items: string[]): string[] {
   return [...new Set(items.filter(Boolean))];
 }
 
+function hasSuspiciousFinalSyntax(content: string): boolean {
+  return /\)\s*\}\s*(?:`{1,3}|<\/[a-z]|<\/motion)/i.test(content)
+    || /^\s*`{1,3};?\s*$/m.test(content)
+    || /^[ \t]*[)}\]]+;?[ \t]*\n[ \t]*(?:<\/[a-z][\w-]*\s*>|<\/motion(?:\.[A-Za-z][\w-]*)?\s*>|<\/>)/im.test(content);
+}
+
 function removeStandaloneBacktickArtifacts(content: string): { content: string; removed: number } {
   const lines = content.split('\n');
   let removed = 0;
@@ -982,9 +1008,8 @@ function removeStandaloneBacktickArtifacts(content: string): { content: string; 
     if (!/^`{1,3};?$/.test(trimmed)) return true;
 
     const before = lines.slice(0, index).join('\n');
-    const after = lines.slice(index + 1).join('\n');
-    const withoutLine = `${before}${before && after ? '\n' : ''}${after}`;
-    if (parseFile('artifact.tsx', withoutLine).ok || /(?:export\s+default|return\s*\(|\)\s*;?\s*$)/.test(before)) {
+    const unescapedTicksBefore = (before.match(/(?<!\\)`/g) || []).length;
+    if (unescapedTicksBefore % 2 === 0 || /(?:export\s+default|return\s*\(|\)\s*\}?\s*;?\s*$)/.test(before)) {
       removed += 1;
       return false;
     }
@@ -992,6 +1017,54 @@ function removeStandaloneBacktickArtifacts(content: string): { content: string; 
   });
 
   return { content: cleaned.join('\n'), removed };
+}
+
+function moveJsClosersBeforeFollowingJsxClosers(content: string): { content: string; moved: number } {
+  const lines = content.split('\n');
+  let moved = 0;
+
+  for (let i = 0; i < lines.length - 1; i++) {
+    if (!isOnlyJsCloserLine(lines[i])) continue;
+
+    const jsStart = i;
+    let jsEnd = i;
+    while (jsEnd + 1 < lines.length && isOnlyJsCloserLine(lines[jsEnd + 1])) jsEnd++;
+
+    const jsxStart = jsEnd + 1;
+    if (jsxStart >= lines.length || !isOnlyJsxCloserLine(lines[jsxStart])) {
+      i = jsEnd;
+      continue;
+    }
+
+    let jsxEnd = jsxStart;
+    while (jsxEnd + 1 < lines.length && isOnlyJsxCloserLine(lines[jsxEnd + 1])) jsxEnd++;
+
+    const jsRun = lines.slice(jsStart, jsEnd + 1);
+    const jsxRun = lines.slice(jsxStart, jsxEnd + 1);
+    lines.splice(jsStart, jsxEnd - jsStart + 1, ...jsxRun, ...jsRun);
+    moved += 1;
+    i = jsStart + jsxRun.length + jsRun.length - 1;
+  }
+
+  return { content: lines.join('\n'), moved };
+}
+
+function collapseDuplicateTerminalJsClosers(content: string): { content: string; removed: number } {
+  const trailing = content.match(/\s*$/)?.[0] ?? '';
+  const body = content.slice(0, content.length - trailing.length);
+  const lines = body.split('\n');
+  let removed = 0;
+
+  while (lines.length >= 2) {
+    const last = lines[lines.length - 1];
+    const previous = lines[lines.length - 2];
+    if (!isOnlyJsCloserLine(last) || !isOnlyJsCloserLine(previous)) break;
+    if (last.trim() !== previous.trim()) break;
+    lines.pop();
+    removed += 1;
+  }
+
+  return { content: lines.join('\n') + trailing, removed };
 }
 
 function moveTrailingJsxClosersBeforeJsClosers(content: string): { content: string; moved: number } {
