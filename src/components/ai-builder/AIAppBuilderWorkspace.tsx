@@ -57,6 +57,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePostBuildSmokeTest } from './usePostBuildSmokeTest';
+import { installBuilderTestHook } from './__testHooks__/builderTestHook';
 import { useVersionTimeline } from '@/hooks/useVersionTimeline';
 import { useBuildLog } from '@/hooks/useBuildLog';
 import { useHotModuleRecovery } from './useHotModuleRecovery';
