@@ -29,6 +29,10 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import aiStudioLogo from '@/assets/ai-studio-logo.png';
+import DOMPurify from 'dompurify';
+
+const escapeHtml = (s: string) =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
 // Demo chat messages - predefined Q&A that doesn't use AI credits
 interface DemoChatMessage {
