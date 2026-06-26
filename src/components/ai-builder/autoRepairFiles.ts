@@ -240,12 +240,11 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
       // ── 6a. Fix malformed framer-motion closing tags: `</motion>` → `</motion.X>` ──
       // AI frequently drops the `.div`/`.section`/etc. on the closing tag, producing
       // `</motion></div>` which esbuild rejects ("Syntax error near </motion>").
+      // If the bare close is orphaned after a valid `</motion.div>`, remove it instead.
       {
-        const motionOpenRe = /<motion\.([A-Za-z][\w-]*)\b[^>]*?(\/?)>/g;
         const stack: string[] = [];
         const events: Array<{ index: number; length: number; replacement: string }> = [];
         const tokenRe = /<motion\.([A-Za-z][\w-]*)\b[^>]*?(\/?)>|<\/motion(?:\.([A-Za-z][\w-]*))?\s*>/g;
-        void motionOpenRe;
         let tk: RegExpExecArray | null;
         while ((tk = tokenRe.exec(content)) !== null) {
           const fullMatch = tk[0];
@@ -257,16 +256,37 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
             continue;
           }
           // Closing tag
-          const expected = stack.pop();
+          const expected = stack[stack.length - 1];
           if (!closeTag && expected) {
             // Bare `</motion>` — repair to `</motion.expected>`
+            stack.pop();
             events.push({
               index: tk.index,
               length: fullMatch.length,
               replacement: `</motion.${expected}>`,
             });
+          } else if (!closeTag && !expected) {
+            // Orphan bare `</motion>` — this is never valid JSX; remove it so
+            // a following HTML close such as `</div>` can balance normally.
+            events.push({
+              index: tk.index,
+              length: fullMatch.length,
+              replacement: '',
+            });
+          } else if (closeTag) {
+            const matchingIndex = stack.lastIndexOf(closeTag);
+            if (matchingIndex >= 0) {
+              stack.length = matchingIndex;
+            } else {
+              // Extra `</motion.div>` with no corresponding open. Remove it; leaving
+              // orphaned member-expression closers always fails TSX parsing.
+              events.push({
+                index: tk.index,
+                length: fullMatch.length,
+                replacement: '',
+              });
+            }
           }
-          // If closeTag exists and matches, fine. If mismatch we leave for general balancer.
         }
         if (events.length > 0) {
           // Apply from end → start to preserve indices
@@ -690,7 +710,7 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
  * Designed to be conservative (avoids uppercase tags to prevent TS generic false-positives).
  */
 function fixJsxTagBalance(content: string): { content: string; fixed: boolean; description: string } {
-  const tokenRegex = /<\/>|<>|<\/[a-z][a-z0-9]*\s*>|<[a-z][a-z0-9]*\b[^>]*>/g;
+  const tokenRegex = /<\/>|<>|<\/[a-z][a-z0-9]*\s*>|<[a-z][a-z0-9]*(?=[\s/>])[^>]*>/g;
   const voidTags = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
   const stack: Array<{ tag: string; isFragment: boolean }> = [];
 
