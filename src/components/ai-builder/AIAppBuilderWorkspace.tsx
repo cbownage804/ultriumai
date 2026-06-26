@@ -406,6 +406,90 @@ function didProjectFilesChange(before: ProjectFile[], after: ProjectFile[]): boo
   return before.some(file => afterMap.get(file.path) !== file.content);
 }
 
+function normalizeVisibleText(value: string): string {
+  return value.toLowerCase().replace(/&amp;/g, '&').replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function extractVisibleUiTargets(input: string): string[] {
+  const targets = new Set<string>();
+  for (const match of input.matchAll(/["'“”‘’]([^"'“”‘’]{2,80})["'“”‘’]/g)) {
+    const normalized = normalizeVisibleText(match[1]);
+    if (normalized.length >= 3) targets.add(normalized);
+  }
+  for (const match of input.matchAll(/\b([A-Z][a-z0-9]+(?:\s+[A-Z][a-z0-9]+){1,4})\b/g)) {
+    const normalized = normalizeVisibleText(match[1]);
+    if (normalized.length >= 5) targets.add(normalized);
+  }
+  for (const known of ['view services', 'book now', 'book your chair', 'get started', 'learn more', 'contact us']) {
+    if (normalizeVisibleText(input).includes(known)) targets.add(known);
+  }
+  return [...targets].slice(0, 6);
+}
+
+function latestNaturalUserRequest(messages: { role: string; content: string }[]): string {
+  const latest = [...messages].reverse().find(m => m.role === 'user')?.content || '';
+  const marker = 'User request:';
+  return latest.includes(marker) ? latest.slice(latest.lastIndexOf(marker) + marker.length).trim() : latest.trim();
+}
+
+function strengthenDarkHeroButtonClass(classValue: string): string {
+  const conflict = /^(?:text-(?:black|white|gray-\d+|slate-\d+|zinc-\d+|neutral-\d+|stone-\d+|amber-\d+|yellow-\d+)|bg-(?:transparent|black|white|gray-\d+|slate-\d+|zinc-\d+|neutral-\d+|stone-\d+|amber-\d+|yellow-\d+|black\/\d+|white\/\d+|\[.*\])|border-(?:transparent|black|white|gray-\d+|slate-\d+|zinc-\d+|neutral-\d+|stone-\d+|amber-\d+|yellow-\d+|white\/\d+|black\/\d+|\[.*\])|hover:(?:bg|text|border)-.+|focus(?:-visible)?:ring-.+)$/;
+  const kept = classValue.split(/\s+/).filter(Boolean).filter(token => !conflict.test(token));
+  const required = ['bg-white', 'text-gray-950', 'border-2', 'border-white', 'hover:bg-amber-300', 'hover:text-black', 'focus-visible:ring-2', 'focus-visible:ring-amber-300', 'shadow-lg'];
+  for (const token of required) {
+    if (!kept.includes(token)) kept.push(token);
+  }
+  return kept.join(' ');
+}
+
+function applyTargetedVisualContrastFallback(
+  files: ProjectFile[],
+  messages: { role: string; content: string }[],
+): { files: ProjectFile[]; patches: string[] } {
+  const request = latestNaturalUserRequest(messages);
+  if (!/\b(readable|visible|contrast|can'?t\s+read|hard\s+to\s+read|too\s+dark|too\s+light|dark\s+hero|button|cta)\b/i.test(request)) {
+    return { files, patches: [] };
+  }
+  const targets = extractVisibleUiTargets(request);
+  if (targets.length === 0) return { files, patches: [] };
+
+  const patches: string[] = [];
+  const patchedFiles = files.map(file => {
+    if (!/\.(tsx?|jsx?|html)$/.test(file.path)) return file;
+    const lines = file.content.split('\n');
+    let changed = false;
+
+    for (const target of targets) {
+      const targetLine = lines.findIndex(line => normalizeVisibleText(line).includes(target));
+      if (targetLine < 0) continue;
+
+      // Find the nearest className for the element that renders the target text.
+      // Most generated CTA markup puts className on the same line or within a few lines above.
+      for (let i = targetLine; i >= Math.max(0, targetLine - 12); i--) {
+        const original = lines[i];
+        let next = original.replace(/className\s*=\s*(["'])([^"']*)\1/, (_match, quote, classValue) => {
+          const strengthened = strengthenDarkHeroButtonClass(classValue);
+          return `className=${quote}${strengthened}${quote}`;
+        });
+        next = next.replace(/className\s*=\s*\{\s*(["'`])([^"'`]*)\1\s*\}/, (_match, quote, classValue) => {
+          const strengthened = strengthenDarkHeroButtonClass(classValue);
+          return `className={${quote}${strengthened}${quote}}`;
+        });
+        if (next !== original) {
+          lines[i] = next;
+          changed = true;
+          patches.push(`${file.path}: strengthened contrast for "${target}"`);
+          break;
+        }
+      }
+    }
+
+    return changed ? { ...file, content: lines.join('\n') } : file;
+  });
+
+  return { files: patchedFiles, patches };
+}
+
 /** Check if the user's latest message explicitly requests changing a protected file */
 function userExplicitlyMentionedFile(messages: { role: string; content: string }[], filePath: string): boolean {
   const fileName = filePath.split('/').pop()?.toLowerCase() || '';
