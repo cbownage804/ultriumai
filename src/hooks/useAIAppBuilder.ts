@@ -1880,6 +1880,9 @@ ${JSON.stringify(brandingData.typography, null, 2)}` : ''}` });
         // Direct path mention in prompt
         if (lowerInput.includes(lowerPath) || lowerInput.includes(fileName)) score += 8;
 
+        // Exact visible UI target hit (e.g. "View Services" button) — strongly prioritize.
+        if (focusPathSet.has(f.path)) score += 25;
+
         // Keyword match: file name words appear in prompt
         const pathWords = lowerPath.replace(/[/._-]/g, ' ').split(/\s+/);
         for (const pw of pathWords) {
