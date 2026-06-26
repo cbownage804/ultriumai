@@ -1,7 +1,7 @@
 /**
  * Premium loading screen shown during AI generation and compilation.
- * Features: animated code rain, real build progress, and morphing skeleton wireframe.
- * All heavy animations are CSS-only to keep the main thread free.
+ * Features: static code backdrop, real build progress, and lightweight skeleton wireframe.
+ * Kept intentionally animation-light so Firefox stays responsive during compiles.
  *
  * Step 4: Now accepts compilePhase for granular progress messages.
  */
@@ -108,16 +108,15 @@ export function SkeletonPreview({
       {/* ── Ambient background glows ── */}
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_25%_25%,rgba(139,92,246,0.08),transparent_34%),radial-gradient(circle_at_78%_72%,rgba(34,211,238,0.06),transparent_30%)]" />
 
-      {/* ── Code rain columns ── */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      {/* ── Static code columns ── */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-60">
         {codeColumns.map((col, ci) => (
           <div
             key={ci}
-            className="absolute code-rain-col"
+            className="absolute"
             style={{
               left: `${col.left}%`,
-              animationDelay: `${col.delay}s`,
-              animationDuration: `${col.duration}s`,
+              top: `${10 + ci * 11}%`,
             }}
           >
             {col.lines.map((line, li) => (
@@ -133,7 +132,7 @@ export function SkeletonPreview({
       </div>
 
       {/* ── Skeleton wireframe (faintly suggests app structure) ── */}
-      <div className="absolute inset-0 pointer-events-none skeleton-wireframe">
+      <div className="absolute inset-0 pointer-events-none opacity-70">
         {/* Nav bar */}
         <div className="mx-auto mt-5 w-[85%] max-w-[640px] flex items-center gap-3">
           <div className="h-5 w-5 rounded bg-white/[0.04] skeleton-pulse" />
@@ -165,7 +164,7 @@ export function SkeletonPreview({
       <div className="relative z-10 flex flex-col items-center gap-6 px-6 max-w-[400px]">
         {/* Spinner */}
         <div className="relative">
-          <svg className="h-11 w-11 skeleton-spin" viewBox="0 0 44 44" fill="none">
+          <svg className="h-11 w-11" viewBox="0 0 44 44" fill="none">
             <circle cx="22" cy="22" r="19" stroke="white" strokeOpacity="0.06" strokeWidth="2.5" />
             <path
               d="M41 22a19 19 0 01-19 19"
@@ -232,11 +231,11 @@ export function SkeletonPreview({
               const idx = (projectFiles?.length ?? 0) - 4 + i;
               const isDone = idx < completedFileCount;
               return (
-                <div key={file.path} className="flex items-center gap-2 animate-in fade-in slide-in-from-bottom-1 duration-200" style={{ animationDelay: `${i * 50}ms` }}>
+                <div key={file.path} className="flex items-center gap-2">
                   {isDone ? (
                     <div className="h-1.5 w-1.5 rounded-full bg-emerald-400/70 shrink-0" />
                   ) : (
-                    <div className="h-1.5 w-1.5 rounded-full bg-cyan-400/50 animate-pulse shrink-0" />
+                    <div className="h-1.5 w-1.5 rounded-full bg-cyan-400/50 shrink-0" />
                   )}
                   <span className={`text-[10px] font-mono truncate ${isDone ? 'text-white/20' : 'text-cyan-300/50'}`}>
                     {fileName}
@@ -282,56 +281,15 @@ export function SkeletonPreview({
 
       {/* ── Top shimmer accent ── */}
       <div className="absolute top-0 left-0 right-0 h-[2px] overflow-hidden z-20">
-        <div
-          className="h-full w-[200%] bg-gradient-to-r from-transparent via-cyan-400/40 to-violet-500/30 opacity-60 skeleton-top-shimmer"
-        />
+        <div className="h-full w-full bg-gradient-to-r from-transparent via-cyan-400/40 to-violet-500/30 opacity-60" />
       </div>
 
       <style>{`
-        .skeleton-spin {
-          animation: sk-rotate 1.2s cubic-bezier(0.5,0,0.5,1) infinite;
-        }
-        @keyframes sk-rotate {
-          100% { transform: rotate(360deg); }
-        }
         .skeleton-shimmer {
-          animation: sk-shimmer 2s ease-in-out infinite;
-        }
-        @keyframes sk-shimmer {
-          0% { transform: translateX(-200%); }
-          100% { transform: translateX(400%); }
-        }
-        .skeleton-top-shimmer {
-          animation: sk-top-slide 3s linear infinite;
-        }
-        @keyframes sk-top-slide {
-          0% { transform: translateX(-50%); }
-          100% { transform: translateX(0); }
+          transform: translateX(30%);
         }
         .skeleton-pulse {
-          animation: sk-pulse 2s cubic-bezier(0.4,0,0.6,1) infinite;
-        }
-        @keyframes sk-pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.4; }
-        }
-        .code-rain-col {
-          position: absolute;
-          top: -80px;
-          animation: code-fall linear infinite;
-        }
-        @keyframes code-fall {
-          0% { transform: translateY(-100px); opacity: 0; }
-          10% { opacity: 1; }
-          90% { opacity: 1; }
-          100% { transform: translateY(calc(100vh + 100px)); opacity: 0; }
-        }
-        .skeleton-wireframe {
-          animation: sk-wireframe-fade 3s ease-in-out infinite alternate;
-        }
-        @keyframes sk-wireframe-fade {
-          0% { opacity: 0.6; }
-          100% { opacity: 1; }
+          opacity: 0.72;
         }
       `}</style>
     </div>

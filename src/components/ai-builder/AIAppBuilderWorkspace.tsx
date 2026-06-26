@@ -3013,6 +3013,11 @@ export function AIAppBuilderWorkspace() {
   }, []);
 
   const handleRetryCompile = useCallback(() => {
+    if (isGeneratingRef.current || isGeneratingOverrideRef.current || isCompiling) {
+      dedupeToast('info', 'Wait for the current build step to finish before retrying compile.');
+      return;
+    }
+
     const hasAnyFiles = project.files.length > 0;
     const hasUserFiles = hasUserGeneratedFiles(project.files);
 
@@ -3025,12 +3030,25 @@ export function AIAppBuilderWorkspace() {
       return;
     }
 
+    const currentErrorText = [compileError?.message, ...(compileError?.errors ?? [])].filter(Boolean).join('\n');
+    const isDeterministicCodeError = /syntax error|unexpected token|parse error|unterminated|adjacent jsx|expected.*<\//i.test(currentErrorText);
+    if (isDeterministicCodeError && !isGeneratingRef.current && !isGeneratingOverrideRef.current) {
+      // Re-running Vite against unchanged syntax-broken files only re-enters the same
+      // expensive failure path. Treat Retry as a focused repair for deterministic code
+      // errors, which is what the user expects from a builder-style retry button.
+      dedupeToast('info', 'Retry found a code error — sending it to AI to fix instead.');
+      setCompileStateRaw('idle');
+      setCompileError(null);
+      handleFixError(`Compile error: ${currentErrorText || 'The preview failed to compile.'}`);
+      return;
+    }
+
     // Clear stale transport errors immediately so Retry cannot appear frozen while
     // the bridge debounce/network retry path starts a fresh compile.
     setCompileError(null);
     setCompileStateRaw('compiling');
     forceCompileRef.current?.();
-  }, [project.files]);
+  }, [project.files, compileError, handleFixError, isCompiling]);
 
   const handleDiscardChanges = useCallback(() => {
     clearRepairWatchdog();
@@ -4128,6 +4146,7 @@ export function AIAppBuilderWorkspace() {
     compileState,
     isGenerating,
     isCompiling,
+    compilePhase,
     refreshKey: previewRefreshKey,
     onFixError: handleFixError,
     onSmartFixError: handleSmartFixError,
@@ -4155,7 +4174,7 @@ export function AIAppBuilderWorkspace() {
     isUsingLKG,
     autoHealSummary,
     previewSlug,
-  }), [compiledHTML, compileState, isGenerating, isCompiling, previewRefreshKey, project.files, isStreamingPreview, isVisualEditActive, viewportMode, repairFailed, repairErrors, compileError, isGoldenProject, isUsingLKG, autoHealSummary, previewSlug, toggleVisualEdit, handleFixError, handleSmartFixError, handleAIEditRequest, handleAutoFixError, handleVisualEdit, handleRetryRepair, handleDiscardChanges, handleRetryCompile, handleResetToGolden]);
+  }), [compiledHTML, compileState, isGenerating, isCompiling, compilePhase, previewRefreshKey, project.files, isStreamingPreview, isVisualEditActive, viewportMode, repairFailed, repairErrors, compileError, isGoldenProject, isUsingLKG, autoHealSummary, previewSlug, toggleVisualEdit, handleFixError, handleSmartFixError, handleAIEditRequest, handleAutoFixError, handleVisualEdit, handleRetryRepair, handleDiscardChanges, handleRetryCompile, handleResetToGolden]);
 
   return (
     <TooltipProvider delayDuration={300}>

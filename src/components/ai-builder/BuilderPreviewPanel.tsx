@@ -20,6 +20,7 @@ import { SkeletonPreview } from './SkeletonPreview';
 import { CompilationProgress } from './CompilationProgress';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 import { usePreviewServiceWorker } from '@/hooks/usePreviewServiceWorker';
+import type { CompilePhase } from './CompilationBridge';
 
 interface BuilderPreviewPanelProps {
   html: string | null;
@@ -53,6 +54,8 @@ interface BuilderPreviewPanelProps {
   onUrlChange?: (url: string) => void;
   /** When true, health checks are paused (iframe expected blank during compilation) */
   isCompiling?: boolean;
+  /** Granular compile phase for low-cost progress UI */
+  compilePhase?: CompilePhase;
   /** Forces iframe remount (e.g. on tab return) without triggering recompilation */
   refreshKey?: number;
   /** Transactional build: repair failed terminal state */
@@ -438,7 +441,7 @@ ${serializationScript}
 </script>`;
 }
 
-export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole = false, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, refreshKey, repairFailed, repairErrors, onRetryRepair, onDiscardChanges, compileError, onRetryCompile, isGoldenProject, onResetToGolden, isUsingLKG, autoHealSummary, previewSlug }: BuilderPreviewPanelProps) {
+export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole = false, isGenerating, onFixError, onSmartFixError, onAIEditRequest, isProcessingAIEdit, projectFiles, isStreamingPreview, completedFileCount, children, fixAttemptCount, maxFixAttempts, isVisualEditActive: externalVisualEdit, onToggleVisualEdit: externalToggleVisualEdit, onVisualEdit, onAutoFixError, externalIframeRef, externalViewportMode, onExternalViewportChange, onStartOver, onUrlChange, isCompiling, compilePhase, refreshKey, repairFailed, repairErrors, onRetryRepair, onDiscardChanges, compileError, onRetryCompile, isGoldenProject, onResetToGolden, isUsingLKG, autoHealSummary, previewSlug }: BuilderPreviewPanelProps) {
   // ── Deferred initial render: prevent freeze from restored preview HTML blocking main thread ──
   const mountDeferredRef = useRef(true);
   const [mountDeferred, setMountDeferred] = useState(true);
@@ -455,6 +458,31 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
   const setViewportMode = onExternalViewportChange ?? setInternalViewportMode;
   const [iframeKey, setIframeKey] = useState(0);
   const [emergencyPreviewHtml, setEmergencyPreviewHtml] = useState<string | null>(null);
+  const retryClickLockRef = useRef(false);
+  const retryDisabled = isGenerating || isCompiling;
+
+  const handleRetryCompileClick = useCallback(() => {
+    if (retryDisabled) {
+      toast.info('Wait for the current build step to finish first.', { duration: 1600 });
+      return;
+    }
+    if (!onRetryCompile || retryClickLockRef.current) return;
+    retryClickLockRef.current = true;
+    toast.info('Retrying compile…', { duration: 1600 });
+
+    // Let Firefox paint the button/toast before kicking off the heavier compile path.
+    requestAnimationFrame(() => {
+      window.setTimeout(() => {
+        try {
+          onRetryCompile();
+        } finally {
+          window.setTimeout(() => {
+            retryClickLockRef.current = false;
+          }, 1200);
+        }
+      }, 0);
+    });
+  }, [onRetryCompile, retryDisabled]);
 
   // Sandpack compiles internally — no need to remount on external compile state changes.
   // Only remount on explicit refreshKey change (user-triggered refresh).
@@ -1112,7 +1140,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
             {/* Streaming indicator */}
             {(isGenerating || isStreamingPreview) && (
               <div className="flex items-center gap-1.5 text-[10px] text-amber-400/60 shrink-0">
-                <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                <div className="h-1.5 w-1.5 rounded-full bg-amber-400" />
                 <span>{isStreamingPreview && completedFileCount ? `${completedFileCount} files` : 'building'}</span>
               </div>
             )}
@@ -1163,7 +1191,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
             ) : (
               <div className="flex h-full items-center justify-center bg-[#0a0a10]">
                 <div className="flex flex-col items-center gap-3 text-center px-6">
-                  <div className="h-5 w-5 rounded-full border-2 border-white/10 border-t-cyan-400 animate-spin" />
+                  <div className="h-5 w-5 rounded-full border-2 border-cyan-400/35 bg-cyan-400/10" />
                   <div>
                     <p className="text-sm text-white/70 font-medium">Preparing isolated preview</p>
                     <p className="text-xs text-white/35 mt-1">Setting up cross-origin sandbox for safe rendering.</p>
@@ -1176,7 +1204,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
             {/* LKG fallback banner — subtle, non-blocking */}
             {isUsingLKG && !isGenerating && !isCompiling && (
                 <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/85 border border-amber-500/25">
-                <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                <div className="h-1.5 w-1.5 rounded-full bg-amber-400" />
                 <span className="text-[10px] text-amber-300/80 font-medium">Showing previous working version</span>
               </div>
             )}
@@ -1184,13 +1212,14 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
             {/* Compile error overlay on LKG preview — show compact error banner instead of full error screen */}
             {compileState === 'error' && !isGenerating && !isCompiling && !isUsingLKG && (
                 <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-2 rounded-lg bg-black/90 border border-red-500/25 max-w-[90%]">
-                <div className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse shrink-0" />
+                <div className="h-1.5 w-1.5 rounded-full bg-red-400 shrink-0" />
                 <span className="text-[10px] text-red-300/80 font-medium truncate">
                   {compileError?.message || 'Build failed'} — auto-fix in progress
                 </span>
                 <button
-                  onClick={onRetryCompile}
-                  className="shrink-0 px-2 py-0.5 rounded bg-red-500/20 hover:bg-red-500/30 text-[10px] text-red-300 font-medium transition-colors"
+                  onClick={handleRetryCompileClick}
+                  disabled={retryDisabled}
+                  className="shrink-0 px-2 py-0.5 rounded bg-red-500/20 hover:bg-red-500/30 text-[10px] text-red-300 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Retry
                 </button>
@@ -1201,7 +1230,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
           <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden bg-[radial-gradient(circle_at_center,rgba(127,29,29,0.18),rgba(10,10,16,1)_58%)]">
             <div className="absolute inset-0 bg-black/40" />
             <div className="relative z-10 space-y-4 px-6 max-w-md">
-              <div className="h-3 w-3 rounded-full bg-red-400 mx-auto animate-pulse" />
+              <div className="h-3 w-3 rounded-full bg-red-400 mx-auto" />
               <h3 className="font-semibold text-lg text-red-300/90 tracking-tight">
                 Preview failed to compile
               </h3>
@@ -1218,8 +1247,9 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
                 </div>
               ) : null}
               <button
-                onClick={onRetryCompile}
-                className="px-4 py-2 rounded-lg bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-medium transition-colors"
+                onClick={handleRetryCompileClick}
+                disabled={retryDisabled}
+                className="px-4 py-2 rounded-lg bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <RefreshCw className="h-3 w-3 inline mr-1.5" />
                 Retry compile
@@ -1232,12 +1262,13 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
             completedFileCount={completedFileCount}
             isGenerating={isGenerating}
             isCompiling={isCompiling}
+            compilePhase={compilePhase}
           />
         ) : projectFiles && projectFiles.length > 0 && !isGoldenProject ? (
           <div className="relative flex flex-col items-center justify-center h-full w-full text-center select-none overflow-hidden bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.14),rgba(10,10,16,1)_58%)]">
             <div className="absolute inset-0 bg-black/40" />
             <div className="relative z-10 space-y-4 px-6 max-w-md">
-              <div className="h-3 w-3 rounded-full bg-amber-400 mx-auto animate-pulse" />
+              <div className="h-3 w-3 rounded-full bg-amber-400 mx-auto" />
               <h3 className="font-semibold text-lg text-amber-300/90 tracking-tight">
                 Preview unavailable
               </h3>
@@ -1245,8 +1276,9 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
                 We have project files, but no compiled preview is available yet.
               </p>
               <button
-                onClick={onRetryCompile}
-                className="px-4 py-2 rounded-lg bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-medium transition-colors"
+                onClick={handleRetryCompileClick}
+                disabled={retryDisabled}
+                className="px-4 py-2 rounded-lg bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <RefreshCw className="h-3 w-3 inline mr-1.5" />
                 Retry compile
