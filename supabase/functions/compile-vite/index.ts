@@ -321,6 +321,117 @@ function looksLikeDanglingExportSuffix(suffix: string): boolean {
   return tagCount > 0;
 }
 
+function stabilizeGeneratedJsxTail(content: string): { content: string; fixed: boolean } {
+  let working = content;
+  let fixed = false;
+
+  const backtickCleaned = removeStandaloneBacktickArtifacts(working);
+  if (backtickCleaned.removed > 0) {
+    working = backtickCleaned.content;
+    fixed = true;
+  }
+
+  const interleaved = moveJsClosersBeforeFollowingJsxClosers(working);
+  if (interleaved.moved > 0) {
+    working = interleaved.content;
+    fixed = true;
+  }
+
+  const trailing = moveTrailingJsxClosersBeforeJsClosers(working);
+  if (trailing.moved > 0) {
+    working = trailing.content;
+    fixed = true;
+  }
+
+  return { content: working, fixed };
+}
+
+function removeStandaloneBacktickArtifacts(content: string): { content: string; removed: number } {
+  const lines = content.split('\n');
+  let removed = 0;
+  const cleaned = lines.filter((line, index) => {
+    const trimmed = line.trim();
+    if (!/^`{1,3};?$/.test(trimmed)) return true;
+
+    const before = lines.slice(0, index).join('\n');
+    const unescapedTicksBefore = (before.match(/(?<!\\)`/g) || []).length;
+    if (unescapedTicksBefore % 2 === 0 || /(?:export\s+default|return\s*\(|\)\s*\}?\s*;?\s*$)/.test(before)) {
+      removed += 1;
+      return false;
+    }
+    return true;
+  });
+
+  return { content: cleaned.join('\n'), removed };
+}
+
+function moveJsClosersBeforeFollowingJsxClosers(content: string): { content: string; moved: number } {
+  const lines = content.split('\n');
+  let moved = 0;
+
+  for (let i = 0; i < lines.length - 1; i++) {
+    if (!isOnlyJsCloserLine(lines[i])) continue;
+
+    const jsStart = i;
+    let jsEnd = i;
+    while (jsEnd + 1 < lines.length && isOnlyJsCloserLine(lines[jsEnd + 1])) jsEnd++;
+
+    const jsxStart = jsEnd + 1;
+    if (jsxStart >= lines.length || !isOnlyJsxCloserLine(lines[jsxStart])) {
+      i = jsEnd;
+      continue;
+    }
+
+    let jsxEnd = jsxStart;
+    while (jsxEnd + 1 < lines.length && isOnlyJsxCloserLine(lines[jsxEnd + 1])) jsxEnd++;
+
+    const jsRun = lines.slice(jsStart, jsEnd + 1);
+    const jsxRun = lines.slice(jsxStart, jsxEnd + 1);
+    lines.splice(jsStart, jsxEnd - jsStart + 1, ...jsxRun, ...jsRun);
+    moved += 1;
+    i = jsStart + jsxRun.length + jsRun.length - 1;
+  }
+
+  return { content: lines.join('\n'), moved };
+}
+
+function moveTrailingJsxClosersBeforeJsClosers(content: string): { content: string; moved: number } {
+  const trimmedEnd = content.match(/\s*$/)?.[0] ?? '';
+  const body = content.slice(0, content.length - trimmedEnd.length);
+  const lines = body.split('\n');
+  if (lines.length < 2) return { content, moved: 0 };
+
+  let i = lines.length - 1;
+  const jsxClosers: string[] = [];
+  while (i >= 0 && isOnlyJsxCloserLine(lines[i])) {
+    jsxClosers.unshift(lines[i]);
+    i--;
+  }
+  if (jsxClosers.length === 0 || i < 0) return { content, moved: 0 };
+
+  const jsCloserLines: string[] = [];
+  while (i >= 0 && isOnlyJsCloserLine(lines[i])) {
+    jsCloserLines.unshift(lines[i]);
+    i--;
+  }
+  if (jsCloserLines.length === 0) return { content, moved: 0 };
+
+  const prefix = lines.slice(0, i + 1);
+  return { content: [...prefix, ...jsxClosers, ...jsCloserLines].join('\n') + trimmedEnd, moved: jsxClosers.length };
+}
+
+function isOnlyJsxCloserLine(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed) return false;
+  return /^(?:<\/>|<\/[a-z][\w-]*\s*>|<\/motion(?:\.[A-Za-z][\w-]*)?\s*>)+;?$/i.test(trimmed);
+}
+
+function isOnlyJsCloserLine(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed) return false;
+  return /^[)}\]]+;?$/.test(trimmed);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -393,6 +504,12 @@ serve(async (req) => {
       if (stripped.fixed) {
         f.content = stripped.content;
         console.log(`[compile-vite] Removed dangling JSX after export default from ${f.path}`);
+      }
+
+      const stabilized = stabilizeGeneratedJsxTail(f.content);
+      if (stabilized.fixed) {
+        f.content = stabilized.content;
+        console.log(`[compile-vite] Stabilized generated JSX tail in ${f.path}`);
       }
     }
 
