@@ -1573,6 +1573,27 @@ export function AIAppBuilderWorkspace() {
         (window as Window & { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback?.(postBuildIdleRef.current);
       }
       postBuildIdleRef.current = null;
+
+      if (error && isDeterministicCompileSyntaxError(error) && project.files.length > 0) {
+        const { files: repairedFiles, repairs } = autoRepairFiles(project.files);
+        if (repairs.length > 0 && didProjectFilesChange(project.files, repairedFiles)) {
+          console.warn('[Workspace] Deterministic compile repair applied before AI retry:', repairs.slice(0, 8));
+          pendingValidationFixRef.current = null;
+          validationFixInFlightRef.current = false;
+          repairInFlightRef.current = false;
+          awaitingRepairJobStartRef.current = false;
+          setRepairFailed(false);
+          setRepairErrors([]);
+          setFiles(repairedFiles);
+          latestFilesRef.current = repairedFiles;
+          setCompileStateRaw('compiling');
+          setCompileError({
+            message: 'Repairing generated syntax before preview compile',
+            errors: repairs.slice(0, 5),
+          });
+          return;
+        }
+      }
     }
 
     // ── Auto-heal: on compile error, automatically re-prompt AI to fix ──
@@ -1679,7 +1700,7 @@ export function AIAppBuilderWorkspace() {
       autoHeal.completeHeal(true);
       console.info('[AutoHeal] ✅ Auto-fix resolved the build error');
     }
-  }, [autoHeal, lkgDiff, errorPatterns, project.files, sendMessage, setIsCompiling]);
+  }, [autoHeal, lkgDiff, errorPatterns, project.files, sendMessage, setIsCompiling, setFiles]);
   const isCompilingAndStateRef = useSyncRef({ isCompiling, compileState });
   // Keep individual refs for backward compat in guards
   isCompilingRef.current = isCompiling;
