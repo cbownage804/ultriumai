@@ -4,6 +4,7 @@ Ultrium RMM Agent
 A lightweight Python agent for remote monitoring and management.
 """
 
+import os
 import requests
 import subprocess
 import platform
