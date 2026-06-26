@@ -834,7 +834,7 @@ function stripDanglingJsxAfterDefaultExport(content: string): { content: string;
   const lineEnd = content.indexOf('\n', lastMatch.index);
   const suffixStart = lineEnd === -1 ? content.length : lineEnd + 1;
   const suffix = content.slice(suffixStart);
-  if (!looksLikeDanglingJsxSuffix(suffix)) {
+  if (!looksLikeDanglingExportSuffix(suffix)) {
     return { content, fixed: false, description: '' };
   }
 
@@ -845,9 +845,10 @@ function stripDanglingJsxAfterDefaultExport(content: string): { content: string;
   };
 }
 
-function looksLikeDanglingJsxSuffix(suffix: string): boolean {
+function looksLikeDanglingExportSuffix(suffix: string): boolean {
   const trimmed = suffix.trim();
   if (!trimmed) return false;
+  if (/^[)\]},;]+$/.test(trimmed)) return /[)\]}]/.test(trimmed);
   if (!/^<\/?(?:[a-z][\w-]*|motion(?:\.[A-Za-z][\w-]*)?|>|\s)/i.test(trimmed)) return false;
 
   let rest = trimmed;
