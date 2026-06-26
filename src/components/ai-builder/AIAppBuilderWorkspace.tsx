@@ -433,7 +433,7 @@ function latestNaturalUserRequest(messages: { role: string; content: string }[])
 }
 
 function strengthenDarkHeroButtonClass(classValue: string): string {
-  const conflict = /^(?:text-(?:black|white|gray-\d+|slate-\d+|zinc-\d+|neutral-\d+|stone-\d+|amber-\d+|yellow-\d+)|bg-(?:transparent|black|white|gray-\d+|slate-\d+|zinc-\d+|neutral-\d+|stone-\d+|amber-\d+|yellow-\d+|black\/\d+|white\/\d+|\[.*\])|border-(?:transparent|black|white|gray-\d+|slate-\d+|zinc-\d+|neutral-\d+|stone-\d+|amber-\d+|yellow-\d+|white\/\d+|black\/\d+|\[.*\])|hover:(?:bg|text|border)-.+|focus(?:-visible)?:ring-.+)$/;
+  const conflict = /^(?:text-(?:black|white|gray-\d+|slate-\d+|zinc-\d+|neutral-\d+|stone-\d+|amber-\d+|yellow-\d+|black\/\d+|white\/\d+|gray-\d+\/\d+|slate-\d+\/\d+|zinc-\d+\/\d+|neutral-\d+\/\d+|stone-\d+\/\d+|\[.*\])|bg-(?:transparent|black|white|gray-\d+|slate-\d+|zinc-\d+|neutral-\d+|stone-\d+|amber-\d+|yellow-\d+|black\/\d+|white\/\d+|gray-\d+\/\d+|slate-\d+\/\d+|zinc-\d+\/\d+|neutral-\d+\/\d+|stone-\d+\/\d+|amber-\d+\/\d+|yellow-\d+\/\d+|\[.*\])|border-(?:transparent|black|white|gray-\d+|slate-\d+|zinc-\d+|neutral-\d+|stone-\d+|amber-\d+|yellow-\d+|white\/\d+|black\/\d+|gray-\d+\/\d+|slate-\d+\/\d+|zinc-\d+\/\d+|neutral-\d+\/\d+|stone-\d+\/\d+|amber-\d+\/\d+|yellow-\d+\/\d+|\[.*\])|hover:(?:bg|text|border)-.+|focus(?:-visible)?:ring-.+)$/;
   const kept = classValue.split(/\s+/).filter(Boolean).filter(token => !conflict.test(token));
   const required = ['bg-white', 'text-gray-950', 'border-2', 'border-white', 'hover:bg-amber-300', 'hover:text-black', 'focus-visible:ring-2', 'focus-visible:ring-amber-300', 'shadow-lg'];
   for (const token of required) {
