@@ -1,4 +1,5 @@
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
+import { parseFile } from '@/lib/ai-builder/astEditor';
 
 /**
  * Auto-repair common syntax issues in project files before sending to Vite.
@@ -571,6 +572,23 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
         content = trailingJsx.content;
         changed = true;
         repairs.push(`${f.path}: ${trailingJsx.description}`);
+      }
+    }
+
+    // Final parse-aware stabilization. The common stuck-loop failure is:
+    //   return ( <unclosed JSX>
+    //   )}
+    //   </div>
+    // where bracket repair appended JS closers before JSX balancing appended tag
+    // closers. Vite then fails forever near `)}` or a stray backtick. Run a
+    // bounded final pass that reorders JSX closers before terminal JS closers,
+    // removes markdown/backtick artifacts, and re-applies bracket balancing.
+    if (['ts', 'tsx', 'js', 'jsx'].includes(ext)) {
+      const finalRepair = stabilizeFinalSyntax(f.path, content, ext);
+      if (finalRepair.fixed) {
+        content = finalRepair.content;
+        changed = true;
+        repairs.push(`${f.path}: ${finalRepair.description}`);
       }
     }
 
