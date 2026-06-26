@@ -92,13 +92,31 @@ function injectImportMapIfNeeded(html: string, detectedPackages: Set<string>): s
     } else if (pkg === 'react/jsx-dev-runtime') {
       imports['react/jsx-dev-runtime'] = `https://esm.sh/react@${REACT_VERSION}/jsx-dev-runtime`;
     } else {
-      // For other packages: put version after base package, subpath after
+      // For other packages: put version after base package, subpath after.
+      // Pin well-known packages to tested versions and use ?bundle for icon
+      // libraries so every named export (e.g. lucide-react Twitter, Instagram)
+      // is materialized in the wrapper module instead of relying on `latest`.
+      const PINNED: Record<string, { version: string; bundle?: boolean }> = {
+        'lucide-react': { version: '0.462.0', bundle: true },
+        'framer-motion': { version: '11.11.17' },
+        'recharts': { version: '2.13.3' },
+        'date-fns': { version: '3.6.0' },
+        'react-router-dom': { version: '6.28.0' },
+        'sonner': { version: '1.7.0' },
+        'clsx': { version: '2.1.1' },
+        'tailwind-merge': { version: '2.5.4' },
+      };
       const parts = pkg.split('/');
       const basePkg = pkg.startsWith('@') ? parts.slice(0, 2).join('/') : parts[0];
       const subpath = pkg.startsWith('@') ? parts.slice(2).join('/') : parts.slice(1).join('/');
+      const pin = PINNED[basePkg];
+      const version = pin?.version ?? 'latest';
+      const query = pin?.bundle
+        ? `?bundle&external=react,react-dom`
+        : `?external=react,react-dom`;
       const url = subpath
-        ? `https://esm.sh/${basePkg}@latest/${subpath}?external=react,react-dom`
-        : `https://esm.sh/${basePkg}?external=react,react-dom`;
+        ? `https://esm.sh/${basePkg}@${version}/${subpath}${query}`
+        : `https://esm.sh/${basePkg}@${version}${query}`;
       imports[pkg] = url;
     }
   }
