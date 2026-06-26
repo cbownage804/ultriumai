@@ -107,6 +107,145 @@ function injectImportMapIfNeeded(html: string, detectedPackages: Set<string>): s
   return html.slice(0, moduleScriptMatch.index) + importmapScript + '\n' + html.slice(moduleScriptMatch.index);
 }
 
+function findJsxTagEnd(content: string, start: number): number {
+  let quote: '"' | "'" | '`' | null = null;
+  let escaped = false;
+  let braceDepth = 0;
+  let parenDepth = 0;
+  let bracketDepth = 0;
+
+  for (let i = start; i < content.length; i++) {
+    const ch = content[i];
+
+    if (quote) {
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (ch === '\\') {
+        escaped = true;
+        continue;
+      }
+      if (ch === quote) quote = null;
+      continue;
+    }
+
+    if (ch === '"' || ch === "'" || ch === '`') {
+      quote = ch;
+      continue;
+    }
+    if (ch === '{') {
+      braceDepth++;
+      continue;
+    }
+    if (ch === '}' && braceDepth > 0) {
+      braceDepth--;
+      continue;
+    }
+    if (ch === '(' && braceDepth > 0) {
+      parenDepth++;
+      continue;
+    }
+    if (ch === ')' && braceDepth > 0 && parenDepth > 0) {
+      parenDepth--;
+      continue;
+    }
+    if (ch === '[' && braceDepth > 0) {
+      bracketDepth++;
+      continue;
+    }
+    if (ch === ']' && braceDepth > 0 && bracketDepth > 0) {
+      bracketDepth--;
+      continue;
+    }
+    if (ch === '>' && braceDepth === 0 && parenDepth === 0 && bracketDepth === 0) return i;
+  }
+
+  return -1;
+}
+
+function parseMotionTokenAt(content: string, index: number):
+  | { kind: 'open'; tag: string; end: number; selfClosing: boolean }
+  | { kind: 'close'; tag: string | null; end: number }
+  | null {
+  const rest = content.slice(index);
+  const closeMatch = rest.match(/^<\/motion(?:\.([A-Za-z][\w-]*))?\s*>/);
+  if (closeMatch) {
+    return { kind: 'close', tag: closeMatch[1] || null, end: index + closeMatch[0].length };
+  }
+
+  const openMatch = rest.match(/^<motion\.([A-Za-z][\w-]*)(?=[\s/>])/);
+  if (!openMatch) return null;
+  const tagEnd = findJsxTagEnd(content, index + openMatch[0].length);
+  if (tagEnd === -1) return null;
+  return {
+    kind: 'open',
+    tag: openMatch[1],
+    end: tagEnd + 1,
+    selfClosing: /\/\s*>$/.test(content.slice(index, tagEnd + 1)),
+  };
+}
+
+function repairFramerMotionClosers(content: string): { content: string; count: number } {
+  const events: Array<{ index: number; length: number; replacement: string }> = [];
+  const stack: string[] = [];
+  let i = 0;
+
+  while (i < content.length) {
+    const openIndex = content.indexOf('<', i);
+    if (openIndex === -1) break;
+    const parsed = parseMotionTokenAt(content, openIndex);
+    if (!parsed) {
+      i = openIndex + 1;
+      continue;
+    }
+
+    if (parsed.kind === 'open') {
+      if (!parsed.selfClosing) stack.push(parsed.tag);
+      i = parsed.end;
+      continue;
+    }
+
+    const expected = stack[stack.length - 1];
+    if (!parsed.tag) {
+      events.push({
+        index: openIndex,
+        length: parsed.end - openIndex,
+        replacement: expected ? `</motion.${expected}>` : '',
+      });
+      if (expected) stack.pop();
+    } else if (expected === parsed.tag) {
+      stack.pop();
+    } else {
+      const matchingIndex = stack.lastIndexOf(parsed.tag);
+      if (matchingIndex >= 0) {
+        stack.length = matchingIndex;
+      } else {
+        events.push({ index: openIndex, length: parsed.end - openIndex, replacement: '' });
+      }
+    }
+
+    i = parsed.end;
+  }
+
+  const alreadyHandled = new Set(events.map(e => e.index));
+  const bareCloseRe = /<\/motion\s*>/g;
+  let bareMatch: RegExpExecArray | null;
+  while ((bareMatch = bareCloseRe.exec(content)) !== null) {
+    if (!alreadyHandled.has(bareMatch.index)) {
+      events.push({ index: bareMatch.index, length: bareMatch[0].length, replacement: '' });
+    }
+  }
+
+  if (events.length === 0) return { content, count: 0 };
+  events.sort((a, b) => b.index - a.index);
+  let output = content;
+  for (const event of events) {
+    output = output.slice(0, event.index) + event.replacement + output.slice(event.index + event.length);
+  }
+  return { content: output, count: events.length };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -140,6 +279,23 @@ serve(async (req) => {
         JSON.stringify({ error: "No files provided" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Defense in depth: repair the exact malformed framer-motion JSX that has
+    // caused preview compile failures (`</motion></div>`). The client also runs
+    // this repair, but the edge compiler must be able to sanitize any source
+    // that reaches the sandbox.
+    let framerMotionRepairCount = 0;
+    for (const f of files) {
+      if (!/\.(tsx|jsx)$/.test(f.path) || typeof f.content !== 'string') continue;
+      const repaired = repairFramerMotionClosers(f.content);
+      if (repaired.count > 0) {
+        f.content = repaired.content;
+        framerMotionRepairCount += repaired.count;
+      }
+    }
+    if (framerMotionRepairCount > 0) {
+      console.log(`[compile-vite] Repaired ${framerMotionRepairCount} malformed framer-motion closing tag(s)`);
     }
 
     // Auto-inject missing local CSS imports (common generated-project failure mode)
