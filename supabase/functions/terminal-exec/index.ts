@@ -1,4 +1,5 @@
 import { corsHeaders } from '../_shared/cors.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.3';
 
 const ALLOWED_COMMANDS: Record<string, string> = {
   'echo': 'echo',
@@ -7,9 +8,6 @@ const ALLOWED_COMMANDS: Record<string, string> = {
   'pwd': 'pwd',
   'date': 'date',
   'whoami': 'whoami',
-  'node': 'node',
-  'npx': 'npx',
-  'deno': 'deno',
   'grep': 'grep',
   'head': 'head',
   'tail': 'tail',
@@ -29,6 +27,34 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Require admin auth
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    );
+    const { data: userData, error: userErr } = await supabase.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+    if (userErr || !userData.user) {
+      return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const { data: profile } = await supabase
+      .from('profiles').select('email').eq('id', userData.user.id).single();
+    const email = profile?.email || userData.user.email || '';
+    if (!email.endsWith('@ultriumai.com')) {
+      return new Response(JSON.stringify({ success: false, error: 'Forbidden: admin only' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const { command } = await req.json();
 
     if (!command || typeof command !== 'string') {
@@ -39,6 +65,7 @@ Deno.serve(async (req) => {
     }
 
     const trimmed = command.trim();
+
     
     // Block dangerous patterns
     const dangerous = /[;&|`$()]|\bsudo\b|\brm\s+-rf\b|\bchmod\b|\bchown\b|\bkill\b|\bshutdown\b|\breboot\b/i;
