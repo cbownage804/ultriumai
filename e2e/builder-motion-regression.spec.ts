@@ -82,6 +82,86 @@ export default function App() {
 `,
     expectContains: ['</motion.button>'],
   },
+  {
+    name: 'deeply nested motion siblings with mixed bare closers',
+    code: `import { motion } from 'framer-motion';
+export default function App() {
+  return (
+    <motion.section>
+      <motion.div>
+        <motion.span>a</motion>
+        <motion.span>b</motion.span>
+      </motion></motion.div>
+      <motion.footer>end</motion></motion.footer>
+    </motion.section>
+  );
+}
+`,
+    expectContains: ['</motion.section>', '</motion.div>', '</motion.footer>'],
+  },
+  {
+    name: 'multiline attribute with > and JSX child expression',
+    code: `import { motion } from 'framer-motion';
+export default function App({ count = 0 }: { count?: number }) {
+  return (
+    <motion.div
+      style={{ opacity: count > 3 ? 1 : 0.5 }}
+      transition={{ duration: count > 10 ? 0.4 : 0.2 }}
+    >
+      {count > 0 && <motion.span key={count}>{count}</motion></span>}
+    </motion></div>
+  );
+}
+`,
+    expectContains: ['</motion.div>', '</motion.span>', 'count > 3', 'count > 10'],
+  },
+  {
+    name: 'AnimatePresence wrapping with broken inner motion',
+    code: `import { motion, AnimatePresence } from 'framer-motion';
+export default function App({ show = true }: { show?: boolean }) {
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.div initial={{ y: -10 }} animate={{ y: 0 }} exit={{ y: 10 }}>
+          <motion.h1>Title</motion></h1>
+          <p>body</p>
+        </motion></div>
+      )}
+    </AnimatePresence>
+  );
+}
+`,
+    expectContains: ['</motion.div>', '</motion.h1>', '</AnimatePresence>'],
+  },
+  {
+    name: 'self-closing motion mixed with broken closer',
+    code: `import { motion } from 'framer-motion';
+export default function App() {
+  return (
+    <motion.div>
+      <motion.img src="/a.png" alt="" />
+      <motion.input type="text" />
+      <motion.p>txt</motion></p>
+    </motion></div>
+  );
+}
+`,
+    expectContains: ['</motion.div>', '</motion.p>', '<motion.img', '<motion.input'],
+  },
+  {
+    name: 'fragment + motion children with stray closers',
+    code: `import { motion } from 'framer-motion';
+export default function App() {
+  return (
+    <>
+      <motion.header>h</motion></header>
+      <motion.main>m</motion></main>
+    </>
+  );
+}
+`,
+    expectContains: ['</motion.header>', '</motion.main>'],
+  },
 ];
 
 const MAIN_TSX = "import App from './App'; export default App;";
