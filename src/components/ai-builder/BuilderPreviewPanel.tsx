@@ -308,6 +308,19 @@ function injectIntoHead(html: string, script: string): string {
   return script + html;
 }
 
+const PINNED_LUCIDE_REACT_URL = 'https://esm.sh/lucide-react@0.462.0?bundle&external=react,react-dom';
+
+function pinPreviewCdnImports(html: string): string {
+  // Hot guard for already-compiled previews: if an older compile-vite response or
+  // cached HTML contains an unversioned lucide-react esm.sh URL, the browser may
+  // resolve latest (where legacy exports like `Github` are missing) and blank the
+  // iframe. Rewrite only this known-fragile CDN URL before rendering srcdoc.
+  return html.replace(
+    /https:\/\/esm\.sh\/lucide-react(?:@[\w.-]+)?(?:\?[^"'`\s<)]*)?/g,
+    PINNED_LUCIDE_REACT_URL,
+  );
+}
+
 function buildLightweightPreviewBridgeScript(serializationScript: string): string {
   return `<script>
 ${serializationScript}
@@ -580,7 +593,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
   );
 
   const htmlWithInjections = useMemo(
-    () => normalizedHtml ? injectIntoHead(normalizedHtml, previewBridgeScript) : null,
+    () => normalizedHtml ? injectIntoHead(pinPreviewCdnImports(normalizedHtml), previewBridgeScript) : null,
     [normalizedHtml, previewBridgeScript],
   );
 

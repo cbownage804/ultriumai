@@ -288,6 +288,7 @@ export function CompilationBridge({
   // streaming setFiles calls, but compilation is blocked anyway.
   const prevDigestRef = useRef('');
   const forceCompileRequestedRef = useRef(false);
+  const skipSynchronousRepairRef = useRef(false);
   const filesDigest = useMemo(() => {
     if (isGenerating || files.length === 0) return prevDigestRef.current || '';
     const digest = files.map(f => {
@@ -458,10 +459,14 @@ export function CompilationBridge({
 
   const prepareFilesForCompile = useCallback((inputFiles: ProjectFile[]) => {
     let preparedFiles = inputFiles;
+    let repairs: string[] = [];
 
-    const { files: repairedFiles, repairs } = autoRepairFiles(preparedFiles);
-    if (repairs.length > 0) {
-      preparedFiles = repairedFiles;
+    if (!skipSynchronousRepairRef.current) {
+      const repairResult = autoRepairFiles(preparedFiles);
+      repairs = repairResult.repairs;
+      if (repairResult.repairs.length > 0) {
+        preparedFiles = repairResult.files;
+      }
     }
 
     // Post-generation lint pass — catches semantic issues (missing keys, unused imports, etc.)
@@ -862,7 +867,7 @@ export function CompilationBridge({
     if (isGoldenProject && !hasEverGeneratedRef.current) return;
 
     // Sync from external if handleBgComplete already compiled
-    if (!stableHTMLRef.current && externalStableHTMLRef?.current) {
+    if (!forceCompileRequestedRef.current && !stableHTMLRef.current && externalStableHTMLRef?.current) {
       console.info('[CompilationBridge] Syncing existing external preview');
       const externalHtml = externalStableHTMLRef.current;
       setStableHTML(externalHtml);
@@ -911,7 +916,7 @@ export function CompilationBridge({
       }
 
       // ── Step 3: Check compiled HTML cache before full recompile ──
-      const cachedHTML = compiledHTMLCacheRef.current.get(filesDigest);
+      const cachedHTML = forceCompileRequestedRef.current ? null : compiledHTMLCacheRef.current.get(filesDigest);
       if (cachedHTML && isPreviewValid(cachedHTML)) {
         console.info('[CompilationBridge] ✅ Step 3: Cache hit — returning cached HTML (%d chars)', cachedHTML.length);
         setStableHTML(cachedHTML);
@@ -930,6 +935,7 @@ export function CompilationBridge({
     // ── Step 2: Duplicate compile suppression ──
     // Skip if same digest was just compiled within 2s (StrictMode double-effects, rapid edits)
     if (
+      !forceCompileRequestedRef.current &&
       filesDigest === lastCompiledDigestRef.current.digest &&
       Date.now() - lastCompiledDigestRef.current.timestamp < 2000
     ) {
@@ -951,7 +957,7 @@ export function CompilationBridge({
     const timer = setTimeout(async () => {
       // Double-check guards after debounce
       if (compilationInFlightRef.current) return;
-      if (stableHTMLRef.current && !softReloadPendingRef.current) return;
+      if (!forceCompileRequestedRef.current && stableHTMLRef.current && !softReloadPendingRef.current) return;
 
       // ── Validation gate — SOFT: log warnings but never block compilation ──
       // Auto-repair already ran inside prepareFilesForCompile. If issues remain,
@@ -1013,7 +1019,7 @@ export function CompilationBridge({
         await new Promise(r => setTimeout(r, 0));
 
         // Bail if external arrived during debounce
-        if (externalStableHTMLRef?.current && !stableHTMLRef.current) {
+        if (trigger !== 'forceCompile' && externalStableHTMLRef?.current && !stableHTMLRef.current) {
           const externalHtml = externalStableHTMLRef.current;
           setStableHTML(externalHtml);
           transitionCompileState(isPreviewValid(externalHtml) ? 'success' : 'error',
@@ -1168,6 +1174,7 @@ export function CompilationBridge({
         unlockCompile(); // Allow future aborts
         clearTimeout(safetyTimer);
         compilationInFlightRef.current = false;
+        skipSynchronousRepairRef.current = false;
         // If files changed during this compile, retrigger
         if (recompileNeededRef.current) {
           console.info('[CompilationBridge] Files changed during compile — retriggering');
@@ -1189,11 +1196,17 @@ export function CompilationBridge({
   useEffect(() => {
     onForceCompile?.(() => {
       console.info('[CompilationBridge] forceCompile invoked — invalidating in-flight run');
+      forceCompileRequestedRef.current = true;
+      skipSynchronousRepairRef.current = true;
       abortCompilation(true); // Force-abort even if locked
       compileRunIdRef.current++; // Invalidate any in-flight compile
       compilationInFlightRef.current = false;
       stableHTMLRef.current = null;
       prevFilesDigestRef.current = '';
+      lastCompiledDigestRef.current = { digest: '', timestamp: 0 };
+      compiledHTMLCacheRef.current.clear();
+      recompileNeededRef.current = false;
+      softReloadPendingRef.current = false;
       // Trigger recompile by resetting — the main effect will pick it up
       setLiveCompiledHTML(null);
       setForceCompileTrigger(c => c + 1);
