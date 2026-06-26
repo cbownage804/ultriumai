@@ -75,7 +75,6 @@ import { useDeleteButtonAutoPatcher } from './useDeleteButtonAutoPatcher';
 import { usePromptPhasePlanner } from './usePromptPhasePlanner';
 import { useBuilderQuestions } from './useBuilderQuestions';
 import { useOutputValidation, sanitizeStagedFiles } from './useOutputValidation';
-import { autoRepairFiles } from './autoRepairFiles';
 import { useBuildAnalytics } from '@/hooks/useBuildAnalytics';
 import { detectSupabaseIntents, buildSupabaseContext, buildErrorDiagnosisContext, analyzeConversationComplexity } from './SupabaseConversational';
 import { PANEL_REGISTRY } from './panelRegistry';
@@ -397,26 +396,10 @@ function validateBootIntegrity(files: ProjectFile[]): { errors: string[]; repair
 
 function isDeterministicCompileSyntaxError(error?: CompileErrorInfo | null): boolean {
   const text = [error?.message, ...(error?.errors ?? [])].filter(Boolean).join('\n');
-  return /syntax error|unexpected token|parse error|unterminated|adjacent jsx|expected.*<\/|jsx|closing tag/i.test(text);
-}
-
-function didProjectFilesChange(before: ProjectFile[], after: ProjectFile[]): boolean {
-  if (before.length !== after.length) return true;
-  const afterMap = new Map(after.map(file => [file.path, file.content]));
-  return before.some(file => afterMap.get(file.path) !== file.content);
-}
-
-function digestProjectFiles(files: ProjectFile[]): string {
-  const sorted = [...files].sort((a, b) => a.path.localeCompare(b.path));
-  let hash = 2166136261;
-  for (const file of sorted) {
-    const input = `${file.path}:${file.content.length}:${file.content.slice(0, 80)}:${file.content.slice(-160)}`;
-    for (let i = 0; i < input.length; i++) {
-      hash ^= input.charCodeAt(i);
-      hash = Math.imul(hash, 16777619);
-    }
+  if (/requested module|doesn['’]?t provide an export|failed to fetch dynamically imported module|error loading dynamically imported module|esm\.sh|cdn|about:srcdoc|runtime error/i.test(text)) {
+    return false;
   }
-  return (hash >>> 0).toString(16);
+  return /syntax error|unexpected token|parse error|unterminated|adjacent jsx|expected.*<\/|jsx|closing tag/i.test(text);
 }
 
 function normalizeVisibleText(value: string): string {
@@ -740,7 +723,6 @@ export function AIAppBuilderWorkspace() {
   const repairInFlightRef = useRef(false);
   const repairJobIdRef = useRef<string | null>(null);
   const awaitingRepairJobStartRef = useRef(false);
-  const deterministicRepairGateRef = useRef<{ digest: string; count: number }>({ digest: '', count: 0 });
   // State-based trigger to force the repair effect to re-evaluate when pendingValidationFixRef is set
   const [repairTrigger, setRepairTrigger] = useState(0);
   const [repairFailed, setRepairFailed] = useState(false);
@@ -1727,10 +1709,6 @@ export function AIAppBuilderWorkspace() {
     setCompileError(state === 'error' && error ? error : null);
     console.info('[Workspace] compileState →', state, error ? error.message : '');
 
-    if (state === 'success') {
-      deterministicRepairGateRef.current = { digest: '', count: 0 };
-    }
-
     if (state === 'error') {
       // Clear pending success signals — auto-heal will handle the error
       pendingBuildToastRef.current = null;
@@ -1739,36 +1717,6 @@ export function AIAppBuilderWorkspace() {
         (window as Window & { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback?.(postBuildIdleRef.current);
       }
       postBuildIdleRef.current = null;
-
-      if (error && isDeterministicCompileSyntaxError(error) && project.files.length > 0) {
-        const { files: repairedFiles, repairs } = autoRepairFiles(project.files);
-        if (repairs.length > 0 && didProjectFilesChange(project.files, repairedFiles)) {
-          const nextDigest = digestProjectFiles(repairedFiles);
-          const gate = deterministicRepairGateRef.current;
-          const nextCount = gate.digest === nextDigest ? gate.count + 1 : 1;
-          deterministicRepairGateRef.current = { digest: nextDigest, count: nextCount };
-
-          if (nextCount > 2) {
-            console.warn('[Workspace] Deterministic repair repeated without success — escalating to AI repair instead of looping');
-          } else {
-            console.warn('[Workspace] Deterministic compile repair applied before AI retry:', repairs.slice(0, 8));
-            pendingValidationFixRef.current = null;
-            validationFixInFlightRef.current = false;
-            repairInFlightRef.current = false;
-            awaitingRepairJobStartRef.current = false;
-            setRepairFailed(false);
-            setRepairErrors([]);
-            setFiles(repairedFiles);
-            latestFilesRef.current = repairedFiles;
-            setCompileStateRaw('compiling');
-            setCompileError({
-              message: 'Repairing generated syntax before preview compile',
-              errors: repairs.slice(0, 5),
-            });
-            return;
-          }
-        }
-      }
     }
 
     // ── Auto-heal: on compile error, automatically re-prompt AI to fix ──
@@ -3170,17 +3118,36 @@ export function AIAppBuilderWorkspace() {
     return lastAssistant?.content || '';
   }, [messages]);
 
+  const fixErrorClickLockRef = useRef(false);
   const handleFixError = useCallback((errorPrompt: string, errorMeta?: { source?: string; line?: number; errors?: Array<{ msg?: string; source?: string; line?: number }> }) => {
-    const runtimeEvents = errorMeta?.errors?.length
-      ? `\n\n[REPORTED RUNTIME EVENTS]\n${errorMeta.errors.slice(0, 5).map((err, index) => `${index + 1}. ${err.msg || 'Unknown runtime error'}${err.source ? ` [${err.source}${err.line ? `:${err.line}` : ''}]` : ''}`).join('\n')}`
-      : '';
-    const diagnosisContext = buildErrorDiagnosisContext(
-      { message: `${errorPrompt}${runtimeEvents}`, source: errorMeta?.source, line: errorMeta?.line },
-      project.files,
-      undefined,
-      getLastAIResponse(),
-    );
-    sendMessage(diagnosisContext, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
+    if (fixErrorClickLockRef.current) {
+      dedupeToast('info', 'Repair is already starting…');
+      return;
+    }
+    fixErrorClickLockRef.current = true;
+    dedupeToast('info', 'Starting repair…');
+
+    // Keep the click handler cheap. Building the full diagnostic prompt can touch
+    // every generated file; defer it so Firefox can paint the button/toast instead
+    // of reporting that the page is frozen.
+    window.setTimeout(() => {
+      try {
+        const runtimeEvents = errorMeta?.errors?.length
+          ? `\n\n[REPORTED RUNTIME EVENTS]\n${errorMeta.errors.slice(0, 5).map((err, index) => `${index + 1}. ${err.msg || 'Unknown runtime error'}${err.source ? ` [${err.source}${err.line ? `:${err.line}` : ''}]` : ''}`).join('\n')}`
+          : '';
+        const diagnosisContext = buildErrorDiagnosisContext(
+          { message: `${errorPrompt}${runtimeEvents}`, source: errorMeta?.source, line: errorMeta?.line },
+          project.files,
+          undefined,
+          getLastAIResponse(),
+        );
+        sendMessage(diagnosisContext, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
+      } finally {
+        window.setTimeout(() => {
+          fixErrorClickLockRef.current = false;
+        }, 1500);
+      }
+    }, 32);
   }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys, selectedModel, getLastAIResponse]);
 
   // Listen for "Fix with AI" from preview error overlay
@@ -3250,29 +3217,17 @@ export function AIAppBuilderWorkspace() {
     }
 
     const currentErrorText = [compileError?.message, ...(compileError?.errors ?? [])].filter(Boolean).join('\n');
-    const isDeterministicCodeError = isDeterministicCompileSyntaxError(compileError);
-    if (isDeterministicCodeError && !isGeneratingRef.current && !isGeneratingOverrideRef.current) {
-      const { files: repairedFiles, repairs } = autoRepairFiles(project.files);
-      if (repairs.length > 0 && didProjectFilesChange(project.files, repairedFiles)) {
-        dedupeToast('info', 'Retry repaired generated syntax locally — compiling again.');
-        pendingValidationFixRef.current = null;
-        pendingFilesRef.current = null;
-        repairAttemptRef.current = 0;
-        setRepairFailed(false);
-        setRepairErrors([]);
-        setCompileError(null);
-        setCompileStateRaw('compiling');
-        setFiles(repairedFiles);
-        latestFilesRef.current = repairedFiles;
-        return;
-      }
-      // Re-running Vite against unchanged syntax-broken files only re-enters the same
-      // expensive failure path. Treat Retry as a focused repair for deterministic code
-      // errors, which is what the user expects from a builder-style retry button.
-      dedupeToast('info', 'Retry found a code error — sending it to AI to fix instead.');
+    if (compileState === 'error' && !isGeneratingRef.current && !isGeneratingOverrideRef.current) {
+      // In an error state the user's button says "Repair now". Do not re-enter the
+      // compile pipeline from that click; unchanged broken files can immediately hit
+      // the same expensive failure path and make the tab appear frozen. Send a focused
+      // AI repair request instead, after letting the UI paint.
+      dedupeToast('info', 'Sending the preview error to AI repair…');
       setCompileStateRaw('idle');
       setCompileError(null);
-      handleFixError(`Compile error: ${currentErrorText || 'The preview failed to compile.'}`);
+      window.setTimeout(() => {
+        handleFixError(`Compile error: ${currentErrorText || 'The preview failed to compile.'}`);
+      }, 32);
       return;
     }
 
@@ -3281,7 +3236,7 @@ export function AIAppBuilderWorkspace() {
     setCompileError(null);
     setCompileStateRaw('compiling');
     forceCompileRef.current?.();
-  }, [project.files, compileError, handleFixError, isCompiling, setFiles]);
+  }, [project.files, compileError, compileState, handleFixError, isCompiling, setFiles]);
 
   const handleDiscardChanges = useCallback(() => {
     clearRepairWatchdog();

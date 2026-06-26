@@ -898,8 +898,16 @@ function stabilizeFinalSyntax(path: string, content: string, ext: string): { con
     return { content, fixed: false, description: '' };
   }
 
+  // Keep this final shield cheap. It runs on the browser main thread during
+  // preview retries, so do not parse every generated file just to discover that
+  // nothing suspicious is present. Only enter the parse-aware loop for the exact
+  // tail-corruption signatures this stabilizer is meant to repair.
+  if (!hasSuspiciousFinalSyntax(content)) {
+    return { content, fixed: false, description: '' };
+  }
+
   const initialParse = parseFile(path, content);
-  if (initialParse.ok && !hasSuspiciousFinalSyntax(content)) {
+  if (initialParse.ok) {
     return { content, fixed: false, description: '' };
   }
 

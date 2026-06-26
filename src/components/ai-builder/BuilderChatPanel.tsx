@@ -581,6 +581,25 @@ export function BuilderChatPanel({
     onUpdateMessages?.(prev => prev.map(m => m.id === msgId ? { ...m, pinned: !m.pinned } : m));
   }, [onUpdateMessages]);
 
+  const repairClickLockRef = useRef(false);
+  const handleRepairPreviewClick = useCallback(() => {
+    if (repairClickLockRef.current) return;
+    repairClickLockRef.current = true;
+    toast.info('Starting repair…', { duration: 1600 });
+    const errorContext = buildErrors?.map(e => `${e.file || ''}:${e.line || ''} ${e.message}`).join('\n') || 'Preview needs repair';
+    requestAnimationFrame(() => {
+      window.setTimeout(() => {
+        try {
+          onFixError(`The preview is showing errors. Please fix these compile errors:\n${errorContext}`);
+        } finally {
+          window.setTimeout(() => {
+            repairClickLockRef.current = false;
+          }, 1200);
+        }
+      }, 0);
+    });
+  }, [buildErrors, onFixError]);
+
   useEffect(() => {
     // ScrollArea's actual scrollable element is the Viewport child
     const el = scrollRef.current;
@@ -1285,10 +1304,7 @@ export function BuilderChatPanel({
               )}
             </div>
             <button
-              onClick={() => {
-                const errorContext = buildErrors?.map(e => `${e.file || ''}:${e.line || ''} ${e.message}`).join('\n') || 'Preview needs repair';
-                onFixError(`The preview is showing errors. Please fix these compile errors:\n${errorContext}`);
-              }}
+              onClick={handleRepairPreviewClick}
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-cyan-500/15 text-cyan-400 hover:bg-cyan-500/25 transition-colors font-semibold text-[13px] shrink-0"
             >
               <Wrench className="h-3.5 w-3.5" />
