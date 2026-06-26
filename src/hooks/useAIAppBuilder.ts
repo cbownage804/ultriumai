@@ -1934,7 +1934,15 @@ ${JSON.stringify(brandingData.typography, null, 2)}` : ''}` });
         .sort((a, b) => b.score - a.score)
         .slice(0, MAX_FILES);
 
-      const filesToSend = relevant.length > 0 ? relevant.map(s => s.file) : files.slice(0, MAX_FILES);
+      const focusFilesToSend = focusFiles
+        .map(path => files.find(f => f.path === path))
+        .filter((f): f is ProjectFile => Boolean(f));
+      const rankedFiles = relevant.length > 0 ? relevant.map(s => s.file) : files.slice(0, MAX_FILES);
+      const filesToSend: ProjectFile[] = [];
+      for (const file of [...focusFilesToSend, ...rankedFiles]) {
+        if (!filesToSend.some(existing => existing.path === file.path)) filesToSend.push(file);
+        if (filesToSend.length >= Math.max(MAX_FILES, Math.min(files.length, focusFilesToSend.length))) break;
+      }
       
       // Dynamic per-file cap: distribute budget evenly, minimum 5KB each
       const perFileCap = Math.max(5000, Math.floor(FILE_BUDGET_CHARS / filesToSend.length));
