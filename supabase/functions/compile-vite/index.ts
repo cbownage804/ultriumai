@@ -298,6 +298,17 @@ serve(async (req) => {
       console.log(`[compile-vite] Repaired ${framerMotionRepairCount} malformed framer-motion closing tag(s)`);
     }
 
+    // Absolute server-side shield: bare </motion> is invalid JSX and must never
+    // reach esbuild, even if earlier client repair did not run.
+    for (const f of files) {
+      if (!/\.(tsx|jsx)$/.test(f.path) || typeof f.content !== 'string') continue;
+      const before = f.content;
+      f.content = f.content.replace(/<\/motion\s*>/gi, '');
+      if (f.content !== before) {
+        console.log(`[compile-vite] Removed invalid bare </motion> closer from ${f.path}`);
+      }
+    }
+
     // Auto-inject missing local CSS imports (common generated-project failure mode)
     const existingPaths = new Set(files.map((f: any) => f.path));
     const missingCssPaths = new Set<string>();
