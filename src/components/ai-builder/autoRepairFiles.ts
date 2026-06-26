@@ -862,7 +862,7 @@ function looksLikeDanglingJsxSuffix(suffix: string): boolean {
       continue;
     }
 
-    const punctuation = rest.match(/^[);,]+\s*/);
+    const punctuation = rest.match(/^[)\]},;]+\s*/);
     if (punctuation) {
       rest = rest.slice(punctuation[0].length).trimStart();
       continue;
