@@ -2112,12 +2112,14 @@ ${JSON.stringify(brandingData.typography, null, 2)}` : ''}` });
       const lastMsg = apiMessages[apiMessages.length - 1];
       if (typeof lastMsg.content === 'string' && lastMsg.content.length > 300000) {
         // Keep manifest + user request, aggressively truncate file contents
-        const manifestEnd = lastMsg.content.indexOf('FILE CONTENTS:');
+        const manifestEnd = lastMsg.content.indexOf('FILE CONTENTS');
         const userReqStart = lastMsg.content.lastIndexOf('User request:');
         if (manifestEnd > 0 && userReqStart > 0) {
-          const manifest = lastMsg.content.slice(0, manifestEnd + 14);
+          const fileContentsHeaderEnd = lastMsg.content.indexOf('\n', manifestEnd);
+          const manifestCut = fileContentsHeaderEnd > manifestEnd ? fileContentsHeaderEnd + 1 : manifestEnd + 'FILE CONTENTS'.length;
+          const manifest = lastMsg.content.slice(0, manifestCut);
           const userReq = lastMsg.content.slice(userReqStart);
-          const fileSection = lastMsg.content.slice(manifestEnd + 14, userReqStart);
+          const fileSection = lastMsg.content.slice(manifestCut, userReqStart);
           // Keep only first 200K of file content
           const truncatedFiles = fileSection.slice(0, 200000) + '\n\n[... remaining files omitted for token budget ...]\n\n';
           lastMsg.content = manifest + truncatedFiles + userReq;
