@@ -1449,7 +1449,6 @@ export function AIAppBuilderWorkspace() {
   const { compileReactProject } = useWorkerCompiler();
   const compileReactProjectRef = useSyncRef(compileReactProject);
   // Dev-only E2E test hook (tree-shaken from production).
-  const projectFilesRef = useSyncRef(project.files);
   const setFilesRef = useSyncRef(setFiles);
   useEffect(() => {
     if (!import.meta.env.DEV) return;
