@@ -781,11 +781,13 @@ While I'm a demo assistant with limited responses, the full version can answer a
                       )}>
                         <div className="whitespace-pre-wrap prose prose-sm dark:prose-invert max-w-none [&>p]:my-1 [&>ul]:my-1 [&>ol]:my-1">
                           {message.content.split('\n').map((line, i) => {
-                            // Simple markdown parsing
-                            let parsed = line
+                            // Escape first, then apply minimal markdown, then sanitize
+                            let parsed = escapeHtml(line)
                               .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                               .replace(/`(.*?)`/g, '<code class="bg-background/50 px-1 rounded text-xs">$1</code>');
-                            return <p key={i} dangerouslySetInnerHTML={{ __html: parsed }} />;
+                            const safe = DOMPurify.sanitize(parsed, { ALLOWED_TAGS: ['strong', 'code'], ALLOWED_ATTR: ['class'] });
+                            return <p key={i} dangerouslySetInnerHTML={{ __html: safe }} />;
+                          })}
                           })}
                         </div>
                       </div>
