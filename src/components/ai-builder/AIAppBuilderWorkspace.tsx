@@ -1094,6 +1094,17 @@ export function AIAppBuilderWorkspace() {
         pendingFilesRef.current = mergedFiles;
       }
 
+      // Deterministic fallback for named readability fixes (e.g. "View Services" on a dark hero).
+      // If the model claims it fixed a CTA but leaves black/transparent button styling intact,
+      // make the exact named element readable before validation/commit.
+      const contrastFallback = applyTargetedVisualContrastFallback(mergedFiles, latestMessagesRef.current);
+      if (contrastFallback.patches.length > 0) {
+        console.info('[handleBgComplete] Applied targeted visual contrast fallback:', contrastFallback.patches);
+        mergedFiles = contrastFallback.files;
+        pendingFilesRef.current = mergedFiles;
+        dedupeToast('info', 'Made the named button readable with a high-contrast fallback.', { duration: 2500 });
+      }
+
       // ── Golden template merge: ensure required boot files always exist ──
       mergedFiles = mergeOntoGolden(mergedFiles);
       pendingFilesRef.current = mergedFiles;
