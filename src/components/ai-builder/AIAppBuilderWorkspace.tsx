@@ -469,7 +469,10 @@ function applyTargetedVisualContrastFallback(
       for (let i = targetLine; i >= Math.max(0, targetLine - 20); i--) {
         if (/className\s*=/.test(lines[i])) candidateIndexes.push(i);
       }
-      const clickableCandidates = candidateIndexes.filter(i => /<(?:button|a|Link|Button)\b|<motion\.(?:a|button)\b|\b(?:href|to|onClick)=/.test(lines[i]));
+      const clickableCandidates = candidateIndexes.filter(i => {
+        const nearbyOpener = lines.slice(Math.max(0, i - 3), i + 1).join(' ');
+        return /<(?:button|a|Link|Button)\b|<motion\.(?:a|button)\b|\b(?:href|to|onClick)=/.test(nearbyOpener);
+      });
       for (const i of [...clickableCandidates, ...candidateIndexes.filter(i => !clickableCandidates.includes(i))]) {
         const original = lines[i];
         let next = original.replace(/className\s*=\s*(["'])([^"']*)\1/, (_match, quote, classValue) => {
