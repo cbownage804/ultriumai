@@ -464,8 +464,13 @@ function applyTargetedVisualContrastFallback(
       if (targetLine < 0) continue;
 
       // Find the nearest className for the element that renders the target text.
-      // Most generated CTA markup puts className on the same line or within a few lines above.
-      for (let i = targetLine; i >= Math.max(0, targetLine - 12); i--) {
+      // Prefer the actual clickable element over child spans/icons.
+      const candidateIndexes: number[] = [];
+      for (let i = targetLine; i >= Math.max(0, targetLine - 20); i--) {
+        if (/className\s*=/.test(lines[i])) candidateIndexes.push(i);
+      }
+      const clickableCandidates = candidateIndexes.filter(i => /<(?:button|a|Link|Button)\b|<motion\.(?:a|button)\b|\b(?:href|to|onClick)=/.test(lines[i]));
+      for (const i of [...clickableCandidates, ...candidateIndexes.filter(i => !clickableCandidates.includes(i))]) {
         const original = lines[i];
         let next = original.replace(/className\s*=\s*(["'])([^"']*)\1/, (_match, quote, classValue) => {
           const strengthened = strengthenDarkHeroButtonClass(classValue);
