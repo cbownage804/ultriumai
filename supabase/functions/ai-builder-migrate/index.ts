@@ -9,6 +9,26 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
 
   try {
+    // Require an authenticated Lovable user (verify_jwt is also enabled in config.toml)
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const authClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+    )
+    const { data: userData, error: userErr } = await authClient.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    )
+    if (userErr || !userData.user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     const { sql, supabaseUrl, supabaseServiceKey } = await req.json()
 
     if (!sql || !supabaseUrl || !supabaseServiceKey) {
@@ -17,16 +37,29 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Validate SQL — block dangerous operations
-    const upperSql = sql.toUpperCase().trim()
-    const blocked = ['DROP DATABASE', 'DROP SCHEMA', 'TRUNCATE ALL', 'ALTER SYSTEM']
+    // Only allow standard Supabase project URLs to prevent SSRF
+    if (!/^https:\/\/[a-z0-9]+\.supabase\.co\/?$/i.test(supabaseUrl)) {
+      return new Response(JSON.stringify({ error: 'Invalid supabaseUrl: must be a https://<ref>.supabase.co URL' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // Validate SQL — block dangerous operations (expanded blocklist)
+    const upperSql = sql.toUpperCase()
+    const blocked = [
+      'DROP DATABASE', 'DROP SCHEMA', 'TRUNCATE', 'ALTER SYSTEM',
+      'DROP ROLE', 'ALTER ROLE', 'CREATE ROLE',
+      'COPY ', 'PG_READ_SERVER_FILES', 'PG_WRITE_SERVER_FILES', 'PG_LS_DIR',
+      'GRANT ALL', 'SECURITY DEFINER', 'LO_IMPORT', 'LO_EXPORT',
+    ]
     for (const b of blocked) {
       if (upperSql.includes(b)) {
-        return new Response(JSON.stringify({ error: `Blocked: "${b}" is not allowed in migrations.` }), {
+        return new Response(JSON.stringify({ error: `Blocked: "${b.trim()}" is not allowed in migrations.` }), {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
       }
     }
+
 
     // Connect to the user's Supabase project using their service role key
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
