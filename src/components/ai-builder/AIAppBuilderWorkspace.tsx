@@ -460,7 +460,7 @@ function applyTargetedVisualContrastFallback(
     let changed = false;
 
     for (const target of targets) {
-      const targetLine = lines.findIndex(line => normalizeVisibleText(line).includes(target));
+      const targetLine = lines.findIndex((_line, idx) => normalizeVisibleText(lines.slice(idx, Math.min(lines.length, idx + 5)).join(' ')).includes(target));
       if (targetLine < 0) continue;
 
       // Find the nearest className for the element that renders the target text.
