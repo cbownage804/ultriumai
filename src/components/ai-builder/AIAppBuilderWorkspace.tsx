@@ -406,6 +406,143 @@ function didProjectFilesChange(before: ProjectFile[], after: ProjectFile[]): boo
   return before.some(file => afterMap.get(file.path) !== file.content);
 }
 
+function normalizeVisibleText(value: string): string {
+  return value.toLowerCase().replace(/&amp;/g, '&').replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function extractVisibleUiTargets(input: string): string[] {
+  const targets = new Set<string>();
+  for (const match of input.matchAll(/["'“”‘’]([^"'“”‘’]{2,80})["'“”‘’]/g)) {
+    const normalized = normalizeVisibleText(match[1]);
+    if (normalized.length >= 3) targets.add(normalized);
+  }
+  for (const match of input.matchAll(/\b([A-Z][a-z0-9]+(?:\s+[A-Z][a-z0-9]+){1,4})\b/g)) {
+    const normalized = normalizeVisibleText(match[1]);
+    if (normalized.length >= 5) targets.add(normalized);
+  }
+  for (const known of ['view services', 'book now', 'book your chair', 'get started', 'learn more', 'contact us']) {
+    if (normalizeVisibleText(input).includes(known)) targets.add(known);
+  }
+  return [...targets].slice(0, 6);
+}
+
+function latestNaturalUserRequest(messages: { role: string; content: string }[]): string {
+  const latest = [...messages].reverse().find(m => m.role === 'user')?.content || '';
+  const marker = 'User request:';
+  return latest.includes(marker) ? latest.slice(latest.lastIndexOf(marker) + marker.length).trim() : latest.trim();
+}
+
+function strengthenDarkHeroButtonClass(classValue: string): string {
+  const conflict = /^(?:text-(?:black|white|gray-\d+|slate-\d+|zinc-\d+|neutral-\d+|stone-\d+|amber-\d+|yellow-\d+|black\/\d+|white\/\d+|gray-\d+\/\d+|slate-\d+\/\d+|zinc-\d+\/\d+|neutral-\d+\/\d+|stone-\d+\/\d+|\[.*\])|bg-(?:transparent|black|white|gray-\d+|slate-\d+|zinc-\d+|neutral-\d+|stone-\d+|amber-\d+|yellow-\d+|black\/\d+|white\/\d+|gray-\d+\/\d+|slate-\d+\/\d+|zinc-\d+\/\d+|neutral-\d+\/\d+|stone-\d+\/\d+|amber-\d+\/\d+|yellow-\d+\/\d+|\[.*\])|border-(?:transparent|black|white|gray-\d+|slate-\d+|zinc-\d+|neutral-\d+|stone-\d+|amber-\d+|yellow-\d+|white\/\d+|black\/\d+|gray-\d+\/\d+|slate-\d+\/\d+|zinc-\d+\/\d+|neutral-\d+\/\d+|stone-\d+\/\d+|amber-\d+\/\d+|yellow-\d+\/\d+|\[.*\])|hover:(?:bg|text|border)-.+|focus(?:-visible)?:ring-.+)$/;
+  const kept = classValue.split(/\s+/).filter(Boolean).filter(token => !conflict.test(token));
+  const required = ['bg-white', 'text-gray-950', 'border-2', 'border-white', 'hover:bg-amber-300', 'hover:text-black', 'focus-visible:ring-2', 'focus-visible:ring-amber-300', 'shadow-lg'];
+  for (const token of required) {
+    if (!kept.includes(token)) kept.push(token);
+  }
+  return kept.join(' ');
+}
+
+function addHighContrastInlineStyle(line: string): string {
+  const readableStyle = "backgroundColor: '#ffffff', color: '#111827', borderColor: '#ffffff'";
+  if (/style\s*=\s*\{\{/.test(line)) {
+    return line.replace(/style\s*=\s*\{\{([^}]*)\}\}/, (_match, existing) => {
+      const kept = String(existing)
+        .split(',')
+        .map(part => part.trim())
+        .filter(part => part && !/^(backgroundColor|color|borderColor)\s*:/.test(part));
+      return `style={{ ${[...kept, readableStyle].join(', ')} }}`;
+    });
+  }
+  if (/\s*>\s*$/.test(line) || /\s*\/?>/.test(line)) {
+    return line.replace(/(\s*\/?>)/, ` style={{ ${readableStyle} }}$1`);
+  }
+  return `${line} style={{ ${readableStyle} }}`;
+}
+
+function strengthenClassNameLine(line: string): string {
+  let next = line.replace(/className\s*=\s*(['"])([^'"]*)\1/, (_match, quote, classValue) => {
+    return `className=${quote}${strengthenDarkHeroButtonClass(classValue)}${quote}`;
+  });
+  next = next.replace(/className\s*=\s*\{\s*(['"`])([^'"`]*)\1\s*\}/, (_match, quote, classValue) => {
+    return `className={${quote}${strengthenDarkHeroButtonClass(classValue)}${quote}}`;
+  });
+  // Common cn()/clsx() shape: className={cn('...', condition && '...')}. Strengthen
+  // the base string argument instead of missing the edit and letting the model claim success.
+  next = next.replace(/(className\s*=\s*\{\s*(?:cn|clsx)\s*\(\s*)(['"`])([^'"`]*)\2/, (_match, prefix, quote, classValue) => {
+    return `${prefix}${quote}${strengthenDarkHeroButtonClass(classValue)}${quote}`;
+  });
+  return next;
+}
+
+function applyTargetedVisualContrastFallback(
+  files: ProjectFile[],
+  messages: { role: string; content: string }[],
+): { files: ProjectFile[]; patches: string[] } {
+  const request = latestNaturalUserRequest(messages);
+  if (!/\b(readable|visible|contrast|can'?t\s+read|hard\s+to\s+read|too\s+dark|too\s+light|dark\s+hero|invisible|not\s+readable)\b/i.test(request)) {
+    return { files, patches: [] };
+  }
+  const targets = extractVisibleUiTargets(request);
+  if (targets.length === 0) return { files, patches: [] };
+
+  const patches: string[] = [];
+  const patchedFiles = files.map(file => {
+    if (!/\.(tsx?|jsx?|html)$/.test(file.path)) return file;
+    const lines = file.content.split('\n');
+    let changed = false;
+
+    for (const target of targets) {
+      const targetLine = lines.findIndex((_line, idx) => normalizeVisibleText(lines.slice(idx, Math.min(lines.length, idx + 5)).join(' ')).includes(target));
+      if (targetLine < 0) continue;
+
+      // Find the nearest className for the element that renders the target text.
+      // Prefer the actual clickable element over child spans/icons.
+      const candidateIndexes: number[] = [];
+      for (let i = targetLine; i >= Math.max(0, targetLine - 20); i--) {
+        if (/className\s*=/.test(lines[i])) candidateIndexes.push(i);
+      }
+      const clickableCandidates = candidateIndexes.filter(i => {
+        const nearbyOpener = lines.slice(Math.max(0, i - 3), i + 1).join(' ');
+        return /<(?:button|a|Link|Button)\b|<motion\.(?:a|button)\b|\b(?:href|to|onClick)=/.test(nearbyOpener);
+      });
+      const styledCandidates = candidateIndexes.filter(i => /\b(?:bg-|border|px-|py-|rounded|inline-flex|justify-center|items-center|btn|button|cta)\b/.test(lines[i]));
+      const orderedCandidates = [...clickableCandidates, ...styledCandidates, ...candidateIndexes]
+        .filter((index, pos, all) => all.indexOf(index) === pos);
+      for (const i of orderedCandidates) {
+        const original = lines[i];
+        let next = strengthenClassNameLine(original);
+        if (next !== original) {
+          lines[i] = next;
+          changed = true;
+          patches.push(`${file.path}: strengthened contrast for "${target}"`);
+          break;
+        }
+      }
+
+      if (!changed) {
+        // Last-resort visual correctness: inline style wins over conflicting Tailwind
+        // classes and handles multiline/class composition the deterministic parser cannot safely rewrite.
+        for (let i = targetLine; i >= Math.max(0, targetLine - 24); i--) {
+          if (/<(?:button|a|Link|Button)\b|<motion\.(?:a|button)\b/.test(lines[i]) || /className\s*=/.test(lines[i])) {
+            const original = lines[i];
+            const next = addHighContrastInlineStyle(original);
+            if (next !== original) {
+              lines[i] = next;
+              changed = true;
+              patches.push(`${file.path}: forced readable inline contrast for "${target}"`);
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    return changed ? { ...file, content: lines.join('\n') } : file;
+  });
+
+  return { files: patchedFiles, patches };
+}
+
 /** Check if the user's latest message explicitly requests changing a protected file */
 function userExplicitlyMentionedFile(messages: { role: string; content: string }[], filePath: string): boolean {
   const fileName = filePath.split('/').pop()?.toLowerCase() || '';
@@ -1008,6 +1145,17 @@ export function AIAppBuilderWorkspace() {
         console.info('[handleBgComplete] Sanitizer applied', sanitizerFixes.length, 'fixes:', sanitizerFixes.slice(0, 5));
         mergedFiles = sanitizedFiles;
         pendingFilesRef.current = mergedFiles;
+      }
+
+      // Deterministic fallback for named readability fixes (e.g. "View Services" on a dark hero).
+      // If the model claims it fixed a CTA but leaves black/transparent button styling intact,
+      // make the exact named element readable before validation/commit.
+      const contrastFallback = applyTargetedVisualContrastFallback(mergedFiles, latestMessagesRef.current);
+      if (contrastFallback.patches.length > 0) {
+        console.info('[handleBgComplete] Applied targeted visual contrast fallback:', contrastFallback.patches);
+        mergedFiles = contrastFallback.files;
+        pendingFilesRef.current = mergedFiles;
+        dedupeToast('info', 'Made the named button readable with a high-contrast fallback.', { duration: 2500 });
       }
 
       // ── Golden template merge: ensure required boot files always exist ──

@@ -23,6 +23,8 @@ Before finalizing your response, mentally review your generated code for these i
 8. **Type Mismatches**: If TypeScript, ensure prop types match component expectations.
 9. **CSS Class Conflicts**: No duplicate or contradictory Tailwind classes on the same element.
 10. **Dead Code**: Remove any unused variables, imports, or functions.
+11. **Visual Fidelity**: If the user asked for a visual change (contrast, readability, color, spacing, hover state, button/CTA style), verify the exact named element was actually edited. Do not claim success unless the output changes the target element's className/style.
+12. **Button Contrast**: For unreadable buttons on dark heroes, the resting state must use a safe high-contrast pairing such as bg-white text-gray-950, bg-amber-400 text-black, or bg-black/50 text-white border-white/70. Do not fix only the hover state.
 
 If you find ANY issue above, fix it BEFORE outputting code. Do NOT mention this review to the user.
 ${antiPatternPrompt || ''}
