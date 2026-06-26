@@ -176,6 +176,43 @@ export default function App() {
 
     expect(repairs.some(r => r.includes('template expression') || r.includes('template literal'))).toBe(true);
   });
+
+  it('repairs bare framer-motion closing tags before Vite sees them', () => {
+    const files = [
+      makeTsx('src/App.tsx', `import { motion } from 'framer-motion';
+export default function App() {
+  return (
+    <motion.div className="p-4">
+      <h1>Hi</h1>
+    </motion></div>
+  );
+}`),
+    ];
+
+    const { files: repairedFiles, repairs } = autoRepairFiles(files);
+    const content = repairedFiles[0].content;
+
+    expect(content).toContain('</motion.div>');
+    expect(content).not.toMatch(/<\/motion>(?!\.)/);
+    expect(repairs.some(r => r.includes('framer-motion closing tag'))).toBe(true);
+  });
+
+  it('removes orphaned framer-motion closing tags after a valid close', () => {
+    const files = [
+      makeTsx('src/App.tsx', `import { motion } from 'framer-motion';
+export default function App() {
+  return <div><motion.section>Ready</motion.section></motion></div>;
+}`),
+    ];
+
+    const { files: repairedFiles, repairs } = autoRepairFiles(files);
+    const content = repairedFiles[0].content;
+
+    expect(content).toContain('<motion.section>Ready</motion.section>');
+    expect(content).toContain('</div>');
+    expect(content).not.toMatch(/<\/motion>(?!\.)/);
+    expect(repairs.some(r => r.includes('framer-motion closing tag'))).toBe(true);
+  });
 });
 
 describe('autoRepairFiles corrupted arrow functions', () => {
