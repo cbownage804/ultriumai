@@ -1186,7 +1186,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
             ) : (
               <div className="flex h-full items-center justify-center bg-[#0a0a10]">
                 <div className="flex flex-col items-center gap-3 text-center px-6">
-                  <div className="h-5 w-5 rounded-full border-2 border-white/10 border-t-cyan-400 animate-spin" />
+                  <div className="h-5 w-5 rounded-full border-2 border-cyan-400/35 bg-cyan-400/10" />
                   <div>
                     <p className="text-sm text-white/70 font-medium">Preparing isolated preview</p>
                     <p className="text-xs text-white/35 mt-1">Setting up cross-origin sandbox for safe rendering.</p>
@@ -1199,7 +1199,7 @@ export function BuilderPreviewPanel({ html, compileState = 'idle', showConsole =
             {/* LKG fallback banner — subtle, non-blocking */}
             {isUsingLKG && !isGenerating && !isCompiling && (
                 <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/85 border border-amber-500/25">
-                <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                <div className="h-1.5 w-1.5 rounded-full bg-amber-400" />
                 <span className="text-[10px] text-amber-300/80 font-medium">Showing previous working version</span>
               </div>
             )}
