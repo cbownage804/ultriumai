@@ -8,7 +8,9 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:e2e": "playwright test",
+    "test:e2e:smoke": "playwright test e2e/builder-autorepair-smoke.spec.ts --project=chromium"
   },
   "dependencies": {
     "@babel/parser": "^7.29.3",
