@@ -3013,6 +3013,11 @@ export function AIAppBuilderWorkspace() {
   }, []);
 
   const handleRetryCompile = useCallback(() => {
+    if (isGeneratingRef.current || isGeneratingOverrideRef.current) {
+      dedupeToast('info', 'Wait for code writing/verification to finish before retrying compile.');
+      return;
+    }
+
     const hasAnyFiles = project.files.length > 0;
     const hasUserFiles = hasUserGeneratedFiles(project.files);
 
