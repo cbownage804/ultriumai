@@ -1972,7 +1972,7 @@ ${JSON.stringify(brandingData.typography, null, 2)}` : ''}` });
       );
       setContextBudget(budget);
 
-      return `${manifest}${structureNote}${unchangedNote}\n\nFILE CONTENTS (with line numbers for ===EDIT: patches):\n${fileContext}${omittedNote}\n\n⚠️ MANDATORY: You MUST use ===EDIT: path=== with @@ lineStart-endLine @@ hunks for ALL changes to existing files. Do NOT use ===FILE: path=== to rewrite existing files — that causes full regeneration which is slow. Use ===FILE: path=== ONLY for brand new files. Use ===DELETE: path=== to remove files. NEVER re-output unchanged files. Output ONLY the changed lines as diff hunks.\n\nAFTER all code blocks, write a brief 1-2 sentence conversational summary of what you changed and why — be friendly and helpful like a coding assistant.\n\nUser request: ${userInput}`;
+      return `${manifest}${structureNote}${unchangedNote}${visualFixContext ? `\n\n${visualFixContext}` : ''}\n\nFILE CONTENTS (with line numbers for ===EDIT: patches):\n${fileContext}${omittedNote}\n\n⚠️ MANDATORY: You MUST use ===EDIT: path=== with @@ lineStart-endLine @@ hunks for ALL changes to existing files. Do NOT use ===FILE: path=== to rewrite existing files — that causes full regeneration which is slow. Use ===FILE: path=== ONLY for brand new files. Use ===DELETE: path=== to remove files. NEVER re-output unchanged files. Output ONLY the changed lines as diff hunks.\n\nAFTER all code blocks, write a brief 1-2 sentence conversational summary of what you changed and why — be friendly and helpful like a coding assistant.\n\nUser request: ${userInput}`;
     };
 
     if (effectiveImageDataUrls?.length) {
