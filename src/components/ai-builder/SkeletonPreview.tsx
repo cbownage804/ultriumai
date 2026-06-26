@@ -1,7 +1,7 @@
 /**
  * Premium loading screen shown during AI generation and compilation.
- * Features: animated code rain, real build progress, and morphing skeleton wireframe.
- * All heavy animations are CSS-only to keep the main thread free.
+ * Features: static code backdrop, real build progress, and lightweight skeleton wireframe.
+ * Kept intentionally animation-light so Firefox stays responsive during compiles.
  *
  * Step 4: Now accepts compilePhase for granular progress messages.
  */
