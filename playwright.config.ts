@@ -17,19 +17,25 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
-  /* Reporter to use */
-  reporter: 'html',
+  /* Reporter to use (HTML report embeds screenshots, videos, and traces) */
+  reporter: [['html', { open: 'never' }], ['list']],
+  /* Where artifacts (screenshots, videos, traces) are written */
+  outputDir: 'test-results',
   /* Shared settings for all the projects below */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: 'http://localhost:8080',
 
-    /* Collect trace when retrying the failed test */
-    trace: 'on-first-retry',
-    
-    /* Screenshot on failure */
-    screenshot: 'only-on-failure',
+    /* Always capture a full HTML trace on failure (open with `npx playwright show-trace`) */
+    trace: 'retain-on-failure',
+
+    /* Screenshot on failure (full page) */
+    screenshot: { mode: 'only-on-failure', fullPage: true },
+
+    /* Record video and keep it only when the test fails */
+    video: 'retain-on-failure',
   },
+
 
   /* Configure projects for major browsers */
   projects: [
