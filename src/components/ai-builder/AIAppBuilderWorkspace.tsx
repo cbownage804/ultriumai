@@ -442,6 +442,38 @@ function strengthenDarkHeroButtonClass(classValue: string): string {
   return kept.join(' ');
 }
 
+function addHighContrastInlineStyle(line: string): string {
+  const readableStyle = "backgroundColor: '#ffffff', color: '#111827', borderColor: '#ffffff'";
+  if (/style\s*=\s*\{\{/.test(line)) {
+    return line.replace(/style\s*=\s*\{\{([^}]*)\}\}/, (_match, existing) => {
+      const kept = String(existing)
+        .split(',')
+        .map(part => part.trim())
+        .filter(part => part && !/^(backgroundColor|color|borderColor)\s*:/.test(part));
+      return `style={{ ${[...kept, readableStyle].join(', ')} }}`;
+    });
+  }
+  if (/\s*>\s*$/.test(line) || /\s*\/?>/.test(line)) {
+    return line.replace(/(\s*\/?>)/, ` style={{ ${readableStyle} }}$1`);
+  }
+  return `${line} style={{ ${readableStyle} }}`;
+}
+
+function strengthenClassNameLine(line: string): string {
+  let next = line.replace(/className\s*=\s*(['"])([^'"]*)\1/, (_match, quote, classValue) => {
+    return `className=${quote}${strengthenDarkHeroButtonClass(classValue)}${quote}`;
+  });
+  next = next.replace(/className\s*=\s*\{\s*(['"`])([^'"`]*)\1\s*\}/, (_match, quote, classValue) => {
+    return `className={${quote}${strengthenDarkHeroButtonClass(classValue)}${quote}}`;
+  });
+  // Common cn()/clsx() shape: className={cn('...', condition && '...')}. Strengthen
+  // the base string argument instead of missing the edit and letting the model claim success.
+  next = next.replace(/(className\s*=\s*\{\s*(?:cn|clsx)\s*\(\s*)(['"`])([^'"`]*)\2/, (_match, prefix, quote, classValue) => {
+    return `${prefix}${quote}${strengthenDarkHeroButtonClass(classValue)}${quote}`;
+  });
+  return next;
+}
+
 function applyTargetedVisualContrastFallback(
   files: ProjectFile[],
   messages: { role: string; content: string }[],
@@ -478,19 +510,29 @@ function applyTargetedVisualContrastFallback(
         .filter((index, pos, all) => all.indexOf(index) === pos);
       for (const i of orderedCandidates) {
         const original = lines[i];
-        let next = original.replace(/className\s*=\s*(["'])([^"']*)\1/, (_match, quote, classValue) => {
-          const strengthened = strengthenDarkHeroButtonClass(classValue);
-          return `className=${quote}${strengthened}${quote}`;
-        });
-        next = next.replace(/className\s*=\s*\{\s*(["'`])([^"'`]*)\1\s*\}/, (_match, quote, classValue) => {
-          const strengthened = strengthenDarkHeroButtonClass(classValue);
-          return `className={${quote}${strengthened}${quote}}`;
-        });
+        let next = strengthenClassNameLine(original);
         if (next !== original) {
           lines[i] = next;
           changed = true;
           patches.push(`${file.path}: strengthened contrast for "${target}"`);
           break;
+        }
+      }
+
+      if (!changed) {
+        // Last-resort visual correctness: inline style wins over conflicting Tailwind
+        // classes and handles multiline/class composition the deterministic parser cannot safely rewrite.
+        for (let i = targetLine; i >= Math.max(0, targetLine - 24); i--) {
+          if (/<(?:button|a|Link|Button)\b|<motion\.(?:a|button)\b/.test(lines[i]) || /className\s*=/.test(lines[i])) {
+            const original = lines[i];
+            const next = addHighContrastInlineStyle(original);
+            if (next !== original) {
+              lines[i] = next;
+              changed = true;
+              patches.push(`${file.path}: forced readable inline contrast for "${target}"`);
+              break;
+            }
+          }
         }
       }
     }
