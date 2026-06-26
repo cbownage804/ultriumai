@@ -473,7 +473,10 @@ function applyTargetedVisualContrastFallback(
         const nearbyOpener = lines.slice(Math.max(0, i - 3), i + 1).join(' ');
         return /<(?:button|a|Link|Button)\b|<motion\.(?:a|button)\b|\b(?:href|to|onClick)=/.test(nearbyOpener);
       });
-      for (const i of [...clickableCandidates, ...candidateIndexes.filter(i => !clickableCandidates.includes(i))]) {
+      const styledCandidates = candidateIndexes.filter(i => /\b(?:bg-|border|px-|py-|rounded|inline-flex|justify-center|items-center|btn|button|cta)\b/.test(lines[i]));
+      const orderedCandidates = [...clickableCandidates, ...styledCandidates, ...candidateIndexes]
+        .filter((index, pos, all) => all.indexOf(index) === pos);
+      for (const i of orderedCandidates) {
         const original = lines[i];
         let next = original.replace(/className\s*=\s*(["'])([^"']*)\1/, (_match, quote, classValue) => {
           const strengthened = strengthenDarkHeroButtonClass(classValue);
