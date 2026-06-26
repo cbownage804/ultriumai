@@ -237,6 +237,48 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
         repairs.push(`${f.path}: replaced for= with htmlFor=`);
       }
 
+      // ── 6a. Fix malformed framer-motion closing tags: `</motion>` → `</motion.X>` ──
+      // AI frequently drops the `.div`/`.section`/etc. on the closing tag, producing
+      // `</motion></div>` which esbuild rejects ("Syntax error near </motion>").
+      {
+        const motionOpenRe = /<motion\.([A-Za-z][\w-]*)\b[^>]*?(\/?)>/g;
+        const stack: string[] = [];
+        const events: Array<{ index: number; length: number; replacement: string }> = [];
+        const tokenRe = /<motion\.([A-Za-z][\w-]*)\b[^>]*?(\/?)>|<\/motion(?:\.([A-Za-z][\w-]*))?\s*>/g;
+        void motionOpenRe;
+        let tk: RegExpExecArray | null;
+        while ((tk = tokenRe.exec(content)) !== null) {
+          const fullMatch = tk[0];
+          const openTag = tk[1];
+          const selfClose = tk[2];
+          const closeTag = tk[3];
+          if (openTag) {
+            if (selfClose !== '/') stack.push(openTag);
+            continue;
+          }
+          // Closing tag
+          const expected = stack.pop();
+          if (!closeTag && expected) {
+            // Bare `</motion>` — repair to `</motion.expected>`
+            events.push({
+              index: tk.index,
+              length: fullMatch.length,
+              replacement: `</motion.${expected}>`,
+            });
+          }
+          // If closeTag exists and matches, fine. If mismatch we leave for general balancer.
+        }
+        if (events.length > 0) {
+          // Apply from end → start to preserve indices
+          for (let i = events.length - 1; i >= 0; i--) {
+            const e = events[i];
+            content = content.slice(0, e.index) + e.replacement + content.slice(e.index + e.length);
+          }
+          changed = true;
+          repairs.push(`${f.path}: repaired ${events.length} malformed framer-motion closing tag(s)`);
+        }
+      }
+
       // ── 6b0. Remove orphaned/out-of-order </textarea> before JSX balance runs ──
       // AI sometimes generates `</textarea></div>` after an <input> or other node,
       // which can still have equal open/close counts but is structurally invalid.
