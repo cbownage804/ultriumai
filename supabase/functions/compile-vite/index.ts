@@ -294,7 +294,7 @@ function stripDanglingJsxAfterDefaultExport(content: string): { content: string;
 function looksLikeDanglingExportSuffix(suffix: string): boolean {
   const trimmed = suffix.trim();
   if (!trimmed) return false;
-  if (/^[)\]},;]+$/.test(trimmed)) return /[)\]}]/.test(trimmed);
+  if (/^[`)\]},;]+$/.test(trimmed)) return /[`\])}]/.test(trimmed);
   if (!/^<\/?(?:[a-z][\w-]*|motion(?:\.[A-Za-z][\w-]*)?|>|\s)/i.test(trimmed)) return false;
 
   let rest = trimmed;
