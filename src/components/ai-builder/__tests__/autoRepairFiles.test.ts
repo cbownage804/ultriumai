@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { autoRepairFiles } from '../autoRepairFiles';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
+import { parseFile } from '@/lib/ai-builder/astEditor';
 
 function makeTsx(path: string, content: string, language = 'typescript'): ProjectFile {
   return {
@@ -452,5 +453,54 @@ export default Navbar;
 
     expect(afterExport.trim()).toBe('');
     expect(repairs.some(r => r.includes('dangling JSX emitted after terminal export default'))).toBe(true);
+  });
+});
+
+describe('autoRepairFiles final syntax stabilization', () => {
+  it('moves generated JSX closers before appended return/function closers', () => {
+    const files = [
+      makeTsx('src/App.tsx', `import React from 'react';
+
+export default function App() {
+  return (
+    <div>
+      <section>
+        <h1>ULTSEC</h1>
+        <p>Pen testing platform by Ultrium</p>
+  )}
+</section></div>`),
+    ];
+
+    const { files: repairedFiles, repairs } = autoRepairFiles(files);
+    const content = repairedFiles[0].content;
+
+    expect(content).toContain('</section>');
+    expect(content).toContain('</div>');
+    expect(content).not.toMatch(/\)\}\s*<\/section>/);
+    expect(parseFile('src/App.tsx', content).ok).toBe(true);
+    expect(repairs.some(r => r.includes('moved') || r.includes('stabilized generated syntax'))).toBe(true);
+  });
+
+  it('repairs the stuck preview shape with a stray backtick near the end', () => {
+    const files = [
+      makeTsx('src/components/Hero.tsx', `import React from 'react';
+
+export default function Hero() {
+  return (
+    <main>
+      <div className="hero">
+        <h1>ULTSEC</h1>
+        <p>Live Threat Map</p>
+  )}
+  \`
+</div></main>`),
+    ];
+
+    const { files: repairedFiles } = autoRepairFiles(files);
+    const content = repairedFiles[0].content;
+
+    expect(content).not.toMatch(/\)\}\s*`/);
+    expect(content).not.toMatch(/`\s*<\/div>/);
+    expect(parseFile('src/components/Hero.tsx', content).ok).toBe(true);
   });
 });
