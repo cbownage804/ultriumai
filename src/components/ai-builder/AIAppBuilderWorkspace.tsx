@@ -447,7 +447,7 @@ function applyTargetedVisualContrastFallback(
   messages: { role: string; content: string }[],
 ): { files: ProjectFile[]; patches: string[] } {
   const request = latestNaturalUserRequest(messages);
-  if (!/\b(readable|visible|contrast|can'?t\s+read|hard\s+to\s+read|too\s+dark|too\s+light|dark\s+hero|button|cta)\b/i.test(request)) {
+  if (!/\b(readable|visible|contrast|can'?t\s+read|hard\s+to\s+read|too\s+dark|too\s+light|dark\s+hero|invisible|not\s+readable)\b/i.test(request)) {
     return { files, patches: [] };
   }
   const targets = extractVisibleUiTargets(request);
