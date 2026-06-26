@@ -3118,17 +3118,36 @@ export function AIAppBuilderWorkspace() {
     return lastAssistant?.content || '';
   }, [messages]);
 
+  const fixErrorClickLockRef = useRef(false);
   const handleFixError = useCallback((errorPrompt: string, errorMeta?: { source?: string; line?: number; errors?: Array<{ msg?: string; source?: string; line?: number }> }) => {
-    const runtimeEvents = errorMeta?.errors?.length
-      ? `\n\n[REPORTED RUNTIME EVENTS]\n${errorMeta.errors.slice(0, 5).map((err, index) => `${index + 1}. ${err.msg || 'Unknown runtime error'}${err.source ? ` [${err.source}${err.line ? `:${err.line}` : ''}]` : ''}`).join('\n')}`
-      : '';
-    const diagnosisContext = buildErrorDiagnosisContext(
-      { message: `${errorPrompt}${runtimeEvents}`, source: errorMeta?.source, line: errorMeta?.line },
-      project.files,
-      undefined,
-      getLastAIResponse(),
-    );
-    sendMessage(diagnosisContext, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
+    if (fixErrorClickLockRef.current) {
+      dedupeToast('info', 'Repair is already starting…');
+      return;
+    }
+    fixErrorClickLockRef.current = true;
+    dedupeToast('info', 'Starting repair…');
+
+    // Keep the click handler cheap. Building the full diagnostic prompt can touch
+    // every generated file; defer it so Firefox can paint the button/toast instead
+    // of reporting that the page is frozen.
+    window.setTimeout(() => {
+      try {
+        const runtimeEvents = errorMeta?.errors?.length
+          ? `\n\n[REPORTED RUNTIME EVENTS]\n${errorMeta.errors.slice(0, 5).map((err, index) => `${index + 1}. ${err.msg || 'Unknown runtime error'}${err.source ? ` [${err.source}${err.line ? `:${err.line}` : ''}]` : ''}`).join('\n')}`
+          : '';
+        const diagnosisContext = buildErrorDiagnosisContext(
+          { message: `${errorPrompt}${runtimeEvents}`, source: errorMeta?.source, line: errorMeta?.line },
+          project.files,
+          undefined,
+          getLastAIResponse(),
+        );
+        sendMessage(diagnosisContext, project.files, supabaseConfig, stripeConfig, serviceKeys, null, selectedModel, undefined, true);
+      } finally {
+        window.setTimeout(() => {
+          fixErrorClickLockRef.current = false;
+        }, 1500);
+      }
+    }, 32);
   }, [sendMessage, project.files, supabaseConfig, stripeConfig, serviceKeys, selectedModel, getLastAIResponse]);
 
   // Listen for "Fix with AI" from preview error overlay
@@ -3198,19 +3217,17 @@ export function AIAppBuilderWorkspace() {
     }
 
     const currentErrorText = [compileError?.message, ...(compileError?.errors ?? [])].filter(Boolean).join('\n');
-    const isDeterministicCodeError = isDeterministicCompileSyntaxError(compileError);
-    if (isDeterministicCodeError && !isGeneratingRef.current && !isGeneratingOverrideRef.current) {
-      // Re-running Vite against unchanged syntax-broken files only re-enters the same
-      // expensive failure path. Also avoid running heavy deterministic repair directly
-      // from the click handler; on large generated pages it can lock the browser before
-      // the retry toast paints. Treat Retry as a focused AI repair for deterministic
-      // code errors, which is what the user expects from a builder-style retry button.
-      dedupeToast('info', 'Retry found a code error — sending it to AI to fix instead.');
+    if (compileState === 'error' && !isGeneratingRef.current && !isGeneratingOverrideRef.current) {
+      // In an error state the user's button says "Repair now". Do not re-enter the
+      // compile pipeline from that click; unchanged broken files can immediately hit
+      // the same expensive failure path and make the tab appear frozen. Send a focused
+      // AI repair request instead, after letting the UI paint.
+      dedupeToast('info', 'Sending the preview error to AI repair…');
       setCompileStateRaw('idle');
       setCompileError(null);
       window.setTimeout(() => {
         handleFixError(`Compile error: ${currentErrorText || 'The preview failed to compile.'}`);
-      }, 0);
+      }, 32);
       return;
     }
 
@@ -3219,7 +3236,7 @@ export function AIAppBuilderWorkspace() {
     setCompileError(null);
     setCompileStateRaw('compiling');
     forceCompileRef.current?.();
-  }, [project.files, compileError, handleFixError, isCompiling, setFiles]);
+  }, [project.files, compileError, compileState, handleFixError, isCompiling, setFiles]);
 
   const handleDiscardChanges = useCallback(() => {
     clearRepairWatchdog();
