@@ -51,10 +51,131 @@ function buildBrandingContext(branding: any): string {
 // ── File hash tracking for incremental context (Lovable-grade) ──
 const fileHashCache = new Map<string, string>();
 
+function normalizeForUiSearch(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/&amp;/g, '&')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Extract likely visible UI labels from a user request.
+ * Example: "fix the View Services button" → ["view services", "services"].
+ * This helps the model see the exact file/line for small visual fixes instead of
+ * claiming success while editing the wrong target.
+ */
+function extractUiTargetPhrases(input: string): string[] {
+  const phrases = new Set<string>();
+  const raw = input.trim();
+
+  for (const match of raw.matchAll(/["'“”‘’]([^"'“”‘’]{2,80})["'“”‘’]/g)) {
+    const normalized = normalizeForUiSearch(match[1]);
+    if (normalized.length >= 2) phrases.add(normalized);
+  }
+
+  // Title-case UI copy such as "View Services", "Book Now", "Get Started".
+  for (const match of raw.matchAll(/\b([A-Z][a-z0-9]+(?:\s+[A-Z][a-z0-9]+){1,4})\b/g)) {
+    const normalized = normalizeForUiSearch(match[1]);
+    if (normalized.length >= 5) phrases.add(normalized);
+  }
+
+  // Words immediately before a component noun are often the visible label.
+  const beforeComponent = raw.match(/\b([a-z][a-z0-9]*(?:\s+[a-z][a-z0-9]*){0,4})\s+(?:button|link|cta|nav\s*item|card|section)\b/i);
+  if (beforeComponent?.[1]) {
+    const stopWords = /\b(the|a|an|that|this|fix|make|change|update|edit|style|readable|visible|contrast|not|isnt|isn't|is|in|on|dark|light|hero|section)\b/g;
+    const cleaned = normalizeForUiSearch(beforeComponent[1]).replace(stopWords, ' ').replace(/\s+/g, ' ').trim();
+    if (cleaned.length >= 3) phrases.add(cleaned);
+  }
+
+  // Common CTA labels that users refer to without quotes/capitalization.
+  const knownLabels = [
+    'view services', 'book now', 'book your chair', 'get started', 'learn more',
+    'contact us', 'schedule appointment', 'request quote', 'shop now', 'sign up',
+    'log in', 'try it free', 'start free trial',
+  ];
+  const normalizedInput = normalizeForUiSearch(input);
+  for (const label of knownLabels) {
+    if (normalizedInput.includes(label)) phrases.add(label);
+  }
+
+  return [...phrases].filter(p => p.length >= 3).slice(0, 8);
+}
+
+function isVisualStyleFixRequest(input: string): boolean {
+  return /\b(readable|visible|contrast|can'?t\s+read|hard\s+to\s+read|too\s+dark|too\s+light|invisible|color|button|cta|hero|text|background|border|hover)\b/i.test(input)
+    && /\b(fix|make|change|update|adjust|improve|readable|visible|contrast)\b/i.test(input);
+}
+
+function buildVisualStyleFixContext(input: string, files: ProjectFile[]): string {
+  if (!isVisualStyleFixRequest(input) || files.length === 0) return '';
+
+  const phrases = extractUiTargetPhrases(input);
+  const normalizedPhrases = phrases.map(normalizeForUiSearch).filter(Boolean);
+  const snippets: string[] = [];
+
+  for (const file of files) {
+    if (!/\.(tsx?|jsx?|html|css)$/.test(file.path)) continue;
+    const lines = file.content.split('\n');
+    const normalizedLines = lines.map(normalizeForUiSearch);
+    const hitIndexes = new Set<number>();
+
+    normalizedLines.forEach((line, index) => {
+      if (normalizedPhrases.some(phrase => phrase && line.includes(phrase))) hitIndexes.add(index);
+    });
+
+    if (hitIndexes.size === 0 && /\b(button|cta)\b/i.test(input)) {
+      normalizedLines.forEach((line, index) => {
+        if (/button|btn|cta|<button|role button/.test(line)) hitIndexes.add(index);
+      });
+    }
+
+    for (const index of [...hitIndexes].slice(0, 3)) {
+      const start = Math.max(0, index - 4);
+      const end = Math.min(lines.length, index + 5);
+      const numbered = lines.slice(start, end).map((line, offset) => `${start + offset + 1}: ${line}`).join('\n');
+      snippets.push(`File: ${file.path}\n${numbered}`);
+      if (snippets.length >= 6) break;
+    }
+    if (snippets.length >= 6) break;
+  }
+
+  const targetText = phrases.length > 0 ? phrases.join(', ') : 'the visual element the user named';
+  return `[TARGETED VISUAL FIX — MUST VERIFY]
+The user is asking for a small visual/readability fix, not a redesign.
+Target text/element(s): ${targetText}
+
+Rules:
+- Locate the exact element in the current files before editing. If the request names a button/CTA, change that exact button's className/style.
+- For unreadable text/buttons on a dark hero, use a filled light/gold/white button with dark text OR a dark translucent button with text-white and a high-contrast border.
+- Button text must contrast against the BUTTON background/fill, not just the page/hero background.
+- Change normal, hover, border, and focus classes together so the button remains readable in every state.
+- Do NOT claim the issue is fixed unless you output an ===EDIT: block that changes the exact className/style for the target element.
+
+Relevant current snippets:
+${snippets.length ? snippets.join('\n\n---\n\n') : '(No exact snippet found — search the provided files for the target label and button/CTA classes.)'}
+[/TARGETED VISUAL FIX]`;
+}
+
 // ── Focus-file detection: match user request to likely target files ──
 function detectFocusFiles(input: string, files: ProjectFile[]): string[] {
   const lower = input.toLowerCase();
   const matches: string[] = [];
+  const uiTargetPhrases = extractUiTargetPhrases(input);
+  const normalizedTargets = uiTargetPhrases.map(normalizeForUiSearch).filter(Boolean);
+
+  // 0. Visible UI text/content mentions (e.g., "View Services" button) should
+  // outrank path-name guesses. This is the common path for visual edit requests.
+  if (normalizedTargets.length > 0) {
+    for (const file of files) {
+      if (!/\.(tsx?|jsx?|html|css)$/.test(file.path)) continue;
+      const normalizedContent = normalizeForUiSearch(file.content);
+      if (normalizedTargets.some(target => normalizedContent.includes(target)) && !matches.includes(file.path)) {
+        matches.push(file.path);
+      }
+    }
+  }
 
   // 1. Explicit file mentions (e.g., "update App.tsx", "fix the header")
   for (const file of files) {
