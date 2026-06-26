@@ -1,4 +1,5 @@
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
+import { parseFile } from '@/lib/ai-builder/astEditor';
 
 /**
  * Auto-repair common syntax issues in project files before sending to Vite.
@@ -574,6 +575,23 @@ export function autoRepairFiles(files: ProjectFile[]): { files: ProjectFile[]; r
       }
     }
 
+    // Final parse-aware stabilization. The common stuck-loop failure is:
+    //   return ( <unclosed JSX>
+    //   )}
+    //   </div>
+    // where bracket repair appended JS closers before JSX balancing appended tag
+    // closers. Vite then fails forever near `)}` or a stray backtick. Run a
+    // bounded final pass that reorders JSX closers before terminal JS closers,
+    // removes markdown/backtick artifacts, and re-applies bracket balancing.
+    if (['ts', 'tsx', 'js', 'jsx'].includes(ext)) {
+      const finalRepair = stabilizeFinalSyntax(f.path, content, ext);
+      if (finalRepair.fixed) {
+        content = finalRepair.content;
+        changed = true;
+        repairs.push(`${f.path}: ${finalRepair.description}`);
+      }
+    }
+
     if (!changed) return f;
     return { ...f, content };
   });
@@ -873,6 +891,218 @@ function looksLikeDanglingExportSuffix(suffix: string): boolean {
   }
 
   return tagCount > 0;
+}
+
+function stabilizeFinalSyntax(path: string, content: string, ext: string): { content: string; fixed: boolean; description: string } {
+  if (!['ts', 'tsx', 'js', 'jsx'].includes(ext)) {
+    return { content, fixed: false, description: '' };
+  }
+
+  const initialParse = parseFile(path, content);
+  if (initialParse.ok && !hasSuspiciousFinalSyntax(content)) {
+    return { content, fixed: false, description: '' };
+  }
+
+  let working = content;
+  const fixes: string[] = [];
+  const isJsx = ext === 'tsx' || ext === 'jsx';
+
+  for (let pass = 0; pass < 4; pass++) {
+    const before = working;
+
+    const markdownCleanup = removeStandaloneBacktickArtifacts(working);
+    if (markdownCleanup.removed > 0) {
+      working = markdownCleanup.content;
+      fixes.push(`removed ${markdownCleanup.removed} stray markdown/backtick artifact${markdownCleanup.removed === 1 ? '' : 's'}`);
+    }
+
+    if (isJsx) {
+      const interleaved = moveJsClosersBeforeFollowingJsxClosers(working);
+      if (interleaved.moved > 0) {
+        working = interleaved.content;
+        fixes.push(`moved ${interleaved.moved} JSX closer run${interleaved.moved === 1 ? '' : 's'} before premature JS closers`);
+      }
+
+      const reordered = moveTrailingJsxClosersBeforeJsClosers(working);
+      if (reordered.moved > 0) {
+        working = reordered.content;
+        fixes.push(`moved ${reordered.moved} trailing JSX closer${reordered.moved === 1 ? '' : 's'} before return/function closers`);
+      }
+
+      const motionRepair = fixFramerMotionTagBalance(working);
+      if (motionRepair.fixed) {
+        working = motionRepair.content;
+        fixes.push(motionRepair.description);
+      }
+
+      const jsxRepair = fixJsxTagBalance(working);
+      if (jsxRepair.fixed) {
+        working = jsxRepair.content;
+        fixes.push(jsxRepair.description);
+      }
+
+      const reorderedAfterJsx = moveTrailingJsxClosersBeforeJsClosers(working);
+      if (reorderedAfterJsx.moved > 0) {
+        working = reorderedAfterJsx.content;
+        fixes.push(`moved ${reorderedAfterJsx.moved} generated JSX closer${reorderedAfterJsx.moved === 1 ? '' : 's'} before JS closers`);
+      }
+
+      const interleavedAfterJsx = moveJsClosersBeforeFollowingJsxClosers(working);
+      if (interleavedAfterJsx.moved > 0) {
+        working = interleavedAfterJsx.content;
+        fixes.push(`moved ${interleavedAfterJsx.moved} generated JSX closer run${interleavedAfterJsx.moved === 1 ? '' : 's'} before premature JS closers`);
+      }
+    }
+
+    const bracketRepair = fixBracketBalance(working, { jsx: isJsx });
+    if (bracketRepair.fixed) {
+      working = bracketRepair.content;
+      fixes.push(bracketRepair.description);
+    }
+
+    const exportSuffixRepair = stripDanglingJsxAfterDefaultExport(working);
+    if (exportSuffixRepair.fixed) {
+      working = exportSuffixRepair.content;
+      fixes.push(exportSuffixRepair.description);
+    }
+
+    const deduped = collapseDuplicateTerminalJsClosers(working);
+    if (deduped.removed > 0) {
+      working = deduped.content;
+      fixes.push(`removed ${deduped.removed} duplicate terminal JS closer${deduped.removed === 1 ? '' : 's'}`);
+    }
+
+    if (parseFile(path, working).ok) {
+      return {
+        content: working,
+        fixed: working !== content,
+        description: uniqueDescriptions(fixes).join(', ') || 'stabilized generated syntax',
+      };
+    }
+
+    if (working === before) break;
+  }
+
+  return {
+    content: working,
+    fixed: working !== content,
+    description: uniqueDescriptions(fixes).join(', ') || 'stabilized generated syntax',
+  };
+}
+
+function uniqueDescriptions(items: string[]): string[] {
+  return [...new Set(items.filter(Boolean))];
+}
+
+function hasSuspiciousFinalSyntax(content: string): boolean {
+  return /\)\s*\}\s*(?:`{1,3}|<\/[a-z]|<\/motion)/i.test(content)
+    || /^\s*`{1,3};?\s*$/m.test(content)
+    || /^[ \t]*[)}\]]+;?[ \t]*\n[ \t]*(?:<\/[a-z][\w-]*\s*>|<\/motion(?:\.[A-Za-z][\w-]*)?\s*>|<\/>)/im.test(content);
+}
+
+function removeStandaloneBacktickArtifacts(content: string): { content: string; removed: number } {
+  const lines = content.split('\n');
+  let removed = 0;
+  const cleaned = lines.filter((line, index) => {
+    const trimmed = line.trim();
+    if (!/^`{1,3};?$/.test(trimmed)) return true;
+
+    const before = lines.slice(0, index).join('\n');
+    const unescapedTicksBefore = (before.match(/(?<!\\)`/g) || []).length;
+    if (unescapedTicksBefore % 2 === 0 || /(?:export\s+default|return\s*\(|\)\s*\}?\s*;?\s*$)/.test(before)) {
+      removed += 1;
+      return false;
+    }
+    return true;
+  });
+
+  return { content: cleaned.join('\n'), removed };
+}
+
+function moveJsClosersBeforeFollowingJsxClosers(content: string): { content: string; moved: number } {
+  const lines = content.split('\n');
+  let moved = 0;
+
+  for (let i = 0; i < lines.length - 1; i++) {
+    if (!isOnlyJsCloserLine(lines[i])) continue;
+
+    const jsStart = i;
+    let jsEnd = i;
+    while (jsEnd + 1 < lines.length && isOnlyJsCloserLine(lines[jsEnd + 1])) jsEnd++;
+
+    const jsxStart = jsEnd + 1;
+    if (jsxStart >= lines.length || !isOnlyJsxCloserLine(lines[jsxStart])) {
+      i = jsEnd;
+      continue;
+    }
+
+    let jsxEnd = jsxStart;
+    while (jsxEnd + 1 < lines.length && isOnlyJsxCloserLine(lines[jsxEnd + 1])) jsxEnd++;
+
+    const jsRun = lines.slice(jsStart, jsEnd + 1);
+    const jsxRun = lines.slice(jsxStart, jsxEnd + 1);
+    lines.splice(jsStart, jsxEnd - jsStart + 1, ...jsxRun, ...jsRun);
+    moved += 1;
+    i = jsStart + jsxRun.length + jsRun.length - 1;
+  }
+
+  return { content: lines.join('\n'), moved };
+}
+
+function collapseDuplicateTerminalJsClosers(content: string): { content: string; removed: number } {
+  const trailing = content.match(/\s*$/)?.[0] ?? '';
+  const body = content.slice(0, content.length - trailing.length);
+  const lines = body.split('\n');
+  let removed = 0;
+
+  while (lines.length >= 2) {
+    const last = lines[lines.length - 1];
+    const previous = lines[lines.length - 2];
+    if (!isOnlyJsCloserLine(last) || !isOnlyJsCloserLine(previous)) break;
+    if (last.trim() !== previous.trim()) break;
+    lines.pop();
+    removed += 1;
+  }
+
+  return { content: lines.join('\n') + trailing, removed };
+}
+
+function moveTrailingJsxClosersBeforeJsClosers(content: string): { content: string; moved: number } {
+  const trimmedEnd = content.match(/\s*$/)?.[0] ?? '';
+  const body = content.slice(0, content.length - trimmedEnd.length);
+  const lines = body.split('\n');
+  if (lines.length < 2) return { content, moved: 0 };
+
+  let i = lines.length - 1;
+  const jsxClosers: string[] = [];
+  while (i >= 0 && isOnlyJsxCloserLine(lines[i])) {
+    jsxClosers.unshift(lines[i]);
+    i--;
+  }
+  if (jsxClosers.length === 0 || i < 0) return { content, moved: 0 };
+
+  const jsCloserLines: string[] = [];
+  while (i >= 0 && isOnlyJsCloserLine(lines[i])) {
+    jsCloserLines.unshift(lines[i]);
+    i--;
+  }
+  if (jsCloserLines.length === 0) return { content, moved: 0 };
+
+  const prefix = lines.slice(0, i + 1);
+  const reordered = [...prefix, ...jsxClosers, ...jsCloserLines].join('\n') + trimmedEnd;
+  return { content: reordered, moved: jsxClosers.length };
+}
+
+function isOnlyJsxCloserLine(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed) return false;
+  return /^(?:<\/>|<\/[a-z][\w-]*\s*>|<\/motion(?:\.[A-Za-z][\w-]*)?\s*>)+;?$/i.test(trimmed);
+}
+
+function isOnlyJsCloserLine(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed) return false;
+  return /^[)}\]]+;?$/.test(trimmed);
 }
 
 function findJsxTagEnd(content: string, start: number): number {
