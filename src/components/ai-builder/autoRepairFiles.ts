@@ -893,6 +893,145 @@ function looksLikeDanglingExportSuffix(suffix: string): boolean {
   return tagCount > 0;
 }
 
+function stabilizeFinalSyntax(path: string, content: string, ext: string): { content: string; fixed: boolean; description: string } {
+  if (!['ts', 'tsx', 'js', 'jsx'].includes(ext)) {
+    return { content, fixed: false, description: '' };
+  }
+
+  const initialParse = parseFile(path, content);
+  if (initialParse.ok) return { content, fixed: false, description: '' };
+
+  let working = content;
+  const fixes: string[] = [];
+  const isJsx = ext === 'tsx' || ext === 'jsx';
+
+  for (let pass = 0; pass < 4; pass++) {
+    const before = working;
+
+    const markdownCleanup = removeStandaloneBacktickArtifacts(working);
+    if (markdownCleanup.removed > 0) {
+      working = markdownCleanup.content;
+      fixes.push(`removed ${markdownCleanup.removed} stray markdown/backtick artifact${markdownCleanup.removed === 1 ? '' : 's'}`);
+    }
+
+    if (isJsx) {
+      const reordered = moveTrailingJsxClosersBeforeJsClosers(working);
+      if (reordered.moved > 0) {
+        working = reordered.content;
+        fixes.push(`moved ${reordered.moved} trailing JSX closer${reordered.moved === 1 ? '' : 's'} before return/function closers`);
+      }
+
+      const motionRepair = fixFramerMotionTagBalance(working);
+      if (motionRepair.fixed) {
+        working = motionRepair.content;
+        fixes.push(motionRepair.description);
+      }
+
+      const jsxRepair = fixJsxTagBalance(working);
+      if (jsxRepair.fixed) {
+        working = jsxRepair.content;
+        fixes.push(jsxRepair.description);
+      }
+
+      const reorderedAfterJsx = moveTrailingJsxClosersBeforeJsClosers(working);
+      if (reorderedAfterJsx.moved > 0) {
+        working = reorderedAfterJsx.content;
+        fixes.push(`moved ${reorderedAfterJsx.moved} generated JSX closer${reorderedAfterJsx.moved === 1 ? '' : 's'} before JS closers`);
+      }
+    }
+
+    const bracketRepair = fixBracketBalance(working, { jsx: isJsx });
+    if (bracketRepair.fixed) {
+      working = bracketRepair.content;
+      fixes.push(bracketRepair.description);
+    }
+
+    const exportSuffixRepair = stripDanglingJsxAfterDefaultExport(working);
+    if (exportSuffixRepair.fixed) {
+      working = exportSuffixRepair.content;
+      fixes.push(exportSuffixRepair.description);
+    }
+
+    if (parseFile(path, working).ok) {
+      return {
+        content: working,
+        fixed: working !== content,
+        description: uniqueDescriptions(fixes).join(', ') || 'stabilized generated syntax',
+      };
+    }
+
+    if (working === before) break;
+  }
+
+  return {
+    content: working,
+    fixed: working !== content,
+    description: uniqueDescriptions(fixes).join(', ') || 'stabilized generated syntax',
+  };
+}
+
+function uniqueDescriptions(items: string[]): string[] {
+  return [...new Set(items.filter(Boolean))];
+}
+
+function removeStandaloneBacktickArtifacts(content: string): { content: string; removed: number } {
+  const lines = content.split('\n');
+  let removed = 0;
+  const cleaned = lines.filter((line, index) => {
+    const trimmed = line.trim();
+    if (!/^`{1,3};?$/.test(trimmed)) return true;
+
+    const before = lines.slice(0, index).join('\n');
+    const after = lines.slice(index + 1).join('\n');
+    const withoutLine = `${before}${before && after ? '\n' : ''}${after}`;
+    if (parseFile('artifact.tsx', withoutLine).ok || /(?:export\s+default|return\s*\(|\)\s*;?\s*$)/.test(before)) {
+      removed += 1;
+      return false;
+    }
+    return true;
+  });
+
+  return { content: cleaned.join('\n'), removed };
+}
+
+function moveTrailingJsxClosersBeforeJsClosers(content: string): { content: string; moved: number } {
+  const trimmedEnd = content.match(/\s*$/)?.[0] ?? '';
+  const body = content.slice(0, content.length - trimmedEnd.length);
+  const lines = body.split('\n');
+  if (lines.length < 2) return { content, moved: 0 };
+
+  let i = lines.length - 1;
+  const jsxClosers: string[] = [];
+  while (i >= 0 && isOnlyJsxCloserLine(lines[i])) {
+    jsxClosers.unshift(lines[i]);
+    i--;
+  }
+  if (jsxClosers.length === 0 || i < 0) return { content, moved: 0 };
+
+  const jsCloserLines: string[] = [];
+  while (i >= 0 && isOnlyJsCloserLine(lines[i])) {
+    jsCloserLines.unshift(lines[i]);
+    i--;
+  }
+  if (jsCloserLines.length === 0) return { content, moved: 0 };
+
+  const prefix = lines.slice(0, i + 1);
+  const reordered = [...prefix, ...jsxClosers, ...jsCloserLines].join('\n') + trimmedEnd;
+  return { content: reordered, moved: jsxClosers.length };
+}
+
+function isOnlyJsxCloserLine(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed) return false;
+  return /^(?:<\/>|<\/[a-z][\w-]*\s*>|<\/motion(?:\.[A-Za-z][\w-]*)?\s*>)+;?$/i.test(trimmed);
+}
+
+function isOnlyJsCloserLine(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed) return false;
+  return /^[)}\]]+;?$/.test(trimmed);
+}
+
 function findJsxTagEnd(content: string, start: number): number {
   let quote: '"' | "'" | '`' | null = null;
   let escaped = false;
