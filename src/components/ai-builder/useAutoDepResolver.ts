@@ -120,6 +120,20 @@ export function useAutoDepResolver() {
     hasChanges: boolean;
   } | null => {
     const bareImports = extractBareImports(files);
+
+    // Always seed React baseline so packages loaded with ?external=react,react-dom
+    // (framer-motion, recharts, react-router-dom, sonner, etc.) can resolve their
+    // internal `react/jsx-runtime` reference. Without this seed, esm.sh modules
+    // throw "The specifier 'react/jsx-runtime' was a bare specifier" at runtime.
+    const REACT_BASELINE = [
+      'react',
+      'react-dom',
+      'react-dom/client',
+      'react/jsx-runtime',
+      'react/jsx-dev-runtime',
+    ];
+    for (const p of REACT_BASELINE) bareImports.add(p);
+
     if (bareImports.size === 0) return null;
 
     // Check if imports changed
