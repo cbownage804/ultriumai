@@ -374,3 +374,28 @@ export default function App() {
     expect(repairs.some(r => r.includes('orphaned </textarea>'))).toBe(true);
   });
 });
+
+describe('autoRepairFiles dangling JSX after export default', () => {
+  it('removes orphaned JSX closers emitted after terminal export default', () => {
+    const files = [
+      makeTsx('src/App.tsx', `import React from 'react';
+
+const App = () => {
+  return (
+    <div><main><section><div>D'Taylor Barbershop
+  );
+};
+
+export default App;
+</div></div></div></section></main></div>`),
+    ];
+
+    const { files: repairedFiles, repairs } = autoRepairFiles(files);
+    const content = repairedFiles[0].content;
+    const afterExport = content.slice(content.lastIndexOf('export default App;') + 'export default App;'.length);
+
+    expect(afterExport).not.toContain('</div>');
+    expect(afterExport.trim()).toBe('');
+    expect(repairs.some(r => r.includes('dangling JSX emitted after terminal export default'))).toBe(true);
+  });
+});

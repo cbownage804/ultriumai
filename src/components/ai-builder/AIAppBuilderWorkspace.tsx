@@ -75,6 +75,7 @@ import { useDeleteButtonAutoPatcher } from './useDeleteButtonAutoPatcher';
 import { usePromptPhasePlanner } from './usePromptPhasePlanner';
 import { useBuilderQuestions } from './useBuilderQuestions';
 import { useOutputValidation, sanitizeStagedFiles } from './useOutputValidation';
+import { autoRepairFiles } from './autoRepairFiles';
 import { useBuildAnalytics } from '@/hooks/useBuildAnalytics';
 import { detectSupabaseIntents, buildSupabaseContext, buildErrorDiagnosisContext, analyzeConversationComplexity } from './SupabaseConversational';
 import { PANEL_REGISTRY } from './panelRegistry';
@@ -392,6 +393,17 @@ function validateBootIntegrity(files: ProjectFile[]): { errors: string[]; repair
   }
 
   return { errors, repairedFiles: needsRepair ? repairedFiles : null };
+}
+
+function isDeterministicCompileSyntaxError(error?: CompileErrorInfo | null): boolean {
+  const text = [error?.message, ...(error?.errors ?? [])].filter(Boolean).join('\n');
+  return /syntax error|unexpected token|parse error|unterminated|adjacent jsx|expected.*<\/|jsx|closing tag/i.test(text);
+}
+
+function didProjectFilesChange(before: ProjectFile[], after: ProjectFile[]): boolean {
+  if (before.length !== after.length) return true;
+  const afterMap = new Map(after.map(file => [file.path, file.content]));
+  return before.some(file => afterMap.get(file.path) !== file.content);
 }
 
 /** Check if the user's latest message explicitly requests changing a protected file */
@@ -1561,6 +1573,27 @@ export function AIAppBuilderWorkspace() {
         (window as Window & { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback?.(postBuildIdleRef.current);
       }
       postBuildIdleRef.current = null;
+
+      if (error && isDeterministicCompileSyntaxError(error) && project.files.length > 0) {
+        const { files: repairedFiles, repairs } = autoRepairFiles(project.files);
+        if (repairs.length > 0 && didProjectFilesChange(project.files, repairedFiles)) {
+          console.warn('[Workspace] Deterministic compile repair applied before AI retry:', repairs.slice(0, 8));
+          pendingValidationFixRef.current = null;
+          validationFixInFlightRef.current = false;
+          repairInFlightRef.current = false;
+          awaitingRepairJobStartRef.current = false;
+          setRepairFailed(false);
+          setRepairErrors([]);
+          setFiles(repairedFiles);
+          latestFilesRef.current = repairedFiles;
+          setCompileStateRaw('compiling');
+          setCompileError({
+            message: 'Repairing generated syntax before preview compile',
+            errors: repairs.slice(0, 5),
+          });
+          return;
+        }
+      }
     }
 
     // ── Auto-heal: on compile error, automatically re-prompt AI to fix ──
@@ -1667,7 +1700,7 @@ export function AIAppBuilderWorkspace() {
       autoHeal.completeHeal(true);
       console.info('[AutoHeal] ✅ Auto-fix resolved the build error');
     }
-  }, [autoHeal, lkgDiff, errorPatterns, project.files, sendMessage, setIsCompiling]);
+  }, [autoHeal, lkgDiff, errorPatterns, project.files, sendMessage, setIsCompiling, setFiles]);
   const isCompilingAndStateRef = useSyncRef({ isCompiling, compileState });
   // Keep individual refs for backward compat in guards
   isCompilingRef.current = isCompiling;
@@ -3042,8 +3075,22 @@ export function AIAppBuilderWorkspace() {
     }
 
     const currentErrorText = [compileError?.message, ...(compileError?.errors ?? [])].filter(Boolean).join('\n');
-    const isDeterministicCodeError = /syntax error|unexpected token|parse error|unterminated|adjacent jsx|expected.*<\//i.test(currentErrorText);
+    const isDeterministicCodeError = isDeterministicCompileSyntaxError(compileError);
     if (isDeterministicCodeError && !isGeneratingRef.current && !isGeneratingOverrideRef.current) {
+      const { files: repairedFiles, repairs } = autoRepairFiles(project.files);
+      if (repairs.length > 0 && didProjectFilesChange(project.files, repairedFiles)) {
+        dedupeToast('info', 'Retry repaired generated syntax locally — compiling again.');
+        pendingValidationFixRef.current = null;
+        pendingFilesRef.current = null;
+        repairAttemptRef.current = 0;
+        setRepairFailed(false);
+        setRepairErrors([]);
+        setCompileError(null);
+        setCompileStateRaw('compiling');
+        setFiles(repairedFiles);
+        latestFilesRef.current = repairedFiles;
+        return;
+      }
       // Re-running Vite against unchanged syntax-broken files only re-enters the same
       // expensive failure path. Treat Retry as a focused repair for deterministic code
       // errors, which is what the user expects from a builder-style retry button.
@@ -3059,7 +3106,7 @@ export function AIAppBuilderWorkspace() {
     setCompileError(null);
     setCompileStateRaw('compiling');
     forceCompileRef.current?.();
-  }, [project.files, compileError, handleFixError, isCompiling]);
+  }, [project.files, compileError, handleFixError, isCompiling, setFiles]);
 
   const handleDiscardChanges = useCallback(() => {
     clearRepairWatchdog();
