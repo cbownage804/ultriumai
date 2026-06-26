@@ -3075,8 +3075,22 @@ export function AIAppBuilderWorkspace() {
     }
 
     const currentErrorText = [compileError?.message, ...(compileError?.errors ?? [])].filter(Boolean).join('\n');
-    const isDeterministicCodeError = /syntax error|unexpected token|parse error|unterminated|adjacent jsx|expected.*<\//i.test(currentErrorText);
+    const isDeterministicCodeError = isDeterministicCompileSyntaxError(compileError);
     if (isDeterministicCodeError && !isGeneratingRef.current && !isGeneratingOverrideRef.current) {
+      const { files: repairedFiles, repairs } = autoRepairFiles(project.files);
+      if (repairs.length > 0 && didProjectFilesChange(project.files, repairedFiles)) {
+        dedupeToast('info', 'Retry repaired generated syntax locally — compiling again.');
+        pendingValidationFixRef.current = null;
+        pendingFilesRef.current = null;
+        repairAttemptRef.current = 0;
+        setRepairFailed(false);
+        setRepairErrors([]);
+        setCompileError(null);
+        setCompileStateRaw('compiling');
+        setFiles(repairedFiles);
+        latestFilesRef.current = repairedFiles;
+        return;
+      }
       // Re-running Vite against unchanged syntax-broken files only re-enters the same
       // expensive failure path. Treat Retry as a focused repair for deterministic code
       // errors, which is what the user expects from a builder-style retry button.
@@ -3092,7 +3106,7 @@ export function AIAppBuilderWorkspace() {
     setCompileError(null);
     setCompileStateRaw('compiling');
     forceCompileRef.current?.();
-  }, [project.files, compileError, handleFixError, isCompiling]);
+  }, [project.files, compileError, handleFixError, isCompiling, setFiles]);
 
   const handleDiscardChanges = useCallback(() => {
     clearRepairWatchdog();
