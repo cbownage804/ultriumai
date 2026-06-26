@@ -406,6 +406,19 @@ function didProjectFilesChange(before: ProjectFile[], after: ProjectFile[]): boo
   return before.some(file => afterMap.get(file.path) !== file.content);
 }
 
+function digestProjectFiles(files: ProjectFile[]): string {
+  const sorted = [...files].sort((a, b) => a.path.localeCompare(b.path));
+  let hash = 2166136261;
+  for (const file of sorted) {
+    const input = `${file.path}:${file.content.length}:${file.content.slice(0, 80)}:${file.content.slice(-160)}`;
+    for (let i = 0; i < input.length; i++) {
+      hash ^= input.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+  }
+  return (hash >>> 0).toString(16);
+}
+
 function normalizeVisibleText(value: string): string {
   return value.toLowerCase().replace(/&amp;/g, '&').replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
 }
@@ -727,6 +740,7 @@ export function AIAppBuilderWorkspace() {
   const repairInFlightRef = useRef(false);
   const repairJobIdRef = useRef<string | null>(null);
   const awaitingRepairJobStartRef = useRef(false);
+  const deterministicRepairGateRef = useRef<{ digest: string; count: number }>({ digest: '', count: 0 });
   // State-based trigger to force the repair effect to re-evaluate when pendingValidationFixRef is set
   const [repairTrigger, setRepairTrigger] = useState(0);
   const [repairFailed, setRepairFailed] = useState(false);
@@ -1713,6 +1727,10 @@ export function AIAppBuilderWorkspace() {
     setCompileError(state === 'error' && error ? error : null);
     console.info('[Workspace] compileState →', state, error ? error.message : '');
 
+    if (state === 'success') {
+      deterministicRepairGateRef.current = { digest: '', count: 0 };
+    }
+
     if (state === 'error') {
       // Clear pending success signals — auto-heal will handle the error
       pendingBuildToastRef.current = null;
@@ -1725,6 +1743,14 @@ export function AIAppBuilderWorkspace() {
       if (error && isDeterministicCompileSyntaxError(error) && project.files.length > 0) {
         const { files: repairedFiles, repairs } = autoRepairFiles(project.files);
         if (repairs.length > 0 && didProjectFilesChange(project.files, repairedFiles)) {
+          const nextDigest = digestProjectFiles(repairedFiles);
+          const gate = deterministicRepairGateRef.current;
+          const nextCount = gate.digest === nextDigest ? gate.count + 1 : 1;
+          deterministicRepairGateRef.current = { digest: nextDigest, count: nextCount };
+
+          if (nextCount > 2) {
+            console.warn('[Workspace] Deterministic repair repeated without success — escalating to AI repair instead of looping');
+          } else {
           console.warn('[Workspace] Deterministic compile repair applied before AI retry:', repairs.slice(0, 8));
           pendingValidationFixRef.current = null;
           validationFixInFlightRef.current = false;
@@ -1740,6 +1766,7 @@ export function AIAppBuilderWorkspace() {
             errors: repairs.slice(0, 5),
           });
           return;
+          }
         }
       }
     }
