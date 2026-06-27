@@ -67,7 +67,7 @@ serve(async (req) => {
     const body = await req.json();
     const { tier, billing } = body;
     
-    if (!tier || !['pro', 'business'].includes(tier)) {
+    if (!tier || !['pro', 'business', 'enterprise'].includes(tier)) {
       throw new Error("Invalid tier specified");
     }
     
