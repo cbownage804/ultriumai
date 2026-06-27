@@ -14,15 +14,22 @@ const TIER_PRICES = {
     yearly: "price_1SrTeiH1u6E0bsJTarTH7ajs"
   },
   business: {
-    monthly: "price_1SrTejH1u6E0bsJTwd4K8st5", 
+    monthly: "price_1SrTejH1u6E0bsJTwd4K8st5",
     yearly: "price_1SrTelH1u6E0bsJTmep4lSIP"
+  },
+  enterprise: {
+    monthly: "price_1SuesEH1u6E0bsJT6o2Hxp0T",
+    yearly: "price_1SuesEH1u6E0bsJT6o2Hxp0T" // No live yearly price yet; falls back to monthly
   }
 };
 
-// SafeSuite product IDs for identifying existing subscriptions
+// Real SafeSuite product IDs (looked up from live Stripe) for upgrade detection
 const SAFESUITE_PRODUCT_IDS = [
-  "prod_SSLFsRKjD1Y2Tx", // Pro
-  "prod_SSLGBWrGEJgLIW", // Business
+  "prod_Tp7uzqASD23WKz", // Pro monthly
+  "prod_Tp7uGQiqO9MvZo", // Pro yearly
+  "prod_Tp7u0hIR2UlTr1", // Business monthly
+  "prod_Tp7uUCb3bDPasl", // Business yearly
+  "prod_TsPhrnVrS2CTEI"  // Enterprise monthly
 ];
 
 const logStep = (step: string, details?: any) => {
@@ -60,7 +67,7 @@ serve(async (req) => {
     const body = await req.json();
     const { tier, billing } = body;
     
-    if (!tier || !['pro', 'business'].includes(tier)) {
+    if (!tier || !['pro', 'business', 'enterprise'].includes(tier)) {
       throw new Error("Invalid tier specified");
     }
     

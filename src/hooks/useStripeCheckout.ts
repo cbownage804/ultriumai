@@ -19,21 +19,21 @@ export const SAFESUITE_PRICES = {
   business: {
     monthly: {
       priceId: 'price_1SrTejH1u6E0bsJTwd4K8st5',
-      amount: 1500, // $15
+      amount: 2999, // $29.99/user/mo (matches live Stripe)
     },
     yearly: {
       priceId: 'price_1SrTelH1u6E0bsJTmep4lSIP',
-      amount: 14400, // $144/year ($12/mo)
+      amount: 28790, // $287.90/year per user (matches live Stripe)
     }
   },
   enterprise: {
     monthly: {
       priceId: 'price_1SuesEH1u6E0bsJT6o2Hxp0T',
-      amount: 4500, // $45
+      amount: 4500, // $45/user/mo
     },
     yearly: {
-      priceId: 'price_enterprise_yearly', // Contact sales
-      amount: 43200, // $432/year
+      priceId: 'price_enterprise_yearly', // Contact sales — no live yearly price
+      amount: 43200, // $432/year per user (placeholder until live price exists)
     }
   }
 };

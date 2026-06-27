@@ -7,12 +7,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Map Stripe price IDs to tiers
+// Map live Stripe price IDs to tiers
 const PRICE_TO_TIER: Record<string, string> = {
-  "price_safesuite_pro_monthly": "pro",
-  "price_safesuite_pro_yearly": "pro",
-  "price_safesuite_business_monthly": "business",
-  "price_safesuite_business_yearly": "business"
+  "price_1SrTegH1u6E0bsJTKpGm5qxr": "pro",      // Pro monthly $9.99
+  "price_1SrTeiH1u6E0bsJTarTH7ajs": "pro",      // Pro yearly $95.90
+  "price_1SrTejH1u6E0bsJTwd4K8st5": "business", // Business monthly $29.99
+  "price_1SrTelH1u6E0bsJTmep4lSIP": "business", // Business yearly $287.90
+  "price_1SuesEH1u6E0bsJT6o2Hxp0T": "enterprise" // Enterprise monthly $45
 };
 
 const logStep = (step: string, details?: any) => {
