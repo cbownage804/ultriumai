@@ -114,6 +114,47 @@ serve(async (req) => {
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
+
+      // Handle update via POST (so id can travel in body reliably)
+      if (requestBody.action === 'update') {
+        const assetId = requestBody.id;
+        const updates = requestBody.updates ?? {};
+
+        if (!assetId) {
+          return new Response(
+            JSON.stringify({ error: 'Asset ID is required' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        const allowedUpdates = ['status', 'scan_frequency', 'metadata'];
+        const filteredUpdates: Record<string, unknown> = {};
+        for (const key of Object.keys(updates)) {
+          if (allowedUpdates.includes(key)) filteredUpdates[key] = updates[key];
+        }
+        filteredUpdates.updated_at = new Date().toISOString();
+
+        const { data: asset, error } = await supabaseClient
+          .from('safeweb_assets')
+          .update(filteredUpdates)
+          .eq('id', assetId)
+          .eq('user_id', user.id)
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error updating asset via POST:', error);
+          return new Response(
+            JSON.stringify({ error: 'Failed to update asset', details: error.message }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        return new Response(
+          JSON.stringify({ asset }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       
       // Regular asset creation - only if not a delete action
       const { asset_type, asset_value, scan_frequency = 'daily', msp_client_id } = requestBody;
