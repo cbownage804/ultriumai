@@ -81,8 +81,8 @@ export const SAFESUITE_TIERS: Record<SafeSuiteTier, TierConfig> = {
     id: 'business',
     name: 'Business',
     description: 'Complete security suite for teams',
-    price: 1500,  // $15/user/mo
-    yearlyPrice: 14400, // $144/year per user (~$12/user/mo)
+    price: 2999,  // $29.99/user/mo (matches live Stripe price_1SrTejH1u6E0bsJTwd4K8st5)
+    yearlyPrice: 28790, // $287.90/year per user (~$23.99/user/mo) (matches Stripe price_1SrTelH1u6E0bsJTmep4lSIP)
     stripePriceId: 'price_1SrTejH1u6E0bsJTwd4K8st5',
     stripeYearlyPriceId: 'price_1SrTelH1u6E0bsJTmep4lSIP',
     badge: 'For Teams',
