@@ -192,13 +192,14 @@ export const ProductTour = ({
   return (
     <AnimatePresence mode="wait">
       {/* Overlay */}
-      <TourOverlay onClick={handleSkip} />
+      <TourOverlay key="tour-overlay" onClick={handleSkip} />
 
       {/* Highlight */}
-      {highlightRect && <TourHighlight rect={highlightRect} />}
+      {highlightRect && <TourHighlight key="tour-highlight" rect={highlightRect} />}
 
       {/* Tour card */}
       <TourCard
+        key="tour-card"
         step={step}
         currentStep={currentStep}
         totalSteps={steps.length}
