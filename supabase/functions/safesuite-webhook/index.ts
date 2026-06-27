@@ -7,12 +7,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature",
 };
 
-// SafeSuite price ID to tier mapping
+// SafeSuite price ID to tier mapping (live Stripe IDs)
 const PRICE_TO_TIER: Record<string, string> = {
-  'price_1SrTegH1u6E0bsJTKpGm5qxr': 'pro',      // Pro monthly
-  'price_1SrTeiH1u6E0bsJTarTH7ajs': 'pro',      // Pro yearly
-  'price_1SrTejH1u6E0bsJTwd4K8st5': 'business', // Business monthly
-  'price_1SrTelH1u6E0bsJTmep4lSIP': 'business', // Business yearly
+  'price_1SrTegH1u6E0bsJTKpGm5qxr': 'pro',        // Pro monthly
+  'price_1SrTeiH1u6E0bsJTarTH7ajs': 'pro',        // Pro yearly
+  'price_1SrTejH1u6E0bsJTwd4K8st5': 'business',   // Business monthly
+  'price_1SrTelH1u6E0bsJTmep4lSIP': 'business',   // Business yearly
+  'price_1SuesEH1u6E0bsJT6o2Hxp0T': 'enterprise', // Enterprise monthly
 };
 
 const logStep = (step: string, details?: unknown) => {
