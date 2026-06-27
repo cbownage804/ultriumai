@@ -99,7 +99,7 @@ export default function SafeSuiteBilling() {
     }
   };
 
-  const pricePerSeat = yearlyBilling ? 12 : 15;
+  const pricePerSeat = yearlyBilling ? 23.99 : 29.99; // Matches live Stripe Business price ($287.90/yr ≈ $23.99/mo, $29.99/mo)
   const totalPrice = pricePerSeat * seats;
 
   const tiers = Object.values(SAFESUITE_TIERS);
