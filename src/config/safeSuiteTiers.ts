@@ -105,8 +105,8 @@ export const SAFESUITE_TIERS: Record<SafeSuiteTier, TierConfig> = {
     description: 'Maximum security for large organizations',
     price: 4500,  // $45/user/mo
     yearlyPrice: 43200, // $432/year per user (~$36/user/mo)
-    stripePriceId: 'price_enterprise_monthly',
-    stripeYearlyPriceId: 'price_enterprise_yearly',
+    stripePriceId: 'price_1SuesEH1u6E0bsJT6o2Hxp0T', // $45/mo live Stripe price
+    stripeYearlyPriceId: 'price_enterprise_yearly', // Contact sales — no live yearly price yet
     badge: 'Enterprise',
     perUser: true,
     priceLabel: '/user/mo',
