@@ -153,19 +153,22 @@ export const useSafeWebData = () => {
     }
   };
 
-  // Update asset
+  // Update asset (status / scan_frequency / metadata)
+  // Sent via POST + action=update so functions.invoke transport stays consistent
+  // with how delete is handled and so the id rides in the body (PUT + query string
+  // is unreliable through supabase.functions.invoke).
   const updateAsset = async (assetId: string, updates: any) => {
     try {
       const { data, error } = await supabase.functions.invoke('safeweb-assets', {
-        body: updates,
-        method: 'PUT'
+        method: 'POST',
+        body: { action: 'update', id: assetId, updates }
       });
 
       if (error) throw error;
-      
+
       // Refresh assets list
       await fetchAssets();
-      return { success: true, asset: data.asset };
+      return { success: true, asset: data?.asset };
     } catch (err) {
       console.error('Error updating asset:', err);
       return { success: false, error: err.message };
