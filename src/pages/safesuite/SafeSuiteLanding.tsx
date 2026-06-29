@@ -90,17 +90,16 @@ export default function WraythLanding() {
               Everything You Need to Stay Secure
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Four powerful security tools working together to protect your digital life
+              Three precise tools, unified by Ray — the AI intelligence at the core of Wrayth.
             </p>
           </div>
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {features.map((productKey, index) => {
               const product = safeSuiteProducts[productKey];
               const colorMap = {
                 safepass: 'amber',
                 safescan: 'red',
                 safeweb: 'violet',
-                safetrack: 'orange'
               };
               const color = colorMap[productKey] || 'primary';
               return (
