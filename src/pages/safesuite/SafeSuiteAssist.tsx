@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Loader2, Send, Plus, Trash2, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import safeassistLogo from '@/assets/safeassist-logo-horizontal.png';
+
 import ReactMarkdown from 'react-markdown';
 
 export default function WraythAssist() {
@@ -107,9 +107,22 @@ export default function WraythAssist() {
       {/* Main chat */}
       <main className="flex-1 flex flex-col min-w-0">
         <header className="flex items-center justify-between gap-4 px-6 py-3 border-b border-border bg-background/80 backdrop-blur">
-          <img src={safeassistLogo} alt="SafeAssist" className="h-7" />
+          <div className="flex items-center gap-3">
+            <span
+              className={cn(
+                'h-2 w-2 rounded-full transition-colors',
+                isTyping ? 'bg-primary wrayth-thinking' : 'bg-muted-foreground/40'
+              )}
+            />
+            <div className="leading-tight">
+              <div className="text-sm font-medium tracking-tight">Ray</div>
+              <div className="text-[11px] text-muted-foreground">
+                {isTyping ? 'thinking' : 'the intelligence of Wrayth'}
+              </div>
+            </div>
+          </div>
           <div className="text-xs text-muted-foreground">
-            {credits.remaining} / {credits.total} credits today
+            {credits.remaining} / {credits.total} questions today
           </div>
         </header>
 
@@ -121,7 +134,7 @@ export default function WraythAssist() {
                 className={cn('flex gap-3', m.role === 'user' ? 'justify-end' : 'justify-start')}
               >
                 {m.role === 'user' ? (
-                  <div className="max-w-[80%] rounded-2xl bg-primary text-primary-foreground px-4 py-2.5 whitespace-pre-wrap">
+                  <div className="max-w-[80%] bg-[#242424] border border-[#3A3A3A] text-[#F3F3F3] px-4 py-2.5 whitespace-pre-wrap wrayth-chamfer-sm">
                     {m.content}
                   </div>
                 ) : (
@@ -132,8 +145,8 @@ export default function WraythAssist() {
               </div>
             ))}
             {isTyping && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> SafeAssist is thinking...
+              <div className="flex items-center gap-2 text-sm text-primary wrayth-thinking">
+                <Loader2 className="h-4 w-4 animate-spin" /> Ray is thinking
               </div>
             )}
           </div>
@@ -151,8 +164,8 @@ export default function WraythAssist() {
               onChange={(e) => setInput(e.target.value)}
               placeholder={
                 credits.remaining > 0
-                  ? 'Ask about a suspicious email, password, link, or anything security...'
-                  : 'Out of credits — try again tomorrow or upgrade.'
+                  ? 'Ask Ray anything — a suspicious email, a weak password, what to do next…'
+                  : 'No questions left today. Upgrade for more.'
               }
               disabled={credits.remaining <= 0}
               className="border-0 focus-visible:ring-0 shadow-none"

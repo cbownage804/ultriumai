@@ -50,20 +50,18 @@ interface UseSafeAssistReturn {
   renameConversation: (conversationId: string, newTitle: string) => Promise<void>;
 }
 
-const WELCOME_MESSAGE = `👋 **Welcome to SafeAssist!**
+const WELCOME_MESSAGE = `Good to see you.
 
-I'm your personal AI security assistant. I'm here to help you understand cybersecurity in plain, simple language — no technical jargon required!
+I'm **Ray** — the intelligence layer of Wrayth. I'm watching your vault, scans, and exposure data so you don't have to.
 
-**Here's what I can help you with:**
+You can ask me things like:
 
-- 🔐 **Password Security** - Create strong passwords and check if yours have been compromised
-- 🎣 **Threat Analysis** - Paste suspicious emails, links, or upload files and I'll analyze them
-- 🔒 **Privacy Tips** - Learn how to protect your personal information online
-- 🛡️ **Security Checkups** - Get personalized advice to improve your online safety
-- 📎 **File Scanning** - Upload documents or images for security analysis
-- ❓ **Any Questions** - Ask me anything about staying safe online!
+- "Are any of my passwords weak?"
+- "Is this email safe?" *(paste it in)*
+- "Have my credentials shown up in a breach?"
+- "What should I work on next?"
 
-Each question uses 1 credit. What would you like to know?`;
+I'll keep it plain English. Just tell me what's on your mind.`;
 
 export function useSafeAssist(): UseSafeAssistReturn {
   const { toast } = useToast();

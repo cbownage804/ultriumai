@@ -382,15 +382,6 @@ const productCardsConfig = [
     path: '/safesuite/web',
     statLabel: 'Assets monitored'
   },
-  {
-    id: 'safetrack',
-    feature: 'safetrack' as keyof TierFeatures,
-    productLogo: safeSuiteProducts.safetrack.logo,
-    title: 'SafeTrack',
-    description: 'Asset Tracking',
-    path: '/safesuite/track',
-    statLabel: 'Assets tracked'
-  }
 ];
 
 export default function WraythDashboard() {
@@ -509,31 +500,82 @@ export default function WraythDashboard() {
     }
   };
 
+  // Ray's briefing — derived from real stats so Ray "already knows".
+  const totalIssues = stats.weakPasswordCount;
+  const score = stats.passwordCount === 0
+    ? 100
+    : Math.max(0, Math.min(100, Math.round(100 - (stats.weakPasswordCount / stats.passwordCount) * 40 + (stats.strongPasswordCount / stats.passwordCount) * 20)));
+  const greeting = (() => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 18) return 'Good afternoon';
+    return 'Good evening';
+  })();
+  const firstName = user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || '';
+
+  const briefingLines: string[] = [];
+  if (stats.weakPasswordCount > 0) {
+    briefingLines.push(`${stats.weakPasswordCount} password${stats.weakPasswordCount === 1 ? '' : 's'} in your vault could be stronger.`);
+  }
+  if (stats.monitoredAssets === 0) {
+    briefingLines.push('You haven\'t set up Watch yet — I can monitor your identities for breach exposure when you\'re ready.');
+  } else {
+    briefingLines.push(`I\'m watching ${stats.monitoredAssets} identit${stats.monitoredAssets === 1 ? 'y' : 'ies'} for exposure.`);
+  }
+  if (stats.scanCount > 0) {
+    briefingLines.push(`I\'ve run ${stats.scanCount} scan${stats.scanCount === 1 ? '' : 's'} this month.`);
+  }
+  if (briefingLines.length === 0) {
+    briefingLines.push('Everything looks healthy. Nothing needs your attention right now.');
+  }
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] -m-4 lg:-m-6 p-4 lg:p-6 space-y-4 sm:space-y-6">
-      {/* Welcome header */}
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
+      {/* Ray's briefing */}
+      <motion.section
+        initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4"
+        className="wrayth-chamfer border border-[#3A3A3A] bg-[#181818] p-5 sm:p-8"
       >
-        <div className="space-y-1">
-          <h1 className="text-fluid-xl font-bold text-white tracking-tight">Welcome back!</h1>
-          <p className="text-fluid-sm text-gray-400">
-            Here's your security overview for today
-          </p>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 space-y-3">
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+              Ray · briefing
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-[#F3F3F3]">
+              {greeting}{firstName ? `, ${firstName}` : ''}.
+            </h1>
+            <p className="text-sm text-muted-foreground">Here's what I noticed today.</p>
+            <ul className="space-y-1.5 text-sm text-[#F3F3F3] pt-1">
+              {briefingLines.map((line, i) => (
+                <li key={i} className="flex gap-2">
+                  <span className="text-muted-foreground select-none">·</span>
+                  <span>{line}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-sm text-muted-foreground pt-2">What would you like to work on?</p>
+          </div>
+          <div className="hidden sm:flex flex-col items-end shrink-0">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Security score</div>
+            <div className="text-4xl font-semibold text-[#F3F3F3] tabular-nums">{score}<span className="text-lg text-muted-foreground">%</span></div>
+            {totalIssues > 0 && (
+              <div className="text-[11px] text-primary mt-1">{totalIssues} item{totalIssues === 1 ? '' : 's'} to address</div>
+            )}
+          </div>
         </div>
         {!isSubscribed && (
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          <div className="mt-5 pt-5 border-t border-[#3A3A3A] flex flex-wrap items-center justify-between gap-3">
+            <span className="text-xs text-muted-foreground">Unlock more capabilities and more questions per day.</span>
             <Link to="/safesuite/billing">
-              <Button className="w-full sm:w-auto gap-2 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 shadow-lg shadow-violet-500/20 btn-touch sm:min-h-[40px]">
-                <Sparkles className="h-4 w-4" />
-                Upgrade to Pro
+              <Button variant="outline" className="wrayth-chamfer-sm border-primary/40 text-primary hover:bg-primary/10">
+                Upgrade
               </Button>
             </Link>
-          </motion.div>
+          </div>
         )}
-      </motion.div>
+      </motion.section>
 
       {/* Subscription Status Banner */}
       <SubscriptionBanner />
@@ -569,13 +611,6 @@ export default function WraythDashboard() {
           value={stats.monitoredAssets}
           theme="safeweb"
           delay={0.2}
-        />
-        <AnimatedStatsCard
-          icon={<Package className="h-4 w-4 sm:h-5 sm:w-5" />}
-          label="Assets"
-          value={stats.trackedAssets}
-          theme="safetrack"
-          delay={0.3}
         />
       </div>
 

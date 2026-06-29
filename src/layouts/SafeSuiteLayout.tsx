@@ -120,27 +120,6 @@ const getNavItems = () => [
       { label: 'Settings', path: getWraythPath('/web/settings') }
     ]
   },
-  {
-    id: 'safetrack',
-    label: 'SafeTrack',
-    path: getWraythPath('/track'),
-    icon: null,
-    productLogo: safeSuiteProducts.safetrack.logo,
-    feature: 'safetrack' as const,
-    subItems: [
-      { label: 'Assets', path: getWraythPath('/track') },
-      { label: 'Settings', path: getWraythPath('/track/settings') }
-    ]
-  },
-  {
-    id: 'safeassist',
-    label: 'SafeAssist',
-    path: getWraythPath('/assist'),
-    icon: null,
-    productLogo: safeSuiteProducts.safeassist?.logo,
-    feature: 'safepass' as const, // Using safepass for now since safeassist is new
-    subItems: []
-  }
 ];
 
 function TierBadge({ tier }: { tier: string }) {
