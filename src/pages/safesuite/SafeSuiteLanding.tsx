@@ -59,8 +59,8 @@ export default function WraythLanding() {
               All Your Security Tools in One Place
             </p>
             <p className="text-lg text-muted-foreground mb-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              Password management, threat scanning, dark web monitoring, and asset tracking — 
-              unified in one powerful, easy-to-use suite.
+              Vault, Scan, and Watch — three precise security tools unified by Ray,
+              the calm AI intelligence at the core of Wrayth.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/auth?tab=signup">
