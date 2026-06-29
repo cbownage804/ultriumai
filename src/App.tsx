@@ -54,6 +54,7 @@ const SafePassIdentity = lazy(() => import('@/pages/safesuite/SafePassIdentity')
 const SafePassHealth = lazy(() => import('@/pages/safesuite/SafePassHealth'));
 const SafePassUsers = lazy(() => import('@/pages/safesuite/SafePassUsers'));
 const SafeSuitePricing = lazy(() => import('@/pages/pricing/SafeSuitePricing'));
+const SafeSuiteAssist = lazy(() => import('@/pages/safesuite/SafeSuiteAssist'));
 
 // Public/legal pages
 const Contact = lazy(() => import('@/pages/Contact'));
@@ -137,6 +138,7 @@ function AppRouter() {
           </ProtectedRoute>
         }>
           <Route path="/safesuite/dashboard" element={<SuspenseWrapper><SafeSuiteDashboard /></SuspenseWrapper>} />
+          <Route path="/safesuite/assist" element={<SuspenseWrapper><SafeSuiteAssist /></SuspenseWrapper>} />
           <Route path="/safesuite/pass" element={<SuspenseWrapper><SafeSuitePass /></SuspenseWrapper>} />
           <Route path="/safesuite/pass/shared" element={<SuspenseWrapper><SafePassShared /></SuspenseWrapper>} />
           <Route path="/safesuite/pass/emergency" element={<SuspenseWrapper><SafePassEmergency /></SuspenseWrapper>} />
