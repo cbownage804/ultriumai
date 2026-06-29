@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { detectReactProject } from './useReactCompiler';
 
 export interface ProjectFile {
   path: string;
@@ -35,6 +34,15 @@ function detectLanguage(path: string): string {
     svg: 'xml',
   };
   return map[ext] || 'plaintext';
+}
+
+function detectReactProject(files: ProjectFile[]): boolean {
+  return files.some((file) => {
+    const normalizedPath = file.path.toLowerCase();
+    if (normalizedPath === 'package.json' && /"react"\s*:/.test(file.content)) return true;
+    if (!/\.(tsx|jsx|ts|js)$/.test(normalizedPath)) return false;
+    return /from\s+['"]react['"]|import\s+React\b|createRoot\s*\(/.test(file.content);
+  });
 }
 
 const DEFAULT_PROJECT: ProjectState = {
