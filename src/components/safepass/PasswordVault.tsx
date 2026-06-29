@@ -46,7 +46,7 @@ import { SecureNotes } from './SecureNotes';
 import { CreditCards } from './CreditCards';
 import { IdentityProfiles } from './IdentityProfiles';
 import { PasswordHealthDashboard } from './PasswordHealthDashboard';
-import { VaultLoadingScreen } from './SafePassLoadingScreen';
+import { VaultLoadingScreen } from './VaultLoadingScreen';
 import { toast } from 'sonner';
 import DOMPurify from 'dompurify';
 import { AnimatePresence } from 'framer-motion';

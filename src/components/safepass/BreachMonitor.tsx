@@ -5,7 +5,7 @@ import { useMasterPassword } from '@/hooks/useMasterPassword';
 import { supabase } from '@/integrations/supabase/client';
 import { BreachCheckService, EmailBreachResult } from '@/services/breachCheckService';
 import { BreachRecommendationDialog, BreachFindingDetails } from './BreachRecommendationDialog';
-import { ScanHistory } from './SafeScanHistory';
+import { ScanHistory } from './ScanHistory';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
