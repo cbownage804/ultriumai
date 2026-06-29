@@ -444,12 +444,12 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 3%;
 
-    /* Primary Palette - Enhanced Blue with Better Contrast */
-    --primary: 217 91% 60%;
+    /* Wrayth Primary - Violet (only accent, used sparingly) */
+    --primary: 258 90% 66%;
     --primary-foreground: 0 0% 98%;
-    --primary-glow: 217 91% 70%;
-    --primary-soft: 217 91% 95%;
-    --primary-dark: 217 91% 45%;
+    --primary-glow: 258 90% 74%;
+    --primary-soft: 258 90% 96%;
+    --primary-dark: 258 90% 56%;
 
     --secondary: 0 0% 96%;
     --secondary-foreground: 0 0% 9%;
@@ -461,11 +461,11 @@
     --accent-foreground: 0 0% 9%;
 
     /* Specialized Colors for Light Mode */
-    --hero: 217 91% 60%;
+    --hero: 258 90% 66%;
     --hero-foreground: 0 0% 98%;
     
-    --ai-message: 217 91% 95%;
-    --ai-message-foreground: 217 91% 20%;
+    --ai-message: 258 90% 96%;
+    --ai-message-foreground: 258 90% 24%;
     
     --user-message: 0 0% 96%;
     --user-message-foreground: 0 0% 9%;
@@ -475,9 +475,11 @@
 
     --border: 0 0% 89%;
     --input: 0 0% 96%;
-    --ring: 217 91% 60%;
+    --ring: 258 90% 66%;
 
-    --radius: 0.75rem;
+    /* Wrayth: subtle angled corners, never pill */
+    --radius: 0.125rem;
+
 
     /* Enhanced Gradients for Light Mode */
     --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(217 91% 70%));
@@ -525,38 +527,39 @@
     --popover: 0 0% 6%;
     --popover-foreground: 0 0% 98%;
 
-    /* Primary Palette - Enhanced for Dark Mode */
-    --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 98%;
-    --primary-glow: 217 91% 70%;
-    --primary-soft: 217 91% 15%;
-    --primary-dark: 217 91% 45%;
+    /* Wrayth Dark - Matte black + graphite, violet accent only */
+    --primary: 258 90% 66%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 258 90% 74%;
+    --primary-soft: 258 40% 14%;
+    --primary-dark: 258 90% 56%;
 
-    --secondary: 0 0% 10%;
+    --secondary: 0 0% 8%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 0 0% 8%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 0 0% 7%;
+    --muted-foreground: 0 0% 62%;
 
-    --accent: 0 0% 10%;
+    --accent: 0 0% 9%;
     --accent-foreground: 0 0% 98%;
 
     /* Specialized Colors for Dark Mode */
-    --hero: 217 91% 60%;
-    --hero-foreground: 0 0% 98%;
+    --hero: 258 90% 66%;
+    --hero-foreground: 0 0% 100%;
     
-    --ai-message: 217 91% 15%;
-    --ai-message-foreground: 217 91% 90%;
+    --ai-message: 258 40% 14%;
+    --ai-message-foreground: 258 60% 92%;
     
-    --user-message: 0 0% 12%;
-    --user-message-foreground: 0 0% 90%;
+    --user-message: 0 0% 10%;
+    --user-message-foreground: 0 0% 92%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
-    --ring: 217 91% 60%;
+    --border: 0 0% 13%;
+    --input: 0 0% 12%;
+    --ring: 258 90% 66%;
+
 
     /* Enhanced Gradients for Dark Mode */
     --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(217 91% 70%));
@@ -1673,5 +1676,99 @@
   
   .text-pretty {
     text-wrap: pretty;
+  }
+}
+
+/* ============================================
+   WRAYTH DESIGN LANGUAGE
+   Angular. Monochrome. Restrained.
+   Apple × Linear × Arc
+   ============================================ */
+@layer utilities {
+  /* Chamfered corners — the signature Wrayth shape.
+     Subtle triangular cuts that echo the W and the hood. */
+  .wrayth-chamfer {
+    clip-path: polygon(
+      10px 0,
+      100% 0,
+      100% calc(100% - 10px),
+      calc(100% - 10px) 100%,
+      0 100%,
+      0 10px
+    );
+  }
+  .wrayth-chamfer-sm {
+    clip-path: polygon(
+      6px 0, 100% 0, 100% calc(100% - 6px),
+      calc(100% - 6px) 100%, 0 100%, 0 6px
+    );
+  }
+  .wrayth-chamfer-lg {
+    clip-path: polygon(
+      16px 0, 100% 0, 100% calc(100% - 16px),
+      calc(100% - 16px) 100%, 0 100%, 0 16px
+    );
+  }
+
+  /* Hairline outline — thin, restrained, premium */
+  .wrayth-hairline {
+    border: 1px solid hsl(0 0% 100% / 0.08);
+    background: hsl(0 0% 4%);
+  }
+  .wrayth-hairline-hover {
+    transition: border-color 200ms ease, background-color 200ms ease;
+  }
+  .wrayth-hairline-hover:hover {
+    border-color: hsl(0 0% 100% / 0.16);
+    background: hsl(0 0% 6%);
+  }
+
+  /* Surface scale — graphite layers, no glassy bubble */
+  .wrayth-surface-0 { background: hsl(0 0% 3%); }
+  .wrayth-surface-1 { background: hsl(0 0% 5%); }
+  .wrayth-surface-2 { background: hsl(0 0% 7%); }
+
+  /* Accent — violet only appears when the AI is thinking/active */
+  .wrayth-accent { color: hsl(258 90% 70%); }
+  .wrayth-accent-bg { background: hsl(258 90% 66%); }
+  .wrayth-accent-ring {
+    box-shadow: 0 0 0 1px hsl(258 90% 66% / 0.6),
+                0 0 24px hsl(258 90% 66% / 0.25);
+  }
+  @keyframes wrayth-thinking {
+    0%, 100% { opacity: 0.4; }
+    50%      { opacity: 1; }
+  }
+  .wrayth-thinking {
+    animation: wrayth-thinking 1.8s ease-in-out infinite;
+    color: hsl(258 90% 72%);
+  }
+
+  /* Buttons — never pill. Flat, hairline, chamfered. */
+  .wrayth-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: hsl(0 0% 96%);
+    background: hsl(0 0% 6%);
+    border: 1px solid hsl(0 0% 100% / 0.1);
+    border-radius: 2px;
+    transition: all 180ms ease;
+  }
+  .wrayth-btn:hover {
+    background: hsl(0 0% 9%);
+    border-color: hsl(0 0% 100% / 0.2);
+  }
+  .wrayth-btn-primary {
+    color: hsl(0 0% 100%);
+    background: hsl(258 90% 60%);
+    border-color: hsl(258 90% 70%);
+  }
+  .wrayth-btn-primary:hover {
+    background: hsl(258 90% 64%);
   }
 }
