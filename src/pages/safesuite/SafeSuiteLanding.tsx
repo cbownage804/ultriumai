@@ -4,7 +4,7 @@
  */
 
 import { Link } from 'react-router-dom';
-import Navigation from '@/components/Navigation';
+import Navigation from '@/components/safesuite/SafeSuiteNav';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
