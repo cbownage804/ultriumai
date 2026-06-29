@@ -30,29 +30,26 @@ const WraythSettings = lazy(() => import('@/pages/safesuite/SafeSuiteSettings'))
 const WraythPass = lazy(() => import('@/pages/safesuite/SafeSuitePass'));
 const WraythScan = lazy(() => import('@/pages/safesuite/SafeSuiteScan'));
 const WraythWeb = lazy(() => import('@/pages/safesuite/SafeSuiteWeb'));
-const WraythTrack = lazy(() => import('@/pages/safesuite/SafeSuiteTrack'));
-const VaultSettings = lazy(() => import('@/pages/safesuite/VaultSettings'));
-const VaultReminders = lazy(() => import('@/pages/safesuite/VaultReminders'));
-const VaultBreach = lazy(() => import('@/pages/safesuite/VaultBreach'));
-const VaultShared = lazy(() => import('@/pages/safesuite/VaultShared'));
-const VaultEmergency = lazy(() => import('@/pages/safesuite/VaultEmergency'));
-const VaultExtension = lazy(() => import('@/pages/safesuite/VaultExtension'));
-const ScanSettings = lazy(() => import('@/pages/safesuite/ScanSettings'));
-const WatchSettings = lazy(() => import('@/pages/safesuite/WatchSettings'));
-const SafeTrackSettings = lazy(() => import('@/pages/safesuite/SafeTrackSettings'));
+const VaultSettings = lazy(() => import('@/pages/safesuite/SafePassSettings'));
+const VaultReminders = lazy(() => import('@/pages/safesuite/SafePassReminders'));
+const VaultBreach = lazy(() => import('@/pages/safesuite/SafePassBreach'));
+const VaultShared = lazy(() => import('@/pages/safesuite/SafePassShared'));
+const VaultEmergency = lazy(() => import('@/pages/safesuite/SafePassEmergency'));
+const VaultExtension = lazy(() => import('@/pages/safesuite/SafePassExtension'));
+const ScanSettings = lazy(() => import('@/pages/safesuite/SafeScanSettings'));
+const WatchSettings = lazy(() => import('@/pages/safesuite/SafeWebSettings'));
 const ForgotPasswordPage = lazy(() => import('@/pages/safesuite/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('@/pages/safesuite/ResetPasswordPage'));
 const MFARecoveryPage = lazy(() => import('@/pages/safesuite/MFARecoveryPage'));
-const VaultProduct = lazy(() => import('@/pages/safesuite/products/VaultProduct'));
-const ScanProduct = lazy(() => import('@/pages/safesuite/products/ScanProduct'));
-const WatchProduct = lazy(() => import('@/pages/safesuite/products/WatchProduct'));
-const SafeTrackProduct = lazy(() => import('@/pages/safesuite/products/SafeTrackProduct'));
+const VaultProduct = lazy(() => import('@/pages/safesuite/products/SafePassProduct'));
+const ScanProduct = lazy(() => import('@/pages/safesuite/products/SafeScanProduct'));
+const WatchProduct = lazy(() => import('@/pages/safesuite/products/SafeWebProduct'));
 const WraythFeatures = lazy(() => import('@/pages/safesuite/SafeSuiteFeatures'));
-const VaultNotes = lazy(() => import('@/pages/safesuite/VaultNotes'));
-const VaultCards = lazy(() => import('@/pages/safesuite/VaultCards'));
-const VaultIdentity = lazy(() => import('@/pages/safesuite/VaultIdentity'));
-const VaultHealth = lazy(() => import('@/pages/safesuite/VaultHealth'));
-const VaultUsers = lazy(() => import('@/pages/safesuite/VaultUsers'));
+const VaultNotes = lazy(() => import('@/pages/safesuite/SafePassNotes'));
+const VaultCards = lazy(() => import('@/pages/safesuite/SafePassCards'));
+const VaultIdentity = lazy(() => import('@/pages/safesuite/SafePassIdentity'));
+const VaultHealth = lazy(() => import('@/pages/safesuite/SafePassHealth'));
+const VaultUsers = lazy(() => import('@/pages/safesuite/SafePassUsers'));
 const WraythPricing = lazy(() => import('@/pages/pricing/SafeSuitePricing'));
 const WraythAssist = lazy(() => import('@/pages/safesuite/SafeSuiteAssist'));
 
@@ -103,7 +100,6 @@ function AppRouter() {
         <Route path="/products/safepass" element={<SuspenseWrapper><VaultProduct /></SuspenseWrapper>} />
         <Route path="/products/safescan" element={<SuspenseWrapper><ScanProduct /></SuspenseWrapper>} />
         <Route path="/products/safeweb" element={<SuspenseWrapper><WatchProduct /></SuspenseWrapper>} />
-        <Route path="/products/safetrack" element={<SuspenseWrapper><SafeTrackProduct /></SuspenseWrapper>} />
         <Route path="/contact" element={<SuspenseWrapper><Contact /></SuspenseWrapper>} />
         <Route path="/terms" element={<SuspenseWrapper><Terms /></SuspenseWrapper>} />
         <Route path="/privacy" element={<SuspenseWrapper><Privacy /></SuspenseWrapper>} />
@@ -127,7 +123,6 @@ function AppRouter() {
         <Route path="/safesuite/auth/reset-password" element={<Navigate to="/auth/reset-password" replace />} />
         <Route path="/safesuite/auth/mfa-recovery" element={<Navigate to="/auth/mfa-recovery" replace />} />
         <Route path="/safesuite/features" element={<SuspenseWrapper><WraythFeatures /></SuspenseWrapper>} />
-        <Route path="/safesuite/products/safetrack" element={<SuspenseWrapper><SafeTrackProduct /></SuspenseWrapper>} />
         <Route path="/safesuite/products/safepass" element={<SuspenseWrapper><VaultProduct /></SuspenseWrapper>} />
         <Route path="/safesuite/products/safeweb" element={<SuspenseWrapper><WatchProduct /></SuspenseWrapper>} />
         <Route path="/safesuite/products/safescan" element={<SuspenseWrapper><ScanProduct /></SuspenseWrapper>} />
@@ -155,8 +150,6 @@ function AppRouter() {
           <Route path="/safesuite/scan/settings" element={<SuspenseWrapper variant="form"><ScanSettings /></SuspenseWrapper>} />
           <Route path="/safesuite/web" element={<SuspenseWrapper><WraythWeb /></SuspenseWrapper>} />
           <Route path="/safesuite/web/settings" element={<SuspenseWrapper variant="form"><WatchSettings /></SuspenseWrapper>} />
-          <Route path="/safesuite/track" element={<SuspenseWrapper><WraythTrack /></SuspenseWrapper>} />
-          <Route path="/safesuite/track/settings" element={<SuspenseWrapper variant="form"><SafeTrackSettings /></SuspenseWrapper>} />
           <Route path="/safesuite/billing" element={<SuspenseWrapper><WraythBilling /></SuspenseWrapper>} />
           <Route path="/safesuite/settings" element={<SuspenseWrapper variant="form"><WraythSettings /></SuspenseWrapper>} />
         </Route>
