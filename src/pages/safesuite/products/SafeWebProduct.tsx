@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import safewebLogo from '@/assets/safeweb-logo.png';
 import heroWeb from '@/assets/hero-web.jpg';
-import { safesuiteLogo } from '@/components/safesuite/WraythProductIcons';
+import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';
 
 const features = [
   { icon: Search, title: "Dark Web Monitoring", description: "24/7 scanning of hacker forums, marketplaces, and paste sites for your exposed data." },

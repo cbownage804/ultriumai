@@ -6,20 +6,20 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useWraythSubscription, useFeatureAccess } from '@/hooks/useWrayth';
+import { useWraythSubscription, useFeatureAccess } from '@/hooks/useSafeSuite';
 import { useSafePass } from '@/hooks/useSafePass';
 import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS, TierFeatures } from '@/config/safeSuiteTiers';
 import { supabase } from '@/integrations/supabase/client';
-import { safeSuiteProducts } from '@/components/safesuite/WraythProductIcons';
+import { safeSuiteProducts } from '@/components/safesuite/SafeSuiteProductIcons';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { UsageLimitBanner } from '@/components/safesuite/WraythPaywall';
+import { UsageLimitBanner } from '@/components/safesuite/SafeSuitePaywall';
 import { SubscriptionBanner } from '@/components/safesuite/SubscriptionBanner';
 import { OnboardingChecklist, ProductTour } from '@/components/onboarding';
 import { SAFESUITE_TOUR_STEPS } from '@/config/productTours';
 import { motion } from 'framer-motion';
-import { GlowContainer, AnimatedStatsCard, StaggerContainer, StaggerItem, SAFESUITE_THEMES } from '@/components/safesuite/WraythEffects';
+import { GlowContainer, AnimatedStatsCard, StaggerContainer, StaggerItem, SAFESUITE_THEMES } from '@/components/safesuite/SafeSuiteEffects';
 import {
   Shield,
   KeyRound,

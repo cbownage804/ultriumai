@@ -2,9 +2,9 @@
  * SafePass Shared - View passwords shared with you (Business feature only)
  */
 
-import { FeatureGate } from '@/components/safesuite/WraythPaywall';
+import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
 import { SharedPasswordAccess } from '@/components/safepass/SharedPasswordAccess';
-import { useWraythSubscription } from '@/hooks/useWrayth';
+import { useWraythSubscription } from '@/hooks/useSafeSuite';
 import { TeaserLock } from '@/components/safesuite/TeaserLock';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

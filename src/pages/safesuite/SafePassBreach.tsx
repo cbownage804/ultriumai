@@ -2,7 +2,7 @@
  * SafePass Breach Monitor - Breach scanning within Wrayth
  */
 
-import { FeatureGate } from '@/components/safesuite/WraythPaywall';
+import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
 import { BreachMonitor } from '@/components/safepass/BreachMonitor';
 
 export default function SafePassBreach() {

@@ -1,5 +1,5 @@
 import { PasswordHealthDashboard } from '@/components/safepass/PasswordHealthDashboard';
-import { FeatureGate } from '@/components/safesuite/WraythPaywall';
+import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
 
 const SafePassHealth = () => {
   return (

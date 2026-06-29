@@ -5,7 +5,7 @@
 
 import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { useFeatureAccess, useWraythSubscription } from '@/hooks/useWrayth';
+import { useFeatureAccess, useWraythSubscription } from '@/hooks/useSafeSuite';
 import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS, formatMonthlyPrice, TierFeatures } from '@/config/safeSuiteTiers';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

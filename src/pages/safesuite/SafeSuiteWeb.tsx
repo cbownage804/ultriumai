@@ -3,9 +3,9 @@
  */
 
 import { useState, useEffect } from 'react';
-import { FeatureGate, UsageLimitBanner, TierLimitInfo } from '@/components/safesuite/WraythPaywall';
+import { FeatureGate, UsageLimitBanner, TierLimitInfo } from '@/components/safesuite/SafeSuitePaywall';
 import { useAuth } from '@/hooks/useAuth';
-import { useFeatureAccess, useWraythUsage } from '@/hooks/useWrayth';
+import { useFeatureAccess, useWraythUsage } from '@/hooks/useSafeSuite';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

@@ -2,7 +2,7 @@
  * SafePass Emergency Access - Manage trusted contacts for emergency vault access
  */
 
-import { FeatureGate } from '@/components/safesuite/WraythPaywall';
+import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
 import { EmergencyAccess } from '@/components/safepass/EmergencyAccess';
 
 export default function SafePassEmergency() {

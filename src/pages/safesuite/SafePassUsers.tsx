@@ -38,7 +38,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useWraythSubscription } from "@/hooks/useWrayth";
+import { useWraythSubscription } from "@/hooks/useSafeSuite";
 import { useNavigate } from "react-router-dom";
 import { isWraythDomain } from "@/utils/subdomain";
 import { 

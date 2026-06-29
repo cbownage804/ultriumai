@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Check } from 'lucide-react';
 import { SAFESUITE_TIERS, formatMonthlyPrice } from '@/config/safeSuiteTiers';
-import WraythNav from '@/components/safesuite/WraythNav';
+import WraythNav from '@/components/safesuite/SafeSuiteNav';
 
 export default function WraythPricing() {
   return (

@@ -4,12 +4,12 @@
  */
 
 import { Link } from 'react-router-dom';
-import Navigation from '@/components/safesuite/WraythNav';
+import Navigation from '@/components/safesuite/SafeSuiteNav';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS, formatMonthlyPrice } from '@/config/safeSuiteTiers';
-import { safeSuiteProducts, safesuiteLogo, type WraythProductKey } from '@/components/safesuite/WraythProductIcons';
+import { safeSuiteProducts, safesuiteLogo, type WraythProductKey } from '@/components/safesuite/SafeSuiteProductIcons';
 import heroSafesuite from '@/assets/hero-safesuite.jpg';
 import {
   Shield,

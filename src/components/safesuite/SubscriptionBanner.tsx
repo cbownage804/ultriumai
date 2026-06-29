@@ -4,7 +4,7 @@
  */
 
 import { Link } from 'react-router-dom';
-import { useWraythSubscription } from '@/hooks/useWrayth';
+import { useWraythSubscription } from '@/hooks/useSafeSuite';
 import { SAFESUITE_TIERS, formatMonthlyPrice, FEATURE_DESCRIPTIONS } from '@/config/safeSuiteTiers';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

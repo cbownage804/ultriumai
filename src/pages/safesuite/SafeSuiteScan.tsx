@@ -2,10 +2,10 @@
  * Wrayth Scan - Security Scanner within Wrayth
  */
 
-import { FeatureGate, TierLimitInfo } from '@/components/safesuite/WraythPaywall';
+import { FeatureGate, TierLimitInfo } from '@/components/safesuite/SafeSuitePaywall';
 import { SafeScanApp } from '@/components/apps/SafeScanApp';
 import { motion } from 'framer-motion';
-import { AnimatedHeader, GlowContainer } from '@/components/safesuite/WraythEffects';
+import { AnimatedHeader, GlowContainer } from '@/components/safesuite/SafeSuiteEffects';
 import safescanLogo from '@/assets/safescan-logo.png';
 import heroSafescanBg from '@/assets/hero-safescan-bg.jpg';
 

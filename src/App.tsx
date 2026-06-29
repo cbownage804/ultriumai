@@ -19,18 +19,18 @@ import AuthConfirm from '@/pages/AuthConfirm';
 import NotFound from '@/pages/NotFound';
 
 // Wrayth layout
-const WraythLayout = lazy(() => import('@/layouts/WraythLayout'));
+const WraythLayout = lazy(() => import('@/layouts/SafeSuiteLayout'));
 
 // Wrayth pages
-const WraythLanding = lazy(() => import('@/pages/safesuite/WraythLanding'));
-const WraythAuth = lazy(() => import('@/pages/safesuite/WraythAuth'));
-const WraythDashboard = lazy(() => import('@/pages/safesuite/WraythDashboard'));
-const WraythBilling = lazy(() => import('@/pages/safesuite/WraythBilling'));
-const WraythSettings = lazy(() => import('@/pages/safesuite/WraythSettings'));
-const WraythPass = lazy(() => import('@/pages/safesuite/WraythPass'));
-const WraythScan = lazy(() => import('@/pages/safesuite/WraythScan'));
-const WraythWeb = lazy(() => import('@/pages/safesuite/WraythWeb'));
-const WraythTrack = lazy(() => import('@/pages/safesuite/WraythTrack'));
+const WraythLanding = lazy(() => import('@/pages/safesuite/SafeSuiteLanding'));
+const WraythAuth = lazy(() => import('@/pages/safesuite/SafeSuiteAuth'));
+const WraythDashboard = lazy(() => import('@/pages/safesuite/SafeSuiteDashboard'));
+const WraythBilling = lazy(() => import('@/pages/safesuite/SafeSuiteBilling'));
+const WraythSettings = lazy(() => import('@/pages/safesuite/SafeSuiteSettings'));
+const WraythPass = lazy(() => import('@/pages/safesuite/SafeSuitePass'));
+const WraythScan = lazy(() => import('@/pages/safesuite/SafeSuiteScan'));
+const WraythWeb = lazy(() => import('@/pages/safesuite/SafeSuiteWeb'));
+const WraythTrack = lazy(() => import('@/pages/safesuite/SafeSuiteTrack'));
 const SafePassSettings = lazy(() => import('@/pages/safesuite/SafePassSettings'));
 const SafePassReminders = lazy(() => import('@/pages/safesuite/SafePassReminders'));
 const SafePassBreach = lazy(() => import('@/pages/safesuite/SafePassBreach'));
@@ -47,14 +47,14 @@ const SafePassProduct = lazy(() => import('@/pages/safesuite/products/SafePassPr
 const SafeScanProduct = lazy(() => import('@/pages/safesuite/products/SafeScanProduct'));
 const SafeWebProduct = lazy(() => import('@/pages/safesuite/products/SafeWebProduct'));
 const SafeTrackProduct = lazy(() => import('@/pages/safesuite/products/SafeTrackProduct'));
-const WraythFeatures = lazy(() => import('@/pages/safesuite/WraythFeatures'));
+const WraythFeatures = lazy(() => import('@/pages/safesuite/SafeSuiteFeatures'));
 const SafePassNotes = lazy(() => import('@/pages/safesuite/SafePassNotes'));
 const SafePassCards = lazy(() => import('@/pages/safesuite/SafePassCards'));
 const SafePassIdentity = lazy(() => import('@/pages/safesuite/SafePassIdentity'));
 const SafePassHealth = lazy(() => import('@/pages/safesuite/SafePassHealth'));
 const SafePassUsers = lazy(() => import('@/pages/safesuite/SafePassUsers'));
-const WraythPricing = lazy(() => import('@/pages/pricing/WraythPricing'));
-const WraythAssist = lazy(() => import('@/pages/safesuite/WraythAssist'));
+const WraythPricing = lazy(() => import('@/pages/pricing/SafeSuitePricing'));
+const WraythAssist = lazy(() => import('@/pages/safesuite/SafeSuiteAssist'));
 
 // Public/legal pages
 const Contact = lazy(() => import('@/pages/Contact'));

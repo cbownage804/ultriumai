@@ -1,5 +1,5 @@
 import { IdentityProfiles } from '@/components/safepass/IdentityProfiles';
-import { FeatureGate } from '@/components/safesuite/WraythPaywall';
+import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
 
 const SafePassIdentity = () => {
   return (

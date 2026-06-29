@@ -25,7 +25,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import safepassLogo from '@/assets/safepass-logo.png';
-import { safesuiteLogo } from '@/components/safesuite/WraythProductIcons';
+import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';
 
 const securityPillars = [
   {
