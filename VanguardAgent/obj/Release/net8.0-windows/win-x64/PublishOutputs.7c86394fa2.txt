@@ -1,3 +1,0 @@
-C:\Users\cbown\ultriumai\VanguardAgent\dist\publish\VanguardAgent.pdb
-C:\Users\cbown\ultriumai\VanguardAgent\dist\publish\config.json
-C:\Users\cbown\ultriumai\VanguardAgent\dist\publish\VanguardAgent.exe

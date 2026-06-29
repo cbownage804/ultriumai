@@ -1,7 +1,0 @@
-# SafeNet Connector Requirements
-# Install with: pip install -r safenet-requirements.txt
-
-requests>=2.28.0
-python-nmap>=0.7.1
-psutil>=5.9.0
-ipaddress>=1.0.23
