@@ -117,7 +117,5 @@ export function FloatingSafeAssist() {
     </>
   );
 }
-  );
-}
 
 export default FloatingSafeAssist;
