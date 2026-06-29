@@ -517,48 +517,50 @@
   }
 
   .dark {
-    /* Dark Mode Colors with Enhanced Contrast */
-    --background: 0 0% 3%;
-    --foreground: 0 0% 98%;
+    /* Wrayth Palette — locked
+       Base #090909 · Surface #181818 · Cards #242424
+       Borders #3A3A3A · Text #F3F3F3 · Accent Electric Violet */
+    --background: 0 0% 3.5%;        /* #090909 */
+    --foreground: 0 0% 95%;         /* #F3F3F3 */
 
-    --card: 0 0% 6%;
-    --card-foreground: 0 0% 98%;
+    --card: 0 0% 14%;               /* #242424 */
+    --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 6%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 0 0% 9%;             /* #181818 */
+    --popover-foreground: 0 0% 95%;
 
-    /* Wrayth Dark - Matte black + graphite, violet accent only */
-    --primary: 258 90% 66%;
+    /* Electric Violet — restrained, not neon */
+    --primary: 262 60% 64%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 258 90% 74%;
-    --primary-soft: 258 40% 14%;
-    --primary-dark: 258 90% 56%;
+    --primary-glow: 262 60% 72%;
+    --primary-soft: 262 30% 16%;
+    --primary-dark: 262 60% 54%;
 
-    --secondary: 0 0% 8%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 0 0% 9%;           /* #181818 */
+    --secondary-foreground: 0 0% 95%;
 
-    --muted: 0 0% 7%;
-    --muted-foreground: 0 0% 62%;
+    --muted: 0 0% 9%;
+    --muted-foreground: 0 0% 64%;
 
-    --accent: 0 0% 9%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 0 0% 14%;             /* #242424 */
+    --accent-foreground: 0 0% 95%;
 
-    /* Specialized Colors for Dark Mode */
-    --hero: 258 90% 66%;
+    --hero: 262 60% 64%;
     --hero-foreground: 0 0% 100%;
-    
-    --ai-message: 258 40% 14%;
-    --ai-message-foreground: 258 60% 92%;
-    
-    --user-message: 0 0% 10%;
+
+    --ai-message: 262 30% 16%;
+    --ai-message-foreground: 262 40% 92%;
+
+    --user-message: 0 0% 14%;
     --user-message-foreground: 0 0% 92%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 13%;
-    --input: 0 0% 12%;
-    --ring: 258 90% 66%;
+    --border: 0 0% 23%;             /* #3A3A3A */
+    --input: 0 0% 14%;
+    --ring: 262 60% 64%;
+
 
 
     /* Enhanced Gradients for Dark Mode */
@@ -1710,38 +1712,41 @@
     );
   }
 
-  /* Hairline outline — thin, restrained, premium */
+  /* Hairline outline — #3A3A3A, thin, restrained */
   .wrayth-hairline {
-    border: 1px solid hsl(0 0% 100% / 0.08);
-    background: hsl(0 0% 4%);
+    border: 1px solid #3A3A3A;
+    background: #181818;
   }
   .wrayth-hairline-hover {
     transition: border-color 200ms ease, background-color 200ms ease;
   }
   .wrayth-hairline-hover:hover {
-    border-color: hsl(0 0% 100% / 0.16);
-    background: hsl(0 0% 6%);
+    border-color: #4a4a4a;
+    background: #1f1f1f;
   }
 
-  /* Surface scale — graphite layers, no glassy bubble */
-  .wrayth-surface-0 { background: hsl(0 0% 3%); }
-  .wrayth-surface-1 { background: hsl(0 0% 5%); }
-  .wrayth-surface-2 { background: hsl(0 0% 7%); }
+  /* Surface scale — locked Wrayth palette */
+  .wrayth-surface-0 { background: #090909; }  /* Base */
+  .wrayth-surface-1 { background: #181818; }  /* Surface */
+  .wrayth-surface-2 { background: #242424; }  /* Cards */
+  .wrayth-text       { color: #F3F3F3; }
+  .wrayth-text-muted { color: #8a8a8a; }
+  .wrayth-border     { border-color: #3A3A3A; }
 
-  /* Accent — violet only appears when the AI is thinking/active */
-  .wrayth-accent { color: hsl(258 90% 70%); }
-  .wrayth-accent-bg { background: hsl(258 90% 66%); }
+  /* Electric Violet accent — only when AI is thinking/active */
+  .wrayth-accent     { color: hsl(262 60% 70%); }
+  .wrayth-accent-bg  { background: hsl(262 60% 64%); }
   .wrayth-accent-ring {
-    box-shadow: 0 0 0 1px hsl(258 90% 66% / 0.6),
-                0 0 24px hsl(258 90% 66% / 0.25);
+    box-shadow: 0 0 0 1px hsl(262 60% 64% / 0.6),
+                0 0 24px hsl(262 60% 64% / 0.22);
   }
   @keyframes wrayth-thinking {
-    0%, 100% { opacity: 0.4; }
+    0%, 100% { opacity: 0.45; }
     50%      { opacity: 1; }
   }
   .wrayth-thinking {
     animation: wrayth-thinking 1.8s ease-in-out infinite;
-    color: hsl(258 90% 72%);
+    color: hsl(262 60% 72%);
   }
 
   /* Buttons — never pill. Flat, hairline, chamfered. */
@@ -1753,22 +1758,23 @@
     font-size: 0.875rem;
     font-weight: 500;
     letter-spacing: 0.02em;
-    color: hsl(0 0% 96%);
-    background: hsl(0 0% 6%);
-    border: 1px solid hsl(0 0% 100% / 0.1);
+    color: #F3F3F3;
+    background: #181818;
+    border: 1px solid #3A3A3A;
     border-radius: 2px;
     transition: all 180ms ease;
   }
   .wrayth-btn:hover {
-    background: hsl(0 0% 9%);
-    border-color: hsl(0 0% 100% / 0.2);
+    background: #242424;
+    border-color: #4a4a4a;
   }
   .wrayth-btn-primary {
-    color: hsl(0 0% 100%);
-    background: hsl(258 90% 60%);
-    border-color: hsl(258 90% 70%);
+    color: #ffffff;
+    background: hsl(262 60% 58%);
+    border-color: hsl(262 60% 68%);
   }
   .wrayth-btn-primary:hover {
-    background: hsl(258 90% 64%);
+    background: hsl(262 60% 62%);
   }
 }
+
