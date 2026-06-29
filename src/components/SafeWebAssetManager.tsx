@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useWatchData, WatchAsset } from "@/hooks/useWatchData";
+import { useWatchData, WatchAsset } from "@/hooks/useSafeWebData";
 import { useWraythUsage } from "@/hooks/useSafeSuite";
 import { 
   Plus, 

@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Building2, Users, Shield, Settings, BarChart3, AlertTriangle, CheckCircle, Plus, Edit } from 'lucide-react';
-import { useVaultMSP } from '@/hooks/useVaultMSP';
+import { useVaultMSP } from '@/hooks/useSafePassMSP';
 
 const MSPConsole = () => {
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
