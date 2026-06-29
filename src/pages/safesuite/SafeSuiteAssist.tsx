@@ -9,7 +9,6 @@ import { useFloatingSafeAssist } from '@/contexts/FloatingSafeAssistContext';
 import { VoiceButton } from '@/components/safeassist/VoiceButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
 import { Loader2, Send, Plus, Trash2, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -71,7 +70,7 @@ export default function SafeSuiteAssist() {
               <Plus className="h-4 w-4 mr-2" /> New conversation
             </Button>
           </div>
-          <ScrollArea className="flex-1">
+          <div className="flex-1 overflow-y-auto">
             <div className="p-2 space-y-1">
               {conversations.length === 0 && (
                 <p className="text-xs text-muted-foreground p-3">No saved chats yet.</p>
@@ -101,7 +100,7 @@ export default function SafeSuiteAssist() {
                 </div>
               ))}
             </div>
-          </ScrollArea>
+          </div>
         </aside>
       )}
 
@@ -114,7 +113,7 @@ export default function SafeSuiteAssist() {
           </div>
         </header>
 
-        <ScrollArea className="flex-1" viewportRef={scrollRef as any}>
+        <div ref={scrollRef} className="flex-1 overflow-y-auto">
           <div className="mx-auto max-w-3xl px-4 py-6 space-y-6">
             {messages.map((m) => (
               <div
@@ -138,7 +137,7 @@ export default function SafeSuiteAssist() {
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
 
         <form
           onSubmit={handleSubmit}
