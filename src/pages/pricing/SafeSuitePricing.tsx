@@ -19,7 +19,7 @@ export default function SafeSuitePricing() {
           </p>
         </div>
         <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {SAFESUITE_TIERS.map((tier) => (
+          {Object.values(SAFESUITE_TIERS).map((tier: any) => (
             <Card key={tier.id} className={tier.recommended ? 'border-primary shadow-lg' : ''}>
               <CardHeader>
                 {tier.recommended && <Badge className="w-fit mb-2">Most popular</Badge>}
