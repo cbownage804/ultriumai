@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { useVault, PasswordEntry as VaultEntry } from '@/hooks/useVault';
+import { useVault, PasswordEntry as VaultEntry } from '@/hooks/useSafePass';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
 import { encryptData } from '@/utils/crypto';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,7 +46,7 @@ import { SecureNotes } from './SecureNotes';
 import { CreditCards } from './CreditCards';
 import { IdentityProfiles } from './IdentityProfiles';
 import { PasswordHealthDashboard } from './PasswordHealthDashboard';
-import { VaultLoadingScreen } from './VaultLoadingScreen';
+import { VaultLoadingScreen } from './SafePassLoadingScreen';
 import { toast } from 'sonner';
 import DOMPurify from 'dompurify';
 import { AnimatePresence } from 'framer-motion';

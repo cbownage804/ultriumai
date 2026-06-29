@@ -3,7 +3,7 @@
  */
 
 import { FeatureGate, TierLimitInfo } from '@/components/safesuite/SafeSuitePaywall';
-import { ScanApp } from '@/components/apps/ScanApp';
+import { ScanApp } from '@/components/apps/SafeScanApp';
 import { motion } from 'framer-motion';
 import { AnimatedHeader, GlowContainer } from '@/components/safesuite/SafeSuiteEffects';
 import safescanLogo from '@/assets/safescan-logo.png';

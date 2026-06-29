@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useVault } from '@/hooks/useVault';
+import { useVault } from '@/hooks/useSafePass';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
 import { supabase } from '@/integrations/supabase/client';
 import { BreachCheckService, EmailBreachResult } from '@/services/breachCheckService';
 import { BreachRecommendationDialog, BreachFindingDetails } from './BreachRecommendationDialog';
-import { ScanHistory } from './ScanHistory';
+import { ScanHistory } from './SafeScanHistory';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
