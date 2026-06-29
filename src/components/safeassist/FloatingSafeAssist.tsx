@@ -97,7 +97,7 @@ export function FloatingSafeAssist() {
                 </div>
               )}
             </div>
-          </ScrollArea>
+          </div>
 
           <form onSubmit={handleSubmit} className="flex items-center gap-2 border-t border-border p-2 bg-background/80">
             <Input
@@ -114,9 +114,9 @@ export function FloatingSafeAssist() {
           </form>
         </div>
       )}
-
-      <VoiceCreditPurchaseDialog />
     </>
+  );
+}
   );
 }
 
