@@ -6,10 +6,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSafeAssist } from '@/hooks/useSafeAssist';
-import { useFloatingSafeAssist, VoiceCreditPurchaseDialog } from '@/contexts/FloatingSafeAssistContext';
+import { useFloatingSafeAssist } from '@/contexts/FloatingSafeAssistContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageCircle, X, Send, Loader2, Maximize2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import safeassistIcon from '@/assets/safeassist-icon.png';
@@ -29,7 +28,7 @@ export function FloatingSafeAssist() {
     }
   }, [isOpen, messages, isTyping]);
 
-  if (isOnAssistPage) return <VoiceCreditPurchaseDialog />;
+  if (isOnAssistPage) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,7 +76,7 @@ export function FloatingSafeAssist() {
             </div>
           </header>
 
-          <ScrollArea className="flex-1" viewportRef={scrollRef as any}>
+          <div ref={scrollRef} className="flex-1 overflow-y-auto">
             <div className="p-3 space-y-3">
               {messages.map((m) => (
                 <div key={m.id} className={cn('flex', m.role === 'user' ? 'justify-end' : 'justify-start')}>
