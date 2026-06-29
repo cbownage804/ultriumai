@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS, formatMonthlyPrice } from '@/config/safeSuiteTiers';
 import { safeSuiteProducts, safesuiteLogo, type WraythProductKey } from '@/components/safesuite/SafeSuiteProductIcons';
-import heroSafesuite from '@/assets/hero-safesuite.jpg';
+import heroWrayth from '@/assets/hero-wrayth.jpg';
 import {
   Shield,
   Check,
@@ -21,7 +21,7 @@ import {
   Star
 } from 'lucide-react';
 
-const features: WraythProductKey[] = ['safepass', 'safescan', 'safeweb', 'safetrack'];
+const features: WraythProductKey[] = ['safepass', 'safescan', 'safeweb'];
 
 export default function WraythLanding() {
   return (
