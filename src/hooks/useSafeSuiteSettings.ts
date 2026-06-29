@@ -1,5 +1,5 @@
 /**
- * SafeSuite Settings Hook
+ * Wrayth Settings Hook
  * Manages user settings persistence to Supabase
  */
 
@@ -9,7 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { devLog } from '@/lib/logger';
 
-export interface SafeSuiteUserSettings {
+export interface WraythUserSettings {
   notifications: {
     breachAlerts: boolean;
     weeklyReport: boolean;
@@ -27,7 +27,7 @@ export interface SafeSuiteUserSettings {
   };
 }
 
-const DEFAULT_SETTINGS: SafeSuiteUserSettings = {
+const DEFAULT_SETTINGS: WraythUserSettings = {
   notifications: {
     breachAlerts: true,
     weeklyReport: true,
@@ -45,9 +45,9 @@ const DEFAULT_SETTINGS: SafeSuiteUserSettings = {
   }
 };
 
-export const useSafeSuiteSettings = () => {
+export const useWraythSettings = () => {
   const { user } = useAuth();
-  const [settings, setSettings] = useState<SafeSuiteUserSettings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<WraythUserSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -85,7 +85,7 @@ export const useSafeSuiteSettings = () => {
     loadSettings();
   }, [loadSettings]);
 
-  const saveSettings = useCallback(async (newSettings: SafeSuiteUserSettings) => {
+  const saveSettings = useCallback(async (newSettings: WraythUserSettings) => {
     if (!user?.id) return false;
 
     setSaving(true);
@@ -116,21 +116,21 @@ export const useSafeSuiteSettings = () => {
     }
   }, [user?.id]);
 
-  const updateNotifications = useCallback((key: keyof SafeSuiteUserSettings['notifications'], value: boolean) => {
+  const updateNotifications = useCallback((key: keyof WraythUserSettings['notifications'], value: boolean) => {
     setSettings(prev => ({
       ...prev,
       notifications: { ...prev.notifications, [key]: value }
     }));
   }, []);
 
-  const updatePreferences = useCallback((key: keyof SafeSuiteUserSettings['preferences'], value: string) => {
+  const updatePreferences = useCallback((key: keyof WraythUserSettings['preferences'], value: string) => {
     setSettings(prev => ({
       ...prev,
       preferences: { ...prev.preferences, [key]: value }
     }));
   }, []);
 
-  const updatePrivacy = useCallback((key: keyof SafeSuiteUserSettings['privacy'], value: boolean) => {
+  const updatePrivacy = useCallback((key: keyof WraythUserSettings['privacy'], value: boolean) => {
     setSettings(prev => ({
       ...prev,
       privacy: { ...prev.privacy, [key]: value }

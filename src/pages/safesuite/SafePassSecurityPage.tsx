@@ -25,7 +25,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import safepassLogo from '@/assets/safepass-logo.png';
-import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';
+import { safesuiteLogo } from '@/components/safesuite/WraythProductIcons';
 
 const securityPillars = [
   {
@@ -592,7 +592,7 @@ export default function SafePassSecurityPage() {
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-3xl text-center">
           <div className="inline-block bg-black px-8 py-4 rounded-lg mb-6 border border-emerald-500/20">
-            <img src={safesuiteLogo} alt="SafeSuite" className="h-16 w-auto" />
+            <img src={safesuiteLogo} alt="Wrayth" className="h-16 w-auto" />
           </div>
           <h2 className="text-3xl font-bold text-white mb-4">
             Ready to Secure Your Passwords?
@@ -603,7 +603,7 @@ export default function SafePassSecurityPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/auth?tab=signup">
               <Button size="lg" className="bg-amber-500 hover:bg-amber-600 text-black gap-2">
-                Start Free with SafeSuite
+                Start Free with Wrayth
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
@@ -620,7 +620,7 @@ export default function SafePassSecurityPage() {
       <footer className="py-8 border-t border-gray-800">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-gray-500 text-sm">
-            <p>© {new Date().getFullYear()} UltriumAI. SafePass is part of the SafeSuite security bundle.</p>
+            <p>© {new Date().getFullYear()} UltriumAI. SafePass is part of the Wrayth security bundle.</p>
             <div className="flex items-center gap-4">
               <Link to="/privacy" className="hover:text-gray-300">Privacy Policy</Link>
               <Link to="/security" className="hover:text-gray-300">Security</Link>

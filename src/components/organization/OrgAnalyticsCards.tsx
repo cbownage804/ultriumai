@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 const PRODUCT_LABELS: Record<string, string> = {
-  safesuite: 'SafeSuite',
+  safesuite: 'Wrayth',
   ai_studio: 'AI Studio',
   vanguard: 'Vanguard',
 };

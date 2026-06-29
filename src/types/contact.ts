@@ -23,7 +23,7 @@ export interface Product {
 
 export const PRODUCTS: Product[] = [
   { id: 'vanguard', name: 'Vanguard', description: 'RMM, helpdesk, pentesting & IT operations' },
-  { id: 'safesuite', name: 'SafeSuite', description: 'Password manager, email security & digital protection' },
+  { id: 'safesuite', name: 'Wrayth', description: 'Password manager, email security & digital protection' },
   { id: 'ai-studio', name: 'AI Studio', description: 'Build custom AI assistants & GPTs' },
   { id: 'custom-apps', name: 'Custom App Development', description: 'Bespoke AI-powered applications' },
 ];

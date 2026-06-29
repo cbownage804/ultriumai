@@ -94,7 +94,7 @@ export const UserBillingDashboard = ({ product = 'safesuite' }: UserBillingDashb
               <Crown className="h-5 w-5 text-amber-500" />
               Your Subscription
             </CardTitle>
-            <CardDescription>Manage your SafeSuite subscription</CardDescription>
+            <CardDescription>Manage your Wrayth subscription</CardDescription>
           </div>
           <Button variant="ghost" size="icon" onClick={handleRefresh} disabled={refreshing}>
             <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
@@ -266,7 +266,7 @@ export const UserBillingDashboard = ({ product = 'safesuite' }: UserBillingDashb
               <div>
                 <h3 className="text-lg font-bold mb-2">Unlock Full Security</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Upgrade to SafeSuite Pro for unlimited passwords, advanced threat protection, and priority support.
+                  Upgrade to Wrayth Pro for unlimited passwords, advanced threat protection, and priority support.
                 </p>
                 <ul className="space-y-1 mb-4">
                   {['Unlimited password storage', 'Dark web monitoring', 'Priority support'].map((feature, i) => (

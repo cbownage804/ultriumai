@@ -1,5 +1,5 @@
 /**
- * FloatingSafeAssist — floating chat bubble shown across SafeSuite pages.
+ * FloatingSafeAssist — floating chat bubble shown across Wrayth pages.
  * Hidden on the full /safesuite/assist page. Uses useSafeAssist hook.
  */
 

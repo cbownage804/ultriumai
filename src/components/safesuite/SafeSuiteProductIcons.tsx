@@ -40,10 +40,10 @@ export const safeSuiteProducts = {
   },
 } as const;
 
-export type SafeSuiteProductKey = keyof typeof safeSuiteProducts;
+export type WraythProductKey = keyof typeof safeSuiteProducts;
 
-interface SafeSuiteProductIconProps {
-  product: SafeSuiteProductKey;
+interface WraythProductIconProps {
+  product: WraythProductKey;
   size?: "sm" | "md" | "lg" | "xl";
   className?: string;
   showName?: boolean;
@@ -56,12 +56,12 @@ const sizeClasses = {
   xl: "h-20 w-20",
 };
 
-export function SafeSuiteProductIcon({ 
+export function WraythProductIcon({ 
   product, 
   size = "md", 
   className = "",
   showName = false 
-}: SafeSuiteProductIconProps) {
+}: WraythProductIconProps) {
   const productData = safeSuiteProducts[product];
   
   return (
@@ -78,7 +78,7 @@ export function SafeSuiteProductIcon({
   );
 }
 
-export function SafeSuiteProductCard({ product }: { product: SafeSuiteProductKey }) {
+export function WraythProductCard({ product }: { product: WraythProductKey }) {
   const productData = safeSuiteProducts[product];
   
   return (

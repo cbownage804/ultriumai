@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import safewebLogo from '@/assets/safeweb-logo.png';
 import heroWeb from '@/assets/hero-web.jpg';
-import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';
+import { safesuiteLogo } from '@/components/safesuite/WraythProductIcons';
 
 const features = [
   { icon: Search, title: "Dark Web Monitoring", description: "24/7 scanning of hacker forums, marketplaces, and paste sites for your exposed data." },
@@ -54,7 +54,7 @@ export default function SafeWebProduct() {
           <div className="flex items-center gap-4">
             <Link to="/safesuite">
               <Button variant="ghost" className="text-gray-400 hover:text-white">
-                ← Back to SafeSuite
+                ← Back to Wrayth
               </Button>
             </Link>
             <Link to="/auth?tab=signup">
@@ -91,7 +91,7 @@ export default function SafeWebProduct() {
                 variant="outline" 
                 className="text-sm px-4 py-1.5 font-medium border-violet-500/50 text-violet-400 bg-violet-500/10"
               >
-                Included with SafeSuite
+                Included with Wrayth
               </Badge>
             </div>
 
@@ -102,7 +102,7 @@ export default function SafeWebProduct() {
                   size="lg"
                   className="gap-2 w-full text-lg py-6 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 font-semibold"
                 >
-                  Start Free with SafeSuite
+                  Start Free with Wrayth
                   <ArrowRight className="h-5 w-5" />
                 </Button>
               </Link>
@@ -112,7 +112,7 @@ export default function SafeWebProduct() {
                 to="/safesuite" 
                 className="inline-block mt-4 text-sm text-gray-400 hover:text-white transition-colors"
               >
-                Learn more about SafeSuite
+                Learn more about Wrayth
               </Link>
             </div>
           </div>
@@ -171,17 +171,17 @@ export default function SafeWebProduct() {
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-3xl text-center">
           <div className="inline-block bg-black px-8 py-4 rounded-lg mb-6 border border-emerald-500/20">
-            <img src={safesuiteLogo} alt="SafeSuite" className="h-16 w-auto" />
+            <img src={safesuiteLogo} alt="Wrayth" className="h-16 w-auto" />
           </div>
           <h2 className="text-3xl font-bold text-white mb-4">
-            SafeWeb is Included with SafeSuite
+            SafeWeb is Included with Wrayth
           </h2>
           <p className="text-gray-400 mb-8">
             Get SafeWeb plus SafePass, SafeScan, and SafeTrack — all in one unified security suite.
           </p>
           <Link to="/auth?tab=signup">
             <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 text-black gap-2">
-              Get Started with SafeSuite
+              Get Started with Wrayth
               <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
@@ -191,7 +191,7 @@ export default function SafeWebProduct() {
       {/* Footer */}
       <footer className="py-8 border-t border-gray-800">
         <div className="container mx-auto px-4 text-center text-gray-500 text-sm">
-          © {new Date().getFullYear()} UltriumAI. SafeWeb is part of the SafeSuite security bundle.
+          © {new Date().getFullYear()} UltriumAI. SafeWeb is part of the Wrayth security bundle.
         </div>
       </footer>
     </div>

@@ -1,36 +1,36 @@
 /**
- * SafeSuite Subscription and Feature Access Hooks
+ * Wrayth Subscription and Feature Access Hooks
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { 
-  SafeSuiteTier, 
+  WraythTier, 
   SAFESUITE_TIERS, 
   getFeatureLimit, 
   isFeatureEnabled,
   TierFeatures 
 } from '@/config/safeSuiteTiers';
 
-export interface SafeSuiteSubscription {
-  tier: SafeSuiteTier;
+export interface WraythSubscription {
+  tier: WraythTier;
   status: 'active' | 'canceled' | 'past_due' | 'trialing';
   currentPeriodEnd: string | null;
   stripeSubscriptionId: string | null;
   stripeCustomerId: string | null;
 }
 
-export interface SafeSuiteUsage {
+export interface WraythUsage {
   safepass: number;
   safescan: number;
   safeweb: number;
   safetrack: number;
 }
 
-export function useSafeSuiteSubscription() {
+export function useWraythSubscription() {
   const { user } = useAuth();
-  const [subscription, setSubscription] = useState<SafeSuiteSubscription | null>(null);
+  const [subscription, setSubscription] = useState<WraythSubscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,7 +54,7 @@ export function useSafeSuiteSubscription() {
       if (dbSub && dbSub.status === 'active' && dbSub.tier !== 'free') {
         // We have an active paid subscription in the database
         setSubscription({
-          tier: dbSub.tier as SafeSuiteTier,
+          tier: dbSub.tier as WraythTier,
           status: dbSub.status as 'active' | 'canceled' | 'past_due' | 'trialing',
           currentPeriodEnd: dbSub.current_period_end,
           stripeSubscriptionId: dbSub.stripe_subscription_id,
@@ -88,7 +88,7 @@ export function useSafeSuiteSubscription() {
         });
       }
     } catch (err) {
-      console.error('Error fetching SafeSuite subscription:', err);
+      console.error('Error fetching Wrayth subscription:', err);
       // Default to free tier on error
       setSubscription({
         tier: 'free',
@@ -130,9 +130,9 @@ export function useSafeSuiteSubscription() {
   };
 }
 
-export function useSafeSuiteUsage() {
+export function useWraythUsage() {
   const { user } = useAuth();
-  const [usage, setUsage] = useState<SafeSuiteUsage>({
+  const [usage, setUsage] = useState<WraythUsage>({
     safepass: 0,
     safescan: 0,
     safeweb: 0,
@@ -156,7 +156,7 @@ export function useSafeSuiteUsage() {
         setUsage(data.usage);
       }
     } catch (err) {
-      console.error('Error fetching SafeSuite usage:', err);
+      console.error('Error fetching Wrayth usage:', err);
     } finally {
       setLoading(false);
     }
@@ -170,8 +170,8 @@ export function useSafeSuiteUsage() {
 }
 
 export function useFeatureAccess() {
-  const { tier } = useSafeSuiteSubscription();
-  const { usage } = useSafeSuiteUsage();
+  const { tier } = useWraythSubscription();
+  const { usage } = useWraythUsage();
 
   const checkFeatureAccess = useCallback((
     feature: keyof TierFeatures,
@@ -229,7 +229,7 @@ export function useFeatureAccess() {
     return null;
   }, [tier]);
 
-  const getRequiredTier = useCallback((feature: keyof TierFeatures): SafeSuiteTier => {
+  const getRequiredTier = useCallback((feature: keyof TierFeatures): WraythTier => {
     // Find the lowest tier that enables this feature
     if (SAFESUITE_TIERS.free.features[feature].enabled) return 'free';
     if (SAFESUITE_TIERS.pro.features[feature].enabled) return 'pro';
@@ -245,12 +245,12 @@ export function useFeatureAccess() {
   };
 }
 
-export function useSafeSuiteCheckout() {
+export function useWraythCheckout() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const createCheckout = useCallback(async (
-    tier: SafeSuiteTier,
+    tier: WraythTier,
     interval: 'monthly' | 'yearly' = 'monthly',
     seats?: number
   ): Promise<{ url?: string; upgraded?: boolean; redirectUrl?: string; message?: string } | null> => {

@@ -1,9 +1,9 @@
 /**
- * SafeSuite Subscription Tiers Configuration
+ * Wrayth Subscription Tiers Configuration
  * Defines feature access and limits for each tier
  */
 
-export type SafeSuiteTier = 'free' | 'pro' | 'business' | 'enterprise';
+export type WraythTier = 'free' | 'pro' | 'business' | 'enterprise';
 
 export interface FeatureLimit {
   enabled: boolean;
@@ -23,7 +23,7 @@ export interface TierFeatures {
 }
 
 export interface TierConfig {
-  id: SafeSuiteTier;
+  id: WraythTier;
   name: string;
   description: string;
   price: number; // in cents
@@ -37,7 +37,7 @@ export interface TierConfig {
   priceLabel?: string; // custom price label like "/user/mo"
 }
 
-export const SAFESUITE_TIERS: Record<SafeSuiteTier, TierConfig> = {
+export const SAFESUITE_TIERS: Record<WraythTier, TierConfig> = {
   free: {
     id: 'free',
     name: 'Free',
@@ -200,24 +200,24 @@ export function formatLimitWithUnit(feature: keyof TierFeatures, limit: number):
 }
 
 // Helper functions
-export function getTierByPriceId(priceId: string): SafeSuiteTier | null {
+export function getTierByPriceId(priceId: string): WraythTier | null {
   for (const [tier, config] of Object.entries(SAFESUITE_TIERS)) {
     if (config.stripePriceId === priceId || config.stripeYearlyPriceId === priceId) {
-      return tier as SafeSuiteTier;
+      return tier as WraythTier;
     }
   }
   return null;
 }
 
-export function getFeatureLimit(tier: SafeSuiteTier, feature: keyof TierFeatures): FeatureLimit {
+export function getFeatureLimit(tier: WraythTier, feature: keyof TierFeatures): FeatureLimit {
   return SAFESUITE_TIERS[tier].features[feature];
 }
 
-export function isFeatureEnabled(tier: SafeSuiteTier, feature: keyof TierFeatures): boolean {
+export function isFeatureEnabled(tier: WraythTier, feature: keyof TierFeatures): boolean {
   return SAFESUITE_TIERS[tier].features[feature].enabled;
 }
 
-export function getFeatureLimitValue(tier: SafeSuiteTier, feature: keyof TierFeatures): number {
+export function getFeatureLimitValue(tier: WraythTier, feature: keyof TierFeatures): number {
   return SAFESUITE_TIERS[tier].features[feature].limit;
 }
 

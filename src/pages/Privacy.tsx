@@ -57,7 +57,7 @@ const Privacy = () => {
                   <p className="text-xs text-muted-foreground">MSP/MSSP security operations platform</p>
                 </div>
                 <div className="bg-muted/50 p-3 rounded-lg">
-                  <h4 className="font-medium text-sm mb-1">SafeSuite</h4>
+                  <h4 className="font-medium text-sm mb-1">Wrayth</h4>
                   <p className="text-xs text-muted-foreground">SafePass, SafeScan, SafeWeb, SafeTrack, SafeAssist</p>
                 </div>
                 <div className="bg-muted/50 p-3 rounded-lg">

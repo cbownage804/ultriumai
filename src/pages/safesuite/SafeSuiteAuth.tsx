@@ -1,6 +1,6 @@
 /**
- * SafeSuite Auth Page
- * Login/Signup for SafeSuite portal
+ * Wrayth Auth Page
+ * Login/Signup for Wrayth portal
  */
 
 import { useState } from 'react';
@@ -17,7 +17,7 @@ import { Loader2, Mail, Lock, User, ArrowLeft, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner';
 import { AuthBrandHeader } from '@/components/auth/AuthBrandHeader';
 
-export default function SafeSuiteAuth() {
+export default function WraythAuth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const defaultTab = searchParams.get('tab') || 'login';
@@ -107,7 +107,7 @@ export default function SafeSuiteAuth() {
       <header className="p-4">
         <Link to="/safesuite" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-4 w-4" />
-          Back to SafeSuite
+          Back to Wrayth
         </Link>
       </header>
 

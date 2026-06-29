@@ -72,7 +72,7 @@ export const SubscriptionOverview = () => {
             </p>
             <div className="flex flex-wrap justify-center gap-2">
               <Button asChild variant="outline">
-                <Link to="/pricing/safesuite">SafeSuite</Link>
+                <Link to="/pricing/safesuite">Wrayth</Link>
               </Button>
               <Button asChild variant="outline">
                 <Link to="/pricing/ai-studio">AI Studio</Link>

@@ -1,10 +1,10 @@
 import { TourStep } from '@/components/onboarding/ProductTour';
 
-// SafeSuite Product Tour - Introduces key features to new users
+// Wrayth Product Tour - Introduces key features to new users
 export const SAFESUITE_TOUR_STEPS: TourStep[] = [
   {
     id: 'welcome',
-    title: 'Welcome to SafeSuite! 🛡️',
+    title: 'Welcome to Wrayth! 🛡️',
     description: 'Your all-in-one security platform. Let us show you around the key features that will keep you and your team safe.',
     position: 'center',
   },

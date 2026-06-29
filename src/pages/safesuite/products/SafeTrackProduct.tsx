@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import safetrackLogo from '@/assets/safetrack-logo.png';
 import heroTrack from '@/assets/hero-track.jpg';
-import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';
+import { safesuiteLogo } from '@/components/safesuite/WraythProductIcons';
 
 const features = [
   { icon: Sparkles, title: "AI Warranty Lookup", description: "Instantly retrieve warranty status by serial number using AI-powered web scraping.", featured: true },
@@ -58,7 +58,7 @@ export default function SafeTrackProduct() {
           <div className="flex items-center gap-4">
             <Link to="/safesuite">
               <Button variant="ghost" className="text-gray-400 hover:text-white">
-                ← Back to SafeSuite
+                ← Back to Wrayth
               </Button>
             </Link>
             <Link to="/auth?tab=signup">
@@ -80,7 +80,7 @@ export default function SafeTrackProduct() {
         
         <div className="relative z-10 text-center px-4 py-20">
           <Badge className="mb-6 bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
-            Included with SafeSuite
+            Included with Wrayth
           </Badge>
           <div className="flex justify-center mb-8">
             <div className="bg-black px-12 py-6 rounded-xl shadow-[0_0_60px_rgba(16,185,129,0.3)] border border-emerald-500/20">
@@ -101,7 +101,7 @@ export default function SafeTrackProduct() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/auth?tab=signup">
               <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 text-black gap-2">
-                Start Free with SafeSuite
+                Start Free with Wrayth
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
@@ -175,17 +175,17 @@ export default function SafeTrackProduct() {
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-3xl text-center">
           <div className="inline-block bg-black px-8 py-4 rounded-lg mb-6 border border-emerald-500/20">
-            <img src={safesuiteLogo} alt="SafeSuite" className="h-16 w-auto" />
+            <img src={safesuiteLogo} alt="Wrayth" className="h-16 w-auto" />
           </div>
           <h2 className="text-3xl font-bold text-white mb-4">
-            SafeTrack is Included with SafeSuite
+            SafeTrack is Included with Wrayth
           </h2>
           <p className="text-gray-400 mb-8">
             Get SafeTrack plus SafePass, SafeScan, and SafeWeb — all in one unified security suite.
           </p>
           <Link to="/auth?tab=signup">
             <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 text-black gap-2">
-              Get Started with SafeSuite
+              Get Started with Wrayth
               <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
@@ -195,7 +195,7 @@ export default function SafeTrackProduct() {
       {/* Footer */}
       <footer className="py-8 border-t border-gray-800">
         <div className="container mx-auto px-4 text-center text-gray-500 text-sm">
-          © {new Date().getFullYear()} UltriumAI. SafeTrack is part of the SafeSuite security bundle.
+          © {new Date().getFullYear()} UltriumAI. SafeTrack is part of the Wrayth security bundle.
         </div>
       </footer>
     </div>

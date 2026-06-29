@@ -1,5 +1,5 @@
 import { SecureNotes } from '@/components/safepass/SecureNotes';
-import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
+import { FeatureGate } from '@/components/safesuite/WraythPaywall';
 
 const SafePassNotes = () => {
   return (

@@ -1,15 +1,15 @@
 /**
- * SafeSuite Scan - Security Scanner within SafeSuite
+ * Wrayth Scan - Security Scanner within Wrayth
  */
 
-import { FeatureGate, TierLimitInfo } from '@/components/safesuite/SafeSuitePaywall';
+import { FeatureGate, TierLimitInfo } from '@/components/safesuite/WraythPaywall';
 import { SafeScanApp } from '@/components/apps/SafeScanApp';
 import { motion } from 'framer-motion';
-import { AnimatedHeader, GlowContainer } from '@/components/safesuite/SafeSuiteEffects';
+import { AnimatedHeader, GlowContainer } from '@/components/safesuite/WraythEffects';
 import safescanLogo from '@/assets/safescan-logo.png';
 import heroSafescanBg from '@/assets/hero-safescan-bg.jpg';
 
-export default function SafeSuiteScan() {
+export default function WraythScan() {
   return (
     <FeatureGate feature="safescan">
       <div 
@@ -50,7 +50,7 @@ export default function SafeSuiteScan() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3, duration: 0.4 }}
         >
-          <SafeScanApp isWhiteLabeled={false} brandName="SafeSuite" hideHeader={true} />
+          <SafeScanApp isWhiteLabeled={false} brandName="Wrayth" hideHeader={true} />
         </motion.div>
         </div>
       </div>

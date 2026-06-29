@@ -1,15 +1,15 @@
 /**
- * SafeSuite Landing Page
+ * Wrayth Landing Page
  * Marketing page for the unified security suite
  */
 
 import { Link } from 'react-router-dom';
-import Navigation from '@/components/safesuite/SafeSuiteNav';
+import Navigation from '@/components/safesuite/WraythNav';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS, formatMonthlyPrice } from '@/config/safeSuiteTiers';
-import { safeSuiteProducts, safesuiteLogo, type SafeSuiteProductKey } from '@/components/safesuite/SafeSuiteProductIcons';
+import { safeSuiteProducts, safesuiteLogo, type WraythProductKey } from '@/components/safesuite/WraythProductIcons';
 import heroSafesuite from '@/assets/hero-safesuite.jpg';
 import {
   Shield,
@@ -21,9 +21,9 @@ import {
   Star
 } from 'lucide-react';
 
-const features: SafeSuiteProductKey[] = ['safepass', 'safescan', 'safeweb', 'safetrack'];
+const features: WraythProductKey[] = ['safepass', 'safescan', 'safeweb', 'safetrack'];
 
-export default function SafeSuiteLanding() {
+export default function WraythLanding() {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -34,7 +34,7 @@ export default function SafeSuiteLanding() {
         <div className="absolute inset-0">
           <img 
             src={heroSafesuite} 
-            alt="SafeSuite Security Platform"
+            alt="Wrayth Security Platform"
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/80 to-background" />
@@ -50,7 +50,7 @@ export default function SafeSuiteLanding() {
               <div className="px-12 py-6 bg-black rounded-2xl shadow-2xl shadow-emerald-500/20 animate-fade-in">
                 <img 
                   src={safesuiteLogo} 
-                  alt="SafeSuite" 
+                  alt="Wrayth" 
                   className="h-28 w-auto object-contain"
                 />
               </div>
@@ -229,7 +229,7 @@ export default function SafeSuiteLanding() {
             Ready to Secure Your Digital Life?
           </h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Join thousands of users who trust SafeSuite to protect their passwords, 
+            Join thousands of users who trust Wrayth to protect their passwords, 
             scan for threats, and monitor the dark web.
           </p>
           <Link to="/auth?tab=signup">
@@ -247,7 +247,7 @@ export default function SafeSuiteLanding() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" />
-              <span className="font-semibold">SafeSuite</span>
+              <span className="font-semibold">Wrayth</span>
               <span className="text-muted-foreground">by UltriumAI</span>
             </div>
             <p className="text-sm text-muted-foreground">

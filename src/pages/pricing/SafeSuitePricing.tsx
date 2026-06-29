@@ -4,12 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Check } from 'lucide-react';
 import { SAFESUITE_TIERS, formatMonthlyPrice } from '@/config/safeSuiteTiers';
-import SafeSuiteNav from '@/components/safesuite/SafeSuiteNav';
+import WraythNav from '@/components/safesuite/WraythNav';
 
-export default function SafeSuitePricing() {
+export default function WraythPricing() {
   return (
     <div className="min-h-screen bg-background">
-      <SafeSuiteNav />
+      <WraythNav />
       <section className="container mx-auto px-4 py-20">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <Badge className="mb-4">Simple, transparent pricing</Badge>

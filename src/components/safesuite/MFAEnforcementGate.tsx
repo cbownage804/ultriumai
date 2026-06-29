@@ -1,5 +1,5 @@
 /**
- * MFA Enforcement Gate for SafeSuite Sensitive Features
+ * MFA Enforcement Gate for Wrayth Sensitive Features
  * Requires MFA verification on each login session (unless device is trusted for 24h)
  * Also blocks access if MFA is not enabled at all
  */
@@ -22,7 +22,7 @@ import {
   Loader2,
   CheckCircle2
 } from 'lucide-react';
-import { isSafeSuiteDomain } from '@/utils/subdomain';
+import { isWraythDomain } from '@/utils/subdomain';
 import { MFALoginChallenge } from './MFALoginChallenge';
 
 // Product logos
@@ -58,7 +58,7 @@ export function MFAEnforcementGate({
   const [mfaVerified, setMfaVerified] = useState(false);
   const [showChallenge, setShowChallenge] = useState(false);
   
-  const settingsPath = isSafeSuiteDomain() ? '/settings' : '/safesuite/settings';
+  const settingsPath = isWraythDomain() ? '/settings' : '/safesuite/settings';
 
   // Check if this session has already verified MFA
   useEffect(() => {
@@ -227,14 +227,14 @@ export function MFAEnforcementGate({
               </Link>
             </motion.div>
 
-            {/* SafeSuite branding */}
+            {/* Wrayth branding */}
             <div className="pt-4 border-t border-border text-center">
               <p className="text-xs text-muted-foreground mb-2">
                 Secured by
               </p>
               <img 
                 src={safesuiteLogo} 
-                alt="SafeSuite" 
+                alt="Wrayth" 
                 className="h-8 mx-auto opacity-60"
               />
             </div>

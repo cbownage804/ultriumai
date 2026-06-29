@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { isSafeSuiteDomain, isVanguardDomain } from '@/utils/subdomain';
+import { isWraythDomain, isVanguardDomain } from '@/utils/subdomain';
 import { Loader2 } from 'lucide-react';
 
 /**
@@ -17,7 +17,7 @@ export default function UnifiedAuthRedirect() {
     const returnPath = location.state?.from?.pathname || '/dashboard';
     
     let returnProduct = '';
-    if (isSafeSuiteDomain()) {
+    if (isWraythDomain()) {
       returnProduct = 'safesuite';
     } else if (isVanguardDomain()) {
       returnProduct = 'vanguard';

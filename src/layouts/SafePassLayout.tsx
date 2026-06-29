@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { safeSuiteProducts } from '@/components/safesuite/SafeSuiteProductIcons';
+import { safeSuiteProducts } from '@/components/safesuite/WraythProductIcons';
 import { AccountSwitcher } from '@/components/safepass/AccountSwitcher';
 
 const navItems = [

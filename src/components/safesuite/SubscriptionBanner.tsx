@@ -4,7 +4,7 @@
  */
 
 import { Link } from 'react-router-dom';
-import { useSafeSuiteSubscription } from '@/hooks/useSafeSuite';
+import { useWraythSubscription } from '@/hooks/useWrayth';
 import { SAFESUITE_TIERS, formatMonthlyPrice, FEATURE_DESCRIPTIONS } from '@/config/safeSuiteTiers';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,7 @@ import {
   Shield
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { isSafeSuiteDomain } from '@/utils/subdomain';
+import { isWraythDomain } from '@/utils/subdomain';
 import { UsageSummary } from './UsageMeter';
 
 interface SubscriptionBannerProps {
@@ -29,13 +29,13 @@ interface SubscriptionBannerProps {
 }
 
 export function SubscriptionBanner({ className, variant = 'full' }: SubscriptionBannerProps) {
-  const { tier, tierConfig, isSubscribed, isPro, isBusiness, loading } = useSafeSuiteSubscription();
+  const { tier, tierConfig, isSubscribed, isPro, isBusiness, loading } = useWraythSubscription();
 
   if (loading) return null;
 
   const currentTier = SAFESUITE_TIERS[tier];
   const nextTier = tier === 'free' ? SAFESUITE_TIERS.pro : tier === 'pro' ? SAFESUITE_TIERS.business : null;
-  const billingPath = isSafeSuiteDomain() ? '/billing' : '/safesuite/billing';
+  const billingPath = isWraythDomain() ? '/billing' : '/safesuite/billing';
 
   // Get key restrictions for current tier
   const restrictions: string[] = [];

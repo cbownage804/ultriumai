@@ -1,5 +1,5 @@
 import { Product } from '@/hooks/useProductAccess';
-import { isSafeSuiteDomain, isVanguardDomain } from '@/utils/subdomain';
+import { isWraythDomain, isVanguardDomain } from '@/utils/subdomain';
 
 /**
  * Determines which product the user is accessing based on:
@@ -9,7 +9,7 @@ import { isSafeSuiteDomain, isVanguardDomain } from '@/utils/subdomain';
  */
 export function getCurrentProduct(pathname: string): Product {
   // Check subdomain first
-  if (isSafeSuiteDomain()) {
+  if (isWraythDomain()) {
     return 'safesuite';
   }
   
@@ -36,7 +36,7 @@ export function getCurrentProduct(pathname: string): Product {
 export function getProductDashboardPath(product: Product): string {
   switch (product) {
     case 'safesuite':
-      return isSafeSuiteDomain() ? '/dashboard' : '/safesuite/dashboard';
+      return isWraythDomain() ? '/dashboard' : '/safesuite/dashboard';
     case 'vanguard':
       return isVanguardDomain() ? '/dashboard' : '/vanguard/dashboard';
     case 'ai_studio':
@@ -51,7 +51,7 @@ export function getProductDashboardPath(product: Product): string {
 export function getProductAuthPath(product: Product): string {
   switch (product) {
     case 'safesuite':
-      return isSafeSuiteDomain() ? '/auth' : '/safesuite/auth';
+      return isWraythDomain() ? '/auth' : '/safesuite/auth';
     case 'vanguard':
       return isVanguardDomain() ? '/auth' : '/vanguard/auth';
     case 'ai_studio':

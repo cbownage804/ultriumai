@@ -1,1 +1,1 @@
-export { default } from '@/components/safesuite/SafeSuiteNav';
+export { default } from '@/components/safesuite/WraythNav';

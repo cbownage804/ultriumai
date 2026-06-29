@@ -60,7 +60,7 @@ interface KBCategory {
 
 const categories: KBCategory[] = [
   { id: 'vanguard', name: 'Vanguard', icon: Target, color: 'text-cyan-400' },
-  { id: 'safesuite', name: 'SafeSuite', icon: BookOpen, color: 'text-amber-400' },
+  { id: 'safesuite', name: 'Wrayth', icon: BookOpen, color: 'text-amber-400' },
   { id: 'ai-studio', name: 'AI Studio', icon: Sparkles, color: 'text-violet-400' },
   { id: 'general', name: 'General', icon: Compass, color: 'text-blue-400' },
 ];
@@ -197,12 +197,12 @@ const articles: KBArticle[] = [
     readTime: '4 min'
   },
 
-  // SafeSuite Articles
+  // Wrayth Articles
   {
     id: 'safesuite-overview',
-    title: 'SafeSuite Dashboard',
+    title: 'Wrayth Dashboard',
     description: 'Your security command center',
-    content: 'SafeSuite combines password management, threat scanning, and breach monitoring in one integrated platform.',
+    content: 'Wrayth combines password management, threat scanning, and breach monitoring in one integrated platform.',
     category: 'safesuite',
     tags: ['dashboard', 'overview', 'security'],
     route: '/safesuite',
@@ -605,7 +605,7 @@ export function ContextualKnowledgeBase({ trigger }: ContextualKnowledgeBaseProp
                 
                 {[
                   { id: 'vanguard-command', name: 'Vanguard Command Tour', desc: 'Complete dashboard walkthrough', duration: '5 min' },
-                  { id: 'safesuite-intro', name: 'SafeSuite Introduction', desc: 'Security platform overview', duration: '3 min' },
+                  { id: 'safesuite-intro', name: 'Wrayth Introduction', desc: 'Security platform overview', duration: '3 min' },
                   { id: 'ai-studio-intro', name: 'AI Studio Basics', desc: 'Build your first GPT', duration: '4 min' },
                   { id: 'safepass-vault', name: 'SafePass Vault Tour', desc: 'Password management deep-dive', duration: '3 min' },
                 ].map(tour => (

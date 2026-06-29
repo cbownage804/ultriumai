@@ -485,8 +485,8 @@ export const useOrganization = () => {
     return true;
   };
 
-  // SafeSuite team migration
-  const migrateSafeSuiteTeam = async () => {
+  // Wrayth team migration
+  const migrateWraythTeam = async () => {
     if (!organization || !isOwner || !user) return false;
 
     try {
@@ -497,7 +497,7 @@ export const useOrganization = () => {
         .eq('owner_id', user.id);
 
       if (teamErr || !teams?.length) {
-        toast({ title: 'No SafeSuite teams found', description: 'You don\'t have any SafeSuite teams to migrate.', variant: 'destructive' });
+        toast({ title: 'No Wrayth teams found', description: 'You don\'t have any Wrayth teams to migrate.', variant: 'destructive' });
         return false;
       }
 
@@ -509,7 +509,7 @@ export const useOrganization = () => {
         .in('team_id', teamIds);
 
       if (!teamMembers?.length) {
-        toast({ title: 'No team members found', description: 'Your SafeSuite teams have no members to migrate.' });
+        toast({ title: 'No team members found', description: 'Your Wrayth teams have no members to migrate.' });
         return false;
       }
 
@@ -534,7 +534,7 @@ export const useOrganization = () => {
 
       toast({
         title: 'Migration complete',
-        description: `Imported ${imported} member${imported !== 1 ? 's' : ''} from ${teams.length} SafeSuite team${teams.length !== 1 ? 's' : ''}.`,
+        description: `Imported ${imported} member${imported !== 1 ? 's' : ''} from ${teams.length} Wrayth team${teams.length !== 1 ? 's' : ''}.`,
       });
       await fetchOrgDetails(organization.id);
       return true;
@@ -566,7 +566,7 @@ export const useOrganization = () => {
     unassignLicense,
     updateOrganization,
     deleteOrganization,
-    migrateSafeSuiteTeam,
+    migrateWraythTeam,
     offboardMember,
     refetch: fetchOrganization,
   };

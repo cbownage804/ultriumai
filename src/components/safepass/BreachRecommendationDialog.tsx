@@ -17,7 +17,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { isSafeSuiteDomain } from '@/utils/subdomain';
+import { isWraythDomain } from '@/utils/subdomain';
 
 export interface BreachFindingDetails {
   entryId: string;
@@ -442,7 +442,7 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
             <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
             <Button className="bg-amber-500 hover:bg-amber-600 text-black" onClick={() => {
               onOpenChange(false);
-              const vaultPath = isSafeSuiteDomain() ? '/pass' : '/safesuite/pass';
+              const vaultPath = isWraythDomain() ? '/pass' : '/safesuite/pass';
               navigate(vaultPath, { state: { editEntryId: finding.entryId } });
             }}>
               <KeyRound className="h-4 w-4 mr-2" />

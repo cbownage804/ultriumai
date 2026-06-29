@@ -39,7 +39,7 @@ const defaultTranslations: Translations = {
     
     // Products
     'products.vanguard': 'Vanguard MSP Platform',
-    'products.safesuite': 'SafeSuite',
+    'products.safesuite': 'Wrayth',
     'products.aistudio': 'AI Studio',
     'products.safepass': 'SafePass',
     'products.safescan': 'SafeScan',

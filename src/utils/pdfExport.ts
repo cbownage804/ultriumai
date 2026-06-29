@@ -1,5 +1,5 @@
 /**
- * PDF Export Utilities for SafeSuite Reports
+ * PDF Export Utilities for Wrayth Reports
  */
 
 import jsPDF from 'jspdf';
@@ -206,7 +206,7 @@ export const generateExecutiveSummaryPDF = (
     doc.setFontSize(8);
     doc.setTextColor(107, 114, 128);
     doc.text(
-      `SafeSuite Dark Web Intelligence Report | Page ${i} of ${totalPages} | Confidential`,
+      `Wrayth Dark Web Intelligence Report | Page ${i} of ${totalPages} | Confidential`,
       pageWidth / 2,
       doc.internal.pageSize.getHeight() - 10,
       { align: 'center' }

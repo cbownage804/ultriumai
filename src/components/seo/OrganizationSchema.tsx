@@ -46,7 +46,7 @@ export const OrganizationSchema = () => {
           },
           {
             "@type": "Offer",
-            "name": "SafeSuite",
+            "name": "Wrayth",
             "description": "Simple, modern security for people & small teams"
           }
         ]

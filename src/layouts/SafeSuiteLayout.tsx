@@ -1,14 +1,14 @@
 /**
- * SafeSuite Layout - Unified layout for all SafeSuite products
+ * Wrayth Layout - Unified layout for all Wrayth products
  */
 
 import { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useSafeSuiteSubscription } from '@/hooks/useSafeSuite';
+import { useWraythSubscription } from '@/hooks/useWrayth';
 import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS } from '@/config/safeSuiteTiers';
-import { getSafeSuiteBasePath, isSafeSuiteDomain } from '@/utils/subdomain';
-import { safeSuiteProducts, safesuiteLogo, type SafeSuiteProductKey } from '@/components/safesuite/SafeSuiteProductIcons';
+import { getWraythBasePath, isWraythDomain } from '@/utils/subdomain';
+import { safeSuiteProducts, safesuiteLogo, type WraythProductKey } from '@/components/safesuite/WraythProductIcons';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -50,12 +50,12 @@ import { FloatingSafeAssistProvider, useFloatingSafeAssist } from '@/contexts/Fl
 import { MFAOnboardingGate } from '@/components/safesuite/MFAOnboardingGate';
 
 /**
- * Get the correct path for SafeSuite routes based on subdomain
+ * Get the correct path for Wrayth routes based on subdomain
  * On safesuite.ultriumai.com: /dashboard
  * On main domain: /safesuite/dashboard
  */
-function getSafeSuitePath(path: string): string {
-  const isSubdomain = isSafeSuiteDomain();
+function getWraythPath(path: string): string {
+  const isSubdomain = isWraythDomain();
   if (isSubdomain) {
     return path; // Clean path like /dashboard
   }
@@ -66,7 +66,7 @@ const getNavItems = () => [
   {
     id: 'dashboard',
     label: 'Dashboard',
-    path: getSafeSuitePath('/dashboard'),
+    path: getWraythPath('/dashboard'),
     icon: LayoutDashboard,
     productLogo: null as string | null,
     feature: null
@@ -74,68 +74,68 @@ const getNavItems = () => [
   {
     id: 'safepass',
     label: 'SafePass',
-    path: getSafeSuitePath('/pass'),
+    path: getWraythPath('/pass'),
     icon: null,
     productLogo: safeSuiteProducts.safepass.logo,
     feature: 'safepass' as const,
     subItems: [
-      { label: 'Vault', path: getSafeSuitePath('/pass') },
-      { label: 'Secure Notes', path: getSafeSuitePath('/pass/notes') },
-      { label: 'Credit Cards', path: getSafeSuitePath('/pass/cards') },
-      { label: 'Identity Profiles', path: getSafeSuitePath('/pass/identity') },
-      { label: 'Password Health', path: getSafeSuitePath('/pass/health') },
-      { label: 'User Management', path: getSafeSuitePath('/pass/users') },
-      { label: 'Shared With Me', path: getSafeSuitePath('/pass/shared') },
-      { label: 'Emergency Access', path: getSafeSuitePath('/pass/emergency') },
-      { label: 'Breach Monitor', path: getSafeSuitePath('/pass/breach') },
-      { label: 'Reminders', path: getSafeSuitePath('/pass/reminders') },
-      { label: 'Browser Extension', path: getSafeSuitePath('/pass/extension'), badge: 'BETA' },
-      { label: 'Import', path: getSafeSuitePath('/pass/import') },
-      { label: 'Export', path: getSafeSuitePath('/pass/export') },
-      { label: 'Team', path: getSafeSuitePath('/pass/team') },
-      { label: 'Settings', path: getSafeSuitePath('/pass/settings') }
+      { label: 'Vault', path: getWraythPath('/pass') },
+      { label: 'Secure Notes', path: getWraythPath('/pass/notes') },
+      { label: 'Credit Cards', path: getWraythPath('/pass/cards') },
+      { label: 'Identity Profiles', path: getWraythPath('/pass/identity') },
+      { label: 'Password Health', path: getWraythPath('/pass/health') },
+      { label: 'User Management', path: getWraythPath('/pass/users') },
+      { label: 'Shared With Me', path: getWraythPath('/pass/shared') },
+      { label: 'Emergency Access', path: getWraythPath('/pass/emergency') },
+      { label: 'Breach Monitor', path: getWraythPath('/pass/breach') },
+      { label: 'Reminders', path: getWraythPath('/pass/reminders') },
+      { label: 'Browser Extension', path: getWraythPath('/pass/extension'), badge: 'BETA' },
+      { label: 'Import', path: getWraythPath('/pass/import') },
+      { label: 'Export', path: getWraythPath('/pass/export') },
+      { label: 'Team', path: getWraythPath('/pass/team') },
+      { label: 'Settings', path: getWraythPath('/pass/settings') }
     ]
   },
   {
     id: 'safescan',
     label: 'SafeScan',
-    path: getSafeSuitePath('/scan'),
+    path: getWraythPath('/scan'),
     icon: null,
     productLogo: safeSuiteProducts.safescan.logo,
     feature: 'safescan' as const,
     subItems: [
-      { label: 'Scanner', path: getSafeSuitePath('/scan') },
-      { label: 'Settings', path: getSafeSuitePath('/scan/settings') }
+      { label: 'Scanner', path: getWraythPath('/scan') },
+      { label: 'Settings', path: getWraythPath('/scan/settings') }
     ]
   },
   {
     id: 'safeweb',
     label: 'SafeWeb',
-    path: getSafeSuitePath('/web'),
+    path: getWraythPath('/web'),
     icon: null,
     productLogo: safeSuiteProducts.safeweb.logo,
     feature: 'safeweb' as const,
     subItems: [
-      { label: 'Monitor', path: getSafeSuitePath('/web') },
-      { label: 'Settings', path: getSafeSuitePath('/web/settings') }
+      { label: 'Monitor', path: getWraythPath('/web') },
+      { label: 'Settings', path: getWraythPath('/web/settings') }
     ]
   },
   {
     id: 'safetrack',
     label: 'SafeTrack',
-    path: getSafeSuitePath('/track'),
+    path: getWraythPath('/track'),
     icon: null,
     productLogo: safeSuiteProducts.safetrack.logo,
     feature: 'safetrack' as const,
     subItems: [
-      { label: 'Assets', path: getSafeSuitePath('/track') },
-      { label: 'Settings', path: getSafeSuitePath('/track/settings') }
+      { label: 'Assets', path: getWraythPath('/track') },
+      { label: 'Settings', path: getWraythPath('/track/settings') }
     ]
   },
   {
     id: 'safeassist',
     label: 'SafeAssist',
-    path: getSafeSuitePath('/assist'),
+    path: getWraythPath('/assist'),
     icon: null,
     productLogo: safeSuiteProducts.safeassist?.logo,
     feature: 'safepass' as const, // Using safepass for now since safeassist is new
@@ -320,11 +320,11 @@ function NavLink({
 
 function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
   const location = useLocation();
-  const { tier, tierConfig } = useSafeSuiteSubscription();
+  const { tier, tierConfig } = useWraythSubscription();
   const { user } = useAuth();
   const { openAssistant } = useFloatingSafeAssist();
   const navItems = getNavItems();
-  const landingPath = isSafeSuiteDomain() ? '/' : '/safesuite';
+  const landingPath = isWraythDomain() ? '/' : '/safesuite';
   
   // Admin check: UltriumAI employee with confirmed email
   const isAdmin = user?.email?.endsWith('@ultriumai.com') && user?.email_confirmed_at != null;
@@ -334,7 +334,7 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
     // Auto-expand the currently active section
     const activeItem = navItems.find(item => 
       location.pathname === item.path || 
-      (item.path !== getSafeSuitePath('/dashboard') && location.pathname.startsWith(item.path))
+      (item.path !== getWraythPath('/dashboard') && location.pathname.startsWith(item.path))
     );
     return activeItem ? new Set([activeItem.id]) : new Set();
   });
@@ -351,18 +351,18 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
     });
   };
 
-  const normalizedPath = isSafeSuiteDomain()
+  const normalizedPath = isWraythDomain()
     ? location.pathname
     : location.pathname.replace(/^\/safesuite/, '');
 
   const appSettingsPath = normalizedPath.startsWith('/pass')
-    ? getSafeSuitePath('/pass/settings')
+    ? getWraythPath('/pass/settings')
     : normalizedPath.startsWith('/scan')
-      ? getSafeSuitePath('/scan/settings')
+      ? getWraythPath('/scan/settings')
       : normalizedPath.startsWith('/web')
-        ? getSafeSuitePath('/web/settings')
+        ? getWraythPath('/web/settings')
         : normalizedPath.startsWith('/track')
-          ? getSafeSuitePath('/track/settings')
+          ? getWraythPath('/track/settings')
           : null;
 
   return (
@@ -372,7 +372,7 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
         <Link to={landingPath} className="flex items-center justify-center">
           <img 
             src={safesuiteLogo} 
-            alt="SafeSuite" 
+            alt="Wrayth" 
             className="h-32 w-auto object-contain"
           />
         </Link>
@@ -392,7 +392,7 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
           <TierBadge tier={tier} />
         </div>
         {tier === 'free' && (
-          <Link to={getSafeSuitePath('/billing')}>
+          <Link to={getWraythPath('/billing')}>
             <Button variant="outline" size="sm" className="w-full mt-2 gap-2">
               <Sparkles className="h-4 w-4" />
               Upgrade
@@ -405,7 +405,7 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path || 
-            (item.path !== getSafeSuitePath('/dashboard') && location.pathname.startsWith(item.path));
+            (item.path !== getWraythPath('/dashboard') && location.pathname.startsWith(item.path));
           const isLocked = item.feature && !tierConfig.features[item.feature].enabled;
 
           return (
@@ -436,14 +436,14 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
           </Link>
         )}
         <Link
-          to={getSafeSuitePath('/settings')}
+          to={getWraythPath('/settings')}
           className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
         >
           <Settings className="h-5 w-5" />
           <span>Account</span>
         </Link>
         <Link
-          to={getSafeSuitePath('/billing')}
+          to={getWraythPath('/billing')}
           className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
         >
           <CreditCard className="h-5 w-5" />
@@ -473,7 +473,7 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
   );
 }
 
-function SafeSuiteLayoutInner() {
+function WraythLayoutInner() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -537,11 +537,11 @@ function SafeSuiteLayoutInner() {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel className="truncate">{user?.email}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate(getSafeSuitePath('/settings'))} className="min-h-[44px]">
+                <DropdownMenuItem onClick={() => navigate(getWraythPath('/settings'))} className="min-h-[44px]">
                   <Settings className="mr-2 h-4 w-4" />
                   Settings
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(getSafeSuitePath('/billing'))} className="min-h-[44px]">
+                <DropdownMenuItem onClick={() => navigate(getWraythPath('/billing'))} className="min-h-[44px]">
                   <CreditCard className="mr-2 h-4 w-4" />
                   Billing
                 </DropdownMenuItem>
@@ -568,11 +568,11 @@ function SafeSuiteLayoutInner() {
   );
 }
 
-export default function SafeSuiteLayout() {
+export default function WraythLayout() {
   return (
     <MFAOnboardingGate>
       <FloatingSafeAssistProvider>
-        <SafeSuiteLayoutInner />
+        <WraythLayoutInner />
       </FloatingSafeAssistProvider>
     </MFAOnboardingGate>
   );

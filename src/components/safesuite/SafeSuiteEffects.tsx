@@ -1,5 +1,5 @@
 /**
- * SafeSuite Premium Visual Effects Components
+ * Wrayth Premium Visual Effects Components
  * Shared animated containers, loading states, and premium UI elements
  */
 
@@ -9,7 +9,7 @@ import { Loader2, Sparkles, Shield, ShieldAlert, AlertTriangle, CheckCircle, Ref
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-// Theme colors for each SafeSuite product
+// Theme colors for each Wrayth product
 export const SAFESUITE_THEMES = {
   safepass: {
     primary: 'amber',
