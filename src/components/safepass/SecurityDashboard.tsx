@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertTriangle, Shield, Scan, UserCheck, Clock, CheckCircle, XCircle, AlertCircle, Settings } from 'lucide-react';
-import { useVaultSecurity } from '@/hooks/useVaultSecurity';
+import { useVaultSecurity } from '@/hooks/useSafePassSecurity';
 
 const SecurityDashboard = () => {
   const [emergencyContactEmail, setEmergencyContactEmail] = useState('');

@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertTriangle, Shield, Eye, CheckCircle, X, Filter, Search } from 'lucide-react';
-import { useWatchData } from '@/hooks/useWatchData';
+import { useWatchData } from '@/hooks/useSafeWebData';
 import { toast } from 'sonner';
 
 export const ThreatAnalytics = () => {
