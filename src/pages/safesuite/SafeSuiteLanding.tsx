@@ -183,8 +183,9 @@ export default function WraythLanding() {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3">
-                    {Object.entries(tier.features).map(([key, value]) => {
-                      const featureInfo = FEATURE_DESCRIPTIONS[key as keyof typeof FEATURE_DESCRIPTIONS];
+                    {(['safepass', 'safescan', 'safeweb', 'team', 'whitelabeling'] as const).map((key) => {
+                      const value = tier.features[key];
+                      const featureInfo = FEATURE_DESCRIPTIONS[key];
                       return (
                         <li key={key} className="flex items-center gap-2">
                           {value.enabled ? (
@@ -203,6 +204,13 @@ export default function WraythLanding() {
                         </li>
                       );
                     })}
+                    <li className="flex items-center gap-2 pt-1 border-t border-border/40 mt-2">
+                      <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                      <span className="text-sm">
+                        <span className="font-medium">Ray</span>
+                        <span className="text-muted-foreground"> — AI intelligence across Wrayth</span>
+                      </span>
+                    </li>
                   </ul>
                 </CardContent>
                 <div className="p-6 pt-0">
