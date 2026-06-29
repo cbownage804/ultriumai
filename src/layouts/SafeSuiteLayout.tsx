@@ -5,10 +5,10 @@
 import { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useWraythSubscription } from '@/hooks/useWrayth';
+import { useWraythSubscription } from '@/hooks/useSafeSuite';
 import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS } from '@/config/safeSuiteTiers';
 import { getWraythBasePath, isWraythDomain } from '@/utils/subdomain';
-import { safeSuiteProducts, safesuiteLogo, type WraythProductKey } from '@/components/safesuite/WraythProductIcons';
+import { safeSuiteProducts, safesuiteLogo, type WraythProductKey } from '@/components/safesuite/SafeSuiteProductIcons';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';

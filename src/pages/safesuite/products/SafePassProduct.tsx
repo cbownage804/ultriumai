@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import safepassLogo from '@/assets/safepass-logo.png';
 import heroPassword from '@/assets/hero-password.jpg';
-import { safesuiteLogo } from '@/components/safesuite/WraythProductIcons';
+import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';
 
 const features = [
   { icon: Lock, title: "Zero-Knowledge Encryption", description: "Your master password never leaves your device. We can't see your data, ever." },

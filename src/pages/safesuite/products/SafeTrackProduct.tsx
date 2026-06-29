@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import safetrackLogo from '@/assets/safetrack-logo.png';
 import heroTrack from '@/assets/hero-track.jpg';
-import { safesuiteLogo } from '@/components/safesuite/WraythProductIcons';
+import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';
 
 const features = [
   { icon: Sparkles, title: "AI Warranty Lookup", description: "Instantly retrieve warranty status by serial number using AI-powered web scraping.", featured: true },

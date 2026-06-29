@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import safescanLogo from '@/assets/safescan-logo.png';
 import heroScan from '@/assets/hero-scan.jpg';
-import { safesuiteLogo } from '@/components/safesuite/WraythProductIcons';
+import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';
 
 const features = [
   { icon: Mail, title: "Email Scanner", description: "Detect phishing attempts, spoofed senders, and malicious attachments before they reach your inbox." },

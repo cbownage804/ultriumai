@@ -4,7 +4,7 @@
  */
 
 import { Link } from 'react-router-dom';
-import { useFeatureAccess, useWraythSubscription, useWraythUsage } from '@/hooks/useWrayth';
+import { useFeatureAccess, useWraythSubscription, useWraythUsage } from '@/hooks/useSafeSuite';
 import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS, TierFeatures } from '@/config/safeSuiteTiers';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';

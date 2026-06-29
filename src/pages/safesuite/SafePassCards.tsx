@@ -1,5 +1,5 @@
 import { CreditCards } from '@/components/safepass/CreditCards';
-import { FeatureGate } from '@/components/safesuite/WraythPaywall';
+import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
 
 const SafePassCards = () => {
   return (

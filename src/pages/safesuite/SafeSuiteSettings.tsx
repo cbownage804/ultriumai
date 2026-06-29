@@ -4,9 +4,9 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useWraythSubscription } from '@/hooks/useWrayth';
+import { useWraythSubscription } from '@/hooks/useSafeSuite';
 import { useSecurity } from '@/hooks/useSecurity';
-import { useWraythSettings } from '@/hooks/useWraythSettings';
+import { useWraythSettings } from '@/hooks/useSafeSuiteSettings';
 import { supabase } from '@/integrations/supabase/client';
 import QRCode from 'qrcode';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

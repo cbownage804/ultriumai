@@ -3,13 +3,13 @@
  */
 
 import { useState } from 'react';
-import { FeatureGate, TierLimitInfo } from '@/components/safesuite/WraythPaywall';
+import { FeatureGate, TierLimitInfo } from '@/components/safesuite/SafeSuitePaywall';
 import { Package, FileSearch, Package2, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AnimatedHeader } from '@/components/safesuite/WraythEffects';
+import { AnimatedHeader } from '@/components/safesuite/SafeSuiteEffects';
 import { TeaserLock } from '@/components/safesuite/TeaserLock';
-import { useWraythSubscription } from '@/hooks/useWrayth';
+import { useWraythSubscription } from '@/hooks/useSafeSuite';
 import safetrackLogo from '@/assets/safetrack-logo.png';
 import heroSafetrackBg from '@/assets/hero-safetrack-bg.jpg';
 import WarrantyLookup from '@/components/safetrack/WarrantyLookup';

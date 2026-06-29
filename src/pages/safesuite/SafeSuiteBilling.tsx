@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { useWraythSubscription, useWraythCheckout } from '@/hooks/useWrayth';
+import { useWraythSubscription, useWraythCheckout } from '@/hooks/useSafeSuite';
 import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS, formatMonthlyPrice, formatLimitWithUnit, WraythTier, TierFeatures } from '@/config/safeSuiteTiers';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

@@ -1,5 +1,5 @@
 import heroWrayth from "@/assets/hero-safesuite.jpg";
-import { safesuiteLogo } from "@/components/safesuite/WraythProductIcons";
+import { safesuiteLogo } from "@/components/safesuite/SafeSuiteProductIcons";
 
 export function AuthBrandHeader() {
   return (
