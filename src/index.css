@@ -517,48 +517,50 @@
   }
 
   .dark {
-    /* Dark Mode Colors with Enhanced Contrast */
-    --background: 0 0% 3%;
-    --foreground: 0 0% 98%;
+    /* Wrayth Palette — locked
+       Base #090909 · Surface #181818 · Cards #242424
+       Borders #3A3A3A · Text #F3F3F3 · Accent Electric Violet */
+    --background: 0 0% 3.5%;        /* #090909 */
+    --foreground: 0 0% 95%;         /* #F3F3F3 */
 
-    --card: 0 0% 6%;
-    --card-foreground: 0 0% 98%;
+    --card: 0 0% 14%;               /* #242424 */
+    --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 6%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 0 0% 9%;             /* #181818 */
+    --popover-foreground: 0 0% 95%;
 
-    /* Wrayth Dark - Matte black + graphite, violet accent only */
-    --primary: 258 90% 66%;
+    /* Electric Violet — restrained, not neon */
+    --primary: 262 60% 64%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 258 90% 74%;
-    --primary-soft: 258 40% 14%;
-    --primary-dark: 258 90% 56%;
+    --primary-glow: 262 60% 72%;
+    --primary-soft: 262 30% 16%;
+    --primary-dark: 262 60% 54%;
 
-    --secondary: 0 0% 8%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 0 0% 9%;           /* #181818 */
+    --secondary-foreground: 0 0% 95%;
 
-    --muted: 0 0% 7%;
-    --muted-foreground: 0 0% 62%;
+    --muted: 0 0% 9%;
+    --muted-foreground: 0 0% 64%;
 
-    --accent: 0 0% 9%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 0 0% 14%;             /* #242424 */
+    --accent-foreground: 0 0% 95%;
 
-    /* Specialized Colors for Dark Mode */
-    --hero: 258 90% 66%;
+    --hero: 262 60% 64%;
     --hero-foreground: 0 0% 100%;
-    
-    --ai-message: 258 40% 14%;
-    --ai-message-foreground: 258 60% 92%;
-    
-    --user-message: 0 0% 10%;
+
+    --ai-message: 262 30% 16%;
+    --ai-message-foreground: 262 40% 92%;
+
+    --user-message: 0 0% 14%;
     --user-message-foreground: 0 0% 92%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 13%;
-    --input: 0 0% 12%;
-    --ring: 258 90% 66%;
+    --border: 0 0% 23%;             /* #3A3A3A */
+    --input: 0 0% 14%;
+    --ring: 262 60% 64%;
+
 
 
     /* Enhanced Gradients for Dark Mode */
