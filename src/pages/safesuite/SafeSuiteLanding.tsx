@@ -33,7 +33,7 @@ export default function WraythLanding() {
         {/* Background Image */}
         <div className="absolute inset-0">
           <img 
-            src={heroSafesuite} 
+            src={heroWrayth} 
             alt="Wrayth Security Platform"
             className="w-full h-full object-cover"
           />
