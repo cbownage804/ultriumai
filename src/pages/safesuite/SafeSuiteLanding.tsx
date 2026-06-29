@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS, formatMonthlyPrice } from '@/config/safeSuiteTiers';
 import { safeSuiteProducts, safesuiteLogo, type WraythProductKey } from '@/components/safesuite/SafeSuiteProductIcons';
-import heroSafesuite from '@/assets/hero-safesuite.jpg';
+import heroWrayth from '@/assets/hero-wrayth.jpg';
 import {
   Shield,
   Check,
@@ -21,7 +21,7 @@ import {
   Star
 } from 'lucide-react';
 
-const features: WraythProductKey[] = ['safepass', 'safescan', 'safeweb', 'safetrack'];
+const features: WraythProductKey[] = ['safepass', 'safescan', 'safeweb'];
 
 export default function WraythLanding() {
   return (
@@ -33,7 +33,7 @@ export default function WraythLanding() {
         {/* Background Image */}
         <div className="absolute inset-0">
           <img 
-            src={heroSafesuite} 
+            src={heroWrayth} 
             alt="Wrayth Security Platform"
             className="w-full h-full object-cover"
           />
@@ -59,8 +59,8 @@ export default function WraythLanding() {
               All Your Security Tools in One Place
             </p>
             <p className="text-lg text-muted-foreground mb-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              Password management, threat scanning, dark web monitoring, and asset tracking — 
-              unified in one powerful, easy-to-use suite.
+              Vault, Scan, and Watch — three precise security tools unified by Ray,
+              the calm AI intelligence at the core of Wrayth.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/auth?tab=signup">
@@ -90,17 +90,16 @@ export default function WraythLanding() {
               Everything You Need to Stay Secure
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Four powerful security tools working together to protect your digital life
+              Three precise tools, unified by Ray — the AI intelligence at the core of Wrayth.
             </p>
           </div>
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {features.map((productKey, index) => {
               const product = safeSuiteProducts[productKey];
               const colorMap = {
                 safepass: 'amber',
                 safescan: 'red',
                 safeweb: 'violet',
-                safetrack: 'orange'
               };
               const color = colorMap[productKey] || 'primary';
               return (

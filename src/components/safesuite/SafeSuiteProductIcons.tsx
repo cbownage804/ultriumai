@@ -1,42 +1,40 @@
-import safepassLogo from "@/assets/safepass-logo.png";
-import safescanLogo from "@/assets/safescan-logo.png";
-import safewebLogo from "@/assets/safeweb-logo.png";
-import safetrackLogo from "@/assets/safetrack-logo.png";
-import safeassistLogo from "@/assets/safeassist-logo-horizontal.png";
-import safesuiteLogo from "@/assets/safesuite-logo.png";
+import vaultLogo from "@/assets/vault-logo.png";
+import scanLogo from "@/assets/scan-logo.png";
+import watchLogo from "@/assets/watch-logo.png";
+import wraythWordmark from "@/assets/wrayth-wordmark-v3.png";
 
-export { safesuiteLogo };
+export const safesuiteLogo = wraythWordmark;
 
 export const safeSuiteProducts = {
   safepass: {
     name: "Vault",
-    logo: safepassLogo,
-    description: "Zero-knowledge password vault with AES-256-GCM encryption and breach monitoring",
-    features: ["600K PBKDF2 key derivation", "Built-in TOTP authenticator", "Password health dashboard"],
+    logo: vaultLogo,
+    description: "Zero-knowledge password vault with AES-256-GCM encryption and continuous breach monitoring.",
+    features: [
+      "600K PBKDF2 key derivation",
+      "Built-in TOTP authenticator",
+      "Password health dashboard",
+    ],
   },
   safescan: {
     name: "Scan",
-    logo: safescanLogo,
-    description: "Unified security scanner for emails, URLs, and documents with AI threat detection",
-    features: ["Bulk scanning up to 50 items", "Scheduled recurring scans", "PDF/CSV reports"],
+    logo: scanLogo,
+    description: "Unified email, URL, and file scanner with AI threat detection powered by Ray.",
+    features: [
+      "Bulk scanning up to 50 items",
+      "Scheduled recurring scans",
+      "PDF/CSV exportable reports",
+    ],
   },
   safeweb: {
     name: "Watch",
-    logo: safewebLogo,
-    description: "Breach database monitoring with AI-powered threat analysis and remediation guidance",
-    features: ["Aggregated breach intelligence", "AI threat response plans", "Exposure risk scoring"],
-  },
-  safetrack: {
-    name: "SafeTrack",
-    logo: safetrackLogo,
-    description: "IT asset lifecycle management with QR tracking and depreciation calculations",
-    features: ["Hardware & software inventory", "Maintenance scheduling", "Compliance audit trails"],
-  },
-  safeassist: {
-    name: "SafeAssist",
-    logo: safeassistLogo,
-    description: "AI-powered security assistant for plain-language guidance and threat analysis",
-    features: ["ChatGPT-style interface", "File & email analysis", "Personalized security advice"],
+    logo: watchLogo,
+    description: "Identity and dark-web monitoring with AI remediation guidance from Ray.",
+    features: [
+      "Aggregated breach intelligence",
+      "AI-generated response plans",
+      "Personal exposure risk score",
+    ],
   },
 } as const;
 

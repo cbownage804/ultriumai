@@ -19,7 +19,7 @@ export default function WraythNav() {
           <Link to="/products/safepass" className="text-muted-foreground hover:text-foreground transition-colors">Vault</Link>
           <Link to="/products/safescan" className="text-muted-foreground hover:text-foreground transition-colors">Scan</Link>
           <Link to="/products/safeweb" className="text-muted-foreground hover:text-foreground transition-colors">Watch</Link>
-          <Link to="/products/safetrack" className="text-muted-foreground hover:text-foreground transition-colors">SafeTrack</Link>
+          
           <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">Contact</Link>
         </nav>
         <div className="flex items-center gap-2">
