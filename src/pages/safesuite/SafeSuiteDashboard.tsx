@@ -382,15 +382,6 @@ const productCardsConfig = [
     path: '/safesuite/web',
     statLabel: 'Assets monitored'
   },
-  {
-    id: 'safetrack',
-    feature: 'safetrack' as keyof TierFeatures,
-    productLogo: safeSuiteProducts.safetrack.logo,
-    title: 'SafeTrack',
-    description: 'Asset Tracking',
-    path: '/safesuite/track',
-    statLabel: 'Assets tracked'
-  }
 ];
 
 export default function WraythDashboard() {
@@ -569,13 +560,6 @@ export default function WraythDashboard() {
           value={stats.monitoredAssets}
           theme="safeweb"
           delay={0.2}
-        />
-        <AnimatedStatsCard
-          icon={<Package className="h-4 w-4 sm:h-5 sm:w-5" />}
-          label="Assets"
-          value={stats.trackedAssets}
-          theme="safetrack"
-          delay={0.3}
         />
       </div>
 
