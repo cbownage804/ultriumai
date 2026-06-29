@@ -5,7 +5,7 @@
 
 import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { useFeatureAccess, useSafeSuiteSubscription } from '@/hooks/useSafeSuite';
+import { useFeatureAccess, useWraythSubscription } from '@/hooks/useWrayth';
 import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS, formatMonthlyPrice, TierFeatures } from '@/config/safeSuiteTiers';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +17,7 @@ import {
   Zap
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { isSafeSuiteDomain } from '@/utils/subdomain';
+import { isWraythDomain } from '@/utils/subdomain';
 
 // Product logos
 import safepassLogo from '@/assets/safepass-logo.png';
@@ -114,7 +114,7 @@ export function TeaserLock({
   message
 }: TeaserLockProps) {
   const { checkFeatureAccess, getRequiredTier } = useFeatureAccess();
-  const { tier } = useSafeSuiteSubscription();
+  const { tier } = useWraythSubscription();
   
   const access = checkFeatureAccess(feature);
   const featureInfo = FEATURE_DESCRIPTIONS[feature];
@@ -122,7 +122,7 @@ export function TeaserLock({
   const requiredTierConfig = SAFESUITE_TIERS[requiredTier];
   const branding = FEATURE_BRANDING[feature] || FEATURE_BRANDING.safepass;
   
-  const billingPath = isSafeSuiteDomain() ? '/billing' : '/safesuite/billing';
+  const billingPath = isWraythDomain() ? '/billing' : '/safesuite/billing';
 
   // Feature is accessible - render children normally
   if (access.allowed) {

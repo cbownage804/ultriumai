@@ -147,7 +147,7 @@ export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
   const getProductLabel = () => {
     if (productInterests.length === 0) return 'UltriumAI';
     if (productInterests.length === 1) {
-      const labels: Record<string, string> = { safesuite: 'SafeSuite', vanguard: 'Vanguard', ai_studio: 'AI Studio' };
+      const labels: Record<string, string> = { safesuite: 'Wrayth', vanguard: 'Vanguard', ai_studio: 'AI Studio' };
       return labels[productInterests[0]] || 'UltriumAI';
     }
     return 'UltriumAI';
@@ -363,7 +363,7 @@ export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
                 {formData.industry && <p><strong>Industry:</strong> {formData.industry}</p>}
                 {productInterests.length > 0 && (
                   <p><strong>Products:</strong> {productInterests.map(p => {
-                    const labels: Record<string, string> = { safesuite: 'SafeSuite', vanguard: 'Vanguard', ai_studio: 'AI Studio' };
+                    const labels: Record<string, string> = { safesuite: 'Wrayth', vanguard: 'Vanguard', ai_studio: 'AI Studio' };
                     return labels[p] || p;
                   }).join(', ')}</p>
                 )}
@@ -376,7 +376,7 @@ export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
             {productInterests.length === 1 && (
               <div className="text-center text-sm text-muted-foreground">
                 <p>You'll be taken directly to your {
-                  productInterests[0] === 'safesuite' ? 'SafeSuite dashboard' :
+                  productInterests[0] === 'safesuite' ? 'Wrayth dashboard' :
                   productInterests[0] === 'vanguard' ? 'Vanguard operations center' :
                   'AI Studio workspace'
                 } after setup.</p>

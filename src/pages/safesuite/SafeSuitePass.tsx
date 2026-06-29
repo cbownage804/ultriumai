@@ -1,10 +1,10 @@
 /**
- * SafeSuite Pass - Password Manager within SafeSuite
+ * Wrayth Pass - Password Manager within Wrayth
  */
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { FeatureGate, TierLimitInfo } from '@/components/safesuite/SafeSuitePaywall';
+import { FeatureGate, TierLimitInfo } from '@/components/safesuite/WraythPaywall';
 import { PasswordVault } from '@/components/safepass/PasswordVault';
 import { MasterPasswordSetup } from '@/components/safepass/MasterPasswordSetup';
 import { MFARecommendationBanner } from '@/components/safepass/MFARecommendationBanner';
@@ -16,11 +16,11 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle2, X, Lock, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AnimatedHeader, GlowContainer, SAFESUITE_THEMES } from '@/components/safesuite/SafeSuiteEffects';
+import { AnimatedHeader, GlowContainer, SAFESUITE_THEMES } from '@/components/safesuite/WraythEffects';
 import safepassLogo from '@/assets/safepass-logo.png';
 import heroSafepassBg from '@/assets/hero-safepass-bg.jpg';
 
-export default function SafeSuitePass() {
+export default function WraythPass() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showExtensionBanner, setShowExtensionBanner] = useState(false);
   const [showMasterPasswordSetup, setShowMasterPasswordSetup] = useState(false);

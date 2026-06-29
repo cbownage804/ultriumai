@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 import safeassistLogo from '@/assets/safeassist-logo-horizontal.png';
 import ReactMarkdown from 'react-markdown';
 
-export default function SafeSuiteAssist() {
+export default function WraythAssist() {
   const {
     messages,
     conversations,

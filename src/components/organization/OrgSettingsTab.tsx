@@ -12,7 +12,7 @@ import { Settings, Trash2, Loader2, ArrowRightLeft, Upload } from 'lucide-react'
 export const OrgSettingsTab = () => {
   const {
     organization, isAdmin, isOwner, members,
-    updateOrganization, deleteOrganization, transferOwnership, migrateSafeSuiteTeam,
+    updateOrganization, deleteOrganization, transferOwnership, migrateWraythTeam,
   } = useOrganization();
   const navigate = useNavigate();
   const [name, setName] = useState(organization?.name || '');
@@ -42,7 +42,7 @@ export const OrgSettingsTab = () => {
 
   const handleMigrate = async () => {
     setMigrating(true);
-    await migrateSafeSuiteTeam();
+    await migrateWraythTeam();
     setMigrating(false);
   };
 
@@ -76,16 +76,16 @@ export const OrgSettingsTab = () => {
         </CardContent>
       </Card>
 
-      {/* SafeSuite Migration */}
+      {/* Wrayth Migration */}
       {isOwner && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Upload className="h-5 w-5" />
-              Import SafeSuite Teams
+              Import Wrayth Teams
             </CardTitle>
             <CardDescription>
-              Migrate members from your existing SafeSuite teams into this organization. Existing org members won't be duplicated.
+              Migrate members from your existing Wrayth teams into this organization. Existing org members won't be duplicated.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -98,9 +98,9 @@ export const OrgSettingsTab = () => {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Import SafeSuite team members?</AlertDialogTitle>
+                  <AlertDialogTitle>Import Wrayth team members?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will import all members from your SafeSuite teams into this organization. Members already in the org will be skipped.
+                    This will import all members from your Wrayth teams into this organization. Members already in the org will be skipped.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

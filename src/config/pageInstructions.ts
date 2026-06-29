@@ -233,7 +233,7 @@ export const PAGE_INSTRUCTIONS: Record<string, PageInstruction> = {
   // ===== SAFESUITE =====
   '/safesuite/dashboard': {
     id: 'safesuite-dashboard',
-    title: 'SafeSuite Dashboard',
+    title: 'Wrayth Dashboard',
     description: 'Your personal security command center with security score, breach alerts, and quick actions.',
     product: 'safesuite',
     sections: [
@@ -340,7 +340,7 @@ export const PAGE_INSTRUCTIONS: Record<string, PageInstruction> = {
     sections: [
       {
         heading: 'Navigation',
-        content: 'Click any product card to access Vanguard (MSP management), SafeSuite (personal security), or AI Studio (custom GPTs).',
+        content: 'Click any product card to access Vanguard (MSP management), Wrayth (personal security), or AI Studio (custom GPTs).',
         tips: ['Use Cmd+K (or Ctrl+K) to open Spotlight Search for quick navigation', 'Press Shift+? to see all keyboard shortcuts'],
       },
     ],

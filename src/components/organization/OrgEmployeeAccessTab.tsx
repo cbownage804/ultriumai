@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const PRODUCTS = [
-  { key: 'safesuite', label: 'SafeSuite', Icon: Shield },
+  { key: 'safesuite', label: 'Wrayth', Icon: Shield },
   { key: 'ai_studio', label: 'AI Studio', Icon: Brain },
   { key: 'vanguard', label: 'Vanguard', Icon: Monitor },
 ] as const;

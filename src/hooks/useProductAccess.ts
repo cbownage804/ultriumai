@@ -80,7 +80,7 @@ export const useProductAccess = (): UseProductAccessReturn => {
         }
       }
 
-      // Also check safesuite_subscriptions for active SafeSuite access
+      // Also check safesuite_subscriptions for active Wrayth access
       const { data: safesuiteSub } = await supabase
         .from('safesuite_subscriptions')
         .select('tier, status, created_at, current_period_end')
@@ -171,7 +171,7 @@ export const useProductAccess = (): UseProductAccessReturn => {
       }
     }
 
-    // SafeSuite always has free tier for authenticated users
+    // Wrayth always has free tier for authenticated users
     if (product === 'safesuite' && !bestLevel) return 'free';
     return bestLevel;
   };

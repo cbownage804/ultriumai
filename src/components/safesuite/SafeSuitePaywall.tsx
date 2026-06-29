@@ -1,10 +1,10 @@
 /**
- * SafeSuite Paywall Component
+ * Wrayth Paywall Component
  * Shows upgrade prompts when users hit tier limits
  */
 
 import { Link } from 'react-router-dom';
-import { useFeatureAccess, useSafeSuiteSubscription } from '@/hooks/useSafeSuite';
+import { useFeatureAccess, useWraythSubscription } from '@/hooks/useWrayth';
 import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS, formatMonthlyPrice, formatLimitWithUnit, TierFeatures } from '@/config/safeSuiteTiers';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,21 +21,21 @@ import {
 import { cn } from '@/lib/utils';
 import { TeaserLock } from './TeaserLock';
 
-interface SafeSuitePaywallProps {
+interface WraythPaywallProps {
   feature: keyof TierFeatures;
   action?: 'view' | 'use';
   children?: React.ReactNode;
   className?: string;
 }
 
-export function SafeSuitePaywall({ 
+export function WraythPaywall({ 
   feature, 
   action = 'use',
   children,
   className 
-}: SafeSuitePaywallProps) {
+}: WraythPaywallProps) {
   const { checkFeatureAccess, getRequiredTier } = useFeatureAccess();
-  const { tier } = useSafeSuiteSubscription();
+  const { tier } = useWraythSubscription();
   
   const access = checkFeatureAccess(feature, action);
   const featureInfo = FEATURE_DESCRIPTIONS[feature];
@@ -102,7 +102,7 @@ interface TierLimitInfoProps {
 
 export function TierLimitInfo({ feature, className }: TierLimitInfoProps) {
   const { checkFeatureAccess, getRequiredTier } = useFeatureAccess();
-  const { tier } = useSafeSuiteSubscription();
+  const { tier } = useWraythSubscription();
   const access = checkFeatureAccess(feature);
   const featureInfo = FEATURE_DESCRIPTIONS[feature];
 

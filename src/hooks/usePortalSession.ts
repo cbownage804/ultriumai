@@ -14,7 +14,7 @@ interface PortalUser {
   mustChangePassword: boolean;
 }
 
-interface SafeSuiteAccess {
+interface WraythAccess {
   safepass_enabled: boolean;
   safescan_enabled: boolean;
   safeweb_enabled: boolean;
@@ -24,7 +24,7 @@ interface SafeSuiteAccess {
 interface PortalSession {
   sessionToken: string;
   user: PortalUser;
-  safeSuiteAccess: SafeSuiteAccess;
+  safeSuiteAccess: WraythAccess;
 }
 
 export function usePortalSession() {

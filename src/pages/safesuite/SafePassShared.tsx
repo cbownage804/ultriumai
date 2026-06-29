@@ -2,9 +2,9 @@
  * SafePass Shared - View passwords shared with you (Business feature only)
  */
 
-import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
+import { FeatureGate } from '@/components/safesuite/WraythPaywall';
 import { SharedPasswordAccess } from '@/components/safepass/SharedPasswordAccess';
-import { useSafeSuiteSubscription } from '@/hooks/useSafeSuite';
+import { useWraythSubscription } from '@/hooks/useWrayth';
 import { TeaserLock } from '@/components/safesuite/TeaserLock';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -52,7 +52,7 @@ function SharedPasswordsTeaser() {
 }
 
 export default function SafePassShared() {
-  const { isBusiness, loading: subLoading } = useSafeSuiteSubscription();
+  const { isBusiness, loading: subLoading } = useWraythSubscription();
 
   // Business tier gate with teaser
   if (!subLoading && !isBusiness) {

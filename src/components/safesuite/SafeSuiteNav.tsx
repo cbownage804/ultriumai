@@ -1,17 +1,17 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';
+import { safesuiteLogo } from '@/components/safesuite/WraythProductIcons';
 
-export default function SafeSuiteNav() {
+export default function WraythNav() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2">
-          <img src={safesuiteLogo} alt="SafeSuite" className="h-8 w-auto" />
-          <span className="font-bold text-lg">SafeSuite</span>
+          <img src={safesuiteLogo} alt="Wrayth" className="h-8 w-auto" />
+          <span className="font-bold text-lg">Wrayth</span>
         </Link>
         <nav className="hidden md:flex items-center gap-6 text-sm">
           <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">Features</Link>

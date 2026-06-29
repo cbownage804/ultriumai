@@ -1,25 +1,25 @@
 /**
- * SafeSuite Dashboard - Unified overview of all security tools
+ * Wrayth Dashboard - Unified overview of all security tools
  * All data is fetched from real database - no mock data
  */
 
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useSafeSuiteSubscription, useFeatureAccess } from '@/hooks/useSafeSuite';
+import { useWraythSubscription, useFeatureAccess } from '@/hooks/useWrayth';
 import { useSafePass } from '@/hooks/useSafePass';
 import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS, TierFeatures } from '@/config/safeSuiteTiers';
 import { supabase } from '@/integrations/supabase/client';
-import { safeSuiteProducts } from '@/components/safesuite/SafeSuiteProductIcons';
+import { safeSuiteProducts } from '@/components/safesuite/WraythProductIcons';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { UsageLimitBanner } from '@/components/safesuite/SafeSuitePaywall';
+import { UsageLimitBanner } from '@/components/safesuite/WraythPaywall';
 import { SubscriptionBanner } from '@/components/safesuite/SubscriptionBanner';
 import { OnboardingChecklist, ProductTour } from '@/components/onboarding';
 import { SAFESUITE_TOUR_STEPS } from '@/config/productTours';
 import { motion } from 'framer-motion';
-import { GlowContainer, AnimatedStatsCard, StaggerContainer, StaggerItem, SAFESUITE_THEMES } from '@/components/safesuite/SafeSuiteEffects';
+import { GlowContainer, AnimatedStatsCard, StaggerContainer, StaggerItem, SAFESUITE_THEMES } from '@/components/safesuite/WraythEffects';
 import {
   Shield,
   KeyRound,
@@ -81,7 +81,7 @@ function SecurityScoreCard({ stats }: { stats: DashboardStats }) {
           <h3 className="font-semibold text-white text-sm sm:text-base">Security Score</h3>
         </div>
         <p className="text-gray-400 text-xs sm:text-sm mb-4 sm:mb-6">
-          Your overall security health across all SafeSuite products
+          Your overall security health across all Wrayth products
         </p>
         
         <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8">
@@ -393,9 +393,9 @@ const productCardsConfig = [
   }
 ];
 
-export default function SafeSuiteDashboard() {
+export default function WraythDashboard() {
   const { user } = useAuth();
-  const { tier, tierConfig, isSubscribed } = useSafeSuiteSubscription();
+  const { tier, tierConfig, isSubscribed } = useWraythSubscription();
   const { canUseFeature } = useFeatureAccess();
   const { entries } = useSafePass();
   

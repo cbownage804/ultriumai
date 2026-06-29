@@ -1,5 +1,5 @@
-import heroSafeSuite from "@/assets/hero-safesuite.jpg";
-import { safesuiteLogo } from "@/components/safesuite/SafeSuiteProductIcons";
+import heroWrayth from "@/assets/hero-safesuite.jpg";
+import { safesuiteLogo } from "@/components/safesuite/WraythProductIcons";
 
 export function AuthBrandHeader() {
   return (
@@ -7,7 +7,7 @@ export function AuthBrandHeader() {
       {/* Hero background */}
       <div className="absolute inset-0">
         <img
-          src={heroSafeSuite}
+          src={heroWrayth}
           alt="Abstract cybersecurity background"
           className="h-full w-full object-cover opacity-40"
           loading="eager"
@@ -20,7 +20,7 @@ export function AuthBrandHeader() {
         <div className="mx-auto flex items-center justify-center">
           <img
             src={safesuiteLogo}
-            alt="SafeSuite"
+            alt="Wrayth"
             className="h-16 w-auto object-contain"
             loading="eager"
           />

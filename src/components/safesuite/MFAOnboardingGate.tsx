@@ -1,6 +1,6 @@
 /**
- * MFA Onboarding Gate - Forces new users to enable MFA before using SafeSuite
- * This wraps the entire SafeSuite layout to ensure mandatory MFA for all users
+ * MFA Onboarding Gate - Forces new users to enable MFA before using Wrayth
+ * This wraps the entire Wrayth layout to ensure mandatory MFA for all users
  */
 
 import { useState, useEffect } from 'react';
@@ -88,7 +88,7 @@ export function MFAOnboardingGate({ children }: MFAOnboardingGateProps) {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">Loading SafeSuite...</p>
+          <p className="text-muted-foreground">Loading Wrayth...</p>
         </div>
       </div>
     );
@@ -204,7 +204,7 @@ export function MFAOnboardingGate({ children }: MFAOnboardingGateProps) {
                 {/* Header with logo */}
                 <div className="relative h-40 bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-transparent flex flex-col items-center justify-center">
                   <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(245,158,11,0.2),transparent_70%)]" />
-                  <img src={safesuiteLogo} alt="SafeSuite" className="h-12 relative z-10 mb-4" />
+                  <img src={safesuiteLogo} alt="Wrayth" className="h-12 relative z-10 mb-4" />
                   <motion.div
                     initial={{ scale: 0.8 }}
                     animate={{ scale: 1 }}
@@ -226,7 +226,7 @@ export function MFAOnboardingGate({ children }: MFAOnboardingGateProps) {
                     Secure Your Account with 2FA
                   </CardTitle>
                   <CardDescription className="text-base">
-                    SafeSuite requires two-factor authentication to protect your sensitive data.
+                    Wrayth requires two-factor authentication to protect your sensitive data.
                   </CardDescription>
                 </CardHeader>
 
@@ -494,11 +494,11 @@ export function MFAOnboardingGate({ children }: MFAOnboardingGateProps) {
                   <div>
                     <h2 className="text-2xl font-bold text-green-500 mb-2">You're All Set!</h2>
                     <p className="text-muted-foreground">
-                      Two-factor authentication is now enabled. Your SafeSuite account is protected.
+                      Two-factor authentication is now enabled. Your Wrayth account is protected.
                     </p>
                   </div>
 
-                  <img src={safesuiteLogo} alt="SafeSuite" className="h-10 mx-auto opacity-60" />
+                  <img src={safesuiteLogo} alt="Wrayth" className="h-10 mx-auto opacity-60" />
                 </CardContent>
               </Card>
             </motion.div>

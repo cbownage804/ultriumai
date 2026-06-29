@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
-import { isSafeSuiteDomain, isVanguardDomain } from '@/utils/subdomain';
+import { isWraythDomain, isVanguardDomain } from '@/utils/subdomain';
 import { devLog } from '@/lib/logger';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -150,7 +150,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Ensure email confirmation links return to the correct dashboard for subdomains
       // and for prefixed product routes on the main domain.
       let redirectPath = '/auth/callback';
-      if (isSafeSuiteDomain()) {
+      if (isWraythDomain()) {
         redirectPath = '/auth/callback';
       } else if (returnProduct === 'safesuite') {
         redirectPath = '/auth/callback?return=safesuite';

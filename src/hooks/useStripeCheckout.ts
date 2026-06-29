@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 
-// SafeSuite pricing configuration - matches Stripe prices
+// Wrayth pricing configuration - matches Stripe prices
 export const SAFESUITE_PRICES = {
   pro: {
     monthly: {
@@ -38,7 +38,7 @@ export const SAFESUITE_PRICES = {
   }
 };
 
-export type SafeSuiteTier = 'pro' | 'business' | 'enterprise';
+export type WraythTier = 'pro' | 'business' | 'enterprise';
 export type BillingCycle = 'monthly' | 'yearly';
 
 interface CheckoutOptions {

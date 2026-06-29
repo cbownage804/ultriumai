@@ -39,7 +39,7 @@ interface CompactProps {
   compactMode?: boolean;
 }
 
-// Pre-defined questions with SafeSuite product recommendations
+// Pre-defined questions with Wrayth product recommendations
 const quickQuestions: QuickQuestion[] = [
   { 
     icon: Key, 
@@ -48,7 +48,7 @@ const quickQuestions: QuickQuestion[] = [
     answer: `Great question! Here's how to **protect your passwords** effectively:
 
 🔐 **Use SafePass Password Vault**
-SafePass is included in your SafeSuite subscription and provides:
+SafePass is included in your Wrayth subscription and provides:
 - **256-bit encryption** for all stored passwords
 - **Automatic password generation** - create 20+ character unique passwords instantly
 - **Breach monitoring** - get alerted if any of your passwords appear in data leaks
@@ -61,7 +61,7 @@ SafePass is included in your SafeSuite subscription and provides:
 3. Use SafePass to generate and store unique passwords
 4. Change passwords immediately after any breach notification
 
-👉 **Get Started:** Open SafePass from your SafeSuite dashboard to import your existing passwords and start generating secure ones!`
+👉 **Get Started:** Open SafePass from your Wrayth dashboard to import your existing passwords and start generating secure ones!`
   },
   { 
     icon: AlertTriangle, 
@@ -86,7 +86,7 @@ SafeWeb continuously monitors the dark web and data breach databases for your in
 4. Recommends which passwords to change
 
 **Take Action Now:**
-1. Go to the **SafeWeb** tab in SafeSuite
+1. Go to the **SafeWeb** tab in Wrayth
 2. Enter your email address or domain
 3. Run a scan to check for exposures
 4. Follow the recommended actions
@@ -158,7 +158,7 @@ SafeWeb continuously monitors the dark web and data breach databases for your in
 - Quick response during security incidents
 
 **Getting Started:**
-1. Open **SafeTrack** from SafeSuite
+1. Open **SafeTrack** from Wrayth
 2. Add your devices manually or import from spreadsheet
 3. Set up warranty and license expiration alerts
 4. Review the security status dashboard
@@ -205,13 +205,13 @@ Use **SafeWeb** to:
 - Monitor for unauthorized activity
 - Consider credit monitoring if financial info was shared
 
-🛡️ **SafeSuite has you covered** at every step of incident response!`
+🛡️ **Wrayth has you covered** at every step of incident response!`
   },
   { 
     icon: Eye, 
     label: 'Privacy Tips', 
     question: 'How can I protect my privacy online?',
-    answer: `Here's your **complete privacy protection guide** using SafeSuite! 🔒
+    answer: `Here's your **complete privacy protection guide** using Wrayth! 🔒
 
 **🔐 Password Privacy with SafePass**
 - Use unique passwords for every site (hackers can't link accounts)
@@ -240,16 +240,16 @@ Use **SafeWeb** to:
 4. Use private browsing for sensitive searches
 5. Enable 2FA everywhere
 
-**SafeSuite Privacy Audit:**
-Run a scan with each SafeSuite tool to get a complete picture of your privacy posture!`
+**Wrayth Privacy Audit:**
+Run a scan with each Wrayth tool to get a complete picture of your privacy posture!`
   }
 ];
 
 const initialMessage = `Hi! I'm **SafeAssist**, your AI-powered security advisor. 🛡️
 
-I can help you with security questions and show you how SafeSuite tools protect you.
+I can help you with security questions and show you how Wrayth tools protect you.
 
-**Choose a question below** to see how SafeSuite can help, or type your own question!`;
+**Choose a question below** to see how Wrayth can help, or type your own question!`;
 
 export const SafeAssistDemo = ({ compactMode = false }: CompactProps) => {
   const [messages, setMessages] = useState<Message[]>([
@@ -336,7 +336,7 @@ export const SafeAssistDemo = ({ compactMode = false }: CompactProps) => {
       return q?.answer || '';
     }
 
-    return `Thanks for your question! Let me point you to the right SafeSuite tool:
+    return `Thanks for your question! Let me point you to the right Wrayth tool:
 
 🔐 **SafePass** - Password storage, generation, and breach monitoring
 🔍 **SafeScan** - Scan files, emails, URLs for threats
@@ -350,7 +350,7 @@ export const SafeAssistDemo = ({ compactMode = false }: CompactProps) => {
 - "How do I scan files for threats?"
 - "I clicked a suspicious link. What should I do?"
 
-Each SafeSuite tool works together to provide complete security coverage!`;
+Each Wrayth tool works together to provide complete security coverage!`;
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

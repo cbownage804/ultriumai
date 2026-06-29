@@ -542,7 +542,7 @@ export const MODULE_TOURS = {
   'vanguard-comply': VANGUARD_COMPLY_TOUR,
   'vanguard-ledger': VANGUARD_LEDGER_TOUR,
   
-  // SafeSuite
+  // Wrayth
   'safesuite-vault': SAFESUITE_VAULT_TOUR,
   'safesuite-scan': SAFESUITE_SCAN_TOUR,
   'safesuite-breach': SAFESUITE_BREACH_TOUR,

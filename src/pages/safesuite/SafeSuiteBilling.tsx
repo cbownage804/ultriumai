@@ -1,11 +1,11 @@
 /**
- * SafeSuite Billing Page
+ * Wrayth Billing Page
  * Subscription management and tier upgrades
  */
 
 import { useState } from 'react';
-import { useSafeSuiteSubscription, useSafeSuiteCheckout } from '@/hooks/useSafeSuite';
-import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS, formatMonthlyPrice, formatLimitWithUnit, SafeSuiteTier, TierFeatures } from '@/config/safeSuiteTiers';
+import { useWraythSubscription, useWraythCheckout } from '@/hooks/useWrayth';
+import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS, formatMonthlyPrice, formatLimitWithUnit, WraythTier, TierFeatures } from '@/config/safeSuiteTiers';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -43,14 +43,14 @@ import { UsageSummary } from '@/components/safesuite/UsageMeter';
 import { InvoiceHistory } from '@/components/billing/InvoiceHistory';
 import { SubscriptionOverview } from '@/components/billing/SubscriptionOverview';
 
-export default function SafeSuiteBilling() {
-  const { subscription, tier, tierConfig, loading: subLoading } = useSafeSuiteSubscription();
-  const { createCheckout, openCustomerPortal, loading: checkoutLoading } = useSafeSuiteCheckout();
+export default function WraythBilling() {
+  const { subscription, tier, tierConfig, loading: subLoading } = useWraythSubscription();
+  const { createCheckout, openCustomerPortal, loading: checkoutLoading } = useWraythCheckout();
   const [yearlyBilling, setYearlyBilling] = useState(false);
   const [seatSelectorOpen, setSeatSelectorOpen] = useState(false);
   const [seats, setSeats] = useState(5);
 
-  const handleUpgrade = async (targetTier: SafeSuiteTier) => {
+  const handleUpgrade = async (targetTier: WraythTier) => {
     // Business tier requires seat selection
     if (targetTier === 'business') {
       setSeatSelectorOpen(true);
@@ -113,7 +113,7 @@ export default function SafeSuiteBilling() {
       >
         <h1 className="text-2xl font-bold">Billing & Subscription</h1>
         <p className="text-muted-foreground">
-          Manage your SafeSuite subscription and billing
+          Manage your Wrayth subscription and billing
         </p>
       </motion.div>
 

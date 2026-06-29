@@ -1,6 +1,6 @@
 import { ContextualTipConfig } from '@/components/onboarding/ContextualTip';
 
-// SafeSuite Tips
+// Wrayth Tips
 export const SAFESUITE_TIPS: Record<string, ContextualTipConfig> = {
   passwordStrength: {
     id: 'safesuite-password-strength',

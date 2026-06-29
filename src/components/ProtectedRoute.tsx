@@ -1,7 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { LoginMFAGate } from '@/components/auth/LoginMFAGate';
-import { isSafeSuiteDomain, isVanguardDomain } from '@/utils/subdomain';
+import { isWraythDomain, isVanguardDomain } from '@/utils/subdomain';
 import { Mail, RefreshCw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,7 +22,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const [sessionCheckComplete, setSessionCheckComplete] = useState(false);
   const [forceChecking, setForceChecking] = useState(false);
   
-  const isOnSubdomain = isSafeSuiteDomain() || isVanguardDomain();
+  const isOnSubdomain = isWraythDomain() || isVanguardDomain();
   
   // On subdomains, explicitly force session check
   useEffect(() => {
@@ -60,7 +60,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     
     // Determine product context for return routing
     let returnProduct = '';
-    if (isSafeSuiteDomain()) {
+    if (isWraythDomain()) {
       returnProduct = 'safesuite';
     } else if (isVanguardDomain()) {
       returnProduct = 'vanguard';
@@ -101,7 +101,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     // Determine correct redirect URL based on product context
     const getProductRedirectUrl = () => {
       // Check subdomain first
-      if (isSafeSuiteDomain()) {
+      if (isWraythDomain()) {
         return `${window.location.origin}/dashboard`;
       }
       if (isVanguardDomain()) {

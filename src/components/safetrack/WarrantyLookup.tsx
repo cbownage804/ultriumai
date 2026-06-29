@@ -38,7 +38,7 @@ import {
 } from '@/components/ui/dialog';
 import { useSafeTrackWarranties, WarrantyData } from '@/hooks/useSafeTrackWarranties';
 import { format, formatDistanceToNow, isPast, isFuture, addDays } from 'date-fns';
-import { GlowContainer } from '@/components/safesuite/SafeSuiteEffects';
+import { GlowContainer } from '@/components/safesuite/WraythEffects';
 
 function WarrantyStatusBadge({ status, endDate }: { status: string; endDate?: string | null }) {
   const isExpiringSoon = endDate && isFuture(new Date(endDate)) && 

@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Key, Shield, Brain, Monitor, UserPlus, UserMinus, Plus, Loader2, ExternalLink } from 'lucide-react';
 
 const PRODUCT_META: Record<string, { label: string; icon: typeof Shield; color: string }> = {
-  safesuite: { label: 'SafeSuite', icon: Shield, color: 'text-green-500' },
+  safesuite: { label: 'Wrayth', icon: Shield, color: 'text-green-500' },
   ai_studio: { label: 'AI Studio', icon: Brain, color: 'text-purple-500' },
   vanguard: { label: 'Vanguard', icon: Monitor, color: 'text-blue-500' },
 };
@@ -107,7 +107,7 @@ export const OrgLicensesTab = () => {
                   <Select value={selectedProduct} onValueChange={setSelectedProduct}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="safesuite">SafeSuite</SelectItem>
+                      <SelectItem value="safesuite">Wrayth</SelectItem>
                       <SelectItem value="ai_studio">AI Studio</SelectItem>
                       <SelectItem value="vanguard">Vanguard</SelectItem>
                     </SelectContent>

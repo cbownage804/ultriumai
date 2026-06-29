@@ -1,13 +1,13 @@
 /**
- * SafeSuite Analytics Hook
- * Provides real-time analytics data for the SafeSuite dashboard
+ * Wrayth Analytics Hook
+ * Provides real-time analytics data for the Wrayth dashboard
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
-export interface SafeSuiteMetrics {
+export interface WraythMetrics {
   scans: {
     total: number;
     threats: number;
@@ -46,9 +46,9 @@ export interface GeneratedReport {
   metadata?: Record<string, unknown>;
 }
 
-export const useSafeSuiteAnalytics = (timeRange: string = '7_days') => {
+export const useWraythAnalytics = (timeRange: string = '7_days') => {
   const { user } = useAuth();
-  const [metrics, setMetrics] = useState<SafeSuiteMetrics>({
+  const [metrics, setMetrics] = useState<WraythMetrics>({
     scans: { total: 0, threats: 0, safe: 0, weeklyChange: 0 },
     passwords: { total: 0, weak: 0, breached: 0, averageStrength: 0 },
     assets: { total: 0, monitored: 0, atRisk: 0 },

@@ -21,11 +21,11 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-interface SafeSuiteTeamsAppsProps {
+interface WraythTeamsAppsProps {
   organizationName?: string;
 }
 
-const SafeSuiteTeamsApps = ({ organizationName = "Your Company" }: SafeSuiteTeamsAppsProps) => {
+const WraythTeamsApps = ({ organizationName = "Your Company" }: WraythTeamsAppsProps) => {
   const { toast } = useToast();
   const [customBranding, setCustomBranding] = useState({
     companyName: organizationName,
@@ -90,7 +90,7 @@ const SafeSuiteTeamsApps = ({ organizationName = "Your Company" }: SafeSuiteTeam
       "id": `safesuite-${app.id}-${Date.now()}`,
       "packageName": `com.safesuite.${app.id}`,
       "developer": {
-        "name": customBranding.companyName || "SafeSuite",
+        "name": customBranding.companyName || "Wrayth",
         "websiteUrl": baseUrl,
         "privacyUrl": `${baseUrl}/privacy`,
         "termsOfUseUrl": `${baseUrl}/terms`
@@ -152,10 +152,10 @@ const SafeSuiteTeamsApps = ({ organizationName = "Your Company" }: SafeSuiteTeam
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <Building2 className="h-6 w-6" />
-            SafeSuite Teams Apps
+            Wrayth Teams Apps
           </h2>
           <p className="text-muted-foreground mt-1">
-            Deploy SafeSuite security tools as white-labeled Microsoft Teams apps for your organization
+            Deploy Wrayth security tools as white-labeled Microsoft Teams apps for your organization
           </p>
         </div>
       </div>
@@ -365,4 +365,4 @@ const SafeSuiteTeamsApps = ({ organizationName = "Your Company" }: SafeSuiteTeam
   );
 };
 
-export default SafeSuiteTeamsApps;
+export default WraythTeamsApps;

@@ -16,7 +16,7 @@ const PRODUCT_OPTIONS: ProductOption[] = [
   {
     id: 'safesuite',
     icon: Shield,
-    title: 'SafeSuite',
+    title: 'Wrayth',
     description: 'Protect my passwords, emails, and digital life',
     recommendation: 'Recommended for individuals & small teams',
   },

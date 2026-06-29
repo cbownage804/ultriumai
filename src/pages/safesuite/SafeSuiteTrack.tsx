@@ -1,24 +1,24 @@
 /**
- * SafeSuite Track - Asset Management within SafeSuite
+ * Wrayth Track - Asset Management within Wrayth
  */
 
 import { useState } from 'react';
-import { FeatureGate, TierLimitInfo } from '@/components/safesuite/SafeSuitePaywall';
+import { FeatureGate, TierLimitInfo } from '@/components/safesuite/WraythPaywall';
 import { Package, FileSearch, Package2, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AnimatedHeader } from '@/components/safesuite/SafeSuiteEffects';
+import { AnimatedHeader } from '@/components/safesuite/WraythEffects';
 import { TeaserLock } from '@/components/safesuite/TeaserLock';
-import { useSafeSuiteSubscription } from '@/hooks/useSafeSuite';
+import { useWraythSubscription } from '@/hooks/useWrayth';
 import safetrackLogo from '@/assets/safetrack-logo.png';
 import heroSafetrackBg from '@/assets/hero-safetrack-bg.jpg';
 import WarrantyLookup from '@/components/safetrack/WarrantyLookup';
 import { AssetManagement } from '@/components/assets/AssetManagement';
 import { SoftwareLicenses } from '@/components/safetrack/SoftwareLicenses';
 
-export default function SafeSuiteTrack() {
+export default function WraythTrack() {
   const [activeTab, setActiveTab] = useState('assets');
-  const { isBusiness, loading: subLoading } = useSafeSuiteSubscription();
+  const { isBusiness, loading: subLoading } = useWraythSubscription();
 
   return (
     <FeatureGate feature="safetrack">

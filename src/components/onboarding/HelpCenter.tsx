@@ -55,7 +55,7 @@ export const AVAILABLE_TOURS: TourInfo[] = [
   },
   {
     id: 'safesuite-intro',
-    name: 'SafeSuite Overview',
+    name: 'Wrayth Overview',
     description: 'Learn the basics of password management, threat scanning, and dark web monitoring.',
     icon: <Shield className="h-5 w-5 text-blue-500" />,
     steps: 6,
@@ -158,12 +158,12 @@ export const HelpCenter = () => {
     if (tour) {
       // Get current path to determine context
       const currentPath = window.location.pathname;
-      const isSafeSuiteContext = currentPath.includes('/safesuite') || currentPath.includes('/pass') || currentPath.includes('/scan') || currentPath.includes('/web') || currentPath.includes('/track');
+      const isWraythContext = currentPath.includes('/safesuite') || currentPath.includes('/pass') || currentPath.includes('/scan') || currentPath.includes('/web') || currentPath.includes('/track');
       
       switch (tour.product) {
         case 'safesuite':
-          // Stay on SafeSuite dashboard if already there, otherwise navigate
-          if (isSafeSuiteContext) {
+          // Stay on Wrayth dashboard if already there, otherwise navigate
+          if (isWraythContext) {
             window.location.href = currentPath.includes('/dashboard') ? `${currentPath}?tour=true` : '/safesuite/dashboard?tour=true';
           } else {
             window.location.href = '/safesuite/dashboard?tour=true';

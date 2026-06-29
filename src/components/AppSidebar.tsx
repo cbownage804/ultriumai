@@ -135,9 +135,9 @@ export function AppSidebar() {
       team_plus: "Team Plus",
       website_basic: "Website Basic",
       website_pro: "Website Pro",
-      safesuite_pro: "SafeSuite Pro",
-      safesuite_business: "SafeSuite Business",
-      safesuite_enterprise: "SafeSuite Enterprise",
+      safesuite_pro: "Wrayth Pro",
+      safesuite_business: "Wrayth Business",
+      safesuite_enterprise: "Wrayth Enterprise",
     };
 
     return labels[tier] || tier;

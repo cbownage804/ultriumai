@@ -38,9 +38,9 @@ import {
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useSafeSuiteSubscription } from "@/hooks/useSafeSuite";
+import { useWraythSubscription } from "@/hooks/useWrayth";
 import { useNavigate } from "react-router-dom";
-import { isSafeSuiteDomain } from "@/utils/subdomain";
+import { isWraythDomain } from "@/utils/subdomain";
 import { 
   Users, 
   Plus, 
@@ -162,7 +162,7 @@ interface ActionDialogState {
 const SafePassUsers = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
-  const { isBusiness, loading: subLoading, tier } = useSafeSuiteSubscription();
+  const { isBusiness, loading: subLoading, tier } = useWraythSubscription();
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -416,8 +416,8 @@ const SafePassUsers = () => {
         return {
           title: isDeactivating ? "Deactivate User" : "Activate User",
           description: isDeactivating 
-            ? `Deactivate ${actionDialog.user.full_name}? They will lose access to all SafeSuite features.`
-            : `Activate ${actionDialog.user.full_name}? They will regain access to SafeSuite features.`,
+            ? `Deactivate ${actionDialog.user.full_name}? They will lose access to all Wrayth features.`
+            : `Activate ${actionDialog.user.full_name}? They will regain access to Wrayth features.`,
           icon: isDeactivating 
             ? <UserX className="h-6 w-6 text-destructive" />
             : <UserCheck className="h-6 w-6 text-green-500" />,

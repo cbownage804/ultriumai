@@ -1,12 +1,12 @@
 /**
- * SafeSuite Settings Page
+ * Wrayth Settings Page
  */
 
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useSafeSuiteSubscription } from '@/hooks/useSafeSuite';
+import { useWraythSubscription } from '@/hooks/useWrayth';
 import { useSecurity } from '@/hooks/useSecurity';
-import { useSafeSuiteSettings } from '@/hooks/useSafeSuiteSettings';
+import { useWraythSettings } from '@/hooks/useWraythSettings';
 import { supabase } from '@/integrations/supabase/client';
 import QRCode from 'qrcode';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,11 +29,11 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function SafeSuiteSettings() {
+export default function WraythSettings() {
   const { user } = useAuth();
-  const { tier } = useSafeSuiteSubscription();
+  const { tier } = useWraythSubscription();
   const { securitySettings, setupTwoFactor, enableTwoFactor, disableTwoFactor, loading: securityLoading } = useSecurity();
-  const { settings, saving, saveSettings, updateNotifications } = useSafeSuiteSettings();
+  const { settings, saving, saveSettings, updateNotifications } = useWraythSettings();
   
   // 2FA Setup state
   const [twoFactorDialog, setTwoFactorDialog] = useState(false);
@@ -313,7 +313,7 @@ export default function SafeSuiteSettings() {
             <div>
               <p className="font-medium">Export Data</p>
               <p className="text-sm text-muted-foreground">
-                Download all your SafeSuite data
+                Download all your Wrayth data
               </p>
             </div>
             <Button variant="outline" onClick={handleExportData}>

@@ -4,8 +4,8 @@
  */
 
 import { useState } from 'react';
-import { useSafeSuiteTeam, useSharedVault } from '@/hooks/useSafeSuiteTeam';
-import { useSafeSuiteSubscription } from '@/hooks/useSafeSuite';
+import { useWraythTeam, useSharedVault } from '@/hooks/useWraythTeam';
+import { useWraythSubscription } from '@/hooks/useWrayth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -132,7 +132,7 @@ function TeamTeaserContent() {
 }
 
 export default function SafePassTeam() {
-  const { tier } = useSafeSuiteSubscription();
+  const { tier } = useWraythSubscription();
   const {
     team,
     members,
@@ -147,7 +147,7 @@ export default function SafePassTeam() {
     removeMember,
     updateMemberRole,
     createVault
-  } = useSafeSuiteTeam();
+  } = useWraythTeam();
 
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'admin' | 'member'>('member');

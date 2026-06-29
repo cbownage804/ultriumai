@@ -47,7 +47,7 @@ interface KBCategory {
 
 const categories: KBCategory[] = [
   { id: 'vanguard', name: 'Vanguard', icon: Target, color: 'text-cyan-400' },
-  { id: 'safesuite', name: 'SafeSuite', icon: BookOpen, color: 'text-amber-400' },
+  { id: 'safesuite', name: 'Wrayth', icon: BookOpen, color: 'text-amber-400' },
   { id: 'ai-studio', name: 'AI Studio', icon: Sparkles, color: 'text-violet-400' },
   { id: 'general', name: 'General', icon: Compass, color: 'text-blue-400' },
 ];
@@ -185,9 +185,9 @@ const articles: KBArticle[] = [
   // ===== SAFESUITE =====
   {
     id: 'safesuite-overview',
-    title: 'SafeSuite Dashboard',
+    title: 'Wrayth Dashboard',
     description: 'Personal security command center',
-    content: 'SafeSuite combines password management, threat scanning, and breach monitoring into a unified personal security platform. View your security score and take action on recommendations.',
+    content: 'Wrayth combines password management, threat scanning, and breach monitoring into a unified personal security platform. View your security score and take action on recommendations.',
     category: 'safesuite',
     tags: ['dashboard', 'overview', 'security', 'score'],
     route: '/safesuite',

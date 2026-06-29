@@ -1,5 +1,5 @@
 /**
- * SafeSuite Team Management Hook
+ * Wrayth Team Management Hook
  * Manages team operations for Business tier subscribers
  */
 
@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
-export interface SafeSuiteTeam {
+export interface WraythTeam {
   id: string;
   name: string;
   owner_id: string;
@@ -59,9 +59,9 @@ export interface SharedEntry {
   updated_at: string;
 }
 
-export function useSafeSuiteTeam() {
+export function useWraythTeam() {
   const { user } = useAuth();
-  const [team, setTeam] = useState<SafeSuiteTeam | null>(null);
+  const [team, setTeam] = useState<WraythTeam | null>(null);
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [vaults, setVaults] = useState<SharedVault[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,7 +122,7 @@ export function useSafeSuiteTeam() {
         .single();
 
       if (teamData) {
-        setTeam(teamData as SafeSuiteTeam);
+        setTeam(teamData as WraythTeam);
 
         // Load team members
         const { data: membersData } = await supabase
@@ -153,7 +153,7 @@ export function useSafeSuiteTeam() {
   }, [loadTeam]);
 
   // Create a new team
-  const createTeam = async (name: string): Promise<SafeSuiteTeam | null> => {
+  const createTeam = async (name: string): Promise<WraythTeam | null> => {
     if (!user) return null;
 
     try {
@@ -172,7 +172,7 @@ export function useSafeSuiteTeam() {
 
       toast.success('Team created successfully!');
       await loadTeam();
-      return data as SafeSuiteTeam;
+      return data as WraythTeam;
     } catch (error: any) {
       console.error('Error creating team:', error);
       toast.error(error.message || 'Failed to create team');

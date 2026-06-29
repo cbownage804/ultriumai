@@ -31,7 +31,7 @@ const WELCOME_SHOWN_KEY = 'ultrium_welcome_shown';
 
 const productConfig = {
   safesuite: {
-    title: 'Welcome to SafeSuite! 🛡️',
+    title: 'Welcome to Wrayth! 🛡️',
     description: 'Your complete security solution for password management, threat detection, and dark web monitoring.',
     icon: <Shield className="h-8 w-8" />,
     color: 'from-blue-500 to-cyan-500',

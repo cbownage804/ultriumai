@@ -4,7 +4,7 @@
  */
 
 import { Link } from 'react-router-dom';
-import { useFeatureAccess, useSafeSuiteSubscription, useSafeSuiteUsage } from '@/hooks/useSafeSuite';
+import { useFeatureAccess, useWraythSubscription, useWraythUsage } from '@/hooks/useWrayth';
 import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS, TierFeatures } from '@/config/safeSuiteTiers';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -21,7 +21,7 @@ import {
   Infinity
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { isSafeSuiteDomain } from '@/utils/subdomain';
+import { isWraythDomain } from '@/utils/subdomain';
 
 interface UsageMeterProps {
   feature: keyof TierFeatures;
@@ -42,15 +42,15 @@ export function UsageMeter({
   label
 }: UsageMeterProps) {
   const { checkFeatureAccess } = useFeatureAccess();
-  const { tier, isPro, isBusiness } = useSafeSuiteSubscription();
-  const { usage } = useSafeSuiteUsage();
+  const { tier, isPro, isBusiness } = useWraythSubscription();
+  const { usage } = useWraythUsage();
   
   const access = checkFeatureAccess(feature);
   const featureInfo = FEATURE_DESCRIPTIONS[feature];
   const tierConfig = SAFESUITE_TIERS[tier];
   const featureConfig = tierConfig.features[feature];
   
-  const billingPath = isSafeSuiteDomain() ? '/billing' : '/safesuite/billing';
+  const billingPath = isWraythDomain() ? '/billing' : '/safesuite/billing';
 
   // Feature not enabled for this tier
   if (!featureConfig.enabled) {
@@ -259,7 +259,7 @@ export function UsageSummary({
   className,
   features = ['safepass', 'safescan', 'safeweb', 'safetrack'] 
 }: UsageSummaryProps) {
-  const { tier } = useSafeSuiteSubscription();
+  const { tier } = useWraythSubscription();
   const tierConfig = SAFESUITE_TIERS[tier];
   
   // Filter to only show enabled features with limits

@@ -50,7 +50,7 @@ export function isVanguardDomain(): boolean {
   return getSubdomain() === 'vanguard';
 }
 
-export function isSafeSuiteDomain(): boolean {
+export function isWraythDomain(): boolean {
   return getSubdomain() === 'safesuite';
 }
 
@@ -62,7 +62,7 @@ export function getVanguardBasePath(): string {
   return '/vanguard/app';
 }
 
-export function getSafeSuiteBasePath(): string {
+export function getWraythBasePath(): string {
   const subdomain = getSubdomain();
   if (subdomain === 'safesuite') {
     return '/';
@@ -71,12 +71,12 @@ export function getSafeSuiteBasePath(): string {
 }
 
 /**
- * Get the correct path for SafeSuite routes based on subdomain
+ * Get the correct path for Wrayth routes based on subdomain
  * On safesuite.ultriumai.com: /dashboard
  * On main domain: /safesuite/dashboard
  */
-export function getSafeSuiteRoutePath(path: string): string {
-  const basePath = getSafeSuiteBasePath();
+export function getWraythRoutePath(path: string): string {
+  const basePath = getWraythBasePath();
   if (basePath === '/') {
     return path.startsWith('/') ? path : `/${path}`;
   }

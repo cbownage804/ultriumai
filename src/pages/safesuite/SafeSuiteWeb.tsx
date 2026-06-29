@@ -1,11 +1,11 @@
 /**
- * SafeSuite Web - Dark Web Monitoring within SafeSuite
+ * Wrayth Web - Dark Web Monitoring within Wrayth
  */
 
 import { useState, useEffect } from 'react';
-import { FeatureGate, UsageLimitBanner, TierLimitInfo } from '@/components/safesuite/SafeSuitePaywall';
+import { FeatureGate, UsageLimitBanner, TierLimitInfo } from '@/components/safesuite/WraythPaywall';
 import { useAuth } from '@/hooks/useAuth';
-import { useFeatureAccess, useSafeSuiteUsage } from '@/hooks/useSafeSuite';
+import { useFeatureAccess, useWraythUsage } from '@/hooks/useWrayth';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -70,11 +70,11 @@ interface ThreatDetails {
   created_at: string;
 }
 
-export default function SafeSuiteWeb() {
+export default function WraythWeb() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { checkFeatureAccess } = useFeatureAccess();
-  const { refreshUsage } = useSafeSuiteUsage();
+  const { refreshUsage } = useWraythUsage();
   
   const [assets, setAssets] = useState<MonitoredAsset[]>([]);
   const [threats, setThreats] = useState<Record<string, ThreatDetails[]>>({});

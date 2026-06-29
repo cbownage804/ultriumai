@@ -88,7 +88,7 @@ const Terms = () => {
                   </ul>
                 </div>
                 <div className="bg-muted/50 p-4 rounded-lg">
-                  <h4 className="font-medium mb-2">SafeSuite Applications</h4>
+                  <h4 className="font-medium mb-2">Wrayth Applications</h4>
                   <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                     <li>SafePass – Password vault and management</li>
                     <li>SafeScan – Threat detection and scanning</li>
@@ -326,7 +326,7 @@ const Terms = () => {
                 <div>
                   <h4 className="font-medium mb-2">Security Tools Disclaimer</h4>
                   <p className="text-sm text-muted-foreground">
-                    Our security tools (Vanguard, SafeSuite) provide analysis, monitoring, and recommendations but do not guarantee complete threat prevention. No security solution can prevent all attacks. You remain responsible for your overall security posture.
+                    Our security tools (Vanguard, Wrayth) provide analysis, monitoring, and recommendations but do not guarantee complete threat prevention. No security solution can prevent all attacks. You remain responsible for your overall security posture.
                   </p>
                 </div>
                 <div>

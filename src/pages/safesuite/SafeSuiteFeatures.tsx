@@ -1,5 +1,5 @@
 /**
- * SafeSuite Features - Unified page showcasing all SafeSuite tools
+ * Wrayth Features - Unified page showcasing all Wrayth tools
  * Consolidates SafePass, SafeScan, SafeWeb, SafeTrack into one clean experience
  */
 
@@ -106,7 +106,7 @@ const tools = [
   },
 ];
 
-export default function SafeSuiteFeatures() {
+export default function WraythFeatures() {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -123,7 +123,7 @@ export default function SafeSuiteFeatures() {
           <div className="inline-block bg-black px-12 py-6 rounded-lg mb-8 shadow-[0_0_60px_rgba(16,185,129,0.3)]">
             <img 
               src={safesuiteLogo} 
-              alt="SafeSuite" 
+              alt="Wrayth" 
               className="h-28 w-auto"
             />
           </div>
@@ -204,7 +204,7 @@ export default function SafeSuiteFeatures() {
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">Get All Tools in One Suite</h2>
           <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-            SafeSuite includes SafePass, SafeScan, SafeWeb, and SafeTrack — all integrated and working together to protect your digital life.
+            Wrayth includes SafePass, SafeScan, SafeWeb, and SafeTrack — all integrated and working together to protect your digital life.
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
