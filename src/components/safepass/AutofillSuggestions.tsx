@@ -3,7 +3,7 @@
  */
 
 import { useMemo } from 'react';
-import { useSafePassAI } from '@/hooks/useSafePassAI';
+import { useVaultAI } from '@/hooks/useVaultAI';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -50,7 +50,7 @@ export function AutofillSuggestions({
   className,
   maxSuggestions = 3,
 }: AutofillSuggestionsProps) {
-  const { isEnabled, getSuggestionsForUrl, recordSelection, extractDomain } = useSafePassAI();
+  const { isEnabled, getSuggestionsForUrl, recordSelection, extractDomain } = useVaultAI();
   
   // Get AI suggestions for current context
   const suggestions = useMemo(() => {
@@ -81,7 +81,7 @@ export function AutofillSuggestions({
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium flex items-center gap-2 text-amber-500">
           <Sparkles className="h-4 w-4" />
-          <span>SafePassAI Suggestions</span>
+          <span>VaultAI Suggestions</span>
           {domain && (
             <Badge variant="outline" className="ml-auto text-[10px] border-amber-500/30 text-gray-400">
               for {domain}

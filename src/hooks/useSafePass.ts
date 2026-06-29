@@ -56,8 +56,8 @@ export interface PasswordAuditLog {
   created_at: string;
 }
 
-// Global cache for SafePass data - persists across component remounts
-interface SafePassCache {
+// Global cache for Vault data - persists across component remounts
+interface VaultCache {
   vaults: PasswordVault[];
   entries: Map<string, PasswordEntry[]>;
   auditLogs: PasswordAuditLog[];
@@ -66,7 +66,7 @@ interface SafePassCache {
   userId: string | null;
 }
 
-const cache: SafePassCache = {
+const cache: VaultCache = {
   vaults: [],
   entries: new Map(),
   auditLogs: [],
@@ -77,7 +77,7 @@ const cache: SafePassCache = {
 
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-export const useSafePass = () => {
+export const useVault = () => {
   const [vaults, setVaults] = useState<PasswordVault[]>(cache.vaults);
   const [entries, setEntries] = useState<PasswordEntry[]>([]);
   const [auditLogs, setAuditLogs] = useState<PasswordAuditLog[]>(cache.auditLogs);

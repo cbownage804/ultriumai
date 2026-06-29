@@ -8,7 +8,7 @@ import { Download, Globe, Monitor, CheckCircle2, AlertTriangle, Beaker } from "l
 import JSZip from "jszip";
 import { toast } from "sonner";
 
-const SafePassExtension = () => {
+const VaultExtension = () => {
   const [isDownloading, setIsDownloading] = useState(false);
 
   const downloadExtension = async () => {
@@ -68,7 +68,7 @@ const SafePassExtension = () => {
     "Open Chrome/Edge and go to chrome://extensions or edge://extensions",
     "Enable 'Developer mode' (toggle in top right)",
     "Click 'Load unpacked' and select the extracted folder",
-    "The SafePass icon will appear in your browser toolbar"
+    "The Vault icon will appear in your browser toolbar"
   ];
 
   return (
@@ -83,7 +83,7 @@ const SafePassExtension = () => {
           </Badge>
         </div>
         <p className="text-muted-foreground mt-1">
-          Install the SafePass extension for seamless autofill
+          Install the Vault extension for seamless autofill
         </p>
       </div>
 
@@ -105,7 +105,7 @@ const SafePassExtension = () => {
               Download Extension
             </CardTitle>
             <CardDescription>
-              Get the SafePass browser extension for Chrome and Edge
+              Get the Vault browser extension for Chrome and Edge
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -170,7 +170,7 @@ const SafePassExtension = () => {
             {[
               { title: "Auto-detect Login Forms", desc: "Automatically finds username and password fields" },
               { title: "One-Click Autofill", desc: "Fill credentials with a single click" },
-              { title: "Secure Vault Sync", desc: "Syncs with your encrypted SafePass vault" },
+              { title: "Secure Vault Sync", desc: "Syncs with your encrypted Vault vault" },
               { title: "Save New Passwords", desc: "Prompts to save new credentials when you sign up" },
               { title: "AES-256 Encryption", desc: "All data encrypted with your master password" },
               { title: "Offline Access", desc: "Cached credentials work without internet" }
@@ -188,4 +188,4 @@ const SafePassExtension = () => {
   );
 };
 
-export default SafePassExtension;
+export default VaultExtension;

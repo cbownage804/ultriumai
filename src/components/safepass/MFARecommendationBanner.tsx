@@ -1,5 +1,5 @@
 /**
- * MFA Recommendation Banner for SafePass
+ * MFA Recommendation Banner for Vault
  * Prompts users to enable 2FA for enhanced vault security
  */
 

@@ -16,7 +16,7 @@ interface MasterPasswordState {
 
 // NOTE: This hook is used in many places. If it keeps its own local state per
 // component instance, the app can get into a split-brain situation where the UI
-// says “unlocked” but the data layer (useSafePass) still thinks it’s locked.
+// says “unlocked” but the data layer (useVault) still thinks it’s locked.
 //
 // To avoid that, we keep one shared store per active user session.
 type Listener = (state: MasterPasswordState) => void;

@@ -12,7 +12,7 @@ import { Loader2, AlertTriangle, Lock, Eye, EyeOff, CheckCircle, Shield, Smartph
 import safepassLogo from '@/assets/safepass-logo.png';
 import heroSafepassBg from '@/assets/hero-safepass-bg.jpg';
 
-export default function SafePassResetMasterPassword() {
+export default function VaultResetMasterPassword() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -183,7 +183,7 @@ export default function SafePassResetMasterPassword() {
       <Card className="w-full max-w-md relative z-10">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 p-4 bg-black rounded-xl shadow-amber-500/20 shadow-lg">
-            <img src={safepassLogo} alt="SafePass" className="h-12 w-auto" />
+            <img src={safepassLogo} alt="Vault" className="h-12 w-auto" />
           </div>
           <CardTitle>Reset Master Password</CardTitle>
           <CardDescription>
@@ -241,7 +241,7 @@ export default function SafePassResetMasterPassword() {
                 className="w-full"
                 onClick={() => navigate('/pass')}
               >
-                Back to SafePass
+                Back to Vault
               </Button>
             </>
           )}
@@ -378,7 +378,7 @@ export default function SafePassResetMasterPassword() {
               <div className="text-center py-8">
                 <CheckCircle className="h-12 w-12 mx-auto text-green-500 mb-4" />
                 <p className="text-muted-foreground">
-                  Your master password has been reset. You can now log in to SafePass with your new password.
+                  Your master password has been reset. You can now log in to Vault with your new password.
                 </p>
               </div>
 
@@ -386,7 +386,7 @@ export default function SafePassResetMasterPassword() {
                 className="w-full bg-amber-500 hover:bg-amber-600"
                 onClick={() => navigate('/pass')}
               >
-                Go to SafePass
+                Go to Vault
               </Button>
             </>
           )}

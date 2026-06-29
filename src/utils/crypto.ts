@@ -1,5 +1,5 @@
 /**
- * SafePass Cryptographic Utilities
+ * Vault Cryptographic Utilities
  * Implements client-side AES-256 encryption with PBKDF2 key derivation
  * 
  * Security Features:

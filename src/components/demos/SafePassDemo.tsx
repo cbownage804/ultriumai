@@ -26,7 +26,7 @@ import {
 import { cn } from '@/lib/utils';
 import safepassLogo from '@/assets/safepass-logo.png';
 
-export const SafePassDemo = () => {
+export const VaultDemo = () => {
   const [activeTab, setActiveTab] = useState('vault');
   const [showPassword, setShowPassword] = useState<Record<number, boolean>>({});
 
@@ -96,9 +96,9 @@ export const SafePassDemo = () => {
 
   return (
     <div className="space-y-4">
-      {/* Header with SafePass branding - centered logo only */}
+      {/* Header with Vault branding - centered logo only */}
       <div className="flex justify-center mb-4">
-        <img src={safepassLogo} alt="SafePass" className="h-28 w-auto" />
+        <img src={safepassLogo} alt="Vault" className="h-28 w-auto" />
       </div>
 
       {/* Navigation Tabs - styled like real app */}
@@ -352,14 +352,14 @@ export const SafePassDemo = () => {
       <Card className="border-amber-500/20 bg-amber-500/5">
         <CardContent className="p-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <img src={safepassLogo} alt="SafePass" className="h-16 w-auto" />
+            <img src={safepassLogo} alt="Vault" className="h-16 w-auto" />
           </div>
           <h4 className="text-lg font-bold mb-1">Zero-Trust Password Security</h4>
           <p className="text-muted-foreground text-sm mb-3">
             Advanced encryption, breach monitoring, and seamless team collaboration
           </p>
           <Button className="bg-amber-500 hover:bg-amber-600 text-white">
-            Deploy SafePass Now
+            Deploy Vault Now
           </Button>
         </CardContent>
       </Card>

@@ -68,7 +68,7 @@ vi.mock('@/lib/logger', () => ({
   },
 }));
 
-describe('useSafePass', () => {
+describe('useVault', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

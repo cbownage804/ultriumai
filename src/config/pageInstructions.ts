@@ -250,7 +250,7 @@ export const PAGE_INSTRUCTIONS: Record<string, PageInstruction> = {
   },
   '/safesuite/pass': {
     id: 'safesuite-pass',
-    title: 'SafePass – Password Manager',
+    title: 'Vault – Password Manager',
     description: 'Securely store, generate, and manage all your passwords with zero-knowledge encryption.',
     product: 'safesuite',
     tourId: 'safesuite-vault',
@@ -272,14 +272,14 @@ export const PAGE_INSTRUCTIONS: Record<string, PageInstruction> = {
   },
   '/safesuite/scan': {
     id: 'safesuite-scan',
-    title: 'SafeScan – Threat Scanner',
+    title: 'Scan – Threat Scanner',
     description: 'Scan URLs, emails, and files for malware, phishing, and other threats.',
     product: 'safesuite',
     tourId: 'safesuite-scan',
     sections: [
       {
         heading: 'Scanning',
-        content: 'Paste a URL, email content, or upload a file. SafeScan uses AI to detect threats, phishing attempts, and malicious content.',
+        content: 'Paste a URL, email content, or upload a file. Scan uses AI to detect threats, phishing attempts, and malicious content.',
         tips: ['Scan suspicious links before clicking them', 'Upload email attachments to check for malware', 'Results show a risk score and detailed breakdown'],
       },
       {
@@ -290,7 +290,7 @@ export const PAGE_INSTRUCTIONS: Record<string, PageInstruction> = {
   },
   '/safesuite/web': {
     id: 'safesuite-web',
-    title: 'SafeWeb – Dark Web Monitor',
+    title: 'Watch – Dark Web Monitor',
     description: 'Continuous monitoring of the dark web for your exposed credentials and personal data.',
     product: 'safesuite',
     tourId: 'safesuite-breach',

@@ -10,8 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Users, Plus, UserPlus, Share, Settings, Shield, Trash2 } from 'lucide-react';
-import { useSafePassTeams } from '@/hooks/useSafePassTeams';
-import { useSafePass } from '@/hooks/useSafePass';
+import { useVaultTeams } from '@/hooks/useVaultTeams';
+import { useVault } from '@/hooks/useVault';
 
 const TeamManagement = () => {
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
@@ -32,9 +32,9 @@ const TeamManagement = () => {
     shareVaultWithTeam, 
     removeMember,
     loadMemberships 
-  } = useSafePassTeams();
+  } = useVaultTeams();
   
-  const { vaults } = useSafePass();
+  const { vaults } = useVault();
 
   const handleCreateTeam = async () => {
     if (!newTeamData.name.trim()) return;

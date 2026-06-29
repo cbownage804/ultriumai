@@ -1,7 +1,7 @@
 import { SecureNotes } from '@/components/safepass/SecureNotes';
 import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
 
-const SafePassNotes = () => {
+const VaultNotes = () => {
   return (
     <FeatureGate feature="safepass">
       <div className="space-y-6">
@@ -15,4 +15,4 @@ const SafePassNotes = () => {
   );
 };
 
-export default SafePassNotes;
+export default VaultNotes;

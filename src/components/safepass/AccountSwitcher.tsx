@@ -1,5 +1,5 @@
 /**
- * AccountSwitcher - Multi-account switching dropdown for SafePass
+ * AccountSwitcher - Multi-account switching dropdown for Vault
  */
 
 import { useState } from 'react';

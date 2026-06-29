@@ -1,7 +1,7 @@
 import { CreditCards } from '@/components/safepass/CreditCards';
 import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
 
-const SafePassCards = () => {
+const VaultCards = () => {
   return (
     <FeatureGate feature="safepass">
       <div className="space-y-6">
@@ -15,4 +15,4 @@ const SafePassCards = () => {
   );
 };
 
-export default SafePassCards;
+export default VaultCards;

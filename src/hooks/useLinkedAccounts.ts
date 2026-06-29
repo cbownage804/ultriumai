@@ -1,5 +1,5 @@
 /**
- * Hook to manage SafePass linked accounts for multi-account switching
+ * Hook to manage Vault linked accounts for multi-account switching
  */
 
 import { useState, useEffect, useCallback } from 'react';

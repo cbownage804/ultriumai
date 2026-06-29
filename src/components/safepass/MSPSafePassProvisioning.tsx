@@ -27,7 +27,7 @@ import {
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
-interface SafePassInvite {
+interface VaultInvite {
   id: string;
   email: string;
   full_name: string | null;
@@ -39,7 +39,7 @@ interface SafePassInvite {
   created_at: string;
 }
 
-interface SafePassAccount {
+interface VaultAccount {
   id: string;
   user_id: string;
   email: string;
@@ -61,13 +61,13 @@ interface LinkRequest {
   notes: string | null;
   created_at: string;
   // Joined data
-  account?: SafePassAccount;
+  account?: VaultAccount;
 }
 
-export default function MSPSafePassProvisioning() {
+export default function MSPVaultProvisioning() {
   const { user } = useAuth();
-  const [invites, setInvites] = useState<SafePassInvite[]>([]);
-  const [accounts, setAccounts] = useState<SafePassAccount[]>([]);
+  const [invites, setInvites] = useState<VaultInvite[]>([]);
+  const [accounts, setAccounts] = useState<VaultAccount[]>([]);
   const [linkRequests, setLinkRequests] = useState<LinkRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
@@ -96,7 +96,7 @@ export default function MSPSafePassProvisioning() {
         .order('created_at', { ascending: false });
       
       if (invitesError) throw invitesError;
-      setInvites((invitesData || []) as SafePassInvite[]);
+      setInvites((invitesData || []) as VaultInvite[]);
 
       // Fetch provisioned accounts
       const { data: accountsData, error: accountsError } = await supabase
@@ -106,7 +106,7 @@ export default function MSPSafePassProvisioning() {
         .order('created_at', { ascending: false });
       
       if (!accountsError && accountsData) {
-        setAccounts(accountsData as SafePassAccount[]);
+        setAccounts(accountsData as VaultAccount[]);
       }
 
       // Fetch link requests
@@ -147,7 +147,7 @@ export default function MSPSafePassProvisioning() {
 
       if (error) throw error;
 
-      setInvites(prev => [data as SafePassInvite, ...prev]);
+      setInvites(prev => [data as VaultInvite, ...prev]);
       setShowInviteDialog(false);
       setNewInvite({ email: '', full_name: '', client_id: '' });
       toast.success('Invite created successfully');
@@ -252,10 +252,10 @@ export default function MSPSafePassProvisioning() {
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <Key className="h-6 w-6 text-primary" />
-            SafePass User Management
+            Vault User Management
           </h2>
           <p className="text-muted-foreground">
-            Provision SafePass accounts for clients and manage Vanguard linking
+            Provision Vault accounts for clients and manage Vanguard linking
           </p>
         </div>
         <div className="flex gap-2">
@@ -272,9 +272,9 @@ export default function MSPSafePassProvisioning() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Invite SafePass User</DialogTitle>
+                <DialogTitle>Invite Vault User</DialogTitle>
                 <DialogDescription>
-                  Create a SafePass account for a client. They'll receive an invite link to set up their account.
+                  Create a Vault account for a client. They'll receive an invite link to set up their account.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 mt-4">
@@ -306,7 +306,7 @@ export default function MSPSafePassProvisioning() {
                     placeholder="Client ID"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Pre-link this SafePass account to a Vanguard client
+                    Pre-link this Vault account to a Vanguard client
                   </p>
                 </div>
                 <div className="flex justify-end gap-2">
@@ -402,9 +402,9 @@ export default function MSPSafePassProvisioning() {
         <TabsContent value="invites">
           <Card>
             <CardHeader>
-              <CardTitle>SafePass Invites</CardTitle>
+              <CardTitle>Vault Invites</CardTitle>
               <CardDescription>
-                Invites you've sent to provision SafePass accounts for clients
+                Invites you've sent to provision Vault accounts for clients
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -472,9 +472,9 @@ export default function MSPSafePassProvisioning() {
         <TabsContent value="accounts">
           <Card>
             <CardHeader>
-              <CardTitle>Provisioned SafePass Accounts</CardTitle>
+              <CardTitle>Provisioned Vault Accounts</CardTitle>
               <CardDescription>
-                SafePass accounts you've created for clients
+                Vault accounts you've created for clients
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -528,7 +528,7 @@ export default function MSPSafePassProvisioning() {
             <CardHeader>
               <CardTitle>Vanguard Link Requests</CardTitle>
               <CardDescription>
-                SafePass users requesting to link their accounts to Vanguard
+                Vault users requesting to link their accounts to Vanguard
               </CardDescription>
             </CardHeader>
             <CardContent>

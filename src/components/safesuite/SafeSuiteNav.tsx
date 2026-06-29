@@ -16,9 +16,9 @@ export default function WraythNav() {
         <nav className="hidden md:flex items-center gap-6 text-sm">
           <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">Features</Link>
           <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
-          <Link to="/products/safepass" className="text-muted-foreground hover:text-foreground transition-colors">SafePass</Link>
-          <Link to="/products/safescan" className="text-muted-foreground hover:text-foreground transition-colors">SafeScan</Link>
-          <Link to="/products/safeweb" className="text-muted-foreground hover:text-foreground transition-colors">SafeWeb</Link>
+          <Link to="/products/safepass" className="text-muted-foreground hover:text-foreground transition-colors">Vault</Link>
+          <Link to="/products/safescan" className="text-muted-foreground hover:text-foreground transition-colors">Scan</Link>
+          <Link to="/products/safeweb" className="text-muted-foreground hover:text-foreground transition-colors">Watch</Link>
           <Link to="/products/safetrack" className="text-muted-foreground hover:text-foreground transition-colors">SafeTrack</Link>
           <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">Contact</Link>
         </nav>

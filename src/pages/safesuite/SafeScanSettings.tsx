@@ -1,5 +1,5 @@
 /**
- * SafeScan Settings Page
+ * Scan Settings Page
  */
 
 import { useState } from 'react';
@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function SafeScanSettings() {
+export default function ScanSettings() {
   const [loading, setLoading] = useState(false);
   
   const [settings, setSettings] = useState({
@@ -40,7 +40,7 @@ export default function SafeScanSettings() {
   const handleSaveSettings = async () => {
     setLoading(true);
     await new Promise(resolve => setTimeout(resolve, 1000));
-    toast.success('SafeScan settings saved');
+    toast.success('Scan settings saved');
     setLoading(false);
   };
 
@@ -49,7 +49,7 @@ export default function SafeScanSettings() {
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <ScanSearch className="h-6 w-6 text-red-500" />
-          <span className="text-red-500">SafeScan</span> Settings
+          <span className="text-red-500">Scan</span> Settings
         </h1>
         <p className="text-muted-foreground">
           Configure your security scanning preferences

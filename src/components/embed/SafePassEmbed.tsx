@@ -17,7 +17,7 @@ import {
   Check
 } from "lucide-react";
 
-interface SafePassEmbedProps {
+interface VaultEmbedProps {
   tenantId: string;
   brandName?: string;
   primaryColor?: string;
@@ -33,13 +33,13 @@ interface SavedCredential {
   password: string; // Would be encrypted in real implementation
 }
 
-export const SafePassEmbed = ({ 
+export const VaultEmbed = ({ 
   tenantId, 
-  brandName = 'SafePass', 
+  brandName = 'Vault', 
   primaryColor = '#3b82f6',
   apiEndpoint = 'https://safepass.ultriumai.com/api',
   onCredentialsDetected
-}: SafePassEmbedProps) => {
+}: VaultEmbedProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [credentials, setCredentials] = useState<SavedCredential[]>([]);
   const [detectedForms, setDetectedForms] = useState<HTMLFormElement[]>([]);

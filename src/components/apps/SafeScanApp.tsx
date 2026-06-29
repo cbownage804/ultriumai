@@ -2,13 +2,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { ShieldCheck } from 'lucide-react';
 
-interface SafeScanAppProps {
+interface ScanAppProps {
   isWhiteLabeled?: boolean;
   brandName?: string;
   hideHeader?: boolean;
 }
 
-export function SafeScanApp({ brandName = 'SafeScan' }: SafeScanAppProps) {
+export function ScanApp({ brandName = 'Scan' }: ScanAppProps) {
   return (
     <div className="container mx-auto px-4 py-8">
       <Card>
@@ -26,11 +26,11 @@ export function SafeScanApp({ brandName = 'SafeScan' }: SafeScanAppProps) {
             The {brandName} agent watches device health, patch status, and vulnerable services.
             Install the agent on each endpoint to begin reporting.
           </p>
-          <Button>Download SafeScan agent</Button>
+          <Button>Download Scan agent</Button>
         </CardContent>
       </Card>
     </div>
   );
 }
 
-export default SafeScanApp;
+export default ScanApp;

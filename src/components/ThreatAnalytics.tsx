@@ -7,11 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertTriangle, Shield, Eye, CheckCircle, X, Filter, Search } from 'lucide-react';
-import { useSafeWebData } from '@/hooks/useSafeWebData';
+import { useWatchData } from '@/hooks/useWatchData';
 import { toast } from 'sonner';
 
 export const ThreatAnalytics = () => {
-  const { threats, loading, updateThreatStatus } = useSafeWebData();
+  const { threats, loading, updateThreatStatus } = useWatchData();
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterSeverity, setFilterSeverity] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');

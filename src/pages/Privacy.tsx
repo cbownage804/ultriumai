@@ -58,7 +58,7 @@ const Privacy = () => {
                 </div>
                 <div className="bg-muted/50 p-3 rounded-lg">
                   <h4 className="font-medium text-sm mb-1">Wrayth</h4>
-                  <p className="text-xs text-muted-foreground">SafePass, SafeScan, SafeWeb, SafeTrack, SafeAssist</p>
+                  <p className="text-xs text-muted-foreground">Vault, Scan, Watch, SafeTrack, SafeAssist</p>
                 </div>
                 <div className="bg-muted/50 p-3 rounded-lg">
                   <h4 className="font-medium text-sm mb-1">Business Tools</h4>
@@ -118,8 +118,8 @@ const Privacy = () => {
               <div>
                 <h3 className="font-semibold mb-3">Security & Compliance Data</h3>
                 <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                  <li>Security scan results and vulnerability assessments (Vanguard, SafeScan)</li>
-                  <li>Password vault data (encrypted with zero-knowledge architecture in SafePass)</li>
+                  <li>Security scan results and vulnerability assessments (Vanguard, Scan)</li>
+                  <li>Password vault data (encrypted with zero-knowledge architecture in Vault)</li>
                   <li>Endpoint monitoring data and RMM agent telemetry</li>
                   <li>Compliance audit logs and security event data</li>
                 </ul>
@@ -285,7 +285,7 @@ const Privacy = () => {
                     <ul className="list-disc list-inside text-xs text-muted-foreground space-y-1">
                       <li>TLS 1.3 encryption for all data in transit</li>
                       <li>AES-256 encryption for data at rest</li>
-                      <li>Zero-knowledge encryption for SafePass vault</li>
+                      <li>Zero-knowledge encryption for Vault vault</li>
                       <li>Multi-factor authentication (MFA) support</li>
                       <li>Regular security audits and penetration testing</li>
                     </ul>

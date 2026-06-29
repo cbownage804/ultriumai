@@ -52,7 +52,7 @@ export interface MSPSecurityReport {
   recommendations: string[];
 }
 
-export const useSafePassMSP = () => {
+export const useVaultMSP = () => {
   const [loading, setLoading] = useState(false);
   const [vaults, setVaults] = useState<MSPPasswordVault[]>([]);
   const [entries, setEntries] = useState<MSPPasswordEntry[]>([]);
@@ -103,7 +103,7 @@ export const useSafePassMSP = () => {
 
       const vaultsData: MSPPasswordVault[] = [];
 
-      // For each client, get their SafePass vault information
+      // For each client, get their Vault vault information
       for (const client of clients || []) {
         const { data: clientVaults, error: vaultsError } = await supabase
           .from('safepass_vaults')
@@ -324,7 +324,7 @@ export const useSafePassMSP = () => {
           template: 'security_recommendations',
           data: {
             recommendations: recommendations,
-            generated_by: 'SafePass Security Analysis'
+            generated_by: 'Vault Security Analysis'
           }
         }
       });

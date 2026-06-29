@@ -418,7 +418,7 @@ export const useMSP = () => {
           domain: mspData.domain,
           contact_email: mspData.contact_email,
           phone: mspData.phone,
-          brand_name: mspData.brand_name || 'SafePass',
+          brand_name: mspData.brand_name || 'Vault',
           brand_color: mspData.brand_color || '#3b82f6'
         })
         .select()
@@ -553,12 +553,12 @@ export const useMSP = () => {
     const embedUrl = `${window.location.origin}/embed/safepass`;
     const config = {
       tenantId: client.id,
-      brandName: msp?.brand_name || 'SafePass',
+      brandName: msp?.brand_name || 'Vault',
       primaryColor: msp?.brand_color || '#3b82f6',
       apiEndpoint: `${window.location.origin}/api/safepass`
     };
 
-    return `<!-- ${msp?.brand_name || 'SafePass'} Widget -->
+    return `<!-- ${msp?.brand_name || 'Vault'} Widget -->
 <script>
 (function() {
   var config = ${JSON.stringify(config, null, 2)};
@@ -566,7 +566,7 @@ export const useMSP = () => {
   script.src = '${embedUrl}/widget.js';
   script.async = true;
   script.onload = function() {
-    SafePassWidget.init(config);
+    VaultWidget.init(config);
   };
   document.head.appendChild(script);
 })();

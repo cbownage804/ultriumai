@@ -1,5 +1,5 @@
 /**
- * SafeWeb Settings Page
+ * Watch Settings Page
  */
 
 import { useState } from 'react';
@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function SafeWebSettings() {
+export default function WatchSettings() {
   const [loading, setLoading] = useState(false);
   
   const [settings, setSettings] = useState({
@@ -40,7 +40,7 @@ export default function SafeWebSettings() {
   const handleSaveSettings = async () => {
     setLoading(true);
     await new Promise(resolve => setTimeout(resolve, 1000));
-    toast.success('SafeWeb settings saved');
+    toast.success('Watch settings saved');
     setLoading(false);
   };
 
@@ -49,7 +49,7 @@ export default function SafeWebSettings() {
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <Globe className="h-6 w-6 text-violet-500" />
-          <span className="text-violet-500">SafeWeb</span> Settings
+          <span className="text-violet-500">Watch</span> Settings
         </h1>
         <p className="text-muted-foreground">
           Configure your website monitoring preferences

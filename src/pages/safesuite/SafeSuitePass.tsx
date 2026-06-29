@@ -123,7 +123,7 @@ export default function WraythPass() {
                   <div className="flex-1">
                     <AlertTitle className="text-amber-400 font-semibold">Extension Installed!</AlertTitle>
                     <AlertDescription className="text-amber-400/80 text-sm mt-1">
-                      The SafePass browser extension is ready to use. Click the extension icon in your toolbar to start autofilling passwords.
+                      The Vault browser extension is ready to use. Click the extension icon in your toolbar to start autofilling passwords.
                     </AlertDescription>
                   </div>
                   <button 
@@ -149,7 +149,7 @@ export default function WraythPass() {
               className="max-w-md mx-auto py-6 sm:py-12 px-2 sm:px-0"
             >
               <GlowContainer theme="safepass" className="p-4 sm:p-8">
-                {/* SafePass Logo - Horizontal Layout */}
+                {/* Vault Logo - Horizontal Layout */}
                 <motion.div 
                   className="mx-auto mb-4 sm:mb-6 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-500/20 to-yellow-500/20 border border-amber-500/30 flex items-center justify-center px-4 sm:px-8 py-3 sm:py-4"
                   animate={{ 
@@ -157,7 +157,7 @@ export default function WraythPass() {
                   }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
-                  <img src={safepassLogo} alt="SafePass" className="h-10 sm:h-12 w-auto object-contain" />
+                  <img src={safepassLogo} alt="Vault" className="h-10 sm:h-12 w-auto object-contain" />
                 </motion.div>
                 
                 <MasterPasswordSetup
@@ -186,7 +186,7 @@ export default function WraythPass() {
             >
               <AnimatedHeader
                 logo={safepassLogo}
-                logoAlt="SafePass"
+                logoAlt="Vault"
                 tagline="Securely store and manage your passwords with military-grade encryption"
                 theme="safepass"
                 badge="Encrypted"

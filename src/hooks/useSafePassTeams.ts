@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
-export interface SafePassTeam {
+export interface VaultTeam {
   id: string;
   owner_id: string;
   name: string;
@@ -54,8 +54,8 @@ export interface SharedVault {
   shared_by_email?: string;
 }
 
-export const useSafePassTeams = () => {
-  const [teams, setTeams] = useState<SafePassTeam[]>([]);
+export const useVaultTeams = () => {
+  const [teams, setTeams] = useState<VaultTeam[]>([]);
   const [memberships, setMemberships] = useState<TeamMembership[]>([]);
   const [sharedVaults, setSharedVaults] = useState<SharedVault[]>([]);
   const [isLoading, setIsLoading] = useState(true);

@@ -102,7 +102,7 @@ export const SharedPasswordAccess = () => {
         })
         .eq('id', credential.id);
 
-      toast.info('Use the SafePass browser extension to autofill', {
+      toast.info('Use the Vault browser extension to autofill', {
         description: 'The extension fills credentials without showing the password',
         duration: 5000
       });
@@ -250,7 +250,7 @@ export const SharedPasswordAccess = () => {
               <Shield className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1">
-              <h4 className="font-medium">Install the SafePass Extension</h4>
+              <h4 className="font-medium">Install the Vault Extension</h4>
               <p className="text-sm text-muted-foreground">
                 Autofill shared passwords directly without ever seeing them.
               </p>

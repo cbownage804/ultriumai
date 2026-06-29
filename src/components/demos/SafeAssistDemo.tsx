@@ -47,8 +47,8 @@ const quickQuestions: QuickQuestion[] = [
     question: 'How can I protect my passwords?',
     answer: `Great question! Here's how to **protect your passwords** effectively:
 
-🔐 **Use SafePass Password Vault**
-SafePass is included in your Wrayth subscription and provides:
+🔐 **Use Vault Password Vault**
+Vault is included in your Wrayth subscription and provides:
 - **256-bit encryption** for all stored passwords
 - **Automatic password generation** - create 20+ character unique passwords instantly
 - **Breach monitoring** - get alerted if any of your passwords appear in data leaks
@@ -58,10 +58,10 @@ SafePass is included in your Wrayth subscription and provides:
 ✅ **Best Practices:**
 1. Never reuse passwords across sites
 2. Enable two-factor authentication (2FA) on all accounts
-3. Use SafePass to generate and store unique passwords
+3. Use Vault to generate and store unique passwords
 4. Change passwords immediately after any breach notification
 
-👉 **Get Started:** Open SafePass from your Wrayth dashboard to import your existing passwords and start generating secure ones!`
+👉 **Get Started:** Open Vault from your Wrayth dashboard to import your existing passwords and start generating secure ones!`
   },
   { 
     icon: AlertTriangle, 
@@ -69,10 +69,10 @@ SafePass is included in your Wrayth subscription and provides:
     question: 'Has my data been exposed in a breach?',
     answer: `I can help you check for data breaches! 🔍
 
-🌐 **Use SafeWeb Dark Web Monitor**
-SafeWeb continuously monitors the dark web and data breach databases for your information:
+🌐 **Use Watch Dark Web Monitor**
+Watch continuously monitors the dark web and data breach databases for your information:
 
-**What SafeWeb Monitors:**
+**What Watch Monitors:**
 - Email addresses and associated accounts
 - Passwords appearing in breach databases
 - Personal information on dark web forums
@@ -80,13 +80,13 @@ SafeWeb continuously monitors the dark web and data breach databases for your in
 - Credential dumps and leaks
 
 🚨 **If a Breach is Found:**
-1. SafeWeb alerts you immediately
+1. Watch alerts you immediately
 2. Shows exactly what data was exposed
 3. Provides step-by-step remediation guidance
 4. Recommends which passwords to change
 
 **Take Action Now:**
-1. Go to the **SafeWeb** tab in Wrayth
+1. Go to the **Watch** tab in Wrayth
 2. Enter your email address or domain
 3. Run a scan to check for exposures
 4. Follow the recommended actions
@@ -97,9 +97,9 @@ SafeWeb continuously monitors the dark web and data breach databases for your in
     icon: Search, 
     label: 'Scan for Threats', 
     question: 'How do I scan files and links for threats?',
-    answer: `SafeScan provides **comprehensive threat detection** for files, emails, URLs, and more! 🛡️
+    answer: `Scan provides **comprehensive threat detection** for files, emails, URLs, and more! 🛡️
 
-🔍 **SafeScan Features:**
+🔍 **Scan Features:**
 
 **Document Scanner**
 - Upload any file (PDF, Office docs, executables)
@@ -127,7 +127,7 @@ SafeWeb continuously monitors the dark web and data breach databases for your in
 ✓ Recommended actions
 ✓ Detailed technical analysis
 
-👉 **Try It:** Go to the **SafeScan** tab and paste a suspicious URL or upload a file to analyze!`
+👉 **Try It:** Go to the **Scan** tab and paste a suspicious URL or upload a file to analyze!`
   },
   { 
     icon: Laptop, 
@@ -177,19 +177,19 @@ SafeWeb continuously monitors the dark web and data breach databases for your in
 - Don't enter any passwords or personal info
 
 **Step 2: Change Passwords NOW**
-Use **SafePass** to quickly:
+Use **Vault** to quickly:
 - Reset your email password first
 - Change banking and financial passwords
 - Update any accounts using similar passwords
 
 **Step 3: Scan for Threats**
-Open **SafeScan** and:
+Open **Scan** and:
 - Run a full device scan
 - Check for any downloaded malware
 - Scan the suspicious URL to confirm it's malicious
 
 **Step 4: Check for Exposure**
-Use **SafeWeb** to:
+Use **Watch** to:
 - Monitor if your credentials appear in breach databases
 - Set up alerts for future exposures
 - Check the dark web for your information
@@ -213,17 +213,17 @@ Use **SafeWeb** to:
     question: 'How can I protect my privacy online?',
     answer: `Here's your **complete privacy protection guide** using Wrayth! 🔒
 
-**🔐 Password Privacy with SafePass**
+**🔐 Password Privacy with Vault**
 - Use unique passwords for every site (hackers can't link accounts)
 - Enable biometric unlock for extra security
 - Use the password generator for truly random credentials
 
-**🌐 Breach Monitoring with SafeWeb**
+**🌐 Breach Monitoring with Watch**
 - Monitor your email addresses for exposures
 - Get alerted when your data appears on the dark web
 - Check if your phone number or address is leaked
 
-**🔍 Link Safety with SafeScan**
+**🔍 Link Safety with Scan**
 - Scan links before clicking to avoid trackers
 - Check if sites are legitimate before entering info
 - Identify data-harvesting phishing pages
@@ -338,9 +338,9 @@ export const SafeAssistDemo = ({ compactMode = false }: CompactProps) => {
 
     return `Thanks for your question! Let me point you to the right Wrayth tool:
 
-🔐 **SafePass** - Password storage, generation, and breach monitoring
-🔍 **SafeScan** - Scan files, emails, URLs for threats
-🌐 **SafeWeb** - Dark web monitoring for your exposed data
+🔐 **Vault** - Password storage, generation, and breach monitoring
+🔍 **Scan** - Scan files, emails, URLs for threats
+🌐 **Watch** - Dark web monitoring for your exposed data
 📱 **SafeTrack** - Device and asset inventory management
 🤖 **SafeAssist** - That's me! 24/7 security guidance
 

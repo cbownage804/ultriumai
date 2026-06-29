@@ -35,7 +35,7 @@ const navItems = [
   { path: '/safepass/settings', label: 'Settings', icon: Settings },
 ];
 
-export function SafePassLayout() {
+export function VaultLayout() {
   const { user, signOut, profile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -59,10 +59,10 @@ export function SafePassLayout() {
           <Link to="/safepass" className="flex items-center space-x-2">
             <img 
               src={safeSuiteProducts.safepass.logo} 
-              alt="SafePass" 
+              alt="Vault" 
               className="h-8 w-8 rounded-lg object-contain"
             />
-            <span className="text-xl font-bold text-amber-500">SafePass</span>
+            <span className="text-xl font-bold text-amber-500">Vault</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -185,7 +185,7 @@ export function SafePassLayout() {
       <footer className="border-t border-amber-500/10 py-6 mt-auto bg-[#0a0a0a]">
         <div className="container flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-gray-500">
-            © {new Date().getFullYear()} SafePass by Ultrium. All rights reserved.
+            © {new Date().getFullYear()} Vault by Ultrium. All rights reserved.
           </p>
           <div className="flex items-center space-x-4 text-sm text-gray-500">
             <Link to="/privacy" className="hover:text-amber-400">Privacy</Link>
@@ -198,4 +198,4 @@ export function SafePassLayout() {
   );
 }
 
-export default SafePassLayout;
+export default VaultLayout;

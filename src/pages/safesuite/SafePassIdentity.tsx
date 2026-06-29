@@ -1,7 +1,7 @@
 import { IdentityProfiles } from '@/components/safepass/IdentityProfiles';
 import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
 
-const SafePassIdentity = () => {
+const VaultIdentity = () => {
   return (
     <FeatureGate feature="safepass">
       <div className="space-y-6">
@@ -15,4 +15,4 @@ const SafePassIdentity = () => {
   );
 };
 
-export default SafePassIdentity;
+export default VaultIdentity;

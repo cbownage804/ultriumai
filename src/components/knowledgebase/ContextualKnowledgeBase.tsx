@@ -208,17 +208,17 @@ const articles: KBArticle[] = [
     route: '/safesuite',
     steps: [
       'View your security score',
-      'Access SafePass password vault',
-      'Run SafeScan threat scans',
+      'Access Vault password vault',
+      'Run Scan threat scans',
       'Check breach monitoring status'
     ],
     readTime: '3 min'
   },
   {
     id: 'safepass-vault',
-    title: 'SafePass - Password Vault',
+    title: 'Vault - Password Vault',
     description: 'Securely store all your credentials',
-    content: 'SafePass provides enterprise-grade password management with AES-256 encryption, auto-fill, and team sharing.',
+    content: 'Vault provides enterprise-grade password management with AES-256 encryption, auto-fill, and team sharing.',
     category: 'safesuite',
     tags: ['passwords', 'vault', 'safepass', 'credentials'],
     route: '/safesuite/vault',
@@ -232,9 +232,9 @@ const articles: KBArticle[] = [
   },
   {
     id: 'safescan-scanner',
-    title: 'SafeScan - Threat Scanner',
+    title: 'Scan - Threat Scanner',
     description: 'Scan emails, files, and URLs',
-    content: 'SafeScan uses AI to detect phishing, malware, and suspicious content in emails, attachments, and links.',
+    content: 'Scan uses AI to detect phishing, malware, and suspicious content in emails, attachments, and links.',
     category: 'safesuite',
     tags: ['scan', 'threats', 'safescan', 'phishing'],
     route: '/safesuite/scan',
@@ -607,7 +607,7 @@ export function ContextualKnowledgeBase({ trigger }: ContextualKnowledgeBaseProp
                   { id: 'vanguard-command', name: 'Vanguard Command Tour', desc: 'Complete dashboard walkthrough', duration: '5 min' },
                   { id: 'safesuite-intro', name: 'Wrayth Introduction', desc: 'Security platform overview', duration: '3 min' },
                   { id: 'ai-studio-intro', name: 'AI Studio Basics', desc: 'Build your first GPT', duration: '4 min' },
-                  { id: 'safepass-vault', name: 'SafePass Vault Tour', desc: 'Password management deep-dive', duration: '3 min' },
+                  { id: 'safepass-vault', name: 'Vault Vault Tour', desc: 'Password management deep-dive', duration: '3 min' },
                 ].map(tour => (
                   <Card 
                     key={tour.id}

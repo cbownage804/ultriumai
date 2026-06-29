@@ -615,7 +615,7 @@ export const VANGUARD_FEATURE_CATEGORIES: FeatureCategory[] = [
     features: [
       {
         id: 'safepass',
-        name: 'SafePass Password Manager',
+        name: 'Vault Password Manager',
         description: 'Zero-knowledge password vault with secure sharing for MSP teams.',
         icon: Key,
         route: '/vanguard/safepass'

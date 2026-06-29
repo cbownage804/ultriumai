@@ -1,5 +1,5 @@
 /**
- * SafePass Team Management Page
+ * Vault Team Management Page
  * For Business tier subscribers to manage team members and shared vaults
  */
 
@@ -131,7 +131,7 @@ function TeamTeaserContent() {
   );
 }
 
-export default function SafePassTeam() {
+export default function VaultTeam() {
   const { tier } = useWraythSubscription();
   const {
     team,

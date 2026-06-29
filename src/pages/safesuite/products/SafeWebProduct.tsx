@@ -1,5 +1,5 @@
 /**
- * SafeWeb Product Page
+ * Watch Product Page
  * Individual landing page for the dark web monitoring module
  */
 
@@ -40,7 +40,7 @@ const highlights = [
   "Historical breach tracking"
 ];
 
-export default function SafeWebProduct() {
+export default function WatchProduct() {
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
       {/* Header */}
@@ -48,7 +48,7 @@ export default function SafeWebProduct() {
         <div className="container mx-auto px-4 h-20 flex items-center justify-between">
           <Link to="/safesuite" className="flex items-center">
             <div className="h-14 rounded-xl bg-black flex items-center justify-center overflow-hidden border border-violet-500/20 px-4 shadow-lg shadow-violet-500/10">
-              <img src={safewebLogo} alt="SafeWeb" className="h-10 w-auto object-contain" />
+              <img src={safewebLogo} alt="Watch" className="h-10 w-auto object-contain" />
             </div>
           </Link>
           <div className="flex items-center gap-4">
@@ -80,7 +80,7 @@ export default function SafeWebProduct() {
             <div className="mb-8">
               <img 
                 src={safewebLogo} 
-                alt="SafeWeb"
+                alt="Watch"
                 className="h-24 md:h-28 w-auto mx-auto object-contain drop-shadow-2xl"
               />
             </div>
@@ -127,7 +127,7 @@ export default function SafeWebProduct() {
               Comprehensive Dark Web Protection
             </h2>
             <p className="text-gray-400 max-w-2xl mx-auto">
-              SafeWeb monitors the places criminals operate so you don't have to.
+              Watch monitors the places criminals operate so you don't have to.
             </p>
           </div>
           
@@ -152,7 +152,7 @@ export default function SafeWebProduct() {
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-white mb-4">
-              Why Choose SafeWeb?
+              Why Choose Watch?
             </h2>
           </div>
           
@@ -174,10 +174,10 @@ export default function SafeWebProduct() {
             <img src={safesuiteLogo} alt="Wrayth" className="h-16 w-auto" />
           </div>
           <h2 className="text-3xl font-bold text-white mb-4">
-            SafeWeb is Included with Wrayth
+            Watch is Included with Wrayth
           </h2>
           <p className="text-gray-400 mb-8">
-            Get SafeWeb plus SafePass, SafeScan, and SafeTrack — all in one unified security suite.
+            Get Watch plus Vault, Scan, and SafeTrack — all in one unified security suite.
           </p>
           <Link to="/auth?tab=signup">
             <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 text-black gap-2">
@@ -191,7 +191,7 @@ export default function SafeWebProduct() {
       {/* Footer */}
       <footer className="py-8 border-t border-gray-800">
         <div className="container mx-auto px-4 text-center text-gray-500 text-sm">
-          © {new Date().getFullYear()} UltriumAI. SafeWeb is part of the Wrayth security bundle.
+          © {new Date().getFullYear()} UltriumAI. Watch is part of the Wrayth security bundle.
         </div>
       </footer>
     </div>

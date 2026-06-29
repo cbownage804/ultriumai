@@ -30,14 +30,14 @@ interface LinkRequest {
   created_at: string;
 }
 
-interface SafePassAccount {
+interface VaultAccount {
   linked_vanguard_client_id: string | null;
   linked_at: string | null;
 }
 
 export default function VanguardLinkingCard() {
   const { user } = useAuth();
-  const [account, setAccount] = useState<SafePassAccount | null>(null);
+  const [account, setAccount] = useState<VaultAccount | null>(null);
   const [linkRequests, setLinkRequests] = useState<LinkRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
@@ -60,7 +60,7 @@ export default function VanguardLinkingCard() {
     
     setLoading(true);
     try {
-      // Check if user has a SafePass account
+      // Check if user has a Vault account
       const { data: accountData } = await supabase
         .from('safepass_accounts')
         .select('linked_vanguard_client_id, linked_at')
@@ -68,7 +68,7 @@ export default function VanguardLinkingCard() {
         .single();
       
       if (accountData) {
-        setAccount(accountData as SafePassAccount);
+        setAccount(accountData as VaultAccount);
       }
 
       // Fetch existing link requests
@@ -140,7 +140,7 @@ export default function VanguardLinkingCard() {
             Connected to Vanguard
           </CardTitle>
           <CardDescription className="text-green-700">
-            Your SafePass account is linked to Vanguard. Access the full security platform.
+            Your Vault account is linked to Vanguard. Access the full security platform.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -217,7 +217,7 @@ export default function VanguardLinkingCard() {
           </div>
           <div className="flex items-center gap-2 text-sm">
             <Check className="h-4 w-4 text-green-500" />
-            <span className="font-medium">SafePass Included</span>
+            <span className="font-medium">Vault Included</span>
           </div>
         </div>
 
@@ -232,7 +232,7 @@ export default function VanguardLinkingCard() {
             <DialogHeader>
               <DialogTitle>Upgrade to Vanguard</DialogTitle>
               <DialogDescription>
-                Submit a request to link your SafePass account to Vanguard and unlock enterprise security features.
+                Submit a request to link your Vault account to Vanguard and unlock enterprise security features.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 mt-4">

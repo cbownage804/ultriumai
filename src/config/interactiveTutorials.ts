@@ -1,6 +1,6 @@
 import { TutorialStep } from '@/components/onboarding/InteractiveTutorial';
 
-// SafePass - Add Your First Password Tutorial
+// Vault - Add Your First Password Tutorial
 export const SAFEPASS_ADD_PASSWORD_TUTORIAL: TutorialStep[] = [
   {
     id: 'open-add-dialog',
@@ -117,12 +117,12 @@ export const VANGUARD_DEPLOY_AGENT_TUTORIAL: TutorialStep[] = [
   },
 ];
 
-// SafeScan - Run Your First Scan Tutorial
+// Scan - Run Your First Scan Tutorial
 export const SAFESCAN_FIRST_SCAN_TUTORIAL: TutorialStep[] = [
   {
     id: 'open-scanner',
-    title: 'Open SafeScan',
-    instruction: 'Navigate to SafeScan in the sidebar.',
+    title: 'Open Scan',
+    instruction: 'Navigate to Scan in the sidebar.',
     target: '[data-tutorial="safescan-nav"]',
     action: 'click',
   },
@@ -182,7 +182,7 @@ export const AVAILABLE_TUTORIALS = [
   {
     id: 'safepass-add-password',
     name: 'Add Your First Password',
-    description: 'Learn how to securely store passwords in SafePass',
+    description: 'Learn how to securely store passwords in Vault',
     product: 'safesuite',
     duration: '2 min',
     steps: SAFEPASS_ADD_PASSWORD_TUTORIAL,

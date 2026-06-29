@@ -434,7 +434,7 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
           <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
             <ExternalLink className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
             <p className="text-xs text-amber-200/80">
-              <span className="font-medium text-amber-400">Important:</span> After updating here, remember to change the password on <span className="font-semibold">{finding.title}</span>'s actual website too. SafePass stores your passwords but doesn't change them automatically.
+              <span className="font-medium text-amber-400">Important:</span> After updating here, remember to change the password on <span className="font-semibold">{finding.title}</span>'s actual website too. Vault stores your passwords but doesn't change them automatically.
             </p>
           </div>
           

@@ -39,10 +39,10 @@ const APP_CONFIG: Record<AppType, {
   gradient: string;
 }> = {
   safescan: {
-    name: 'SafeScan AI',
+    name: 'Scan AI',
     icon: Shield,
     gradient: 'from-red-500 to-red-600',
-    welcomeMessage: `🛡️ **SafeScan AI Assistant**
+    welcomeMessage: `🛡️ **Scan AI Assistant**
 
 I can help you with:
 - **Threat Analysis**: Understand scan results and security threats
@@ -57,10 +57,10 @@ What would you like to know?`,
     ]
   },
   safepass: {
-    name: 'SafePass AI',
+    name: 'Vault AI',
     icon: Lock,
     gradient: 'from-blue-500 to-cyan-500',
-    welcomeMessage: `🔐 **SafePass AI Assistant**
+    welcomeMessage: `🔐 **Vault AI Assistant**
 
 I can help you with:
 - **Password Security**: Best practices for strong passwords
