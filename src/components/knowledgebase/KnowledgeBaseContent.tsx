@@ -196,9 +196,9 @@ const articles: KBArticle[] = [
   },
   {
     id: 'safepass-vault',
-    title: 'SafePass – Password Vault',
+    title: 'Vault – Password Vault',
     description: 'Securely store and manage credentials',
-    content: 'SafePass provides enterprise-grade password management. Store credentials with AES-256 encryption, organize with folders and tags, generate strong passwords, and check for compromised credentials.',
+    content: 'Vault provides enterprise-grade password management. Store credentials with AES-256 encryption, organize with folders and tags, generate strong passwords, and check for compromised credentials.',
     category: 'safesuite',
     tags: ['passwords', 'vault', 'safepass', 'credentials', 'encryption'],
     route: '/safesuite/vault',
@@ -208,9 +208,9 @@ const articles: KBArticle[] = [
   },
   {
     id: 'safescan-scanner',
-    title: 'SafeScan – Threat Scanner',
+    title: 'Scan – Threat Scanner',
     description: 'Scan emails, URLs, and files for threats',
-    content: 'SafeScan detects phishing attempts, malicious URLs, and malware in files. Paste any suspicious content to get an instant AI-powered risk analysis with detailed explanations.',
+    content: 'Scan detects phishing attempts, malicious URLs, and malware in files. Paste any suspicious content to get an instant AI-powered risk analysis with detailed explanations.',
     category: 'safesuite',
     tags: ['scan', 'threats', 'safescan', 'phishing', 'malware', 'urls'],
     route: '/safesuite/scan',

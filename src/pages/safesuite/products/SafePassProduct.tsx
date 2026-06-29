@@ -1,5 +1,5 @@
 /**
- * SafePass Product Page
+ * Vault Product Page
  * Individual landing page for the password manager module
  */
 
@@ -40,7 +40,7 @@ const highlights = [
   "Two-factor authentication support"
 ];
 
-export default function SafePassProduct() {
+export default function VaultProduct() {
   return (
     <div className="min-h-screen bg-[#0a0a0a] safe-area-inset-bottom">
       {/* Header */}
@@ -48,7 +48,7 @@ export default function SafePassProduct() {
         <div className="container mx-auto px-4 h-16 sm:h-20 flex items-center justify-between">
           <Link to="/safesuite" className="flex items-center">
             <div className="h-10 sm:h-14 rounded-xl bg-black flex items-center justify-center overflow-hidden border border-amber-500/20 px-3 sm:px-4 shadow-lg shadow-amber-500/10">
-              <img src={safepassLogo} alt="SafePass" className="h-7 sm:h-10 w-auto object-contain" />
+              <img src={safepassLogo} alt="Vault" className="h-7 sm:h-10 w-auto object-contain" />
             </div>
           </Link>
           <div className="flex items-center gap-2 sm:gap-4">
@@ -83,7 +83,7 @@ export default function SafePassProduct() {
             <div className="bg-black px-8 sm:px-12 py-4 sm:py-6 rounded-xl shadow-[0_0_60px_rgba(245,158,11,0.3)] border border-amber-500/20">
               <img 
                 src={safepassLogo} 
-                alt="SafePass" 
+                alt="Vault" 
                 className="h-16 sm:h-24 w-auto object-contain"
               />
             </div>
@@ -114,7 +114,7 @@ export default function SafePassProduct() {
               Everything You Need for Password Security
             </h2>
             <p className="text-gray-400 max-w-2xl mx-auto">
-              SafePass combines enterprise-grade security with consumer-friendly simplicity.
+              Vault combines enterprise-grade security with consumer-friendly simplicity.
             </p>
           </div>
           
@@ -139,7 +139,7 @@ export default function SafePassProduct() {
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-8 sm:mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
-              Why Choose SafePass?
+              Why Choose Vault?
             </h2>
           </div>
           
@@ -161,10 +161,10 @@ export default function SafePassProduct() {
             <img src={safesuiteLogo} alt="Wrayth" className="h-12 sm:h-16 w-auto" />
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4">
-            SafePass is Included with Wrayth
+            Vault is Included with Wrayth
           </h2>
           <p className="text-gray-400 mb-6 sm:mb-8 text-sm sm:text-base px-4">
-            Get SafePass plus SafeScan, SafeWeb, and SafeTrack — all in one unified security suite.
+            Get Vault plus Scan, Watch, and SafeTrack — all in one unified security suite.
           </p>
           <Link to="/auth?tab=signup">
             <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 text-black gap-2 touch-target">
@@ -178,7 +178,7 @@ export default function SafePassProduct() {
       {/* Footer */}
       <footer className="py-6 sm:py-8 border-t border-gray-800 safe-area-inset-bottom">
         <div className="container mx-auto px-4 text-center text-gray-500 text-sm">
-          © {new Date().getFullYear()} UltriumAI. SafePass is part of the Wrayth security bundle.
+          © {new Date().getFullYear()} UltriumAI. Vault is part of the Wrayth security bundle.
         </div>
       </footer>
     </div>

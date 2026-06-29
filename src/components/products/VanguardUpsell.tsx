@@ -19,9 +19,9 @@ const VANGUARD_TIERS: VanguardTier[] = [
     price: '$30',
     description: 'Core security protection',
     includes: [
-      'SafeScan™ - Email/URL/Doc Scanning',
-      'SafePass™ - Password Manager',
-      'SafeWeb™ - Dark Web Monitoring',
+      'Scan™ - Email/URL/Doc Scanning',
+      'Vault™ - Password Manager',
+      'Watch™ - Dark Web Monitoring',
       'AI Threat Detection',
       'Security Dashboard',
     ],

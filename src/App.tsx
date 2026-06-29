@@ -30,29 +30,26 @@ const WraythSettings = lazy(() => import('@/pages/safesuite/SafeSuiteSettings'))
 const WraythPass = lazy(() => import('@/pages/safesuite/SafeSuitePass'));
 const WraythScan = lazy(() => import('@/pages/safesuite/SafeSuiteScan'));
 const WraythWeb = lazy(() => import('@/pages/safesuite/SafeSuiteWeb'));
-const WraythTrack = lazy(() => import('@/pages/safesuite/SafeSuiteTrack'));
-const SafePassSettings = lazy(() => import('@/pages/safesuite/SafePassSettings'));
-const SafePassReminders = lazy(() => import('@/pages/safesuite/SafePassReminders'));
-const SafePassBreach = lazy(() => import('@/pages/safesuite/SafePassBreach'));
-const SafePassShared = lazy(() => import('@/pages/safesuite/SafePassShared'));
-const SafePassEmergency = lazy(() => import('@/pages/safesuite/SafePassEmergency'));
-const SafePassExtension = lazy(() => import('@/pages/safesuite/SafePassExtension'));
-const SafeScanSettings = lazy(() => import('@/pages/safesuite/SafeScanSettings'));
-const SafeWebSettings = lazy(() => import('@/pages/safesuite/SafeWebSettings'));
-const SafeTrackSettings = lazy(() => import('@/pages/safesuite/SafeTrackSettings'));
+const VaultSettings = lazy(() => import('@/pages/safesuite/SafePassSettings'));
+const VaultReminders = lazy(() => import('@/pages/safesuite/SafePassReminders'));
+const VaultBreach = lazy(() => import('@/pages/safesuite/SafePassBreach'));
+const VaultShared = lazy(() => import('@/pages/safesuite/SafePassShared'));
+const VaultEmergency = lazy(() => import('@/pages/safesuite/SafePassEmergency'));
+const VaultExtension = lazy(() => import('@/pages/safesuite/SafePassExtension'));
+const ScanSettings = lazy(() => import('@/pages/safesuite/SafeScanSettings'));
+const WatchSettings = lazy(() => import('@/pages/safesuite/SafeWebSettings'));
 const ForgotPasswordPage = lazy(() => import('@/pages/safesuite/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('@/pages/safesuite/ResetPasswordPage'));
 const MFARecoveryPage = lazy(() => import('@/pages/safesuite/MFARecoveryPage'));
-const SafePassProduct = lazy(() => import('@/pages/safesuite/products/SafePassProduct'));
-const SafeScanProduct = lazy(() => import('@/pages/safesuite/products/SafeScanProduct'));
-const SafeWebProduct = lazy(() => import('@/pages/safesuite/products/SafeWebProduct'));
-const SafeTrackProduct = lazy(() => import('@/pages/safesuite/products/SafeTrackProduct'));
+const VaultProduct = lazy(() => import('@/pages/safesuite/products/SafePassProduct'));
+const ScanProduct = lazy(() => import('@/pages/safesuite/products/SafeScanProduct'));
+const WatchProduct = lazy(() => import('@/pages/safesuite/products/SafeWebProduct'));
 const WraythFeatures = lazy(() => import('@/pages/safesuite/SafeSuiteFeatures'));
-const SafePassNotes = lazy(() => import('@/pages/safesuite/SafePassNotes'));
-const SafePassCards = lazy(() => import('@/pages/safesuite/SafePassCards'));
-const SafePassIdentity = lazy(() => import('@/pages/safesuite/SafePassIdentity'));
-const SafePassHealth = lazy(() => import('@/pages/safesuite/SafePassHealth'));
-const SafePassUsers = lazy(() => import('@/pages/safesuite/SafePassUsers'));
+const VaultNotes = lazy(() => import('@/pages/safesuite/SafePassNotes'));
+const VaultCards = lazy(() => import('@/pages/safesuite/SafePassCards'));
+const VaultIdentity = lazy(() => import('@/pages/safesuite/SafePassIdentity'));
+const VaultHealth = lazy(() => import('@/pages/safesuite/SafePassHealth'));
+const VaultUsers = lazy(() => import('@/pages/safesuite/SafePassUsers'));
 const WraythPricing = lazy(() => import('@/pages/pricing/SafeSuitePricing'));
 const WraythAssist = lazy(() => import('@/pages/safesuite/SafeSuiteAssist'));
 
@@ -100,10 +97,9 @@ function AppRouter() {
         <Route path="/" element={<SuspenseWrapper><WraythLanding /></SuspenseWrapper>} />
         <Route path="/pricing" element={<SuspenseWrapper variant="cards"><WraythPricing /></SuspenseWrapper>} />
         <Route path="/features" element={<SuspenseWrapper><WraythFeatures /></SuspenseWrapper>} />
-        <Route path="/products/safepass" element={<SuspenseWrapper><SafePassProduct /></SuspenseWrapper>} />
-        <Route path="/products/safescan" element={<SuspenseWrapper><SafeScanProduct /></SuspenseWrapper>} />
-        <Route path="/products/safeweb" element={<SuspenseWrapper><SafeWebProduct /></SuspenseWrapper>} />
-        <Route path="/products/safetrack" element={<SuspenseWrapper><SafeTrackProduct /></SuspenseWrapper>} />
+        <Route path="/products/safepass" element={<SuspenseWrapper><VaultProduct /></SuspenseWrapper>} />
+        <Route path="/products/safescan" element={<SuspenseWrapper><ScanProduct /></SuspenseWrapper>} />
+        <Route path="/products/safeweb" element={<SuspenseWrapper><WatchProduct /></SuspenseWrapper>} />
         <Route path="/contact" element={<SuspenseWrapper><Contact /></SuspenseWrapper>} />
         <Route path="/terms" element={<SuspenseWrapper><Terms /></SuspenseWrapper>} />
         <Route path="/privacy" element={<SuspenseWrapper><Privacy /></SuspenseWrapper>} />
@@ -127,10 +123,9 @@ function AppRouter() {
         <Route path="/safesuite/auth/reset-password" element={<Navigate to="/auth/reset-password" replace />} />
         <Route path="/safesuite/auth/mfa-recovery" element={<Navigate to="/auth/mfa-recovery" replace />} />
         <Route path="/safesuite/features" element={<SuspenseWrapper><WraythFeatures /></SuspenseWrapper>} />
-        <Route path="/safesuite/products/safetrack" element={<SuspenseWrapper><SafeTrackProduct /></SuspenseWrapper>} />
-        <Route path="/safesuite/products/safepass" element={<SuspenseWrapper><SafePassProduct /></SuspenseWrapper>} />
-        <Route path="/safesuite/products/safeweb" element={<SuspenseWrapper><SafeWebProduct /></SuspenseWrapper>} />
-        <Route path="/safesuite/products/safescan" element={<SuspenseWrapper><SafeScanProduct /></SuspenseWrapper>} />
+        <Route path="/safesuite/products/safepass" element={<SuspenseWrapper><VaultProduct /></SuspenseWrapper>} />
+        <Route path="/safesuite/products/safeweb" element={<SuspenseWrapper><WatchProduct /></SuspenseWrapper>} />
+        <Route path="/safesuite/products/safescan" element={<SuspenseWrapper><ScanProduct /></SuspenseWrapper>} />
 
         <Route element={
           <ProtectedRoute>
@@ -140,23 +135,21 @@ function AppRouter() {
           <Route path="/safesuite/dashboard" element={<SuspenseWrapper><WraythDashboard /></SuspenseWrapper>} />
           <Route path="/safesuite/assist" element={<SuspenseWrapper><WraythAssist /></SuspenseWrapper>} />
           <Route path="/safesuite/pass" element={<SuspenseWrapper><WraythPass /></SuspenseWrapper>} />
-          <Route path="/safesuite/pass/shared" element={<SuspenseWrapper><SafePassShared /></SuspenseWrapper>} />
-          <Route path="/safesuite/pass/emergency" element={<SuspenseWrapper><SafePassEmergency /></SuspenseWrapper>} />
-          <Route path="/safesuite/pass/extension" element={<SuspenseWrapper><SafePassExtension /></SuspenseWrapper>} />
-          <Route path="/safesuite/pass/reminders" element={<SuspenseWrapper><SafePassReminders /></SuspenseWrapper>} />
-          <Route path="/safesuite/pass/breach" element={<SuspenseWrapper><SafePassBreach /></SuspenseWrapper>} />
-          <Route path="/safesuite/pass/settings" element={<SuspenseWrapper variant="form"><SafePassSettings /></SuspenseWrapper>} />
-          <Route path="/safesuite/pass/notes" element={<SuspenseWrapper><SafePassNotes /></SuspenseWrapper>} />
-          <Route path="/safesuite/pass/cards" element={<SuspenseWrapper><SafePassCards /></SuspenseWrapper>} />
-          <Route path="/safesuite/pass/identity" element={<SuspenseWrapper><SafePassIdentity /></SuspenseWrapper>} />
-          <Route path="/safesuite/pass/health" element={<SuspenseWrapper><SafePassHealth /></SuspenseWrapper>} />
-          <Route path="/safesuite/pass/users" element={<SuspenseWrapper><SafePassUsers /></SuspenseWrapper>} />
+          <Route path="/safesuite/pass/shared" element={<SuspenseWrapper><VaultShared /></SuspenseWrapper>} />
+          <Route path="/safesuite/pass/emergency" element={<SuspenseWrapper><VaultEmergency /></SuspenseWrapper>} />
+          <Route path="/safesuite/pass/extension" element={<SuspenseWrapper><VaultExtension /></SuspenseWrapper>} />
+          <Route path="/safesuite/pass/reminders" element={<SuspenseWrapper><VaultReminders /></SuspenseWrapper>} />
+          <Route path="/safesuite/pass/breach" element={<SuspenseWrapper><VaultBreach /></SuspenseWrapper>} />
+          <Route path="/safesuite/pass/settings" element={<SuspenseWrapper variant="form"><VaultSettings /></SuspenseWrapper>} />
+          <Route path="/safesuite/pass/notes" element={<SuspenseWrapper><VaultNotes /></SuspenseWrapper>} />
+          <Route path="/safesuite/pass/cards" element={<SuspenseWrapper><VaultCards /></SuspenseWrapper>} />
+          <Route path="/safesuite/pass/identity" element={<SuspenseWrapper><VaultIdentity /></SuspenseWrapper>} />
+          <Route path="/safesuite/pass/health" element={<SuspenseWrapper><VaultHealth /></SuspenseWrapper>} />
+          <Route path="/safesuite/pass/users" element={<SuspenseWrapper><VaultUsers /></SuspenseWrapper>} />
           <Route path="/safesuite/scan" element={<SuspenseWrapper><WraythScan /></SuspenseWrapper>} />
-          <Route path="/safesuite/scan/settings" element={<SuspenseWrapper variant="form"><SafeScanSettings /></SuspenseWrapper>} />
+          <Route path="/safesuite/scan/settings" element={<SuspenseWrapper variant="form"><ScanSettings /></SuspenseWrapper>} />
           <Route path="/safesuite/web" element={<SuspenseWrapper><WraythWeb /></SuspenseWrapper>} />
-          <Route path="/safesuite/web/settings" element={<SuspenseWrapper variant="form"><SafeWebSettings /></SuspenseWrapper>} />
-          <Route path="/safesuite/track" element={<SuspenseWrapper><WraythTrack /></SuspenseWrapper>} />
-          <Route path="/safesuite/track/settings" element={<SuspenseWrapper variant="form"><SafeTrackSettings /></SuspenseWrapper>} />
+          <Route path="/safesuite/web/settings" element={<SuspenseWrapper variant="form"><WatchSettings /></SuspenseWrapper>} />
           <Route path="/safesuite/billing" element={<SuspenseWrapper><WraythBilling /></SuspenseWrapper>} />
           <Route path="/safesuite/settings" element={<SuspenseWrapper variant="form"><WraythSettings /></SuspenseWrapper>} />
         </Route>

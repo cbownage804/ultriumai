@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useWraythSubscription, useFeatureAccess } from '@/hooks/useSafeSuite';
-import { useSafePass } from '@/hooks/useSafePass';
+import { useVault } from '@/hooks/useVault';
 import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS, TierFeatures } from '@/config/safeSuiteTiers';
 import { supabase } from '@/integrations/supabase/client';
 import { safeSuiteProducts } from '@/components/safesuite/SafeSuiteProductIcons';
@@ -359,7 +359,7 @@ const productCardsConfig = [
     id: 'safepass',
     feature: 'safepass' as keyof TierFeatures,
     productLogo: safeSuiteProducts.safepass.logo,
-    title: 'SafePass',
+    title: 'Vault',
     description: 'Password Manager',
     path: '/safesuite/pass',
     statLabel: 'Passwords'
@@ -368,7 +368,7 @@ const productCardsConfig = [
     id: 'safescan',
     feature: 'safescan' as keyof TierFeatures,
     productLogo: safeSuiteProducts.safescan.logo,
-    title: 'SafeScan',
+    title: 'Scan',
     description: 'Security Scanner',
     path: '/safesuite/scan',
     statLabel: 'Scans this month'
@@ -377,7 +377,7 @@ const productCardsConfig = [
     id: 'safeweb',
     feature: 'safeweb' as keyof TierFeatures,
     productLogo: safeSuiteProducts.safeweb.logo,
-    title: 'SafeWeb',
+    title: 'Watch',
     description: 'Dark Web Monitoring',
     path: '/safesuite/web',
     statLabel: 'Assets monitored'
@@ -397,7 +397,7 @@ export default function WraythDashboard() {
   const { user } = useAuth();
   const { tier, tierConfig, isSubscribed } = useWraythSubscription();
   const { canUseFeature } = useFeatureAccess();
-  const { entries } = useSafePass();
+  const { entries } = useVault();
   
   const [stats, setStats] = useState<DashboardStats>({
     passwordCount: 0,
@@ -422,7 +422,7 @@ export default function WraythDashboard() {
           .eq('resource_type', 'scan')
           .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString());
         
-        // SafeWeb: Query safeweb_assets table for accurate count
+        // Watch: Query safeweb_assets table for accurate count
         const monitorsResult = await supabase
           .from('safeweb_assets')
           .select('id', { count: 'exact', head: true })

@@ -136,9 +136,9 @@ export const usePerformanceAnalytics = (timeRange: string = '7_days') => {
 
       // Application metrics
       const applicationMetrics: ApplicationMetric[] = [
-        { name: 'SafePass Vault', availability: 99.98, errors: 2, requests: 45230 },
-        { name: 'SafeScan Engine', availability: 99.95, errors: 5, requests: 12450 },
-        { name: 'SafeWeb Monitor', availability: 99.99, errors: 1, requests: 8920 },
+        { name: 'Vault Vault', availability: 99.98, errors: 2, requests: 45230 },
+        { name: 'Scan Engine', availability: 99.95, errors: 5, requests: 12450 },
+        { name: 'Watch Monitor', availability: 99.99, errors: 1, requests: 8920 },
         { name: 'Analytics API', availability: 99.92, errors: 8, requests: 34500 }
       ];
 

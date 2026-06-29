@@ -38,7 +38,7 @@ const WraythTeamsApps = ({ organizationName = "Your Company" }: WraythTeamsAppsP
   const safeSuiteApps = [
     {
       id: "safescan",
-      name: "SafeScan",
+      name: "Scan",
       icon: Scan,
       description: "URL threat scanner for checking links before clicking",
       color: "#2563eb",
@@ -47,7 +47,7 @@ const WraythTeamsApps = ({ organizationName = "Your Company" }: WraythTeamsAppsP
     },
     {
       id: "safepass",
-      name: "SafePass",
+      name: "Vault",
       icon: Key,
       description: "Secure password manager with auto-fill capabilities",
       color: "#059669",

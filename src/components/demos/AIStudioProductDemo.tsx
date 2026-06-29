@@ -59,7 +59,7 @@ const DEMO_QA: DemoQA[] = [
 4. **Click the link** and create a new secure password
 5. **Log in** with your new credentials
 
-💡 **Tip:** Use a password manager like **SafePass** to generate and store strong passwords securely!`
+💡 **Tip:** Use a password manager like **Vault** to generate and store strong passwords securely!`
   },
   {
     question: "What are your pricing plans?",

@@ -1,10 +1,10 @@
 /**
- * SafePass Settings Page
+ * Vault Settings Page
  */
 
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useSafePassAI } from '@/hooks/useSafePassAI';
+import { useVaultAI } from '@/hooks/useVaultAI';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,21 +27,21 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function SafePassSettings() {
+export default function VaultSettings() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [clearingPatterns, setClearingPatterns] = useState(false);
   
-  // SafePassAI settings
+  // VaultAI settings
   const { 
     isEnabled: aiEnabled, 
     learnPatterns, 
     toggleEnabled: setAiEnabled, 
     toggleLearnPatterns: setLearnPatterns,
     clearPatterns
-  } = useSafePassAI();
+  } = useVaultAI();
   
-  // SafePass-specific settings
+  // Vault-specific settings
   const [settings, setSettings] = useState({
     autoLockTimeout: 15,
     clipboardClearTime: 30,
@@ -60,7 +60,7 @@ export default function SafePassSettings() {
   const handleSaveSettings = async () => {
     setLoading(true);
     await new Promise(resolve => setTimeout(resolve, 1000));
-    toast.success('SafePass settings saved');
+    toast.success('Vault settings saved');
     setLoading(false);
   };
 
@@ -76,7 +76,7 @@ export default function SafePassSettings() {
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <KeyRound className="h-6 w-6 text-amber-500" />
-          <span className="text-amber-500">SafePass</span> Settings
+          <span className="text-amber-500">Vault</span> Settings
         </h1>
         <p className="text-muted-foreground">
           Configure your password vault preferences
@@ -138,12 +138,12 @@ export default function SafePassSettings() {
         </CardContent>
       </Card>
 
-      {/* SafePassAI Settings */}
+      {/* VaultAI Settings */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-amber-500" />
-            SafePassAI
+            VaultAI
           </CardTitle>
           <CardDescription>
             Intelligent credential suggestions and smart search
@@ -155,7 +155,7 @@ export default function SafePassSettings() {
               <div className="space-y-0.5">
                 <Label className="text-base flex items-center gap-2">
                   <Sparkles className="h-4 w-4" />
-                  Enable SafePassAI
+                  Enable VaultAI
                 </Label>
                 <p className="text-sm text-muted-foreground">
                   Get intelligent credential suggestions based on context

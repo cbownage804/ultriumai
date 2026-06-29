@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';
+import wraythLogo from '@/assets/wrayth-logo.png';
 
 export default function WraythNav() {
   const { user, signOut } = useAuth();
@@ -10,15 +10,15 @@ export default function WraythNav() {
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2">
-          <img src={safesuiteLogo} alt="Wrayth" className="h-8 w-auto" />
+          <img src={wraythLogo} alt="Wrayth" className="h-8 w-auto" width={32} height={32} />
           <span className="font-bold text-lg">Wrayth</span>
         </Link>
         <nav className="hidden md:flex items-center gap-6 text-sm">
           <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">Features</Link>
           <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
-          <Link to="/products/safepass" className="text-muted-foreground hover:text-foreground transition-colors">SafePass</Link>
-          <Link to="/products/safescan" className="text-muted-foreground hover:text-foreground transition-colors">SafeScan</Link>
-          <Link to="/products/safeweb" className="text-muted-foreground hover:text-foreground transition-colors">SafeWeb</Link>
+          <Link to="/products/safepass" className="text-muted-foreground hover:text-foreground transition-colors">Vault</Link>
+          <Link to="/products/safescan" className="text-muted-foreground hover:text-foreground transition-colors">Scan</Link>
+          <Link to="/products/safeweb" className="text-muted-foreground hover:text-foreground transition-colors">Watch</Link>
           <Link to="/products/safetrack" className="text-muted-foreground hover:text-foreground transition-colors">SafeTrack</Link>
           <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">Contact</Link>
         </nav>

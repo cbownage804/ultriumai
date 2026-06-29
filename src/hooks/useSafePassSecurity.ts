@@ -46,7 +46,7 @@ export interface EmergencyAccess {
   vault_name?: string;
 }
 
-export const useSafePassSecurity = () => {
+export const useVaultSecurity = () => {
   const [alerts, setAlerts] = useState<SecurityAlert[]>([]);
   const [securityScore, setSecurityScore] = useState<SecurityScore | null>(null);
   const [emergencyAccess, setEmergencyAccess] = useState<EmergencyAccess[]>([]);

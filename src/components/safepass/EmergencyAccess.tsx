@@ -90,7 +90,7 @@ export const EmergencyAccess = () => {
       return;
     }
 
-    toast.info('Emergency access setup requires the contact to have a SafePass account', {
+    toast.info('Emergency access setup requires the contact to have a Vault account', {
       description: 'They will receive an invitation email.',
       duration: 5000
     });

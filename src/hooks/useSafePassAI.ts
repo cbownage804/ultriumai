@@ -1,5 +1,5 @@
 /**
- * Hook for SafePassAI - intelligent credential matching and learning
+ * Hook for VaultAI - intelligent credential matching and learning
  */
 
 import { useState, useCallback, useMemo } from 'react';
@@ -32,7 +32,7 @@ interface DomainPreference {
 
 const PREFERENCES_KEY = 'safepass_ai_preferences';
 
-export function useSafePassAI() {
+export function useVaultAI() {
   const { user } = useAuth();
   const [isEnabled, setIsEnabled] = useState(() => {
     try {

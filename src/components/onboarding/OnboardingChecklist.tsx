@@ -81,7 +81,7 @@ export const OnboardingChecklist = ({
         {
           id: 'first_password',
           title: 'Save your first password',
-          description: 'Store a password in SafePass vault',
+          description: 'Store a password in Vault vault',
           icon: <Key className="h-4 w-4" />,
           href: '/safesuite/pass',
           isComplete: completedItems.includes('first_password'),

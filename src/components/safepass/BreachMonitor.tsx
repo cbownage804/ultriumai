@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useSafePass } from '@/hooks/useSafePass';
+import { useVault } from '@/hooks/useSafePass';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
 import { supabase } from '@/integrations/supabase/client';
 import { BreachCheckService, EmailBreachResult } from '@/services/breachCheckService';
@@ -52,7 +52,7 @@ interface ScanResult {
 
 export const BreachMonitor = () => {
   const { user } = useAuth();
-  const { getEntryPassword, loadAllEntries } = useSafePass();
+  const { getEntryPassword, loadAllEntries } = useVault();
   const { isUnlocked } = useMasterPassword();
   
   const [isScanning, setIsScanning] = useState(false);

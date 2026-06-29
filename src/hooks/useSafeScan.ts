@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from '@/hooks/use-toast';
 
-interface SafeScanResult {
+interface ScanResult {
   success: boolean;
   scan_type: string;
   safe: boolean;
@@ -26,9 +26,9 @@ interface PasswordScanResult {
   breach_count?: number;
 }
 
-export const useSafeScan = () => {
+export const useScan = () => {
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<SafeScanResult | null>(null);
+  const [results, setResults] = useState<ScanResult | null>(null);
   const [scanHistory, setScanHistory] = useState<any[]>([]);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -66,7 +66,7 @@ export const useSafeScan = () => {
   };
 
   // URL/Link Scanning
-  const scanURL = async (url: string): Promise<SafeScanResult | null> => {
+  const scanURL = async (url: string): Promise<ScanResult | null> => {
     if (!url) {
       toast({
         title: "Error",
@@ -84,7 +84,7 @@ export const useSafeScan = () => {
 
       if (error) throw error;
 
-      const result: SafeScanResult = {
+      const result: ScanResult = {
         success: true,
         scan_type: 'url',
         safe: data.safe,
@@ -119,7 +119,7 @@ export const useSafeScan = () => {
   };
 
   // Document Scanning
-  const scanDocument = async (file: File): Promise<SafeScanResult | null> => {
+  const scanDocument = async (file: File): Promise<ScanResult | null> => {
     if (!file) {
       toast({
         title: "Error",
@@ -142,7 +142,7 @@ export const useSafeScan = () => {
 
       if (error) throw error;
 
-      const result: SafeScanResult = {
+      const result: ScanResult = {
         success: true,
         scan_type: 'document',
         safe: data.safe,
@@ -182,7 +182,7 @@ export const useSafeScan = () => {
     sender: string;
     content?: string;
     attachments?: string[];
-  }): Promise<SafeScanResult | null> => {
+  }): Promise<ScanResult | null> => {
     if (!emailData.subject || !emailData.sender) {
       toast({
         title: "Error",
@@ -206,7 +206,7 @@ export const useSafeScan = () => {
 
       if (error) throw error;
 
-      const result: SafeScanResult = {
+      const result: ScanResult = {
         success: true,
         scan_type: 'email',
         safe: data.action === 'allow',

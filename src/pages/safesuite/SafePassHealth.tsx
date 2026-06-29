@@ -1,7 +1,7 @@
 import { PasswordHealthDashboard } from '@/components/safepass/PasswordHealthDashboard';
 import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
 
-const SafePassHealth = () => {
+const VaultHealth = () => {
   return (
     <FeatureGate feature="safepass">
       <div className="space-y-6">
@@ -15,4 +15,4 @@ const SafePassHealth = () => {
   );
 };
 
-export default SafePassHealth;
+export default VaultHealth;

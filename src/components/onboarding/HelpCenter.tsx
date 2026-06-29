@@ -125,7 +125,7 @@ const GUIDES: GuideInfo[] = [
   {
     id: 'threat-monitoring',
     title: 'Understanding Threat Monitoring',
-    description: 'How to use SafeScan and dark web monitoring effectively.',
+    description: 'How to use Scan and dark web monitoring effectively.',
     type: 'video',
     duration: '8 min',
   },

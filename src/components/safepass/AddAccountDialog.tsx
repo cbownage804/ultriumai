@@ -1,5 +1,5 @@
 /**
- * AddAccountDialog - Dialog to link a new SafePass account or authenticate for switching
+ * AddAccountDialog - Dialog to link a new Vault account or authenticate for switching
  */
 
 import { useState } from 'react';
@@ -117,7 +117,7 @@ export function AddAccountDialog({
           <DialogDescription>
             {mode === 'authenticate' 
               ? 'Enter your password to switch to this account.'
-              : 'Link another SafePass account for quick switching.'}
+              : 'Link another Vault account for quick switching.'}
           </DialogDescription>
         </DialogHeader>
 

@@ -1,11 +1,11 @@
 /**
- * SafePass Breach Monitor - Breach scanning within Wrayth
+ * Vault Breach Monitor - Breach scanning within Wrayth
  */
 
 import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
 import { BreachMonitor } from '@/components/safepass/BreachMonitor';
 
-export default function SafePassBreach() {
+export default function VaultBreach() {
   return (
     <FeatureGate feature="safepass">
       <BreachMonitor />

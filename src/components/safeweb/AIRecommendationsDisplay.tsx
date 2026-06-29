@@ -1,5 +1,5 @@
 /**
- * SafeWeb AI Recommendations Display
+ * Watch AI Recommendations Display
  * A polished, structured presentation of AI-generated security advice
  */
 

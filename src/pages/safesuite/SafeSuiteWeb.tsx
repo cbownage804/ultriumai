@@ -105,7 +105,7 @@ export default function WraythWeb() {
       if (assetsError) throw assetsError;
       setAssets(assetsData || []);
     } catch (error) {
-      console.error('Error loading SafeWeb data:', error);
+      console.error('Error loading Watch data:', error);
     } finally {
       setLoading(false);
     }
@@ -264,7 +264,7 @@ export default function WraythWeb() {
         if (error.message?.includes('Usage limit exceeded')) {
           toast({
             title: "Limit Reached",
-            description: "You've reached your SafeWeb asset limit. Please upgrade to add more.",
+            description: "You've reached your Watch asset limit. Please upgrade to add more.",
             variant: "destructive"
           });
           return;
@@ -387,7 +387,7 @@ export default function WraythWeb() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="p-4 rounded-xl bg-gradient-to-br from-violet-500/20 via-purple-500/10 to-fuchsia-500/20 border border-violet-500/20 shadow-[0_0_60px_rgba(139,92,246,0.15)]">
-              <img src={safewebLogo} alt="SafeWeb" className="h-32 w-auto" />
+              <img src={safewebLogo} alt="Watch" className="h-32 w-auto" />
             </div>
             <p className="text-gray-400">
               Monitor the dark web for your exposed credentials and data

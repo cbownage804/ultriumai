@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
-export interface SafeWebAsset {
+export interface WatchAsset {
   id: string;
   asset_type: 'email' | 'domain' | 'brand' | 'executive' | 'ip_range';
   asset_value: string;
@@ -15,10 +15,10 @@ export interface SafeWebAsset {
   created_at: string;
   updated_at: string;
   msp_client_id?: string;
-  safeweb_threats?: SafeWebThreat[];
+  safeweb_threats?: WatchThreat[];
 }
 
-export interface SafeWebThreat {
+export interface WatchThreat {
   id: string;
   threat_type: 'credential' | 'data_breach' | 'threat_actor' | 'marketplace' | 'brand_mention' | 'executive_mention';
   title: string;
@@ -66,10 +66,10 @@ export interface MSPClient {
   };
 }
 
-export const useSafeWebData = () => {
+export const useWatchData = () => {
   const { user } = useAuth();
-  const [assets, setAssets] = useState<SafeWebAsset[]>([]);
-  const [threats, setThreats] = useState<SafeWebThreat[]>([]);
+  const [assets, setAssets] = useState<WatchAsset[]>([]);
+  const [threats, setThreats] = useState<WatchThreat[]>([]);
   const [mspClients, setMspClients] = useState<MSPClient[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -107,7 +107,7 @@ export const useSafeWebData = () => {
       const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
-      setThreats((data || []) as SafeWebThreat[]);
+      setThreats((data || []) as WatchThreat[]);
     } catch (err) {
       setError('Failed to fetch threats');
       console.error('Error fetching threats:', err);

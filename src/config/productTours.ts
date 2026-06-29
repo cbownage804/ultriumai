@@ -17,21 +17,21 @@ export const SAFESUITE_TOUR_STEPS: TourStep[] = [
   },
   {
     id: 'safepass',
-    title: 'SafePass - Password Vault',
+    title: 'Vault - Password Vault',
     description: 'Store all your passwords securely in one place. We use military-grade AES-256 encryption to keep your credentials safe from hackers.',
     target: '[data-tour="safepass"]',
     position: 'bottom',
   },
   {
     id: 'safescan',
-    title: 'SafeScan - Threat Detection',
+    title: 'Scan - Threat Detection',
     description: 'Scan your emails, files, URLs, and attachments for threats. Our AI-powered scanner catches phishing attempts, malware, and suspicious content.',
     target: '[data-tour="safescan"]',
     position: 'bottom',
   },
   {
     id: 'safeweb',
-    title: 'SafeWeb - Dark Web Monitoring',
+    title: 'Watch - Dark Web Monitoring',
     description: 'We continuously monitor the dark web for your credentials and personal data. Get instant alerts if your information appears in a data breach.',
     target: '[data-tour="safeweb"]',
     position: 'bottom',
@@ -317,7 +317,7 @@ export const WHATS_NEW_TOUR_STEPS: TourStep[] = [
 export const SAFEPASS_TOUR_STEPS: TourStep[] = [
   {
     id: 'welcome',
-    title: 'SafePass Password Vault 🔐',
+    title: 'Vault Password Vault 🔐',
     description: 'Store, organize, and autofill your passwords securely. Let\'s show you the key features.',
     position: 'center',
   },

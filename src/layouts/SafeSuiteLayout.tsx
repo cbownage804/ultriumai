@@ -73,7 +73,7 @@ const getNavItems = () => [
   },
   {
     id: 'safepass',
-    label: 'SafePass',
+    label: 'Vault',
     path: getWraythPath('/pass'),
     icon: null,
     productLogo: safeSuiteProducts.safepass.logo,
@@ -98,7 +98,7 @@ const getNavItems = () => [
   },
   {
     id: 'safescan',
-    label: 'SafeScan',
+    label: 'Scan',
     path: getWraythPath('/scan'),
     icon: null,
     productLogo: safeSuiteProducts.safescan.logo,
@@ -110,7 +110,7 @@ const getNavItems = () => [
   },
   {
     id: 'safeweb',
-    label: 'SafeWeb',
+    label: 'Watch',
     path: getWraythPath('/web'),
     icon: null,
     productLogo: safeSuiteProducts.safeweb.logo,

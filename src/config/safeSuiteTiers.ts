@@ -132,21 +132,21 @@ export const FEATURE_DESCRIPTIONS: Record<keyof TierFeatures, {
   limitUnitPlural: string;
 }> = {
   safepass: {
-    name: 'SafePass',
+    name: 'Vault',
     description: 'Zero-knowledge password vault with enterprise-grade encryption',
     icon: 'KeyRound',
     limitUnit: 'password',
     limitUnitPlural: 'passwords'
   },
   safescan: {
-    name: 'SafeScan',
+    name: 'Scan',
     description: 'Unified email, URL, and document security scanner',
     icon: 'ScanSearch',
     limitUnit: 'scan/mo',
     limitUnitPlural: 'scans/mo'
   },
   safeweb: {
-    name: 'SafeWeb',
+    name: 'Watch',
     description: 'Dark web monitoring with AI threat analysis',
     icon: 'Globe',
     limitUnit: 'monitored asset',

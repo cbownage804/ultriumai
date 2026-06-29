@@ -1,5 +1,5 @@
 /**
- * SafePass Security Architecture - Public Customer-Facing Page
+ * Vault Security Architecture - Public Customer-Facing Page
  * Explains zero-knowledge encryption and security measures in detail
  */
 
@@ -137,11 +137,11 @@ const breachProtections = [
 
 const faqs = [
   {
-    question: 'Can SafePass employees see my passwords?',
+    question: 'Can Vault employees see my passwords?',
     answer: 'No. Your vault is encrypted with a key derived from your master password, which never leaves your device. We only store encrypted blobs that are mathematically impossible to decrypt without your master password.'
   },
   {
-    question: 'What happens if SafePass gets hacked?',
+    question: 'What happens if Vault gets hacked?',
     answer: 'Attackers would only obtain encrypted data that is useless without your master password. With 600,000 PBKDF2 iterations and AES-256-GCM encryption, brute-forcing a single vault would take longer than the age of the universe.'
   },
   {
@@ -149,16 +149,16 @@ const faqs = [
     answer: 'No. This is by design. If we could reset your password, it would mean we have access to your encryption keys — which would defeat the purpose of zero-knowledge architecture. We recommend setting up emergency access contacts.'
   },
   {
-    question: 'How is SafePass different from browser password managers?',
-    answer: 'Browser password managers often sync passwords to cloud servers in ways that may be accessible to the provider. SafePass encrypts everything locally before any data leaves your device, and uses stronger key derivation (600K iterations vs. Chrome\'s ~10K).'
+    question: 'How is Vault different from browser password managers?',
+    answer: 'Browser password managers often sync passwords to cloud servers in ways that may be accessible to the provider. Vault encrypts everything locally before any data leaves your device, and uses stronger key derivation (600K iterations vs. Chrome\'s ~10K).'
   },
   {
-    question: 'Is SafePass audited by third parties?',
+    question: 'Is Vault audited by third parties?',
     answer: 'Our security architecture is based on industry-standard, peer-reviewed cryptographic primitives (AES-256-GCM, PBKDF2). We follow OWASP guidelines and are working toward SOC 2 Type II certification.'
   }
 ];
 
-export default function SafePassSecurityPage() {
+export default function VaultSecurityPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
       {/* Header */}
@@ -166,14 +166,14 @@ export default function SafePassSecurityPage() {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/safesuite/products/safepass" className="flex items-center gap-3">
             <div className="h-12 w-12 rounded-xl bg-black flex items-center justify-center overflow-hidden border border-amber-500/30 shadow-lg shadow-amber-500/10">
-              <img src={safepassLogo} alt="SafePass" className="h-9 w-9 object-contain" />
+              <img src={safepassLogo} alt="Vault" className="h-9 w-9 object-contain" />
             </div>
-            <span className="text-lg font-semibold text-amber-400">SafePass Security</span>
+            <span className="text-lg font-semibold text-amber-400">Vault Security</span>
           </Link>
           <div className="flex items-center gap-4">
             <Link to="/products/safepass">
               <Button variant="ghost" className="text-gray-400 hover:text-white">
-                ← Back to SafePass
+                ← Back to Vault
               </Button>
             </Link>
             <Link to="/auth?tab=signup">
@@ -202,7 +202,7 @@ export default function SafePassSecurityPage() {
           </div>
           
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            How SafePass Protects Your Data
+            How Vault Protects Your Data
           </h1>
           <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-8">
             A transparent, in-depth look at our zero-knowledge security architecture. 
@@ -257,7 +257,7 @@ export default function SafePassSecurityPage() {
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-white mb-4">
-              Six Pillars of SafePass Security
+              Six Pillars of Vault Security
             </h2>
             <p className="text-gray-400 max-w-2xl mx-auto">
               Every layer is designed with the assumption that attackers will eventually breach our infrastructure. 
@@ -303,7 +303,7 @@ export default function SafePassSecurityPage() {
               How Zero-Knowledge Works
             </h2>
             <p className="text-gray-400">
-              A step-by-step breakdown of what happens when you use SafePass
+              A step-by-step breakdown of what happens when you use Vault
             </p>
           </div>
           
@@ -352,11 +352,11 @@ export default function SafePassSecurityPage() {
               Critical Difference
             </Badge>
             <h2 className="text-3xl font-bold text-white mb-4">
-              Why SafePass Is Safer Than Browser Password Managers
+              Why Vault Is Safer Than Browser Password Managers
             </h2>
             <p className="text-gray-400 max-w-2xl mx-auto">
               Browser password managers are designed for ease of use, not for protecting your most sensitive credentials against modern threats. 
-              SafePass is purpose-built as a zero-knowledge password manager with a breach-assume security model.
+              Vault is purpose-built as a zero-knowledge password manager with a breach-assume security model.
             </p>
           </div>
           
@@ -388,7 +388,7 @@ export default function SafePassSecurityPage() {
             
             <Card className="bg-[#141414] border-amber-500/30">
               <CardContent className="p-6">
-                <h3 className="text-lg font-semibold text-amber-400 mb-4">SafePass</h3>
+                <h3 className="text-lg font-semibold text-amber-400 mb-4">Vault</h3>
                 <ul className="space-y-3 text-sm text-gray-300">
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0 mt-0.5" />
@@ -416,7 +416,7 @@ export default function SafePassSecurityPage() {
             <p className="text-center text-lg">
               <span className="text-red-400 font-semibold">If a system can reset your passwords, it can also access them.</span>
               <br />
-              <span className="text-amber-400 font-bold">SafePass cannot.</span>
+              <span className="text-amber-400 font-bold">Vault cannot.</span>
             </p>
           </div>
           
@@ -430,7 +430,7 @@ export default function SafePassSecurityPage() {
                 <thead>
                   <tr className="bg-[#141414]">
                     <th className="text-left p-4 text-gray-400 font-medium">Security Feature</th>
-                    <th className="text-center p-4 text-amber-400 font-medium">SafePass</th>
+                    <th className="text-center p-4 text-amber-400 font-medium">Vault</th>
                     <th className="text-center p-4 text-gray-400 font-medium">Typical Browser Manager</th>
                   </tr>
                 </thead>
@@ -455,7 +455,7 @@ export default function SafePassSecurityPage() {
                 Designed for Breach Scenarios
               </h3>
               <p className="text-gray-400 text-sm mb-4">
-                SafePass is built under a simple assumption: <strong className="text-white">Attackers will eventually breach infrastructure.</strong>
+                Vault is built under a simple assumption: <strong className="text-white">Attackers will eventually breach infrastructure.</strong>
               </p>
               <p className="text-gray-400 text-sm">If that happens, attackers obtain:</p>
               <ul className="mt-3 space-y-2 text-sm">
@@ -526,7 +526,7 @@ export default function SafePassSecurityPage() {
               Security Comparison vs Industry
             </h2>
             <p className="text-gray-400">
-              How SafePass stacks up against other password managers
+              How Vault stacks up against other password managers
             </p>
           </div>
           
@@ -535,7 +535,7 @@ export default function SafePassSecurityPage() {
               <thead>
                 <tr className="bg-[#141414]">
                   <th className="text-left p-4 text-gray-400 font-medium">Feature</th>
-                  <th className="text-center p-4 text-amber-400 font-medium">SafePass</th>
+                  <th className="text-center p-4 text-amber-400 font-medium">Vault</th>
                   <th className="text-center p-4 text-gray-400 font-medium">Others</th>
                 </tr>
               </thead>
@@ -598,7 +598,7 @@ export default function SafePassSecurityPage() {
             Ready to Secure Your Passwords?
           </h2>
           <p className="text-gray-400 mb-8">
-            Join thousands of users who trust SafePass with their most sensitive credentials.
+            Join thousands of users who trust Vault with their most sensitive credentials.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/auth?tab=signup">
@@ -609,7 +609,7 @@ export default function SafePassSecurityPage() {
             </Link>
             <Link to="/products/safepass">
               <Button size="lg" variant="outline" className="border-gray-700 text-gray-300 hover:bg-gray-800">
-                Learn More About SafePass
+                Learn More About Vault
               </Button>
             </Link>
           </div>
@@ -620,7 +620,7 @@ export default function SafePassSecurityPage() {
       <footer className="py-8 border-t border-gray-800">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-gray-500 text-sm">
-            <p>© {new Date().getFullYear()} UltriumAI. SafePass is part of the Wrayth security bundle.</p>
+            <p>© {new Date().getFullYear()} UltriumAI. Vault is part of the Wrayth security bundle.</p>
             <div className="flex items-center gap-4">
               <Link to="/privacy" className="hover:text-gray-300">Privacy Policy</Link>
               <Link to="/security" className="hover:text-gray-300">Security</Link>

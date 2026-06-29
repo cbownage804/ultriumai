@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { useSafePass, PasswordEntry as SafePassEntry } from '@/hooks/useSafePass';
+import { useVault, PasswordEntry as VaultEntry } from '@/hooks/useSafePass';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
 import { encryptData } from '@/utils/crypto';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -91,7 +91,7 @@ export const PasswordVault = () => {
     entries: safePassEntries, 
     isLoading: vaultsLoading,
     createEntry, 
-    deleteEntry: deleteSafePassEntry,
+    deleteEntry: deleteVaultEntry,
     updateEntry,
     createVault,
     loadVaults,
@@ -102,7 +102,7 @@ export const PasswordVault = () => {
     getEntryWebsite,
     getEntryNotes,
     generatePassword: generateSecurePassword
-  } = useSafePass();
+  } = useVault();
   const { isUnlocked, masterPassword } = useMasterPassword();
   
   // Initialize with cached data if available
@@ -303,7 +303,7 @@ export const PasswordVault = () => {
   const handleSaveEntry = async () => {
     // Must be unlocked to encrypt & save
     if (!isUnlocked || !masterPassword) {
-      toast.error('Unlock SafePass to save passwords.');
+      toast.error('Unlock Vault to save passwords.');
       return;
     }
 
@@ -406,7 +406,7 @@ export const PasswordVault = () => {
     if (!confirm('Are you sure you want to delete this password entry?')) return;
 
     try {
-      const success = await deleteSafePassEntry(entryId);
+      const success = await deleteVaultEntry(entryId);
       if (success) {
         // Invalidate cache
         if (selectedVault) {

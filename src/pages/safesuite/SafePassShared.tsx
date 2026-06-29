@@ -1,5 +1,5 @@
 /**
- * SafePass Shared - View passwords shared with you (Business feature only)
+ * Vault Shared - View passwords shared with you (Business feature only)
  */
 
 import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
@@ -51,7 +51,7 @@ function SharedPasswordsTeaser() {
   );
 }
 
-export default function SafePassShared() {
+export default function VaultShared() {
   const { isBusiness, loading: subLoading } = useWraythSubscription();
 
   // Business tier gate with teaser

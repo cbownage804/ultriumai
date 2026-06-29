@@ -90,9 +90,9 @@ const Terms = () => {
                 <div className="bg-muted/50 p-4 rounded-lg">
                   <h4 className="font-medium mb-2">Wrayth Applications</h4>
                   <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                    <li>SafePass – Password vault and management</li>
-                    <li>SafeScan – Threat detection and scanning</li>
-                    <li>SafeWeb – Browser security and monitoring</li>
+                    <li>Vault – Password vault and management</li>
+                    <li>Scan – Threat detection and scanning</li>
+                    <li>Watch – Browser security and monitoring</li>
                     <li>SafeTrack – Asset and device tracking</li>
                     <li>SafeAssist – AI-powered support assistant</li>
                   </ul>

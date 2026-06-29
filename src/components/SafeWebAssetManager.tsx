@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useSafeWebData, SafeWebAsset } from "@/hooks/useSafeWebData";
+import { useWatchData, WatchAsset } from "@/hooks/useWatchData";
 import { useWraythUsage } from "@/hooks/useSafeSuite";
 import { 
   Plus, 
@@ -30,8 +30,8 @@ interface Props {
   showAddForm?: boolean;
 }
 
-export const SafeWebAssetManager = ({ clientId, showAddForm = true }: Props) => {
-  const { assets, loading, addAsset, updateAsset, deleteAsset, triggerScan, fetchAssets } = useSafeWebData();
+export const WatchAssetManager = ({ clientId, showAddForm = true }: Props) => {
+  const { assets, loading, addAsset, updateAsset, deleteAsset, triggerScan, fetchAssets } = useWatchData();
   const { toast } = useToast();
   const { refreshUsage } = useWraythUsage();
   
@@ -89,7 +89,7 @@ export const SafeWebAssetManager = ({ clientId, showAddForm = true }: Props) => 
     setIsAddingAsset(false);
   };
 
-  const handleStatusToggle = async (asset: SafeWebAsset) => {
+  const handleStatusToggle = async (asset: WatchAsset) => {
     const newStatus = asset.status === 'active' ? 'paused' : 'active';
     const result = await updateAsset(asset.id, { status: newStatus });
     

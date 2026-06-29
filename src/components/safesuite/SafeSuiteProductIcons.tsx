@@ -9,19 +9,19 @@ export { safesuiteLogo };
 
 export const safeSuiteProducts = {
   safepass: {
-    name: "SafePass",
+    name: "Vault",
     logo: safepassLogo,
     description: "Zero-knowledge password vault with AES-256-GCM encryption and breach monitoring",
     features: ["600K PBKDF2 key derivation", "Built-in TOTP authenticator", "Password health dashboard"],
   },
   safescan: {
-    name: "SafeScan",
+    name: "Scan",
     logo: safescanLogo,
     description: "Unified security scanner for emails, URLs, and documents with AI threat detection",
     features: ["Bulk scanning up to 50 items", "Scheduled recurring scans", "PDF/CSV reports"],
   },
   safeweb: {
-    name: "SafeWeb",
+    name: "Watch",
     logo: safewebLogo,
     description: "Breach database monitoring with AI-powered threat analysis and remediation guidance",
     features: ["Aggregated breach intelligence", "AI threat response plans", "Exposure risk scoring"],

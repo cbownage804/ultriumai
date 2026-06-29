@@ -159,7 +159,7 @@ interface ActionDialogState {
   loading: boolean;
 }
 
-const SafePassUsers = () => {
+const VaultUsers = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
   const { isBusiness, loading: subLoading, tier } = useWraythSubscription();
@@ -768,4 +768,4 @@ const SafePassUsers = () => {
   );
 };
 
-export default SafePassUsers;
+export default VaultUsers;

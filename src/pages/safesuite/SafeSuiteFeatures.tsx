@@ -1,6 +1,6 @@
 /**
  * Wrayth Features - Unified page showcasing all Wrayth tools
- * Consolidates SafePass, SafeScan, SafeWeb, SafeTrack into one clean experience
+ * Consolidates Vault, Scan, Watch, SafeTrack into one clean experience
  */
 
 import Navigation from "@/components/Navigation";
@@ -26,7 +26,7 @@ import safetrackLogo from "@/assets/safetrack-logo.png";
 const tools = [
   {
     id: "safepass",
-    name: "SafePass",
+    name: "Vault",
     tagline: "Enterprise Password Management",
     description: "Military-grade encryption for all your credentials with zero-knowledge architecture.",
     icon: Key,
@@ -46,7 +46,7 @@ const tools = [
   },
   {
     id: "safescan",
-    name: "SafeScan",
+    name: "Scan",
     tagline: "AI-Powered Threat Scanner",
     description: "Unified scanning for emails, documents, and URLs with real-time AI threat detection.",
     icon: Scan,
@@ -66,7 +66,7 @@ const tools = [
   },
   {
     id: "safeweb",
-    name: "SafeWeb",
+    name: "Watch",
     tagline: "Dark Web Intelligence",
     description: "Continuous monitoring of the dark web for your exposed credentials and data leaks.",
     icon: Globe,
@@ -204,7 +204,7 @@ export default function WraythFeatures() {
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">Get All Tools in One Suite</h2>
           <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Wrayth includes SafePass, SafeScan, SafeWeb, and SafeTrack — all integrated and working together to protect your digital life.
+            Wrayth includes Vault, Scan, Watch, and SafeTrack — all integrated and working together to protect your digital life.
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">

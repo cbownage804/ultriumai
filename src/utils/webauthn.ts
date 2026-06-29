@@ -1,5 +1,5 @@
 /**
- * WebAuthn/FIDO2 Utilities for SafePass Hardware Key Support
+ * WebAuthn/FIDO2 Utilities for Vault Hardware Key Support
  * 
  * Enables users to use hardware security keys (YubiKey, etc.) or 
  * platform authenticators (Touch ID, Windows Hello) as a second factor
@@ -9,7 +9,7 @@
 import { supabase } from '@/integrations/supabase/client';
 
 // WebAuthn configuration
-const RP_NAME = 'SafePass';
+const RP_NAME = 'Vault';
 const RP_ID = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
 const CHALLENGE_TIMEOUT = 60000; // 60 seconds
 

@@ -196,7 +196,7 @@ export const VANGUARD_CORTEX_TOUR: TourStep[] = [
 export const SAFESUITE_VAULT_TOUR: TourStep[] = [
   {
     id: 'welcome',
-    title: 'SafePass Vault 🔐',
+    title: 'Vault Vault 🔐',
     description: 'Your secure password vault. AES-256 encrypted, zero-knowledge architecture.',
     position: 'center',
   },
@@ -232,7 +232,7 @@ export const SAFESUITE_VAULT_TOUR: TourStep[] = [
 export const SAFESUITE_SCAN_TOUR: TourStep[] = [
   {
     id: 'welcome',
-    title: 'SafeScan Threat Scanner 🔍',
+    title: 'Scan Threat Scanner 🔍',
     description: 'AI-powered scanning for emails, URLs, and files. Catch threats before they catch you.',
     position: 'center',
   },
@@ -260,7 +260,7 @@ export const SAFESUITE_SCAN_TOUR: TourStep[] = [
   {
     id: 'complete',
     title: 'Ready to Scan! 🔬',
-    description: 'Got a suspicious email? Paste it in and let SafeScan analyze it.',
+    description: 'Got a suspicious email? Paste it in and let Scan analyze it.',
     position: 'center',
   },
 ];

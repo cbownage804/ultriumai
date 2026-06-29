@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-export const SafePassLandingDemo = () => {
+export const VaultLandingDemo = () => {
   const [activeTab, setActiveTab] = useState('vault');
   const [showPasswords, setShowPasswords] = useState<Record<number, boolean>>({});
   

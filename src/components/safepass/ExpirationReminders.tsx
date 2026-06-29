@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useSafePass } from '@/hooks/useSafePass';
+import { useVault } from '@/hooks/useVault';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -45,7 +45,7 @@ interface Reminder {
 
 export const ExpirationReminders = () => {
   const { user } = useAuth();
-  const { entries, updateEntry } = useSafePass();
+  const { entries, updateEntry } = useVault();
   
   const [isLoading, setIsLoading] = useState(false);
   const [expiringEntries, setExpiringEntries] = useState<ExpiringEntry[]>([]);

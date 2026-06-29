@@ -1,9 +1,9 @@
 /**
- * SafePassAI Smart Search - AI-powered credential search with intelligent suggestions
+ * VaultAI Smart Search - AI-powered credential search with intelligent suggestions
  */
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { useSafePassAI } from '@/hooks/useSafePassAI';
+import { useVaultAI } from '@/hooks/useVaultAI';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,7 +38,7 @@ interface PasswordEntry {
   last_used_at?: string;
 }
 
-interface SafePassAISearchProps {
+interface VaultAISearchProps {
   entries: PasswordEntry[];
   onSelect: (entry: PasswordEntry) => void;
   onSearch: (query: string) => void;
@@ -46,14 +46,14 @@ interface SafePassAISearchProps {
   className?: string;
 }
 
-export function SafePassAISearch({
+export function VaultAISearch({
   entries,
   onSelect,
   onSearch,
   placeholder = "Search passwords...",
   className,
-}: SafePassAISearchProps) {
-  const { isEnabled, smartSearch, recordSelection, extractDomain } = useSafePassAI();
+}: VaultAISearchProps) {
+  const { isEnabled, smartSearch, recordSelection, extractDomain } = useVaultAI();
   
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);

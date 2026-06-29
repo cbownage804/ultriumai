@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
-import { useSafePass } from '@/hooks/useSafePass';
+import { useVault } from '@/hooks/useVault';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -33,7 +33,7 @@ interface PasswordIssue {
 export const PasswordHealthDashboard = () => {
   const { user } = useAuth();
   const { isUnlocked, masterPassword } = useMasterPassword();
-  const { getEntryPassword, loadAllEntries } = useSafePass();
+  const { getEntryPassword, loadAllEntries } = useVault();
   
   const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState(false);

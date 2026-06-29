@@ -3,7 +3,7 @@
  */
 
 import { FeatureGate, TierLimitInfo } from '@/components/safesuite/SafeSuitePaywall';
-import { SafeScanApp } from '@/components/apps/SafeScanApp';
+import { ScanApp } from '@/components/apps/SafeScanApp';
 import { motion } from 'framer-motion';
 import { AnimatedHeader, GlowContainer } from '@/components/safesuite/SafeSuiteEffects';
 import safescanLogo from '@/assets/safescan-logo.png';
@@ -30,7 +30,7 @@ export default function WraythScan() {
         >
           <AnimatedHeader
             logo={safescanLogo}
-            logoAlt="SafeScan"
+            logoAlt="Scan"
             tagline="Scan emails, URLs, and documents for security threats"
             theme="safescan"
             badge="Real-time Protection"
@@ -50,7 +50,7 @@ export default function WraythScan() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3, duration: 0.4 }}
         >
-          <SafeScanApp isWhiteLabeled={false} brandName="Wrayth" hideHeader={true} />
+          <ScanApp isWhiteLabeled={false} brandName="Wrayth" hideHeader={true} />
         </motion.div>
         </div>
       </div>
