@@ -811,7 +811,6 @@ export default function WraythWeb() {
             )}
           </DialogContent>
         </Dialog>
-        </div>
       </div>
     </FeatureGate>
   );
