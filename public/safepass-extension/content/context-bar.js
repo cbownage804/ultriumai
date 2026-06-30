@@ -83,9 +83,10 @@
         ${reasons.length ? `<div class="wrayth-panel-section"><div class="wrayth-panel-label">Why Ray says this</div><ul>${reasons.map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ul></div>` : ''}
         ${positives.length ? `<div class="wrayth-panel-section"><div class="wrayth-panel-label">What looks normal</div><ul>${positives.map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ul></div>` : ''}
         ${pw ? renderPasswordIntel(pw) : ''}
+        ${ctx.signals && ctx.signals.secureProvider ? `<div class="wrayth-panel-section"><div class="wrayth-panel-label">Ray can secure this account</div><ul><li>I have a guided playbook for ${escapeHtml(ctx.signals.secureProvider)}. I'll walk you through MFA, passkeys, and recovery — one step at a time.</li></ul></div>` : ''}
       </div>
       <div class="wrayth-panel-actions">
-        <button class="wrayth-panel-btn wrayth-panel-btn-primary" data-act="open">Open Ray</button>
+        ${ctx.signals && ctx.signals.secureProvider ? `<button class="wrayth-panel-btn wrayth-panel-btn-primary" data-act="secure">Secure with Ray</button>` : `<button class="wrayth-panel-btn wrayth-panel-btn-primary" data-act="open">Open Ray</button>`}
         <button class="wrayth-panel-btn" data-act="leave" ${lvl === 'danger' ? '' : 'hidden'}>Leave site</button>
         <button class="wrayth-panel-btn" data-act="close">Dismiss</button>
       </div>
@@ -95,6 +96,9 @@
         const act = b.getAttribute('data-act');
         if (act === 'open') {
           try { chrome.runtime.sendMessage({ type: 'wrayth:open-sidepanel' }).catch?.(() => {}); } catch (_) {}
+        } else if (act === 'secure') {
+          const prov = ctx.signals && ctx.signals.secureProvider;
+          try { chrome.runtime.sendMessage({ type: 'wrayth:open-url', url: `https://wrayth.app/app/ray/secure/${prov}` }).catch?.(() => {}); } catch (_) {}
         } else if (act === 'leave') {
           location.href = 'about:blank';
         } else {
@@ -103,6 +107,7 @@
       });
     });
   }
+
 
   function renderPasswordIntel(pw) {
     const items = [];
