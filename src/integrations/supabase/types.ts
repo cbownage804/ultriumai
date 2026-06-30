@@ -17621,6 +17621,69 @@ export type Database = {
         }
         Relationships: []
       }
+      ray_notices: {
+        Row: {
+          body: string | null
+          confidence: number
+          created_at: string
+          dedupe_key: string
+          entity_id: string | null
+          entity_kind: string | null
+          id: string
+          kind: string
+          metadata: Json
+          prepared_answer: Json | null
+          priority: number
+          resolved_at: string | null
+          snoozed_until: string | null
+          source_signal: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          confidence?: number
+          created_at?: string
+          dedupe_key: string
+          entity_id?: string | null
+          entity_kind?: string | null
+          id?: string
+          kind: string
+          metadata?: Json
+          prepared_answer?: Json | null
+          priority?: number
+          resolved_at?: string | null
+          snoozed_until?: string | null
+          source_signal?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          confidence?: number
+          created_at?: string
+          dedupe_key?: string
+          entity_id?: string | null
+          entity_kind?: string | null
+          id?: string
+          kind?: string
+          metadata?: Json
+          prepared_answer?: Json | null
+          priority?: number
+          resolved_at?: string | null
+          snoozed_until?: string | null
+          source_signal?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ray_profiles: {
         Row: {
           audience: string | null
