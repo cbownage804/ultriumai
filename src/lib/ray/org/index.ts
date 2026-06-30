@@ -139,7 +139,7 @@ export async function fetchLatestHealth(orgId: string): Promise<RayOrgHealth | n
     .order('snapshot_date', { ascending: false })
     .limit(1)
     .maybeSingle();
-  return (data as RayOrgHealth | null) ?? null;
+  return (data as unknown as RayOrgHealth | null) ?? null;
 }
 
 export async function fetchProfiles(orgId: string): Promise<RayOrgProfile[]> {
@@ -148,7 +148,7 @@ export async function fetchProfiles(orgId: string): Promise<RayOrgProfile[]> {
     .select('*')
     .eq('org_id', orgId)
     .order('priority_rank', { ascending: true });
-  return ((data as RayOrgProfile[] | null) ?? []).map((p) => ({
+  return ((data as unknown as RayOrgProfile[] | null) ?? []).map((p) => ({
     ...p,
     top_risks: Array.isArray(p.top_risks) ? p.top_risks : [],
   }));
@@ -161,7 +161,7 @@ export async function fetchMissions(orgId: string): Promise<RayOrgMission[]> {
     .eq('org_id', orgId)
     .order('status', { ascending: true })
     .order('created_at', { ascending: false });
-  return (data as RayOrgMission[] | null) ?? [];
+  return (data as unknown as RayOrgMission[] | null) ?? [];
 }
 
 export async function fetchTimeline(orgId: string, limit = 25): Promise<RayOrgTimelineEvent[]> {
@@ -171,7 +171,7 @@ export async function fetchTimeline(orgId: string, limit = 25): Promise<RayOrgTi
     .eq('org_id', orgId)
     .order('occurred_at', { ascending: false })
     .limit(limit);
-  return (data as RayOrgTimelineEvent[] | null) ?? [];
+  return (data as unknown as RayOrgTimelineEvent[] | null) ?? [];
 }
 
 export async function fetchTodayBriefing(orgId: string): Promise<RayOrgBriefing | null> {
@@ -183,7 +183,7 @@ export async function fetchTodayBriefing(orgId: string): Promise<RayOrgBriefing 
     .eq('org_id', orgId)
     .eq('brief_date', today)
     .maybeSingle();
-  return (data as RayOrgBriefing | null) ?? null;
+  return (data as unknown as RayOrgBriefing | null) ?? null;
 }
 
 export async function fetchMspBriefing(userId: string): Promise<RayOrgBriefing | null> {
@@ -195,7 +195,7 @@ export async function fetchMspBriefing(userId: string): Promise<RayOrgBriefing |
     .eq('msp_owner_user_id', userId)
     .eq('brief_date', today)
     .maybeSingle();
-  return (data as RayOrgBriefing | null) ?? null;
+  return (data as unknown as RayOrgBriefing | null) ?? null;
 }
 
 export async function fetchDepartmentScores(orgId: string): Promise<RayOrgDepartmentScore[]> {
@@ -207,7 +207,7 @@ export async function fetchDepartmentScores(orgId: string): Promise<RayOrgDepart
     .order('snapshot_date', { ascending: false });
   const seen = new Set<string>();
   const out: RayOrgDepartmentScore[] = [];
-  for (const row of ((data as RayOrgDepartmentScore[] | null) ?? [])) {
+  for (const row of ((data as unknown as RayOrgDepartmentScore[] | null) ?? [])) {
     if (seen.has(row.department)) continue;
     seen.add(row.department);
     out.push(row);
