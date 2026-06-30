@@ -84,40 +84,16 @@ type NavSection = {
 };
 
 function getSections(): NavSection[] {
+  // Consolidated navigation — Ray lives everywhere, not in the nav.
+  // Home, Vault (passwords/2FA), Scan (threats), Watch (exposure/identity), Settings.
   return [
     {
       id: 'main',
       items: [
-        { label: 'Home', path: getWraythPath('/dashboard'), icon: Home },
-        { label: 'Morning Brief', path: getWraythPath('/brief'), icon: Sparkles },
-        { label: 'Ray', path: getWraythPath('/ray'), icon: Eye },
-        { label: 'Missions', path: getWraythPath('/missions'), icon: Target },
-        { label: 'Timeline', path: getWraythPath('/timeline'), icon: Activity },
-        { label: 'Trends', path: getWraythPath('/trends'), icon: LineChart },
-      ],
-    },
-    {
-      id: 'protection',
-      label: 'Protection',
-      items: [
-        { label: 'Passwords', path: getWraythPath('/passwords'), icon: KeyRound, feature: 'safepass' },
-        { label: '2FA',       path: getWraythPath('/mfa'),       icon: ShieldCheck, feature: 'safepass' },
-        { label: 'Threats',   path: getWraythPath('/threats'),   icon: ShieldAlert, feature: 'safescan' },
-        { label: 'Exposure',  path: getWraythPath('/exposure'),  icon: Globe, feature: 'safeweb' },
-        { label: 'Identity',  path: getWraythPath('/identity'),  icon: UserCircle2 },
-        { label: 'Devices',   path: getWraythPath('/devices'),   icon: Monitor },
-        { label: 'Reports',   path: getWraythPath('/reports'),   icon: FileText, badge: 'SOON' },
-      ],
-    },
-    {
-      id: 'workspace',
-      label: 'Workspace',
-      items: [
-        { label: 'Organizations', path: getWraythPath('/passwords/users'), icon: Building2 },
-        { label: 'Team',          path: getWraythPath('/passwords/team'),  icon: Users },
-        { label: 'Shared',        path: getWraythPath('/passwords/shared'), icon: Share2 },
-        { label: 'API',           path: getWraythPath('/settings'),    icon: Code2, badge: 'SOON' },
-        { label: 'Extensions',    path: getWraythPath('/passwords/extension'), icon: Plug },
+        { label: 'Home',     path: getWraythPath('/dashboard'), icon: Home },
+        { label: 'Vault',    path: getWraythPath('/passwords'), icon: KeyRound, feature: 'safepass' },
+        { label: 'Scan',     path: getWraythPath('/threats'),   icon: ShieldAlert, feature: 'safescan' },
+        { label: 'Watch',    path: getWraythPath('/exposure'),  icon: Globe, feature: 'safeweb' },
       ],
     },
   ];
