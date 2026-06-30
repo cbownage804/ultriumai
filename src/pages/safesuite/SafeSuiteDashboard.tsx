@@ -69,7 +69,7 @@ function SecurityScoreCard({ stats }: { stats: DashboardStats }) {
 
   const score = Math.max(0, Math.min(100, calculateScore()));
   const scoreColor = score >= 80 ? 'text-emerald-400' : score >= 60 ? 'text-yellow-400' : 'text-red-400';
-  const strokeColor = score >= 80 ? 'stroke-emerald-500' : score >= 60 ? 'stroke-yellow-500' : 'stroke-red-500';
+  const strokeColor = score >= 80 ? 'stroke-emerald-500' : score >= 60 ? 'stroke-primary' : 'stroke-red-500';
 
   return (
     <motion.div
@@ -294,7 +294,7 @@ function RecentActivityCard({ activities }: { activities: ActivityItem[] }) {
 
   const getIconColor = (type: string) => {
     switch (type) {
-      case 'password': return 'text-amber-400 bg-amber-500/10';
+      case 'password': return 'text-primary bg-primary/10';
       case 'scan': return 'text-red-400 bg-red-500/10';
       case 'breach': return 'text-violet-400 bg-violet-500/10';
       case 'asset': return 'text-emerald-400 bg-emerald-500/10';
