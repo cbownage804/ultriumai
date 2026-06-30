@@ -61,7 +61,6 @@ import { cn } from '@/lib/utils';
 import { FloatingSafeAssist } from '@/components/safeassist/FloatingSafeAssist';
 import { AskRayPalette } from '@/components/safeassist/AskRayPalette';
 import { FloatingSafeAssistProvider } from '@/contexts/FloatingSafeAssistContext';
-import { MFAOnboardingGate } from '@/components/safesuite/MFAOnboardingGate';
 import { RayContextProvider } from '@/components/ray/RayContext';
 import { SidebarBriefing } from '@/components/ray/SidebarBriefing';
 
