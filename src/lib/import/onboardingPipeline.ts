@@ -395,6 +395,8 @@ export async function runRayBaseline(
     .from('ray_profiles')
     .update({ onboarded_at: new Date().toISOString(), import_source: 'baseline' })
     .eq('user_id', userId);
+  await recordOnboardingHandoff(userId, 'baseline', profile, intel, score, breach.degraded);
+  void prewarmFirstBriefing();
   onProgress({ phase: 'done', done: 1, total: 1, message: 'Done.' });
   return { parsed: raw.length, imported: 0, skipped: 0, intel, score, breachDegraded: breach.degraded };
 }
