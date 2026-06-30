@@ -357,13 +357,13 @@ function WraythLayoutInner() {
 }
 
 export default function WraythLayout() {
+  // MFA is optional and lives inside Ray onboarding + /app/mfa. We no longer
+  // force a 2FA wall in front of the app.
   return (
-    <MFAOnboardingGate>
-      <FloatingSafeAssistProvider>
-        <RayContextProvider>
-          <WraythLayoutInner />
-        </RayContextProvider>
-      </FloatingSafeAssistProvider>
-    </MFAOnboardingGate>
+    <FloatingSafeAssistProvider>
+      <RayContextProvider>
+        <WraythLayoutInner />
+      </RayContextProvider>
+    </FloatingSafeAssistProvider>
   );
 }
