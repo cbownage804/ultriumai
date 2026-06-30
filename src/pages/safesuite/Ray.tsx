@@ -51,17 +51,6 @@ const SUGGESTED_QUESTIONS = [
   'What happened overnight?',
 ];
 
-function pageHrefFor(area?: string | null): string {
-  switch (area) {
-    case 'passwords': return '/app/passwords';
-    case 'threats': return '/app/threats';
-    case 'exposure': return '/app/exposure';
-    case 'identity': return '/app/identity';
-    case 'devices': return '/app/devices';
-    case 'reports': return '/app/timeline';
-    default: return '/app/missions';
-  }
-}
 
 function priorityTone(p: number) {
   if (p >= 70) return 'border-red-500/30 bg-red-500/[0.04]';
@@ -86,7 +75,6 @@ export default function Ray() {
   const {
     recommendations,
     memory,
-    startRecommendation,
     snoozeRecommendation,
     completeRecommendation,
     dismissRecommendation,
