@@ -84,22 +84,16 @@ export function RayConversationCard({ context, healthyLine, className }: Props) 
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
-                {top.actionHref ? (
-                  <Button asChild size="sm" className="bg-violet-500 hover:bg-violet-400 text-white">
-                    <Link to={top.actionHref}>{top.actionLabel ?? 'Fix Now'}</Link>
-                  </Button>
-                ) : (
-                  <Button
-                    size="sm"
-                    className="bg-violet-500 hover:bg-violet-400 text-white"
-                    onClick={() => completeRecommendation(top.id)}
-                  >
-                    {top.actionLabel ?? 'Fix Now'}
-                  </Button>
-                )}
-                {top.estimatedMinutes != null && (
+                <Button
+                  size="sm"
+                  className="bg-violet-500 hover:bg-violet-400 text-white"
+                  onClick={() => completeRecommendation(top.id)}
+                >
+                  Fix Now
+                </Button>
+                {top.estimated_fix_seconds != null && top.estimated_fix_seconds > 0 && (
                   <span className="text-xs text-slate-400">
-                    Estimated time · {top.estimatedMinutes} minute{top.estimatedMinutes === 1 ? '' : 's'}
+                    Estimated time · {Math.max(1, Math.round(top.estimated_fix_seconds / 60))} min
                   </span>
                 )}
               </div>
