@@ -130,6 +130,14 @@ function AppRouter() {
 
         <Route element={
           <ProtectedRoute>
+            <SuspenseWrapper><RayOnboarding /></SuspenseWrapper>
+          </ProtectedRoute>
+        }>
+          <Route path="/onboarding/ray" element={null} />
+        </Route>
+
+        <Route element={
+          <ProtectedRoute>
             <SuspenseWrapper><WraythLayout /></SuspenseWrapper>
           </ProtectedRoute>
         }>
