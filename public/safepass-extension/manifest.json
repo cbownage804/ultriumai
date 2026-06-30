@@ -84,10 +84,11 @@
     },
     {
       "matches": ["<all_urls>"],
-      "js": ["content/detector.js", "content/context-bar.js"],
+      "js": ["content/detector.js", "content/context-bar.js", "content/concepts.js"],
       "css": ["content/ray-overlay.css"],
       "run_at": "document_idle"
     }
+
   ],
   "background": {
     "service_worker": "background.js",
