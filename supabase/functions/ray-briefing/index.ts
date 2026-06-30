@@ -57,7 +57,7 @@ serve(async (req) => {
       ?? "there";
 
     // Gather context in parallel
-    const [profile, memory, timeline, findings, passwords, monitors, insights] = await Promise.all([
+    const [profile, memory, timeline, findings, passwords, monitors, insights, openRecs, lastBriefing] = await Promise.all([
       supabase.from("ray_profiles").select("*").eq("user_id", user.id).maybeSingle(),
       supabase.from("ray_memory").select("key,value,source").eq("user_id", user.id).limit(50),
       supabase.from("ray_timeline").select("event_type,summary,severity,occurred_at").eq("user_id", user.id).order("occurred_at", { ascending: false }).limit(15),
@@ -65,7 +65,20 @@ serve(async (req) => {
       supabase.from("password_entries").select("id,password_strength").eq("user_id", user.id),
       supabase.from("safeweb_assets").select("id,asset_type,status").eq("user_id", user.id).eq("status", "active"),
       supabase.from("ray_insights").select("kind,area,severity,title,observed_at,status").eq("user_id", user.id).eq("status", "open").order("observed_at", { ascending: false }).limit(50),
+      supabase.from("ray_recommendations").select("id,title,body,priority,page_context").eq("user_id", user.id).eq("status", "open").order("priority", { ascending: false }).limit(8),
+      supabase.from("ray_briefings").select("id").eq("user_id", user.id).order("generated_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
+
+    // Detect first-run handoff from onboarding: no prior briefing AND the
+    // profile was onboarded in the last 10 minutes. The first brief should
+    // explicitly acknowledge what Ray learned during setup.
+    const onboardedAt = profile.data?.onboarded_at ? new Date(profile.data.onboarded_at) : null;
+    const isFirstRun =
+      !lastBriefing.data &&
+      !!onboardedAt &&
+      Date.now() - onboardedAt.getTime() < 10 * 60 * 1000;
+    const onboardingMemory = (memory.data ?? []).find((m: any) => m.key === "onboarding.summary")?.value ?? null;
+
 
     const passwordStats = {
       total: passwords.data?.length ?? 0,
@@ -93,11 +106,14 @@ serve(async (req) => {
 
     const contextPayload = {
       first_name: firstName,
+      is_first_run: isFirstRun,
+      onboarding_summary: onboardingMemory,
       profile: profile.data ?? null,
       memory: memory.data ?? [],
       recent_timeline: timeline.data ?? [],
       open_findings: findings.data ?? [],
       open_insights: insights.data ?? [],
+      existing_open_recommendations: openRecs.data ?? [],
       overnight_delta: overnight,
       password_stats: passwordStats,
       monitored_count: monitors.data?.length ?? 0,
@@ -112,20 +128,24 @@ serve(async (req) => {
       });
     }
 
-    const userPrompt = `Generate a short, conversational morning briefing for ${firstName}.
-Greeting must be 1 short sentence (e.g. "Good morning, ${firstName}.").
+    const firstRunInstruction = isFirstRun
+      ? `\nFIRST-RUN HANDOFF: This is the user's very first briefing — they just finished onboarding with you minutes ago. Acknowledge it warmly in the greeting (e.g. "Welcome in, ${firstName}. Here's where we stand."). In the bullets, reference what you found DURING SETUP using onboarding_summary (e.g. "I went through your ${onboardingMemory?.total ?? 0} credentials. ${onboardingMemory?.breached ?? 0} were in known breaches."). Prefer surfacing the recommendations already in existing_open_recommendations rather than inventing new ones — those were generated from the user's real data during setup. Do not say "good morning" or pretend time has passed.`
+      : `\nReturning user — keep continuity with recent_timeline and prior memory. Reference the most recent meaningful event if it adds value.`;
+
+    const userPrompt = `Generate a short, conversational ${isFirstRun ? "first-run welcome" : "morning"} briefing for ${firstName}.
+Greeting must be 1 short sentence.
 Bullets: 2-4 plain, calm observations grounded in the context.
 Recommendations: 0-3 items. TITLES MUST BE OUTCOME-FOCUSED and written as something you (Ray) will do FOR the user.
 GOOD titles: "Start protecting your passwords", "Let me monitor your dark-web exposure", "Turn on MFA for your Google account".
 BAD titles: "Establish password monitoring", "Configure breach detection", "Setup 2FA".
-The body explains what it actually does in 1 sentence.
+The body explains what it actually does in 1 sentence.${firstRunInstruction}
 
 Context JSON:
 ${JSON.stringify(contextPayload).slice(0, 8000)}
 
 Return JSON ONLY in this exact shape:
 {
-  "greeting": "Good morning, <name>.",
+  "greeting": "short sentence",
   "bullets": ["short observation", "..."],
   "recommendations": [
     { "title": "outcome-focused action Ray will take", "body": "what it does", "priority": 0-100, "estimated_fix_seconds": <int>, "page_context": "passwords"|"threats"|"exposure"|"identity"|"devices"|"reports"|"home" }
@@ -188,15 +208,26 @@ Return JSON ONLY in this exact shape:
       parsed = { greeting: `Hello, ${firstName}.`, bullets: [String(content).slice(0, 200)], recommendations: [] };
     }
 
-    // Persist recommendations and collect their IDs.
-    const recIds: string[] = [];
+    // On first run, prefer the recommendations the onboarding pipeline
+    // already created from real findings. Skip any AI-generated rec whose
+    // title duplicates an existing open one.
+    const existingTitles = new Set(
+      (openRecs.data ?? []).map((r: any) => String(r.title ?? "").toLowerCase().trim()),
+    );
+    const recIds: string[] = isFirstRun
+      ? (openRecs.data ?? []).slice(0, 5).map((r: any) => r.id)
+      : [];
+
     if (Array.isArray(parsed.recommendations)) {
       for (const rec of parsed.recommendations.slice(0, 5)) {
+        const title = String(rec.title ?? "").slice(0, 200);
+        if (!title) continue;
+        if (existingTitles.has(title.toLowerCase().trim())) continue;
         const { data: inserted } = await supabase
           .from("ray_recommendations")
           .insert({
             user_id: user.id,
-            title: String(rec.title ?? "").slice(0, 200),
+            title,
             body: String(rec.body ?? "").slice(0, 1000),
             priority: Math.max(0, Math.min(100, Number(rec.priority ?? 50))),
             status: "open",
@@ -208,6 +239,7 @@ Return JSON ONLY in this exact shape:
         if (inserted?.id) recIds.push(inserted.id);
       }
     }
+
 
     const { data: saved } = await supabase
       .from("ray_briefings")
