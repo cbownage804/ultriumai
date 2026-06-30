@@ -28,6 +28,8 @@ import { Volume2, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMorningBrief, type RayBriefRow, type RayBriefFeedback } from "@/lib/ray/morningBrief";
 import { useRayBrain } from "@/lib/ray/brain";
+import { useAuth } from "@/hooks/useAuth";
+import { playbookForRecommendation, startPlaybook } from "@/lib/ray/playbooks";
 import { useRayVoice } from "@/hooks/useRayVoice";
 import { cn } from "@/lib/utils";
 import { ScoreCelebration } from "@/components/ray/ScoreCelebration";
@@ -145,6 +147,7 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
     useRayBrain({ pageContext: "home" });
   const [busyId, setBusyId] = useState<string | null>(null);
   const voice = useRayVoice();
+  const { user } = useAuth();
 
   const brief = today;
   const greeting = brief?.greeting ?? (firstName ? `Good morning, ${firstName}.` : "Good morning.");
@@ -335,6 +338,15 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
                         className="h-7 px-3 text-xs bg-violet-500 hover:bg-violet-400 text-white border-0"
                         onClick={() => withBusy(rec.id, async () => {
                           await startRecommendation(rec.id);
+                          if (user) {
+                            const slug = playbookForRecommendation(rec);
+                            const run = slug ? await startPlaybook(user.id, slug, { sourceRecommendationId: rec.id }) : null;
+                            if (run) {
+                              toast.success("Ray is on it.", { description: rec.title });
+                              navigate(`/app/ray/playbook/${run.id}`);
+                              return;
+                            }
+                          }
                           toast.success("Ray is on it.", { description: rec.title });
                         })}
                       >
