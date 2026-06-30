@@ -118,9 +118,9 @@ export default function MorningBrief() {
   return (
     <div className="space-y-6 max-w-4xl">
       <RayPageHeader
-        eyebrow="MORNING BRIEF"
+        subtitle="MORNING BRIEF"
         title="Ray's morning brief"
-        subtitle={lastSeen ? `Catching you up since ${lastSeen.toLocaleString()}.` : 'Catching you up.'}
+        description={lastSeen ? `Catching you up since ${lastSeen.toLocaleString()}.` : 'Catching you up.'}
       />
 
       <motion.section
