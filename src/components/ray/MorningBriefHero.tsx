@@ -206,6 +206,12 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
         I checked everything overnight. Here's what matters today.
       </p>
       <p className="relative mt-1 text-xs text-slate-500 italic">{personality}</p>
+      {memoryLine && (
+        <p className="relative mt-2 inline-flex items-center gap-1.5 rounded-full border border-violet-400/20 bg-violet-500/5 px-2.5 py-1 text-[11px] text-violet-200/90">
+          <Sparkles className="h-3 w-3" />
+          {memoryLine}
+        </p>
+      )}
 
       {/* Status cards — scannable in one second. */}
       <div className="relative mt-5 grid grid-cols-2 sm:grid-cols-4 gap-2">
