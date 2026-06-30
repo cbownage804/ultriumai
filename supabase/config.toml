@@ -418,3 +418,6 @@ verify_jwt = true
 
 [functions.ray-breach-check]
 verify_jwt = true
+
+[functions.ray-briefing]
+verify_jwt = true
