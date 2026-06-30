@@ -164,13 +164,62 @@
   const pwObserver = new MutationObserver(() => watchPasswordFields());
   pwObserver.observe(document.documentElement, { childList: true, subtree: true });
 
+  // ---- Wrayth 4.1: rich page snapshot for "Explain this page" ----
+  function visibleText(el) {
+    try {
+      const s = (el?.innerText || el?.textContent || '').trim().replace(/\s+/g, ' ');
+      return s.slice(0, 140);
+    } catch (_) { return ''; }
+  }
+  function describeForm(form) {
+    const fields = Array.from(form.querySelectorAll('input, select, textarea'))
+      .slice(0, 8)
+      .map((el) => {
+        const type = (el.getAttribute('type') || el.tagName || '').toLowerCase();
+        const name = el.getAttribute('name') || el.getAttribute('autocomplete') || el.getAttribute('id') || '';
+        const label = el.getAttribute('aria-label') || el.getAttribute('placeholder') || name || type;
+        return `${type}:${String(label).slice(0, 40)}`;
+      });
+    const submit = form.querySelector('button[type="submit"], input[type="submit"], button');
+    return { fields, submitText: submit ? visibleText(submit).slice(0, 40) : null };
+  }
+  function snapshot() {
+    const headings = Array.from(document.querySelectorAll('h1, h2, h3'))
+      .slice(0, 10).map(visibleText).filter(Boolean);
+    const buttons = Array.from(document.querySelectorAll('button, a[role="button"], input[type="submit"]'))
+      .slice(0, 20).map(visibleText).filter(Boolean).slice(0, 12);
+    const forms = Array.from(document.querySelectorAll('form')).slice(0, 5).map(describeForm);
+    const metaDesc = document.querySelector('meta[name="description"]')?.getAttribute('content') || null;
+    const ctx = last || classify();
+    return {
+      url: location.href,
+      host: location.hostname,
+      title: document.title,
+      metaDescription: metaDesc ? String(metaDesc).slice(0, 280) : null,
+      headings,
+      buttons,
+      forms,
+      type: ctx.type,
+      signals: ctx.signals,
+      provider: ctx.signals?.secureProvider || null,
+      capturedAt: Date.now(),
+    };
+  }
+
   // Answer requests from sidepanel/popup via background relay
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg?.type === 'wrayth:get-context') {
       sendResponse(last || classify());
+      return true;
     }
-    return true;
+    if (msg?.type === 'wrayth:get-snapshot') {
+      sendResponse(snapshot());
+      return true;
+    }
+    return false;
   });
 
   window.__wraythGetContext = () => last || classify();
+  window.__wraythGetSnapshot = snapshot;
 })();
+
