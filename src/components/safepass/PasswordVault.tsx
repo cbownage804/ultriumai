@@ -47,6 +47,7 @@ import { CreditCards } from './CreditCards';
 import { IdentityProfiles } from './IdentityProfiles';
 import { PasswordHealthDashboard } from './PasswordHealthDashboard';
 import { VaultLoadingScreen } from './VaultLoadingScreen';
+import { PasswordScoreBlock } from './PasswordScoreBlock';
 import { toast } from 'sonner';
 import DOMPurify from 'dompurify';
 import { AnimatePresence } from 'framer-motion';
@@ -479,12 +480,15 @@ export const PasswordVault = () => {
 
   const weakPasswords = entries.filter(entry => entry.password_strength < 60).length;
   const strongPasswords = entries.filter(entry => entry.password_strength >= 80).length;
+  const overallScore = entries.length === 0
+    ? 100
+    : Math.round(entries.reduce((sum, e) => sum + (e.password_strength || 0), 0) / entries.length);
 
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Tabs Navigation */}
       <Tabs defaultValue="passwords" className="w-full">
-        <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid mb-4 sm:mb-6 bg-[#1a1a1a] border border-primary/10 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid mb-4 sm:mb-6 bg-[#1a1a1a] border border-primary/10 h-auto p-1">
           <TabsTrigger value="passwords" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-primary/20 data-[state=active]:text-primary touch-target py-2.5 sm:py-2">
             <Key className="h-4 w-4" />
             <span className="hidden sm:inline text-sm">Passwords</span>
@@ -500,10 +504,6 @@ export const PasswordVault = () => {
           <TabsTrigger value="identity" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-primary/20 data-[state=active]:text-primary touch-target py-2.5 sm:py-2">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline text-sm">Identity</span>
-          </TabsTrigger>
-          <TabsTrigger value="2fa" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-primary/20 data-[state=active]:text-primary touch-target py-2.5 sm:py-2">
-            <Lock className="h-4 w-4" />
-            <span className="hidden sm:inline text-sm">2FA</span>
           </TabsTrigger>
           <TabsTrigger value="health" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-primary/20 data-[state=active]:text-primary touch-target py-2.5 sm:py-2">
             <Heart className="h-4 w-4" />
@@ -697,70 +697,16 @@ export const PasswordVault = () => {
       </div>
     </div>
 
-      {/* Security Overview - Clickable to sort */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card 
-          className={`border-primary/20 bg-card/80 cursor-pointer transition-all hover:border-primary/50 ${sortBy === 'strong' ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}`}
-          onClick={() => setSortBy(sortBy === 'strong' ? 'all' : 'strong')}
-        >
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Shield className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Security Health</p>
-                  <p className="text-2xl font-light text-primary tabular-nums">{strongPasswords}<span className="text-sm text-muted-foreground font-light ml-1">strong</span></p>
-                </div>
-              </div>
-              {sortBy === 'strong' && (
-                <Badge variant="outline" className="border-primary/50 text-primary text-xs">
-                  Sorted
-                </Badge>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card 
-          className={`border-red-500/20 bg-card/80 cursor-pointer transition-all hover:border-red-500/50 ${sortBy === 'weak' ? 'ring-2 ring-red-500 ring-offset-2 ring-offset-background' : ''}`}
-          onClick={() => setSortBy(sortBy === 'weak' ? 'all' : 'weak')}
-        >
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 rounded-lg bg-red-500/10">
-                  <AlertTriangle className="h-5 w-5 text-red-500" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Breach Status</p>
-                  <p className="text-2xl font-light text-red-500 tabular-nums">{weakPasswords}<span className="text-sm text-muted-foreground font-light ml-1">need attention</span></p>
-                </div>
-              </div>
-              {sortBy === 'weak' && (
-                <Badge variant="outline" className="border-red-500/50 text-red-500 text-xs">
-                  Sorted
-                </Badge>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-primary/20 bg-card/80">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Lock className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Passwords Stored</p>
-                <p className="text-2xl font-light text-foreground tabular-nums">{entries.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Unified Password Score */}
+      <PasswordScoreBlock
+        score={overallScore}
+        stats={[
+          { label: 'Strong passwords', value: strongPasswords, tone: 'success' },
+          { label: 'Weak passwords', value: weakPasswords, tone: 'warning' },
+          { label: 'Breaches', value: 0, tone: 'warning' },
+          { label: 'Accounts using MFA', value: 0 },
+        ]}
+      />
 
       {/* Search and Filters */}
       <div className="flex flex-col md:flex-row gap-4">
@@ -853,10 +799,8 @@ export const PasswordVault = () => {
           <IdentityProfiles />
         </TabsContent>
 
-        {/* 2FA / TOTP Tab */}
-        <TabsContent value="2fa">
-          <TOTPManager />
-        </TabsContent>
+
+
 
         {/* Password Health Tab */}
         <TabsContent value="health">

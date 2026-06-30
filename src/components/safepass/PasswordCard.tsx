@@ -1,25 +1,16 @@
+/**
+ * PasswordCard — Apple-Passwords-inspired row. Conversational status,
+ * favicon-first identity, Ray annotations on rows that need attention.
+ */
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { 
-  Eye, 
-  EyeOff, 
-  Copy, 
-  Star,
-  Globe,
-  CreditCard,
-  FileText,
-  Lock,
-  Edit,
-  Trash2,
-  ExternalLink
-} from 'lucide-react';
+import { Eye, EyeOff, Copy, Star, Globe, Edit, Trash2, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
-import { EntryAttachments } from './EntryAttachments';
-import { ShareEntry } from './ShareEntry';
+import { lookupCatalog } from '@/lib/ray/mfaCatalog';
+import { formatDistanceToNowStrict } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface PasswordCardProps {
   entry: {
@@ -33,25 +24,65 @@ interface PasswordCardProps {
     is_favorite: boolean;
     password_strength: number;
     vault_id: string;
+    created_at?: string;
   };
+  /** Whether this account has a TOTP authenticator stored. */
+  hasMfa?: boolean;
+  /** True if this service appears in a known breach dataset. */
+  hasBreach?: boolean;
   onEdit: () => void;
   onDelete: () => void;
   onToggleFavorite: () => void;
 }
 
-const categoryIcons: Record<string, typeof Globe> = {
-  login: Globe,
-  General: Globe,
-  payment: CreditCard,
-  identity: FileText,
-  'secure-note': Lock,
-};
+function hostnameFor(website: string, title: string): string {
+  try {
+    const url = website ? (website.startsWith('http') ? website : `https://${website}`) : '';
+    if (url) return new URL(url).hostname.replace(/^www\./, '');
+  } catch {/* noop */}
+  return title?.toLowerCase().replace(/\s+/g, '') || '';
+}
 
-export const PasswordCard = ({ entry, onEdit, onDelete, onToggleFavorite }: PasswordCardProps) => {
+function faviconFor(host: string): string | null {
+  if (!host) return null;
+  return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=64`;
+}
+
+export const PasswordCard = ({
+  entry,
+  hasMfa = false,
+  hasBreach = false,
+  onEdit,
+  onDelete,
+  onToggleFavorite,
+}: PasswordCardProps) => {
   const [showPassword, setShowPassword] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
 
-  const CategoryIcon = categoryIcons[entry.category] || Globe;
+  const host = hostnameFor(entry.website, entry.title);
+  const favicon = faviconFor(host);
+  const catalog = (() => {
+    try { return lookupCatalog(host); } catch { return null; }
+  })();
+  const supportsMfa = !!catalog;
+
+  const lastChanged = entry.created_at
+    ? `Last changed ${formatDistanceToNowStrict(new Date(entry.created_at))} ago`
+    : null;
+
+  const status: { text: string; tone: 'good' | 'warn' | 'bad' } = (() => {
+    if (hasBreach) return { text: 'Found in a known breach', tone: 'bad' };
+    if (entry.password_strength < 60) return { text: 'Weak password', tone: 'bad' };
+    if (hasMfa) return { text: 'Protected with 2FA', tone: 'good' };
+    if (supportsMfa) return { text: 'Strong password · Supports 2FA', tone: 'good' };
+    return { text: 'Strong password · No breach detected', tone: 'good' };
+  })();
+
+  const rayNote = (() => {
+    if (hasBreach) return "Ray: this password appeared in a breach. I'd rotate it now.";
+    if (entry.password_strength < 60) return "Ray: this password is weak. I can generate a stronger one for you.";
+    if (supportsMfa && !hasMfa) return `Ray: ${host || entry.title} supports 2FA. I'd enable it next.`;
+    return null;
+  })();
 
   const handleCopy = async (text: string, type: string) => {
     try {
@@ -62,191 +93,100 @@ export const PasswordCard = ({ entry, onEdit, onDelete, onToggleFavorite }: Pass
     }
   };
 
-  const getStrengthInfo = (strength: number) => {
-    if (strength >= 80) return { color: 'bg-primary', text: 'No Breaches', textColor: 'text-primary', badgeBg: 'bg-primary/10 border-primary/30' };
-    if (strength >= 60) return { color: 'bg-primary', text: 'Medium', textColor: 'text-primary', badgeBg: 'bg-primary/10 border-primary/30' };
-    return { color: 'bg-red-500', text: 'Weak', textColor: 'text-red-500', badgeBg: 'bg-red-500/10 border-red-500/30' };
-  };
-
-  const strengthInfo = getStrengthInfo(entry.password_strength);
-
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      whileHover={{ scale: 1.01 }}
+      exit={{ opacity: 0, y: -6 }}
       transition={{ duration: 0.2 }}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
+      className="group"
     >
-      <Card className="group relative overflow-hidden border border-primary/10 bg-[#141414] backdrop-blur-sm hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10 transition-all duration-300">
-        {/* Strength indicator bar */}
-        <div className="absolute top-0 left-0 right-0 h-1">
-          <div 
-            className={`h-full ${strengthInfo.color} transition-all duration-500`}
-            style={{ width: `${entry.password_strength}%` }}
-          />
+      <div className="flex items-center gap-4 px-4 py-3 rounded-xl border border-white/5 bg-card/40 hover:bg-card/70 hover:border-primary/20 transition-colors">
+        {/* Favicon */}
+        <div className="shrink-0 w-10 h-10 rounded-lg bg-muted/50 border border-border/40 flex items-center justify-center overflow-hidden">
+          {favicon ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={favicon}
+              alt=""
+              className="w-6 h-6"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+            />
+          ) : (
+            <Globe className="w-4 h-4 text-muted-foreground" />
+          )}
         </div>
 
-        <div className="p-4 pt-5">
-          <div className="flex items-start gap-4">
-            {/* Icon */}
-            <div className="flex-shrink-0">
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center transition-transform duration-300 ${isHovered ? 'scale-110' : ''}`}>
-                <CategoryIcon className="w-5 h-5 text-primary" />
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 min-w-0 space-y-3">
-              {/* Header */}
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-semibold text-foreground truncate">{entry.title}</h3>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={onToggleFavorite}
-                  >
-                    <Star className={`w-4 h-4 transition-colors ${entry.is_favorite ? 'text-primary fill-primary' : 'text-muted-foreground hover:text-primary'}`} />
-                  </Button>
-                </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <Badge variant="secondary" className="text-xs bg-muted/50">
-                    {entry.category}
-                  </Badge>
-                  <Badge variant="outline" className={`text-xs ${strengthInfo.textColor} ${strengthInfo.badgeBg}`}>
-                    {strengthInfo.text}
-                  </Badge>
-                </div>
-              </div>
-
-              {/* Fields */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Username */}
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Username</p>
-                  <div className="flex items-center gap-2">
-                    <code className="text-sm bg-muted/50 px-2 py-1 rounded font-mono truncate flex-1">
-                      {entry.username || '—'}
-                    </code>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => handleCopy(entry.username, 'Username')}
-                          >
-                            <Copy className="w-3.5 h-3.5" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Copy username</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                </div>
-
-                {/* Password */}
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Password</p>
-                  <div className="flex items-center gap-2">
-                    <code className="text-sm bg-muted/50 px-2 py-1 rounded font-mono truncate flex-1">
-                      {showPassword ? entry.password : '••••••••••••'}
-                    </code>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => setShowPassword(!showPassword)}
-                          >
-                            {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>{showPassword ? 'Hide' : 'Show'} password</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => handleCopy(entry.password, 'Password')}
-                          >
-                            <Copy className="w-3.5 h-3.5" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Copy password</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                </div>
-              </div>
-
-              {/* Website */}
-              {entry.website && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Globe className="w-3.5 h-3.5 text-muted-foreground" />
-                  <a 
-                    href={entry.website.startsWith('http') ? entry.website : `https://${entry.website}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline truncate flex items-center gap-1"
-                  >
-                    {entry.website}
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
-              )}
-
-              {/* Notes preview */}
-              {entry.notes && (
-                <p className="text-sm text-muted-foreground line-clamp-2 italic">
-                  "{entry.notes}"
-                </p>
-              )}
-
-              {/* Footer Actions */}
-              <div className="flex items-center justify-between pt-2 border-t border-border/50">
-                <div className="flex items-center gap-1">
-                  <EntryAttachments entryId={entry.id} entryTitle={entry.title} />
-                  <ShareEntry entryId={entry.id} entryTitle={entry.title} vaultId={entry.vault_id} />
-                </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={onEdit}>
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Edit</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive hover:text-destructive" onClick={onDelete}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Delete</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              </div>
-            </div>
+        {/* Identity */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="text-[15px] font-medium text-foreground truncate">{entry.title}</h3>
+            {host && <span className="text-xs text-muted-foreground truncate">{host}</span>}
+            <button onClick={onToggleFavorite} className="ml-1 shrink-0" aria-label="Favorite">
+              <Star className={cn('w-3.5 h-3.5', entry.is_favorite ? 'text-primary fill-primary' : 'text-muted-foreground/40 hover:text-primary')} />
+            </button>
           </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5 truncate">
+            <span className="truncate">{entry.username || '—'}</span>
+            <span className="text-muted-foreground/50">·</span>
+            <span className={cn(
+              'truncate',
+              status.tone === 'bad' && 'text-red-400',
+              status.tone === 'good' && 'text-emerald-400/90',
+            )}>
+              {status.text}
+            </span>
+            {hasMfa && <ShieldCheck className="w-3 h-3 text-emerald-400/80 shrink-0" />}
+          </div>
+          {rayNote && (
+            <div className="text-xs italic text-violet-300/70 mt-1 truncate">{rayNote}</div>
+          )}
         </div>
-      </Card>
+
+        {/* Last changed */}
+        {lastChanged && (
+          <div className="hidden md:block text-xs text-muted-foreground/70 shrink-0 mr-2">
+            {lastChanged}
+          </div>
+        )}
+
+        {/* Password reveal */}
+        <div className="hidden sm:flex items-center gap-1 shrink-0">
+          <code className="text-xs text-muted-foreground tabular-nums">
+            {showPassword ? entry.password : '••••••••'}
+          </code>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setShowPassword(!showPassword)}>
+                  {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{showPassword ? 'Hide' : 'Show'}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => handleCopy(entry.password, 'Password')}>
+                  <Copy className="w-3.5 h-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Copy password</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+
+        {/* Edit / delete (hover) */}
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shrink-0">
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onEdit}>
+            <Edit className="w-3.5 h-3.5" />
+          </Button>
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive hover:text-destructive" onClick={onDelete}>
+            <Trash2 className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+      </div>
     </motion.div>
   );
 };
