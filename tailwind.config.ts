@@ -268,6 +268,21 @@ export default {
 				'rotate-slow': {
 					from: { transform: 'rotate(0deg)' },
 					to: { transform: 'rotate(360deg)' }
+				},
+
+				// Ray "thinking" — intentional violet pulse + drifting particles
+				'ray-pulse': {
+					'0%, 100%': { opacity: '0.55', transform: 'translateY(-50%) scale(1)' },
+					'50%': { opacity: '0.95', transform: 'translateY(-50%) scale(1.06)' }
+				},
+				'ray-pulse-fast': {
+					'0%, 100%': { opacity: '0.4', transform: 'translateY(-50%) scale(0.95)' },
+					'50%': { opacity: '0.85', transform: 'translateY(-50%) scale(1.1)' }
+				},
+				'ray-particle': {
+					'0%': { opacity: '0', transform: 'translate(0,0) scale(0.5)' },
+					'25%': { opacity: '1' },
+					'100%': { opacity: '0', transform: 'translate(-40px,-60px) scale(1.2)' }
 				}
 			},
 			animation: {
