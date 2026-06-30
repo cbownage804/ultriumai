@@ -29,6 +29,7 @@ import { useMorningBrief, type RayBriefRow, type RayBriefFeedback } from "@/lib/
 import { useRayBrain } from "@/lib/ray/brain";
 import { cn } from "@/lib/utils";
 import { ScoreCelebration } from "@/components/ray/ScoreCelebration";
+import { toast } from "sonner";
 
 function pageHrefFor(area?: string | null): string {
   switch (area) {
