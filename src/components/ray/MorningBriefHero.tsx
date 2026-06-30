@@ -150,6 +150,8 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
   const [busyId, setBusyId] = useState<string | null>(null);
   const voice = useRayVoice();
   const { user } = useAuth();
+  const { subscription } = useUserSubscription();
+  const voiceUnlocked = subscription?.tier === 'pro' || subscription?.tier === 'business' || subscription?.tier === 'enterprise';
 
   const brief = today;
   const greeting = brief?.greeting ?? (firstName ? `Good morning, ${firstName}.` : "Good morning.");
