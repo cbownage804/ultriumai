@@ -129,9 +129,6 @@ export default function WraythLanding() {
               </Link>
             </div>
 
-            <p className="text-xs text-muted-foreground mt-6 tracking-wide">
-              Free forever plan · No credit card required
-            </p>
           </div>
         </div>
       </section>
@@ -238,19 +235,23 @@ export default function WraythLanding() {
                 <ul className="space-y-3 mb-8 flex-1">
                   <li className="flex items-start gap-2 text-sm text-[#F3F3F3]">
                     <Check className="h-4 w-4 text-primary mt-0.5" />
-                    <span><span className="font-medium">Ray</span> — always on, across everything</span>
+                    <span>Secure every password</span>
                   </li>
                   <li className="flex items-start gap-2 text-sm text-[#F3F3F3]">
                     <Check className="h-4 w-4 text-primary mt-0.5" />
-                    <span>Ray protects your passwords</span>
+                    <span>Analyze suspicious emails &amp; files</span>
                   </li>
                   <li className="flex items-start gap-2 text-sm text-[#F3F3F3]">
                     <Check className="h-4 w-4 text-primary mt-0.5" />
-                    <span>Ray analyzes suspicious links, emails, and files</span>
+                    <span>Monitor for exposed credentials</span>
                   </li>
                   <li className="flex items-start gap-2 text-sm text-[#F3F3F3]">
                     <Check className="h-4 w-4 text-primary mt-0.5" />
-                    <span>Ray watches the dark web for your identity</span>
+                    <span>AI guidance from Ray</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-sm text-[#F3F3F3]">
+                    <Check className="h-4 w-4 text-primary mt-0.5" />
+                    <span>Security score &amp; recommendations</span>
                   </li>
                   {tier.features.team?.enabled && (
                     <li className="flex items-start gap-2 text-sm text-[#F3F3F3]">
@@ -293,7 +294,7 @@ export default function WraythLanding() {
             <span className="text-muted-foreground">Start working with Ray.</span>
           </h2>
           <p className="text-muted-foreground mb-10 max-w-xl">
-            Ray is always watching, always learning, and always one message away. Meet your new cybersecurity teammate.
+            Stop juggling security software. Let Ray handle it for you.
           </p>
           <Link to="/auth?tab=signup">
             <Button size="lg" className="wrayth-chamfer-sm gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
