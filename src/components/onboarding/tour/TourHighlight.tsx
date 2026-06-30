@@ -41,9 +41,9 @@ export const TourHighlight = ({
   
   // Intensity configurations
   const intensityConfig = {
-    subtle: { pulseScale: 1.05, ringCount: 1, overlayOpacity: 0.5 },
-    normal: { pulseScale: 1.1, ringCount: 3, overlayOpacity: 0.65 },
-    prominent: { pulseScale: 1.15, ringCount: 4, overlayOpacity: 0.75 },
+    subtle: { pulseScale: 1.05, ringCount: 1, overlayOpacity: 0.3 },
+    normal: { pulseScale: 1.1, ringCount: 3, overlayOpacity: 0.45 },
+    prominent: { pulseScale: 1.15, ringCount: 4, overlayOpacity: 0.6 },
   };
 
   const config = intensityConfig[intensity];
