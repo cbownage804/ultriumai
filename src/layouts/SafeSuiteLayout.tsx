@@ -65,7 +65,7 @@ function getWraythPath(path: string): string {
 const getNavItems = () => [
   {
     id: 'dashboard',
-    label: 'Dashboard',
+    label: 'Home',
     path: getWraythPath('/dashboard'),
     icon: LayoutDashboard,
     productLogo: null as string | null,
