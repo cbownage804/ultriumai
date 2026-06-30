@@ -17399,6 +17399,63 @@ export type Database = {
         }
         Relationships: []
       }
+      ray_insights: {
+        Row: {
+          area: string
+          body: string | null
+          created_at: string
+          evidence: Json
+          expires_at: string | null
+          id: string
+          kind: string
+          observed_at: string
+          page_context: string | null
+          recommended_action: string | null
+          resolved_at: string | null
+          severity: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          area: string
+          body?: string | null
+          created_at?: string
+          evidence?: Json
+          expires_at?: string | null
+          id?: string
+          kind: string
+          observed_at?: string
+          page_context?: string | null
+          recommended_action?: string | null
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          area?: string
+          body?: string | null
+          created_at?: string
+          evidence?: Json
+          expires_at?: string | null
+          id?: string
+          kind?: string
+          observed_at?: string
+          page_context?: string | null
+          recommended_action?: string | null
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ray_memory: {
         Row: {
           confidence: number
@@ -17442,8 +17499,10 @@ export type Database = {
           existing_manager: string | null
           future_integrations: Json
           import_source: string | null
+          last_seen_at: string | null
           onboarded_at: string | null
           providers: Json
+          timezone: string
           updated_at: string
           user_id: string
         }
@@ -17453,8 +17512,10 @@ export type Database = {
           existing_manager?: string | null
           future_integrations?: Json
           import_source?: string | null
+          last_seen_at?: string | null
           onboarded_at?: string | null
           providers?: Json
+          timezone?: string
           updated_at?: string
           user_id: string
         }
@@ -17464,8 +17525,10 @@ export type Database = {
           existing_manager?: string | null
           future_integrations?: Json
           import_source?: string | null
+          last_seen_at?: string | null
           onboarded_at?: string | null
           providers?: Json
+          timezone?: string
           updated_at?: string
           user_id?: string
         }
