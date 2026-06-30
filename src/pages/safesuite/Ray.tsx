@@ -118,7 +118,7 @@ export default function Ray() {
         description="Ask me anything about your security. I remember our conversations and surface what needs attention."
       />
 
-      <RaySearchBar />
+      <AskRay />
 
 
 
