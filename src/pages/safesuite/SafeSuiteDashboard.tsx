@@ -455,23 +455,30 @@ export default function WraythDashboard() {
         const mappedActivities: ActivityItem[] = (auditLogsResult.data || []).map(log => {
           let text = log.action;
           let type: 'password' | 'scan' | 'breach' | 'asset' = 'password';
-          
-          if (log.resource_type === 'password_entry') {
+          const details = log.details as any;
+          const actionLower = (log.action || '').toLowerCase();
+          const resourceLower = (log.resource_type || '').toLowerCase();
+
+          if (resourceLower === 'password_entry') {
             type = 'password';
-            const details = log.details as any;
             if (log.action === 'created') {
-              text = `Added password${details?.title ? ` for ${details.title}` : ''}`;
+              text = `Ray saved a password${details?.title ? ` for ${details.title}` : ''}`;
             } else if (log.action === 'updated') {
-              text = `Updated password${details?.title ? ` for ${details.title}` : ''}`;
+              text = `Ray updated a password${details?.title ? ` for ${details.title}` : ''}`;
             } else if (log.action === 'deleted') {
-              text = `Deleted password${details?.title ? ` for ${details.title}` : ''}`;
+              text = `Ray removed a password${details?.title ? ` for ${details.title}` : ''}`;
             }
-          } else if (log.resource_type === 'scan') {
+          } else if (resourceLower === 'scan') {
             type = 'scan';
-            text = 'Completed security scan';
-          } else if (log.resource_type === 'breach_check') {
+            text = 'Ray analyzed a threat';
+          } else if (resourceLower === 'breach_check') {
             type = 'breach';
-            text = 'Ran breach check';
+            text = 'Ray ran an exposure check';
+          } else if (actionLower.includes('safeassist') || actionLower.includes('ray') || actionLower.includes('assist')) {
+            type = 'password';
+            text = 'Ray conversation';
+          } else {
+            text = 'Ray activity';
           }
 
           return {
