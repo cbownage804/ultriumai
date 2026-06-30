@@ -25,11 +25,18 @@ const VaultExtension = () => {
         'popup.html',
         'popup.js',
         'popup.css',
+        'sidepanel.html',
+        'sidepanel.js',
+        'sidepanel.css',
+        'content/detector.js',
+        'content/context-bar.js',
+        'content/ray-overlay.css',
         'icons/icon16.png',
         'icons/icon32.png',
         'icons/icon48.png',
         'icons/icon128.png'
       ];
+
 
       for (const file of files) {
         try {
