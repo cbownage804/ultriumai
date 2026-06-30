@@ -272,7 +272,10 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
                         size="sm"
                         disabled={isBusy}
                         className="h-7 px-3 text-xs bg-violet-500 hover:bg-violet-400 text-white border-0"
-                        onClick={() => withBusy(rec.id, () => startRecommendation(rec.id))}
+                        onClick={() => withBusy(rec.id, async () => {
+                          await startRecommendation(rec.id);
+                          toast.success("Ray is on it.", { description: rec.title });
+                        })}
                       >
                         <Play className="h-3 w-3 mr-1" /> Start
                       </Button>
@@ -280,7 +283,10 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
                     <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-slate-300 hover:text-white" onClick={() => navigate(pageHrefFor(rec.page_context))}>
                       Open <ArrowRight className="h-3 w-3 ml-1" />
                     </Button>
-                    <Button size="sm" variant="ghost" disabled={isBusy} className="h-7 px-2 text-xs text-emerald-300 hover:text-emerald-200" onClick={() => withBusy(rec.id, () => completeRecommendation(rec.id))}>
+                    <Button size="sm" variant="ghost" disabled={isBusy} className="h-7 px-2 text-xs text-emerald-300 hover:text-emerald-200" onClick={() => withBusy(rec.id, async () => {
+                      await completeRecommendation(rec.id);
+                      toast.success("Nice work — handled.", { description: `${rec.title}. I'll remember.` });
+                    })}>
                       <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Mark handled
                     </Button>
                     <Button size="sm" variant="ghost" disabled={isBusy} className="h-7 px-2 text-xs text-amber-300 hover:text-amber-200" onClick={() => withBusy(rec.id, () => snoozeRecommendation(rec.id, 24))}>
