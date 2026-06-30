@@ -93,6 +93,7 @@ export default function Ray() {
   } = useRayBrain();
   const [recent, setRecent] = useState<RecentAction[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [runs, setRuns] = useState<PlaybookRun[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -104,6 +105,9 @@ export default function Ray() {
       .order('created_at', { ascending: false })
       .limit(6)
       .then(({ data }) => { if (active) setRecent((data ?? []) as RecentAction[]); });
+    void listRuns(user.id, ['in_progress', 'paused', 'completed']).then((r) => {
+      if (active) setRuns(r);
+    });
     return () => { active = false; };
   }, [user]);
 
@@ -112,6 +116,21 @@ export default function Ray() {
     () => memory.slice().sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0)).slice(0, 5),
     [memory],
   );
+  const currentPlaybook = useMemo(() => runs.find((r) => r.status === 'in_progress') ?? null, [runs]);
+  const pausedPlaybooks = useMemo(() => runs.filter((r) => r.status === 'paused'), [runs]);
+  const completedPlaybooks = useMemo(
+    () => runs.filter((r) => r.status === 'completed').slice(0, 5),
+    [runs],
+  );
+
+  const suggestedNext = useMemo(() => {
+    const topRec = recs[0];
+    if (!topRec) return null;
+    const slug = playbookForRecommendation(topRec);
+    const template = findTemplate(slug);
+    if (!template) return null;
+    return { recommendation: topRec, template };
+  }, [recs]);
 
   function askRay(q: string) {
     window.dispatchEvent(new CustomEvent('ray:ask', { detail: q }));
@@ -121,6 +140,24 @@ export default function Ray() {
   async function withBusy(id: string, fn: () => Promise<unknown>) {
     setBusyId(id);
     try { await fn(); } finally { setBusyId(null); }
+  }
+
+  async function handleResume(run: PlaybookRun) {
+    await resumeRun(run.id);
+    navigate(`/app/ray/playbook/${run.id}`);
+  }
+
+  async function handleArchive(run: PlaybookRun) {
+    await archiveRun(run.id);
+    setRuns((prev) => prev.filter((r) => r.id !== run.id));
+  }
+
+  async function startSuggested() {
+    if (!user || !suggestedNext) return;
+    const run = await startPlaybook(user.id, suggestedNext.template.slug, {
+      sourceRecommendationId: suggestedNext.recommendation.id,
+    });
+    if (run) navigate(`/app/ray/playbook/${run.id}`);
   }
 
   return (
