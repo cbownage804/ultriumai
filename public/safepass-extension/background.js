@@ -1535,5 +1535,66 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     wraythRememberEvent({ kind: 'logged', ...(message.event || {}) });
     return false;
   }
+  if (message?.type === 'wrayth:explain-page') {
+    (async () => {
+      try {
+        const snap = message.snapshot || {};
+        const host = snap.host || (snap.url ? new URL(snap.url).hostname : 'unknown');
+        const cacheKey = `explain:${snap.url || host}`;
+        // Per-URL session cache (24h)
+        if (!message.force) {
+          try {
+            const cached = (await chrome.storage.session.get(cacheKey))[cacheKey];
+            if (cached && cached.expires > Date.now()) {
+              sendResponse({ ok: true, explanation: { ...cached.value, cached: true } });
+              return;
+            }
+          } catch (_) {}
+        }
+        const resp = await fetch(`${FUNCTIONS_URL}/wrayth-explain-page`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', apikey: API_KEY, Authorization: `Bearer ${API_KEY}` },
+          body: JSON.stringify(snap),
+        });
+        if (!resp.ok) {
+          sendResponse({ ok: false, error: `Ray\u2019s analysis service returned ${resp.status}.` });
+          return;
+        }
+        const explanation = await resp.json();
+        try {
+          await chrome.storage.session.set({
+            [cacheKey]: { value: explanation, expires: Date.now() + 24 * 60 * 60 * 1000 },
+          });
+        } catch (_) {}
+        wraythRememberEvent({
+          kind: 'explained',
+          host,
+          risk: explanation.risk_level || 'green',
+          title: explanation.title || null,
+        });
+        // Timeline: log a security-page review when the explanation lands on a known security area
+        if (snap.type === 'security-settings' && snap.provider) {
+          wraythSyncTimeline({
+            event_type: 'browser.reviewed_security_settings',
+            summary: `Reviewed ${snap.provider.charAt(0).toUpperCase() + snap.provider.slice(1)} security settings.`,
+            severity: 'info',
+            payload: { host, provider: snap.provider, url: snap.url, risk: explanation.risk_level },
+          }).catch(() => {});
+        } else if (explanation.risk_level === 'red') {
+          wraythSyncTimeline({
+            event_type: 'browser.explained_risky_page',
+            summary: `Ray flagged ${host} as suspicious.`,
+            severity: 'warning',
+            payload: { host, url: snap.url, why: (explanation.why || []).slice(0, 3) },
+          }).catch(() => {});
+        }
+        sendResponse({ ok: true, explanation });
+      } catch (e) {
+        sendResponse({ ok: false, error: String(e?.message || e) });
+      }
+    })();
+    return true;
+  }
   return undefined;
 });
+

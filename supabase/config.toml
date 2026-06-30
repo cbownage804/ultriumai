@@ -185,6 +185,11 @@ verify_jwt = true
 [functions.wrayth-domain-intel]
 verify_jwt = false
 
+# Wrayth 4.1 — Explain This Page (public; no PII, page snapshot only)
+[functions.wrayth-explain-page]
+verify_jwt = false
+
+
 
 
 # Social Media AI Generator

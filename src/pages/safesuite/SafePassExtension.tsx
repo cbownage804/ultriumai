@@ -30,7 +30,9 @@ const VaultExtension = () => {
         'sidepanel.css',
         'content/detector.js',
         'content/context-bar.js',
+        'content/concepts.js',
         'content/ray-overlay.css',
+
         'icons/icon16.png',
         'icons/icon32.png',
         'icons/icon48.png',

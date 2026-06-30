@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Wrayth — Ray for your browser",
-  "version": "3.1.0",
-  "description": "Ray accompanies you across the web. Real-time site trust, password intelligence, identity awareness, and calm guidance — all synced to Wrayth.",
+  "version": "4.1.0",
+  "description": "Ray accompanies you across the web. Explain any page in plain English, real-time site trust, password intelligence, identity awareness — all synced to Wrayth.",
+
   "permissions": [
     "storage",
     "alarms",
@@ -83,10 +84,11 @@
     },
     {
       "matches": ["<all_urls>"],
-      "js": ["content/detector.js", "content/context-bar.js"],
+      "js": ["content/detector.js", "content/context-bar.js", "content/concepts.js"],
       "css": ["content/ray-overlay.css"],
       "run_at": "document_idle"
     }
+
   ],
   "background": {
     "service_worker": "background.js",
