@@ -86,7 +86,7 @@ export default function RayMFAHub() {
 
       {showEmptyIntro ? (
         <EmptyIntro
-          onStart={() => setMode('overview' as const) || setMode('setup')}
+          onStart={() => setMode('setup')}
           onPickFromVault={() => {
             void mfa.rescanVault();
             setMode('overview');
