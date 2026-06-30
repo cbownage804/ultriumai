@@ -58,3 +58,62 @@
   70%  { box-shadow: 0 0 0 8px rgba(124,58,237,0); }
   100% { box-shadow: 0 0 0 0 rgba(124,58,237,0); }
 }
+
+/* ---- Ray expanded panel (click chip to open) ---- */
+.wrayth-panel {
+  position: fixed;
+  bottom: 60px;
+  right: 16px;
+  z-index: 2147483646;
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  background: rgba(15, 15, 18, 0.96);
+  color: #f4f4f5;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.5);
+  backdrop-filter: blur(12px);
+  font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity .15s ease, transform .15s ease;
+}
+.wrayth-panel[data-open="1"] { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.wrayth-panel-head {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.wrayth-panel-eye {
+  width: 22px; height: 22px; border-radius: 999px; flex: 0 0 22px;
+  background: radial-gradient(circle at 50% 50%, #a78bfa 0 30%, #1a1a20 35% 100%);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.06);
+}
+.wrayth-panel-head[data-level="danger"] .wrayth-panel-eye { background: radial-gradient(circle at 50% 50%, #ef4444 0 30%, #1a1a20 35% 100%); }
+.wrayth-panel-head[data-level="warn"]   .wrayth-panel-eye { background: radial-gradient(circle at 50% 50%, #eab308 0 30%, #1a1a20 35% 100%); }
+.wrayth-panel-head[data-level="ok"]     .wrayth-panel-eye { background: radial-gradient(circle at 50% 50%, #22c55e 0 30%, #1a1a20 35% 100%); }
+.wrayth-panel-host { font-weight: 600; font-size: 12.5px; color: #d4d4d8; }
+.wrayth-panel-headline { font-size: 13.5px; color: #fafafa; margin-top: 2px; }
+.wrayth-panel-body { padding: 10px 14px 4px; max-height: 50vh; overflow: auto; }
+.wrayth-panel-section { margin: 6px 0 10px; }
+.wrayth-panel-label {
+  text-transform: uppercase; letter-spacing: .08em; font-size: 10.5px;
+  color: #a1a1aa; margin-bottom: 4px;
+}
+.wrayth-panel-section ul { margin: 0; padding-left: 16px; }
+.wrayth-panel-section li { margin: 3px 0; color: #e4e4e7; }
+.wrayth-panel-actions { display: flex; gap: 6px; padding: 10px 14px 14px; border-top: 1px solid rgba(255,255,255,.06); }
+.wrayth-panel-btn {
+  all: unset;
+  flex: 1; text-align: center;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.06);
+  color: #f4f4f5;
+  font-weight: 500;
+  cursor: pointer;
+}
+.wrayth-panel-btn:hover { background: rgba(255,255,255,.1); }
+.wrayth-panel-btn-primary { background: #7c3aed; }
+.wrayth-panel-btn-primary:hover { background: #8b5cf6; }

@@ -35,7 +35,7 @@ function setTab(name) {
   document.querySelectorAll('.sp-panel').forEach((p) => p.classList.toggle('is-active', p.dataset.panel === name));
 }
 
-function renderContext(ctx) {
+async function renderContext(ctx) {
   if (!ctx) return;
   currentContext = ctx;
   $('sp-host').textContent = ctx.host || '—';
@@ -44,20 +44,44 @@ function renderContext(ctx) {
   $('sp-https').textContent = ctx.signals?.isHTTPS ? 'Yes' : 'No';
   $('sp-passkey').textContent = ctx.signals?.passkeySupported ? 'Supported' : '—';
 
-  // Reputation indicator
+  // Domain intel (cached server-side; ~50ms typical)
+  let intel = null;
+  try {
+    const reply = await chrome.runtime.sendMessage({ type: 'wrayth:get-domain-intel', host: ctx.host });
+    intel = reply?.intel || null;
+  } catch (_) {}
+
+  // Reputation indicator — driven by intel when available, else heuristics
   let level = 'ok';
-  if (!ctx.signals?.isHTTPS && ctx.type === 'login') level = 'warn';
-  if (ctx.type === 'mfa' || ctx.signals?.passkeySupported) level = 'info';
+  if (intel?.level) level = intel.level === 'danger' ? 'warn' : intel.level; // map danger -> warn dot
+  else if (!ctx.signals?.isHTTPS && ctx.type === 'login') level = 'warn';
+  else if (ctx.type === 'mfa' || ctx.signals?.passkeySupported) level = 'info';
   $('sp-rep').dataset.level = level;
+  if (intel?.headline) $('sp-pagehint').textContent = intel.headline;
 
   // Recommendation
-  const rec = recommendFor(ctx);
+  const rec = recommendFor(ctx, intel);
   $('sp-rec-body').textContent = rec.body;
   $('sp-rec-go').textContent = rec.cta;
   $('sp-rec-go').onclick = rec.action;
 }
 
-function recommendFor(ctx) {
+
+function recommendFor(ctx, intel) {
+  if (intel && intel.level === 'danger') {
+    return {
+      body: intel.headline || 'This site shows phishing-style signals. I recommend leaving.',
+      cta: 'Leave site',
+      action: () => chrome.tabs.update({ url: 'about:blank' }),
+    };
+  }
+  if (intel && intel.level === 'warn') {
+    return {
+      body: intel.headline || 'I have concerns about this site. Verify before entering credentials.',
+      cta: 'Check this domain',
+      action: () => openWrayth(`/app/watch?domain=${encodeURIComponent(ctx.host)}`),
+    };
+  }
   switch (ctx.type) {
     case 'login':
       return {
@@ -76,11 +100,12 @@ function recommendFor(ctx) {
     case 'payment':
       return { body: 'Double-check the URL. I won\'t autofill cards unless you ask.', cta: 'Check this domain', action: () => openWrayth(`/app/watch?domain=${encodeURIComponent(ctx.host)}`) };
     case 'security-settings':
-      return { body: 'Perfect place to enable MFA and add passkeys.', cta: 'Open security playbook', action: () => openWrayth('/app/playbooks') };
+      return { body: 'Perfect place to enable MFA and add passkeys. Want me to guide you?', cta: 'Open security playbook', action: () => openWrayth('/app/playbooks') };
     default:
       return { body: 'Quiet for now. Ask me anything about this site.', cta: 'Open Wrayth', action: () => openWrayth('/app/dashboard') };
   }
 }
+
 
 function openWrayth(path) {
   chrome.tabs.create({ url: `https://ultriumai.app${path}` });

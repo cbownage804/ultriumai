@@ -757,3 +757,63 @@ function showToast(message, type = 'success') {
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 2500);
 }
+// ============ Ray status strip (Wrayth 3.1) ============
+(function rayStripInit() {
+  const stripEl = document.getElementById('ray-strip');
+  if (!stripEl) return;
+  const hostEl = document.getElementById('ray-strip-host');
+  const greetEl = document.getElementById('ray-strip-greeting');
+  const badgeEl = document.getElementById('ray-strip-badge');
+  const headlineEl = document.getElementById('ray-strip-headline');
+  const openBtn = document.getElementById('ray-strip-open');
+  const scanBtn = document.getElementById('ray-strip-scan');
+  const portalBtn = document.getElementById('ray-strip-portal');
+
+  const greetings = () => {
+    const h = new Date().getHours();
+    if (h < 5) return 'Working late.';
+    if (h < 12) return 'Good morning.';
+    if (h < 18) return 'Good afternoon.';
+    return 'Good evening.';
+  };
+
+  async function refresh() {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!tab?.url || !/^https?:/i.test(tab.url)) {
+        hostEl.textContent = 'Not a web page';
+        badgeEl.textContent = 'Idle';
+        headlineEl.textContent = 'Open a website and I\'ll have more to say.';
+        stripEl.dataset.level = 'neutral';
+        return;
+      }
+      const u = new URL(tab.url);
+      hostEl.textContent = u.hostname.replace(/^www\./, '');
+      greetEl.textContent = greetings();
+      badgeEl.textContent = 'Checking…';
+      headlineEl.textContent = 'Ray is reading this page.';
+      const reply = await chrome.runtime.sendMessage({ type: 'wrayth:get-domain-intel', host: u.hostname }).catch(() => null);
+      const intel = reply?.intel;
+      if (!intel) { badgeEl.textContent = 'Unknown'; return; }
+      const labels = { ok: 'Trusted', info: 'New domain', warn: 'Caution', danger: 'High risk' };
+      stripEl.dataset.level = intel.level;
+      badgeEl.textContent = labels[intel.level] || 'Unknown';
+      headlineEl.textContent = intel.headline || 'Ray analyzed this page.';
+    } catch (_) {
+      badgeEl.textContent = 'Offline';
+    }
+  }
+
+  openBtn?.addEventListener('click', async () => {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab?.windowId != null) await chrome.sidePanel.open({ windowId: tab.windowId });
+    } catch (_) {}
+  });
+  scanBtn?.addEventListener('click', refresh);
+  portalBtn?.addEventListener('click', () => {
+    chrome.tabs.create({ url: 'https://ultriumai.app/app/dashboard' });
+  });
+
+  refresh();
+})();
