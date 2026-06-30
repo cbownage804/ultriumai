@@ -52,6 +52,7 @@ const VaultHealth = lazy(() => import('@/pages/safesuite/SafePassHealth'));
 const VaultUsers = lazy(() => import('@/pages/safesuite/SafePassUsers'));
 const WraythPricing = lazy(() => import('@/pages/pricing/SafeSuitePricing'));
 const WraythAssist = lazy(() => import('@/pages/safesuite/SafeSuiteAssist'));
+const RayOnboarding = lazy(() => import('@/pages/onboarding/RayOnboarding'));
 
 // Public/legal pages
 const Contact = lazy(() => import('@/pages/Contact'));
