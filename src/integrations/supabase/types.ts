@@ -17564,6 +17564,63 @@ export type Database = {
         }
         Relationships: []
       }
+      ray_missions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          dismissed_at: string | null
+          estimated_minutes: number
+          id: string
+          priority: number
+          progress: number
+          reward_points: number
+          slug: string
+          started_at: string | null
+          status: string
+          steps: Json
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          dismissed_at?: string | null
+          estimated_minutes?: number
+          id?: string
+          priority?: number
+          progress?: number
+          reward_points?: number
+          slug: string
+          started_at?: string | null
+          status?: string
+          steps?: Json
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          dismissed_at?: string | null
+          estimated_minutes?: number
+          id?: string
+          priority?: number
+          progress?: number
+          reward_points?: number
+          slug?: string
+          started_at?: string | null
+          status?: string
+          steps?: Json
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ray_profiles: {
         Row: {
           audience: string | null
