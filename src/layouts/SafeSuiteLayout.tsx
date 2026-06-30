@@ -188,11 +188,12 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
 
   return (
     <aside className="flex flex-col h-full bg-card border-r border-border">
-      {/* Wordmark */}
-      <div className="px-4 pt-4 pb-3 border-b border-border">
-        <Link to={landingPath} className="flex items-center gap-2">
-          <img src={safesuiteLogo} alt="Wrayth" className="h-7 w-auto object-contain" />
-          <span className="text-sm tracking-[0.28em] text-foreground/90">WRAYTH</span>
+      {/* Wordmark — single mark, white, vertically centered */}
+      <div className="h-16 px-5 flex items-center border-b border-border">
+        <Link to={landingPath} className="flex items-center" aria-label="Wrayth">
+          <span className="text-[15px] font-light tracking-[0.42em] text-foreground select-none">
+            WRAYTH
+          </span>
         </Link>
       </div>
 

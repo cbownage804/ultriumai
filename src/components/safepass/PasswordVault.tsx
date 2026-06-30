@@ -515,9 +515,8 @@ export const PasswordVault = () => {
         <TabsContent value="passwords" className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-white">Password Vault</h2>
-          <p className="text-gray-400 text-sm sm:text-base">Securely store and manage your passwords</p>
+        <div className="sr-only">
+          <h2>Passwords</h2>
         </div>
         
         <div className="flex flex-wrap items-center gap-2">
@@ -711,8 +710,8 @@ export const PasswordVault = () => {
                   <Shield className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">No Breaches</p>
-                  <p className="text-2xl font-bold text-primary">{strongPasswords}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Security Health</p>
+                  <p className="text-2xl font-light text-primary tabular-nums">{strongPasswords}<span className="text-sm text-muted-foreground font-light ml-1">strong</span></p>
                 </div>
               </div>
               {sortBy === 'strong' && (
@@ -735,8 +734,8 @@ export const PasswordVault = () => {
                   <AlertTriangle className="h-5 w-5 text-red-500" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Weak</p>
-                  <p className="text-2xl font-bold text-red-500">{weakPasswords}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Breach Status</p>
+                  <p className="text-2xl font-light text-red-500 tabular-nums">{weakPasswords}<span className="text-sm text-muted-foreground font-light ml-1">need attention</span></p>
                 </div>
               </div>
               {sortBy === 'weak' && (
@@ -755,8 +754,8 @@ export const PasswordVault = () => {
                 <Lock className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Entries</p>
-                <p className="text-2xl font-bold text-primary">{entries.length}</p>
+                <p className="text-sm font-medium text-muted-foreground">Passwords Stored</p>
+                <p className="text-2xl font-light text-foreground tabular-nums">{entries.length}</p>
               </div>
             </div>
           </CardContent>
