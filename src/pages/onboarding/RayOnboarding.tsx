@@ -450,7 +450,7 @@ export default function RayOnboarding() {
               <p className="text-lg text-foreground">
                 {existing && existing !== 'none'
                   ? `Want me to pull your logins out of ${EXISTING_OPTIONS.find((o) => o.value === existing)?.label} and look them over?`
-                  : 'No existing manager — that's fine. I can scan a sample of your environment to baseline you.'}
+                  : "No existing manager — that's fine. I can scan a sample of your environment to baseline you."}
               </p>
               <p className="text-sm text-muted-foreground">
                 Nothing is shared. Analysis runs locally against your vault.
