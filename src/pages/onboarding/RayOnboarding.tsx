@@ -36,6 +36,7 @@ type Step =
   | 'ecosystem'
   | 'existing'
   | 'master'
+  | 'mfa'
   | 'import'
   | 'running'
   | 'report'
