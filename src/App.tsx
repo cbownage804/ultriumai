@@ -64,6 +64,7 @@ const TrustCenter = lazy(() => import('@/pages/safesuite/TrustCenter'));
 const RayOnboarding = lazy(() => import('@/pages/onboarding/RayOnboarding'));
 const RayTimelinePage = lazy(() => import('@/pages/safesuite/RayTimelinePage'));
 const PlaybookRunnerPage = lazy(() => import('@/pages/safesuite/PlaybookRunnerPage'));
+const Integrations = lazy(() => import('@/pages/safesuite/Integrations'));
 
 // Public/legal pages
 const Contact = lazy(() => import('@/pages/Contact'));
@@ -176,6 +177,7 @@ function AppRouter() {
           <Route path="/app/identity" element={<SuspenseWrapper><Identity /></SuspenseWrapper>} />
           <Route path="/app/devices" element={<SuspenseWrapper><Devices /></SuspenseWrapper>} />
           <Route path="/app/reports" element={<SuspenseWrapper><Reports /></SuspenseWrapper>} />
+          <Route path="/app/integrations" element={<SuspenseWrapper><Integrations /></SuspenseWrapper>} />
 
           {/* Canonical product routes */}
           <Route path="/app/passwords" element={<SuspenseWrapper><Passwords /></SuspenseWrapper>} />

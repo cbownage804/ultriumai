@@ -436,3 +436,12 @@ verify_jwt = false
 
 [functions.ray-tts]
 verify_jwt = true
+
+[functions.ms-graph-oauth-start]
+verify_jwt = true
+
+[functions.ms-graph-oauth-callback]
+verify_jwt = false
+
+[functions.ms-graph-sync]
+verify_jwt = true
