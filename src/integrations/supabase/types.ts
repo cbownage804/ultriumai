@@ -34422,6 +34422,159 @@ export type Database = {
         }
         Relationships: []
       }
+      vault_mfa_health_snapshots: {
+        Row: {
+          captured_at: string
+          critical_unprotected: number
+          details: Json
+          id: string
+          protected_count: number
+          score: number
+          unprotected_count: number
+          user_id: string
+        }
+        Insert: {
+          captured_at?: string
+          critical_unprotected?: number
+          details?: Json
+          id?: string
+          protected_count?: number
+          score?: number
+          unprotected_count?: number
+          user_id: string
+        }
+        Update: {
+          captured_at?: string
+          critical_unprotected?: number
+          details?: Json
+          id?: string
+          protected_count?: number
+          score?: number
+          unprotected_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vault_mfa_recommendations: {
+        Row: {
+          created_at: string
+          dismissed_until: string | null
+          id: string
+          mfa_methods: Json
+          password_entry_id: string | null
+          priority: string
+          reason: string | null
+          service_domain: string | null
+          service_name: string
+          setup_url: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dismissed_until?: string | null
+          id?: string
+          mfa_methods?: Json
+          password_entry_id?: string | null
+          priority?: string
+          reason?: string | null
+          service_domain?: string | null
+          service_name: string
+          setup_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dismissed_until?: string | null
+          id?: string
+          mfa_methods?: Json
+          password_entry_id?: string | null
+          priority?: string
+          reason?: string | null
+          service_domain?: string | null
+          service_name?: string
+          setup_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vault_totp_secrets: {
+        Row: {
+          account_label: string | null
+          algorithm: string
+          backup_codes_ciphertext: string | null
+          backup_codes_iv: string | null
+          created_at: string
+          digits: number
+          id: string
+          issuer: string | null
+          last_used_at: string | null
+          notes: string | null
+          password_entry_id: string | null
+          period: number
+          recovery_method: string
+          secret_ciphertext: string
+          secret_iv: string
+          secret_salt: string
+          service_domain: string | null
+          service_name: string
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          account_label?: string | null
+          algorithm?: string
+          backup_codes_ciphertext?: string | null
+          backup_codes_iv?: string | null
+          created_at?: string
+          digits?: number
+          id?: string
+          issuer?: string | null
+          last_used_at?: string | null
+          notes?: string | null
+          password_entry_id?: string | null
+          period?: number
+          recovery_method?: string
+          secret_ciphertext: string
+          secret_iv: string
+          secret_salt: string
+          service_domain?: string | null
+          service_name: string
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          account_label?: string | null
+          algorithm?: string
+          backup_codes_ciphertext?: string | null
+          backup_codes_iv?: string | null
+          created_at?: string
+          digits?: number
+          id?: string
+          issuer?: string | null
+          last_used_at?: string | null
+          notes?: string | null
+          password_entry_id?: string | null
+          period?: number
+          recovery_method?: string
+          secret_ciphertext?: string
+          secret_iv?: string
+          secret_salt?: string
+          service_domain?: string | null
+          service_name?: string
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       voice_assistant_interactions: {
         Row: {
           content: string
