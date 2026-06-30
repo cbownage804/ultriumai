@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Wrayth Vault - Password Manager by Ray",
-  "version": "2.1.0",
-  "description": "Wrayth Vault: AI-assisted password autofill, generator, TOTP, and breach detection — powered by Ray. Works on Chrome and Edge.",
+  "name": "Wrayth — Ray for your browser",
+  "version": "3.0.0",
+  "description": "Ray accompanies you across the web. Calm security guidance, password autofill, breach detection, and page-aware help in one side panel.",
   "permissions": [
     "storage",
     "alarms",
@@ -10,7 +10,10 @@
     "clipboardWrite",
     "clipboardRead",
     "contextMenus",
-    "activeTab"
+    "activeTab",
+    "tabs",
+    "scripting",
+    "sidePanel"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -21,7 +24,14 @@
         "default": "Ctrl+Shift+P",
         "mac": "Command+Shift+P"
       },
-      "description": "Open Wrayth Vault popup"
+      "description": "Open Wrayth popup"
+    },
+    "open-ray": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+J",
+        "mac": "Command+Shift+J"
+      },
+      "description": "Open Ray side panel"
     },
     "autofill": {
       "suggested_key": {
@@ -47,13 +57,16 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Wrayth Vault - Click to open (Ctrl+Shift+P)",
+    "default_title": "Wrayth — Click to open Ray (Ctrl+Shift+P)",
     "default_icon": {
       "16": "icons/icon16.png",
       "32": "icons/icon32.png",
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     }
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
   },
   "icons": {
     "16": "icons/icon16.png",
@@ -67,6 +80,12 @@
       "js": ["content.js"],
       "css": ["content.css"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content/detector.js", "content/context-bar.js"],
+      "css": ["content/ray-overlay.css"],
+      "run_at": "document_idle"
     }
   ],
   "background": {
@@ -78,9 +97,9 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["icons/*"],
+      "resources": ["icons/*", "content/*"],
       "matches": ["<all_urls>"]
     }
   ],
-  "minimum_chrome_version": "88"
+  "minimum_chrome_version": "114"
 }
