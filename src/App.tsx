@@ -65,6 +65,7 @@ const RayOnboarding = lazy(() => import('@/pages/onboarding/RayOnboarding'));
 const RayTimelinePage = lazy(() => import('@/pages/safesuite/RayTimelinePage'));
 const PlaybookRunnerPage = lazy(() => import('@/pages/safesuite/PlaybookRunnerPage'));
 const Integrations = lazy(() => import('@/pages/safesuite/Integrations'));
+const SecureProviderLauncher = lazy(() => import('@/pages/safesuite/SecureProviderLauncher'));
 
 // Public/legal pages
 const Contact = lazy(() => import('@/pages/Contact'));
