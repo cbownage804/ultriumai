@@ -64,6 +64,8 @@ export default function MorningBrief() {
 
       <MorningBriefHero variant="page" showFullBriefLink={false} />
 
+      <RayNoticesPanel />
+
       {stats && (
         <section className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <StatBlock
