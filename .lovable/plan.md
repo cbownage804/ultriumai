@@ -1,78 +1,99 @@
-# Wrayth 4.0 — Ray Can Do the Work
+# Wrayth 4.2 — Ray Protects Your Organization
 
-This is a multi-release roadmap. I'll ship in phases so credits go to the highest-leverage pieces first. Approve and I'll start with **Phase 1 (Wrayth 4.0 core)**.
+Ray graduates from understanding one person to understanding an entire company — and, for MSPs, every client organization in one view. This plan ships in four waves so each piece is usable on its own.
 
-## Strategic shift
-Ray stops being a reporter. He becomes a **co-pilot** who recognizes where you are, walks you through fixes, and tracks completion across providers. Every new capability must reinforce: *Ray is the reason you choose Wrayth.*
+## What Ray will be able to say
 
----
+> "Good morning, Brandon. I checked all 42 employees overnight. No critical threats. Two haven't enabled MFA. One credential appeared in a new breach. Average score went 91 → 93. I'd fix John's password first."
 
-## Phase 1 — Wrayth 4.0: Secure With Ray (ship now)
+And for Ultrium:
 
-Provider-aware guided playbooks that recognize the page you're on and walk you through it step-by-step, with live progress and rewards.
+> "Good morning, Brandon. I checked 27 client organizations overnight. Three need attention today."
 
-**Build:**
-1. **Provider catalog** — `src/lib/ray/providers/catalog.ts`: Google, Microsoft, GitHub, Apple, Amazon, Facebook, Dropbox. Each maps domain patterns → provider id, branding, and a playbook slug.
-2. **Provider playbooks** — Add 7 new templates to `src/lib/ray/playbooks/templates.ts` (`secure-google`, `secure-microsoft`, `secure-github`, etc.). Each is step-by-step ("Open Security", "Click Two-Step Verification", "Scan QR", "Save backup codes", "Verify login") with a `targetUrl` per step.
-3. **Guided runner UI** — New `GuidedPlaybookRunner.tsx` (extends existing `PlaybookRunner`): big checklist, % complete bar, "Mission Complete +N" celebration that writes timeline + score + memory (engine already supports this).
-4. **Extension recognition** — `public/safepass-extension/content/detector.js` adds provider detection from hostname. When matched, the Context Bar shows a **"Secure this account with Ray"** chip that deep-links to `/app/ray/secure/{provider}` and opens the playbook.
-5. **Account Health scores** — New table `ray_account_health` (provider, user_id, score, last_checked, signals). Surface on dashboard as horizontal bars (Google 91%, Microsoft 63%, …). Completing a provider playbook bumps that provider's score.
-6. **Dashboard surface** — Add "Secure Your Accounts" panel to `MorningBriefHero.tsx` listing detected accounts (from vault + extension signals) with per-provider Secure buttons.
+## Wave 1 — Org Brain Foundation (data + scoring)
 
-**DB:** one migration — `ray_account_health` table with GRANTs + RLS + `provider`/`user_id` unique.
+Build the schema and synthesis engine Ray will read from. No new UI yet beyond a basic page.
 
-**Deliverable:** A user on accounts.google.com sees Ray's chip → clicks Secure → runs a 5-step guided playbook → score jumps, timeline updates, account turns green.
+New tables (all RLS-scoped to org membership):
+- `ray_org_profiles` — per-employee Ray profile: score, MFA status, breach count, last_active, top risks JSON.
+- `ray_org_health` — daily snapshot per org: overall score, identity/device/threat/exposure/compliance/training/software/domain sub-scores, deltas vs yesterday.
+- `ray_org_missions` — company-wide missions (e.g. "Enable MFA company-wide"): target, progress, est_minutes, owner.
+- `ray_org_timeline` — org-level events ("John enabled MFA", "Heather added Dropbox").
+- `ray_org_briefings` — daily executive brief text + structured stats, one per org per day.
+- `ray_org_department_scores` — department roll-ups for the heat map.
 
----
+Edge functions:
+- `ray-org-sync` — pulls signals from `vault_*`, `ray_findings`, `safepass_breach_*`, `vanguard_*`, `ms_graph_*`, dark web monitors. Rolls them into `ray_org_profiles` + sub-scores.
+- `ray-org-brief` — Gemini-powered executive summary using yesterday vs today deltas + top recommendation. Writes to `ray_org_briefings` and `ray_org_timeline`.
+- `pg_cron` schedule for both nightly per org.
 
-## Phase 2 — Wrayth 4.1: AI Security Review
+SDK: `src/lib/ray/org/` (`profiles.ts`, `health.ts`, `missions.ts`, `timeline.ts`, `briefings.ts`).
 
-"Review this page" button (extension + web). Ray analyzes login forms, permissions, branding-vs-domain mismatch, suspicious wording, and **explains why**, not just red/green.
+## Wave 2 — Organization Dashboard
 
-- New edge function `ray-page-review` (Gemini 3 Flash) — takes URL, page text, screenshot signals from detector.
-- Extension side-panel "Review this page" action.
-- **AI Explains** tooltip system: hover any security term → one-sentence plain-English explanation via cached Gemini calls (`ray-explain` function with KV cache).
+New route `/app/org` (auto-shown when the user belongs to an org; personal dashboard stays at `/app/dashboard`).
 
----
+Components in `src/components/ray/org/`:
+- `OrgMorningBriefHero` — Ray-voiced exec summary, score with delta arrow, "since yesterday" bullets, primary CTA.
+- `OrgHealthGrid` — 8 intelligence surfaces (Identities, Devices, Threats, Exposure, Compliance, Training, Software, Domains) as cards with sub-score + one-line Ray comment.
+- `EmployeeIntelligenceList` — replaces user table. Each row is a Ray profile card (score, Ray's one-liner, top fix). Sort defaults to "Ray's priority".
+- `OrgTimelineFeed` — yesterday / today sections from `ray_org_timeline`.
+- `OrgMissionsPanel` — progress bars per mission with "Continue mission" → playbook launcher.
+- `RiskHeatMap` — department bars from `ray_org_department_scores`, hover shows Ray's reasoning.
+- `AIPrioritizationList` — "Today I'd spend my time on…" top-3 with impact deltas, each launches an existing playbook.
 
-## Phase 3 — Wrayth 4.2: Behavior Intelligence
+Reuses MorningBriefHero patterns and existing playbook runner — no duplication.
 
-Ray learns your routine sites and flags anomalies (BoA at 3 AM when you only visit dev tools weekday mornings).
+## Wave 3 — Ask Ray (org questions) + memory
 
-- `ray_browsing_patterns` table — daily aggregated visit fingerprints (no URLs stored raw; hashed host + hour bucket).
-- Anomaly scorer in extension background — flags new-host + off-hour + sensitive-category.
-- Inline Ray notice: *"This is unusual for you. Want me to verify it's safe?"* → triggers Phase 2 page review.
+Extend the existing Ask Ray palette and `ray-action` edge function with an org intent router so these natural questions all work:
+- "Who worries you most?"
+- "Which department is improving?"
+- "Did anything important happen overnight?"
+- "Are we safer than last week?"
+- "Who still needs MFA?"
+- "Show me every device that hasn't checked in."
+- "Are we ready for cyber insurance?"
 
----
+Implementation: new skills in `src/lib/ray/org/skills/` that query the org tables and return structured answers Ray narrates. Reuses `ray_memory` keyed by `org_id` so Ray remembers things like "I recommended MFA to John 5 days ago — escalating priority."
 
-## Phase 4 — Wrayth 4.3: MSP Console
+## Wave 4 — MSP Multi-Tenant View (Ultrium killer feature)
 
-Multi-tenant dashboard for Ultrium to deploy Wrayth to clients.
+New route `/app/msp` gated on `useAccountType().isMSPOrMSSP`.
 
-- Reuse existing `msp_clients`. New view `/msp/ray` listing clients with aggregate Ray score, critical issues count, "Launch Ray for this client" button.
-- Per-client missions and delegated playbooks; MSP admins can assign and monitor.
+- `MspMorningBrief` — "I checked 27 client organizations overnight. Three need attention today."
+- `ClientOrgGrid` — one card per `msp_clients` row showing org score, delta, # employees, top issue, "Open" → switches active org context.
+- `CrossClientPrioritization` — Ray ranks work across all clients ("Acme: enable MFA for 3 users — biggest score lift today").
+- Extends `ray-org-sync` + `ray-org-brief` to iterate every client an MSP owns; writes one briefing per client and one MSP-level rollup to `ray_org_briefings` with `scope = 'msp'`.
 
----
+## Cross-cutting
 
-## Phase 5 — Wrayth 5.0: Autonomous Security
+- All new tables follow the GRANT → RLS → POLICY order; policies use a `has_org_access(auth.uid(), org_id)` security-definer function so MSP staff inherit access to their clients without recursion.
+- Every new edge function entry added to `supabase/config.toml`.
+- `MorningBriefHero` (personal) gets a small "View organization brief" link when the user belongs to an org.
+- Voice (Ray TTS) reused as-is for org briefings — Pro gating unchanged.
+- No changes to the browser extension in this release.
 
-User-approved automations: scheduled reviews, routine maintenance, continuous monitoring with human-in-the-loop for high-impact actions. Builds on existing `ray_playbook_schedules` + `needsApproval` tool pattern.
+## Technical details
 
----
+- Scoring formula lives in `src/lib/ray/org/scoring.ts`: org_score = weighted avg of sub-scores (identity 25, devices 20, threats 20, exposure 15, compliance 10, training 5, software 3, domains 2). Per-employee score reuses existing personal scoring + MFA/breach signals.
+- Org context resolution: new `useActiveOrg()` hook picks org from `org_teams` membership (or `msp_clients` when MSP switches context). Defaults to user's primary org.
+- `ray_org_*` writes go through edge functions with service role; reads from the client use RLS.
+- Heat map departments come from `comanaged_departments` / `org_team_members.department` when present, else "Unassigned".
+- Backwards compatible: solo users without an org keep seeing the existing personal dashboard.
 
-## Companion threads (woven into phases)
+## Success criteria
 
-- **Password Evolution** (4.0): When Ray flags a weak vault password, the recommendation becomes a 3-step inline flow — Generate → Store in Vault → Update on site (deep-link). Extends existing `password-cleanup` playbook.
-- **Weekly Wins** (4.1): Friday digest edge function `ray-weekly-wins` aggregates timeline events into a "This Week" card on dashboard + optional email.
-- **Homepage shift** (after 4.0 ships): Update `/` hero to *"Ray doesn't just find security problems. He helps you solve them."* with a Secure-With-Ray demo loop.
+A CEO logs in, spends 60 seconds on `/app/org`, and knows:
+- current company risk,
+- what changed overnight,
+- what matters most,
+- exactly what to do next — without opening a report.
 
----
+An MSP owner logs in, spends 60 seconds on `/app/msp`, and knows which of their clients need attention today.
 
-## Technical notes
-- All new playbooks plug into the existing engine (`src/lib/ray/playbooks/engine.ts`) — no runtime rewrite.
-- Account health and provider catalog are additive; nothing existing changes shape.
-- Phase 1 is ~1 migration + ~8 files + extension detector update. Phases 2–5 each get their own approval gate so we don't burn credits speculatively.
+## Out of scope for 4.2 (saved for later)
 
----
-
-**Approve to start Phase 1 (Wrayth 4.0).** I'll ship it end-to-end, then check in before moving to 4.1.
+- Cyber insurance readiness report PDF (Ray will answer the question; formal report ships in 4.3).
+- Org-wide auto-remediation (Ray still proposes; humans execute via playbooks).
+- Slack/Teams delivery of the exec briefing.

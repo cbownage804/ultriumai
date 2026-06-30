@@ -456,3 +456,9 @@ verify_jwt = false
 
 [functions.ms-graph-sync]
 verify_jwt = true
+
+[functions.ray-org-sync]
+verify_jwt = true
+
+[functions.ray-org-brief]
+verify_jwt = true

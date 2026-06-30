@@ -17774,6 +17774,303 @@ export type Database = {
         }
         Relationships: []
       }
+      ray_org_briefings: {
+        Row: {
+          brief_date: string
+          created_at: string
+          feedback: string | null
+          greeting: string | null
+          id: string
+          msp_owner_user_id: string | null
+          org_id: string | null
+          recommendation: string | null
+          scope: string
+          spoken_script: string | null
+          stats: Json
+          summary: string
+          updated_at: string
+        }
+        Insert: {
+          brief_date?: string
+          created_at?: string
+          feedback?: string | null
+          greeting?: string | null
+          id?: string
+          msp_owner_user_id?: string | null
+          org_id?: string | null
+          recommendation?: string | null
+          scope?: string
+          spoken_script?: string | null
+          stats?: Json
+          summary: string
+          updated_at?: string
+        }
+        Update: {
+          brief_date?: string
+          created_at?: string
+          feedback?: string | null
+          greeting?: string | null
+          id?: string
+          msp_owner_user_id?: string | null
+          org_id?: string | null
+          recommendation?: string | null
+          scope?: string
+          spoken_script?: string | null
+          stats?: Json
+          summary?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ray_org_department_scores: {
+        Row: {
+          created_at: string
+          department: string
+          employee_count: number
+          id: string
+          org_id: string
+          ray_reason: string | null
+          score: number
+          snapshot_date: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department: string
+          employee_count?: number
+          id?: string
+          org_id: string
+          ray_reason?: string | null
+          score?: number
+          snapshot_date?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department?: string
+          employee_count?: number
+          id?: string
+          org_id?: string
+          ray_reason?: string | null
+          score?: number
+          snapshot_date?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ray_org_health: {
+        Row: {
+          compliance_score: number
+          created_at: string
+          device_score: number
+          domain_score: number
+          exposure_score: number
+          id: string
+          identity_score: number
+          org_id: string
+          overall_score: number
+          ray_notes: Json
+          score_delta: number
+          snapshot_date: string
+          software_score: number
+          stats: Json
+          threat_score: number
+          training_score: number
+          updated_at: string
+        }
+        Insert: {
+          compliance_score?: number
+          created_at?: string
+          device_score?: number
+          domain_score?: number
+          exposure_score?: number
+          id?: string
+          identity_score?: number
+          org_id: string
+          overall_score?: number
+          ray_notes?: Json
+          score_delta?: number
+          snapshot_date?: string
+          software_score?: number
+          stats?: Json
+          threat_score?: number
+          training_score?: number
+          updated_at?: string
+        }
+        Update: {
+          compliance_score?: number
+          created_at?: string
+          device_score?: number
+          domain_score?: number
+          exposure_score?: number
+          id?: string
+          identity_score?: number
+          org_id?: string
+          overall_score?: number
+          ray_notes?: Json
+          score_delta?: number
+          snapshot_date?: string
+          software_score?: number
+          stats?: Json
+          threat_score?: number
+          training_score?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ray_org_missions: {
+        Row: {
+          category: string
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          est_minutes_remaining: number | null
+          id: string
+          metadata: Json
+          org_id: string
+          owner_user_id: string | null
+          progress: number
+          status: string
+          target: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          est_minutes_remaining?: number | null
+          id?: string
+          metadata?: Json
+          org_id: string
+          owner_user_id?: string | null
+          progress?: number
+          status?: string
+          target?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          est_minutes_remaining?: number | null
+          id?: string
+          metadata?: Json
+          org_id?: string
+          owner_user_id?: string | null
+          progress?: number
+          status?: string
+          target?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ray_org_profiles: {
+        Row: {
+          breach_count: number
+          created_at: string
+          department: string | null
+          display_name: string
+          email: string | null
+          id: string
+          last_active_at: string | null
+          mfa_enabled: boolean
+          org_id: string
+          priority_rank: number
+          ray_note: string | null
+          reused_password_count: number
+          score: number
+          top_risks: Json
+          updated_at: string
+          user_id: string | null
+          weak_password_count: number
+        }
+        Insert: {
+          breach_count?: number
+          created_at?: string
+          department?: string | null
+          display_name: string
+          email?: string | null
+          id?: string
+          last_active_at?: string | null
+          mfa_enabled?: boolean
+          org_id: string
+          priority_rank?: number
+          ray_note?: string | null
+          reused_password_count?: number
+          score?: number
+          top_risks?: Json
+          updated_at?: string
+          user_id?: string | null
+          weak_password_count?: number
+        }
+        Update: {
+          breach_count?: number
+          created_at?: string
+          department?: string | null
+          display_name?: string
+          email?: string | null
+          id?: string
+          last_active_at?: string | null
+          mfa_enabled?: boolean
+          org_id?: string
+          priority_rank?: number
+          ray_note?: string | null
+          reused_password_count?: number
+          score?: number
+          top_risks?: Json
+          updated_at?: string
+          user_id?: string | null
+          weak_password_count?: number
+        }
+        Relationships: []
+      }
+      ray_org_timeline: {
+        Row: {
+          actor: string | null
+          actor_user_id: string | null
+          category: string
+          created_at: string
+          id: string
+          metadata: Json
+          occurred_at: string
+          org_id: string
+          severity: string
+          summary: string
+        }
+        Insert: {
+          actor?: string | null
+          actor_user_id?: string | null
+          category: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          org_id: string
+          severity?: string
+          summary: string
+        }
+        Update: {
+          actor?: string | null
+          actor_user_id?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          org_id?: string
+          severity?: string
+          summary?: string
+        }
+        Relationships: []
+      }
       ray_playbook_runs: {
         Row: {
           affected_assets: Json
@@ -36691,6 +36988,14 @@ export type Database = {
       is_current_user_admin: { Args: never; Returns: boolean }
       is_msp_or_mssp: { Args: { _user_id: string }; Returns: boolean }
       is_msp_user: { Args: { check_user_id: string }; Returns: boolean }
+      is_org_admin: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_org_member: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_org_team_admin: {
         Args: { p_org_id: string; p_user_id: string }
         Returns: boolean

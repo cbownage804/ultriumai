@@ -63,6 +63,8 @@ import { AskRayPalette } from '@/components/safeassist/AskRayPalette';
 import { FloatingSafeAssistProvider } from '@/contexts/FloatingSafeAssistContext';
 import { RayContextProvider } from '@/components/ray/RayContext';
 import { SidebarBriefing } from '@/components/ray/SidebarBriefing';
+import { useActiveOrg } from '@/hooks/useActiveOrg';
+import { useAccountType } from '@/hooks/useAccountType';
 
 function getWraythPath(path: string): string {
   return isWraythDomain() ? path : `/app${path}`;
@@ -83,20 +85,20 @@ type NavSection = {
   items: NavItem[];
 };
 
-function getSections(): NavSection[] {
-  // Consolidated navigation — Ray lives everywhere, not in the nav.
-  // Home, Vault (passwords/2FA), Scan (threats), Watch (exposure/identity), Settings.
-  return [
-    {
-      id: 'main',
-      items: [
-        { label: 'Home',     path: getWraythPath('/dashboard'), icon: Home },
-        { label: 'Vault',    path: getWraythPath('/passwords'), icon: KeyRound, feature: 'safepass' },
-        { label: 'Scan',     path: getWraythPath('/threats'),   icon: ShieldAlert, feature: 'safescan' },
-        { label: 'Watch',    path: getWraythPath('/exposure'),  icon: Globe, feature: 'safeweb' },
-      ],
-    },
+function getSections(opts?: { hasOrg?: boolean; isMSP?: boolean }): NavSection[] {
+  const main: NavItem[] = [
+    { label: 'Home',     path: getWraythPath('/dashboard'), icon: Home },
+    { label: 'Vault',    path: getWraythPath('/passwords'), icon: KeyRound, feature: 'safepass' },
+    { label: 'Scan',     path: getWraythPath('/threats'),   icon: ShieldAlert, feature: 'safescan' },
+    { label: 'Watch',    path: getWraythPath('/exposure'),  icon: Globe, feature: 'safeweb' },
   ];
+  if (opts?.hasOrg) {
+    main.push({ label: 'Organization', path: getWraythPath('/org'), icon: Building2 });
+  }
+  if (opts?.isMSP) {
+    main.push({ label: 'Clients', path: getWraythPath('/msp'), icon: Share2 });
+  }
+  return [{ id: 'main', items: main }];
 }
 
 function TierBadge({ tier }: { tier: string }) {
@@ -158,7 +160,9 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
   const location = useLocation();
   const { tier, tierConfig } = useWraythSubscription();
   const { user } = useAuth();
-  const sections = getSections();
+  const { hasOrg } = useActiveOrg();
+  const { isMSPOrMSSP } = useAccountType();
+  const sections = getSections({ hasOrg, isMSP: isMSPOrMSSP });
   const landingPath = isWraythDomain() ? '/' : '/app';
   const isAdmin = user?.email?.endsWith('@ultriumai.com') && user?.email_confirmed_at != null;
 
