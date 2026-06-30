@@ -19,6 +19,7 @@ import safewebLogo from '@/assets/safeweb-logo.png';
 import heroSafewebBg from '@/assets/hero-safeweb-bg.jpg';
 import { Sparkles } from 'lucide-react';
 import { AIRecommendationsDisplay } from '@/components/safeweb/AIRecommendationsDisplay';
+import { RayInsightPanel } from '@/components/ray/RayInsightPanel';
 import {
   Globe,
   Shield,
