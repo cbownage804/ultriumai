@@ -45,7 +45,10 @@ export default function WraythScan() {
         >
           <TierLimitInfo feature="safescan" />
         </motion.div>
-        
+
+        <RayInsightPanel context="threats" />
+
+
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
