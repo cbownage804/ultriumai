@@ -245,6 +245,35 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
         </p>
       )}
 
+      {/* ▶ Listen — Ray's voice, only here on the Morning Brief. */}
+      <div className="relative mt-3">
+        <button
+          type="button"
+          onClick={() => voice.speak(buildSpokenBrief({ greeting, personality, brief, topRec: top[0] ?? null, memoryLine }))}
+          disabled={voice.isLoading}
+          className={cn(
+            "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition",
+            voice.isPlaying
+              ? "border-violet-400/60 bg-violet-500/15 text-violet-100"
+              : "border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.08] hover:text-white",
+          )}
+          aria-label={voice.isPlaying ? "Stop Ray" : "Listen to today's briefing"}
+        >
+          {voice.isLoading ? (
+            <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Ray is warming up…</>
+          ) : voice.isPlaying ? (
+            <><Square className="h-3 w-3 fill-current" /> Stop</>
+          ) : (
+            <><Volume2 className="h-3.5 w-3.5" /> Listen to today's briefing</>
+          )}
+        </button>
+        {voice.error && (
+          <span className="ml-3 text-[11px] text-amber-300/80">{voice.error}</span>
+        )}
+      </div>
+
+
+
       {/* Status cards — scannable in one second. */}
       <div className="relative mt-5 grid grid-cols-2 sm:grid-cols-4 gap-2">
         {statusCards.map((c) => (
