@@ -40,6 +40,7 @@ import {
   LogOut,
   Menu,
   Shield,
+  ShieldCheck,
   Crown,
   Lock,
   Sparkles,
