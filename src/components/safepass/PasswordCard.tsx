@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Eye, EyeOff, Copy, Star, Globe, Edit, Trash2, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
-import { servicePolicy } from '@/lib/ray/mfaCatalog';
+import { lookupCatalog } from '@/lib/ray/mfaCatalog';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -60,14 +60,10 @@ export const PasswordCard = ({
 
   const host = hostnameFor(entry.website, entry.title);
   const favicon = faviconFor(host);
-  const policy = (() => {
-    try {
-      return servicePolicy?.(host);
-    } catch {
-      return null;
-    }
+  const catalog = (() => {
+    try { return lookupCatalog(host); } catch { return null; }
   })();
-  const supportsMfa = !!policy?.supportsTotp;
+  const supportsMfa = !!catalog;
 
   const lastChanged = entry.created_at
     ? `Last changed ${formatDistanceToNowStrict(new Date(entry.created_at))} ago`
