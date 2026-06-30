@@ -226,6 +226,7 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
 
       {/* Footer */}
       <div className="px-3 py-3 border-t border-border space-y-1">
+        <SideLink item={{ label: 'Integrations', path: getWraythPath('/integrations'), icon: Plug }} isActive={isActive(getWraythPath('/integrations'))} isLocked={false} onClick={onItemClick} />
         <SideLink item={{ label: 'Settings', path: getWraythPath('/settings'), icon: Settings }} isActive={isActive(getWraythPath('/settings'))} isLocked={false} onClick={onItemClick} />
         <SideLink item={{ label: 'Billing',  path: getWraythPath('/billing'),  icon: CreditCard }} isActive={isActive(getWraythPath('/billing'))} isLocked={false} onClick={onItemClick} />
         <SideLink item={{ label: 'AI Credits', path: '/credits', icon: Coins }} isActive={isActive('/credits')} isLocked={false} onClick={onItemClick} />
