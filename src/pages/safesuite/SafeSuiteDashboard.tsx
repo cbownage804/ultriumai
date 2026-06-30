@@ -40,6 +40,7 @@ import {
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { RayBriefingHero } from '@/components/ray/RayBriefingHero';
+import { RayTimeline } from '@/components/ray/RayTimeline';
 
 interface DashboardStats {
   passwordCount: number;
