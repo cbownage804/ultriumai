@@ -1242,4 +1242,102 @@ async function forceFullSync() {
   }
 }
 
+// ===== Wrayth Ray side panel + chat relay =====
+try {
+  chrome.sidePanel?.setPanelBehavior?.({ openPanelOnActionClick: false }).catch(() => {});
+} catch (_) {}
+
+chrome.commands.onCommand.addListener(async (command) => {
+  if (command === 'open-ray') {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab?.windowId != null) await chrome.sidePanel.open({ windowId: tab.windowId });
+    } catch (e) { console.warn('[Wrayth] open-ray failed', e); }
+  }
+});
+
+// Track latest page context per tab so the sidepanel can read instantly
+const wraythContextByTab = new Map();
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // Cache page-context from content scripts
+  if (message?.type === 'wrayth:page-context' && sender?.tab?.id != null) {
+    wraythContextByTab.set(sender.tab.id, message.context);
+    // No response needed; sidepanel listens via its own onMessage.
+    return false;
+  }
+
+  // Open sidepanel on user gesture inside the page (via Context Bar click)
+  if (message?.type === 'wrayth:open-sidepanel') {
+    (async () => {
+      try {
+        const windowId = sender?.tab?.windowId;
+        if (windowId != null) {
+          await chrome.sidePanel.open({ windowId });
+          sendResponse({ ok: true });
+        } else {
+          sendResponse({ ok: false, error: 'no-window' });
+        }
+      } catch (e) {
+        sendResponse({ ok: false, error: String(e?.message || e) });
+      }
+    })();
+    return true;
+  }
+
+  // Ray chat relay -> Lovable AI via the existing safeassist edge function
+  if (message?.type === 'wrayth:chat') {
+    (async () => {
+      try {
+        const session = await chrome.storage.session.get(['authToken']);
+        const headers = {
+          'Content-Type': 'application/json',
+          apikey: API_KEY,
+          Authorization: `Bearer ${session.authToken || API_KEY}`,
+        };
+        const sys = buildRaySystemPrompt(message.context);
+        const body = JSON.stringify({
+          messages: [{ role: 'system', content: sys }, ...(message.messages || [])],
+          source: 'extension',
+        });
+        const resp = await fetch(`${FUNCTIONS_URL}/ray-chat`, { method: 'POST', headers, body }).catch(() => null);
+        if (resp && resp.ok) {
+          const data = await resp.json().catch(() => ({}));
+          const text = data?.text || data?.message || data?.choices?.[0]?.message?.content;
+          sendResponse({ ok: true, text: text || "I'm here, but I didn't catch a reply." });
+          return;
+        }
+        // Fallback: local heuristic reply so the panel stays useful even offline
+        sendResponse({ ok: true, text: localRayReply(message.context, message.messages) });
+      } catch (e) {
+        sendResponse({ ok: false, error: String(e?.message || e) });
+      }
+    })();
+    return true;
+  }
+
+  return undefined;
+});
+
+function buildRaySystemPrompt(ctx) {
+  const lines = [
+    "You are Ray, the calm, JARVIS-like security teammate inside the Wrayth browser extension.",
+    "Speak in short, plain sentences. Never alarm the user. Always offer a concrete next step.",
+    "You can recommend actions inside Wrayth (Vault, Scan, Watch, Playbooks) and link with https://ultriumai.app/app/... paths.",
+  ];
+  if (ctx) {
+    lines.push(`Current site: ${ctx.host} (${ctx.type}). HTTPS: ${ctx.signals?.isHTTPS ? 'yes' : 'no'}. Passkey support: ${ctx.signals?.passkeySupported ? 'yes' : 'no'}.`);
+  }
+  return lines.join('\n');
+}
+
+function localRayReply(ctx, msgs) {
+  const last = msgs?.[msgs.length - 1]?.content || '';
+  if (!ctx) return "I'm here. Open a website and I'll have more to say.";
+  if (/passkey/i.test(last)) return `${ctx.host} ${ctx.signals?.passkeySupported ? 'supports passkeys — I recommend enrolling one.' : 'does not appear to support passkeys yet.'}`;
+  if (/safe|trust|legit/i.test(last)) return `${ctx.host} ${ctx.signals?.isHTTPS ? 'is served over HTTPS.' : 'is NOT using HTTPS — I would not enter a password here.'}`;
+  if (ctx.type === 'login') return `Looks like a sign-in page on ${ctx.host}. Want me to fill from your vault?`;
+  return "I'm running in offline mode right now. I'll have more context once Wrayth reconnects.";
+}
+
 console.log('[SafePass] Background service worker v2.2 initialized');
