@@ -242,15 +242,15 @@ export default function WraythLanding() {
                   </li>
                   <li className="flex items-start gap-2 text-sm text-[#F3F3F3]">
                     <Check className="h-4 w-4 text-primary mt-0.5" />
-                    <span>Password protection (Vault)</span>
+                    <span>Ray protects your passwords</span>
                   </li>
                   <li className="flex items-start gap-2 text-sm text-[#F3F3F3]">
                     <Check className="h-4 w-4 text-primary mt-0.5" />
-                    <span>Threat analysis (Scan)</span>
+                    <span>Ray analyzes suspicious links, emails, and files</span>
                   </li>
                   <li className="flex items-start gap-2 text-sm text-[#F3F3F3]">
                     <Check className="h-4 w-4 text-primary mt-0.5" />
-                    <span>Dark web monitoring (Watch)</span>
+                    <span>Ray watches the dark web for your identity</span>
                   </li>
                   {tier.features.team?.enabled && (
                     <li className="flex items-start gap-2 text-sm text-[#F3F3F3]">
