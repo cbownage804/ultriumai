@@ -351,6 +351,8 @@ export default function Ray() {
           )}
         </section>
       </div>
+      <PlaybookLibrary />
+
 
       <section>
         <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
