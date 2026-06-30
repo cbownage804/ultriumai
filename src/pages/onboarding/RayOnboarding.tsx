@@ -13,7 +13,9 @@ import { useMasterPassword } from '@/hooks/useMasterPassword';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Check, Eye, Loader2, ShieldCheck, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Check, Eye, Loader2, ShieldCheck, AlertTriangle, ArrowRight, Copy, QrCode } from 'lucide-react';
+import QRCode from 'qrcode';
+import { useSecurity } from '@/hooks/useSecurity';
 import { cn } from '@/lib/utils';
 import { PasswordImportStep } from '@/components/onboarding/PasswordImportStep';
 import {
