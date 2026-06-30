@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Ray — Wrayth</title>
+    <link rel="stylesheet" href="sidepanel.css" />
+  </head>
+  <body>
+    <header class="sp-header">
+      <div class="sp-brand">
+        <div class="sp-eye" aria-hidden="true"></div>
+        <div class="sp-title">
+          <div class="sp-name">Ray</div>
+          <div class="sp-sub" id="sp-host">—</div>
+        </div>
+        <div class="sp-rep" id="sp-rep" data-level="neutral" title="Reputation"></div>
+      </div>
+      <nav class="sp-tabs" role="tablist">
+        <button class="sp-tab is-active" data-tab="overview" role="tab">Overview</button>
+        <button class="sp-tab" data-tab="vault" role="tab">Vault</button>
+        <button class="sp-tab" data-tab="activity" role="tab">Activity</button>
+        <button class="sp-tab" data-tab="chat" role="tab">Chat</button>
+      </nav>
+    </header>
+
+    <main class="sp-main">
+      <section class="sp-panel is-active" data-panel="overview">
+        <div class="sp-card">
+          <div class="sp-card-label">Page</div>
+          <div class="sp-card-value" id="sp-pagetype">—</div>
+          <div class="sp-card-hint" id="sp-pagehint">Ray is watching the page.</div>
+        </div>
+        <div class="sp-grid">
+          <div class="sp-stat"><div class="sp-stat-k">HTTPS</div><div class="sp-stat-v" id="sp-https">—</div></div>
+          <div class="sp-stat"><div class="sp-stat-k">Domain age</div><div class="sp-stat-v" id="sp-age">—</div></div>
+          <div class="sp-stat"><div class="sp-stat-k">Certificate</div><div class="sp-stat-v" id="sp-cert">—</div></div>
+          <div class="sp-stat"><div class="sp-stat-k">Breaches</div><div class="sp-stat-v" id="sp-breach">—</div></div>
+          <div class="sp-stat"><div class="sp-stat-k">Saved logins</div><div class="sp-stat-v" id="sp-saved">—</div></div>
+          <div class="sp-stat"><div class="sp-stat-k">Passkeys</div><div class="sp-stat-v" id="sp-passkey">—</div></div>
+        </div>
+        <div class="sp-rec" id="sp-rec">
+          <div class="sp-rec-title">Recommended next step</div>
+          <div class="sp-rec-body" id="sp-rec-body">Ray will suggest the right action as soon as the page settles.</div>
+          <div class="sp-rec-actions">
+            <button class="sp-btn sp-btn-primary" id="sp-rec-go">Guide me</button>
+            <button class="sp-btn" id="sp-rec-snooze">Not now</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="sp-panel" data-panel="vault">
+        <div class="sp-vault-empty">Vault summary coming next wave. Use the popup for full vault.</div>
+      </section>
+
+      <section class="sp-panel" data-panel="activity">
+        <ul class="sp-activity" id="sp-activity"><li class="sp-empty">No recent activity on this site.</li></ul>
+      </section>
+
+      <section class="sp-panel" data-panel="chat">
+        <div class="sp-chat" id="sp-chat">
+          <div class="sp-msg sp-msg-ray">
+            <div class="sp-msg-name">Ray</div>
+            <div class="sp-msg-body">I'm here. Ask me about this page or anything in your vault.</div>
+          </div>
+        </div>
+        <form class="sp-composer" id="sp-composer">
+          <textarea id="sp-input" rows="2" placeholder="Ask Ray about this page…" autocomplete="off"></textarea>
+          <button type="submit" class="sp-btn sp-btn-primary" id="sp-send">Send</button>
+        </form>
+      </section>
+    </main>
+
+    <script src="sidepanel.js" type="module"></script>
+  </body>
+</html>
