@@ -1,85 +1,68 @@
-## Wrayth 3.0 — Ray Action Engine
+# Wrayth — Triple Track Execution Plan
 
-Goal: every recommendation in Wrayth becomes an interactive playbook Ray walks the user through, with real lifecycle state, score rewards, timeline entries, and memory.
-
-This is a large build. I'll ship it in four focused waves so we get something working end-to-end fast, then expand. Each wave is independently usable.
+I'll ship these in order. Each track ends in a working, demoable state before moving on.
 
 ---
 
-### Wave 1 — Universal Action Framework (foundation)
+## Track 1 — Real Data Hardening (Vault / Scan / Watch → Ray)
 
-**Database (one migration)**
-- `ray_playbooks` — the catalog (slug, title, description, category, estimated_minutes, reward_score, task_ids[]). Seeded server-side from a templates file; users never edit this.
-- `ray_playbook_runs` — a user's instance of a playbook with lifecycle: `new → ready → in_progress → completed → archived`, plus `paused_at`, `completed_at`, `progress`, `tasks` (jsonb of `{id, label, done, done_at, ray_prompt}`), `affected_assets` jsonb, `score_delta_actual`.
-- `ray_tasks_catalog` (lightweight reference; stored as TS for now if not needed in DB — see Architecture below).
-- Add `playbook_run_id` (nullable) to `ray_recommendations` so a recommendation can point at its in-flight run.
+Goal: kill the remaining demo data so Ray's briefings, score, and recommendations reflect real signals.
 
-**Client SDK — `src/lib/ray/playbooks/`**
-- `catalog.ts` — reusable task primitives: `enableMfa`, `generatePassword`, `storeRecoveryCodes`, `verifyDevice`, `reviewBreach`, `updatePassword`, `addPasskey`, `verifyRecoveryEmail`, `reviewAdminPermissions`, `scanIdentity`, `reviewExposure`. Each exports `{ id, label, defaultRayPrompt, render?: ComponentSlug }`.
-- `templates.ts` — playbook templates composed of tasks: `secure-google`, `secure-microsoft`, `resolve-credential-exposure`, `eliminate-weak-passwords`, `protect-identity`, `verify-devices`, `monitor-domains`, `passkey-upgrade`.
-- `engine.ts` — `startPlaybook(slug)`, `advanceTask(runId, taskId)`, `pause(runId)`, `resume(runId)`, `archive(runId)`, `complete(runId)`. On complete: write `ray_timeline`, write `ray_memory` achievement, bump `ray_security_scores`, queue a brief update flag.
-- `hooks/usePlaybookRun.ts` — subscribes to a single run, exposes progress, current task, Ray's prompt for that task, and action callbacks.
+**Vault (passwords / 2FA)**
+- Read live entries from the existing `safepass_*` / vault tables (already PBKDF2 encrypted client-side).
+- Compute live metrics: reused count, weak entropy count, missing-2FA count, breached count via the existing HIBP edge proxy (`ray-breach-check`) using k-anonymity SHA1 prefix — never send full hashes.
+- Persist results to `ray_findings` (`source = 'vault'`) so Ray's score + recommendations consume the same pipeline.
 
-**Recommendation → Action Launcher mapping**
-- `src/lib/ray/playbooks/router.ts` — `playbookForRecommendation(rec)` maps recommendation `kind` → playbook slug (weak_password → password-replacement, missing_mfa → mfa, breach → credential-recovery, passkey_available → passkey-upgrade, inactive_device → device-verification).
+**Scan (email + file threats)**
+- Pull live counts from `safescan_*` tables, last 30 days. Drop hardcoded "demo threats."
+- Surface latest 5 detections on the module card; write a `ray_findings` row per active threat.
 
----
+**Watch (identity / exposure)**
+- Replace seeded breach list with a live HIBP `breachedaccount` lookup via `safeweb-scanner` for each verified email on the profile.
+- Cache results in `ray_findings` (`source = 'watch'`) with a 24h TTL so we don't burn API calls.
 
-### Wave 2 — Conversational playbook runner UI
+**Ray glue**
+- `ray-briefing` already reads `ray_findings` — extend its scoring weights so vault / scan / watch each contribute, and so the morning brief cites real numbers ("3 reused passwords, 1 breached login, 2 exposed emails").
+- Add `useRayLiveSignals` hook that batches the three module syncs and runs on dashboard mount + after onboarding.
 
-**Component: `src/components/ray/PlaybookRunner.tsx`**
-- Full-bleed conversational layout (no wizard chrome). Left rail: task checklist with progress. Main column: Ray's current message + the single action for this step + Continue / I did this / Skip / Pause.
-- Ray speaks one short message per task. Tone matches existing Ray voice (calm, JARVIS-like). Pulls copy from the task's `defaultRayPrompt`, overridable per playbook.
-- Header shows: playbook title, estimated minutes remaining, expected score reward, live progress %.
-
-**Component: `src/components/ray/FixWithRayButton.tsx`**
-- Small button that, given a `RayRecommendation`, calls `playbookForRecommendation` + `startPlaybook` then navigates to `/app/ray/playbook/:runId`.
-- Drop-in replacement for the existing "Fix with Ray" buttons in `RayInsightPanel`, `RayNoticesPanel`, `Ray.tsx` recommendations list, Passwords page weak-password rows, Threats breach rows, MFA hub recommendations.
-
-**Route**
-- `/app/ray/playbook/:runId` → `PlaybookRunnerPage.tsx` renders `PlaybookRunner`.
-
-**Completion celebration**
-- Reuse existing `ScoreCelebration` overlay style. Show: "Excellent work. Your Google account is now protected with MFA. Your Security Score increased from X to Y. I'll continue monitoring it automatically."
+**Acceptance:** dashboard shows real numbers for a freshly onboarded user; no `Math.random`, no `mockX` imports left in `src/pages/safesuite/{Vault,Scan,Watch}.tsx`.
 
 ---
 
-### Wave 3 — Ray Workspace (`/app/ray` overhaul)
+## Track 2 — Wrayth Marketing Site
 
-Rebuild `src/pages/safesuite/Ray.tsx` into Ray's headquarters with these stacked sections (existing AskRay bar stays at top):
-- **Current Mission** — the active mission card (existing `ray_missions`).
-- **Current Playbook** — the active `in_progress` run, big resume CTA.
-- **Suggested Next** — top 1 recommended playbook from open recommendations.
-- **Paused Playbooks** — resume / archive.
-- **Completed Playbooks** — recent wins with score delta and date.
-- **Prepared Notices** — existing `RayNoticesPanel`.
-- **Conversation History** — last 10 AskRay questions from `ray_timeline`.
-- **What Ray remembers** — existing memory panel.
+Goal: a standalone marketing surface for Wrayth that sells Ray, separate from `ultriumai.com`.
 
----
+- New route tree under `/wrayth/*` (kept inside this project; later mappable to its own domain). Pages:
+  - `/wrayth` — hero "Meet Ray. Your AI cybersecurity teammate.", violet pulse, single CTA "Meet Ray" → `/auth?next=/app/onboarding/ray`.
+  - `/wrayth/ray` — what Ray does (Vault / Scan / Watch under one mind), animated eye, JARVIS-tone copy.
+  - `/wrayth/pricing` — outcome-based tiers wired to the existing Stripe price IDs in `src/config/safeSuiteTiers.ts`.
+  - `/wrayth/resources` — security playbook excerpts pulled from `src/lib/ray/playbooks/templates.ts` as static teasers.
+- Shared `WraythMarketingLayout` with its own nav (Platform, Pricing, Resources, Sign in) — no app chrome.
+- SEO: per-page `<title>`/meta/OG, JSON-LD `Product` + `Organization`, single H1, canonical, sitemap entries.
+- Strictly design-token driven (matte black, graphite, soft silver, Electric Violet only on Ray-thinking states).
 
-### Wave 4 — Wiring everywhere + polish
-
-- Replace every existing "Fix with Ray" / "Start" button on Home brief, Morning Brief, Passwords, Threats, Exposure, Identity, Devices, MFA hub with `<FixWithRayButton recommendation={r} />`.
-- Missions page: completing a mission step that has a matching playbook offers "Run the playbook with Ray".
-- Morning Brief: completed playbooks since last brief appear as "Recent wins".
-- Timeline: new `playbook_completed` event type with score delta and asset list.
-- Ray Memory: on completion, insert a high-confidence memory `achievement:<playbook_slug>`.
+**Acceptance:** `/wrayth` loads with zero app-sidebar bleed, all CTAs route to existing auth/checkout, Lighthouse SEO ≥ 95.
 
 ---
 
-### Technical notes (for me)
+## Track 3 — Ray Action Engine Wave 5
 
-- Reuse, don't replace. `ray_missions` stays for the "one mission at a time" framing; playbooks are the executable layer underneath. A mission step can optionally reference a playbook slug.
-- Task catalog lives in TypeScript (not DB) so adding tasks is a code change, not a migration. `ray_playbook_runs.tasks` snapshots the task list at start so future template changes don't mutate past runs.
-- All score deltas write through a single helper so Trends, Brief, and Celebration stay consistent.
-- No new edge functions required for Wave 1–3. Ray's per-task prompts are static copy; if we want dynamic coaching later we can add a `ray-coach` function.
+Goal: playbooks become resumable, schedulable, and feel alive.
+
+- **Resumable runs:** persist per-task state in `ray_playbook_runs` (`current_step`, `step_state jsonb`, `paused_at`). `PlaybookRunner.tsx` rehydrates from last step on reopen.
+- **Scheduled playbooks:** new `ray_playbook_schedules` table (`cron`, `playbook_id`, `next_run_at`). Cron-trigger edge function `ray-scheduler` (every 5 min) enqueues due runs. Uses `pg_cron` + `pg_net` (per platform guidance — scheduled via `supabase--insert`, not migration, since URL+anon key are tenant-specific).
+- **Progress UX:** step pills, ETA, "Ray is working…" violet pulse, and a `ray_timeline` event per step completion. Toast on resume: "Picking up where we left off."
+- **Library polish:** filter chips on `PlaybookLibrary` (Critical / Quick win / Scheduled), and a "Schedule monthly" button on relevant playbooks (credit freeze refresh, OAuth audit, MFA review).
+
+**Acceptance:** start a playbook, close the tab, reopen — Ray resumes at the same step. Schedule a playbook for "every Monday 9am" and verify a run appears.
 
 ---
 
-### Out of scope for this PR
+## Order of operations
 
-- External integrations that *perform* the change for the user (e.g. actually flipping Google MFA via API). Ray coaches; the user clicks Continue when done. This matches the spec ("I'll stay with you until we're finished. Open your Google Security page.").
-- Reordering the sidebar. Workspace expansion is on `/app/ray` only.
+1. Track 1 lands first — everything downstream is more compelling once Ray cites real data.
+2. Track 2 — marketing can then confidently quote "real-time HIBP-backed monitoring."
+3. Track 3 — depth feature; ships after the surface is solid.
 
-If this plan looks right I'll start with the migration + Wave 1 SDK, then Wave 2 runner UI, then Wave 3 workspace, then Wave 4 wiring.
+I'll execute Track 1 immediately on approval, then continue straight through 2 and 3 without re-prompting.
