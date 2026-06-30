@@ -106,11 +106,14 @@ serve(async (req) => {
 
     const contextPayload = {
       first_name: firstName,
+      is_first_run: isFirstRun,
+      onboarding_summary: onboardingMemory,
       profile: profile.data ?? null,
       memory: memory.data ?? [],
       recent_timeline: timeline.data ?? [],
       open_findings: findings.data ?? [],
       open_insights: insights.data ?? [],
+      existing_open_recommendations: openRecs.data ?? [],
       overnight_delta: overnight,
       password_stats: passwordStats,
       monitored_count: monitors.data?.length ?? 0,
@@ -125,20 +128,24 @@ serve(async (req) => {
       });
     }
 
-    const userPrompt = `Generate a short, conversational morning briefing for ${firstName}.
-Greeting must be 1 short sentence (e.g. "Good morning, ${firstName}.").
+    const firstRunInstruction = isFirstRun
+      ? `\nFIRST-RUN HANDOFF: This is the user's very first briefing — they just finished onboarding with you minutes ago. Acknowledge it warmly in the greeting (e.g. "Welcome in, ${firstName}. Here's where we stand."). In the bullets, reference what you found DURING SETUP using onboarding_summary (e.g. "I went through your ${onboardingMemory?.total ?? 0} credentials. ${onboardingMemory?.breached ?? 0} were in known breaches."). Prefer surfacing the recommendations already in existing_open_recommendations rather than inventing new ones — those were generated from the user's real data during setup. Do not say "good morning" or pretend time has passed.`
+      : `\nReturning user — keep continuity with recent_timeline and prior memory. Reference the most recent meaningful event if it adds value.`;
+
+    const userPrompt = `Generate a short, conversational ${isFirstRun ? "first-run welcome" : "morning"} briefing for ${firstName}.
+Greeting must be 1 short sentence.
 Bullets: 2-4 plain, calm observations grounded in the context.
 Recommendations: 0-3 items. TITLES MUST BE OUTCOME-FOCUSED and written as something you (Ray) will do FOR the user.
 GOOD titles: "Start protecting your passwords", "Let me monitor your dark-web exposure", "Turn on MFA for your Google account".
 BAD titles: "Establish password monitoring", "Configure breach detection", "Setup 2FA".
-The body explains what it actually does in 1 sentence.
+The body explains what it actually does in 1 sentence.${firstRunInstruction}
 
 Context JSON:
 ${JSON.stringify(contextPayload).slice(0, 8000)}
 
 Return JSON ONLY in this exact shape:
 {
-  "greeting": "Good morning, <name>.",
+  "greeting": "short sentence",
   "bullets": ["short observation", "..."],
   "recommendations": [
     { "title": "outcome-focused action Ray will take", "body": "what it does", "priority": 0-100, "estimated_fix_seconds": <int>, "page_context": "passwords"|"threats"|"exposure"|"identity"|"devices"|"reports"|"home" }
