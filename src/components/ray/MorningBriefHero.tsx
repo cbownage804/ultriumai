@@ -24,12 +24,43 @@ import {
   X,
   Shield,
 } from "lucide-react";
+import { Volume2, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMorningBrief, type RayBriefRow, type RayBriefFeedback } from "@/lib/ray/morningBrief";
 import { useRayBrain } from "@/lib/ray/brain";
+import { useRayVoice } from "@/hooks/useRayVoice";
 import { cn } from "@/lib/utils";
 import { ScoreCelebration } from "@/components/ray/ScoreCelebration";
 import { toast } from "sonner";
+
+/** Compose Ray's spoken brief: greeting → reassurance → top recommendation → close. */
+function buildSpokenBrief(opts: {
+  greeting: string;
+  personality: string;
+  brief: RayBriefRow | null;
+  topRec?: { title: string; body?: string | null } | null;
+  memoryLine: string | null;
+}): string {
+  const lines: string[] = [];
+  lines.push(opts.greeting);
+  if (opts.brief?.summary) lines.push(opts.brief.summary);
+  else lines.push("I checked everything overnight. Here's what matters today.");
+  lines.push(opts.personality);
+  if (opts.memoryLine) lines.push(opts.memoryLine);
+  if (opts.brief?.score != null) {
+    const delta = opts.brief.score_delta ?? 0;
+    if (delta > 0) lines.push(`Your security score is ${opts.brief.score}, up ${delta} since the last brief.`);
+    else if (delta < 0) lines.push(`Your security score is ${opts.brief.score}, down ${Math.abs(delta)} since the last brief.`);
+    else lines.push(`Your security score remains at ${opts.brief.score}.`);
+  }
+  if (opts.topRec) {
+    lines.push(`The one thing I'd focus on today: ${opts.topRec.title}.`);
+    if (opts.topRec.body) lines.push(opts.topRec.body);
+  }
+  if (opts.brief?.guidance) lines.push(opts.brief.guidance);
+  lines.push("Whenever you're ready, I'm here.");
+  return lines.join(" ");
+}
 
 function pageHrefFor(area?: string | null): string {
   switch (area) {
