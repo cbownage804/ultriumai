@@ -597,10 +597,25 @@ export default function WraythDashboard() {
         ))}
       </div>
 
+      {/* Ray's security timeline (preview) */}
+      <div className="wrayth-chamfer border border-[#3A3A3A] bg-[#0f0f0f] p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <div className="text-[11px] uppercase tracking-[0.22em] text-violet-300/80">Ray's timeline</div>
+            <h2 className="mt-1 text-lg font-light text-foreground">Everything I've done lately</h2>
+          </div>
+          <Link to="/app/timeline" className="text-xs text-violet-300 hover:text-violet-200 inline-flex items-center gap-1">
+            View all <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+        <RayTimeline limit={6} embedded />
+      </div>
+
       {/* Recent Activity */}
       <div>
         <RecentActivityCard activities={activities} />
       </div>
+
 
       {/* Product Tour */}
       <ProductTour 
