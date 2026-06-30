@@ -87,13 +87,15 @@ export async function recordTimelineEvent(
     severity?: RayTimelineEvent['severity'];
   },
 ) {
-  const { error } = await supabase.from('ray_timeline').insert({
-    user_id: userId,
-    event_type: event.event_type,
-    summary: event.summary,
-    payload: event.payload ?? {},
-    severity: event.severity ?? 'info',
-  });
+  const { error } = await supabase.from('ray_timeline').insert([
+    {
+      user_id: userId,
+      event_type: event.event_type,
+      summary: event.summary,
+      payload: (event.payload ?? {}) as never,
+      severity: event.severity ?? 'info',
+    },
+  ]);
   if (error) console.warn('[ray.brain] recordTimelineEvent failed', error);
 }
 
