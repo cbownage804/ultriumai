@@ -185,7 +185,7 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
       case 'critical': return { bg: 'bg-red-500/10', border: 'border-red-500/30', text: 'text-red-400', badge: 'bg-red-500/20 text-red-300' };
       case 'high': return { bg: 'bg-primary/10', border: 'border-primary/30', text: 'text-orange-400', badge: 'bg-primary/20 text-orange-300' };
       case 'low': return { bg: 'bg-green-500/10', border: 'border-green-500/30', text: 'text-green-400', badge: 'bg-green-500/20 text-green-300' };
-      default: return { bg: 'bg-primary/10', border: 'border-primary/30', text: 'text-primary', badge: 'bg-primary/20 text-amber-300' };
+      default: return { bg: 'bg-primary/10', border: 'border-primary/30', text: 'text-primary', badge: 'bg-primary/20 text-primary' };
     }
   };
 
