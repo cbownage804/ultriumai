@@ -67,7 +67,21 @@ async function renderContext(ctx) {
 }
 
 
-function recommendFor(ctx) {
+function recommendFor(ctx, intel) {
+  if (intel && intel.level === 'danger') {
+    return {
+      body: intel.headline || 'This site shows phishing-style signals. I recommend leaving.',
+      cta: 'Leave site',
+      action: () => chrome.tabs.update({ url: 'about:blank' }),
+    };
+  }
+  if (intel && intel.level === 'warn') {
+    return {
+      body: intel.headline || 'I have concerns about this site. Verify before entering credentials.',
+      cta: 'Check this domain',
+      action: () => openWrayth(`/app/watch?domain=${encodeURIComponent(ctx.host)}`),
+    };
+  }
   switch (ctx.type) {
     case 'login':
       return {
@@ -86,11 +100,12 @@ function recommendFor(ctx) {
     case 'payment':
       return { body: 'Double-check the URL. I won\'t autofill cards unless you ask.', cta: 'Check this domain', action: () => openWrayth(`/app/watch?domain=${encodeURIComponent(ctx.host)}`) };
     case 'security-settings':
-      return { body: 'Perfect place to enable MFA and add passkeys.', cta: 'Open security playbook', action: () => openWrayth('/app/playbooks') };
+      return { body: 'Perfect place to enable MFA and add passkeys. Want me to guide you?', cta: 'Open security playbook', action: () => openWrayth('/app/playbooks') };
     default:
       return { body: 'Quiet for now. Ask me anything about this site.', cta: 'Open Wrayth', action: () => openWrayth('/app/dashboard') };
   }
 }
+
 
 function openWrayth(path) {
   chrome.tabs.create({ url: `https://ultriumai.app${path}` });
