@@ -608,46 +608,15 @@ export default function WraythDashboard() {
         <UsageLimitBanner feature="safepass" />
       </div>
 
-      {/* Stats row - responsive grid */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <AnimatedStatsCard
-          icon={<KeyRound className="h-4 w-4 sm:h-5 sm:w-5" />}
-          label="Passwords"
-          value={stats.passwordCount}
-          theme="safepass"
-          delay={0}
-        />
-        <AnimatedStatsCard
-          icon={<ScanSearch className="h-4 w-4 sm:h-5 sm:w-5" />}
-          label="Scans"
-          value={stats.scanCount}
-          theme="safescan"
-          delay={0.1}
-        />
-        <AnimatedStatsCard
-          icon={<Globe className="h-4 w-4 sm:h-5 sm:w-5" />}
-          label="Monitored"
-          value={stats.monitoredAssets}
-          theme="safeweb"
-          delay={0.2}
-        />
+      {/* Ray's conversational quick actions */}
+      <div data-tour="quick-actions">
+        <QuickActionsCard />
       </div>
 
-      {/* Main grid - responsive layout */}
-      <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {/* Security Score - full width on mobile, 2 cols on tablet+ */}
-        <div className="col-span-1 md:col-span-2" data-tour="security-score">
-          <SecurityScoreCard stats={stats} />
-        </div>
-
-        {/* Quick Actions */}
-        <div className="col-span-1" data-tour="quick-actions">
-          <QuickActionsCard />
-        </div>
-
-        {/* Product Cards - responsive */}
+      {/* Outcome tiles — Passwords / Threats / Exposure */}
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-3">
         {productCardsConfig.map((product, index) => (
-          <div key={product.id} className="col-span-1" data-tour={product.id}>
+          <div key={product.id} data-tour={product.id}>
             <ProductCard
               product={product}
               isLocked={!canUseFeature(product.feature)}
@@ -656,11 +625,11 @@ export default function WraythDashboard() {
             />
           </div>
         ))}
+      </div>
 
-        {/* Recent Activity */}
-        <div className="col-span-1 md:col-span-2 lg:col-span-1">
-          <RecentActivityCard activities={activities} />
-        </div>
+      {/* Recent Activity */}
+      <div>
+        <RecentActivityCard activities={activities} />
       </div>
 
       {/* Product Tour */}
