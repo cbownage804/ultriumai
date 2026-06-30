@@ -75,6 +75,15 @@ function SuspenseWrapper({ children, variant = 'dashboard' }: { children: React.
   );
 }
 
+/** Rewrites any /safesuite/<rest> URL to /app/<rest>, preserving search + hash. */
+function LegacySafesuiteRedirect() {
+  const location = useLocation();
+  const rest = location.pathname.replace(/^\/safesuite/, '') || '/dashboard';
+  return <Navigate to={`/app${rest}${location.search}${location.hash}`} replace />;
+}
+
+
+
 function AppRouter() {
   const { user, loading } = useAuth();
   const location = useLocation();
