@@ -128,13 +128,13 @@ function AppRouter() {
         <Route path="/safesuite/products/safeweb" element={<SuspenseWrapper><WatchProduct /></SuspenseWrapper>} />
         <Route path="/safesuite/products/safescan" element={<SuspenseWrapper><ScanProduct /></SuspenseWrapper>} />
 
-        <Route element={
+        <Route path="/onboarding/ray" element={
           <ProtectedRoute>
             <SuspenseWrapper><RayOnboarding /></SuspenseWrapper>
           </ProtectedRoute>
-        }>
-          <Route path="/onboarding/ray" element={null} />
-        </Route>
+        } />
+
+
 
         <Route element={
           <ProtectedRoute>
