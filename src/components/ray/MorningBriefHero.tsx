@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { useMorningBrief, type RayBriefRow, type RayBriefFeedback } from "@/lib/ray/morningBrief";
 import { useRayBrain } from "@/lib/ray/brain";
 import { cn } from "@/lib/utils";
+import { ScoreCelebration } from "@/components/ray/ScoreCelebration";
 
 function pageHrefFor(area?: string | null): string {
   switch (area) {
@@ -126,6 +127,8 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
   }
 
   return (
+    <>
+    <ScoreCelebration score={brief?.score ?? null} />
     <motion.section
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
@@ -246,6 +249,7 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
         )}
       </div>
     </motion.section>
+    </>
   );
 }
 

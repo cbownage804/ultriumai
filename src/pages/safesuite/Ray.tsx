@@ -2,17 +2,28 @@
  * Ray — the canonical Ray command center.
  *
  * Composes the full-page conversation surface with Ray's current
- * recommendations, recently completed work, and suggested questions
- * the user can click to start a conversation.
+ * recommendations (with lifecycle controls), recently completed work,
+ * what Ray remembers about the user, and suggested questions.
  */
-import { lazy, Suspense, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { getRayContext, type RayContext } from '@/lib/ray';
+import { useRayBrain } from '@/lib/ray/brain';
 import { supabase } from '@/integrations/supabase/client';
 import { RayPageHeader } from '@/components/ray/RayPageHeader';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { ArrowRight, Check, Eye, MessageSquare } from 'lucide-react';
+import {
+  ArrowRight,
+  Brain,
+  Check,
+  CheckCircle2,
+  Clock,
+  MessageSquare,
+  Play,
+  Shield,
+  X,
+} from 'lucide-react';
 
 const WraythAssist = lazy(() => import('@/pages/safesuite/SafeSuiteAssist'));
 
@@ -26,38 +37,76 @@ const SUGGESTED_QUESTIONS = [
   'What happened overnight?',
 ];
 
+function pageHrefFor(area?: string | null): string {
+  switch (area) {
+    case 'passwords': return '/app/passwords';
+    case 'threats': return '/app/threats';
+    case 'exposure': return '/app/exposure';
+    case 'identity': return '/app/identity';
+    case 'devices': return '/app/devices';
+    case 'reports': return '/app/timeline';
+    default: return '/app/missions';
+  }
+}
+
 function priorityTone(p: number) {
-  if (p <= 1) return 'border-red-500/40 bg-red-500/[0.04]';
-  if (p <= 3) return 'border-amber-500/40 bg-amber-500/[0.04]';
-  return 'border-border bg-card/40';
+  if (p >= 70) return 'border-red-500/30 bg-red-500/[0.04]';
+  if (p >= 40) return 'border-amber-500/25 bg-amber-500/[0.03]';
+  return 'border-emerald-500/20 bg-emerald-500/[0.03]';
+}
+
+function prettyMemoryKey(k: string): string {
+  return k.replace(/[._-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function prettyMemoryValue(v: unknown): string {
+  if (v == null) return '—';
+  if (typeof v === 'string') return v;
+  if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+  try { return JSON.stringify(v); } catch { return '—'; }
 }
 
 export default function Ray() {
   const { user } = useAuth();
-  const [ctx, setCtx] = useState<RayContext | null>(null);
+  const navigate = useNavigate();
+  const {
+    recommendations,
+    memory,
+    startRecommendation,
+    snoozeRecommendation,
+    completeRecommendation,
+    dismissRecommendation,
+  } = useRayBrain();
   const [recent, setRecent] = useState<RecentAction[]>([]);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
     let active = true;
-    void getRayContext(user.id).then((c) => { if (active) setCtx(c); });
     void supabase
       .from('ray_timeline')
       .select('event_type,summary,created_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-      .limit(5)
+      .limit(6)
       .then(({ data }) => { if (active) setRecent((data ?? []) as RecentAction[]); });
     return () => { active = false; };
   }, [user]);
 
-  const recs = ctx?.recommendations?.slice(0, 3) ?? [];
+  const recs = useMemo(() => recommendations.slice(0, 4), [recommendations]);
+  const topMemory = useMemo(
+    () => memory.slice().sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0)).slice(0, 5),
+    [memory],
+  );
 
   function askRay(q: string) {
-    // Surface to the embedded WraythAssist via a custom event the
-    // assist component listens for. Falls back to clipboard copy.
     window.dispatchEvent(new CustomEvent('ray:ask', { detail: q }));
     try { void navigator.clipboard?.writeText(q); } catch { /* ignore */ }
+  }
+
+  async function withBusy(id: string, fn: () => Promise<unknown>) {
+    setBusyId(id);
+    try { await fn(); } finally { setBusyId(null); }
   }
 
   return (
@@ -68,38 +117,65 @@ export default function Ray() {
         description="Ask me anything about your security. I remember our conversations and surface what needs attention."
       />
 
-      <div className="grid gap-3 lg:grid-cols-3">
-        {recs.length > 0 && (
-          <section className="lg:col-span-2">
-            <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
-              Ray's current recommendations
-            </div>
-            <div className="grid gap-2 sm:grid-cols-3">
-              {recs.map((r) => (
-                <Link
-                  key={r.id}
-                  to="/app/missions"
-                  className={cn(
-                    'group rounded-sm border px-4 py-3 transition-colors hover:border-foreground/40',
-                    priorityTone(r.priority ?? 5),
-                  )}
-                >
+      {/* Current recommendations with lifecycle controls */}
+      <section>
+        <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
+          Ray's current recommendations
+        </div>
+        {recs.length === 0 ? (
+          <div className="rounded-sm border border-emerald-500/30 bg-emerald-500/[0.04] px-4 py-3 text-sm text-emerald-200">
+            Nothing needs your attention right now. I'll let you know the moment that changes.
+          </div>
+        ) : (
+          <div className="grid gap-2">
+            {recs.map((r) => {
+              const inProgress = r.status === 'in_progress';
+              const isBusy = busyId === r.id;
+              return (
+                <div key={r.id} className={cn('rounded-sm border px-4 py-3', priorityTone(r.priority ?? 5))}>
                   <div className="flex items-start gap-3">
-                    <Eye className="h-4 w-4 mt-0.5 text-foreground/70 shrink-0" />
-                    <div className="min-w-0">
-                      <div className="text-sm text-foreground line-clamp-2">{r.title}</div>
-                      <div className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground group-hover:text-foreground transition-colors">
-                        Fix with Ray <ArrowRight className="h-3 w-3" />
+                    <Shield className="h-4 w-4 mt-0.5 text-foreground/70 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <div className="text-sm text-foreground">{r.title}</div>
+                        {inProgress && (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-violet-400/40 bg-violet-500/15 px-2 py-0.5 text-[10px] uppercase tracking-wider text-violet-200">
+                            <Play className="h-2.5 w-2.5" /> In progress
+                          </span>
+                        )}
+                      </div>
+                      {r.body && <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{r.body}</p>}
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => navigate(pageHrefFor(r.page_context))}>
+                          Fix with Ray <ArrowRight className="h-3 w-3 ml-1" />
+                        </Button>
+                        {!inProgress && (
+                          <Button size="sm" variant="ghost" disabled={isBusy} className="h-7 px-2 text-xs text-violet-300 hover:text-violet-200" onClick={() => withBusy(r.id, () => startRecommendation(r.id))}>
+                            <Play className="h-3 w-3 mr-1" /> Start
+                          </Button>
+                        )}
+                        <Button size="sm" variant="ghost" disabled={isBusy} className="h-7 px-2 text-xs text-emerald-300 hover:text-emerald-200" onClick={() => withBusy(r.id, () => completeRecommendation(r.id))}>
+                          <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Mark handled
+                        </Button>
+                        <Button size="sm" variant="ghost" disabled={isBusy} className="h-7 px-2 text-xs text-amber-300 hover:text-amber-200" onClick={() => withBusy(r.id, () => snoozeRecommendation(r.id, 24))}>
+                          <Clock className="h-3.5 w-3.5 mr-1" /> Snooze 24h
+                        </Button>
+                        <Button size="sm" variant="ghost" disabled={isBusy} className="h-7 px-2 text-xs text-muted-foreground" onClick={() => withBusy(r.id, () => dismissRecommendation(r.id))}>
+                          <X className="h-3.5 w-3.5 mr-1" /> Dismiss
+                        </Button>
                       </div>
                     </div>
                   </div>
-                </Link>
-              ))}
-            </div>
-          </section>
+                </div>
+              );
+            })}
+          </div>
         )}
+      </section>
 
-        <section className={recs.length > 0 ? '' : 'lg:col-span-3'}>
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Recently, Ray... */}
+        <section>
           <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
             Recently, Ray…
           </div>
@@ -125,6 +201,27 @@ export default function Ray() {
               Full timeline <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
+        </section>
+
+        {/* What Ray remembers */}
+        <section>
+          <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-2 inline-flex items-center gap-2">
+            <Brain className="h-3 w-3" /> What Ray remembers
+          </div>
+          {topMemory.length === 0 ? (
+            <div className="rounded-sm border border-border bg-card/40 px-4 py-3 text-sm text-muted-foreground">
+              Nothing yet. As we work together, I'll remember what matters to you.
+            </div>
+          ) : (
+            <ul className="rounded-sm border border-border bg-card/40 divide-y divide-border">
+              {topMemory.map((m) => (
+                <li key={m.id} className="px-4 py-2.5 text-sm">
+                  <div className="text-foreground/90">{prettyMemoryKey(m.key)}</div>
+                  <div className="text-xs text-muted-foreground truncate">{prettyMemoryValue(m.value)}</div>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       </div>
 
