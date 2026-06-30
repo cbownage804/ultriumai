@@ -166,11 +166,16 @@ const ANALYZE_STEPS = [
 
 function AnalyzingSequence({ onDone }: { onDone: () => void }) {
   const [completed, setCompleted] = useState<number>(0);
+  const [anticipation, setAnticipation] = useState(false);
+  const [reveal, setReveal] = useState(false);
 
   useEffect(() => {
     if (completed >= ANALYZE_STEPS.length) {
-      const t = setTimeout(onDone, 700);
-      return () => clearTimeout(t);
+      // 600ms anticipation pulse before the reveal — Apple/Linear/OpenAI-style pause.
+      const t1 = setTimeout(() => setAnticipation(true), 200);
+      const t2 = setTimeout(() => setReveal(true), 800);
+      const t3 = setTimeout(onDone, 1500);
+      return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
     }
     const t = setTimeout(() => setCompleted((c) => c + 1), 900);
     return () => clearTimeout(t);
@@ -214,6 +219,23 @@ function AnalyzingSequence({ onDone }: { onDone: () => void }) {
           );
         })}
       </div>
+
+      {anticipation && (
+        <div className="ml-[72px] pt-4 animate-fade-in">
+          <div className="flex items-center gap-3">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inset-0 rounded-full bg-[hsl(262_60%_64%)] animate-ping" />
+              <span className="relative h-2 w-2 rounded-full bg-[hsl(262_60%_70%)]" />
+            </span>
+            <span className={cn(
+              'text-sm transition-opacity duration-500',
+              reveal ? 'text-foreground opacity-100' : 'text-muted-foreground opacity-70'
+            )}>
+              {reveal ? 'I found something.' : ''}
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
