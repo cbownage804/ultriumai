@@ -17,6 +17,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle2, X, Lock, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AnimatedHeader, GlowContainer, SAFESUITE_THEMES } from '@/components/safesuite/SafeSuiteEffects';
+import { RayInsightPanel } from '@/components/ray/RayInsightPanel';
 import safepassLogo from '@/assets/safepass-logo.png';
 import heroSafepassBg from '@/assets/hero-safepass-bg.jpg';
 
@@ -194,6 +195,10 @@ export default function WraythPass() {
               
               {/* Tier Limit Info - Always visible for upselling */}
               <TierLimitInfo feature="safepass" />
+
+              {/* Ray's per-page insight */}
+              <RayInsightPanel context="passwords" />
+
               
               {/* Security Badge - shows architecture on click */}
               <div className="flex justify-center">

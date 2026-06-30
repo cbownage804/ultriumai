@@ -6,6 +6,7 @@ import { FeatureGate, TierLimitInfo } from '@/components/safesuite/SafeSuitePayw
 import { ScanApp } from '@/components/apps/SafeScanApp';
 import { motion } from 'framer-motion';
 import { AnimatedHeader, GlowContainer } from '@/components/safesuite/SafeSuiteEffects';
+import { RayInsightPanel } from '@/components/ray/RayInsightPanel';
 import safescanLogo from '@/assets/safescan-logo.png';
 import heroSafescanBg from '@/assets/hero-safescan-bg.jpg';
 
@@ -44,7 +45,10 @@ export default function WraythScan() {
         >
           <TierLimitInfo feature="safescan" />
         </motion.div>
-        
+
+        <RayInsightPanel context="threats" />
+
+
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}

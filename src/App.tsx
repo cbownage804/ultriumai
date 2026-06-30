@@ -57,6 +57,7 @@ const Identity = lazy(() => import('@/pages/safesuite/Identity'));
 const Devices = lazy(() => import('@/pages/safesuite/Devices'));
 const Reports = lazy(() => import('@/pages/safesuite/Reports'));
 const RayOnboarding = lazy(() => import('@/pages/onboarding/RayOnboarding'));
+const RayTimelinePage = lazy(() => import('@/pages/safesuite/RayTimelinePage'));
 
 // Public/legal pages
 const Contact = lazy(() => import('@/pages/Contact'));
@@ -158,6 +159,7 @@ function AppRouter() {
           <Route path="/app/dashboard" element={<SuspenseWrapper><WraythDashboard /></SuspenseWrapper>} />
           <Route path="/app/assist" element={<SuspenseWrapper><WraythAssist /></SuspenseWrapper>} />
           <Route path="/app/ray" element={<SuspenseWrapper><Ray /></SuspenseWrapper>} />
+          <Route path="/app/timeline" element={<SuspenseWrapper><RayTimelinePage /></SuspenseWrapper>} />
           <Route path="/app/identity" element={<SuspenseWrapper><Identity /></SuspenseWrapper>} />
           <Route path="/app/devices" element={<SuspenseWrapper><Devices /></SuspenseWrapper>} />
           <Route path="/app/reports" element={<SuspenseWrapper><Reports /></SuspenseWrapper>} />
