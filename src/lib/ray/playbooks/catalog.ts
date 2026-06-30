@@ -34,6 +34,21 @@ export type RayTaskId =
   | 'request_data_removal'
   | 'freeze_credit_bureau'
   | 'set_fraud_alert'
+  | 'verify_email_ownership'
+  | 'monitor_identity_continuously'
+  | 'review_weak_passwords'
+  | 'review_reused_passwords'
+  | 'review_old_passwords'
+  | 'review_compromised_passwords'
+  | 'disable_legacy_auth'
+  | 'configure_conditional_access'
+  | 'admin_security_review'
+  | 'add_recovery_phone'
+  | 'save_backup_codes'
+  | 'install_endpoint_agent'
+  | 'verify_disk_encryption'
+  | 'enable_firewall'
+  | 'patch_operating_system'
   | 'confirm_done';
 
 export type RayTask = {
@@ -226,5 +241,80 @@ export const RAY_TASKS: Record<RayTaskId, RayTask> = {
     label: 'Place a fraud alert',
     rayPrompt:
       "A fraud alert tells creditors to verify your identity before opening anything new. Quick to set up at any bureau.",
+  },
+  verify_email_ownership: {
+    id: 'verify_email_ownership',
+    label: 'Verify you own this email',
+    rayPrompt: "Quick check — open the inbox and click the verification link I sent. That confirms we're watching the right address.",
+  },
+  monitor_identity_continuously: {
+    id: 'monitor_identity_continuously',
+    label: 'Turn on continuous monitoring',
+    rayPrompt: "I'll keep watching this identity 24/7. The moment anything new surfaces, you'll hear from me first.",
+  },
+  review_weak_passwords: {
+    id: 'review_weak_passwords',
+    label: 'Review weak passwords',
+    rayPrompt: "Here are the weakest passwords in your Vault. Let's swap each one for something stronger.",
+  },
+  review_reused_passwords: {
+    id: 'review_reused_passwords',
+    label: 'Review reused passwords',
+    rayPrompt: "These passwords are used in more than one place. One breach takes them all down — let's give each its own.",
+  },
+  review_old_passwords: {
+    id: 'review_old_passwords',
+    label: 'Review passwords you haven\'t changed in over a year',
+    rayPrompt: "These passwords are over a year old. Even if they're strong, rotating them resets the clock on any silent exposure.",
+  },
+  review_compromised_passwords: {
+    id: 'review_compromised_passwords',
+    label: 'Review compromised passwords',
+    rayPrompt: "These passwords have been seen in known breaches. We rotate every one of them — no exceptions.",
+  },
+  disable_legacy_auth: {
+    id: 'disable_legacy_auth',
+    label: 'Disable legacy authentication',
+    rayPrompt: "Legacy auth bypasses MFA. Open the admin center and turn it off — modern auth handles everything safer.",
+  },
+  configure_conditional_access: {
+    id: 'configure_conditional_access',
+    label: 'Configure Conditional Access',
+    rayPrompt: "Conditional Access lets you require MFA for risky sign-ins, block legacy auth, and trust only known locations. I'll suggest a baseline policy.",
+  },
+  admin_security_review: {
+    id: 'admin_security_review',
+    label: 'Review admin accounts',
+    rayPrompt: "Admins are the highest-value targets. Let's confirm every admin has MFA, no shared accounts, and access they still need.",
+  },
+  add_recovery_phone: {
+    id: 'add_recovery_phone',
+    label: 'Add a recovery phone',
+    rayPrompt: "Add a recovery phone you control. If you ever lose access, this is one of the lifelines back in.",
+  },
+  save_backup_codes: {
+    id: 'save_backup_codes',
+    label: 'Save your backup codes to the Vault',
+    rayPrompt: "Generate backup codes and save them in your Vault. If your phone disappears, these are your safety net.",
+  },
+  install_endpoint_agent: {
+    id: 'install_endpoint_agent',
+    label: 'Install the Wrayth endpoint agent',
+    rayPrompt: "Install the agent so I can see device health — encryption, firewall, patches — and act on issues directly.",
+  },
+  verify_disk_encryption: {
+    id: 'verify_disk_encryption',
+    label: 'Verify disk encryption',
+    rayPrompt: "Confirm full-disk encryption (FileVault, BitLocker, or LUKS) is on. If the device is ever lost, the data stays sealed.",
+  },
+  enable_firewall: {
+    id: 'enable_firewall',
+    label: 'Enable the system firewall',
+    rayPrompt: "Turn on the built-in firewall. It blocks the easy reconnaissance attackers do before anything else.",
+  },
+  patch_operating_system: {
+    id: 'patch_operating_system',
+    label: 'Patch your operating system',
+    rayPrompt: "Install all pending OS updates. Most attacks use bugs that were already fixed weeks ago.",
   },
 };

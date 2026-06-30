@@ -24,12 +24,43 @@ import {
   X,
   Shield,
 } from "lucide-react";
+import { Volume2, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMorningBrief, type RayBriefRow, type RayBriefFeedback } from "@/lib/ray/morningBrief";
 import { useRayBrain } from "@/lib/ray/brain";
+import { useRayVoice } from "@/hooks/useRayVoice";
 import { cn } from "@/lib/utils";
 import { ScoreCelebration } from "@/components/ray/ScoreCelebration";
 import { toast } from "sonner";
+
+/** Compose Ray's spoken brief: greeting → reassurance → top recommendation → close. */
+function buildSpokenBrief(opts: {
+  greeting: string;
+  personality: string;
+  brief: RayBriefRow | null;
+  topRec?: { title: string; body?: string | null } | null;
+  memoryLine: string | null;
+}): string {
+  const lines: string[] = [];
+  lines.push(opts.greeting);
+  if (opts.brief?.summary) lines.push(opts.brief.summary);
+  else lines.push("I checked everything overnight. Here's what matters today.");
+  lines.push(opts.personality);
+  if (opts.memoryLine) lines.push(opts.memoryLine);
+  if (opts.brief?.score != null) {
+    const delta = opts.brief.score_delta ?? 0;
+    if (delta > 0) lines.push(`Your security score is ${opts.brief.score}, up ${delta} since the last brief.`);
+    else if (delta < 0) lines.push(`Your security score is ${opts.brief.score}, down ${Math.abs(delta)} since the last brief.`);
+    else lines.push(`Your security score remains at ${opts.brief.score}.`);
+  }
+  if (opts.topRec) {
+    lines.push(`The one thing I'd focus on today: ${opts.topRec.title}.`);
+    if (opts.topRec.body) lines.push(opts.topRec.body);
+  }
+  if (opts.brief?.guidance) lines.push(opts.brief.guidance);
+  lines.push("Whenever you're ready, I'm here.");
+  return lines.join(" ");
+}
 
 function pageHrefFor(area?: string | null): string {
   switch (area) {
@@ -113,6 +144,7 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
   const { recommendations, completeRecommendation, dismissRecommendation, snoozeRecommendation, startRecommendation, timeline } =
     useRayBrain({ pageContext: "home" });
   const [busyId, setBusyId] = useState<string | null>(null);
+  const voice = useRayVoice();
 
   const brief = today;
   const greeting = brief?.greeting ?? (firstName ? `Good morning, ${firstName}.` : "Good morning.");
@@ -212,6 +244,35 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
           {memoryLine}
         </p>
       )}
+
+      {/* ▶ Listen — Ray's voice, only here on the Morning Brief. */}
+      <div className="relative mt-3">
+        <button
+          type="button"
+          onClick={() => voice.speak(buildSpokenBrief({ greeting, personality, brief, topRec: top[0] ?? null, memoryLine }))}
+          disabled={voice.isLoading}
+          className={cn(
+            "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition",
+            voice.isPlaying
+              ? "border-violet-400/60 bg-violet-500/15 text-violet-100"
+              : "border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.08] hover:text-white",
+          )}
+          aria-label={voice.isPlaying ? "Stop Ray" : "Listen to today's briefing"}
+        >
+          {voice.isLoading ? (
+            <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Ray is warming up…</>
+          ) : voice.isPlaying ? (
+            <><Square className="h-3 w-3 fill-current" /> Stop</>
+          ) : (
+            <><Volume2 className="h-3.5 w-3.5" /> Listen to today's briefing</>
+          )}
+        </button>
+        {voice.error && (
+          <span className="ml-3 text-[11px] text-amber-300/80">{voice.error}</span>
+        )}
+      </div>
+
+
 
       {/* Status cards — scannable in one second. */}
       <div className="relative mt-5 grid grid-cols-2 sm:grid-cols-4 gap-2">
