@@ -339,7 +339,9 @@ export default function WraythLayout() {
   return (
     <MFAOnboardingGate>
       <FloatingSafeAssistProvider>
-        <WraythLayoutInner />
+        <RayContextProvider>
+          <WraythLayoutInner />
+        </RayContextProvider>
       </FloatingSafeAssistProvider>
     </MFAOnboardingGate>
   );
