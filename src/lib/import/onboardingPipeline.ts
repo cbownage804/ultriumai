@@ -309,6 +309,10 @@ export async function runRayOnboardingPipeline(
     })
     .eq('user_id', userId);
 
+  // 10. Handoff to Ray: persist memory + timeline, pre-warm first briefing.
+  await recordOnboardingHandoff(userId, source, profile, intel, score, breach.degraded);
+  void prewarmFirstBriefing();
+
   onProgress({ phase: 'done', done: 1, total: 1, message: 'Done.' });
   return {
     parsed: parsed.credentials.length,
