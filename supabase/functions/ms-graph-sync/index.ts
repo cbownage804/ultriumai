@@ -175,25 +175,28 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Persist as ray_findings (idempotent per key per user)
+    // Persist as ray_findings — clear previous m365 findings for this user, then insert fresh.
     const now = new Date().toISOString();
-    for (const sig of signals) {
-      const sev = sig.status === "risk" ? "critical" : sig.status === "warn" ? "warning" : "info";
-      await admin.from("ray_findings").upsert(
-        {
-          user_id: userId,
+    await admin
+      .from("ray_findings")
+      .delete()
+      .eq("user_id", userId)
+      .like("kind", "m365:%");
+
+    if (signals.length > 0) {
+      const rows = signals.map((sig) => ({
+        user_id: userId,
+        kind: `m365:${sig.key}`,
+        severity: sig.status === "risk" ? "high" : sig.status === "warn" ? "medium" : "low",
+        details: {
           source: "microsoft_365",
-          category: "identity",
-          finding_key: `m365:${sig.key}`,
-          title: `M365 · ${sig.label}`,
-          summary: sig.detail || "",
-          severity: sev,
-          status: "open",
-          metadata: { value: sig.value, signal: sig },
-          observed_at: now,
+          label: sig.label,
+          value: sig.value,
+          detail: sig.detail,
+          status: sig.status,
         },
-        { onConflict: "user_id,finding_key" } as any,
-      );
+      }));
+      await admin.from("ray_findings").insert(rows);
     }
 
     await admin.from("ray_integrations").update({
@@ -208,9 +211,9 @@ Deno.serve(async (req) => {
       await admin.from("ray_timeline").insert({
         user_id: userId,
         event_type: "integration_sync",
-        title: "Synced Microsoft 365",
-        summary: `Pulled ${signals.length} signal(s) from your tenant.`,
-        metadata: { provider: "microsoft_365", signals },
+        summary: `Synced Microsoft 365 · pulled ${signals.length} signal(s).`,
+        payload: { provider: "microsoft_365", signals },
+        severity: "info",
       });
     } catch (_) { /* table optional */ }
 
