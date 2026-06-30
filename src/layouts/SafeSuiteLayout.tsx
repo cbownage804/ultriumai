@@ -87,6 +87,7 @@ function getSections(): NavSection[] {
       id: 'main',
       items: [
         { label: 'Home', path: getWraythPath('/dashboard'), icon: Home },
+        { label: 'Morning Brief', path: getWraythPath('/brief'), icon: Sparkles },
         { label: 'Ray', path: getWraythPath('/ray'), icon: Eye },
         { label: 'Timeline', path: getWraythPath('/timeline'), icon: Activity },
       ],
