@@ -144,6 +144,7 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
   const { recommendations, completeRecommendation, dismissRecommendation, snoozeRecommendation, startRecommendation, timeline } =
     useRayBrain({ pageContext: "home" });
   const [busyId, setBusyId] = useState<string | null>(null);
+  const voice = useRayVoice();
 
   const brief = today;
   const greeting = brief?.greeting ?? (firstName ? `Good morning, ${firstName}.` : "Good morning.");
