@@ -114,8 +114,8 @@ function TeamTeaserContent() {
             {['Development Credentials', 'Client Accounts', 'Infrastructure'].map((vault, i) => (
               <div key={i} className="p-4 rounded-lg border bg-card">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                    <FolderKey className="h-5 w-5 text-amber-500" />
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <FolderKey className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium">{vault}</p>

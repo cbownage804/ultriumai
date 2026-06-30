@@ -111,7 +111,7 @@ const TeamManagement = () => {
         </div>
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
-            <Button className="bg-amber-500 hover:bg-amber-600 text-black">
+            <Button className="bg-primary hover:bg-primary text-black">
               <Plus className="h-4 w-4 mr-2" />
               Create Team
             </Button>
@@ -154,7 +154,7 @@ const TeamManagement = () => {
                 <Button onClick={() => setShowCreateDialog(false)} variant="outline" className="flex-1">
                   Cancel
                 </Button>
-                <Button onClick={handleCreateTeam} className="flex-1 bg-amber-500 hover:bg-amber-600 text-black">
+                <Button onClick={handleCreateTeam} className="flex-1 bg-primary hover:bg-primary text-black">
                   Create Team
                 </Button>
               </div>
@@ -256,7 +256,7 @@ const TeamManagement = () => {
                                         <Button onClick={() => setShowInviteDialog(false)} variant="outline" className="flex-1">
                                           Cancel
                                         </Button>
-                                        <Button onClick={handleInviteMember} className="flex-1 bg-amber-500 hover:bg-amber-600 text-black">
+                                        <Button onClick={handleInviteMember} className="flex-1 bg-primary hover:bg-primary text-black">
                                           Send Invite
                                         </Button>
                                       </div>
@@ -339,7 +339,7 @@ const TeamManagement = () => {
                                         <Button onClick={() => setShowShareDialog(false)} variant="outline" className="flex-1">
                                           Cancel
                                         </Button>
-                                        <Button onClick={handleShareVault} className="flex-1 bg-amber-500 hover:bg-amber-600 text-black">
+                                        <Button onClick={handleShareVault} className="flex-1 bg-primary hover:bg-primary text-black">
                                           Share Vault
                                         </Button>
                                       </div>

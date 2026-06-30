@@ -97,14 +97,14 @@ export function SecurityTipsModal({ forceShow = false, onClose }: SecurityTipsMo
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-md bg-[#0a0a0a] border-amber-500/30 overflow-hidden">
+      <DialogContent className="sm:max-w-md bg-[#0a0a0a] border-primary/30 overflow-hidden">
         {/* Background glow */}
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-yellow-500/5 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 pointer-events-none" />
         
         <DialogHeader className="relative">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-amber-500/20 border border-amber-500/30">
-              <Shield className="h-5 w-5 text-amber-400" />
+            <div className="p-2 rounded-lg bg-primary/20 border border-primary/30">
+              <Shield className="h-5 w-5 text-primary" />
             </div>
             <DialogTitle className="text-white">Security Best Practices</DialogTitle>
           </div>
@@ -116,9 +116,9 @@ export function SecurityTipsModal({ forceShow = false, onClose }: SecurityTipsMo
                 key={index}
                 className={`h-1.5 rounded-full transition-all duration-300 ${
                   index === currentTip 
-                    ? 'w-6 bg-amber-400' 
+                    ? 'w-6 bg-primary' 
                     : index < currentTip 
-                      ? 'w-1.5 bg-amber-400/50' 
+                      ? 'w-1.5 bg-primary/50' 
                       : 'w-1.5 bg-white/20'
                 }`}
               />
@@ -136,8 +136,8 @@ export function SecurityTipsModal({ forceShow = false, onClose }: SecurityTipsMo
             className="relative py-6"
           >
             <div className="flex flex-col items-center text-center space-y-4">
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/20 to-yellow-500/10 border border-amber-500/30">
-                <div className="text-amber-400">
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/30">
+                <div className="text-primary">
                   {tip.icon}
                 </div>
               </div>
@@ -166,7 +166,7 @@ export function SecurityTipsModal({ forceShow = false, onClose }: SecurityTipsMo
           <Button
             onClick={handleNext}
             size="sm"
-            className="bg-amber-500 hover:bg-amber-600 text-black font-medium"
+            className="bg-primary hover:bg-primary text-black font-medium"
           >
             {isLastTip ? (
               <>

@@ -115,21 +115,21 @@ export default function WraythPass() {
               animate={{ opacity: 1, y: 0, height: 'auto' }}
               exit={{ opacity: 0, y: -20, height: 0 }}
             >
-              <Alert className="bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border-amber-500/30 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 to-transparent" />
+              <Alert className="bg-gradient-to-r from-primary/10 to-primary/10 border-primary/30 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent" />
                 <div className="relative flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-amber-500/20">
-                    <CheckCircle2 className="h-5 w-5 text-amber-400" />
+                  <div className="p-2 rounded-lg bg-primary/20">
+                    <CheckCircle2 className="h-5 w-5 text-primary" />
                   </div>
                   <div className="flex-1">
-                    <AlertTitle className="text-amber-400 font-semibold">Extension Installed!</AlertTitle>
-                    <AlertDescription className="text-amber-400/80 text-sm mt-1">
+                    <AlertTitle className="text-primary font-semibold">Extension Installed!</AlertTitle>
+                    <AlertDescription className="text-primary/80 text-sm mt-1">
                       The Vault browser extension is ready to use. Click the extension icon in your toolbar to start autofilling passwords.
                     </AlertDescription>
                   </div>
                   <button 
                     onClick={() => setShowExtensionBanner(false)}
-                    className="text-amber-400/60 hover:text-amber-400 transition-colors p-1"
+                    className="text-primary/60 hover:text-primary transition-colors p-1"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -152,7 +152,7 @@ export default function WraythPass() {
               <GlowContainer theme="safepass" className="p-4 sm:p-8">
                 {/* Vault Logo - Horizontal Layout */}
                 <motion.div 
-                  className="mx-auto mb-4 sm:mb-6 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-500/20 to-yellow-500/20 border border-amber-500/30 flex items-center justify-center px-4 sm:px-8 py-3 sm:py-4"
+                  className="mx-auto mb-4 sm:mb-6 rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary/20 to-primary/20 border border-primary/30 flex items-center justify-center px-4 sm:px-8 py-3 sm:py-4"
                   animate={{ 
                     boxShadow: ['0 0 20px rgba(245,158,11,0.2)', '0 0 40px rgba(245,158,11,0.3)', '0 0 20px rgba(245,158,11,0.2)']
                   }}

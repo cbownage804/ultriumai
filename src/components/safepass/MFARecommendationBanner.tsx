@@ -80,19 +80,19 @@ export function MFARecommendationBanner({ className }: MFARecommendationBannerPr
           transition={{ duration: 0.3 }}
           className={className}
         >
-          <Alert className="bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-orange-500/10 border-amber-500/30 relative overflow-hidden">
+          <Alert className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border-primary/30 relative overflow-hidden">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(245,158,11,0.1),transparent_50%)]" />
             <div className="relative flex items-start gap-4">
-              <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500/20 to-yellow-500/20 border border-amber-500/30 shrink-0">
-                <Shield className="h-5 w-5 text-amber-400" />
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/20 to-primary/20 border border-primary/30 shrink-0">
+                <Shield className="h-5 w-5 text-primary" />
               </div>
               
               <div className="flex-1 min-w-0">
-                <AlertTitle className="text-amber-400 font-semibold flex items-center gap-2">
+                <AlertTitle className="text-primary font-semibold flex items-center gap-2">
                   <ShieldCheck className="h-4 w-4" />
                   Strengthen Your Vault Security
                 </AlertTitle>
-                <AlertDescription className="text-amber-400/80 text-sm mt-1.5 leading-relaxed">
+                <AlertDescription className="text-primary/80 text-sm mt-1.5 leading-relaxed">
                   Enable two-factor authentication (2FA) to add an extra layer of protection to your password vault. 
                   Even if someone discovers your master password, they won't be able to access your data without your authenticator.
                 </AlertDescription>
@@ -101,7 +101,7 @@ export function MFARecommendationBanner({ className }: MFARecommendationBannerPr
                   <Button 
                     asChild
                     size="sm" 
-                    className="bg-amber-500 hover:bg-amber-600 text-black font-medium"
+                    className="bg-primary hover:bg-primary text-black font-medium"
                   >
                     <Link to="/settings/security">
                       Enable 2FA Now
@@ -112,7 +112,7 @@ export function MFARecommendationBanner({ className }: MFARecommendationBannerPr
                     variant="ghost"
                     size="sm"
                     onClick={handleDismiss}
-                    className="text-amber-400/60 hover:text-amber-400 hover:bg-amber-500/10"
+                    className="text-primary/60 hover:text-primary hover:bg-primary/10"
                   >
                     Remind me later
                   </Button>
@@ -121,7 +121,7 @@ export function MFARecommendationBanner({ className }: MFARecommendationBannerPr
               
               <button 
                 onClick={handleDismiss}
-                className="text-amber-400/40 hover:text-amber-400 transition-colors p-1 shrink-0"
+                className="text-primary/40 hover:text-primary transition-colors p-1 shrink-0"
                 aria-label="Dismiss"
               >
                 <X className="h-4 w-4" />

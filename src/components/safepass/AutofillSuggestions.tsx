@@ -77,13 +77,13 @@ export function AutofillSuggestions({
   const domain = extractDomain(contextUrl || '');
 
   return (
-    <Card className={cn("bg-gradient-to-br from-amber-500/5 to-amber-500/10 border-amber-500/20", className)}>
+    <Card className={cn("bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20", className)}>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium flex items-center gap-2 text-amber-500">
+        <CardTitle className="text-sm font-medium flex items-center gap-2 text-primary">
           <Sparkles className="h-4 w-4" />
           <span>VaultAI Suggestions</span>
           {domain && (
-            <Badge variant="outline" className="ml-auto text-[10px] border-amber-500/30 text-gray-400">
+            <Badge variant="outline" className="ml-auto text-[10px] border-primary/30 text-gray-400">
               for {domain}
             </Badge>
           )}
@@ -97,18 +97,18 @@ export function AutofillSuggestions({
                 key={suggestion.id}
                 className={cn(
                   "flex items-center gap-3 p-2 rounded-lg transition-colors cursor-pointer",
-                  "hover:bg-amber-500/10 group",
-                  index === 0 && "bg-amber-500/5"
+                  "hover:bg-primary/10 group",
+                  index === 0 && "bg-primary/5"
                 )}
                 onClick={() => handleSelect(suggestion)}
               >
                 {/* Icon */}
                 <div className={cn(
                   "h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0",
-                  index === 0 ? "bg-amber-500/20" : "bg-[#252525]"
+                  index === 0 ? "bg-primary/20" : "bg-[#252525]"
                 )}>
                   {index === 0 ? (
-                    <Zap className="h-4 w-4 text-amber-500" />
+                    <Zap className="h-4 w-4 text-primary" />
                   ) : (
                     <Globe className="h-4 w-4 text-gray-400" />
                   )}
@@ -121,10 +121,10 @@ export function AutofillSuggestions({
                       {suggestion.title}
                     </span>
                     {suggestion.is_favorite && (
-                      <Star className="h-3 w-3 text-amber-500 fill-amber-500 flex-shrink-0" />
+                      <Star className="h-3 w-3 text-primary fill-primary flex-shrink-0" />
                     )}
                     {index === 0 && (
-                      <Badge className="text-[10px] px-1.5 py-0 h-4 bg-amber-500/20 text-amber-500 border-0">
+                      <Badge className="text-[10px] px-1.5 py-0 h-4 bg-primary/20 text-primary border-0">
                         Best Match
                       </Badge>
                     )}
@@ -139,7 +139,7 @@ export function AutofillSuggestions({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 hover:bg-amber-500/20 hover:text-amber-500"
+                    className="h-7 w-7 hover:bg-primary/20 hover:text-primary"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleCopyPassword(suggestion);
@@ -152,7 +152,7 @@ export function AutofillSuggestions({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 hover:bg-amber-500/20 hover:text-amber-500"
+                      className="h-7 w-7 hover:bg-primary/20 hover:text-primary"
                       onClick={(e) => {
                         e.stopPropagation();
                         let url = suggestion.website;

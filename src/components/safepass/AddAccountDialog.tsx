@@ -99,9 +99,9 @@ export function AddAccountDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="bg-[#141414] border-amber-500/20 sm:max-w-md">
+      <DialogContent className="bg-[#141414] border-primary/20 sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-amber-500">
+          <DialogTitle className="flex items-center gap-2 text-primary">
             {mode === 'authenticate' ? (
               <>
                 <Lock className="h-5 w-5" />
@@ -135,7 +135,7 @@ export function AddAccountDialog({
                   placeholder="account@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 bg-[#1a1a1a] border-amber-500/20 focus:border-amber-500"
+                  className="pl-10 bg-[#1a1a1a] border-primary/20 focus:border-primary"
                   required
                 />
               </div>
@@ -153,7 +153,7 @@ export function AddAccountDialog({
                   placeholder="Work, Personal, etc."
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="pl-10 bg-[#1a1a1a] border-amber-500/20 focus:border-amber-500"
+                  className="pl-10 bg-[#1a1a1a] border-primary/20 focus:border-primary"
                 />
               </div>
             </div>
@@ -170,7 +170,7 @@ export function AddAccountDialog({
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="bg-amber-500 hover:bg-amber-600 text-black"
+                className="bg-primary hover:bg-primary text-black"
               >
                 {isLoading ? (
                   <>
@@ -196,7 +196,7 @@ export function AddAccountDialog({
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 bg-[#1a1a1a] border-amber-500/20 focus:border-amber-500"
+                  className="pl-10 bg-[#1a1a1a] border-primary/20 focus:border-primary"
                   required
                   disabled={!!pendingEmail}
                 />
@@ -215,7 +215,7 @@ export function AddAccountDialog({
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 bg-[#1a1a1a] border-amber-500/20 focus:border-amber-500"
+                  className="pl-10 bg-[#1a1a1a] border-primary/20 focus:border-primary"
                   required
                   autoFocus
                 />
@@ -234,7 +234,7 @@ export function AddAccountDialog({
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="bg-amber-500 hover:bg-amber-600 text-black"
+                className="bg-primary hover:bg-primary text-black"
               >
                 {isLoading ? (
                   <>

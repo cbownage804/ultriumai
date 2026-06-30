@@ -351,7 +351,7 @@ export const BreachMonitor = () => {
         <Button 
           onClick={runBreachScan} 
           disabled={isScanning}
-          className="bg-amber-500 hover:bg-amber-600 text-black w-full sm:w-auto touch-target"
+          className="bg-primary hover:bg-primary text-black w-full sm:w-auto touch-target"
         >
           {isScanning ? (
             <>
@@ -412,7 +412,7 @@ export const BreachMonitor = () => {
         <Card>
           <CardContent className="p-4 sm:p-6">
             <div className="flex items-center gap-2 sm:gap-3">
-              <AlertTriangle className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-500 shrink-0" />
+              <AlertTriangle className="h-6 w-6 sm:h-8 sm:w-8 text-primary shrink-0" />
               <div>
                 <div className="text-xl sm:text-2xl font-bold">{lastScan?.weak_count || 0}</div>
                 <p className="text-xs sm:text-sm text-muted-foreground">Weak</p>
@@ -424,7 +424,7 @@ export const BreachMonitor = () => {
         <Card>
           <CardContent className="p-4 sm:p-6">
             <div className="flex items-center gap-2 sm:gap-3">
-              <RefreshCw className="h-6 w-6 sm:h-8 sm:w-8 text-orange-500 shrink-0" />
+              <RefreshCw className="h-6 w-6 sm:h-8 sm:w-8 text-primary shrink-0" />
               <div>
                 <div className="text-xl sm:text-2xl font-bold">{lastScan?.reused_count || 0}</div>
                 <p className="text-xs sm:text-sm text-muted-foreground">Reused</p>
@@ -439,7 +439,7 @@ export const BreachMonitor = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-yellow-500" />
+              <AlertTriangle className="h-5 w-5 text-primary" />
               Security Issues ({currentResults.length})
             </CardTitle>
             <CardDescription>

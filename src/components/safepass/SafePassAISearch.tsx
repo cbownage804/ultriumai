@@ -126,7 +126,7 @@ export function VaultAISearch({
   };
   
   const getMatchIcon = (reasons: string[]) => {
-    if (reasons.includes('Your preferred choice')) return <Star className="h-3 w-3 text-amber-500" />;
+    if (reasons.includes('Your preferred choice')) return <Star className="h-3 w-3 text-primary" />;
     if (reasons.includes('Frequently used')) return <TrendingUp className="h-3 w-3 text-green-500" />;
     if (reasons.includes('Recently used')) return <Clock className="h-3 w-3 text-blue-500" />;
     if (reasons.includes('Current site match')) return <Zap className="h-3 w-3 text-purple-500" />;
@@ -146,10 +146,10 @@ export function VaultAISearch({
             onChange={(e) => handleInputChange(e.target.value)}
             onKeyDown={handleKeyDown}
             onFocus={() => entries.length > 0 && setIsOpen(true)}
-            className="pl-10 pr-10 bg-[#1a1a1a] border-amber-500/20 focus:border-amber-500 text-white placeholder:text-gray-500"
+            className="pl-10 pr-10 bg-[#1a1a1a] border-primary/20 focus:border-primary text-white placeholder:text-gray-500"
           />
           {isEnabled && (
-            <Sparkles className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-500/60" />
+            <Sparkles className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/60" />
           )}
           {query && (
             <Button
@@ -168,7 +168,7 @@ export function VaultAISearch({
       </PopoverTrigger>
       
       <PopoverContent 
-        className="w-[var(--radix-popover-trigger-width)] p-0 bg-[#1a1a1a] border-amber-500/20"
+        className="w-[var(--radix-popover-trigger-width)] p-0 bg-[#1a1a1a] border-primary/20"
         align="start"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
@@ -176,8 +176,8 @@ export function VaultAISearch({
           <ScrollArea className="max-h-[300px]">
             <div className="py-1">
               {!query && isEnabled && (
-                <div className="px-3 py-2 text-xs text-gray-500 flex items-center gap-2 border-b border-amber-500/10">
-                  <Sparkles className="h-3 w-3 text-amber-500" />
+                <div className="px-3 py-2 text-xs text-gray-500 flex items-center gap-2 border-b border-primary/10">
+                  <Sparkles className="h-3 w-3 text-primary" />
                   <span>AI Suggestions</span>
                 </div>
               )}
@@ -189,8 +189,8 @@ export function VaultAISearch({
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-2 text-left transition-colors",
                     index === selectedIndex 
-                      ? "bg-amber-500/20" 
-                      : "hover:bg-amber-500/10"
+                      ? "bg-primary/20" 
+                      : "hover:bg-primary/10"
                   )}
                 >
                   <div className="h-8 w-8 rounded-lg bg-[#252525] flex items-center justify-center flex-shrink-0">
@@ -203,7 +203,7 @@ export function VaultAISearch({
                         {result.title}
                       </span>
                       {result.is_favorite && (
-                        <Star className="h-3 w-3 text-amber-500 fill-amber-500 flex-shrink-0" />
+                        <Star className="h-3 w-3 text-primary fill-primary flex-shrink-0" />
                       )}
                     </div>
                     <div className="flex items-center gap-2">
@@ -226,7 +226,7 @@ export function VaultAISearch({
                     {result.relevanceScore > 70 && isEnabled && (
                       <Badge 
                         variant="outline" 
-                        className="text-[10px] px-1.5 py-0 h-4 border-amber-500/30 text-amber-500"
+                        className="text-[10px] px-1.5 py-0 h-4 border-primary/30 text-primary"
                       >
                         {result.relevanceScore}%
                       </Badge>

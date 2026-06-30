@@ -106,13 +106,13 @@ export function AccountSwitcher({ className }: AccountSwitcherProps) {
           <Button 
             variant="ghost" 
             className={cn(
-              "flex items-center gap-2 px-2 py-1 h-auto hover:bg-amber-500/10",
+              "flex items-center gap-2 px-2 py-1 h-auto hover:bg-primary/10",
               className
             )}
             disabled={isSwitching}
           >
             <Avatar className="h-7 w-7">
-              <AvatarFallback className="bg-amber-500/20 text-amber-500 text-xs">
+              <AvatarFallback className="bg-primary/20 text-primary text-xs">
                 {getInitials(currentEmail)}
               </AvatarFallback>
             </Avatar>
@@ -127,7 +127,7 @@ export function AccountSwitcher({ className }: AccountSwitcherProps) {
               )}
             </div>
             {isSwitching ? (
-              <Loader2 className="h-3 w-3 animate-spin text-amber-500" />
+              <Loader2 className="h-3 w-3 animate-spin text-primary" />
             ) : (
               <ChevronDown className="h-3 w-3 text-gray-400" />
             )}
@@ -136,7 +136,7 @@ export function AccountSwitcher({ className }: AccountSwitcherProps) {
         
         <DropdownMenuContent 
           align="end" 
-          className="w-64 bg-[#1a1a1a] border-amber-500/20"
+          className="w-64 bg-[#1a1a1a] border-primary/20"
         >
           <DropdownMenuLabel className="text-gray-400 text-xs">
             Switch Account
@@ -155,12 +155,12 @@ export function AccountSwitcher({ className }: AccountSwitcherProps) {
               created_at: new Date().toISOString(),
             })}
             className={cn(
-              "flex items-center gap-3 cursor-pointer hover:bg-amber-500/10",
-              isPrimaryAccount && "bg-amber-500/10"
+              "flex items-center gap-3 cursor-pointer hover:bg-primary/10",
+              isPrimaryAccount && "bg-primary/10"
             )}
           >
             <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-amber-500/20 text-amber-500">
+              <AvatarFallback className="bg-primary/20 text-primary">
                 {getInitials(user?.email || '')}
               </AvatarFallback>
             </Avatar>
@@ -173,7 +173,7 @@ export function AccountSwitcher({ className }: AccountSwitcherProps) {
               </p>
             </div>
             {isPrimaryAccount && (
-              <Check className="h-4 w-4 text-amber-500 flex-shrink-0" />
+              <Check className="h-4 w-4 text-primary flex-shrink-0" />
             )}
           </DropdownMenuItem>
           
@@ -186,8 +186,8 @@ export function AccountSwitcher({ className }: AccountSwitcherProps) {
                 key={account.id}
                 onClick={() => !isActive && handleSwitchAccount(account)}
                 className={cn(
-                  "flex items-center gap-3 cursor-pointer hover:bg-amber-500/10 group",
-                  isActive && "bg-amber-500/10"
+                  "flex items-center gap-3 cursor-pointer hover:bg-primary/10 group",
+                  isActive && "bg-primary/10"
                 )}
               >
                 <Avatar className="h-8 w-8">
@@ -204,7 +204,7 @@ export function AccountSwitcher({ className }: AccountSwitcherProps) {
                   </p>
                 </div>
                 {isActive ? (
-                  <Check className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                  <Check className="h-4 w-4 text-primary flex-shrink-0" />
                 ) : (
                   <Button
                     variant="ghost"
@@ -219,7 +219,7 @@ export function AccountSwitcher({ className }: AccountSwitcherProps) {
             );
           })}
           
-          <DropdownMenuSeparator className="bg-amber-500/10" />
+          <DropdownMenuSeparator className="bg-primary/10" />
           
           {/* Add Account Button */}
           <DropdownMenuItem
@@ -227,7 +227,7 @@ export function AccountSwitcher({ className }: AccountSwitcherProps) {
               setPendingSwitch(null);
               setShowAddDialog(true);
             }}
-            className="flex items-center gap-2 cursor-pointer hover:bg-amber-500/10 text-amber-500"
+            className="flex items-center gap-2 cursor-pointer hover:bg-primary/10 text-primary"
           >
             <UserPlus className="h-4 w-4" />
             <span>Add Account</span>

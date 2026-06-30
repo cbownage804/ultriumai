@@ -183,9 +183,9 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
   const getRiskStyles = (level: string) => {
     switch (level) {
       case 'critical': return { bg: 'bg-red-500/10', border: 'border-red-500/30', text: 'text-red-400', badge: 'bg-red-500/20 text-red-300' };
-      case 'high': return { bg: 'bg-orange-500/10', border: 'border-orange-500/30', text: 'text-orange-400', badge: 'bg-orange-500/20 text-orange-300' };
+      case 'high': return { bg: 'bg-primary/10', border: 'border-primary/30', text: 'text-orange-400', badge: 'bg-primary/20 text-orange-300' };
       case 'low': return { bg: 'bg-green-500/10', border: 'border-green-500/30', text: 'text-green-400', badge: 'bg-green-500/20 text-green-300' };
-      default: return { bg: 'bg-amber-500/10', border: 'border-amber-500/30', text: 'text-amber-400', badge: 'bg-amber-500/20 text-amber-300' };
+      default: return { bg: 'bg-primary/10', border: 'border-primary/30', text: 'text-primary', badge: 'bg-primary/20 text-amber-300' };
     }
   };
 
@@ -203,9 +203,9 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] p-0 overflow-hidden bg-background border-amber-500/20">
+      <DialogContent className="max-w-2xl max-h-[85vh] p-0 overflow-hidden bg-background border-primary/20">
         {/* Header */}
-        <DialogHeader className="px-6 pt-6 pb-4 border-b border-amber-500/10 bg-gradient-to-b from-amber-500/5 to-transparent">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-primary/10 bg-gradient-to-b from-primary/5 to-transparent">
           <div className="flex items-start gap-4">
             <div className={cn("p-3 rounded-xl", severityStyles.bg, severityStyles.border, "border")}>
               <ShieldAlert className={cn("h-6 w-6", severityStyles.text)} />
@@ -232,7 +232,7 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
           <div className="p-6 space-y-4">
             {/* Issues Summary */}
             <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
-              <h4 className="text-sm font-medium text-amber-400 mb-3 flex items-center gap-2">
+              <h4 className="text-sm font-medium text-primary mb-3 flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4" />
                 Security Issues Detected
               </h4>
@@ -266,10 +266,10 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-amber-500/20">
-                    <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+                  <div className="p-1.5 rounded-lg bg-primary/20">
+                    <Sparkles className="h-3.5 w-3.5 text-primary" />
                   </div>
-                  <span className="text-sm font-medium text-amber-400">AI Security Advisor</span>
+                  <span className="text-sm font-medium text-primary">AI Security Advisor</span>
                 </div>
                 {recommendation && (
                   <div className="flex items-center gap-1">
@@ -286,19 +286,19 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
               {isLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => (
-                    <div key={i} className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 animate-pulse">
+                    <div key={i} className="p-4 rounded-xl bg-primary/5 border border-primary/10 animate-pulse">
                       <div className="flex items-center gap-2 mb-3">
-                        <div className="w-8 h-8 rounded-lg bg-amber-500/20" />
-                        <div className="h-4 bg-amber-500/20 rounded w-32" />
+                        <div className="w-8 h-8 rounded-lg bg-primary/20" />
+                        <div className="h-4 bg-primary/20 rounded w-32" />
                       </div>
                       <div className="space-y-2">
-                        <div className="h-3 bg-amber-500/10 rounded w-full" />
-                        <div className="h-3 bg-amber-500/10 rounded w-3/4" />
+                        <div className="h-3 bg-primary/10 rounded w-full" />
+                        <div className="h-3 bg-primary/10 rounded w-3/4" />
                       </div>
                     </div>
                   ))}
                   <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-2">
-                    <Loader2 className="h-3 w-3 animate-spin text-amber-400" />
+                    <Loader2 className="h-3 w-3 animate-spin text-primary" />
                     Analyzing security risks...
                   </p>
                 </div>
@@ -370,10 +370,10 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
                   {/* Password Tip */}
                   {parsed.passwordTip && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-                      className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                      className="p-4 rounded-xl bg-primary/10 border border-primary/20">
                       <div className="flex items-start gap-3">
-                        <div className="p-2 rounded-lg bg-amber-500/20">
-                          <KeyRound className="h-4 w-4 text-amber-400" />
+                        <div className="p-2 rounded-lg bg-primary/20">
+                          <KeyRound className="h-4 w-4 text-primary" />
                         </div>
                         <div>
                           <h4 className="text-sm font-semibold mb-1">Password Tip</h4>
@@ -429,18 +429,18 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
         </ScrollArea>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-amber-500/10 bg-gradient-to-t from-amber-500/5 to-transparent space-y-3">
+        <div className="px-6 py-4 border-t border-primary/10 bg-gradient-to-t from-primary/5 to-transparent space-y-3">
           {/* Important reminder */}
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-            <ExternalLink className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
-            <p className="text-xs text-amber-200/80">
-              <span className="font-medium text-amber-400">Important:</span> After updating here, remember to change the password on <span className="font-semibold">{finding.title}</span>'s actual website too. Vault stores your passwords but doesn't change them automatically.
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
+            <ExternalLink className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+            <p className="text-xs text-primary/80">
+              <span className="font-medium text-primary">Important:</span> After updating here, remember to change the password on <span className="font-semibold">{finding.title}</span>'s actual website too. Vault stores your passwords but doesn't change them automatically.
             </p>
           </div>
           
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
-            <Button className="bg-amber-500 hover:bg-amber-600 text-black" onClick={() => {
+            <Button className="bg-primary hover:bg-primary text-black" onClick={() => {
               onOpenChange(false);
               const vaultPath = isWraythDomain() ? '/pass' : '/app/pass';
               navigate(vaultPath, { state: { editEntryId: finding.entryId } });

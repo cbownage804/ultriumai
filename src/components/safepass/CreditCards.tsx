@@ -340,7 +340,7 @@ export const CreditCards = () => {
         
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-amber-500 hover:bg-amber-600 text-black" onClick={() => {
+            <Button className="bg-primary hover:bg-primary text-black" onClick={() => {
               setEditingCard(null);
               setNewCard({ holderName: '', cardNumber: '', expiry: '', cvv: '', zip: '', cardType: 'credit' });
             }}>
@@ -428,7 +428,7 @@ export const CreditCards = () => {
               </div>
               
               <div className="flex gap-2 pt-4">
-                <Button onClick={handleSaveCard} className="flex-1 bg-amber-500 hover:bg-amber-600 text-black">
+                <Button onClick={handleSaveCard} className="flex-1 bg-primary hover:bg-primary text-black">
                   {editingCard ? 'Update' : 'Save'} Card
                 </Button>
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
@@ -461,7 +461,7 @@ export const CreditCards = () => {
           <CreditCardIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
           <h3 className="text-lg font-semibold mb-2">No Cards Saved</h3>
           <p className="text-muted-foreground mb-4">Add your first payment card</p>
-          <Button className="bg-amber-500 hover:bg-amber-600 text-black" onClick={() => setIsAddDialogOpen(true)}>
+          <Button className="bg-primary hover:bg-primary text-black" onClick={() => setIsAddDialogOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Add Card
           </Button>
@@ -486,7 +486,7 @@ export const CreditCards = () => {
                         className="h-7 w-7 p-0 text-white/70 hover:text-white hover:bg-white/10"
                         onClick={() => toggleFavorite(card)}
                       >
-                        <Star className={`h-4 w-4 ${card.is_favorite ? 'fill-yellow-500 text-yellow-500' : ''}`} />
+                        <Star className={`h-4 w-4 ${card.is_favorite ? 'fill-primary text-primary' : ''}`} />
                       </Button>
                     </div>
                     

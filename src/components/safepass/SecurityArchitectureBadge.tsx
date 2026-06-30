@@ -76,10 +76,10 @@ export function SecurityArchitectureBadge({ className = '', variant = 'badge' }:
 
   if (variant === 'inline') {
     return (
-      <div className={`rounded-xl bg-gradient-to-br from-amber-500/10 to-yellow-500/5 border border-amber-500/20 p-6 ${className}`}>
+      <div className={`rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 p-6 ${className}`}>
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-2.5 rounded-xl bg-amber-500/20 border border-amber-500/30">
-            <Shield className="h-6 w-6 text-amber-400" />
+          <div className="p-2.5 rounded-xl bg-primary/20 border border-primary/30">
+            <Shield className="h-6 w-6 text-primary" />
           </div>
           <div>
             <h3 className="text-lg font-semibold text-white">Enterprise-Grade Security</h3>
@@ -96,7 +96,7 @@ export function SecurityArchitectureBadge({ className = '', variant = 'badge' }:
               transition={{ delay: index * 0.05 }}
               className="flex items-start gap-3 p-3 rounded-lg bg-black/30 border border-white/5"
             >
-              <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-400 shrink-0">
+              <div className="p-1.5 rounded-lg bg-primary/20 text-primary shrink-0">
                 {feature.icon}
               </div>
               <div className="min-w-0">
@@ -113,20 +113,20 @@ export function SecurityArchitectureBadge({ className = '', variant = 'badge' }:
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <button className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-medium hover:bg-amber-500/20 transition-colors ${className}`}>
+        <button className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-primary text-xs font-medium hover:bg-primary/20 transition-colors ${className}`}>
           <Shield className="h-3.5 w-3.5" />
           <span>Zero-Knowledge Encrypted</span>
           <CheckCircle2 className="h-3.5 w-3.5" />
         </button>
       </DialogTrigger>
       
-      <DialogContent className="sm:max-w-lg bg-[#0a0a0a] border-amber-500/30 max-h-[85vh] overflow-y-auto">
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-yellow-500/5 pointer-events-none" />
+      <DialogContent className="sm:max-w-lg bg-[#0a0a0a] border-primary/30 max-h-[85vh] overflow-y-auto">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 pointer-events-none" />
         
         <DialogHeader className="relative">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500/20 to-yellow-500/20 border border-amber-500/30">
-              <Shield className="h-6 w-6 text-amber-400" />
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/20 to-primary/20 border border-primary/30">
+              <Shield className="h-6 w-6 text-primary" />
             </div>
             <div>
               <DialogTitle className="text-white text-lg">Security Architecture</DialogTitle>
@@ -137,11 +137,11 @@ export function SecurityArchitectureBadge({ className = '', variant = 'badge' }:
 
         <div className="relative space-y-4 py-4">
           {/* Zero-knowledge highlight */}
-          <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/10 to-yellow-500/5 border border-amber-500/20">
+          <div className="p-4 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
             <div className="flex items-start gap-3">
-              <Eye className="h-5 w-5 text-amber-400 mt-0.5" />
+              <Eye className="h-5 w-5 text-primary mt-0.5" />
               <div>
-                <h4 className="text-sm font-semibold text-amber-400">We Can't See Your Data</h4>
+                <h4 className="text-sm font-semibold text-primary">We Can't See Your Data</h4>
                 <p className="text-xs text-gray-400 mt-1">
                   All encryption and decryption happens on your device. Your master password is never transmitted or stored on our servers. 
                   Even if our servers were compromised, attackers would only find encrypted blobs that are mathematically impossible to decrypt.
@@ -158,9 +158,9 @@ export function SecurityArchitectureBadge({ className = '', variant = 'badge' }:
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="flex items-start gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:border-amber-500/30 transition-colors"
+                className="flex items-start gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:border-primary/30 transition-colors"
               >
-                <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400 shrink-0">
+                <div className="p-2 rounded-lg bg-primary/20 text-primary shrink-0">
                   {feature.icon}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -169,7 +169,7 @@ export function SecurityArchitectureBadge({ className = '', variant = 'badge' }:
                     <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
                   </div>
                   <p className="text-xs text-gray-400 mt-1">{feature.description}</p>
-                  <span className="inline-block mt-2 px-2 py-0.5 rounded text-[10px] font-mono bg-black/40 text-amber-400/80 border border-amber-500/20">
+                  <span className="inline-block mt-2 px-2 py-0.5 rounded text-[10px] font-mono bg-black/40 text-primary/80 border border-primary/20">
                     {feature.technical}
                   </span>
                 </div>
