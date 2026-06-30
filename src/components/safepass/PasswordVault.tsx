@@ -696,70 +696,16 @@ export const PasswordVault = () => {
       </div>
     </div>
 
-      {/* Security Overview - Clickable to sort */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card 
-          className={`border-primary/20 bg-card/80 cursor-pointer transition-all hover:border-primary/50 ${sortBy === 'strong' ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}`}
-          onClick={() => setSortBy(sortBy === 'strong' ? 'all' : 'strong')}
-        >
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Shield className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Security Health</p>
-                  <p className="text-2xl font-light text-primary tabular-nums">{strongPasswords}<span className="text-sm text-muted-foreground font-light ml-1">strong</span></p>
-                </div>
-              </div>
-              {sortBy === 'strong' && (
-                <Badge variant="outline" className="border-primary/50 text-primary text-xs">
-                  Sorted
-                </Badge>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card 
-          className={`border-red-500/20 bg-card/80 cursor-pointer transition-all hover:border-red-500/50 ${sortBy === 'weak' ? 'ring-2 ring-red-500 ring-offset-2 ring-offset-background' : ''}`}
-          onClick={() => setSortBy(sortBy === 'weak' ? 'all' : 'weak')}
-        >
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 rounded-lg bg-red-500/10">
-                  <AlertTriangle className="h-5 w-5 text-red-500" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Breach Status</p>
-                  <p className="text-2xl font-light text-red-500 tabular-nums">{weakPasswords}<span className="text-sm text-muted-foreground font-light ml-1">need attention</span></p>
-                </div>
-              </div>
-              {sortBy === 'weak' && (
-                <Badge variant="outline" className="border-red-500/50 text-red-500 text-xs">
-                  Sorted
-                </Badge>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-primary/20 bg-card/80">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Lock className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Passwords Stored</p>
-                <p className="text-2xl font-light text-foreground tabular-nums">{entries.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Unified Password Score */}
+      <PasswordScoreBlock
+        score={overallScore}
+        stats={[
+          { label: 'Strong passwords', value: strongPasswords, tone: 'success' },
+          { label: 'Weak passwords', value: weakPasswords, tone: 'warning' },
+          { label: 'Breaches', value: 0, tone: 'warning' },
+          { label: 'Accounts using MFA', value: 0 },
+        ]}
+      />
 
       {/* Search and Filters */}
       <div className="flex flex-col md:flex-row gap-4">
