@@ -121,6 +121,8 @@ export default function Ray() {
 
       <AskRay />
 
+      <RayNoticesPanel />
+
 
 
       {/* Current recommendations with lifecycle controls */}
