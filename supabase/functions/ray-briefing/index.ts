@@ -57,13 +57,14 @@ serve(async (req) => {
       ?? "there";
 
     // Gather context in parallel
-    const [profile, memory, timeline, findings, passwords, monitors] = await Promise.all([
+    const [profile, memory, timeline, findings, passwords, monitors, insights] = await Promise.all([
       supabase.from("ray_profiles").select("*").eq("user_id", user.id).maybeSingle(),
       supabase.from("ray_memory").select("key,value,source").eq("user_id", user.id).limit(50),
       supabase.from("ray_timeline").select("event_type,summary,severity,occurred_at").eq("user_id", user.id).order("occurred_at", { ascending: false }).limit(15),
       supabase.from("ray_findings").select("kind,severity,details").eq("user_id", user.id).is("resolved_at", null).limit(25),
       supabase.from("password_entries").select("id,password_strength").eq("user_id", user.id),
       supabase.from("safeweb_assets").select("id,asset_type,status").eq("user_id", user.id).eq("status", "active"),
+      supabase.from("ray_insights").select("kind,area,severity,title,observed_at,status").eq("user_id", user.id).eq("status", "open").order("observed_at", { ascending: false }).limit(50),
     ]);
 
     const passwordStats = {
@@ -71,12 +72,33 @@ serve(async (req) => {
       weak: passwords.data?.filter((p: any) => p.password_strength === "weak").length ?? 0,
     };
 
+    // Overnight delta — what Ray observed since last_seen_at.
+    const lastSeen = profile.data?.last_seen_at ? new Date(profile.data.last_seen_at) : null;
+    let overnight: { since: string | null; by_area: Record<string, number>; new_critical: number; new_high: number; total_new: number } = {
+      since: lastSeen?.toISOString() ?? null,
+      by_area: {},
+      new_critical: 0,
+      new_high: 0,
+      total_new: 0,
+    };
+    if (lastSeen) {
+      const recent = (insights.data ?? []).filter((i: any) => new Date(i.observed_at) >= lastSeen);
+      overnight.total_new = recent.length;
+      for (const r of recent) {
+        overnight.by_area[r.area] = (overnight.by_area[r.area] ?? 0) + 1;
+        if (r.severity === "critical") overnight.new_critical += 1;
+        if (r.severity === "high") overnight.new_high += 1;
+      }
+    }
+
     const contextPayload = {
       first_name: firstName,
       profile: profile.data ?? null,
       memory: memory.data ?? [],
       recent_timeline: timeline.data ?? [],
       open_findings: findings.data ?? [],
+      open_insights: insights.data ?? [],
+      overnight_delta: overnight,
       password_stats: passwordStats,
       monitored_count: monitors.data?.length ?? 0,
       now: new Date().toISOString(),
