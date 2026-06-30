@@ -57,6 +57,7 @@ import { FloatingSafeAssist } from '@/components/safeassist/FloatingSafeAssist';
 import { AskRayPalette } from '@/components/safeassist/AskRayPalette';
 import { FloatingSafeAssistProvider } from '@/contexts/FloatingSafeAssistContext';
 import { MFAOnboardingGate } from '@/components/safesuite/MFAOnboardingGate';
+import { RayContextProvider } from '@/components/ray/RayContext';
 import { SidebarBriefing } from '@/components/ray/SidebarBriefing';
 
 function getWraythPath(path: string): string {
@@ -339,7 +340,9 @@ export default function WraythLayout() {
   return (
     <MFAOnboardingGate>
       <FloatingSafeAssistProvider>
-        <WraythLayoutInner />
+        <RayContextProvider>
+          <WraythLayoutInner />
+        </RayContextProvider>
       </FloatingSafeAssistProvider>
     </MFAOnboardingGate>
   );
