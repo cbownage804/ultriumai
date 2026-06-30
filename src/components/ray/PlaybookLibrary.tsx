@@ -1,15 +1,20 @@
 /**
- * PlaybookLibrary — browse all available Ray playbooks and start one on demand.
+ * PlaybookLibrary — Wave 4 + Wave 5: browseable playbooks with filters
+ * and scheduling.
  *
- * Templates are pure data from `PLAYBOOK_TEMPLATES`; clicking "Start" creates
- * a run via the same engine the Fix-with-Ray launcher uses.
+ * Filter chips narrow the catalog by intent (Critical / Quick win /
+ * Scheduled). The "Schedule" action opens a weekly/monthly cadence and
+ * writes to ray_playbook_schedules so the ray-scheduler cron can run it
+ * unattended.
  */
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Clock, Play, Sparkles } from 'lucide-react';
+import { Calendar, Clock, Play, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import {
   PLAYBOOK_TEMPLATES,
   startPlaybook,
@@ -29,20 +34,33 @@ const CATEGORY_LABEL: Record<PlaybookCategory, string> = {
 
 const ORDER: PlaybookCategory[] = ['credential', 'mfa', 'account', 'identity', 'exposure', 'device', 'passkey'];
 
+type Filter = 'all' | 'critical' | 'quick' | 'scheduled';
+const SCHEDULABLE = new Set(['freeze-credit', 'oauth-app-audit', 'mfa-enroll-everywhere', 'exposure-cleanup']);
+
 export function PlaybookLibrary() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [busy, setBusy] = useState<string | null>(null);
+  const [filter, setFilter] = useState<Filter>('all');
+
+  const filtered = useMemo(() => {
+    return PLAYBOOK_TEMPLATES.filter((t) => {
+      if (filter === 'critical') return t.reward_score >= 15;
+      if (filter === 'quick') return t.estimated_minutes <= 5;
+      if (filter === 'scheduled') return SCHEDULABLE.has(t.slug);
+      return true;
+    });
+  }, [filter]);
 
   const grouped = useMemo(() => {
     const map = new Map<PlaybookCategory, PlaybookTemplate[]>();
-    for (const t of PLAYBOOK_TEMPLATES) {
+    for (const t of filtered) {
       const arr = map.get(t.category) ?? [];
       arr.push(t);
       map.set(t.category, arr);
     }
     return map;
-  }, []);
+  }, [filtered]);
 
   async function launch(slug: string) {
     if (!user || busy) return;
@@ -55,6 +73,29 @@ export function PlaybookLibrary() {
     }
   }
 
+  async function schedule(slug: string, cron: 'weekly' | 'monthly') {
+    if (!user) return;
+    const { error } = await supabase.from('ray_playbook_schedules').insert({
+      user_id: user.id,
+      playbook_slug: slug,
+      cron,
+      enabled: true,
+      next_run_at: new Date().toISOString(),
+    });
+    if (error) {
+      toast.error("Ray couldn't save that schedule.");
+      return;
+    }
+    toast.success(`Scheduled. I'll run this ${cron} and let you know.`);
+  }
+
+  const chips: Array<[Filter, string]> = [
+    ['all', 'All'],
+    ['critical', 'Critical'],
+    ['quick', 'Quick win'],
+    ['scheduled', 'Schedulable'],
+  ];
+
   return (
     <section>
       <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-2 inline-flex items-center gap-2">
@@ -63,6 +104,24 @@ export function PlaybookLibrary() {
       <p className="text-xs text-muted-foreground mb-4">
         Start any of these whenever you want. I'll walk you through it one step at a time.
       </p>
+
+      <div className="flex flex-wrap gap-2 mb-5">
+        {chips.map(([id, label]) => (
+          <button
+            key={id}
+            onClick={() => setFilter(id)}
+            className={cn(
+              'text-xs px-3 py-1 rounded-full border transition-colors',
+              filter === id
+                ? 'border-violet-400/60 text-violet-200 bg-violet-500/10'
+                : 'border-border text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       <div className="space-y-6">
         {ORDER.filter((c) => grouped.has(c)).map((cat) => (
           <div key={cat}>
@@ -79,24 +138,37 @@ export function PlaybookLibrary() {
                     <div className="text-sm font-medium text-foreground">{t.title}</div>
                     <div className="mt-1 text-xs text-muted-foreground line-clamp-2">{t.description}</div>
                   </div>
-                  <div className="mt-auto flex items-center justify-between text-xs text-muted-foreground">
+                  <div className="mt-auto flex items-center justify-between text-xs text-muted-foreground gap-2">
                     <span className="inline-flex items-center gap-1">
                       <Clock className="h-3 w-3" /> {t.estimated_minutes} min
                       <span className="mx-1">·</span>
                       <span className="text-violet-300">+{t.reward_score}</span>
                     </span>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      disabled={busy === t.slug}
-                      onClick={() => launch(t.slug)}
-                      className={cn(
-                        'h-7 px-2 text-xs text-foreground/80 hover:text-foreground',
-                        busy === t.slug && 'opacity-60',
+                    <div className="flex items-center gap-1">
+                      {SCHEDULABLE.has(t.slug) && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => schedule(t.slug, 'monthly')}
+                          className="h-7 px-2 text-xs text-foreground/70 hover:text-foreground"
+                          title="Schedule monthly"
+                        >
+                          <Calendar className="h-3 w-3 mr-1" /> Monthly
+                        </Button>
                       )}
-                    >
-                      <Play className="h-3 w-3 mr-1" /> Start
-                    </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={busy === t.slug}
+                        onClick={() => launch(t.slug)}
+                        className={cn(
+                          'h-7 px-2 text-xs text-foreground/80 hover:text-foreground',
+                          busy === t.slug && 'opacity-60',
+                        )}
+                      >
+                        <Play className="h-3 w-3 mr-1" /> Start
+                      </Button>
+                    </div>
                   </div>
                 </li>
               ))}

@@ -73,6 +73,7 @@ const Security = lazy(() => import('@/pages/Security'));
 const SecurityPolicy = lazy(() => import('@/pages/SecurityPolicy'));
 const PaymentSuccess = lazy(() => import('@/pages/PaymentSuccess'));
 const PaymentCancel = lazy(() => import('@/pages/PaymentCancel'));
+const WraythResources = lazy(() => import('@/pages/WraythResources'));
 
 function SuspenseWrapper({ children, variant = 'dashboard' }: { children: React.ReactNode; variant?: 'dashboard' | 'list' | 'detail' | 'form' | 'cards' }) {
   return (
@@ -118,6 +119,7 @@ function AppRouter() {
         <Route path="/" element={<SuspenseWrapper><WraythLanding /></SuspenseWrapper>} />
         <Route path="/pricing" element={<SuspenseWrapper variant="cards"><WraythPricing /></SuspenseWrapper>} />
         <Route path="/features" element={<SuspenseWrapper><WraythFeatures /></SuspenseWrapper>} />
+        <Route path="/resources" element={<SuspenseWrapper><WraythResources /></SuspenseWrapper>} />
         <Route path="/products/safepass" element={<SuspenseWrapper><VaultProduct /></SuspenseWrapper>} />
         <Route path="/products/safescan" element={<SuspenseWrapper><ScanProduct /></SuspenseWrapper>} />
         <Route path="/products/safeweb" element={<SuspenseWrapper><WatchProduct /></SuspenseWrapper>} />

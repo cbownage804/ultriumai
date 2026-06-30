@@ -427,3 +427,9 @@ verify_jwt = true
 
 [functions.ray-brief-cron]
 verify_jwt = false
+
+[functions.ray-sync-signals]
+verify_jwt = true
+
+[functions.ray-scheduler]
+verify_jwt = false
