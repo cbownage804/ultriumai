@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRayBrain } from '@/lib/ray/brain';
 import { supabase } from '@/integrations/supabase/client';
 import { RayPageHeader } from '@/components/ray/RayPageHeader';
+import { RaySearchBar } from '@/components/ray/RaySearchBar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
