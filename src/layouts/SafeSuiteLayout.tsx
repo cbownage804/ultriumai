@@ -254,6 +254,7 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
         <SideLink item={{ label: 'Settings', path: getWraythPath('/settings'), icon: Settings }} isActive={isActive(getWraythPath('/settings'))} isLocked={false} onClick={onItemClick} />
         <SideLink item={{ label: 'Billing',  path: getWraythPath('/billing'),  icon: CreditCard }} isActive={isActive(getWraythPath('/billing'))} isLocked={false} onClick={onItemClick} />
         <SideLink item={{ label: 'AI Credits', path: '/credits', icon: Coins }} isActive={isActive('/credits')} isLocked={false} onClick={onItemClick} />
+        <SideLink item={{ label: 'Trust Center', path: getWraythPath('/trust'), icon: Scale }} isActive={isActive(getWraythPath('/trust'))} isLocked={false} onClick={onItemClick} />
         {isAdmin && (
           <Link
             to="/admin"
