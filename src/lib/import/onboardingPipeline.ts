@@ -19,6 +19,69 @@ import {
 import { checkBreaches } from '@/lib/ray/breachIntelligence';
 import { calculateScore, type ScoreResult } from '@/lib/ray/scoring';
 import { generateRecommendations, type RayProfileInput } from '@/lib/ray/recommendations';
+import { rememberFact, recordTimelineEvent } from '@/lib/ray/brain';
+
+/**
+ * Persist the onboarding summary as Ray memory + a timeline event so the
+ * very first Morning Brief can reference what happened during setup
+ * ("Yesterday during setup, I found 12 reused passwords — let's start
+ * there.") instead of greeting the user cold.
+ */
+async function recordOnboardingHandoff(
+  userId: string,
+  source: ImportSource | 'baseline',
+  profile: RayProfileInput,
+  intel: PasswordIntelligenceResult,
+  score: ScoreResult,
+  breachDegraded: boolean,
+) {
+  const summary = {
+    source,
+    total: intel.total,
+    breached: intel.findings.filter((f) => f.kind === 'breached').length,
+    reused: intel.reusedCount,
+    weak: intel.weak,
+    empty: intel.empty,
+    old: intel.oldCount,
+    score: score.score,
+    breach_degraded: breachDegraded,
+    at: new Date().toISOString(),
+  };
+
+  await Promise.all([
+    rememberFact(userId, 'onboarding.summary', summary, 'system', 1),
+    profile.audience ? rememberFact(userId, 'profile.audience', profile.audience, 'user_stated', 1) : Promise.resolve(),
+    profile.existing_manager
+      ? rememberFact(userId, 'profile.existing_manager', profile.existing_manager, 'user_stated', 1)
+      : Promise.resolve(),
+    profile.providers && Object.keys(profile.providers).length
+      ? rememberFact(userId, 'profile.providers', profile.providers, 'user_stated', 1)
+      : Promise.resolve(),
+    rememberFact(userId, 'baseline.score', score.score, 'system', 1),
+    recordTimelineEvent(userId, {
+      event_type: 'onboarding_completed',
+      summary:
+        intel.total > 0
+          ? `Baselined ${intel.total} credentials. Score ${score.score}/100.`
+          : `Onboarded. No credentials imported yet.`,
+      payload: summary,
+      severity: summary.breached > 0 || intel.weak > 5 ? 'medium' : 'info',
+    }),
+  ]);
+}
+
+/**
+ * Pre-warm the first Morning Brief so it's ready the moment the user
+ * lands on the dashboard. Best-effort — if it fails the dashboard will
+ * generate one on demand.
+ */
+async function prewarmFirstBriefing() {
+  try {
+    await supabase.functions.invoke('ray-briefing', { body: { first_run: true } });
+  } catch (e) {
+    console.warn('[onboarding] pre-warm briefing failed', e);
+  }
+}
 
 export type Phase =
   | 'parsing'
