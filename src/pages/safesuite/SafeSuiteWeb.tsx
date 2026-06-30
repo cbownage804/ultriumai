@@ -401,6 +401,10 @@ export default function WraythWeb() {
 
         <TierLimitInfo feature="safeweb" />
 
+        <RayInsightPanel context="exposure" />
+
+
+
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="bg-[#141414] border-violet-500/10">
