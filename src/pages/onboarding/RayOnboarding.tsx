@@ -203,6 +203,50 @@ export default function RayOnboarding() {
   const [result, setResult] = useState<PipelineResult | null>(null);
   const [runErr, setRunErr] = useState<string | null>(null);
 
+  // Optional MFA setup (inline in onboarding).
+  const { setupTwoFactor, enableTwoFactor } = useSecurity();
+  const [mfaPhase, setMfaPhase] = useState<'offer' | 'qr' | 'done'>('offer');
+  const [mfaQr, setMfaQr] = useState<string | null>(null);
+  const [mfaSecret, setMfaSecret] = useState('');
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaErr, setMfaErr] = useState<string | null>(null);
+  const [mfaBusy, setMfaBusy] = useState(false);
+
+  const beginMfaSetup = async () => {
+    setMfaErr(null);
+    setMfaBusy(true);
+    try {
+      const result = await setupTwoFactor();
+      if (!result) { setMfaErr('Could not start 2FA setup.'); return; }
+      setMfaSecret(result.secret);
+      if (result.qr_code) {
+        const dataUrl = await QRCode.toDataURL(result.qr_code, {
+          width: 200, margin: 2, color: { dark: '#000000', light: '#ffffff' },
+        });
+        setMfaQr(dataUrl);
+      }
+      setMfaPhase('qr');
+    } catch (e) {
+      setMfaErr((e as Error).message);
+    } finally {
+      setMfaBusy(false);
+    }
+  };
+
+  const verifyMfaCode = async () => {
+    if (mfaCode.length !== 6) { setMfaErr('Enter the 6-digit code.'); return; }
+    setMfaErr(null);
+    setMfaBusy(true);
+    try {
+      const ok = await enableTwoFactor(mfaCode);
+      if (!ok) { setMfaErr('That code didn\'t match. Try the latest one in your app.'); return; }
+      setMfaPhase('done');
+      setTimeout(() => setStep('import'), 700);
+    } finally {
+      setMfaBusy(false);
+    }
+  };
+
   const advanceTimer = useRef<number | null>(null);
   const queueAdvance = (next: Step, delay = 450) => {
     if (advanceTimer.current) window.clearTimeout(advanceTimer.current);
