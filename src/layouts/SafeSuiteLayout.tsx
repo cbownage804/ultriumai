@@ -191,9 +191,12 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
     <aside className="flex flex-col h-full bg-card border-r border-border">
       {/* Wordmark — single mark, white, vertically centered */}
       <div className="h-16 px-5 flex items-center border-b border-border">
-        <Link to={landingPath} className="flex items-center" aria-label="Wrayth">
+        <Link to={landingPath} className="flex items-center gap-2" aria-label="Wrayth">
           <span className="text-[15px] font-light tracking-[0.42em] text-foreground select-none">
             WRAYTH
+          </span>
+          <span className="text-[9px] font-medium tracking-[0.18em] uppercase px-1.5 py-0.5 rounded-sm border border-violet-500/30 text-violet-300/80">
+            Beta
           </span>
         </Link>
       </div>
