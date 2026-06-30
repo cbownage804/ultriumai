@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useWraythSubscription, useFeatureAccess } from '@/hooks/useSafeSuite';
 import { useVault } from '@/hooks/useSafePass';
@@ -389,6 +389,13 @@ export default function WraythDashboard() {
   const { tier, tierConfig, isSubscribed } = useWraythSubscription();
   const { canUseFeature } = useFeatureAccess();
   const { entries } = useVault();
+
+  // First-run: send users to Ray's onboarding before they land here.
+  if (user && typeof window !== 'undefined' &&
+      localStorage.getItem(`wrayth.ray.onboarded:${user.id}`) !== 'true') {
+    return <Navigate to="/onboarding/ray" replace />;
+  }
+
   
   const [stats, setStats] = useState<DashboardStats>({
     passwordCount: 0,

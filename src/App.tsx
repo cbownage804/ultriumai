@@ -52,6 +52,7 @@ const VaultHealth = lazy(() => import('@/pages/safesuite/SafePassHealth'));
 const VaultUsers = lazy(() => import('@/pages/safesuite/SafePassUsers'));
 const WraythPricing = lazy(() => import('@/pages/pricing/SafeSuitePricing'));
 const WraythAssist = lazy(() => import('@/pages/safesuite/SafeSuiteAssist'));
+const RayOnboarding = lazy(() => import('@/pages/onboarding/RayOnboarding'));
 
 // Public/legal pages
 const Contact = lazy(() => import('@/pages/Contact'));
@@ -109,7 +110,7 @@ function AppRouter() {
         <Route path="/payment-cancel" element={<SuspenseWrapper><PaymentCancel /></SuspenseWrapper>} />
 
         {/* Auth */}
-        <Route path="/auth" element={user ? <Navigate to="/safesuite/dashboard" replace /> : <SuspenseWrapper><WraythAuth /></SuspenseWrapper>} />
+        <Route path="/auth" element={user ? <Navigate to={localStorage.getItem(`wrayth.ray.onboarded:${user.id}`) === 'true' ? '/safesuite/dashboard' : '/onboarding/ray'} replace /> : <SuspenseWrapper><WraythAuth /></SuspenseWrapper>} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/auth/confirm" element={<AuthConfirm />} />
         <Route path="/auth/forgot-password" element={<SuspenseWrapper variant="form"><ForgotPasswordPage /></SuspenseWrapper>} />
@@ -126,6 +127,14 @@ function AppRouter() {
         <Route path="/safesuite/products/safepass" element={<SuspenseWrapper><VaultProduct /></SuspenseWrapper>} />
         <Route path="/safesuite/products/safeweb" element={<SuspenseWrapper><WatchProduct /></SuspenseWrapper>} />
         <Route path="/safesuite/products/safescan" element={<SuspenseWrapper><ScanProduct /></SuspenseWrapper>} />
+
+        <Route path="/onboarding/ray" element={
+          <ProtectedRoute>
+            <SuspenseWrapper><RayOnboarding /></SuspenseWrapper>
+          </ProtectedRoute>
+        } />
+
+
 
         <Route element={
           <ProtectedRoute>
