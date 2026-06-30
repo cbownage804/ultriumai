@@ -387,16 +387,16 @@ const productCardsConfig = [
 
 export default function WraythDashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { tier, tierConfig, isSubscribed } = useWraythSubscription();
   const { canUseFeature } = useFeatureAccess();
   const { entries } = useVault();
 
-  // First-run gate: read the user's onboarding state from the database.
-  // We avoid localStorage so the gate survives reinstalls and new devices.
-  const [onboardCheck, setOnboardCheck] = useState<'loading' | 'ok' | 'redirect'>('loading');
+  // First-run gate: read onboarding state from the database. Using an effect
+  // (instead of an early return) preserves React's rules of hooks below.
   useEffect(() => {
-    let active = true;
     if (!user) return;
+    let active = true;
     (async () => {
       const { data } = await supabase
         .from('ray_profiles')
@@ -404,12 +404,10 @@ export default function WraythDashboard() {
         .eq('user_id', user.id)
         .maybeSingle();
       if (!active) return;
-      setOnboardCheck(data?.onboarded_at ? 'ok' : 'redirect');
+      if (!data?.onboarded_at) navigate('/onboarding/ray', { replace: true });
     })();
     return () => { active = false; };
-  }, [user]);
-
-  if (onboardCheck === 'redirect') return <Navigate to="/onboarding/ray" replace />;
+  }, [user, navigate]);
 
   const [stats, setStats] = useState<DashboardStats>({
     passwordCount: 0,
