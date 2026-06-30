@@ -13,6 +13,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { RayPageHeader } from '@/components/ray/RayPageHeader';
 import { AskRay } from '@/components/ray/AskRay';
 import { RayNoticesPanel } from '@/components/ray/RayNoticesPanel';
+import { FixWithRayButton } from '@/components/ray/FixWithRayButton';
+import {
+  listRuns,
+  resumeRun,
+  archiveRun,
+  playbookForRecommendation,
+  findTemplate,
+  startPlaybook,
+  type PlaybookRun,
+} from '@/lib/ray/playbooks';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -22,8 +32,10 @@ import {
   CheckCircle2,
   Clock,
   MessageSquare,
+  Pause,
   Play,
   Shield,
+  Sparkles,
   X,
 } from 'lucide-react';
 
