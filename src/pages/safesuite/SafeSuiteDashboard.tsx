@@ -562,6 +562,7 @@ export default function WraythDashboard() {
         <MorningBriefHero firstName={firstName} />
       </div>
       <RayNoticesPanel variant="hero" />
+      <AccountHealthPanel />
       {/* Upgrade prompts stay contextual (password/seat limits) — Home is focused on security. */}
 
 
