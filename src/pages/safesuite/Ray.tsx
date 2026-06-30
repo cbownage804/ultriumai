@@ -118,6 +118,10 @@ export default function Ray() {
         description="Ask me anything about your security. I remember our conversations and surface what needs attention."
       />
 
+      <RaySearchBar />
+
+
+
       {/* Current recommendations with lifecycle controls */}
       <section>
         <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
