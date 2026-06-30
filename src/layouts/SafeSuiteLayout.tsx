@@ -51,6 +51,9 @@ import {
   Plug,
   Code2,
   Activity,
+  Target,
+  LineChart,
+  Scale,
 } from 'lucide-react';
 import { AppSwitcher } from '@/components/AppSwitcher';
 import { HelpCenter } from '@/components/onboarding/HelpCenter';
