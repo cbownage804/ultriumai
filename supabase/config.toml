@@ -421,3 +421,9 @@ verify_jwt = true
 
 [functions.ray-briefing]
 verify_jwt = true
+
+[functions.ray-brief]
+verify_jwt = true
+
+[functions.ray-brief-cron]
+verify_jwt = false

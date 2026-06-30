@@ -1,126 +1,100 @@
 /**
- * MorningBrief — the standalone /app/brief surface.
+ * MorningBrief — Ray's daily security briefing.
  *
- * Reuses Ray's brain for the AI-generated briefing, then layers an "overnight
- * delta" (what Ray did since your last visit) and a list of currently open
- * recommendations grouped by area. This is the page that makes Ray feel alive
- * when the user comes back tomorrow.
+ * Hybrid generation:
+ *   - pg_cron generates the brief at 07:00 in the user's local timezone.
+ *   - If no brief exists for today (or the latest is stale), we lazily call
+ *     ray-brief on first app open via useMorningBrief().
+ *
+ * Structured stats come straight from the user's security data; only the
+ * greeting/bullets/guidance are AI-written. Every brief is stored in
+ * public.ray_briefs so the user can revisit previous days and compare progress.
  */
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { ArrowRight, CheckCircle2, Loader2, Sparkles, X } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
-import { useRayBrain } from '@/lib/ray/brain';
-import {
-  overnightDelta,
-  pageHrefForArea,
-  type OvernightDelta,
-  type RayInsightArea,
-} from '@/lib/ray/insights';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { RayPageHeader } from '@/components/ray/RayPageHeader';
-import { cn } from '@/lib/utils';
+import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { ArrowRight, ArrowUpRight, ArrowDownRight, CheckCircle2, Loader2, Shield, Sparkles, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { RayPageHeader } from "@/components/ray/RayPageHeader";
+import { useMorningBrief, type RayBriefRow } from "@/lib/ray/morningBrief";
+import { useRayBrain } from "@/lib/ray/brain";
+import { cn } from "@/lib/utils";
 
-function firstNameOf(user: { email?: string | null; user_metadata?: Record<string, unknown> | null } | null): string {
-  if (!user) return 'there';
-  const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
-  const full = (meta.full_name as string | undefined) ?? (meta.name as string | undefined);
-  if (full) return String(full).split(' ')[0];
-  if (user.email) return user.email.split('@')[0];
-  return 'there';
+function pageHrefFor(area?: string | null): string {
+  switch (area) {
+    case "passwords": return "/app/passwords";
+    case "threats": return "/app/threats";
+    case "exposure": return "/app/exposure";
+    case "identity": return "/app/identity";
+    case "devices": return "/app/devices";
+    case "reports": return "/app/timeline";
+    default: return "/app";
+  }
 }
 
-function areaLabel(a: RayInsightArea): string {
-  return ({ passwords: 'passwords', threats: 'threats', exposure: 'exposures', identity: 'identities', devices: 'devices', home: 'signals' } as const)[a];
+function StatBlock({ label, value, hint, tone = "neutral" }: { label: string; value: string | number; hint?: string; tone?: "neutral" | "warn" | "danger" | "good" }) {
+  const toneCls = {
+    neutral: "text-slate-200",
+    good: "text-emerald-300",
+    warn: "text-amber-300",
+    danger: "text-red-300",
+  }[tone];
+  return (
+    <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4">
+      <div className="text-[10px] uppercase tracking-[0.2em] text-slate-400">{label}</div>
+      <div className={cn("mt-1 text-2xl font-semibold tabular-nums", toneCls)}>{value}</div>
+      {hint && <div className="mt-1 text-xs text-slate-400/90">{hint}</div>}
+    </div>
+  );
 }
 
-function priorityBadge(p: number) {
-  if (p >= 70) return { label: 'High', cls: 'bg-red-500/15 text-red-300 border-red-500/30' };
-  if (p >= 40) return { label: 'Medium', cls: 'bg-amber-500/15 text-amber-300 border-amber-500/30' };
-  return { label: 'Low', cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' };
+function ScoreBadge({ score, delta }: { score: number | null; delta: number | null }) {
+  if (score == null) return null;
+  const tone = score >= 80 ? "text-emerald-300" : score >= 60 ? "text-amber-300" : "text-red-300";
+  return (
+    <div className="flex items-center gap-3">
+      <div className={cn("text-3xl font-semibold tabular-nums", tone)}>{score}</div>
+      <div className="flex flex-col">
+        <div className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Ray score</div>
+        {delta != null && delta !== 0 ? (
+          <div className={cn("text-xs flex items-center gap-1", delta > 0 ? "text-emerald-300" : "text-red-300")}>
+            {delta > 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+            {Math.abs(delta)} vs last brief
+          </div>
+        ) : (
+          <div className="text-xs text-slate-400">No change</div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function MorningBrief() {
-  const { user } = useAuth();
   const navigate = useNavigate();
-  const {
-    briefing,
-    recommendations,
-    isLoading,
-    isGenerating,
-    refresh,
-    completeRecommendation,
-    dismissRecommendation,
-  } = useRayBrain({ pageContext: 'home' });
+  const { today, history, isLoading, isGenerating, refresh, timezone } = useMorningBrief();
+  const { completeRecommendation, dismissRecommendation } = useRayBrain({ pageContext: "home" });
 
-  const [delta, setDelta] = useState<OvernightDelta | null>(null);
-  const [lastSeen, setLastSeen] = useState<Date | null>(null);
+  const brief: RayBriefRow | null = today;
+  const stats = brief?.stats ?? null;
 
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      if (!user) return;
-      // Pull last_seen_at from ray_profiles, then update it to "now".
-      const { data: profile } = await supabase
-        .from('ray_profiles')
-        .select('last_seen_at')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      const since = profile?.last_seen_at
-        ? new Date(profile.last_seen_at)
-        : new Date(Date.now() - 24 * 3600_000);
-      if (!active) return;
-      setLastSeen(since);
-      const d = await overnightDelta(user.id, since);
-      if (!active) return;
-      setDelta(d);
-      // Touch last_seen_at so the next visit's delta is "since now".
-      await supabase
-        .from('ray_profiles')
-        .update({ last_seen_at: new Date().toISOString() })
-        .eq('user_id', user.id);
-    })();
-    return () => { active = false; };
-  }, [user]);
+  const dateLabel = useMemo(() => {
+    if (!brief) return "Today";
+    try {
+      return new Date(brief.brief_date + "T12:00:00").toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+    } catch { return brief.brief_date; }
+  }, [brief]);
 
-  const firstName = useMemo(() => firstNameOf(user ?? null), [user]);
+  const previous = useMemo(() => history.filter((h) => h.id !== brief?.id).slice(0, 7), [history, brief]);
 
-  const greeting = briefing?.greeting ?? `Good morning, ${firstName}.`;
-  const bullets = briefing?.bullets?.length
-    ? briefing.bullets
-    : ['I checked your monitored accounts overnight.', 'Nothing urgent — I will keep watching.'];
-
-  const overnightLine = useMemo(() => {
-    if (!delta) return null;
-    const parts: string[] = [];
-    const order: RayInsightArea[] = ['identity', 'devices', 'passwords', 'threats', 'exposure'];
-    for (const area of order) {
-      const n = delta.insightsByArea[area];
-      if (n > 0) parts.push(`${n} ${areaLabel(area)}`);
-    }
-    if (parts.length === 0) return "I didn't see anything new since we last spoke.";
-    return `Since we last spoke I checked ${parts.join(', ')}.`;
-  }, [delta]);
-
-  const grouped = useMemo(() => {
-    const m = new Map<string, typeof recommendations>();
-    for (const r of recommendations) {
-      const key = r.page_context ?? 'home';
-      const arr = m.get(key) ?? [];
-      arr.push(r);
-      m.set(key, arr);
-    }
-    return Array.from(m.entries());
-  }, [recommendations]);
+  const bullets = brief?.bullets?.length ? brief.bullets : ["I'm catching up on your environment."];
+  const greeting = brief?.greeting ?? "Good morning.";
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-5xl">
       <RayPageHeader
         subtitle="MORNING BRIEF"
-        title="Ray's morning brief"
-        description={lastSeen ? `Catching you up since ${lastSeen.toLocaleString()}.` : 'Catching you up.'}
+        title={dateLabel}
+        description={timezone ? `Generated in your local timezone (${timezone}).` : "Generated in your local timezone."}
       />
 
       <motion.section
@@ -136,32 +110,18 @@ export default function MorningBrief() {
           transition={{ duration: 2.4, repeat: isGenerating ? Infinity : 0 }}
         />
 
-        <div className="relative flex items-center gap-2 text-violet-300/90 text-xs uppercase tracking-[0.18em] mb-3">
-          <Sparkles className="h-3.5 w-3.5" />
-          {isGenerating ? 'Ray is thinking…' : "Ray's briefing"}
-          {isLoading && <Loader2 className="h-3 w-3 animate-spin" />}
+        <div className="relative flex items-center justify-between gap-4 mb-4">
+          <div className="flex items-center gap-2 text-violet-300/90 text-xs uppercase tracking-[0.18em]">
+            <Sparkles className="h-3.5 w-3.5" />
+            {isGenerating ? "Ray is thinking…" : brief?.source === "cron" ? "Delivered at 7:00 AM" : "Ray's briefing"}
+            {isLoading && <Loader2 className="h-3 w-3 animate-spin" />}
+          </div>
+          {brief && <ScoreBadge score={brief.score} delta={brief.score_delta} />}
         </div>
 
         <h1 className="relative text-2xl sm:text-3xl font-semibold text-white tracking-tight">
           {greeting}
         </h1>
-
-        {overnightLine && (
-          <p className="relative mt-3 text-[15px] text-violet-200/85">
-            {overnightLine}
-            {delta && delta.newCritical + delta.newHigh > 0 && (
-              <>
-                {' '}
-                <span className="text-amber-200/90">
-                  {delta.newCritical > 0 ? `${delta.newCritical} critical` : ''}
-                  {delta.newCritical > 0 && delta.newHigh > 0 ? ' and ' : ''}
-                  {delta.newHigh > 0 ? `${delta.newHigh} high-priority` : ''}
-                  {' '}items need your attention.
-                </span>
-              </>
-            )}
-          </p>
-        )}
 
         <ul className="relative mt-4 space-y-1.5">
           {bullets.map((b, i) => (
@@ -169,81 +129,122 @@ export default function MorningBrief() {
           ))}
         </ul>
 
+        {brief?.guidance && (
+          <p className="relative mt-4 text-[15px] text-violet-200/90 border-l-2 border-violet-400/40 pl-3">
+            {brief.guidance}
+          </p>
+        )}
+
         <div className="relative mt-6 flex flex-wrap gap-2">
           <Button
             variant="outline"
             size="sm"
             className="bg-white/5 border-white/10 text-slate-100 hover:bg-white/10"
-            onClick={() => refresh()}
+            onClick={() => refresh({ force: true })}
             disabled={isGenerating}
           >
             {isGenerating ? <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 mr-2" />}
-            Ask Ray to re-check
+            Re-run the brief
           </Button>
           <Button
             variant="ghost"
             size="sm"
             className="text-slate-300 hover:text-white"
-            onClick={() => navigate('/app/timeline')}
+            onClick={() => navigate("/app/timeline")}
           >
             Open timeline <ArrowRight className="h-3.5 w-3.5 ml-1" />
           </Button>
         </div>
       </motion.section>
 
-      {grouped.length > 0 && (
+      {stats && (
+        <section className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <StatBlock
+            label="Passwords"
+            value={stats.passwords?.total ?? 0}
+            hint={`${stats.passwords?.weak ?? 0} weak · ${stats.passwords?.breached ?? 0} breached`}
+            tone={(stats.passwords?.breached ?? 0) > 0 ? "danger" : (stats.passwords?.weak ?? 0) > 0 ? "warn" : "good"}
+          />
+          <StatBlock
+            label="Open threats"
+            value={stats.threats?.open ?? 0}
+            hint={`${stats.threats?.critical ?? 0} critical · ${stats.threats?.high ?? 0} high`}
+            tone={(stats.threats?.critical ?? 0) > 0 ? "danger" : (stats.threats?.high ?? 0) > 0 ? "warn" : "good"}
+          />
+          <StatBlock
+            label="Monitored"
+            value={stats.exposure?.monitored ?? 0}
+            hint={`${stats.exposure?.new_breaches ?? 0} new exposures`}
+            tone={(stats.exposure?.new_breaches ?? 0) > 0 ? "warn" : "neutral"}
+          />
+          <StatBlock
+            label="Since last brief"
+            value={stats.timeline?.since_last_brief ?? 0}
+            hint="timeline events"
+            tone="neutral"
+          />
+        </section>
+      )}
+
+      {brief && brief.recommendations.length > 0 && (
         <section className="space-y-3">
           <h2 className="text-sm font-medium text-foreground/80">What Ray recommends</h2>
-          <div className="space-y-3">
-            {grouped.map(([area, items]) => (
-              <div key={area} className="rounded-2xl border border-border bg-card/40 p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{area}</div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-muted-foreground hover:text-foreground"
-                    onClick={() => navigate(pageHrefForArea((area as RayInsightArea) ?? 'home'))}
-                  >
-                    Open <ArrowRight className="h-3.5 w-3.5 ml-1" />
-                  </Button>
+          <div className="space-y-2">
+            {brief.recommendations.map((rec, idx) => {
+              const tone = rec.priority >= 70 ? "border-red-500/30 bg-red-500/[0.04]" : rec.priority >= 40 ? "border-amber-500/25 bg-amber-500/[0.03]" : "border-emerald-500/20 bg-emerald-500/[0.03]";
+              return (
+                <div key={rec.id ?? idx} className={cn("flex items-start gap-3 p-4 rounded-2xl border", tone)}>
+                  <Shield className="h-4 w-4 mt-0.5 text-slate-300 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-foreground">{rec.title}</div>
+                    {rec.body && <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{rec.body}</p>}
+                    <div className="mt-2 flex items-center gap-2">
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-slate-300 hover:text-white" onClick={() => navigate(pageHrefFor(rec.page_context))}>
+                        Open {rec.page_context ?? "area"} <ArrowRight className="h-3 w-3 ml-1" />
+                      </Button>
+                      {rec.id && (
+                        <>
+                          <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-emerald-300 hover:text-emerald-200" onClick={() => completeRecommendation(rec.id!)}>
+                            <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Mark done
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-muted-foreground" onClick={() => dismissRecommendation(rec.id!)}>
+                            <X className="h-3.5 w-3.5 mr-1" /> Dismiss
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <ul className="space-y-2">
-                  {items.map((rec) => {
-                    const pri = priorityBadge(rec.priority);
-                    return (
-                      <li key={rec.id} className="flex items-start gap-3 p-3 rounded-lg bg-background/60 border border-border/60">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className={cn('text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-sm border', pri.cls)}>
-                              {pri.label}
-                            </span>
-                            <span className="text-sm font-medium text-foreground truncate">{rec.title}</span>
-                          </div>
-                          {rec.body && <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{rec.body}</p>}
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <Button size="icon" variant="ghost" className="h-8 w-8 text-emerald-400 hover:text-emerald-300" onClick={() => completeRecommendation(rec.id)} aria-label="Mark done">
-                            <CheckCircle2 className="h-4 w-4" />
-                          </Button>
-                          <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground" onClick={() => dismissRecommendation(rec.id)} aria-label="Dismiss">
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       )}
 
-      {grouped.length === 0 && !isLoading && (
-        <p className="text-sm text-muted-foreground">
-          Ray has no outstanding recommendations for you right now. I&apos;ll surface things here the moment they appear.
-        </p>
+      {previous.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-sm font-medium text-foreground/80">Previous briefings</h2>
+          <div className="rounded-2xl border border-border bg-card/40 divide-y divide-border/60">
+            {previous.map((h) => {
+              const label = (() => { try { return new Date(h.brief_date + "T12:00:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }); } catch { return h.brief_date; } })();
+              const delta = h.score_delta ?? 0;
+              return (
+                <div key={h.id} className="flex items-center gap-3 p-3">
+                  <div className="w-28 text-xs text-muted-foreground">{label}</div>
+                  <div className="flex-1 min-w-0 text-sm text-foreground truncate">{h.greeting ?? h.summary ?? "Briefing"}</div>
+                  <div className="flex items-center gap-2 text-xs">
+                    {h.score != null && <span className="tabular-nums text-slate-300">{h.score}</span>}
+                    {delta !== 0 && (
+                      <span className={cn("tabular-nums", delta > 0 ? "text-emerald-300" : "text-red-300")}>
+                        {delta > 0 ? "+" : ""}{delta}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
       )}
     </div>
   );

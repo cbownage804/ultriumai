@@ -17363,6 +17363,69 @@ export type Database = {
         }
         Relationships: []
       }
+      ray_briefs: {
+        Row: {
+          ai_status: string
+          brief_date: string
+          bullets: Json
+          created_at: string
+          generated_at: string
+          generation_ms: number | null
+          greeting: string | null
+          guidance: string | null
+          id: string
+          recommendations: Json
+          score: number | null
+          score_delta: number | null
+          source: string
+          stats: Json
+          summary: string | null
+          timezone: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_status?: string
+          brief_date: string
+          bullets?: Json
+          created_at?: string
+          generated_at?: string
+          generation_ms?: number | null
+          greeting?: string | null
+          guidance?: string | null
+          id?: string
+          recommendations?: Json
+          score?: number | null
+          score_delta?: number | null
+          source?: string
+          stats?: Json
+          summary?: string | null
+          timezone?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_status?: string
+          brief_date?: string
+          bullets?: Json
+          created_at?: string
+          generated_at?: string
+          generation_ms?: number | null
+          greeting?: string | null
+          guidance?: string | null
+          id?: string
+          recommendations?: Json
+          score?: number | null
+          score_delta?: number | null
+          source?: string
+          stats?: Json
+          summary?: string | null
+          timezone?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ray_findings: {
         Row: {
           created_at: string
