@@ -17753,6 +17753,45 @@ export type Database = {
         }
         Relationships: []
       }
+      ray_playbook_schedules: {
+        Row: {
+          created_at: string
+          cron: string
+          enabled: boolean
+          id: string
+          last_run_at: string | null
+          last_run_id: string | null
+          next_run_at: string
+          playbook_slug: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          cron: string
+          enabled?: boolean
+          id?: string
+          last_run_at?: string | null
+          last_run_id?: string | null
+          next_run_at?: string
+          playbook_slug: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          cron?: string
+          enabled?: boolean
+          id?: string
+          last_run_at?: string | null
+          last_run_id?: string | null
+          next_run_at?: string
+          playbook_slug?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ray_profiles: {
         Row: {
           audience: string | null
