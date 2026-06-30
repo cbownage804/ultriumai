@@ -63,6 +63,8 @@ import { AskRayPalette } from '@/components/safeassist/AskRayPalette';
 import { FloatingSafeAssistProvider } from '@/contexts/FloatingSafeAssistContext';
 import { RayContextProvider } from '@/components/ray/RayContext';
 import { SidebarBriefing } from '@/components/ray/SidebarBriefing';
+import { useActiveOrg } from '@/hooks/useActiveOrg';
+import { useAccountType } from '@/hooks/useAccountType';
 
 function getWraythPath(path: string): string {
   return isWraythDomain() ? path : `/app${path}`;
@@ -158,7 +160,9 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
   const location = useLocation();
   const { tier, tierConfig } = useWraythSubscription();
   const { user } = useAuth();
-  const sections = getSections();
+  const { hasOrg } = useActiveOrg();
+  const { isMSPOrMSSP } = useAccountType();
+  const sections = getSections({ hasOrg, isMSP: isMSPOrMSSP });
   const landingPath = isWraythDomain() ? '/' : '/app';
   const isAdmin = user?.email?.endsWith('@ultriumai.com') && user?.email_confirmed_at != null;
 
