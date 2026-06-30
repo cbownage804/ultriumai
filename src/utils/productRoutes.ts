@@ -17,8 +17,8 @@ export function getCurrentProduct(pathname: string): Product {
     return 'vanguard';
   }
   
-  // Check path prefix
-  if (pathname.startsWith('/app')) {
+  // Check path prefix (legacy /safesuite still recognized for redirect handling)
+  if (pathname.startsWith('/app') || pathname.startsWith('/safesuite')) {
     return 'safesuite';
   }
   
