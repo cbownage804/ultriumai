@@ -17330,6 +17330,42 @@ export type Database = {
         }
         Relationships: []
       }
+      ray_account_health: {
+        Row: {
+          created_at: string
+          id: string
+          last_completed_at: string | null
+          last_playbook_slug: string | null
+          provider: string
+          score: number
+          signals: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_completed_at?: string | null
+          last_playbook_slug?: string | null
+          provider: string
+          score?: number
+          signals?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_completed_at?: string | null
+          last_playbook_slug?: string | null
+          provider?: string
+          score?: number
+          signals?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ray_briefings: {
         Row: {
           bullets: Json
