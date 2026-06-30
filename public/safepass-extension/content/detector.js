@@ -98,6 +98,7 @@
         isPayment, isSecurity,
         isHTTPS: location.protocol === 'https:',
         brandMimic,
+        secureProvider: detectSecureProvider(),
       },
       detectedAt: Date.now(),
     };
