@@ -188,8 +188,9 @@ export function useRayBrain(options?: { pageContext?: string }) {
         .eq('user_id', user.id)
         .is('dismissed_at', null)
         .is('completed_at', null)
+        .or(`snoozed_until.is.null,snoozed_until.lt.${new Date().toISOString()}`)
         .order('priority', { ascending: false })
-        .limit(10),
+        .limit(20),
       supabase.from('ray_memory').select('*').eq('user_id', user.id),
       supabase
         .from('ray_timeline')
