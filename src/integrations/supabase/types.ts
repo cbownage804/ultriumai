@@ -17330,6 +17330,39 @@ export type Database = {
         }
         Relationships: []
       }
+      ray_briefings: {
+        Row: {
+          bullets: Json
+          created_at: string
+          expires_at: string
+          generated_at: string
+          greeting: string
+          id: string
+          recommendation_ids: Json
+          user_id: string
+        }
+        Insert: {
+          bullets?: Json
+          created_at?: string
+          expires_at?: string
+          generated_at?: string
+          greeting: string
+          id?: string
+          recommendation_ids?: Json
+          user_id: string
+        }
+        Update: {
+          bullets?: Json
+          created_at?: string
+          expires_at?: string
+          generated_at?: string
+          greeting?: string
+          id?: string
+          recommendation_ids?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       ray_findings: {
         Row: {
           created_at: string
@@ -17363,6 +17396,42 @@ export type Database = {
           severity?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      ray_memory: {
+        Row: {
+          confidence: number
+          created_at: string
+          id: string
+          key: string
+          last_seen_at: string
+          source: string
+          updated_at: string
+          user_id: string
+          value: Json
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string
+          id?: string
+          key: string
+          last_seen_at?: string
+          source?: string
+          updated_at?: string
+          user_id: string
+          value?: Json
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          id?: string
+          key?: string
+          last_seen_at?: string
+          source?: string
+          updated_at?: string
+          user_id?: string
+          value?: Json
         }
         Relationships: []
       }
@@ -17405,8 +17474,12 @@ export type Database = {
       ray_recommendations: {
         Row: {
           body: string
+          completed_at: string | null
           created_at: string
+          dismissed_at: string | null
+          estimated_fix_seconds: number | null
           id: string
+          page_context: string | null
           priority: number
           source_finding_ids: Json
           status: string
@@ -17416,8 +17489,12 @@ export type Database = {
         }
         Insert: {
           body: string
+          completed_at?: string | null
           created_at?: string
+          dismissed_at?: string | null
+          estimated_fix_seconds?: number | null
           id?: string
+          page_context?: string | null
           priority?: number
           source_finding_ids?: Json
           status?: string
@@ -17427,8 +17504,12 @@ export type Database = {
         }
         Update: {
           body?: string
+          completed_at?: string | null
           created_at?: string
+          dismissed_at?: string | null
+          estimated_fix_seconds?: number | null
           id?: string
+          page_context?: string | null
           priority?: number
           source_finding_ids?: Json
           status?: string
@@ -17458,6 +17539,39 @@ export type Database = {
           factors?: Json
           id?: string
           score?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ray_timeline: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          occurred_at: string
+          payload: Json
+          severity: string
+          summary: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          occurred_at?: string
+          payload?: Json
+          severity?: string
+          summary: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          occurred_at?: string
+          payload?: Json
+          severity?: string
+          summary?: string
           user_id?: string
         }
         Relationships: []
