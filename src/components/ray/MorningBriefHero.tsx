@@ -29,6 +29,7 @@ import { useMorningBrief, type RayBriefRow, type RayBriefFeedback } from "@/lib/
 import { useRayBrain } from "@/lib/ray/brain";
 import { cn } from "@/lib/utils";
 import { ScoreCelebration } from "@/components/ray/ScoreCelebration";
+import { toast } from "sonner";
 
 function pageHrefFor(area?: string | null): string {
   switch (area) {
@@ -109,7 +110,7 @@ export interface MorningBriefHeroProps {
 export function MorningBriefHero({ showFullBriefLink = true, variant = "home", firstName }: MorningBriefHeroProps) {
   const navigate = useNavigate();
   const { today, isLoading, isGenerating, refresh, sendFeedback, timezone } = useMorningBrief();
-  const { recommendations, completeRecommendation, dismissRecommendation, snoozeRecommendation, startRecommendation } =
+  const { recommendations, completeRecommendation, dismissRecommendation, snoozeRecommendation, startRecommendation, timeline } =
     useRayBrain({ pageContext: "home" });
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -126,6 +127,15 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
     "Caught up on everything while you slept.",
   ];
   const personality = personalityLines[new Date().getDate() % personalityLines.length];
+
+  // "Ray remembers" — a continuity nudge built from the most recent meaningful event.
+  const lastCompleted = timeline.find((e) => e.event_type === "recommendation_completed");
+  const lastStarted = timeline.find((e) => e.event_type === "recommendation_started");
+  const memoryLine = lastCompleted
+    ? `Last time, you handled "${(lastCompleted.payload?.title as string) ?? "a recommendation"}". Nice work — I remembered.`
+    : lastStarted
+      ? `You started "${(lastStarted.payload?.title as string) ?? "a playbook"}" last time. Want to pick it back up?`
+      : null;
 
   // Build status cards from real brief.stats — facts at a glance.
   const s = brief?.stats ?? null;
@@ -196,6 +206,12 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
         I checked everything overnight. Here's what matters today.
       </p>
       <p className="relative mt-1 text-xs text-slate-500 italic">{personality}</p>
+      {memoryLine && (
+        <p className="relative mt-2 inline-flex items-center gap-1.5 rounded-full border border-violet-400/20 bg-violet-500/5 px-2.5 py-1 text-[11px] text-violet-200/90">
+          <Sparkles className="h-3 w-3" />
+          {memoryLine}
+        </p>
+      )}
 
       {/* Status cards — scannable in one second. */}
       <div className="relative mt-5 grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -256,7 +272,10 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
                         size="sm"
                         disabled={isBusy}
                         className="h-7 px-3 text-xs bg-violet-500 hover:bg-violet-400 text-white border-0"
-                        onClick={() => withBusy(rec.id, () => startRecommendation(rec.id))}
+                        onClick={() => withBusy(rec.id, async () => {
+                          await startRecommendation(rec.id);
+                          toast.success("Ray is on it.", { description: rec.title });
+                        })}
                       >
                         <Play className="h-3 w-3 mr-1" /> Start
                       </Button>
@@ -264,7 +283,10 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
                     <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-slate-300 hover:text-white" onClick={() => navigate(pageHrefFor(rec.page_context))}>
                       Open <ArrowRight className="h-3 w-3 ml-1" />
                     </Button>
-                    <Button size="sm" variant="ghost" disabled={isBusy} className="h-7 px-2 text-xs text-emerald-300 hover:text-emerald-200" onClick={() => withBusy(rec.id, () => completeRecommendation(rec.id))}>
+                    <Button size="sm" variant="ghost" disabled={isBusy} className="h-7 px-2 text-xs text-emerald-300 hover:text-emerald-200" onClick={() => withBusy(rec.id, async () => {
+                      await completeRecommendation(rec.id);
+                      toast.success("Nice work — handled.", { description: `${rec.title}. I'll remember.` });
+                    })}>
                       <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Mark handled
                     </Button>
                     <Button size="sm" variant="ghost" disabled={isBusy} className="h-7 px-2 text-xs text-amber-300 hover:text-amber-200" onClick={() => withBusy(rec.id, () => snoozeRecommendation(rec.id, 24))}>
