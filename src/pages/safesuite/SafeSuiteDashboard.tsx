@@ -39,7 +39,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
-import { RayBriefingHero } from '@/components/ray/RayBriefingHero';
+import { MorningBriefHero } from '@/components/ray/MorningBriefHero';
 import { RayTimeline } from '@/components/ray/RayTimeline';
 
 interface DashboardStats {
