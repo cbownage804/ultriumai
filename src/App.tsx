@@ -52,6 +52,10 @@ const VaultHealth = lazy(() => import('@/pages/safesuite/SafePassHealth'));
 const VaultUsers = lazy(() => import('@/pages/safesuite/SafePassUsers'));
 const WraythPricing = lazy(() => import('@/pages/pricing/SafeSuitePricing'));
 const WraythAssist = lazy(() => import('@/pages/safesuite/SafeSuiteAssist'));
+const Ray = lazy(() => import('@/pages/safesuite/Ray'));
+const Identity = lazy(() => import('@/pages/safesuite/Identity'));
+const Devices = lazy(() => import('@/pages/safesuite/Devices'));
+const Reports = lazy(() => import('@/pages/safesuite/Reports'));
 const RayOnboarding = lazy(() => import('@/pages/onboarding/RayOnboarding'));
 
 // Public/legal pages
@@ -144,6 +148,10 @@ function AppRouter() {
         }>
           <Route path="/safesuite/dashboard" element={<SuspenseWrapper><WraythDashboard /></SuspenseWrapper>} />
           <Route path="/safesuite/assist" element={<SuspenseWrapper><WraythAssist /></SuspenseWrapper>} />
+          <Route path="/safesuite/ray" element={<SuspenseWrapper><Ray /></SuspenseWrapper>} />
+          <Route path="/safesuite/identity" element={<SuspenseWrapper><Identity /></SuspenseWrapper>} />
+          <Route path="/safesuite/devices" element={<SuspenseWrapper><Devices /></SuspenseWrapper>} />
+          <Route path="/safesuite/reports" element={<SuspenseWrapper><Reports /></SuspenseWrapper>} />
           <Route path="/safesuite/pass" element={<SuspenseWrapper><WraythPass /></SuspenseWrapper>} />
           <Route path="/safesuite/pass/shared" element={<SuspenseWrapper><VaultShared /></SuspenseWrapper>} />
           <Route path="/safesuite/pass/emergency" element={<SuspenseWrapper><VaultEmergency /></SuspenseWrapper>} />
