@@ -208,15 +208,26 @@ Return JSON ONLY in this exact shape:
       parsed = { greeting: `Hello, ${firstName}.`, bullets: [String(content).slice(0, 200)], recommendations: [] };
     }
 
-    // Persist recommendations and collect their IDs.
-    const recIds: string[] = [];
+    // On first run, prefer the recommendations the onboarding pipeline
+    // already created from real findings. Skip any AI-generated rec whose
+    // title duplicates an existing open one.
+    const existingTitles = new Set(
+      (openRecs.data ?? []).map((r: any) => String(r.title ?? "").toLowerCase().trim()),
+    );
+    const recIds: string[] = isFirstRun
+      ? (openRecs.data ?? []).slice(0, 5).map((r: any) => r.id)
+      : [];
+
     if (Array.isArray(parsed.recommendations)) {
       for (const rec of parsed.recommendations.slice(0, 5)) {
+        const title = String(rec.title ?? "").slice(0, 200);
+        if (!title) continue;
+        if (existingTitles.has(title.toLowerCase().trim())) continue;
         const { data: inserted } = await supabase
           .from("ray_recommendations")
           .insert({
             user_id: user.id,
-            title: String(rec.title ?? "").slice(0, 200),
+            title,
             body: String(rec.body ?? "").slice(0, 1000),
             priority: Math.max(0, Math.min(100, Number(rec.priority ?? 50))),
             status: "open",
@@ -228,6 +239,7 @@ Return JSON ONLY in this exact shape:
         if (inserted?.id) recIds.push(inserted.id);
       }
     }
+
 
     const { data: saved } = await supabase
       .from("ray_briefings")
