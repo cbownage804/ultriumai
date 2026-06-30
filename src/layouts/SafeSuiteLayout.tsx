@@ -40,6 +40,7 @@ import {
   LogOut,
   Menu,
   Shield,
+  ShieldCheck,
   Crown,
   Lock,
   Sparkles,
@@ -95,6 +96,7 @@ function getSections(): NavSection[] {
       label: 'Protection',
       items: [
         { label: 'Passwords', path: getWraythPath('/pass'), icon: KeyRound, feature: 'safepass' },
+        { label: '2FA',       path: getWraythPath('/mfa'),  icon: ShieldCheck, feature: 'safepass' },
         { label: 'Threats',   path: getWraythPath('/scan'), icon: ShieldAlert, feature: 'safescan' },
         { label: 'Exposure',  path: getWraythPath('/web'),  icon: Globe, feature: 'safeweb' },
         { label: 'Identity',  path: getWraythPath('/identity'), icon: UserCircle2, badge: 'SOON' },
