@@ -47,7 +47,7 @@ export default function RayMFAHub() {
         <RayPageHeader
           subtitle="Ray · 2FA"
           title="Let's lock down this account"
-          subtitle="One short conversation and you're protected. I'll handle the encryption and the verification."
+          description="One short conversation and you're protected. I'll handle the encryption and the verification."
         />
         <RayMFASetupFlow
           catalog={setupTarget?.catalog}
