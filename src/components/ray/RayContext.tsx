@@ -17,15 +17,15 @@ export type RayPageContext =
   | 'other';
 
 function inferContextFromPath(pathname: string): RayPageContext {
-  if (pathname.startsWith('/app/pass')) return 'passwords';
-  if (pathname.startsWith('/app/scan')) return 'threats';
-  if (pathname.startsWith('/app/web')) return 'exposure';
+  if (pathname.startsWith('/app/pass')) return 'passwords'; // covers /app/passwords and legacy /app/pass
+  if (pathname.startsWith('/app/threats') || pathname.startsWith('/app/scan')) return 'threats';
+  if (pathname.startsWith('/app/exposure') || pathname.startsWith('/app/web')) return 'exposure';
   if (pathname.startsWith('/app/identity')) return 'identity';
   if (pathname.startsWith('/app/devices')) return 'devices';
   if (pathname.startsWith('/app/reports')) return 'reports';
   if (pathname.startsWith('/app/settings') || pathname.startsWith('/app/billing'))
     return 'settings';
-  if (pathname === '/app' || pathname === '/app/' || pathname.startsWith('/app/dashboard') || pathname.startsWith('/app/ray'))
+  if (pathname === '/app' || pathname === '/app/' || pathname.startsWith('/app/dashboard') || pathname.startsWith('/app/brief') || pathname.startsWith('/app/ray'))
     return 'home';
   return 'other';
 }
