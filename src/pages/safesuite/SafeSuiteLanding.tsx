@@ -73,37 +73,52 @@ export default function WraythLanding() {
           <img
             src={heroWrayth}
             alt=""
-            className="w-full h-full object-cover opacity-60"
+            className="w-full h-full object-cover opacity-50"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#090909]/85 via-[#090909]/80 to-[#090909]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#090909]/90 via-[#090909]/85 to-[#090909]" />
+
+          {/* Ray "thinking" — intentional violet pulse + drifting particles */}
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="absolute top-1/2 right-[12%] -translate-y-1/2 h-[480px] w-[480px] rounded-full bg-primary/[0.07] blur-[120px] animate-ray-pulse" />
+            <div className="absolute top-1/2 right-[18%] -translate-y-1/2 h-[180px] w-[180px] rounded-full bg-primary/[0.12] blur-[60px] animate-ray-pulse-fast" />
+            {Array.from({ length: 6 }).map((_, i) => (
+              <span
+                key={i}
+                className="absolute h-1 w-1 rounded-full bg-primary/60 animate-ray-particle"
+                style={{
+                  top: `${30 + (i * 9) % 50}%`,
+                  right: `${10 + (i * 7) % 22}%`,
+                  animationDelay: `${i * 1.4}s`,
+                  animationDuration: `${8 + (i % 3) * 2}s`,
+                }}
+              />
+            ))}
+          </div>
         </div>
 
         <div className="container mx-auto px-4 relative z-10 py-24 md:py-36">
           <div className="max-w-3xl">
             <div className="flex items-center gap-2 mb-8 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
               Wrayth · AI security platform
             </div>
 
-            <h1 className="text-5xl md:text-7xl font-semibold tracking-tight text-[#F3F3F3] mb-6 leading-[1.05]">
+            <h1 className="text-5xl md:text-7xl font-semibold tracking-tight text-[#F3F3F3] mb-8 leading-[1.05]">
               Meet <span className="text-primary">Ray</span>.
               <br />
               Your AI cybersecurity teammate.
             </h1>
 
-            <p className="text-lg md:text-xl text-muted-foreground mb-4 max-w-2xl leading-relaxed">
-              Ray quietly protects your business — securing passwords, analyzing suspicious
-              emails and files, monitoring the dark web for exposed credentials, and guiding
-              you through every security decision.
-            </p>
-            <p className="text-base text-muted-foreground mb-10 max-w-2xl">
-              No cybersecurity expertise required. One intelligent platform. Always watching.
+            <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl leading-relaxed">
+              Ray protects your passwords, analyzes suspicious emails and files,
+              monitors the dark web for exposed credentials, and guides you through
+              every security decision&mdash;in plain English.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3">
               <Link to="/auth?tab=signup">
                 <Button size="lg" className="wrayth-chamfer-sm gap-2 w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90">
-                  Experience Ray
+                  Meet Ray
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
@@ -120,6 +135,8 @@ export default function WraythLanding() {
           </div>
         </div>
       </section>
+
+
 
       {/* PHILOSOPHY STRIP */}
       <section className="border-b border-[#3A3A3A] bg-[#0d0d0d]">
