@@ -1,68 +1,74 @@
-# Wrayth — Triple Track Execution Plan
+## Wrayth 3.5 — Ray Everywhere (Browser Extension)
 
-I'll ship these in order. Each track ends in a working, demoable state before moving on.
+Rewrite `public/safepass-extension/` so the extension feels like Ray accompanying the user across the web, not another password toolbar. Ship in waves so each milestone is usable on its own.
 
----
+### Wave 1 — Foundation & manifest (this session)
 
-## Track 1 — Real Data Hardening (Vault / Scan / Watch → Ray)
+- Bump `manifest.json` to v3.0.0, rename to "Wrayth — Ray for your browser", add `sidePanel`, `webRequest`, `cookies`, `scripting`, `tabs` permissions.
+- Register Chrome **Side Panel** (`side_panel.default_path = sidepanel.html`).
+- New file layout:
+  ```
+  public/safepass-extension/
+    manifest.json
+    background.js              (service worker — page analysis bus)
+    sidepanel.html / .js / .css   (Ray side panel UI)
+    popup.html / .js / .css       (mini-dashboard)
+    content/
+      detector.js              (login/MFA/passkey/payment detection)
+      context-bar.js           (calm chip UI)
+      field-menu.js            (inline field menu)
+    lib/
+      domain-intel.js          (typosquat, cert, age heuristics)
+      page-context.js          (classify page type)
+      ray-client.js            (talks to Wrayth edge fns)
+      timeline.js              (writes to ray_timeline)
+      vault-store.js           (encrypted local cache)
+    styles/ray-tokens.css      (matte black / violet accents)
+  ```
 
-Goal: kill the remaining demo data so Ray's briefings, score, and recommendations reflect real signals.
+### Wave 2 — Intelligent detection & Context Bar
 
-**Vault (passwords / 2FA)**
-- Read live entries from the existing `safepass_*` / vault tables (already PBKDF2 encrypted client-side).
-- Compute live metrics: reused count, weak entropy count, missing-2FA count, breached count via the existing HIBP edge proxy (`ray-breach-check`) using k-anonymity SHA1 prefix — never send full hashes.
-- Persist results to `ray_findings` (`source = 'vault'`) so Ray's score + recommendations consume the same pipeline.
+- `detector.js`: classify page as one of `login | signup | reset | mfa | oauth | passkey | payment | security-settings | none`. Detect MFA fields (`autocomplete="one-time-code"`, OTP input groups), passkey availability (`navigator.credentials` + WebAuthn meta), OAuth providers from button text/URLs.
+- `context-bar.js`: small bottom-right chip with 4 states 🟢🟡🔴⚪ + "Ask Ray" — click opens side panel. Never auto-popup; respects per-site dismiss.
+- `field-menu.js`: inline menu on focused username/password fields (Fill from Vault / Generate / Save / Ask Ray).
 
-**Scan (email + file threats)**
-- Pull live counts from `safescan_*` tables, last 30 days. Drop hardcoded "demo threats."
-- Surface latest 5 detections on the module card; write a `ray_findings` row per active threat.
+### Wave 3 — Ray Side Panel
 
-**Watch (identity / exposure)**
-- Replace seeded breach list with a live HIBP `breachedaccount` lookup via `safeweb-scanner` for each verified email on the profile.
-- Cache results in `ray_findings` (`source = 'watch'`) with a 24h TTL so we don't burn API calls.
+- `sidepanel.html`: header (current site + reputation dot), tabs (Overview · Vault · Activity · Chat).
+- Overview shows: domain age, cert issuer/validity, HTTPS, breach count, saved credential count, page-type label, "Recommended next step".
+- Chat tab streams to the existing Ray edge function with page-context system prompt ("User is on github.com, login form detected, has 1 saved credential, supports passkeys").
+- Reuses Wrayth tokens (matte black, electric violet accent only when Ray is thinking).
 
-**Ray glue**
-- `ray-briefing` already reads `ray_findings` — extend its scoring weights so vault / scan / watch each contribute, and so the morning brief cites real numbers ("3 reused passwords, 1 breached login, 2 exposed emails").
-- Add `useRayLiveSignals` hook that batches the three module syncs and runs on dashboard mount + after onboarding.
+### Wave 4 — Domain & password intelligence
 
-**Acceptance:** dashboard shows real numbers for a freshly onboarded user; no `Math.random`, no `mockX` imports left in `src/pages/safesuite/{Vault,Scan,Watch}.tsx`.
+- `domain-intel.js`: lightweight heuristics in the SW + new edge function `ray-domain-intel` (Supabase) that returns `{ reputation, ageDays, certIssuer, typosquatOf, breachCount, malicious }`. Uses HIBP for breach, certificate transparency (`crt.sh`) + WHOIS via existing safeweb infra when available; falls back to local heuristic.
+- On password fields: strength meter, reuse check against local vault cache, breach lookup, crack-time estimate. All in `field-menu.js`.
+- Passkey coach: if WebAuthn supported and the site is in a curated allowlist (`lib/passkey-sites.json`), show "This site supports passkeys" with one-click playbook deep link `wrayth.app/app/playbooks/passkey-upgrade?site=...`.
 
----
+### Wave 5 — Popup as mini-dashboard
 
-## Track 2 — Wrayth Marketing Site
+- Replace current 758-line popup with: greeting, current site card, quick actions (Save · Scan page · Check domain · Generate · Ask Ray), latest notice, latest recommendation, security score, recent activity (last 5 timeline rows). Reuse side-panel components.
 
-Goal: a standalone marketing surface for Wrayth that sells Ray, separate from `ultriumai.com`.
+### Wave 6 — Cloud sync & timeline feed
 
-- New route tree under `/wrayth/*` (kept inside this project; later mappable to its own domain). Pages:
-  - `/wrayth` — hero "Meet Ray. Your AI cybersecurity teammate.", violet pulse, single CTA "Meet Ray" → `/auth?next=/app/onboarding/ray`.
-  - `/wrayth/ray` — what Ray does (Vault / Scan / Watch under one mind), animated eye, JARVIS-tone copy.
-  - `/wrayth/pricing` — outcome-based tiers wired to the existing Stripe price IDs in `src/config/safeSuiteTiers.ts`.
-  - `/wrayth/resources` — security playbook excerpts pulled from `src/lib/ray/playbooks/templates.ts` as static teasers.
-- Shared `WraythMarketingLayout` with its own nav (Platform, Pricing, Resources, Sign in) — no app chrome.
-- SEO: per-page `<title>`/meta/OG, JSON-LD `Product` + `Organization`, single H1, canonical, sitemap entries.
-- Strictly design-token driven (matte black, graphite, soft silver, Electric Violet only on Ray-thinking states).
+- New edge function `ray-extension-sync` (verified JWT) for: pull vault entries, pull notices/score, push timeline events (`signed_in`, `password_saved`, `mfa_enabled`, `warning_shown`, `warning_dismissed`, `warning_accepted`). Writes to `ray_timeline` so Morning Brief can summarize.
+- Auth: sign-in flow opens `wrayth.app/auth?source=extension`, returns a refresh token via `chrome.identity.launchWebAuthFlow`. Tokens stored in `chrome.storage.session`.
 
-**Acceptance:** `/wrayth` loads with zero app-sidebar bleed, all CTAs route to existing auth/checkout, Lighthouse SEO ≥ 95.
+### Technical Details
 
----
+- **Manifest V3** with module service worker. Sidepanel requires Chrome 114+ — bump `minimum_chrome_version`.
+- **CSP** unchanged (`script-src 'self'`), all UI uses vanilla JS modules to avoid bundler.
+- **Edge functions added**: `ray-domain-intel`, `ray-extension-sync`. Both `verify_jwt = true`.
+- **DB**: reuse `ray_timeline`, `ray_notices`, `ray_security_scores`, `safepass_entries`. No new tables this wave.
+- **Packaging**: existing `re-zip on download` flow at `/app/safepass/extension` keeps working — bump version string to 3.0.0 so Chrome auto-updates installed unpacked dev builds when reloaded.
+- **No intrusive notifications**: remove `notifications` permission usage; warnings surface via Context Bar + side panel only.
 
-## Track 3 — Ray Action Engine Wave 5
+### What ships this session
 
-Goal: playbooks become resumable, schedulable, and feel alive.
+Waves 1–3 end-to-end (manifest, detection, context bar, side panel skeleton with live page context + Ray chat). Waves 4–6 follow in subsequent sessions because they need new edge functions and auth flow polish.
 
-- **Resumable runs:** persist per-task state in `ray_playbook_runs` (`current_step`, `step_state jsonb`, `paused_at`). `PlaybookRunner.tsx` rehydrates from last step on reopen.
-- **Scheduled playbooks:** new `ray_playbook_schedules` table (`cron`, `playbook_id`, `next_run_at`). Cron-trigger edge function `ray-scheduler` (every 5 min) enqueues due runs. Uses `pg_cron` + `pg_net` (per platform guidance — scheduled via `supabase--insert`, not migration, since URL+anon key are tenant-specific).
-- **Progress UX:** step pills, ETA, "Ray is working…" violet pulse, and a `ray_timeline` event per step completion. Toast on resume: "Picking up where we left off."
-- **Library polish:** filter chips on `PlaybookLibrary` (Critical / Quick win / Scheduled), and a "Schedule monthly" button on relevant playbooks (credit freeze refresh, OAuth audit, MFA review).
+### Out of scope (this pass)
 
-**Acceptance:** start a playbook, close the tab, reopen — Ray resumes at the same step. Schedule a playbook for "every Monday 9am" and verify a run appears.
-
----
-
-## Order of operations
-
-1. Track 1 lands first — everything downstream is more compelling once Ray cites real data.
-2. Track 2 — marketing can then confidently quote "real-time HIBP-backed monitoring."
-3. Track 3 — depth feature; ships after the surface is solid.
-
-I'll execute Track 1 immediately on approval, then continue straight through 2 and 3 without re-prompting.
+- Firefox / Safari builds.
+- Background WebAuthn ceremony (only coaching link for now).
+- M365 / Google Workspace deep links (already separate playbooks).
