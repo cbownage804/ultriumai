@@ -57,7 +57,7 @@ serve(async (req) => {
       ?? "there";
 
     // Gather context in parallel
-    const [profile, memory, timeline, findings, passwords, monitors, insights] = await Promise.all([
+    const [profile, memory, timeline, findings, passwords, monitors, insights, openRecs, lastBriefing] = await Promise.all([
       supabase.from("ray_profiles").select("*").eq("user_id", user.id).maybeSingle(),
       supabase.from("ray_memory").select("key,value,source").eq("user_id", user.id).limit(50),
       supabase.from("ray_timeline").select("event_type,summary,severity,occurred_at").eq("user_id", user.id).order("occurred_at", { ascending: false }).limit(15),
@@ -65,7 +65,20 @@ serve(async (req) => {
       supabase.from("password_entries").select("id,password_strength").eq("user_id", user.id),
       supabase.from("safeweb_assets").select("id,asset_type,status").eq("user_id", user.id).eq("status", "active"),
       supabase.from("ray_insights").select("kind,area,severity,title,observed_at,status").eq("user_id", user.id).eq("status", "open").order("observed_at", { ascending: false }).limit(50),
+      supabase.from("ray_recommendations").select("id,title,body,priority,page_context").eq("user_id", user.id).eq("status", "open").order("priority", { ascending: false }).limit(8),
+      supabase.from("ray_briefings").select("id").eq("user_id", user.id).order("generated_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
+
+    // Detect first-run handoff from onboarding: no prior briefing AND the
+    // profile was onboarded in the last 10 minutes. The first brief should
+    // explicitly acknowledge what Ray learned during setup.
+    const onboardedAt = profile.data?.onboarded_at ? new Date(profile.data.onboarded_at) : null;
+    const isFirstRun =
+      !lastBriefing.data &&
+      !!onboardedAt &&
+      Date.now() - onboardedAt.getTime() < 10 * 60 * 1000;
+    const onboardingMemory = (memory.data ?? []).find((m: any) => m.key === "onboarding.summary")?.value ?? null;
+
 
     const passwordStats = {
       total: passwords.data?.length ?? 0,
