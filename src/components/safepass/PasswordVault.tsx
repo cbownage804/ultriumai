@@ -520,11 +520,11 @@ export const PasswordVault = () => {
         </div>
         
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" onClick={() => navigate('/app/pass/import')} className="border-primary/30 text-primary hover:bg-primary/10 hover:text-primary h-10 sm:h-9 touch-target tap-scale flex-1 sm:flex-initial min-w-[100px]">
+          <Button variant="outline" onClick={() => navigate('/app/passwords/import')} className="border-primary/30 text-primary hover:bg-primary/10 hover:text-primary h-10 sm:h-9 touch-target tap-scale flex-1 sm:flex-initial min-w-[100px]">
             <Upload className="w-4 h-4 mr-1 sm:mr-2" />
             <span className="text-sm">Import</span>
           </Button>
-          <Button variant="outline" onClick={() => navigate('/app/pass/export')} className="border-primary/30 text-primary hover:bg-primary/10 hover:text-primary h-10 sm:h-9 touch-target tap-scale flex-1 sm:flex-initial min-w-[100px]">
+          <Button variant="outline" onClick={() => navigate('/app/passwords/export')} className="border-primary/30 text-primary hover:bg-primary/10 hover:text-primary h-10 sm:h-9 touch-target tap-scale flex-1 sm:flex-initial min-w-[100px]">
             <Download className="w-4 h-4 mr-1 sm:mr-2" />
             <span className="text-sm">Export</span>
           </Button>
