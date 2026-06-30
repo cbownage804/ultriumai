@@ -197,8 +197,46 @@ export default function WraythLanding() {
         </div>
       </section>
 
+      {/* PLAYBOOKS — what Ray actually does, in your hands */}
+      <section className="py-24 border-t border-[#3A3A3A]">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mb-12">
+            <div className="text-[11px] uppercase tracking-[0.22em] text-violet-300/80 mb-3">
+              Ray runs the work
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight">
+              Every recommendation becomes a conversation.
+            </h2>
+            <p className="mt-3 text-muted-foreground">
+              Ray doesn't dump a checklist on you. It walks each fix with you, step by step, in plain English — and remembers what you've already handled.
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              { t: 'Protect your identity end-to-end', d: 'Add an email, verify it, scan for breaches, keep watch — Ray handles the whole chain.' },
+              { t: 'Clean up every weak or reused password', d: 'Weak, reused, old, compromised — Ray sweeps the Vault one credential at a time.' },
+              { t: 'Secure Microsoft 365', d: 'MFA enforced, Conditional Access set, legacy auth off, admins reviewed.' },
+              { t: 'Secure Google Workspace', d: 'Passkeys, 2FA, recovery you control, backup codes saved.' },
+              { t: 'Harden this device', d: 'Encryption verified, firewall on, OS patched, agent reporting in.' },
+              { t: 'And more', d: 'Ray\'s playbook library grows every week. Browse the full catalog.' },
+            ].map((p) => (
+              <div key={p.t} className="rounded-sm border border-border/60 bg-card/30 p-5">
+                <div className="text-base font-medium">{p.t}</div>
+                <p className="mt-2 text-sm text-muted-foreground">{p.d}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-8">
+            <Button asChild variant="ghost" className="text-violet-300 hover:text-violet-200">
+              <Link to="/resources">Browse every playbook <ArrowRight className="ml-2 h-4 w-4" /></Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* PRICING */}
       <section id="pricing" className="py-24 border-t border-[#3A3A3A] bg-[#0d0d0d]">
+
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mb-14">
             <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
