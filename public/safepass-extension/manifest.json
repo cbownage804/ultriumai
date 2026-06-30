@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Wrayth — Ray for your browser",
-  "version": "3.0.0",
-  "description": "Ray accompanies you across the web. Calm security guidance, password autofill, breach detection, and page-aware help in one side panel.",
+  "version": "3.1.0",
+  "description": "Ray accompanies you across the web. Real-time site trust, password intelligence, identity awareness, and calm guidance — all synced to Wrayth.",
   "permissions": [
     "storage",
     "alarms",
