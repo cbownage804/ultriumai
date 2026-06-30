@@ -335,6 +335,16 @@ function headlineFor(intent: Intent, skills: string[]): string {
 
 export async function askRay(userId: string, question: string): Promise<RayAnswer | null> {
   if (!userId || !isQuestion(question)) return null;
+
+  // Organization intents take precedence when the user mentions company-level scope.
+  try {
+    const { isOrgQuestion, answerOrgQuestion } = await import('@/lib/ray/org/skills');
+    if (isOrgQuestion(question)) {
+      const orgAnswer = await answerOrgQuestion(userId, question);
+      if (orgAnswer && orgAnswer.bullets.length) return orgAnswer;
+    }
+  } catch { /* fall through to personal skills */ }
+
   const intent = parseIntent(question);
   const { skills } = plan(intent);
 
