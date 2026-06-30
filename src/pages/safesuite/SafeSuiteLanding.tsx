@@ -116,17 +116,22 @@ export default function WraythLanding() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3">
-              <Link to="/auth?tab=signup">
+              <Link to="/auth?tab=signup&return=safesuite&path=%2Fonboarding%2Fray">
                 <Button size="lg" className="wrayth-chamfer-sm gap-2 w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90">
                   Meet Ray
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              <Link to="#platform">
-                <Button size="lg" variant="outline" className="wrayth-chamfer-sm w-full sm:w-auto border-[#3A3A3A] text-[#F3F3F3] hover:bg-[#181818]">
-                  See what Ray can do
-                </Button>
-              </Link>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => {
+                  document.getElementById('platform')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+                className="wrayth-chamfer-sm w-full sm:w-auto border-[#3A3A3A] text-[#F3F3F3] hover:bg-[#181818]"
+              >
+                See what Ray can do
+              </Button>
             </div>
 
           </div>

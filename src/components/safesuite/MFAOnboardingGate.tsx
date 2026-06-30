@@ -185,7 +185,7 @@ export function MFAOnboardingGate({ children }: MFAOnboardingGateProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-amber-500/5 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -200,10 +200,10 @@ export function MFAOnboardingGate({ children }: MFAOnboardingGateProps) {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
             >
-              <Card className="border-amber-500/30 overflow-hidden">
+              <Card className="border-primary/30 overflow-hidden">
                 {/* Header with logo */}
-                <div className="relative h-40 bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-transparent flex flex-col items-center justify-center">
-                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(245,158,11,0.2),transparent_70%)]" />
+                <div className="relative h-40 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent flex flex-col items-center justify-center">
+                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(139,92,246,0.2),transparent_70%)]" />
                   <img src={safesuiteLogo} alt="Wrayth" className="h-12 relative z-10 mb-4" />
                   <motion.div
                     initial={{ scale: 0.8 }}
@@ -211,14 +211,14 @@ export function MFAOnboardingGate({ children }: MFAOnboardingGateProps) {
                     transition={{ delay: 0.2, type: 'spring' }}
                     className="relative"
                   >
-                    <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                    <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-primary flex items-center justify-center shadow-lg shadow-primary/30">
                       <Shield className="h-8 w-8 text-white" />
                     </div>
                   </motion.div>
                 </div>
 
                 <CardHeader className="text-center pb-2">
-                  <Badge variant="outline" className="mx-auto mb-3 border-amber-500/50 text-amber-500">
+                  <Badge variant="outline" className="mx-auto mb-3 border-primary/50 text-primary">
                     <Sparkles className="h-3 w-3 mr-1" />
                     One-Time Setup
                   </Badge>
@@ -241,7 +241,7 @@ export function MFAOnboardingGate({ children }: MFAOnboardingGateProps) {
                         transition={{ delay: 0.3 + index * 0.1 }}
                         className="flex items-start gap-3"
                       >
-                        <CheckCircle2 className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                        <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                         <span className="text-sm text-muted-foreground">{benefit}</span>
                       </motion.div>
                     ))}
@@ -253,7 +253,7 @@ export function MFAOnboardingGate({ children }: MFAOnboardingGateProps) {
                       size="lg"
                       onClick={handleStartSetup}
                       disabled={isSettingUp}
-                      className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold"
+                      className="w-full gap-2 bg-gradient-to-r from-primary to-primary hover:from-primary/90 hover:to-primary/90 text-white font-semibold"
                     >
                       {isSettingUp ? (
                         <Loader2 className="h-5 w-5 animate-spin" />
@@ -296,10 +296,10 @@ export function MFAOnboardingGate({ children }: MFAOnboardingGateProps) {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
             >
-              <Card className="border-amber-500/30">
+              <Card className="border-primary/30">
                 <CardHeader className="text-center">
-                  <div className="mx-auto mb-4 h-14 w-14 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                    <QrCode className="h-7 w-7 text-amber-500" />
+                  <div className="mx-auto mb-4 h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <QrCode className="h-7 w-7 text-primary" />
                   </div>
                   <CardTitle>Scan QR Code</CardTitle>
                   <CardDescription>
@@ -356,10 +356,10 @@ export function MFAOnboardingGate({ children }: MFAOnboardingGateProps) {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
             >
-              <Card className="border-amber-500/30">
+              <Card className="border-primary/30">
                 <CardHeader className="text-center">
-                  <div className="mx-auto mb-4 h-14 w-14 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                    <Smartphone className="h-7 w-7 text-amber-500" />
+                  <div className="mx-auto mb-4 h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Smartphone className="h-7 w-7 text-primary" />
                   </div>
                   <CardTitle>Verify Setup</CardTitle>
                   <CardDescription>
@@ -390,7 +390,7 @@ export function MFAOnboardingGate({ children }: MFAOnboardingGateProps) {
                   <Button 
                     onClick={handleVerify}
                     disabled={verificationCode.length !== 6 || isVerifying}
-                    className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                    className="w-full gap-2 bg-gradient-to-r from-primary to-primary hover:from-primary/90 hover:to-primary/90"
                   >
                     {isVerifying ? (
                       <Loader2 className="h-5 w-5 animate-spin" />
@@ -456,7 +456,7 @@ export function MFAOnboardingGate({ children }: MFAOnboardingGateProps) {
                     {copiedBackupCodes ? 'Copied!' : 'Copy All Codes'}
                   </Button>
 
-                  <div className="flex items-start gap-2 text-sm text-amber-500 bg-amber-500/10 p-3 rounded-lg">
+                  <div className="flex items-start gap-2 text-sm text-primary bg-primary/10 p-3 rounded-lg">
                     <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
                     <span>Each backup code can only be used once. Store them in a secure location.</span>
                   </div>

@@ -149,9 +149,9 @@ export function MFAEnforcementGate({
         transition={{ duration: 0.4 }}
         className="w-full max-w-lg"
       >
-        <Card className="border-amber-500/30 bg-gradient-to-b from-amber-500/5 to-transparent overflow-hidden">
+        <Card className="border-primary/30 bg-gradient-to-b from-primary/5 to-transparent overflow-hidden">
           {/* Decorative header */}
-          <div className="relative h-32 bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-transparent flex items-center justify-center">
+          <div className="relative h-32 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent flex items-center justify-center">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(245,158,11,0.15),transparent_70%)]" />
             <motion.div
               initial={{ scale: 0.8 }}
@@ -159,14 +159,14 @@ export function MFAEnforcementGate({
               transition={{ delay: 0.2, type: 'spring' }}
               className="relative"
             >
-              <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
+              <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-primary to-primary flex items-center justify-center shadow-lg shadow-primary/30">
                 <Shield className="h-10 w-10 text-white" />
               </div>
             </motion.div>
           </div>
 
           <CardHeader className="text-center pb-2">
-            <Badge variant="outline" className="mx-auto mb-3 border-amber-500/50 text-amber-500">
+            <Badge variant="outline" className="mx-auto mb-3 border-primary/50 text-primary">
               <Lock className="h-3 w-3 mr-1" />
               Security Required
             </Badge>
@@ -189,7 +189,7 @@ export function MFAEnforcementGate({
                   transition={{ delay: 0.3 + index * 0.1 }}
                   className="flex items-start gap-3"
                 >
-                  <CheckCircle2 className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                  <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                   <span className="text-sm text-muted-foreground">{benefit}</span>
                 </motion.div>
               ))}
@@ -198,7 +198,7 @@ export function MFAEnforcementGate({
             {/* Setup instructions */}
             <div className="bg-muted/50 rounded-lg p-4 space-y-3">
               <div className="flex items-center gap-2 text-sm font-medium">
-                <Smartphone className="h-4 w-4 text-amber-500" />
+                <Smartphone className="h-4 w-4 text-primary" />
                 How to set up 2FA:
               </div>
               <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
@@ -218,7 +218,7 @@ export function MFAEnforcementGate({
               <Link to={settingsPath}>
                 <Button 
                   size="lg" 
-                  className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold"
+                  className="w-full gap-2 bg-gradient-to-r from-primary to-primary hover:from-primary/90 hover:to-primary/90 text-white font-semibold"
                 >
                   <ShieldCheck className="h-5 w-5" />
                   Set Up 2FA Now
