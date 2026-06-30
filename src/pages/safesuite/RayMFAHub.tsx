@@ -45,7 +45,7 @@ export default function RayMFAHub() {
     return (
       <div className="space-y-6 p-6">
         <RayPageHeader
-          eyebrow="Ray · 2FA"
+          subtitle="Ray · 2FA"
           title="Let's lock down this account"
           subtitle="One short conversation and you're protected. I'll handle the encryption and the verification."
         />
@@ -64,9 +64,9 @@ export default function RayMFAHub() {
   return (
     <div className="space-y-6 p-6">
       <RayPageHeader
-        eyebrow="Ray · 2FA"
+        subtitle="Ray · 2FA"
         title="Two-factor, the way it should feel"
-        subtitle={
+        description={
           showEmptyIntro
             ? "Most account takeovers happen because the password was the only lock. Let me fix that with you, one account at a time."
             : `${mfa.verdict.line}`
