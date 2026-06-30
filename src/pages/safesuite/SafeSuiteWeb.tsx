@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { FeatureGate, UsageLimitBanner, TierLimitInfo } from '@/components/safesuite/SafeSuitePaywall';
+import { FeatureGate, UsageLimitBanner } from '@/components/safesuite/SafeSuitePaywall';
 import { useAuth } from '@/hooks/useAuth';
 import { useFeatureAccess, useWraythUsage } from '@/hooks/useSafeSuite';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,11 +15,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import safewebLogo from '@/assets/safeweb-logo.png';
-import heroSafewebBg from '@/assets/hero-safeweb-bg.jpg';
 import { Sparkles } from 'lucide-react';
 import { AIRecommendationsDisplay } from '@/components/safeweb/AIRecommendationsDisplay';
-import { RayInsightPanel } from '@/components/ray/RayInsightPanel';
+import { RayConversationCard } from '@/components/ray/RayConversationCard';
+import { RayPageHeader } from '@/components/ray/RayPageHeader';
 import {
   Globe,
   Shield,
@@ -374,35 +373,20 @@ export default function WraythWeb() {
 
   return (
     <FeatureGate feature="safeweb">
-      <div 
-        className="min-h-full p-6 -m-6 rounded-lg relative"
-        style={{
-          backgroundImage: `url(${heroSafewebBg})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundAttachment: 'fixed'
-        }}
-      >
-        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm rounded-lg" />
-        <div className="relative z-10 space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="p-4 rounded-xl bg-gradient-to-br from-violet-500/20 via-purple-500/10 to-fuchsia-500/20 border border-violet-500/20 shadow-[0_0_60px_rgba(139,92,246,0.15)]">
-              <img src={safewebLogo} alt="Watch" className="h-32 w-auto" />
-            </div>
-            <p className="text-gray-400">
-              Monitor the dark web for your exposed credentials and data
-            </p>
-          </div>
-          <Button variant="outline" onClick={() => loadData()} className="border-violet-500/30 text-violet-500 hover:bg-violet-500/10">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-        </div>
+      <div className="space-y-6">
+        <RayPageHeader
+          title="Exposure"
+          description="Monitoring the internet for compromised identities and leaked credentials."
+          right={
+            <Button variant="outline" onClick={() => loadData()} className="border-primary/30 text-primary hover:bg-primary/10">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          }
+        />
 
-        <TierLimitInfo feature="safeweb" />
+        <RayConversationCard context="exposure" />
 
-        <RayInsightPanel context="exposure" />
 
 
 
