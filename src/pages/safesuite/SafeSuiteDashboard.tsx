@@ -40,6 +40,7 @@ import {
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { MorningBriefHero } from '@/components/ray/MorningBriefHero';
+import { useRayLiveSignals } from '@/hooks/useRayLiveSignals';
 import { RayNoticesPanel } from '@/components/ray/RayNoticesPanel';
 import { RayTimeline } from '@/components/ray/RayTimeline';
 
@@ -394,6 +395,8 @@ export default function WraythDashboard() {
   const { tier, tierConfig, isSubscribed } = useWraythSubscription();
   const { canUseFeature } = useFeatureAccess();
   const { entries } = useVault();
+  // Track 1: refresh Ray's unified findings from Vault/Scan/Watch on mount.
+  useRayLiveSignals();
 
   // First-run gate: read onboarding state from the database. Using an effect
   // (instead of an early return) preserves React's rules of hooks below.
