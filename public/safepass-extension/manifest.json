@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "SafePass - Password Manager",
-  "version": "2.0.0",
-  "description": "Secure password autofill, generator, TOTP authenticator, and breach detection. Works on Chrome and Microsoft Edge.",
+  "name": "Wrayth Vault - Password Manager by Ray",
+  "version": "2.1.0",
+  "description": "Wrayth Vault: AI-assisted password autofill, generator, TOTP, and breach detection — powered by Ray. Works on Chrome and Edge.",
   "permissions": [
     "storage",
     "alarms",
