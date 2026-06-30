@@ -237,7 +237,7 @@ export default function RayOnboarding() {
     const res = await mp.setMasterPassword(masterPw);
     if (!res.success) { setMpError(res.errors?.[0] ?? 'Could not set master password.'); return; }
     setMasterPw(''); setMasterPw2('');
-    setStep('import');
+    setStep('mfa');
   };
 
   const handleUnlock = async () => {
@@ -246,7 +246,7 @@ export default function RayOnboarding() {
     const res = await mp.unlockWithPassword(masterPw);
     if (!res.success) { setMpError(res.error ?? 'Could not unlock.'); return; }
     setMasterPw('');
-    setStep('import');
+    setStep('mfa');
   };
 
   const startPipeline = async (source: ImportSource, text: string) => {
