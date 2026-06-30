@@ -507,62 +507,65 @@ export default function WraythDashboard() {
     }
   };
 
-  // Ray's briefing — derived from real stats so Ray "already knows".
+  // Ray's continuity briefing — feels like returning to a teammate, not opening software.
   const totalIssues = stats.weakPasswordCount;
   const score = stats.passwordCount === 0
     ? 100
     : Math.max(0, Math.min(100, Math.round(100 - (stats.weakPasswordCount / stats.passwordCount) * 40 + (stats.strongPasswordCount / stats.passwordCount) * 20)));
-  const greeting = (() => {
-    const h = new Date().getHours();
-    if (h < 12) return 'Good morning';
-    if (h < 18) return 'Good afternoon';
-    return 'Good evening';
-  })();
   const firstName = user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || '';
 
-  const briefingLines: string[] = [];
+  // "Since we last talked..." — continuity bullets, leading with what Ray did.
+  const sinceLines: { tone: 'good' | 'warn'; text: string }[] = [];
+  if (stats.strongPasswordCount > 0) {
+    sinceLines.push({ tone: 'good', text: `${stats.strongPasswordCount} password${stats.strongPasswordCount === 1 ? '' : 's'} looking strong` });
+  }
+  sinceLines.push({ tone: 'good', text: 'No new breaches detected' });
+  if (stats.monitoredAssets > 0) {
+    sinceLines.push({ tone: 'good', text: `Watching ${stats.monitoredAssets} identit${stats.monitoredAssets === 1 ? 'y' : 'ies'} for you` });
+  }
   if (stats.weakPasswordCount > 0) {
-    briefingLines.push(`${stats.weakPasswordCount} password${stats.weakPasswordCount === 1 ? '' : 's'} in your vault could be stronger.`);
-  }
-  if (stats.monitoredAssets === 0) {
-    briefingLines.push('You haven\'t set up Watch yet — I can monitor your identities for breach exposure when you\'re ready.');
+    sinceLines.push({ tone: 'warn', text: `${stats.weakPasswordCount} password${stats.weakPasswordCount === 1 ? '' : 's'} I'd like to strengthen with you` });
   } else {
-    briefingLines.push(`I\'m watching ${stats.monitoredAssets} identit${stats.monitoredAssets === 1 ? 'y' : 'ies'} for exposure.`);
-  }
-  if (stats.scanCount > 0) {
-    briefingLines.push(`I\'ve run ${stats.scanCount} scan${stats.scanCount === 1 ? '' : 's'} this month.`);
-  }
-  if (briefingLines.length === 0) {
-    briefingLines.push('Everything looks healthy. Nothing needs your attention right now.');
+    sinceLines.push({ tone: 'good', text: 'Everything looks healthy' });
   }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] -m-4 lg:-m-6 p-4 lg:p-6 space-y-4 sm:space-y-6">
-      {/* Ray's briefing */}
+      {/* Ray's continuity briefing */}
       <motion.section
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
         className="wrayth-chamfer border border-[#3A3A3A] bg-[#181818] p-5 sm:p-8"
       >
         <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 space-y-3">
+          <div className="flex-1 space-y-4">
             <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              Ray · briefing
+              Ray
             </div>
-            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-[#F3F3F3]">
-              {greeting}{firstName ? `, ${firstName}` : ''}.
+            <h1 className="text-2xl sm:text-3xl font-light tracking-tight text-[#F3F3F3]">
+              Welcome back{firstName ? `, ${firstName}` : ''}.
             </h1>
-            <p className="text-sm text-muted-foreground">Here's what I noticed today.</p>
-            <ul className="space-y-1.5 text-sm text-[#F3F3F3] pt-1">
-              {briefingLines.map((line, i) => (
-                <li key={i} className="flex gap-2">
-                  <span className="text-muted-foreground select-none">·</span>
-                  <span>{line}</span>
+            <p className="text-sm text-muted-foreground">Since we last talked…</p>
+            <ul className="space-y-2 text-sm text-[#F3F3F3] pt-1">
+              {sinceLines.map((line, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <span className={cn(
+                    'mt-0.5 select-none',
+                    line.tone === 'good' ? 'text-emerald-400' : 'text-amber-400'
+                  )}>
+                    {line.tone === 'good' ? '✓' : '!'}
+                  </span>
+                  <span>{line.text}</span>
                 </li>
               ))}
             </ul>
-            <p className="text-sm text-muted-foreground pt-2">What would you like to work on?</p>
+            <p className="text-sm text-muted-foreground pt-3">
+              What would you like to work on today?{' '}
+              <span className="text-foreground/60">
+                Press <kbd className="px-1.5 py-0.5 text-[10px] font-mono border border-border rounded bg-background/40">⌘K</kbd> to ask me anything.
+              </span>
+            </p>
           </div>
           <div className="hidden sm:flex flex-col items-end shrink-0">
             <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Security score</div>
@@ -583,6 +586,7 @@ export default function WraythDashboard() {
           </div>
         )}
       </motion.section>
+
 
       {/* Subscription Status Banner */}
       <SubscriptionBanner />

@@ -46,6 +46,7 @@ import { AppSwitcher } from '@/components/AppSwitcher';
 import { HelpCenter } from '@/components/onboarding/HelpCenter';
 import { cn } from '@/lib/utils';
 import { FloatingSafeAssist } from '@/components/safeassist/FloatingSafeAssist';
+import { AskRayPalette } from '@/components/safeassist/AskRayPalette';
 import { FloatingSafeAssistProvider, useFloatingSafeAssist } from '@/contexts/FloatingSafeAssistContext';
 import { MFAOnboardingGate } from '@/components/safesuite/MFAOnboardingGate';
 
@@ -65,7 +66,7 @@ function getWraythPath(path: string): string {
 const getNavItems = () => [
   {
     id: 'dashboard',
-    label: 'Dashboard',
+    label: 'Home',
     path: getWraythPath('/dashboard'),
     icon: LayoutDashboard,
     productLogo: null as string | null,
@@ -541,6 +542,9 @@ function WraythLayoutInner() {
         </main>
       </div>
       
+      {/* Ask Ray — global command palette (⌘K / Ctrl+K) */}
+      <AskRayPalette />
+
       {/* Floating SafeAssist Chat - available on all pages */}
       <FloatingSafeAssist />
     </div>

@@ -166,11 +166,16 @@ const ANALYZE_STEPS = [
 
 function AnalyzingSequence({ onDone }: { onDone: () => void }) {
   const [completed, setCompleted] = useState<number>(0);
+  const [anticipation, setAnticipation] = useState(false);
+  const [reveal, setReveal] = useState(false);
 
   useEffect(() => {
     if (completed >= ANALYZE_STEPS.length) {
-      const t = setTimeout(onDone, 700);
-      return () => clearTimeout(t);
+      // 600ms anticipation pulse before the reveal — Apple/Linear/OpenAI-style pause.
+      const t1 = setTimeout(() => setAnticipation(true), 200);
+      const t2 = setTimeout(() => setReveal(true), 800);
+      const t3 = setTimeout(onDone, 1500);
+      return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
     }
     const t = setTimeout(() => setCompleted((c) => c + 1), 900);
     return () => clearTimeout(t);
@@ -214,6 +219,23 @@ function AnalyzingSequence({ onDone }: { onDone: () => void }) {
           );
         })}
       </div>
+
+      {anticipation && (
+        <div className="ml-[72px] pt-4 animate-fade-in">
+          <div className="flex items-center gap-3">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inset-0 rounded-full bg-[hsl(262_60%_64%)] animate-ping" />
+              <span className="relative h-2 w-2 rounded-full bg-[hsl(262_60%_70%)]" />
+            </span>
+            <span className={cn(
+              'text-sm transition-opacity duration-500',
+              reveal ? 'text-foreground opacity-100' : 'text-muted-foreground opacity-70'
+            )}>
+              {reveal ? 'I found something.' : ''}
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -549,14 +571,19 @@ export default function RayOnboarding() {
         {step === 'finale' && (
           <div className="space-y-10 animate-fade-in">
             <RayEye thinking size={88} />
-            <div className="space-y-4">
+            <div className="space-y-5 max-w-xl">
               <h2 className="text-2xl sm:text-3xl font-light tracking-tight text-foreground">
-                I'm on watch now.
+                Welcome to Wrayth.
               </h2>
-              <p className="text-lg text-muted-foreground leading-relaxed max-w-xl">
-                If something important happens, I'll let you know.
-                Until then, I'll quietly keep an eye on things.
-              </p>
+              <div className="space-y-3 text-lg text-muted-foreground leading-relaxed">
+                <p className="text-foreground">I'm on watch now.</p>
+                <p>I'll quietly monitor your security from here.</p>
+                <p>If something important happens, I'll let you know.</p>
+                <p className="text-foreground/90">
+                  You don't have to think about cybersecurity anymore.
+                </p>
+                <p className="text-foreground">That's my job.</p>
+              </div>
             </div>
             <Button
               size="lg"
