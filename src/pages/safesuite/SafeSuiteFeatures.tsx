@@ -131,13 +131,13 @@ export default function WraythFeatures() {
             Complete security suite with password management, threat scanning, dark web monitoring, and asset tracking
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
-            <Link to="/safesuite/auth">
+            <Link to="/app/auth">
               <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600">
                 Start Free Trial
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
-            <Link to="/safesuite">
+            <Link to="/app">
               <Button size="lg" variant="outline" className="border-white/20 hover:bg-white/10">
                 View Pricing
               </Button>
@@ -237,7 +237,7 @@ export default function WraythFeatures() {
                       </li>
                     ))}
                   </ul>
-                  <Link to="/safesuite/auth">
+                  <Link to="/app/auth">
                     <Button className={`w-full ${plan.popular ? "bg-emerald-500 hover:bg-emerald-600" : ""}`} variant={plan.popular ? "default" : "outline"}>
                       Get Started
                     </Button>

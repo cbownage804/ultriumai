@@ -164,7 +164,7 @@ export default function VaultSecurityPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-[#0a0a0a]/95 backdrop-blur border-b border-amber-500/10">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/safesuite/products/safepass" className="flex items-center gap-3">
+          <Link to="/app/products/safepass" className="flex items-center gap-3">
             <div className="h-12 w-12 rounded-xl bg-black flex items-center justify-center overflow-hidden border border-amber-500/30 shadow-lg shadow-amber-500/10">
               <img src={safepassLogo} alt="Vault" className="h-9 w-9 object-contain" />
             </div>

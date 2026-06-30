@@ -52,7 +52,7 @@ export default function Ray() {
             {recs.map((r) => (
               <Link
                 key={r.id}
-                to="/safesuite/pass/health"
+                to="/app/pass/health"
                 className={cn(
                   'group rounded-sm border px-4 py-3 transition-colors hover:border-foreground/40',
                   priorityTone(r.priority ?? 5),

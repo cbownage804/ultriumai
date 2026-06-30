@@ -205,7 +205,7 @@ const articles: KBArticle[] = [
     content: 'Wrayth combines password management, threat scanning, and breach monitoring in one integrated platform.',
     category: 'safesuite',
     tags: ['dashboard', 'overview', 'security'],
-    route: '/safesuite',
+    route: '/app',
     steps: [
       'View your security score',
       'Access Vault password vault',
@@ -221,7 +221,7 @@ const articles: KBArticle[] = [
     content: 'Vault provides enterprise-grade password management with AES-256 encryption, auto-fill, and team sharing.',
     category: 'safesuite',
     tags: ['passwords', 'vault', 'safepass', 'credentials'],
-    route: '/safesuite/vault',
+    route: '/app/vault',
     steps: [
       'Add passwords manually or import',
       'Organize with folders and tags',
@@ -237,7 +237,7 @@ const articles: KBArticle[] = [
     content: 'Scan uses AI to detect phishing, malware, and suspicious content in emails, attachments, and links.',
     category: 'safesuite',
     tags: ['scan', 'threats', 'safescan', 'phishing'],
-    route: '/safesuite/scan',
+    route: '/app/scan',
     steps: [
       'Scan suspicious emails',
       'Check URLs for threats',
@@ -253,7 +253,7 @@ const articles: KBArticle[] = [
     content: 'Continuously monitor the dark web for your credentials and personal data. Get instant alerts if your information appears in a breach.',
     category: 'safesuite',
     tags: ['breach', 'darkweb', 'monitoring'],
-    route: '/safesuite/breach',
+    route: '/app/breach',
     steps: [
       'Add email addresses to monitor',
       'View breach history',

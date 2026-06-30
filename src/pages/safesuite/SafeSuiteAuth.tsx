@@ -57,7 +57,7 @@ export default function WraythAuth() {
       // Send first-time users to Ray. Returning users go straight to dashboard.
       const { data: { user: signedIn } } = await supabase.auth.getUser();
       const onboarded = signedIn && localStorage.getItem(`wrayth.ray.onboarded:${signedIn.id}`) === 'true';
-      navigate(onboarded ? '/safesuite/dashboard' : '/onboarding/ray');
+      navigate(onboarded ? '/app/dashboard' : '/onboarding/ray');
     } catch (err) {
       setError('An unexpected error occurred');
     }
@@ -108,7 +108,7 @@ export default function WraythAuth() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="p-4">
-        <Link to="/safesuite" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+        <Link to="/app" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-4 w-4" />
           Back to Wrayth
         </Link>
@@ -118,7 +118,7 @@ export default function WraythAuth() {
       <main className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           {/* Logo */}
-          <Link to="/safesuite" className="block mb-8">
+          <Link to="/app" className="block mb-8">
             <AuthBrandHeader />
           </Link>
 

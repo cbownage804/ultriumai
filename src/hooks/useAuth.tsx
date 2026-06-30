@@ -154,7 +154,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         redirectPath = '/auth/callback';
       } else if (returnProduct === 'safesuite') {
         redirectPath = '/auth/callback?return=safesuite';
-      } else if (pathname.startsWith('/safesuite')) {
+      } else if (pathname.startsWith('/app')) {
         redirectPath = '/auth/callback?return=safesuite';
       } else if (isVanguardDomain()) {
         redirectPath = '/auth/callback';

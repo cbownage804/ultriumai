@@ -42,7 +42,7 @@ const WraythTeamsApps = ({ organizationName = "Your Company" }: WraythTeamsAppsP
       icon: Scan,
       description: "URL threat scanner for checking links before clicking",
       color: "#2563eb",
-      embedPath: "/safesuite/scan",
+      embedPath: "/app/scan",
       features: ["Link Scanning", "Threat Detection", "Real-time Analysis"]
     },
     {
@@ -51,7 +51,7 @@ const WraythTeamsApps = ({ organizationName = "Your Company" }: WraythTeamsAppsP
       icon: Key,
       description: "Secure password manager with auto-fill capabilities",
       color: "#059669",
-      embedPath: "/safesuite/pass",
+      embedPath: "/app/pass",
       features: ["Password Vault", "Secure Sharing", "Breach Monitoring"]
     },
     {
@@ -60,7 +60,7 @@ const WraythTeamsApps = ({ organizationName = "Your Company" }: WraythTeamsAppsP
       icon: MessageSquare,
       description: "AI-powered IT support assistant with voice capabilities",
       color: "#7c3aed",
-      embedPath: "/safesuite/assist",
+      embedPath: "/app/assist",
       features: ["AI Chat", "Voice Support", "Ticket Creation"]
     },
     {

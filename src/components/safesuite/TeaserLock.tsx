@@ -122,7 +122,7 @@ export function TeaserLock({
   const requiredTierConfig = SAFESUITE_TIERS[requiredTier];
   const branding = FEATURE_BRANDING[feature] || FEATURE_BRANDING.safepass;
   
-  const billingPath = isWraythDomain() ? '/billing' : '/safesuite/billing';
+  const billingPath = isWraythDomain() ? '/billing' : '/app/billing';
 
   // Feature is accessible - render children normally
   if (access.allowed) {

@@ -115,7 +115,7 @@ function AppRouter() {
 
         {/* Auth */}
         {/* Onboarding gate is enforced at /safesuite/dashboard from the DB. */}
-        <Route path="/auth" element={user ? <Navigate to="/safesuite/dashboard" replace /> : <SuspenseWrapper><WraythAuth /></SuspenseWrapper>} />
+        <Route path="/auth" element={user ? <Navigate to="/app/dashboard" replace /> : <SuspenseWrapper><WraythAuth /></SuspenseWrapper>} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/auth/confirm" element={<AuthConfirm />} />
         <Route path="/auth/forgot-password" element={<SuspenseWrapper variant="form"><ForgotPasswordPage /></SuspenseWrapper>} />
@@ -123,15 +123,15 @@ function AppRouter() {
         <Route path="/auth/mfa-recovery" element={<SuspenseWrapper variant="form"><MFARecoveryPage /></SuspenseWrapper>} />
 
         {/* Wrayth app (keep /safesuite/* paths intact — layout has hardcoded links) */}
-        <Route path="/safesuite" element={<Navigate to="/safesuite/dashboard" replace />} />
-        <Route path="/safesuite/auth" element={<Navigate to="/auth" replace />} />
-        <Route path="/safesuite/auth/forgot-password" element={<Navigate to="/auth/forgot-password" replace />} />
-        <Route path="/safesuite/auth/reset-password" element={<Navigate to="/auth/reset-password" replace />} />
-        <Route path="/safesuite/auth/mfa-recovery" element={<Navigate to="/auth/mfa-recovery" replace />} />
-        <Route path="/safesuite/features" element={<SuspenseWrapper><WraythFeatures /></SuspenseWrapper>} />
-        <Route path="/safesuite/products/safepass" element={<SuspenseWrapper><VaultProduct /></SuspenseWrapper>} />
-        <Route path="/safesuite/products/safeweb" element={<SuspenseWrapper><WatchProduct /></SuspenseWrapper>} />
-        <Route path="/safesuite/products/safescan" element={<SuspenseWrapper><ScanProduct /></SuspenseWrapper>} />
+        <Route path="/app" element={<Navigate to="/app/dashboard" replace />} />
+        <Route path="/app/auth" element={<Navigate to="/auth" replace />} />
+        <Route path="/app/auth/forgot-password" element={<Navigate to="/auth/forgot-password" replace />} />
+        <Route path="/app/auth/reset-password" element={<Navigate to="/auth/reset-password" replace />} />
+        <Route path="/app/auth/mfa-recovery" element={<Navigate to="/auth/mfa-recovery" replace />} />
+        <Route path="/app/features" element={<SuspenseWrapper><WraythFeatures /></SuspenseWrapper>} />
+        <Route path="/app/products/safepass" element={<SuspenseWrapper><VaultProduct /></SuspenseWrapper>} />
+        <Route path="/app/products/safeweb" element={<SuspenseWrapper><WatchProduct /></SuspenseWrapper>} />
+        <Route path="/app/products/safescan" element={<SuspenseWrapper><ScanProduct /></SuspenseWrapper>} />
 
         <Route path="/onboarding/ray" element={
           <ProtectedRoute>
@@ -146,36 +146,36 @@ function AppRouter() {
             <SuspenseWrapper><WraythLayout /></SuspenseWrapper>
           </ProtectedRoute>
         }>
-          <Route path="/safesuite/dashboard" element={<SuspenseWrapper><WraythDashboard /></SuspenseWrapper>} />
-          <Route path="/safesuite/assist" element={<SuspenseWrapper><WraythAssist /></SuspenseWrapper>} />
-          <Route path="/safesuite/ray" element={<SuspenseWrapper><Ray /></SuspenseWrapper>} />
-          <Route path="/safesuite/identity" element={<SuspenseWrapper><Identity /></SuspenseWrapper>} />
-          <Route path="/safesuite/devices" element={<SuspenseWrapper><Devices /></SuspenseWrapper>} />
-          <Route path="/safesuite/reports" element={<SuspenseWrapper><Reports /></SuspenseWrapper>} />
-          <Route path="/safesuite/pass" element={<SuspenseWrapper><WraythPass /></SuspenseWrapper>} />
-          <Route path="/safesuite/pass/shared" element={<SuspenseWrapper><VaultShared /></SuspenseWrapper>} />
-          <Route path="/safesuite/pass/emergency" element={<SuspenseWrapper><VaultEmergency /></SuspenseWrapper>} />
-          <Route path="/safesuite/pass/extension" element={<SuspenseWrapper><VaultExtension /></SuspenseWrapper>} />
-          <Route path="/safesuite/pass/reminders" element={<SuspenseWrapper><VaultReminders /></SuspenseWrapper>} />
-          <Route path="/safesuite/pass/breach" element={<SuspenseWrapper><VaultBreach /></SuspenseWrapper>} />
-          <Route path="/safesuite/pass/settings" element={<SuspenseWrapper variant="form"><VaultSettings /></SuspenseWrapper>} />
-          <Route path="/safesuite/pass/notes" element={<SuspenseWrapper><VaultNotes /></SuspenseWrapper>} />
-          <Route path="/safesuite/pass/cards" element={<SuspenseWrapper><VaultCards /></SuspenseWrapper>} />
-          <Route path="/safesuite/pass/identity" element={<SuspenseWrapper><VaultIdentity /></SuspenseWrapper>} />
-          <Route path="/safesuite/pass/health" element={<SuspenseWrapper><VaultHealth /></SuspenseWrapper>} />
-          <Route path="/safesuite/pass/users" element={<SuspenseWrapper><VaultUsers /></SuspenseWrapper>} />
-          <Route path="/safesuite/scan" element={<SuspenseWrapper><WraythScan /></SuspenseWrapper>} />
-          <Route path="/safesuite/scan/settings" element={<SuspenseWrapper variant="form"><ScanSettings /></SuspenseWrapper>} />
-          <Route path="/safesuite/web" element={<SuspenseWrapper><WraythWeb /></SuspenseWrapper>} />
-          <Route path="/safesuite/web/settings" element={<SuspenseWrapper variant="form"><WatchSettings /></SuspenseWrapper>} />
-          <Route path="/safesuite/billing" element={<SuspenseWrapper><WraythBilling /></SuspenseWrapper>} />
-          <Route path="/safesuite/settings" element={<SuspenseWrapper variant="form"><WraythSettings /></SuspenseWrapper>} />
+          <Route path="/app/dashboard" element={<SuspenseWrapper><WraythDashboard /></SuspenseWrapper>} />
+          <Route path="/app/assist" element={<SuspenseWrapper><WraythAssist /></SuspenseWrapper>} />
+          <Route path="/app/ray" element={<SuspenseWrapper><Ray /></SuspenseWrapper>} />
+          <Route path="/app/identity" element={<SuspenseWrapper><Identity /></SuspenseWrapper>} />
+          <Route path="/app/devices" element={<SuspenseWrapper><Devices /></SuspenseWrapper>} />
+          <Route path="/app/reports" element={<SuspenseWrapper><Reports /></SuspenseWrapper>} />
+          <Route path="/app/pass" element={<SuspenseWrapper><WraythPass /></SuspenseWrapper>} />
+          <Route path="/app/pass/shared" element={<SuspenseWrapper><VaultShared /></SuspenseWrapper>} />
+          <Route path="/app/pass/emergency" element={<SuspenseWrapper><VaultEmergency /></SuspenseWrapper>} />
+          <Route path="/app/pass/extension" element={<SuspenseWrapper><VaultExtension /></SuspenseWrapper>} />
+          <Route path="/app/pass/reminders" element={<SuspenseWrapper><VaultReminders /></SuspenseWrapper>} />
+          <Route path="/app/pass/breach" element={<SuspenseWrapper><VaultBreach /></SuspenseWrapper>} />
+          <Route path="/app/pass/settings" element={<SuspenseWrapper variant="form"><VaultSettings /></SuspenseWrapper>} />
+          <Route path="/app/pass/notes" element={<SuspenseWrapper><VaultNotes /></SuspenseWrapper>} />
+          <Route path="/app/pass/cards" element={<SuspenseWrapper><VaultCards /></SuspenseWrapper>} />
+          <Route path="/app/pass/identity" element={<SuspenseWrapper><VaultIdentity /></SuspenseWrapper>} />
+          <Route path="/app/pass/health" element={<SuspenseWrapper><VaultHealth /></SuspenseWrapper>} />
+          <Route path="/app/pass/users" element={<SuspenseWrapper><VaultUsers /></SuspenseWrapper>} />
+          <Route path="/app/scan" element={<SuspenseWrapper><WraythScan /></SuspenseWrapper>} />
+          <Route path="/app/scan/settings" element={<SuspenseWrapper variant="form"><ScanSettings /></SuspenseWrapper>} />
+          <Route path="/app/web" element={<SuspenseWrapper><WraythWeb /></SuspenseWrapper>} />
+          <Route path="/app/web/settings" element={<SuspenseWrapper variant="form"><WatchSettings /></SuspenseWrapper>} />
+          <Route path="/app/billing" element={<SuspenseWrapper><WraythBilling /></SuspenseWrapper>} />
+          <Route path="/app/settings" element={<SuspenseWrapper variant="form"><WraythSettings /></SuspenseWrapper>} />
         </Route>
 
         {/* Convenience aliases */}
-        <Route path="/dashboard" element={<Navigate to="/safesuite/dashboard" replace />} />
-        <Route path="/billing" element={<Navigate to="/safesuite/billing" replace />} />
-        <Route path="/settings" element={<Navigate to="/safesuite/settings" replace />} />
+        <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />
+        <Route path="/billing" element={<Navigate to="/app/billing" replace />} />
+        <Route path="/settings" element={<Navigate to="/app/settings" replace />} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

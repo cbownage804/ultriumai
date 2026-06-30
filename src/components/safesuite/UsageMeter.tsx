@@ -50,7 +50,7 @@ export function UsageMeter({
   const tierConfig = SAFESUITE_TIERS[tier];
   const featureConfig = tierConfig.features[feature];
   
-  const billingPath = isWraythDomain() ? '/billing' : '/safesuite/billing';
+  const billingPath = isWraythDomain() ? '/billing' : '/app/billing';
 
   // Feature not enabled for this tier
   if (!featureConfig.enabled) {

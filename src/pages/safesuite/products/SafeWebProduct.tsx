@@ -46,13 +46,13 @@ export default function WatchProduct() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-[#0a0a0a]/95 backdrop-blur border-b border-violet-500/10">
         <div className="container mx-auto px-4 h-20 flex items-center justify-between">
-          <Link to="/safesuite" className="flex items-center">
+          <Link to="/app" className="flex items-center">
             <div className="h-14 rounded-xl bg-black flex items-center justify-center overflow-hidden border border-violet-500/20 px-4 shadow-lg shadow-violet-500/10">
               <img src={safewebLogo} alt="Watch" className="h-10 w-auto object-contain" />
             </div>
           </Link>
           <div className="flex items-center gap-4">
-            <Link to="/safesuite">
+            <Link to="/app">
               <Button variant="ghost" className="text-gray-400 hover:text-white">
                 ← Back to Wrayth
               </Button>
@@ -109,7 +109,7 @@ export default function WatchProduct() {
 
               {/* Compare plans link */}
               <Link 
-                to="/safesuite" 
+                to="/app" 
                 className="inline-block mt-4 text-sm text-gray-400 hover:text-white transition-colors"
               >
                 Learn more about Wrayth

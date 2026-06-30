@@ -73,7 +73,7 @@ export const useRoleBasedRedirect = () => {
 
   const getProductDashboard = (product: string): string => {
     switch (product) {
-      case 'safesuite': return '/safesuite/dashboard';
+      case 'safesuite': return '/app/dashboard';
       case 'vanguard': return '/vanguard/app/dashboard';
       case 'ai_studio': return '/ai-studio';
       default: return '/hub';
