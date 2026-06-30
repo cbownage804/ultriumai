@@ -32,7 +32,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { playbookForRecommendation, startPlaybook } from "@/lib/ray/playbooks";
 import { useRayVoice } from "@/hooks/useRayVoice";
 import { useUserSubscription } from "@/hooks/useUserSubscription";
-import { useNavigate } from "react-router-dom";
 import { Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScoreCelebration } from "@/components/ray/ScoreCelebration";
