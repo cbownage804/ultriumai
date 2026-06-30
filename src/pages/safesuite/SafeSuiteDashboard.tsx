@@ -391,13 +391,26 @@ export default function WraythDashboard() {
   const { canUseFeature } = useFeatureAccess();
   const { entries } = useVault();
 
-  // First-run: send users to Ray's onboarding before they land here.
-  if (user && typeof window !== 'undefined' &&
-      localStorage.getItem(`wrayth.ray.onboarded:${user.id}`) !== 'true') {
-    return <Navigate to="/onboarding/ray" replace />;
-  }
+  // First-run gate: read the user's onboarding state from the database.
+  // We avoid localStorage so the gate survives reinstalls and new devices.
+  const [onboardCheck, setOnboardCheck] = useState<'loading' | 'ok' | 'redirect'>('loading');
+  useEffect(() => {
+    let active = true;
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from('ray_profiles')
+        .select('onboarded_at')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (!active) return;
+      setOnboardCheck(data?.onboarded_at ? 'ok' : 'redirect');
+    })();
+    return () => { active = false; };
+  }, [user]);
 
-  
+  if (onboardCheck === 'redirect') return <Navigate to="/onboarding/ray" replace />;
+
   const [stats, setStats] = useState<DashboardStats>({
     passwordCount: 0,
     weakPasswordCount: 0,
