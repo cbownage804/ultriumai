@@ -272,14 +272,19 @@ function WraythLayoutInner() {
   const userInitials = user?.email?.split('@')[0].slice(0, 2).toUpperCase() || 'U';
 
   return (
-    <div className="min-h-screen flex bg-background">
-      <div className="hidden lg:block w-64 flex-shrink-0">
+    <div className="min-h-screen flex bg-background relative">
+      {/* Ambient violet — Ray's signature */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <div className="absolute -top-32 -left-32 h-[480px] w-[480px] rounded-full bg-[hsl(262_70%_55%/0.08)] blur-[120px]" />
+        <div className="absolute top-1/3 -right-40 h-[520px] w-[520px] rounded-full bg-[hsl(252_70%_55%/0.06)] blur-[140px]" />
+      </div>
+      <div className="hidden lg:block w-64 flex-shrink-0 relative z-10">
         <div className="fixed top-0 left-0 h-full w-64 overflow-y-auto">
           <Sidebar />
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col min-h-screen w-full">
+      <div className="flex-1 flex flex-col min-h-screen w-full relative z-10">
         <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 border-b border-border safe-area-inset-top">
           <div className="flex items-center justify-between h-14 sm:h-16 px-3 sm:px-4 lg:px-6">
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
