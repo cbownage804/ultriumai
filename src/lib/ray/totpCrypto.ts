@@ -67,10 +67,10 @@ export function base32Decode(input: string): Uint8Array {
 
 export async function deriveKey(masterPassword: string, salt: Uint8Array): Promise<CryptoKey> {
   const baseKey = await crypto.subtle.importKey(
-    'raw', enc.encode(masterPassword), 'PBKDF2', false, ['deriveKey'],
+    'raw', enc.encode(masterPassword) as BufferSource, 'PBKDF2', false, ['deriveKey'],
   );
   return crypto.subtle.deriveKey(
-    { name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
+    { name: 'PBKDF2', salt: salt as BufferSource, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
     baseKey,
     { name: 'AES-GCM', length: KEY_LENGTH * 8 },
     false,
@@ -88,16 +88,16 @@ export async function encryptString(plaintext: string, masterPassword: string): 
   const salt = randomBytes(16);
   const iv = randomBytes(12);
   const key = await deriveKey(masterPassword, salt);
-  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(plaintext));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv as BufferSource }, key, enc.encode(plaintext) as BufferSource);
   return { ciphertext: bufToB64(ct), iv: bufToB64(iv), salt: bufToB64(salt) };
 }
 
 export async function decryptString(payload: EncryptedPayload, masterPassword: string): Promise<string> {
   const key = await deriveKey(masterPassword, b64ToBuf(payload.salt));
   const pt = await crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv: b64ToBuf(payload.iv) },
+    { name: 'AES-GCM', iv: b64ToBuf(payload.iv) as BufferSource },
     key,
-    b64ToBuf(payload.ciphertext),
+    b64ToBuf(payload.ciphertext) as BufferSource,
   );
   return dec.decode(pt);
 }
@@ -151,7 +151,7 @@ export async function generateTOTP(secretBase32: string, opts: TOTPOptions = {})
   view.setUint32(4, counter >>> 0);
 
   const key = await crypto.subtle.importKey(
-    'raw', keyBytes, { name: 'HMAC', hash: algoToWebCrypto(algorithm) }, false, ['sign'],
+    'raw', keyBytes as BufferSource, { name: 'HMAC', hash: algoToWebCrypto(algorithm) }, false, ['sign'],
   );
   const hmac = new Uint8Array(await crypto.subtle.sign('HMAC', key, counterBuf));
   const offset = hmac[hmac.length - 1] & 0x0f;
