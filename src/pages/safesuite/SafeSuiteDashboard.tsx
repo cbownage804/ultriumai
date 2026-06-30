@@ -359,28 +359,28 @@ const productCardsConfig = [
     id: 'safepass',
     feature: 'safepass' as keyof TierFeatures,
     productLogo: safeSuiteProducts.safepass.logo,
-    title: 'Vault',
-    description: 'Password Manager',
+    title: 'Passwords',
+    description: 'Ray keeps every credential strong and unique.',
     path: '/safesuite/pass',
-    statLabel: 'Passwords'
+    statLabel: 'Stored'
   },
   {
     id: 'safescan',
     feature: 'safescan' as keyof TierFeatures,
     productLogo: safeSuiteProducts.safescan.logo,
-    title: 'Scan',
-    description: 'Security Scanner',
+    title: 'Threats',
+    description: 'Ray analyzes anything suspicious you send over.',
     path: '/safesuite/scan',
-    statLabel: 'Scans this month'
+    statLabel: 'Analyzed this month'
   },
   {
     id: 'safeweb',
     feature: 'safeweb' as keyof TierFeatures,
     productLogo: safeSuiteProducts.safeweb.logo,
-    title: 'Watch',
-    description: 'Dark Web Monitoring',
+    title: 'Exposure',
+    description: 'Ray watches the dark web for your identity.',
     path: '/safesuite/web',
-    statLabel: 'Assets monitored'
+    statLabel: 'Identities watched'
   },
 ];
 
