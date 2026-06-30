@@ -10,6 +10,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
+export type RayBriefFeedback = "helpful" | "not_helpful" | "wrong";
+
 export type RayBriefRow = {
   id: string;
   user_id: string;
@@ -34,7 +36,18 @@ export type RayBriefRow = {
   generation_ms: number | null;
   generated_at: string;
   created_at: string;
+  feedback: RayBriefFeedback | string | null;
+  feedback_note: string | null;
+  feedback_at: string | null;
 };
+
+export async function submitBriefFeedback(briefId: string, feedback: RayBriefFeedback, note?: string) {
+  const { error } = await supabase
+    .from("ray_briefs" as never)
+    .update({ feedback, feedback_note: note ?? null, feedback_at: new Date().toISOString() } as never)
+    .eq("id", briefId);
+  if (error) console.warn("[morningBrief] feedback failed", error);
+}
 
 function localDate(tz: string): string {
   try {
