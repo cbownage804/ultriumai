@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
+import { RayBriefingHero } from '@/components/ray/RayBriefingHero';
 
 interface DashboardStats {
   passwordCount: number;
@@ -550,61 +551,18 @@ export default function WraythDashboard() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] -m-4 lg:-m-6 p-4 lg:p-6 space-y-4 sm:space-y-6">
-      {/* Ray's continuity briefing */}
-      <motion.section
-        initial={{ opacity: 0, y: -12 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="wrayth-chamfer border border-[#3A3A3A] bg-[#181818] p-5 sm:p-8"
-      >
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 space-y-4">
-            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              Ray
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-light tracking-tight text-[#F3F3F3]">
-              Welcome back{firstName ? `, ${firstName}` : ''}.
-            </h1>
-            <p className="text-sm text-muted-foreground">Since we last talked…</p>
-            <ul className="space-y-2 text-sm text-[#F3F3F3] pt-1">
-              {sinceLines.map((line, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <span className={cn(
-                    'mt-0.5 select-none',
-                    line.tone === 'good' ? 'text-emerald-400' : 'text-amber-400'
-                  )}>
-                    {line.tone === 'good' ? '✓' : '!'}
-                  </span>
-                  <span>{line.text}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="text-sm text-muted-foreground pt-3">
-              What would you like to work on today?{' '}
-              <span className="text-foreground/60">
-                Press <kbd className="px-1.5 py-0.5 text-[10px] font-mono border border-border rounded bg-background/40">⌘K</kbd> to ask me anything.
-              </span>
-            </p>
-          </div>
-          <div className="hidden sm:flex flex-col items-end shrink-0">
-            <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Security score</div>
-            <div className="text-4xl font-semibold text-[#F3F3F3] tabular-nums">{score}<span className="text-lg text-muted-foreground">%</span></div>
-            {totalIssues > 0 && (
-              <div className="text-[11px] text-primary mt-1">{totalIssues} item{totalIssues === 1 ? '' : 's'} to address</div>
-            )}
-          </div>
+      {/* Ray's morning briefing (LLM-generated, cached 6h) */}
+      <RayBriefingHero firstName={firstName} />
+      {!isSubscribed && (
+        <div className="wrayth-chamfer border border-[#3A3A3A] bg-[#181818] px-5 py-3 flex flex-wrap items-center justify-between gap-3">
+          <span className="text-xs text-muted-foreground">Unlock more of Ray&rsquo;s capabilities.</span>
+          <Link to="/app/billing">
+            <Button variant="outline" className="wrayth-chamfer-sm border-primary/40 text-primary hover:bg-primary/10">
+              Upgrade
+            </Button>
+          </Link>
         </div>
-        {!isSubscribed && (
-          <div className="mt-5 pt-5 border-t border-[#3A3A3A] flex flex-wrap items-center justify-between gap-3">
-            <span className="text-xs text-muted-foreground">Unlock more capabilities and more questions per day.</span>
-            <Link to="/app/billing">
-              <Button variant="outline" className="wrayth-chamfer-sm border-primary/40 text-primary hover:bg-primary/10">
-                Upgrade
-              </Button>
-            </Link>
-          </div>
-        )}
-      </motion.section>
+      )}
 
 
       {/* Subscription Status Banner */}
