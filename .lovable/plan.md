@@ -1,74 +1,78 @@
-## Wrayth 3.5 — Ray Everywhere (Browser Extension)
+# Wrayth 4.0 — Ray Can Do the Work
 
-Rewrite `public/safepass-extension/` so the extension feels like Ray accompanying the user across the web, not another password toolbar. Ship in waves so each milestone is usable on its own.
+This is a multi-release roadmap. I'll ship in phases so credits go to the highest-leverage pieces first. Approve and I'll start with **Phase 1 (Wrayth 4.0 core)**.
 
-### Wave 1 — Foundation & manifest (this session)
+## Strategic shift
+Ray stops being a reporter. He becomes a **co-pilot** who recognizes where you are, walks you through fixes, and tracks completion across providers. Every new capability must reinforce: *Ray is the reason you choose Wrayth.*
 
-- Bump `manifest.json` to v3.0.0, rename to "Wrayth — Ray for your browser", add `sidePanel`, `webRequest`, `cookies`, `scripting`, `tabs` permissions.
-- Register Chrome **Side Panel** (`side_panel.default_path = sidepanel.html`).
-- New file layout:
-  ```
-  public/safepass-extension/
-    manifest.json
-    background.js              (service worker — page analysis bus)
-    sidepanel.html / .js / .css   (Ray side panel UI)
-    popup.html / .js / .css       (mini-dashboard)
-    content/
-      detector.js              (login/MFA/passkey/payment detection)
-      context-bar.js           (calm chip UI)
-      field-menu.js            (inline field menu)
-    lib/
-      domain-intel.js          (typosquat, cert, age heuristics)
-      page-context.js          (classify page type)
-      ray-client.js            (talks to Wrayth edge fns)
-      timeline.js              (writes to ray_timeline)
-      vault-store.js           (encrypted local cache)
-    styles/ray-tokens.css      (matte black / violet accents)
-  ```
+---
 
-### Wave 2 — Intelligent detection & Context Bar
+## Phase 1 — Wrayth 4.0: Secure With Ray (ship now)
 
-- `detector.js`: classify page as one of `login | signup | reset | mfa | oauth | passkey | payment | security-settings | none`. Detect MFA fields (`autocomplete="one-time-code"`, OTP input groups), passkey availability (`navigator.credentials` + WebAuthn meta), OAuth providers from button text/URLs.
-- `context-bar.js`: small bottom-right chip with 4 states 🟢🟡🔴⚪ + "Ask Ray" — click opens side panel. Never auto-popup; respects per-site dismiss.
-- `field-menu.js`: inline menu on focused username/password fields (Fill from Vault / Generate / Save / Ask Ray).
+Provider-aware guided playbooks that recognize the page you're on and walk you through it step-by-step, with live progress and rewards.
 
-### Wave 3 — Ray Side Panel
+**Build:**
+1. **Provider catalog** — `src/lib/ray/providers/catalog.ts`: Google, Microsoft, GitHub, Apple, Amazon, Facebook, Dropbox. Each maps domain patterns → provider id, branding, and a playbook slug.
+2. **Provider playbooks** — Add 7 new templates to `src/lib/ray/playbooks/templates.ts` (`secure-google`, `secure-microsoft`, `secure-github`, etc.). Each is step-by-step ("Open Security", "Click Two-Step Verification", "Scan QR", "Save backup codes", "Verify login") with a `targetUrl` per step.
+3. **Guided runner UI** — New `GuidedPlaybookRunner.tsx` (extends existing `PlaybookRunner`): big checklist, % complete bar, "Mission Complete +N" celebration that writes timeline + score + memory (engine already supports this).
+4. **Extension recognition** — `public/safepass-extension/content/detector.js` adds provider detection from hostname. When matched, the Context Bar shows a **"Secure this account with Ray"** chip that deep-links to `/app/ray/secure/{provider}` and opens the playbook.
+5. **Account Health scores** — New table `ray_account_health` (provider, user_id, score, last_checked, signals). Surface on dashboard as horizontal bars (Google 91%, Microsoft 63%, …). Completing a provider playbook bumps that provider's score.
+6. **Dashboard surface** — Add "Secure Your Accounts" panel to `MorningBriefHero.tsx` listing detected accounts (from vault + extension signals) with per-provider Secure buttons.
 
-- `sidepanel.html`: header (current site + reputation dot), tabs (Overview · Vault · Activity · Chat).
-- Overview shows: domain age, cert issuer/validity, HTTPS, breach count, saved credential count, page-type label, "Recommended next step".
-- Chat tab streams to the existing Ray edge function with page-context system prompt ("User is on github.com, login form detected, has 1 saved credential, supports passkeys").
-- Reuses Wrayth tokens (matte black, electric violet accent only when Ray is thinking).
+**DB:** one migration — `ray_account_health` table with GRANTs + RLS + `provider`/`user_id` unique.
 
-### Wave 4 — Domain & password intelligence
+**Deliverable:** A user on accounts.google.com sees Ray's chip → clicks Secure → runs a 5-step guided playbook → score jumps, timeline updates, account turns green.
 
-- `domain-intel.js`: lightweight heuristics in the SW + new edge function `ray-domain-intel` (Supabase) that returns `{ reputation, ageDays, certIssuer, typosquatOf, breachCount, malicious }`. Uses HIBP for breach, certificate transparency (`crt.sh`) + WHOIS via existing safeweb infra when available; falls back to local heuristic.
-- On password fields: strength meter, reuse check against local vault cache, breach lookup, crack-time estimate. All in `field-menu.js`.
-- Passkey coach: if WebAuthn supported and the site is in a curated allowlist (`lib/passkey-sites.json`), show "This site supports passkeys" with one-click playbook deep link `wrayth.app/app/playbooks/passkey-upgrade?site=...`.
+---
 
-### Wave 5 — Popup as mini-dashboard
+## Phase 2 — Wrayth 4.1: AI Security Review
 
-- Replace current 758-line popup with: greeting, current site card, quick actions (Save · Scan page · Check domain · Generate · Ask Ray), latest notice, latest recommendation, security score, recent activity (last 5 timeline rows). Reuse side-panel components.
+"Review this page" button (extension + web). Ray analyzes login forms, permissions, branding-vs-domain mismatch, suspicious wording, and **explains why**, not just red/green.
 
-### Wave 6 — Cloud sync & timeline feed
+- New edge function `ray-page-review` (Gemini 3 Flash) — takes URL, page text, screenshot signals from detector.
+- Extension side-panel "Review this page" action.
+- **AI Explains** tooltip system: hover any security term → one-sentence plain-English explanation via cached Gemini calls (`ray-explain` function with KV cache).
 
-- New edge function `ray-extension-sync` (verified JWT) for: pull vault entries, pull notices/score, push timeline events (`signed_in`, `password_saved`, `mfa_enabled`, `warning_shown`, `warning_dismissed`, `warning_accepted`). Writes to `ray_timeline` so Morning Brief can summarize.
-- Auth: sign-in flow opens `wrayth.app/auth?source=extension`, returns a refresh token via `chrome.identity.launchWebAuthFlow`. Tokens stored in `chrome.storage.session`.
+---
 
-### Technical Details
+## Phase 3 — Wrayth 4.2: Behavior Intelligence
 
-- **Manifest V3** with module service worker. Sidepanel requires Chrome 114+ — bump `minimum_chrome_version`.
-- **CSP** unchanged (`script-src 'self'`), all UI uses vanilla JS modules to avoid bundler.
-- **Edge functions added**: `ray-domain-intel`, `ray-extension-sync`. Both `verify_jwt = true`.
-- **DB**: reuse `ray_timeline`, `ray_notices`, `ray_security_scores`, `safepass_entries`. No new tables this wave.
-- **Packaging**: existing `re-zip on download` flow at `/app/safepass/extension` keeps working — bump version string to 3.0.0 so Chrome auto-updates installed unpacked dev builds when reloaded.
-- **No intrusive notifications**: remove `notifications` permission usage; warnings surface via Context Bar + side panel only.
+Ray learns your routine sites and flags anomalies (BoA at 3 AM when you only visit dev tools weekday mornings).
 
-### What ships this session
+- `ray_browsing_patterns` table — daily aggregated visit fingerprints (no URLs stored raw; hashed host + hour bucket).
+- Anomaly scorer in extension background — flags new-host + off-hour + sensitive-category.
+- Inline Ray notice: *"This is unusual for you. Want me to verify it's safe?"* → triggers Phase 2 page review.
 
-Waves 1–3 end-to-end (manifest, detection, context bar, side panel skeleton with live page context + Ray chat). Waves 4–6 follow in subsequent sessions because they need new edge functions and auth flow polish.
+---
 
-### Out of scope (this pass)
+## Phase 4 — Wrayth 4.3: MSP Console
 
-- Firefox / Safari builds.
-- Background WebAuthn ceremony (only coaching link for now).
-- M365 / Google Workspace deep links (already separate playbooks).
+Multi-tenant dashboard for Ultrium to deploy Wrayth to clients.
+
+- Reuse existing `msp_clients`. New view `/msp/ray` listing clients with aggregate Ray score, critical issues count, "Launch Ray for this client" button.
+- Per-client missions and delegated playbooks; MSP admins can assign and monitor.
+
+---
+
+## Phase 5 — Wrayth 5.0: Autonomous Security
+
+User-approved automations: scheduled reviews, routine maintenance, continuous monitoring with human-in-the-loop for high-impact actions. Builds on existing `ray_playbook_schedules` + `needsApproval` tool pattern.
+
+---
+
+## Companion threads (woven into phases)
+
+- **Password Evolution** (4.0): When Ray flags a weak vault password, the recommendation becomes a 3-step inline flow — Generate → Store in Vault → Update on site (deep-link). Extends existing `password-cleanup` playbook.
+- **Weekly Wins** (4.1): Friday digest edge function `ray-weekly-wins` aggregates timeline events into a "This Week" card on dashboard + optional email.
+- **Homepage shift** (after 4.0 ships): Update `/` hero to *"Ray doesn't just find security problems. He helps you solve them."* with a Secure-With-Ray demo loop.
+
+---
+
+## Technical notes
+- All new playbooks plug into the existing engine (`src/lib/ray/playbooks/engine.ts`) — no runtime rewrite.
+- Account health and provider catalog are additive; nothing existing changes shape.
+- Phase 1 is ~1 migration + ~8 files + extension detector update. Phases 2–5 each get their own approval gate so we don't burn credits speculatively.
+
+---
+
+**Approve to start Phase 1 (Wrayth 4.0).** I'll ship it end-to-end, then check in before moving to 4.1.

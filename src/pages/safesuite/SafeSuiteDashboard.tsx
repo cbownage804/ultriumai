@@ -40,6 +40,7 @@ import {
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { MorningBriefHero } from '@/components/ray/MorningBriefHero';
+import { AccountHealthPanel } from '@/components/ray/AccountHealthPanel';
 import { useRayLiveSignals } from '@/hooks/useRayLiveSignals';
 import { RayNoticesPanel } from '@/components/ray/RayNoticesPanel';
 import { RayTimeline } from '@/components/ray/RayTimeline';
@@ -561,6 +562,7 @@ export default function WraythDashboard() {
         <MorningBriefHero firstName={firstName} />
       </div>
       <RayNoticesPanel variant="hero" />
+      <AccountHealthPanel />
       {/* Upgrade prompts stay contextual (password/seat limits) — Home is focused on security. */}
 
 

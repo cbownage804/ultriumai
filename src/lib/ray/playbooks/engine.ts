@@ -293,6 +293,36 @@ async function handleCompletion(run: PlaybookRun) {
     0.95,
   );
 
+  // Wrayth 4.0 — bump per-provider Account Health when a "secure-*" playbook completes.
+  if (run.slug.startsWith('secure-')) {
+    const providerId = run.slug.replace(/^secure-/, '').split('-')[0];
+    try {
+      const { data: existing } = await supabase
+        .from('ray_account_health')
+        .select('score')
+        .eq('user_id', run.user_id)
+        .eq('provider', providerId)
+        .maybeSingle();
+      const prevScore = (existing as { score?: number } | null)?.score ?? 50;
+      const bumped = Math.min(100, prevScore + Math.max(8, Math.round(run.reward_score * 1.2)));
+      await supabase
+        .from('ray_account_health')
+        .upsert(
+          {
+            user_id: run.user_id,
+            provider: providerId,
+            score: bumped,
+            last_playbook_slug: run.slug,
+            last_completed_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id,provider' },
+        );
+    } catch (err) {
+      console.warn('[ray.playbooks] account-health bump failed', err);
+    }
+  }
+
+
   // If this run resolved a recommendation, complete it.
   if (run.source_recommendation_id) {
     void supabase

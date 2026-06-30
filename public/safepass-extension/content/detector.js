@@ -45,6 +45,25 @@
     return null;
   }
 
+  // Wrayth 4.0 — provider recognition for "Secure this account with Ray"
+  const SECURE_PROVIDERS = [
+    { id: 'google',    domains: ['google.com', 'gmail.com'] },
+    { id: 'microsoft', domains: ['microsoft.com', 'live.com', 'outlook.com', 'office.com', 'microsoftonline.com'] },
+    { id: 'github',    domains: ['github.com'] },
+    { id: 'apple',     domains: ['apple.com', 'icloud.com'] },
+    { id: 'amazon',    domains: ['amazon.com'] },
+    { id: 'facebook',  domains: ['facebook.com', 'fb.com', 'instagram.com'] },
+    { id: 'dropbox',   domains: ['dropbox.com'] },
+  ];
+  function detectSecureProvider() {
+    const h = location.hostname.toLowerCase();
+    for (const p of SECURE_PROVIDERS) {
+      if (p.domains.some((d) => h === d || h.endsWith('.' + d))) return p.id;
+    }
+    return null;
+  }
+
+
   function classify() {
     const path = pathHints();
     const hasPassword = hasFieldType(['password']);
@@ -79,6 +98,7 @@
         isPayment, isSecurity,
         isHTTPS: location.protocol === 'https:',
         brandMimic,
+        secureProvider: detectSecureProvider(),
       },
       detectedAt: Date.now(),
     };
