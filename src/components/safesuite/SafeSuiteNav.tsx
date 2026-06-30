@@ -21,7 +21,7 @@ export default function WraythNav() {
         <div className="flex items-center gap-2">
           {user ? (
             <>
-              <Button variant="ghost" size="sm" onClick={() => navigate('/safesuite/dashboard')}>Dashboard</Button>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/safesuite/dashboard')}>Home</Button>
               <Button variant="outline" size="sm" onClick={async () => { await signOut(); navigate('/'); }}>Sign Out</Button>
             </>
           ) : (
