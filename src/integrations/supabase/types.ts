@@ -17528,6 +17528,60 @@ export type Database = {
         }
         Relationships: []
       }
+      ray_integrations: {
+        Row: {
+          access_token: string | null
+          account_email: string | null
+          created_at: string
+          id: string
+          last_error: string | null
+          last_sync_at: string | null
+          metadata: Json
+          provider: string
+          provider_tenant_id: string | null
+          refresh_token: string | null
+          scopes: string[] | null
+          status: string
+          token_expires_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          account_email?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          last_sync_at?: string | null
+          metadata?: Json
+          provider: string
+          provider_tenant_id?: string | null
+          refresh_token?: string | null
+          scopes?: string[] | null
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          account_email?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          last_sync_at?: string | null
+          metadata?: Json
+          provider?: string
+          provider_tenant_id?: string | null
+          refresh_token?: string | null
+          scopes?: string[] | null
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ray_memory: {
         Row: {
           confidence: number

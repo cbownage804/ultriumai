@@ -292,6 +292,12 @@ export const PLAYBOOK_TEMPLATES: PlaybookTemplate[] = [
     estimated_minutes: 12,
     reward_score: 18,
     steps: [
+      {
+        task: 'confirm_done',
+        rayPrompt: "First, connect your Microsoft 365 tenant so I can read your real posture instead of guessing.",
+        externalUrl: '/app/integrations',
+        externalLabel: 'Connect Microsoft 365',
+      },
       { task: 'enable_mfa', externalUrl: 'https://admin.microsoft.com', externalLabel: 'Open Microsoft 365 admin' },
       { task: 'configure_conditional_access', externalUrl: 'https://entra.microsoft.com/#view/Microsoft_AAD_ConditionalAccess', externalLabel: 'Open Conditional Access' },
       { task: 'disable_legacy_auth' },
