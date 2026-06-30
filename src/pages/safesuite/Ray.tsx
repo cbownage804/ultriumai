@@ -14,6 +14,7 @@ import { RayPageHeader } from '@/components/ray/RayPageHeader';
 import { AskRay } from '@/components/ray/AskRay';
 import { RayNoticesPanel } from '@/components/ray/RayNoticesPanel';
 import { FixWithRayButton } from '@/components/ray/FixWithRayButton';
+import { PlaybookLibrary } from '@/components/ray/PlaybookLibrary';
 import {
   listRuns,
   resumeRun,
@@ -350,6 +351,8 @@ export default function Ray() {
           )}
         </section>
       </div>
+      <PlaybookLibrary />
+
 
       <section>
         <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-2">

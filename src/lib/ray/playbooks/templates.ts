@@ -162,6 +162,95 @@ export const PLAYBOOK_TEMPLATES: PlaybookTemplate[] = [
     completion:
       "Only the devices you trust can reach your accounts.",
   },
+  {
+    slug: 'breach-response-full',
+    title: 'Full breach response',
+    description: "A serious exposure needs more than a new password. Let's run the full response.",
+    category: 'credential',
+    estimated_minutes: 10,
+    reward_score: 14,
+    steps: [
+      { task: 'review_breach' },
+      { task: 'rotate_password_immediately' },
+      { task: 'generate_password' },
+      { task: 'update_password' },
+      { task: 'change_security_questions' },
+      { task: 'revoke_unknown_sessions' },
+      { task: 'enable_mfa' },
+      { task: 'enable_breach_alerts' },
+      { task: 'notify_affected_contacts' },
+      { task: 'confirm_breach_resolved' },
+    ],
+    completion:
+      "Containment, rotation, and monitoring are all in place. The exposure is closed.",
+  },
+  {
+    slug: 'mfa-enroll-everywhere',
+    title: 'Enroll strong MFA everywhere',
+    description: 'Move every important account onto authenticator apps or security keys.',
+    category: 'mfa',
+    estimated_minutes: 8,
+    reward_score: 12,
+    steps: [
+      { task: 'enroll_authenticator_app' },
+      { task: 'enroll_security_key' },
+      { task: 'store_recovery_codes' },
+      { task: 'remove_sms_2fa' },
+      { task: 'confirm_done' },
+    ],
+    completion:
+      "Strong MFA is live. SMS is out of the picture — that's a big jump in resilience.",
+  },
+  {
+    slug: 'exposure-cleanup',
+    title: 'Clean up your exposure',
+    description: "Reduce what's findable about you online, then keep watch.",
+    category: 'exposure',
+    estimated_minutes: 12,
+    reward_score: 10,
+    steps: [
+      { task: 'scan_identity' },
+      { task: 'review_exposure' },
+      { task: 'request_data_removal' },
+      { task: 'add_watched_email' },
+      { task: 'enable_breach_alerts' },
+      { task: 'confirm_done' },
+    ],
+    completion:
+      "Your footprint is smaller and I'm watching what's left. Expect a quieter inbox.",
+  },
+  {
+    slug: 'oauth-app-audit',
+    title: 'Audit connected apps',
+    description: 'Remove apps with access to your account that you no longer trust or use.',
+    category: 'account',
+    estimated_minutes: 4,
+    reward_score: 6,
+    steps: [
+      { task: 'audit_oauth_apps', externalUrl: 'https://myaccount.google.com/permissions', externalLabel: 'Open Google connected apps' },
+      { task: 'disconnect_unused_apps' },
+      { task: 'confirm_done' },
+    ],
+    completion:
+      "Connected-app sprawl trimmed. Fewer ways in if any of those apps gets breached.",
+  },
+  {
+    slug: 'freeze-credit',
+    title: 'Freeze your credit',
+    description: 'Block new accounts from being opened in your name at all three bureaus.',
+    category: 'identity',
+    estimated_minutes: 10,
+    reward_score: 10,
+    steps: [
+      { task: 'freeze_credit_bureau', externalUrl: 'https://www.equifax.com/personal/credit-report-services/credit-freeze/', externalLabel: 'Equifax freeze' },
+      { task: 'freeze_credit_bureau', externalUrl: 'https://www.experian.com/freeze/center.html', externalLabel: 'Experian freeze' },
+      { task: 'freeze_credit_bureau', externalUrl: 'https://www.transunion.com/credit-freeze', externalLabel: 'TransUnion freeze' },
+      { task: 'set_fraud_alert' },
+      { task: 'confirm_done' },
+    ],
+    completion:
+      "All three bureaus frozen. New credit can't be opened without you unfreezing first.",
+  },
 ];
 
 export function findTemplate(slug: string): PlaybookTemplate | undefined {

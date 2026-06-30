@@ -10,18 +10,30 @@ export type RayTaskId =
   | 'generate_password'
   | 'update_password'
   | 'enable_mfa'
+  | 'enroll_authenticator_app'
+  | 'enroll_security_key'
+  | 'remove_sms_2fa'
   | 'store_recovery_codes'
   | 'verify_recovery_email'
   | 'review_admin_permissions'
   | 'add_passkey'
   | 'review_breach'
+  | 'rotate_password_immediately'
+  | 'change_security_questions'
+  | 'notify_affected_contacts'
+  | 'enable_breach_alerts'
   | 'confirm_breach_resolved'
   | 'verify_device'
   | 'revoke_unknown_sessions'
+  | 'audit_oauth_apps'
+  | 'disconnect_unused_apps'
   | 'import_passwords'
   | 'scan_identity'
   | 'review_exposure'
   | 'add_watched_email'
+  | 'request_data_removal'
+  | 'freeze_credit_bureau'
+  | 'set_fraud_alert'
   | 'confirm_done';
 
 export type RayTask = {
@@ -142,5 +154,77 @@ export const RAY_TASKS: Record<RayTaskId, RayTask> = {
     label: "Confirm we're done",
     rayPrompt:
       "We've covered everything. Click Continue and I'll lock in your progress.",
+  },
+  enroll_authenticator_app: {
+    id: 'enroll_authenticator_app',
+    label: 'Enroll an authenticator app',
+    rayPrompt:
+      "Use an authenticator app — far safer than SMS. Scan the QR with your app and enter the first code to confirm.",
+  },
+  enroll_security_key: {
+    id: 'enroll_security_key',
+    label: 'Register a hardware security key',
+    rayPrompt:
+      "If you have a YubiKey or similar, register it now. It's the strongest second factor available.",
+  },
+  remove_sms_2fa: {
+    id: 'remove_sms_2fa',
+    label: 'Remove SMS as a second factor',
+    rayPrompt:
+      "Once your authenticator or key is working, remove SMS. SIM-swap attacks make it the weakest option.",
+  },
+  rotate_password_immediately: {
+    id: 'rotate_password_immediately',
+    label: 'Rotate the exposed password right now',
+    rayPrompt:
+      "This password is in the wild. Open the provider and change it before anything else — I'll generate one in a moment.",
+  },
+  change_security_questions: {
+    id: 'change_security_questions',
+    label: 'Reset your security questions',
+    rayPrompt:
+      "Security questions often leak with breaches. Replace the answers with random strings I'll store in your Vault.",
+  },
+  notify_affected_contacts: {
+    id: 'notify_affected_contacts',
+    label: 'Warn anyone who could be impacted',
+    rayPrompt:
+      "If contacts could be targeted using your exposed data, send them a quick heads-up. I'll suggest the wording.",
+  },
+  enable_breach_alerts: {
+    id: 'enable_breach_alerts',
+    label: 'Enable ongoing breach alerts',
+    rayPrompt:
+      "I'll keep watching this email or username and ping you the moment anything new surfaces.",
+  },
+  audit_oauth_apps: {
+    id: 'audit_oauth_apps',
+    label: 'Audit connected apps',
+    rayPrompt:
+      "Open the account's connected apps page. We're looking for anything you don't recognise or no longer use.",
+  },
+  disconnect_unused_apps: {
+    id: 'disconnect_unused_apps',
+    label: 'Disconnect what you no longer need',
+    rayPrompt:
+      "Remove access for anything stale. Less surface area, fewer ways in.",
+  },
+  request_data_removal: {
+    id: 'request_data_removal',
+    label: 'Request removal from data brokers',
+    rayPrompt:
+      "I'll point you at the opt-out pages for the brokers exposing you. A few minutes here saves a lot of spam and risk.",
+  },
+  freeze_credit_bureau: {
+    id: 'freeze_credit_bureau',
+    label: 'Freeze your credit at the bureaus',
+    rayPrompt:
+      "A credit freeze blocks new accounts being opened in your name. Free, reversible, and the single biggest financial protection.",
+  },
+  set_fraud_alert: {
+    id: 'set_fraud_alert',
+    label: 'Place a fraud alert',
+    rayPrompt:
+      "A fraud alert tells creditors to verify your identity before opening anything new. Quick to set up at any bureau.",
   },
 };
