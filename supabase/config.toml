@@ -181,6 +181,12 @@ verify_jwt = true
 [functions.safeassist-ai]
 verify_jwt = true
 
+# Wrayth browser extension — domain trust engine (public; no PII)
+[functions.wrayth-domain-intel]
+verify_jwt = false
+
+
+
 # Social Media AI Generator
 [functions.generate-social-post]
 verify_jwt = false
