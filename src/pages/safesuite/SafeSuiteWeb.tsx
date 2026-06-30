@@ -390,101 +390,96 @@ export default function WraythWeb() {
 
 
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="bg-[#141414] border-violet-500/10">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-violet-500/20 rounded-lg">
-                  <Eye className="h-5 w-5 text-violet-500" />
-                </div>
+        {/* Unified stats — matches Passwords page rhythm */}
+        {(() => {
+          const totalThreats = assets.reduce((acc, a) => acc + (a.threats_found || 0), 0);
+          const cleanCount = assets.filter((a) => a.last_scan_at && a.threats_found === 0).length;
+          return (
+            <section className="rounded-2xl border border-border bg-card/40 p-5 sm:p-6">
+              <div className="grid grid-cols-3 gap-6">
                 <div>
-                  <p className="text-2xl font-bold text-white">{assets.length}</p>
-                  <p className="text-sm text-gray-400">Monitored Assets</p>
+                  <div className="text-3xl sm:text-4xl font-extralight tabular-nums leading-none text-foreground">
+                    {assets.length}
+                  </div>
+                  <div className="mt-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+                    Watched
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="text-left"
+                  onClick={async () => {
+                    const withThreats = assets.filter((a) => a.threats_found > 0);
+                    for (const asset of withThreats) {
+                      if (!expandedAssets.has(asset.id)) {
+                        await loadThreatsForAsset(asset.id);
+                        setExpandedAssets((prev) => new Set(prev).add(asset.id));
+                      }
+                    }
+                  }}
+                >
+                  <div
+                    className={`text-3xl sm:text-4xl font-extralight tabular-nums leading-none ${
+                      totalThreats > 0 ? 'text-amber-300' : 'text-foreground'
+                    }`}
+                  >
+                    {totalThreats}
+                  </div>
+                  <div className="mt-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+                    Exposures found
+                  </div>
+                </button>
+                <div>
+                  <div className="text-3xl sm:text-4xl font-extralight tabular-nums leading-none text-emerald-300">
+                    {cleanCount}
+                  </div>
+                  <div className="mt-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+                    Clean
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-          <Card 
-            className="bg-[#141414] border-violet-500/10 cursor-pointer hover:border-red-500/30 transition-colors"
-            onClick={async () => {
-              // Expand all assets with threats
-              const assetsWithThreats = assets.filter(a => a.threats_found > 0);
-              for (const asset of assetsWithThreats) {
-                if (!expandedAssets.has(asset.id)) {
-                  await loadThreatsForAsset(asset.id);
-                  setExpandedAssets(prev => new Set(prev).add(asset.id));
-                }
-              }
-            }}
-          >
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-500/20 rounded-lg">
-                  <AlertTriangle className="h-5 w-5 text-red-500" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-red-500">
-                    {assets.reduce((acc, a) => acc + (a.threats_found || 0), 0)}
-                  </p>
-                  <p className="text-sm text-gray-400">Threats Found</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-[#141414] border-violet-500/10">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-500/20 rounded-lg">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-green-500">
-                    {assets.filter(a => a.last_scan_at && a.threats_found === 0).length}
-                  </p>
-                  <p className="text-sm text-gray-400">Clean Assets</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            </section>
+          );
+        })()}
 
         {/* Add new asset */}
-        <Card className="bg-[#141414] border-violet-500/10">
-          <CardHeader>
-            <CardTitle className="text-lg text-white">Add Asset to Monitor</CardTitle>
-            <CardDescription className="text-gray-400">
-              Add emails, domains, or other identifiers to monitor on the dark web
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-2">
-              <select
-                value={assetType}
-                onChange={(e) => setAssetType(e.target.value as any)}
-                className="px-3 py-2 border border-violet-500/20 rounded-md bg-[#1a1a1a] text-white"
-              >
-                <option value="email">Email</option>
-                <option value="domain">Domain</option>
-                <option value="brand">Brand</option>
-              </select>
-              <Input
-                placeholder={
-                  assetType === 'email' ? 'Enter email address...' :
-                  assetType === 'domain' ? 'Enter domain...' :
-                  'Enter brand name...'
-                }
-                value={newAsset}
-                onChange={(e) => setNewAsset(e.target.value)}
-                className="flex-1 bg-[#1a1a1a] border-violet-500/20 text-white"
-              />
-              <Button onClick={addAsset} disabled={!newAsset.trim()} className="bg-violet-500 hover:bg-violet-600 text-white">
-                <Plus className="h-4 w-4 mr-2" />
-                Add
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <section className="rounded-2xl border border-border bg-card/40 p-5 sm:p-6">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">Add an identity to monitor</div>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Ray will scan the dark web and breach feeds for any mention of it.
+          </p>
+          <div className="mt-4 flex flex-col sm:flex-row gap-2">
+            <select
+              value={assetType}
+              onChange={(e) => setAssetType(e.target.value as any)}
+              className="px-3 py-2 rounded-md border border-border bg-background text-foreground text-sm"
+            >
+              <option value="email">Email</option>
+              <option value="domain">Domain</option>
+              <option value="brand">Brand</option>
+            </select>
+            <Input
+              placeholder={
+                assetType === 'email'
+                  ? 'Enter email address...'
+                  : assetType === 'domain'
+                  ? 'Enter domain...'
+                  : 'Enter brand name...'
+              }
+              value={newAsset}
+              onChange={(e) => setNewAsset(e.target.value)}
+              className="flex-1 bg-background border-border text-foreground"
+            />
+            <Button
+              onClick={addAsset}
+              disabled={!newAsset.trim()}
+              className="bg-violet-500 hover:bg-violet-400 text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add
+            </Button>
+          </div>
+        </section>
 
         {/* Assets list */}
         <div className="space-y-2">
