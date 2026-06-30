@@ -58,6 +58,9 @@ const Ray = lazy(() => import('@/pages/safesuite/Ray'));
 const Identity = lazy(() => import('@/pages/safesuite/Identity'));
 const Devices = lazy(() => import('@/pages/safesuite/Devices'));
 const Reports = lazy(() => import('@/pages/safesuite/Reports'));
+const Missions = lazy(() => import('@/pages/safesuite/Missions'));
+const Trends = lazy(() => import('@/pages/safesuite/Trends'));
+const TrustCenter = lazy(() => import('@/pages/safesuite/TrustCenter'));
 const RayOnboarding = lazy(() => import('@/pages/onboarding/RayOnboarding'));
 const RayTimelinePage = lazy(() => import('@/pages/safesuite/RayTimelinePage'));
 
