@@ -64,6 +64,7 @@ export function AskRay() {
     let active = true;
     setLoading(true);
     const question = isQuestionish(debounced);
+    if (question) void recordAskedQuestion(user.id, debounced);
     const work = question
       ? askRay(user.id, debounced).then((a) => { if (active) { setAnswer(a); setResults([]); } })
       : raySearch(user.id, debounced).then((r) => { if (active) { setResults(r); setAnswer(null); } });
