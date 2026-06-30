@@ -1,86 +1,122 @@
-## Goal
-Turn the Ray onboarding flow from a scripted demo into the user's real first session — every selection, import, finding, and score is persisted and re-used by the dashboard and the rest of Wrayth.
+# Wrayth 2.0 — Consistency Sprint
 
-## Architecture: Ray Intelligence Engine
-New module `src/lib/ray/` acting as the single source of truth Ray asks before speaking:
+Goal: open any page, cover the logo, still know it's Wrayth. Stop shipping "products." Start shipping **areas Ray understands.**
+
+Internal names (Vault / Scan / Watch / SafeSuite / SafePass / SafeAssist) stay in the database, file paths, and edge function URLs — only user-facing surfaces change.
+
+---
+
+## Phase 1 — Sidebar & global navigation
+
+Rebuild `SafeSuiteLayout` sidebar to the new shape:
 
 ```text
-src/lib/ray/
-  index.ts                  // getRayContext(userId): unified snapshot
-  passwordIntelligence.ts   // strength, age, reuse, dupes, missing fields
-  breachIntelligence.ts     // HIBP lookups (k-anonymity via edge function)
-  identityIntelligence.ts   // providers, ecosystem, audience
-  threatIntelligence.ts     // placeholder, reads scan/watch tables
-  behaviorIntelligence.ts   // login cadence, activity log summary
-  scoring.ts                // weighted 0–100 score + factor breakdown
-  recommendations.ts        // deterministic recs from findings
+WRAYTH                          ← wordmark
+👁  Good afternoon, Brandon     ← live greeting
+    Security Score  98
+    Everything looks healthy.   ← from getRayContext()
+
+──── MAIN ────
+🏠  Home
+👁  Ray                         ← dedicated route, not floating
+
+──── PROTECTION ────
+🔐  Passwords    (was Vault)
+🛡  Threats      (was Scan)
+🌐  Exposure     (was Watch)
+👤  Identity     (new placeholder area)
+💻  Devices      (new placeholder area)
+📄  Reports      (new placeholder area)
+
+──── WORKSPACE ────
+Organizations · Team · Shared · API · Extensions
+
+──── BOTTOM ────
+Settings · Billing · Account · Admin
 ```
 
-All UI (onboarding finale, Home briefing, Vault health) calls `getRayContext()` instead of computing its own numbers.
+- Remove every "SafeSuite", "Vault", "Scan", "Watch" label from the sidebar.
+- Active route highlight + collapsed/icon mode preserved.
+- Greeting + score block reads from `getRayContext` (real data, no placeholder).
+- New nav targets (`/safesuite/identity`, `/safesuite/devices`, `/safesuite/reports`) get lightweight "Ray is learning this area" placeholder pages so nothing 404s.
 
-## Data model (one migration)
-- `ray_profiles` — `user_id`, `audience`, `providers jsonb`, `existing_manager`, `future_integrations jsonb`, `onboarded_at`, `import_source`.
-- `ray_security_scores` — `user_id`, `score`, `factors jsonb`, `created_at` (history table; latest = current).
-- `ray_findings` — `user_id`, `entry_id`, `kind` (weak/reused/breached/missing_url/missing_username/empty/old/no_mfa), `severity`, `details jsonb`, `resolved_at`.
-- `ray_recommendations` — `user_id`, `title`, `body`, `priority`, `source_finding_ids jsonb`, `status`, `created_at`.
-- All four: RLS scoped to `auth.uid() = user_id`, proper GRANTs, updated_at triggers where mutable.
+## Phase 2 — Ray gets a real page
 
-## Step 1 — Profile capture (real)
-Rewrite the existing onboarding steps in `RayOnboarding.tsx` to:
-- Collect audience (Personal/Family/Business), Microsoft 365, Google Workspace, Apple, Other, existing password manager, planned integrations.
-- On step submit, upsert into `ray_profiles`.
+`/safesuite/ray` becomes Ray's home: conversation, history, recommendations, tasks. The existing floating eye stays as a quick-summon shortcut but the canonical destination is the page. AskRay palette (⌘K) still works.
 
-## Step 2 — Real password import
-Replace the demo import with a real importer:
-- New `src/components/onboarding/PasswordImportStep.tsx` with source picker: Chrome, Edge, Firefox, Safari, Bitwarden, 1Password, Keeper, LastPass, Dashlane, Generic CSV.
-- New `src/lib/import/parsers/` — one parser per source (each accepts the exported CSV/JSON for that vendor; browsers all export CSV with same schema; password managers each have their own column layout).
-- Pipeline: parse → normalize → dedupe (by url+username) → encrypt with the user's existing SafePass master key (reuse `useSafePass` encryption path) → insert into `safepass_entries`.
-- Live progress (parsed / deduped / encrypted / saved counts) streamed from the importer.
+## Phase 3 — Rename every user-facing page
 
-## Step 3 — Real security analysis
-After import completes, run `passwordIntelligence.analyze(entries)`:
-- zxcvbn-based strength, reuse map, duplicate detection, missing url/username, empty password, age (if `password_changed_at` present).
-- Call edge function `ray-breach-check` (new, wraps HIBP range API with k-anonymity SHA-1 prefix) for each unique password hash; cache results.
-- Persist every issue into `ray_findings`.
+Sweep every page header, breadcrumb, tab title, toast, empty state, doc string, and marketing block:
 
-## Step 4 — Real security score
-`scoring.ts` weighted formula (documented in code):
-```text
-base 100
-- 8 per breached credential (cap 40)
-- 4 per weak password (cap 30)
-- 3 per reused password group (cap 20)
-- 5 if no MFA indicators on any high-value account
-- 2 per missing-url/empty/old (cap 15)
-+ small bonuses for strong, unique, MFA-enabled
-clamp 0..100
-```
-Write to `ray_security_scores` (history).
+| Old user-facing string | New |
+|---|---|
+| Vault / Password Vault / SafePass | **Passwords** (subtitle: *Managed by Ray*) |
+| Scan / SafeScan | **Threats** (subtitle: *Analyzed by Ray*) |
+| Watch / SafeWeb / SafeWeb Monitoring | **Exposure** (subtitle: *Monitored by Ray*) |
+| SafeAssist | **Ray** |
+| SafeSuite (in-app) | **Wrayth** |
+| Security Health / Vault Health | **Ray's Assessment** |
+| "Vault Stats" cards | "Passwords / Threats / Exposure" |
 
-## Step 5 — Personalized Ray report
-`recommendations.generate(findings, score, profile)` produces ordered, real recommendations.
-Onboarding finale renders the actual numbers ("I analyzed N passwords…") from `getRayContext()`.
+Page tone shifts from product-y to conversational:
+- "Password Vault" → "Passwords — Ray found no weak passwords."
+- "Threat Scan results" → "Ray analyzed 3 files today."
+- "Dark Web Monitoring" → "Ray is watching 7 identities."
 
-## Persistence + dashboard wiring
-- On finish: mark `ray_profiles.onboarded_at`, leave score + recs in DB, navigate to `/safesuite`.
-- Replace localStorage `wrayth.ray.onboarded:{uid}` gate with `ray_profiles.onboarded_at IS NOT NULL`.
-- Rewrite `SafeSuiteDashboard` briefing to load the persisted latest score + recommendations via `getRayContext()` and diff against previous score for the "Since our last review…" line. No regeneration on load.
+Dashboard's three product cards become "Passwords / Threats / Exposure" tiles.
 
-## Honesty rule
-Intelligence modules return `{ value, confidence, missing: string[] }`. When data is missing (e.g. no breach API key configured), Ray's copy says "I need X to check that" instead of fabricating a number.
+## Phase 4 — Wrayth icon family (custom)
 
-## Out of scope (intentionally)
-- Microsoft 365 / Google Workspace live API ingestion (profile captures the intent; actual sync is a later feature).
-- Browser-extension live capture.
-- Endpoint/phishing modules (engine has the slot, no data yet).
+One SVG family, all derived from triangular Wrayth language. Lives at `src/components/icons/wrayth/`. Same API as Lucide (`size`, `className`, `strokeWidth`).
 
-## Deliverables
-1. One migration creating the four tables + RLS + GRANTs.
-2. `src/lib/ray/*` intelligence engine.
-3. `src/lib/import/parsers/*` + import pipeline.
-4. New `ray-breach-check` edge function.
-5. Rewritten `RayOnboarding.tsx` using real steps.
-6. Updated `SafeSuiteDashboard.tsx` reading from the engine.
-7. Onboarding gate switched from localStorage to DB.
+- `IconHome` — chevron-roof triangle
+- `IconRay` — hooded eye (matches logo)
+- `IconPasswords` — geometric key echoing the W
+- `IconThreats` — triangular radar
+- `IconExposure` — hooded eye, open variant
+- `IconIdentity` — hex profile
+- `IconDevices` — angular monitor
+- `IconReports` — folded-triangle paper
+- `IconSettings`, `IconBilling`, `IconAccount`, `IconAdmin`, `IconTeam`, `IconOrg`, `IconShared`, `IconAPI`, `IconExtensions`
 
-Estimated scope: ~15 new files, ~3 rewrites, 1 migration, 1 edge function.
+Sidebar swaps from Lucide → Wrayth icons. Lucide stays allowed for small inline cues elsewhere; the navigation must use the family.
+
+## Phase 5 — Consistency pass
+
+- Standardize section headers across all module pages on the same `<RayPageHeader title subtitle="Managed by Ray" />` component.
+- Every health/recommendation block routed through one `<RayAssessment>` component, fed by `getRayContext`.
+- Remove residual "SafeSuite" wording from landing/marketing surfaces still using it.
+- Audit toasts/empty states for legacy product names.
+
+---
+
+## Technical notes
+
+- Files touched (primary):
+  - `src/layouts/SafeSuiteLayout.tsx` — sidebar rebuild
+  - `src/components/safesuite/SafeSuiteNav.tsx` — top-bar wording
+  - `src/components/icons/wrayth/*` — new icon family
+  - `src/components/ray/RayPageHeader.tsx`, `RayAssessment.tsx` — new shared primitives
+  - `src/pages/safesuite/SafePass/*`, `SafeScan/*`, `SafeWeb/*` — page headers + copy
+  - `src/pages/safesuite/SafeSuiteDashboard.tsx` — three tiles renamed, assessment block
+  - `src/pages/safesuite/Ray.tsx` (new) — Ray's page
+  - `src/pages/safesuite/{Identity,Devices,Reports}.tsx` (new placeholders)
+  - `src/App.tsx` — register new routes
+- Internal identifiers (DB tables `safepass_*`, edge functions `safepass-*`, route paths `/safesuite/passwords` etc.) are NOT renamed — too risky, no user-visible benefit.
+- Existing routes `/safesuite/safepass`, `/safesuite/safescan`, `/safesuite/safeweb` keep working as aliases; new canonical paths `/safesuite/passwords`, `/safesuite/threats`, `/safesuite/exposure` redirect to the existing modules so deep links don't break.
+- No business logic changes. No DB migrations. No edge function changes.
+
+## Suggested sequencing
+
+Because this is a lot of surface area for one turn, I'd ship in this order and check in after each:
+
+1. **Sidebar + Ray page + dashboard tiles** (highest visible impact, ~1 turn)
+2. **Page header/assessment primitives + Passwords/Threats/Exposure rename sweep** (~1 turn)
+3. **Wrayth icon family + sidebar icon swap** (~1 turn; the icons themselves take real care)
+4. **Identity/Devices/Reports placeholder areas + final copy audit** (~1 turn)
+
+## Questions before I start
+
+1. **Icon family scope** — hand-author the SVG paths inline (fastest, fully controllable, no external assets), or generate stylized PNG glyphs? Inline SVG is the right call for an icon family; confirming.
+2. **Identity / Devices / Reports** — placeholders that say "Ray is learning this area" so the nav is complete, or hide them until built?
+3. **Ray's page** — start with a conversation surface that reuses the existing SafeAssist chat (rebranded), plus a "Recent recommendations" panel pulled from `ray_recommendations`? Voice / memory / tasks come later.
