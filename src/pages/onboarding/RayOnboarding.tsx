@@ -305,7 +305,7 @@ export default function RayOnboarding() {
     }
   };
 
-  const finish = () => navigate('/safesuite/dashboard');
+  const finish = () => navigate('/app/dashboard');
 
   const skipForNow = async () => {
     // Still mark onboarded so we don't loop the user; profile selections persisted above.
@@ -317,7 +317,7 @@ export default function RayOnboarding() {
           { onConflict: 'user_id' },
         );
     }
-    navigate('/safesuite/dashboard');
+    navigate('/app/dashboard');
   };
 
   // Once we know whether a master password already exists, route from

@@ -31,7 +31,7 @@ export function FloatingSafeAssist() {
   // Hide on marketing/auth surfaces — Ray lives inside the Wrayth product.
   const path = location.pathname;
   const inProduct =
-    path.startsWith('/safesuite') ||
+    path.startsWith('/app') ||
     path.startsWith('/dashboard') ||
     path.startsWith('/pass') ||
     path.startsWith('/scan') ||
@@ -95,7 +95,7 @@ export function FloatingSafeAssist() {
             </div>
             <div className="flex items-center gap-1">
               <Button asChild variant="ghost" size="icon" className="h-7 w-7" title="Expand">
-                <Link to="/safesuite/assist"><Maximize2 className="h-4 w-4" /></Link>
+                <Link to="/app/assist"><Maximize2 className="h-4 w-4" /></Link>
               </Button>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={closeAssistant} aria-label="Close">
                 <X className="h-4 w-4" />

@@ -442,7 +442,7 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
             <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
             <Button className="bg-amber-500 hover:bg-amber-600 text-black" onClick={() => {
               onOpenChange(false);
-              const vaultPath = isWraythDomain() ? '/pass' : '/safesuite/pass';
+              const vaultPath = isWraythDomain() ? '/pass' : '/app/pass';
               navigate(vaultPath, { state: { editEntryId: finding.entryId } });
             }}>
               <KeyRound className="h-4 w-4 mr-2" />

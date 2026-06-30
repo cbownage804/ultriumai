@@ -132,7 +132,7 @@ export const UserBillingDashboard = ({ product = 'safesuite' }: UserBillingDashb
                 </Button>
               ) : (
                 <Button asChild>
-                  <Link to="/pricing/safesuite">
+                  <Link to="/pricing">
                     <ArrowUpRight className="h-4 w-4 mr-2" />
                     Upgrade
                   </Link>
@@ -216,7 +216,7 @@ export const UserBillingDashboard = ({ product = 'safesuite' }: UserBillingDashb
           {currentTier === 'free' && (
             <div className="pt-4">
               <Button className="w-full" asChild>
-                <Link to="/pricing/safesuite">
+                <Link to="/pricing">
                   <ArrowUpRight className="h-4 w-4 mr-2" />
                   Upgrade for Unlimited Access
                 </Link>
@@ -280,7 +280,7 @@ export const UserBillingDashboard = ({ product = 'safesuite' }: UserBillingDashb
               <Badge className="bg-emerald-500 text-white">$9.99/mo</Badge>
             </div>
             <Button className="w-full bg-emerald-500 hover:bg-emerald-600" asChild>
-              <Link to="/pricing/safesuite">
+              <Link to="/pricing">
                 Start 14-Day Free Trial
               </Link>
             </Button>

@@ -17,8 +17,8 @@ export function getCurrentProduct(pathname: string): Product {
     return 'vanguard';
   }
   
-  // Check path prefix
-  if (pathname.startsWith('/safesuite')) {
+  // Check path prefix (legacy /safesuite still recognized for redirect handling)
+  if (pathname.startsWith('/app') || pathname.startsWith('/safesuite')) {
     return 'safesuite';
   }
   
@@ -36,7 +36,7 @@ export function getCurrentProduct(pathname: string): Product {
 export function getProductDashboardPath(product: Product): string {
   switch (product) {
     case 'safesuite':
-      return isWraythDomain() ? '/dashboard' : '/safesuite/dashboard';
+      return isWraythDomain() ? '/dashboard' : '/app/dashboard';
     case 'vanguard':
       return isVanguardDomain() ? '/dashboard' : '/vanguard/dashboard';
     case 'ai_studio':
@@ -51,7 +51,7 @@ export function getProductDashboardPath(product: Product): string {
 export function getProductAuthPath(product: Product): string {
   switch (product) {
     case 'safesuite':
-      return isWraythDomain() ? '/auth' : '/safesuite/auth';
+      return isWraythDomain() ? '/auth' : '/app/auth';
     case 'vanguard':
       return isVanguardDomain() ? '/auth' : '/vanguard/auth';
     case 'ai_studio':

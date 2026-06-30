@@ -76,7 +76,7 @@ export default function ForgotPasswordPage() {
         <div className="w-full max-w-md">
           {/* Logo */}
           <div className="text-center mb-8">
-            <Link to="/safesuite" className="inline-flex items-center gap-2">
+            <Link to="/app" className="inline-flex items-center gap-2">
               <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center">
                 <Shield className="h-7 w-7 text-primary-foreground" />
               </div>

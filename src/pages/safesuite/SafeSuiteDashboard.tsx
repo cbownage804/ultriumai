@@ -162,10 +162,10 @@ function SecurityScoreCard({ stats }: { stats: DashboardStats }) {
 
 function QuickActionsCard() {
   const options = [
-    { to: '/safesuite/pass', label: 'Save a password' },
-    { to: '/safesuite/scan', label: 'Check an email or file' },
-    { to: '/safesuite/scan', label: 'Scan a website' },
-    { to: '/safesuite/web', label: 'Review my exposure' },
+    { to: '/app/pass', label: 'Save a password' },
+    { to: '/app/scan', label: 'Check an email or file' },
+    { to: '/app/scan', label: 'Scan a website' },
+    { to: '/app/web', label: 'Review my exposure' },
   ];
 
   const openAskRay = () => {
@@ -362,7 +362,7 @@ const productCardsConfig = [
     productLogo: safeSuiteProducts.safepass.logo,
     title: 'Passwords',
     description: 'Ray keeps every credential strong and unique.',
-    path: '/safesuite/pass',
+    path: '/app/pass',
     statLabel: 'Stored'
   },
   {
@@ -371,7 +371,7 @@ const productCardsConfig = [
     productLogo: safeSuiteProducts.safescan.logo,
     title: 'Threats',
     description: 'Ray analyzes anything suspicious you send over.',
-    path: '/safesuite/scan',
+    path: '/app/scan',
     statLabel: 'Analyzed this month'
   },
   {
@@ -380,7 +380,7 @@ const productCardsConfig = [
     productLogo: safeSuiteProducts.safeweb.logo,
     title: 'Exposure',
     description: 'Ray watches the dark web for your identity.',
-    path: '/safesuite/web',
+    path: '/app/web',
     statLabel: 'Identities watched'
   },
 ];
@@ -597,7 +597,7 @@ export default function WraythDashboard() {
         {!isSubscribed && (
           <div className="mt-5 pt-5 border-t border-[#3A3A3A] flex flex-wrap items-center justify-between gap-3">
             <span className="text-xs text-muted-foreground">Unlock more capabilities and more questions per day.</span>
-            <Link to="/safesuite/billing">
+            <Link to="/app/billing">
               <Button variant="outline" className="wrayth-chamfer-sm border-primary/40 text-primary hover:bg-primary/10">
                 Upgrade
               </Button>

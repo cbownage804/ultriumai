@@ -35,7 +35,7 @@ export function SubscriptionBanner({ className, variant = 'full' }: Subscription
 
   const currentTier = SAFESUITE_TIERS[tier];
   const nextTier = tier === 'free' ? SAFESUITE_TIERS.pro : tier === 'pro' ? SAFESUITE_TIERS.business : null;
-  const billingPath = isWraythDomain() ? '/billing' : '/safesuite/billing';
+  const billingPath = isWraythDomain() ? '/billing' : '/app/billing';
 
   // Get key restrictions for current tier
   const restrictions: string[] = [];

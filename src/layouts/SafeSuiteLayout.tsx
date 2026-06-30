@@ -60,7 +60,7 @@ import { MFAOnboardingGate } from '@/components/safesuite/MFAOnboardingGate';
 import { SidebarBriefing } from '@/components/ray/SidebarBriefing';
 
 function getWraythPath(path: string): string {
-  return isWraythDomain() ? path : `/safesuite${path}`;
+  return isWraythDomain() ? path : `/app${path}`;
 }
 
 type NavItem = {
@@ -173,7 +173,7 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
   const { tier, tierConfig } = useWraythSubscription();
   const { user } = useAuth();
   const sections = getSections();
-  const landingPath = isWraythDomain() ? '/' : '/safesuite';
+  const landingPath = isWraythDomain() ? '/' : '/app';
   const isAdmin = user?.email?.endsWith('@ultriumai.com') && user?.email_confirmed_at != null;
 
   const isActive = (path: string) => {

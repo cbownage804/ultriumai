@@ -64,7 +64,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       returnProduct = 'safesuite';
     } else if (isVanguardDomain()) {
       returnProduct = 'vanguard';
-    } else if (location.pathname.startsWith('/safesuite')) {
+    } else if (location.pathname.startsWith('/app')) {
       returnProduct = 'safesuite';
     } else if (location.pathname.startsWith('/vanguard')) {
       returnProduct = 'vanguard';
@@ -109,8 +109,8 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       }
       
       // Check URL path prefix
-      if (location.pathname.startsWith('/safesuite')) {
-        return `${window.location.origin}/safesuite/dashboard`;
+      if (location.pathname.startsWith('/app')) {
+        return `${window.location.origin}/app/dashboard`;
       }
       if (location.pathname.startsWith('/vanguard')) {
         return `${window.location.origin}/vanguard/dashboard`;

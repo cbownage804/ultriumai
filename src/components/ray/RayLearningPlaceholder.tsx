@@ -30,7 +30,7 @@ export function RayLearningPlaceholder({ title, subtitle, promise, arrival = 'Co
             <p className="mt-2 text-sm text-muted-foreground max-w-prose">{promise}</p>
             <p className="mt-1 text-sm text-muted-foreground">{arrival}</p>
             <div className="mt-6">
-              <Link to="/safesuite/dashboard">
+              <Link to="/app/dashboard">
                 <Button variant="outline" className="rounded-sm">
                   <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
                 </Button>

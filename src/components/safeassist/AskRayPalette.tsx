@@ -174,19 +174,19 @@ export function AskRayPalette() {
             <CommandSeparator />
 
             <CommandGroup heading="Jump to">
-              <CommandItem onSelect={() => goTo('/safesuite/dashboard')} className="gap-2">
+              <CommandItem onSelect={() => goTo('/app/dashboard')} className="gap-2">
                 <Eye className="h-4 w-4" /> Home
               </CommandItem>
-              <CommandItem onSelect={() => goTo('/safesuite/pass')} className="gap-2">
+              <CommandItem onSelect={() => goTo('/app/pass')} className="gap-2">
                 <KeyRound className="h-4 w-4" /> Vault
               </CommandItem>
-              <CommandItem onSelect={() => goTo('/safesuite/scan')} className="gap-2">
+              <CommandItem onSelect={() => goTo('/app/scan')} className="gap-2">
                 <ScanSearch className="h-4 w-4" /> Scan
               </CommandItem>
-              <CommandItem onSelect={() => goTo('/safesuite/web')} className="gap-2">
+              <CommandItem onSelect={() => goTo('/app/web')} className="gap-2">
                 <Globe className="h-4 w-4" /> Watch
               </CommandItem>
-              <CommandItem onSelect={() => goTo('/safesuite/settings')} className="gap-2">
+              <CommandItem onSelect={() => goTo('/app/settings')} className="gap-2">
                 <Settings className="h-4 w-4" /> Settings
               </CommandItem>
             </CommandGroup>

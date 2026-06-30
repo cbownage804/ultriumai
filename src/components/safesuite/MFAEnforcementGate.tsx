@@ -58,7 +58,7 @@ export function MFAEnforcementGate({
   const [mfaVerified, setMfaVerified] = useState(false);
   const [showChallenge, setShowChallenge] = useState(false);
   
-  const settingsPath = isWraythDomain() ? '/settings' : '/safesuite/settings';
+  const settingsPath = isWraythDomain() ? '/settings' : '/app/settings';
 
   // Check if this session has already verified MFA
   useEffect(() => {

@@ -14,14 +14,14 @@ export default function WraythNav() {
           <span className="font-bold text-lg">Wrayth</span>
         </Link>
         <nav className="hidden md:flex items-center gap-8 text-sm">
-          <Link to="/safesuite#platform" className="text-muted-foreground hover:text-foreground transition-colors">Platform</Link>
-          <Link to="/safesuite#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
+          <Link to="/app#platform" className="text-muted-foreground hover:text-foreground transition-colors">Platform</Link>
+          <Link to="/app#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
           <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">Resources</Link>
         </nav>
         <div className="flex items-center gap-2">
           {user ? (
             <>
-              <Button variant="ghost" size="sm" onClick={() => navigate('/safesuite/dashboard')}>Home</Button>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/app/dashboard')}>Home</Button>
               <Button variant="outline" size="sm" onClick={async () => { await signOut(); navigate('/'); }}>Sign Out</Button>
             </>
           ) : (

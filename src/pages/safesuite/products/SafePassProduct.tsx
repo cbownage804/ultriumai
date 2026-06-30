@@ -46,13 +46,13 @@ export default function VaultProduct() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-[#0a0a0a]/95 backdrop-blur border-b border-amber-500/10 safe-area-inset-top">
         <div className="container mx-auto px-4 h-16 sm:h-20 flex items-center justify-between">
-          <Link to="/safesuite" className="flex items-center">
+          <Link to="/app" className="flex items-center">
             <div className="h-10 sm:h-14 rounded-xl bg-black flex items-center justify-center overflow-hidden border border-amber-500/20 px-3 sm:px-4 shadow-lg shadow-amber-500/10">
               <img src={safepassLogo} alt="Vault" className="h-7 sm:h-10 w-auto object-contain" />
             </div>
           </Link>
           <div className="flex items-center gap-2 sm:gap-4">
-            <Link to="/safesuite">
+            <Link to="/app">
               <Button variant="ghost" className="text-gray-400 hover:text-white text-sm sm:text-base px-2 sm:px-4">
                 <span className="hidden sm:inline">← Back to Wrayth</span>
                 <span className="sm:hidden">← Back</span>

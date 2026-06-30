@@ -190,7 +190,7 @@ const articles: KBArticle[] = [
     content: 'Wrayth combines password management, threat scanning, and breach monitoring into a unified personal security platform. View your security score and take action on recommendations.',
     category: 'safesuite',
     tags: ['dashboard', 'overview', 'security', 'score'],
-    route: '/safesuite',
+    route: '/app',
     steps: ['View your overall security score', 'Review security recommendations', 'Access Vault, Scan, and Breach modules', 'Check recent security activity'],
     readTime: '3 min'
   },
@@ -201,7 +201,7 @@ const articles: KBArticle[] = [
     content: 'Vault provides enterprise-grade password management. Store credentials with AES-256 encryption, organize with folders and tags, generate strong passwords, and check for compromised credentials.',
     category: 'safesuite',
     tags: ['passwords', 'vault', 'safepass', 'credentials', 'encryption'],
-    route: '/safesuite/vault',
+    route: '/app/vault',
     steps: ['Add passwords manually or import from CSV', 'Organize entries with folders and tags', 'Use the password generator for strong credentials', 'Enable auto-fill for browser integration', 'Share passwords securely with team members'],
     tips: ['Check the health report for weak or reused passwords', 'Enable 2FA for vault access'],
     readTime: '5 min'
@@ -213,7 +213,7 @@ const articles: KBArticle[] = [
     content: 'Scan detects phishing attempts, malicious URLs, and malware in files. Paste any suspicious content to get an instant AI-powered risk analysis with detailed explanations.',
     category: 'safesuite',
     tags: ['scan', 'threats', 'safescan', 'phishing', 'malware', 'urls'],
-    route: '/safesuite/scan',
+    route: '/app/scan',
     steps: ['Select scan type: Email, URL, or File', 'Paste or upload the content to scan', 'Review the threat analysis results', 'Take recommended actions on threats'],
     tips: ['Bookmark suspicious items for later review', 'Check scan history for patterns'],
     readTime: '3 min'
@@ -225,7 +225,7 @@ const articles: KBArticle[] = [
     content: 'Breach Monitor checks if your email addresses or credentials appear in known data breaches. Get alerts when new breaches are detected and take immediate action to secure affected accounts.',
     category: 'safesuite',
     tags: ['breach', 'monitor', 'dark-web', 'compromised', 'exposure'],
-    route: '/safesuite/breach',
+    route: '/app/breach',
     steps: ['Add email addresses to monitor', 'View breach history for each email', 'Take action on compromised accounts', 'Enable notifications for new breaches'],
     readTime: '3 min'
   },

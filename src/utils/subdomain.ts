@@ -67,7 +67,7 @@ export function getWraythBasePath(): string {
   if (subdomain === 'safesuite') {
     return '/';
   }
-  return '/safesuite';
+  return '/app';
 }
 
 /**

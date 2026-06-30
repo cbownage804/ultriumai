@@ -158,15 +158,15 @@ export const HelpCenter = () => {
     if (tour) {
       // Get current path to determine context
       const currentPath = window.location.pathname;
-      const isWraythContext = currentPath.includes('/safesuite') || currentPath.includes('/pass') || currentPath.includes('/scan') || currentPath.includes('/web') || currentPath.includes('/track');
+      const isWraythContext = currentPath.includes('/app') || currentPath.includes('/pass') || currentPath.includes('/scan') || currentPath.includes('/web') || currentPath.includes('/track');
       
       switch (tour.product) {
         case 'safesuite':
           // Stay on Wrayth dashboard if already there, otherwise navigate
           if (isWraythContext) {
-            window.location.href = currentPath.includes('/dashboard') ? `${currentPath}?tour=true` : '/safesuite/dashboard?tour=true';
+            window.location.href = currentPath.includes('/dashboard') ? `${currentPath}?tour=true` : '/app/dashboard?tour=true';
           } else {
-            window.location.href = '/safesuite/dashboard?tour=true';
+            window.location.href = '/app/dashboard?tour=true';
           }
           break;
         case 'ai-studio':

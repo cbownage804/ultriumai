@@ -76,14 +76,14 @@ export function WraythPaywall({
         </div>
       </CardContent>
       <CardFooter className="flex flex-col gap-2">
-        <Link to="/safesuite/billing" className="w-full">
+        <Link to="/app/billing" className="w-full">
           <Button className="w-full gap-2">
             <Sparkles className="h-4 w-4" />
             Upgrade to {requiredTierConfig.name}
             <ArrowRight className="h-4 w-4" />
           </Button>
         </Link>
-        <Link to="/safesuite/billing" className="text-sm text-muted-foreground hover:text-foreground">
+        <Link to="/app/billing" className="text-sm text-muted-foreground hover:text-foreground">
           Compare all plans
         </Link>
       </CardFooter>
@@ -167,7 +167,7 @@ export function TierLimitInfo({ feature, className }: TierLimitInfoProps) {
         </div>
         
         {nextTierConfig && (
-          <Link to="/safesuite/billing" className="flex-shrink-0">
+          <Link to="/app/billing" className="flex-shrink-0">
             <Button 
               size="sm" 
               variant={isAtLimit ? 'default' : 'outline'}
@@ -227,7 +227,7 @@ export function UsageLimitBanner({ feature, className }: UsageLimitBannerProps) 
           </div>
           <Progress value={Math.min(usedPercentage, 100)} className="h-2" />
         </div>
-        <Link to="/safesuite/billing">
+        <Link to="/app/billing">
           <Button size="sm" variant={isAtLimit ? 'default' : 'outline'}>
             Upgrade
           </Button>
@@ -334,7 +334,7 @@ export function TierComparison({ highlightTier, className }: TierComparisonProps
             </ul>
           </CardContent>
           <CardFooter>
-            <Link to="/safesuite/billing" className="w-full">
+            <Link to="/app/billing" className="w-full">
               <Button 
                 variant={tier.popular ? 'default' : 'outline'} 
                 className="w-full"
