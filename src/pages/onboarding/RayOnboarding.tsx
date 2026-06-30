@@ -472,10 +472,10 @@ export default function RayOnboarding() {
             <RaySays>
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Step 4 of 5</p>
               <p className="text-lg text-foreground">
-                {mp.hasServerPassword ? 'Unlock your vault so I can encrypt what we import.' : 'Set a master password I\'ll use to encrypt your vault.'}
+                {mp.hasUserSetMasterPassword() ? 'Unlock your vault so I can encrypt what we import.' : 'Set a master password I\'ll use to encrypt your vault.'}
               </p>
               <p className="text-sm text-muted-foreground">
-                {mp.hasServerPassword
+                {mp.hasUserSetMasterPassword()
                   ? 'You set this when you created your vault. I never see or store it.'
                   : 'Pick something long that only you know. I never see or store it — your vault is end-to-end encrypted.'}
               </p>
@@ -488,7 +488,7 @@ export default function RayOnboarding() {
                 onChange={(e) => setMasterPw(e.target.value)}
                 className="rounded-sm"
               />
-              {!mp.hasServerPassword && (
+              {!mp.hasUserSetMasterPassword() && (
                 <Input
                   type="password"
                   placeholder="Confirm master password"
@@ -501,10 +501,10 @@ export default function RayOnboarding() {
               <div className="flex gap-3">
                 <Button
                   size="lg"
-                  onClick={mp.hasServerPassword ? handleUnlock : handleSetMaster}
+                  onClick={mp.hasUserSetMasterPassword() ? handleUnlock : handleSetMaster}
                   className="rounded-sm bg-foreground text-background hover:bg-foreground/90"
                 >
-                  {mp.hasServerPassword ? 'Unlock' : 'Set master password'}
+                  {mp.hasUserSetMasterPassword() ? 'Unlock' : 'Set master password'}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
