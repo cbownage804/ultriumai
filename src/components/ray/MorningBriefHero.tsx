@@ -150,8 +150,8 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
   const [busyId, setBusyId] = useState<string | null>(null);
   const voice = useRayVoice();
   const { user } = useAuth();
-  const { subscription } = useUserSubscription();
-  const voiceUnlocked = subscription?.tier === 'pro' || subscription?.tier === 'business' || subscription?.tier === 'enterprise';
+  const sub = useUserSubscription();
+  const voiceUnlocked = sub?.tier === 'pro' || sub?.tier === 'business' || sub?.tier === 'enterprise';
 
   const brief = today;
   const greeting = brief?.greeting ?? (firstName ? `Good morning, ${firstName}.` : "Good morning.");
@@ -252,11 +252,17 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
         </p>
       )}
 
-      {/* ▶ Listen — Ray's voice, only here on the Morning Brief. */}
+      {/* ▶ Listen — Ray's voice, Pro-only. */}
       <div className="relative mt-3">
         <button
           type="button"
-          onClick={() => voice.speak(buildSpokenBrief({ greeting, personality, brief, topRec: top[0] ?? null, memoryLine }))}
+          onClick={() => {
+            if (!voiceUnlocked) {
+              navigate('/app/billing');
+              return;
+            }
+            voice.speak(buildSpokenBrief({ greeting, personality, brief, topRec: top[0] ?? null, memoryLine }));
+          }}
           disabled={voice.isLoading}
           className={cn(
             "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition",
@@ -264,20 +270,23 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
               ? "border-violet-400/60 bg-violet-500/15 text-violet-100"
               : "border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.08] hover:text-white",
           )}
-          aria-label={voice.isPlaying ? "Stop Ray" : "Listen to today's briefing"}
+          aria-label={voice.isPlaying ? "Stop Ray" : voiceUnlocked ? "Listen to today's briefing" : "Unlock Ray's voice with Pro"}
         >
           {voice.isLoading ? (
             <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Ray is warming up…</>
           ) : voice.isPlaying ? (
             <><Square className="h-3 w-3 fill-current" /> Stop</>
-          ) : (
+          ) : voiceUnlocked ? (
             <><Volume2 className="h-3.5 w-3.5" /> Listen to today's briefing</>
+          ) : (
+            <><Lock className="h-3.5 w-3.5" /> Unlock Ray's voice — Pro</>
           )}
         </button>
         {voice.error && (
           <span className="ml-3 text-[11px] text-amber-300/80">{voice.error}</span>
         )}
       </div>
+
 
 
 
