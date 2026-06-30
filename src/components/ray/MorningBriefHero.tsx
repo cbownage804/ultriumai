@@ -110,7 +110,7 @@ export interface MorningBriefHeroProps {
 export function MorningBriefHero({ showFullBriefLink = true, variant = "home", firstName }: MorningBriefHeroProps) {
   const navigate = useNavigate();
   const { today, isLoading, isGenerating, refresh, sendFeedback, timezone } = useMorningBrief();
-  const { recommendations, completeRecommendation, dismissRecommendation, snoozeRecommendation, startRecommendation } =
+  const { recommendations, completeRecommendation, dismissRecommendation, snoozeRecommendation, startRecommendation, timeline } =
     useRayBrain({ pageContext: "home" });
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -127,6 +127,15 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
     "Caught up on everything while you slept.",
   ];
   const personality = personalityLines[new Date().getDate() % personalityLines.length];
+
+  // "Ray remembers" — a continuity nudge built from the most recent meaningful event.
+  const lastCompleted = timeline.find((e) => e.event_type === "recommendation_completed");
+  const lastStarted = timeline.find((e) => e.event_type === "recommendation_started");
+  const memoryLine = lastCompleted
+    ? `Last time, you handled "${(lastCompleted.payload?.title as string) ?? "a recommendation"}". Nice work — I remembered.`
+    : lastStarted
+      ? `You started "${(lastStarted.payload?.title as string) ?? "a playbook"}" last time. Want to pick it back up?`
+      : null;
 
   // Build status cards from real brief.stats — facts at a glance.
   const s = brief?.stats ?? null;
