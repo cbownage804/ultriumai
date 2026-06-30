@@ -1300,7 +1300,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           messages: [{ role: 'system', content: sys }, ...(message.messages || [])],
           source: 'extension',
         });
-        const resp = await fetch(`${FUNCTIONS_URL}/ray-chat`, { method: 'POST', headers, body }).catch(() => null);
+        const resp = await fetch(`${FUNCTIONS_URL}/safeassist-ai`, { method: 'POST', headers, body }).catch(() => null);
         if (resp && resp.ok) {
           const data = await resp.json().catch(() => ({}));
           const text = data?.text || data?.message || data?.choices?.[0]?.message?.content;
