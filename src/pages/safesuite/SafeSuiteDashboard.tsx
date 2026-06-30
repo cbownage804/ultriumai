@@ -554,7 +554,9 @@ export default function WraythDashboard() {
   return (
     <div className="min-h-screen bg-[#0a0a0a] -m-4 lg:-m-6 p-4 lg:p-6 space-y-4 sm:space-y-6">
       {/* Ray's morning brief — same brief as /app/brief, lives on Home */}
-      <MorningBriefHero firstName={firstName} />
+      <div data-tour="security-score">
+        <MorningBriefHero firstName={firstName} />
+      </div>
       <RayNoticesPanel variant="hero" />
       {!isSubscribed && (
         <div className="wrayth-chamfer border border-[#3A3A3A] bg-[#181818] px-5 py-3 flex flex-wrap items-center justify-between gap-3">
