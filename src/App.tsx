@@ -177,6 +177,10 @@ function AppRouter() {
         <Route path="/billing" element={<Navigate to="/app/billing" replace />} />
         <Route path="/settings" element={<Navigate to="/app/settings" replace />} />
 
+        {/* Legacy /safesuite/* → /app/* (preserves old bookmarks, emails, screenshots) */}
+        <Route path="/safesuite" element={<Navigate to="/app/dashboard" replace />} />
+        <Route path="/safesuite/*" element={<LegacySafesuiteRedirect />} />
+
         <Route path="*" element={<NotFound />} />
       </Routes>
 
