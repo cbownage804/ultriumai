@@ -40,6 +40,7 @@ import {
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { MorningBriefHero } from '@/components/ray/MorningBriefHero';
+import { RayNoticesPanel } from '@/components/ray/RayNoticesPanel';
 import { RayTimeline } from '@/components/ray/RayTimeline';
 
 interface DashboardStats {
