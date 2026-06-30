@@ -415,3 +415,6 @@ verify_jwt = true
 
 [functions.ai-builder-migrate]
 verify_jwt = true
+
+[functions.ray-breach-check]
+verify_jwt = true

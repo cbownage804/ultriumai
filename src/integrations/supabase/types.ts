@@ -17330,6 +17330,138 @@ export type Database = {
         }
         Relationships: []
       }
+      ray_findings: {
+        Row: {
+          created_at: string
+          details: Json
+          entry_id: string | null
+          id: string
+          kind: string
+          resolved_at: string | null
+          severity: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json
+          entry_id?: string | null
+          id?: string
+          kind: string
+          resolved_at?: string | null
+          severity?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json
+          entry_id?: string | null
+          id?: string
+          kind?: string
+          resolved_at?: string | null
+          severity?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ray_profiles: {
+        Row: {
+          audience: string | null
+          created_at: string
+          existing_manager: string | null
+          future_integrations: Json
+          import_source: string | null
+          onboarded_at: string | null
+          providers: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          audience?: string | null
+          created_at?: string
+          existing_manager?: string | null
+          future_integrations?: Json
+          import_source?: string | null
+          onboarded_at?: string | null
+          providers?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          audience?: string | null
+          created_at?: string
+          existing_manager?: string | null
+          future_integrations?: Json
+          import_source?: string | null
+          onboarded_at?: string | null
+          providers?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ray_recommendations: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          priority: number
+          source_finding_ids: Json
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          priority?: number
+          source_finding_ids?: Json
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          priority?: number
+          source_finding_ids?: Json
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ray_security_scores: {
+        Row: {
+          created_at: string
+          factors: Json
+          id: string
+          score: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          factors?: Json
+          id?: string
+          score: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          factors?: Json
+          id?: string
+          score?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       realtime_alerts: {
         Row: {
           acknowledged_at: string | null

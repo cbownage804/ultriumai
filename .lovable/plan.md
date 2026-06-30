@@ -1,73 +1,86 @@
-## SafeSuite Overhaul Plan
+## Goal
+Turn the Ray onboarding flow from a scripted demo into the user's real first session — every selection, import, finding, and score is persisted and re-used by the dashboard and the rest of Wrayth.
 
-The SafeSuite surface is huge (5 modules, 30+ pages, 25+ edge functions). Shipping "all of it works" in one pass would burn credits and break things. I'll split this into 4 sequenced phases. **Each phase ends in a deployable, revenue-capable state** — so even if we stop after Phase 1, you can take money.
+## Architecture: Ray Intelligence Engine
+New module `src/lib/ray/` acting as the single source of truth Ray asks before speaking:
 
-You picked all 4 scopes + "keep existing Stripe setup as-is", so this is the order I'll work in.
+```text
+src/lib/ray/
+  index.ts                  // getRayContext(userId): unified snapshot
+  passwordIntelligence.ts   // strength, age, reuse, dupes, missing fields
+  breachIntelligence.ts     // HIBP lookups (k-anonymity via edge function)
+  identityIntelligence.ts   // providers, ecosystem, audience
+  threatIntelligence.ts     // placeholder, reads scan/watch tables
+  behaviorIntelligence.ts   // login cadence, activity log summary
+  scoring.ts                // weighted 0–100 score + factor breakdown
+  recommendations.ts        // deterministic recs from findings
+```
 
----
+All UI (onboarding finale, Home briefing, Vault health) calls `getRayContext()` instead of computing its own numbers.
 
-### Phase 1 — Revenue path works end-to-end (highest priority)
+## Data model (one migration)
+- `ray_profiles` — `user_id`, `audience`, `providers jsonb`, `existing_manager`, `future_integrations jsonb`, `onboarded_at`, `import_source`.
+- `ray_security_scores` — `user_id`, `score`, `factors jsonb`, `created_at` (history table; latest = current).
+- `ray_findings` — `user_id`, `entry_id`, `kind` (weak/reused/breached/missing_url/missing_username/empty/old/no_mfa), `severity`, `details jsonb`, `resolved_at`.
+- `ray_recommendations` — `user_id`, `title`, `body`, `priority`, `source_finding_ids jsonb`, `status`, `created_at`.
+- All four: RLS scoped to `auth.uid() = user_id`, proper GRANTs, updated_at triggers where mutable.
 
-Goal: a logged-in user can pick a plan, pay, and immediately get access to gated features. No silent failures.
+## Step 1 — Profile capture (real)
+Rewrite the existing onboarding steps in `RayOnboarding.tsx` to:
+- Collect audience (Personal/Family/Business), Microsoft 365, Google Workspace, Apple, Other, existing password manager, planned integrations.
+- On step submit, upsert into `ray_profiles`.
 
-1. **Audit live Stripe prices** — call Stripe to confirm every `priceId` in `src/hooks/useStripeCheckout.ts` (`SAFESUITE_PRICES`) and `src/config/productPricing.ts` actually exists and is active. Replace any stale/test IDs.
-2. **`safesuite-checkout` edge function** — verify it reads tier+billing, picks the right price, creates a Checkout Session, handles existing customer, returns `{url}`. Add structured logging + clear error messages.
-3. **`safesuite-check-subscription`** — confirm it sets `subscribed`, `subscription_tier`, `subscription_end` in the `subscribers` table and is called on login + periodic refresh.
-4. **`safesuite-webhook`** — verify it's wired to Stripe (signing secret present), handles `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, and writes to `subscribers`.
-5. **`safesuite-customer-portal`** — verify it works for managing/cancelling subs.
-6. **`SafeSuitePaywall` / `FeatureGate`** — make sure it actually blocks when `subscribed=false` and unblocks immediately after a successful checkout return (currently has a `TierLimitInfo` that reads stale state in some places).
-7. **`/safesuite/billing` page** — show current plan, renewal date, upgrade CTAs, "Manage subscription" button calling customer-portal.
-8. **Success/cancel routes** — `/payment/success` should re-run `check-subscription` then route to `/safesuite/dashboard`. `/payment/cancel` should land on `/pricing/safesuite`.
+## Step 2 — Real password import
+Replace the demo import with a real importer:
+- New `src/components/onboarding/PasswordImportStep.tsx` with source picker: Chrome, Edge, Firefox, Safari, Bitwarden, 1Password, Keeper, LastPass, Dashlane, Generic CSV.
+- New `src/lib/import/parsers/` — one parser per source (each accepts the exported CSV/JSON for that vendor; browsers all export CSV with same schema; password managers each have their own column layout).
+- Pipeline: parse → normalize → dedupe (by url+username) → encrypt with the user's existing SafePass master key (reuse `useSafePass` encryption path) → insert into `safepass_entries`.
+- Live progress (parsed / deduped / encrypted / saved counts) streamed from the importer.
 
-Exit criteria: I can sign up → pay with test card `4242…` → land on dashboard with feature gates unlocked → cancel in portal → gates re-lock.
+## Step 3 — Real security analysis
+After import completes, run `passwordIntelligence.analyze(entries)`:
+- zxcvbn-based strength, reuse map, duplicate detection, missing url/username, empty password, age (if `password_changed_at` present).
+- Call edge function `ray-breach-check` (new, wraps HIBP range API with k-anonymity SHA-1 prefix) for each unique password hash; cache results.
+- Persist every issue into `ray_findings`.
 
----
+## Step 4 — Real security score
+`scoring.ts` weighted formula (documented in code):
+```text
+base 100
+- 8 per breached credential (cap 40)
+- 4 per weak password (cap 30)
+- 3 per reused password group (cap 20)
+- 5 if no MFA indicators on any high-value account
+- 2 per missing-url/empty/old (cap 15)
++ small bonuses for strong, unique, MFA-enabled
+clamp 0..100
+```
+Write to `ray_security_scores` (history).
 
-### Phase 2 — Core modules don't have dead ends
+## Step 5 — Personalized Ray report
+`recommendations.generate(findings, score, profile)` produces ordered, real recommendations.
+Onboarding finale renders the actual numbers ("I analyzed N passwords…") from `getRayContext()`.
 
-Walk each module and fix anything that throws, 404s, or shows empty state with no recovery. Not a redesign — just "every button does what it says."
+## Persistence + dashboard wiring
+- On finish: mark `ray_profiles.onboarded_at`, leave score + recs in DB, navigate to `/safesuite`.
+- Replace localStorage `wrayth.ray.onboarded:{uid}` gate with `ray_profiles.onboarded_at IS NOT NULL`.
+- Rewrite `SafeSuiteDashboard` briefing to load the persisted latest score + recommendations via `getRayContext()` and diff against previous score for the "Since our last review…" line. No regeneration on load.
 
-- **SafeScan** (`/safesuite/scan`): scan submit → result render → history list. Confirm `safescan-api` returns and `safescan-ai-analyzer` enriches.
-- **SafePass** (`/safesuite/pass` + 14 sub-pages): vault unlock, add entry, breach check, extension page, team sharing. Verify PBKDF2 client-side encrypt path still works.
-- **SafeWeb** (`/safesuite/web`): asset add, dark-web scan kickoff, recommendations render.
-- **SafeTrack** (`/safesuite/track`): asset CRUD, warranty lookup.
-- **Dashboard** (`/safesuite/dashboard`): tiles link correctly, usage meters read from `safesuite-usage`.
+## Honesty rule
+Intelligence modules return `{ value, confidence, missing: string[] }`. When data is missing (e.g. no breach API key configured), Ray's copy says "I need X to check that" instead of fabricating a number.
 
-For each: open the page in a headless browser, click the primary CTA, fix what breaks. Per-module fix budget is small — anything that needs a redesign gets logged, not rebuilt.
+## Out of scope (intentionally)
+- Microsoft 365 / Google Workspace live API ingestion (profile captures the intent; actual sync is a later feature).
+- Browser-extension live capture.
+- Endpoint/phishing modules (engine has the slot, no data yet).
 
----
+## Deliverables
+1. One migration creating the four tables + RLS + GRANTs.
+2. `src/lib/ray/*` intelligence engine.
+3. `src/lib/import/parsers/*` + import pipeline.
+4. New `ray-breach-check` edge function.
+5. Rewritten `RayOnboarding.tsx` using real steps.
+6. Updated `SafeSuiteDashboard.tsx` reading from the engine.
+7. Onboarding gate switched from localStorage to DB.
 
-### Phase 3 — Auth, onboarding, trial flow
-
-1. **Sign up at `/safesuite/auth`** → email confirm → `/safesuite/dashboard` with Free tier active.
-2. **Product Intent Picker** (post-signup) — point everyone toward Pro trial, not back to picker.
-3. **Trial banner** (`SubscriptionBanner`) — show days-left, upgrade CTA opens checkout.
-4. **MFA gates** — confirm `MFAOnboardingGate` only prompts on Business/Enterprise per memory.
-5. **Forgot/reset password** flow on SafeSuite — confirm `/reset-password` page exists and `resetPasswordForEmail` uses correct origin per memory.
-
----
-
-### Phase 4 — Production readiness
-
-1. **Edge function secrets audit** — `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`, `LOVABLE_API_KEY` all set. Flag any missing.
-2. **RLS spot-check** on `subscribers`, `safepass_vaults`, `safepass_entries`, `safenet_devices` — service-role-only writes, user-scoped reads.
-3. **SEO on marketing pages** — `/pricing/safesuite`, `/products/safesuite`, `/safesuite/features`: title <60ch, meta desc <160ch, OG tags, single H1, product JSON-LD.
-4. **Security scan** — run `security--run_security_scan`, fix any new critical findings, leave the previously-ignored ones alone.
-5. **Publish** — push live to `ultriumai.app` after Phase 1 minimum so revenue can start flowing.
-
----
-
-### Out of scope (won't touch unless you ask)
-
-- Pricing model changes (you said keep as-is)
-- Visual redesign of any module
-- New features (AI add-ons, white-label, MSP reseller flows — already covered by other memories)
-- Vanguard, AI Studio, customer portal — separate products
-
----
-
-### How I'll work it
-
-I'll execute **Phase 1 in this turn after you approve**, then check in before Phase 2. Each phase ≈ 1 round of edits + 1 round of verification with headless browser. You'll see exactly what changed, what was tested, and what's still broken before we move on.
-
-Approve and I start with the Stripe price audit.
+Estimated scope: ~15 new files, ~3 rewrites, 1 migration, 1 edge function.

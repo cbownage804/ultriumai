@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useWraythSubscription, useFeatureAccess } from '@/hooks/useSafeSuite';
 import { useVault } from '@/hooks/useSafePass';
@@ -387,17 +387,28 @@ const productCardsConfig = [
 
 export default function WraythDashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { tier, tierConfig, isSubscribed } = useWraythSubscription();
   const { canUseFeature } = useFeatureAccess();
   const { entries } = useVault();
 
-  // First-run: send users to Ray's onboarding before they land here.
-  if (user && typeof window !== 'undefined' &&
-      localStorage.getItem(`wrayth.ray.onboarded:${user.id}`) !== 'true') {
-    return <Navigate to="/onboarding/ray" replace />;
-  }
+  // First-run gate: read onboarding state from the database. Using an effect
+  // (instead of an early return) preserves React's rules of hooks below.
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    (async () => {
+      const { data } = await supabase
+        .from('ray_profiles')
+        .select('onboarded_at')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (!active) return;
+      if (!data?.onboarded_at) navigate('/onboarding/ray', { replace: true });
+    })();
+    return () => { active = false; };
+  }, [user, navigate]);
 
-  
   const [stats, setStats] = useState<DashboardStats>({
     passwordCount: 0,
     weakPasswordCount: 0,
