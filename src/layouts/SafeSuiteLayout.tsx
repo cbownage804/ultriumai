@@ -541,6 +541,9 @@ function WraythLayoutInner() {
         </main>
       </div>
       
+      {/* Ask Ray — global command palette (⌘K / Ctrl+K) */}
+      <AskRayPalette />
+
       {/* Floating SafeAssist Chat - available on all pages */}
       <FloatingSafeAssist />
     </div>
