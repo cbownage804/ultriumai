@@ -110,7 +110,7 @@ function AppRouter() {
         <Route path="/payment-cancel" element={<SuspenseWrapper><PaymentCancel /></SuspenseWrapper>} />
 
         {/* Auth */}
-        <Route path="/auth" element={user ? <Navigate to="/safesuite/dashboard" replace /> : <SuspenseWrapper><WraythAuth /></SuspenseWrapper>} />
+        <Route path="/auth" element={user ? <Navigate to={localStorage.getItem(`wrayth.ray.onboarded:${user.id}`) === 'true' ? '/safesuite/dashboard' : '/onboarding/ray'} replace /> : <SuspenseWrapper><WraythAuth /></SuspenseWrapper>} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/auth/confirm" element={<AuthConfirm />} />
         <Route path="/auth/forgot-password" element={<SuspenseWrapper variant="form"><ForgotPasswordPage /></SuspenseWrapper>} />
