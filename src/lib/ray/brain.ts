@@ -245,5 +245,13 @@ export function useRayBrain(options?: { pageContext?: string }) {
       await dismissRecommendation(id);
       await refresh();
     },
+    startRecommendation: async (id: string) => {
+      await startRecommendation(id);
+      await refresh();
+    },
+    snoozeRecommendation: async (id: string, hours = 24) => {
+      await snoozeRecommendation(id, hours);
+      await refresh();
+    },
   };
 }
