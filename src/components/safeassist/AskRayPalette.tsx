@@ -3,14 +3,19 @@
  *
  * "You never hunt through menus. You ask."
  *
- * Lives at the layout level so Ray is reachable from any Wrayth page.
- * Submits to the safeassist-ai edge function (Ray's brain) and streams
- * Ray's answer right inside the palette — no page change, no context loss.
+ * Ray now does three things from one input:
+ *  1. Listens — voice via the Web Speech API (hold-to-speak mic button).
+ *  2. Acts — natural-language "open passwords" routes through `ray-action`
+ *     and navigates instantly, no extra confirmation.
+ *  3. Answers — anything else is sent to `safeassist-ai` for a conversational
+ *     reply right inside the palette.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, ArrowRight, Loader2, KeyRound, ScanSearch, Globe, Settings } from 'lucide-react';
+import {
+  Eye, ArrowRight, Loader2, KeyRound, ScanSearch, Globe, Settings, Mic, MicOff,
+} from 'lucide-react';
 import {
   CommandDialog,
   CommandEmpty,
@@ -22,11 +27,13 @@ import {
 } from '@/components/ui/command';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { resolveRayAction } from '@/lib/ray/actions';
+import { isVoiceSupported, startVoiceCapture, type VoiceSession } from '@/lib/ray/voice';
 
 const SUGGESTIONS = [
-  'Which passwords worry you most?',
+  'Open my passwords',
   'Scan this website for me',
-  'Explain my last alert',
+  'Show me the timeline',
   'What should I fix first?',
 ];
 
@@ -37,7 +44,11 @@ export function AskRayPalette() {
   const [thinking, setThinking] = useState(false);
   const [anticipation, setAnticipation] = useState(false);
   const [answer, setAnswer] = useState<string | null>(null);
+  const [listening, setListening] = useState(false);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const voiceRef = useRef<VoiceSession | null>(null);
+  const voiceSupported = isVoiceSupported();
 
   // Global hotkey: ⌘K / Ctrl+K
   useEffect(() => {
@@ -56,10 +67,14 @@ export function AskRayPalette() {
   useEffect(() => {
     if (!open) {
       abortRef.current?.abort();
+      voiceRef.current?.stop();
+      voiceRef.current = null;
       setQuery('');
       setAnswer(null);
       setThinking(false);
       setAnticipation(false);
+      setListening(false);
+      setVoiceError(null);
     }
   }, [open]);
 
@@ -70,18 +85,36 @@ export function AskRayPalette() {
     setAnswer(null);
 
     try {
+      // Wave 3: ask Ray to interpret intent first.
+      const action = await resolveRayAction(question);
+
+      if (action.intent === 'navigate' && action.path) {
+        // 400ms beat so Ray feels deliberate, not robotic.
+        setThinking(false);
+        setAnticipation(true);
+        await new Promise((r) => setTimeout(r, 400));
+        setAnticipation(false);
+        setOpen(false);
+        navigate(action.path);
+        return;
+      }
+
+      // For 'ask' (and 'scan' fallback today), let Ray answer conversationally.
       const { data, error } = await supabase.functions.invoke('safeassist-ai', {
         body: {
           message: question,
-          context: { source: 'ask-ray-palette' },
+          context: { source: 'ask-ray-palette', rayIntent: action.intent },
         },
       });
       if (error) throw error;
 
-      // 600ms anticipation pause before Ray reveals the answer.
       setThinking(false);
       setAnticipation(true);
-      const text = data?.response || data?.message || "I'm here, but I couldn't form a response. Try again?";
+      const text =
+        data?.response ||
+        data?.message ||
+        action.say ||
+        "I'm here, but I couldn't form a response. Try again?";
       await new Promise((r) => setTimeout(r, 600));
       setAnticipation(false);
       setAnswer(text);
@@ -90,7 +123,7 @@ export function AskRayPalette() {
       setAnticipation(false);
       setAnswer("I couldn't reach my brain just now. Give me a moment and try again.");
     }
-  }, []);
+  }, [navigate]);
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,34 +135,85 @@ export function AskRayPalette() {
     navigate(path);
   };
 
+  const toggleVoice = useCallback(() => {
+    if (listening) {
+      voiceRef.current?.stop();
+      voiceRef.current = null;
+      setListening(false);
+      return;
+    }
+    setVoiceError(null);
+    const session = startVoiceCapture({
+      onInterim: (text) => setQuery(text),
+      onFinal: (text) => {
+        setQuery(text);
+        setListening(false);
+        voiceRef.current = null;
+        askRay(text);
+      },
+      onError: (msg) => {
+        setVoiceError(msg);
+        setListening(false);
+        voiceRef.current = null;
+      },
+      onEnd: () => {
+        setListening(false);
+        voiceRef.current = null;
+      },
+    });
+    if (session) {
+      voiceRef.current = session;
+      setListening(true);
+    }
+  }, [listening, askRay]);
+
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
       <form onSubmit={onSubmit} className="flex items-center gap-2 border-b border-border px-3">
         <Eye
           className={cn(
             'h-4 w-4 shrink-0 transition-colors',
-            thinking || anticipation ? 'text-[hsl(262_60%_70%)]' : 'text-muted-foreground',
-            (thinking || anticipation) && 'animate-pulse',
+            thinking || anticipation || listening ? 'text-[hsl(262_60%_70%)]' : 'text-muted-foreground',
+            (thinking || anticipation || listening) && 'animate-pulse',
           )}
         />
         <CommandInput
           value={query}
           onValueChange={setQuery}
-          placeholder="Ask Ray anything…"
+          placeholder={listening ? 'Listening…' : 'Ask Ray anything…'}
           className="border-0 focus:ring-0"
         />
+        {voiceSupported && (
+          <button
+            type="button"
+            onClick={toggleVoice}
+            aria-label={listening ? 'Stop listening' : 'Speak to Ray'}
+            className={cn(
+              'shrink-0 rounded-md p-1.5 transition-colors',
+              listening
+                ? 'bg-[hsl(262_60%_70%/0.15)] text-[hsl(262_60%_70%)]'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+            )}
+          >
+            {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+          </button>
+        )}
         {thinking && <Loader2 className="h-4 w-4 animate-spin text-[hsl(262_60%_70%)]" />}
       </form>
 
       <CommandList className="max-h-[420px]">
-        {(thinking || anticipation) && (
+        {(thinking || anticipation || listening) && (
           <div className="px-4 py-6 flex items-center gap-3 text-sm text-muted-foreground">
             <span className="relative flex h-2 w-2">
               <span className="absolute inset-0 rounded-full bg-[hsl(262_60%_64%)] animate-ping" />
               <span className="relative h-2 w-2 rounded-full bg-[hsl(262_60%_70%)]" />
             </span>
-            {thinking ? 'Ray is thinking…' : 'I found something.'}
+            {listening ? 'Ray is listening…' : thinking ? 'Ray is thinking…' : 'I found something.'}
           </div>
+        )}
+
+        {voiceError && !listening && (
+          <div className="px-4 py-2 text-xs text-destructive">{voiceError}</div>
         )}
 
         {answer && !thinking && !anticipation && (
@@ -148,7 +232,7 @@ export function AskRayPalette() {
           </div>
         )}
 
-        {!answer && !thinking && !anticipation && (
+        {!answer && !thinking && !anticipation && !listening && (
           <>
             {query.trim() && (
               <CommandGroup heading="Ask Ray">
@@ -178,13 +262,13 @@ export function AskRayPalette() {
                 <Eye className="h-4 w-4" /> Home
               </CommandItem>
               <CommandItem onSelect={() => goTo('/app/pass')} className="gap-2">
-                <KeyRound className="h-4 w-4" /> Vault
+                <KeyRound className="h-4 w-4" /> Passwords
               </CommandItem>
               <CommandItem onSelect={() => goTo('/app/scan')} className="gap-2">
-                <ScanSearch className="h-4 w-4" /> Scan
+                <ScanSearch className="h-4 w-4" /> Threats
               </CommandItem>
               <CommandItem onSelect={() => goTo('/app/web')} className="gap-2">
-                <Globe className="h-4 w-4" /> Watch
+                <Globe className="h-4 w-4" /> Exposure
               </CommandItem>
               <CommandItem onSelect={() => goTo('/app/settings')} className="gap-2">
                 <Settings className="h-4 w-4" /> Settings
