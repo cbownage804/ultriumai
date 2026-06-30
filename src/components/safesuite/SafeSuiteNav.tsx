@@ -13,14 +13,10 @@ export default function WraythNav() {
           <img src={wraythLogo} alt="Wrayth" className="h-8 w-auto" width={32} height={32} />
           <span className="font-bold text-lg">Wrayth</span>
         </Link>
-        <nav className="hidden md:flex items-center gap-6 text-sm">
-          <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">Features</Link>
-          <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
-          <Link to="/products/safepass" className="text-muted-foreground hover:text-foreground transition-colors">Vault</Link>
-          <Link to="/products/safescan" className="text-muted-foreground hover:text-foreground transition-colors">Scan</Link>
-          <Link to="/products/safeweb" className="text-muted-foreground hover:text-foreground transition-colors">Watch</Link>
-          
-          <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">Contact</Link>
+        <nav className="hidden md:flex items-center gap-8 text-sm">
+          <Link to="/safesuite#platform" className="text-muted-foreground hover:text-foreground transition-colors">Platform</Link>
+          <Link to="/safesuite#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
+          <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">Resources</Link>
         </nav>
         <div className="flex items-center gap-2">
           {user ? (

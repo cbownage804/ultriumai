@@ -1,247 +1,286 @@
 /**
  * Wrayth Landing Page
- * Marketing page for the unified security suite
+ * Sells Ray — the AI cybersecurity teammate.
+ * Vault / Scan / Watch are framed as capabilities, not products.
  */
 
 import { Link } from 'react-router-dom';
 import Navigation from '@/components/safesuite/SafeSuiteNav';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS, formatMonthlyPrice } from '@/config/safeSuiteTiers';
-import { safeSuiteProducts, safesuiteLogo, type WraythProductKey } from '@/components/safesuite/SafeSuiteProductIcons';
+import { SAFESUITE_TIERS, formatMonthlyPrice } from '@/config/safeSuiteTiers';
 import heroWrayth from '@/assets/hero-wrayth.jpg';
+import wraythLogo from '@/assets/wrayth-logo.png';
 import {
-  Shield,
-  Check,
-  Sparkles,
-  Crown,
   ArrowRight,
-  Lock,
-  Star
+  Check,
+  KeyRound,
+  ScanSearch,
+  Globe,
+  Star,
+  Crown,
 } from 'lucide-react';
 
-const features: WraythProductKey[] = ['safepass', 'safescan', 'safeweb'];
+// Ray's capabilities — not products. Each one is something Ray *does*.
+const capabilities = [
+  {
+    icon: KeyRound,
+    title: 'Ray protects your passwords.',
+    blurb:
+      "Ray stores every credential under zero-knowledge encryption, flags weak or reused passwords, generates stronger ones on request, and quietly monitors password health over time.",
+    bullets: [
+      'Secure credential vault',
+      'Weak-password detection',
+      'Stronger password recommendations',
+      'Ongoing password health monitoring',
+    ],
+  },
+  {
+    icon: ScanSearch,
+    title: 'Ray analyzes suspicious content.',
+    blurb:
+      "Forward an email, drop in a document, paste a URL — Ray reads it, understands what it's doing, and explains the threat in plain English. No security degree required.",
+    bullets: [
+      'Emails, documents, URLs, QR codes, attachments',
+      'AI threat analysis',
+      'Plain-English explanations',
+      'Calm guidance on what to do next',
+    ],
+  },
+  {
+    icon: Globe,
+    title: 'Ray watches your digital exposure.',
+    blurb:
+      "Ray continuously monitors the dark web for your leaked credentials and identities, alerts you the moment something surfaces, and walks you through exactly how to respond.",
+    bullets: [
+      'Dark web monitoring',
+      'Credential leak alerts',
+      'Identity exposure tracking',
+      'Step-by-step remediation',
+    ],
+  },
+];
 
 export default function WraythLanding() {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
 
-      {/* Hero Section */}
-      <section className="py-20 md:py-32 relative overflow-hidden">
-        {/* Background Image */}
+      {/* HERO — Meet Ray */}
+      <section className="relative overflow-hidden border-b border-[#3A3A3A]">
         <div className="absolute inset-0">
-          <img 
-            src={heroWrayth} 
-            alt="Wrayth Security Platform"
-            className="w-full h-full object-cover"
+          <img
+            src={heroWrayth}
+            alt=""
+            className="w-full h-full object-cover opacity-60"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/80 to-background" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/70 via-transparent to-background/70" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#090909]/85 via-[#090909]/80 to-[#090909]" />
         </div>
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-3xl mx-auto text-center">
-            <Badge variant="secondary" className="mb-6 gap-1 animate-fade-in bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-              <Sparkles className="h-3 w-3" />
-              Complete Security Suite
-            </Badge>
-            <div className="flex justify-center mb-8">
-              <div className="px-12 py-6 bg-black rounded-2xl shadow-2xl shadow-emerald-500/20 animate-fade-in">
-                <img 
-                  src={safesuiteLogo} 
-                  alt="Wrayth" 
-                  className="h-28 w-auto object-contain"
-                />
-              </div>
+
+        <div className="container mx-auto px-4 relative z-10 py-24 md:py-36">
+          <div className="max-w-3xl">
+            <div className="flex items-center gap-2 mb-8 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+              Wrayth · AI security platform
             </div>
-            <p className="text-2xl md:text-3xl font-semibold text-muted-foreground mb-4 animate-fade-in" style={{ animationDelay: '0.1s' }}>
-              All Your Security Tools in One Place
+
+            <h1 className="text-5xl md:text-7xl font-semibold tracking-tight text-[#F3F3F3] mb-6 leading-[1.05]">
+              Meet <span className="text-primary">Ray</span>.
+              <br />
+              Your AI cybersecurity teammate.
+            </h1>
+
+            <p className="text-lg md:text-xl text-muted-foreground mb-4 max-w-2xl leading-relaxed">
+              Ray quietly protects your business — securing passwords, analyzing suspicious
+              emails and files, monitoring the dark web for exposed credentials, and guiding
+              you through every security decision.
             </p>
-            <p className="text-lg text-muted-foreground mb-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              Vault, Scan, and Watch — three precise security tools unified by Ray,
-              the calm AI intelligence at the core of Wrayth.
+            <p className="text-base text-muted-foreground mb-10 max-w-2xl">
+              No cybersecurity expertise required. One intelligent platform. Always watching.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+
+            <div className="flex flex-col sm:flex-row gap-3">
               <Link to="/auth?tab=signup">
-                <Button size="lg" className="gap-2 w-full sm:w-auto">
-                  Start Free Trial
+                <Button size="lg" className="wrayth-chamfer-sm gap-2 w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90">
+                  Experience Ray
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              <Link to="#pricing">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                  View Pricing
+              <Link to="#platform">
+                <Button size="lg" variant="outline" className="wrayth-chamfer-sm w-full sm:w-auto border-[#3A3A3A] text-[#F3F3F3] hover:bg-[#181818]">
+                  See what Ray can do
                 </Button>
               </Link>
             </div>
-            <p className="text-sm text-muted-foreground mt-4">
-              No credit card required • Free forever plan available
+
+            <p className="text-xs text-muted-foreground mt-6 tracking-wide">
+              Free forever plan · No credit card required
             </p>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">
-              Everything You Need to Stay Secure
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Three precise tools, unified by Ray — the AI intelligence at the core of Wrayth.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {features.map((productKey, index) => {
-              const product = safeSuiteProducts[productKey];
-              const colorMap = {
-                safepass: 'amber',
-                safescan: 'red',
-                safeweb: 'violet',
-              };
-              const color = colorMap[productKey] || 'primary';
-              return (
-              <Card key={productKey} className="relative overflow-hidden group hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                  <CardHeader>
-                    <div className="flex flex-col gap-3">
-                      <div className="h-14 w-40 rounded-xl bg-black flex items-center justify-center overflow-hidden shadow-lg group-hover:scale-105 transition-transform">
-                        <img 
-                          src={product.logo} 
-                          alt={product.name} 
-                          className="h-full w-full object-contain"
-                        />
-                      </div>
-                      <CardDescription className="text-sm">{product.description}</CardDescription>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-2">
-                      {product.features.map((feature, i) => (
-                        <li key={i} className="flex items-center gap-2 text-sm">
-                          <div className="w-5 h-5 rounded-full bg-success/10 flex items-center justify-center">
-                            <Check className="h-3 w-3 text-success" />
-                          </div>
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                    <Link to={`/products/${productKey}`} className="block mt-4">
-                      <Button variant="outline" size="sm" className="w-full group-hover:bg-primary/10">
-                        Explore Features
-                        <ArrowRight className="ml-2 h-3 w-3" />
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+      {/* PHILOSOPHY STRIP */}
+      <section className="border-b border-[#3A3A3A] bg-[#0d0d0d]">
+        <div className="container mx-auto px-4 py-12 md:py-16">
+          <p className="max-w-3xl text-xl md:text-2xl text-[#F3F3F3] font-light leading-snug">
+            You don't need to become a cybersecurity expert.
+            <span className="text-muted-foreground"> Ray already is.</span>
+          </p>
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section id="pricing" className="py-20">
+      {/* CAPABILITIES — what Ray can do */}
+      <section id="platform" className="py-24">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">
-              Simple, Transparent Pricing
+          <div className="max-w-2xl mb-16">
+            <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+              What Ray can do
+            </div>
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-[#F3F3F3]">
+              One teammate. Every layer of your security.
             </h2>
-            <p className="text-lg text-muted-foreground">
-              Choose the plan that fits your needs. Upgrade anytime.
-            </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+
+          <div className="grid gap-px bg-[#3A3A3A] border border-[#3A3A3A] wrayth-chamfer overflow-hidden">
+            {capabilities.map((cap) => (
+              <div
+                key={cap.title}
+                className="bg-[#0d0d0d] p-8 md:p-10 grid md:grid-cols-[1fr_1.5fr] gap-6 md:gap-12"
+              >
+                <div>
+                  <div className="inline-flex items-center justify-center h-11 w-11 border border-[#3A3A3A] wrayth-chamfer-sm mb-6">
+                    <cap.icon className="h-5 w-5 text-[#F3F3F3]" />
+                  </div>
+                  <h3 className="text-xl md:text-2xl font-semibold text-[#F3F3F3] leading-snug">
+                    {cap.title}
+                  </h3>
+                </div>
+                <div className="space-y-5">
+                  <p className="text-muted-foreground leading-relaxed">{cap.blurb}</p>
+                  <ul className="grid sm:grid-cols-2 gap-y-2 gap-x-6">
+                    {cap.bullets.map((b) => (
+                      <li key={b} className="flex items-start gap-2 text-sm text-[#F3F3F3]">
+                        <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                        <span>{b}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-10 text-sm text-muted-foreground max-w-2xl">
+            Every new capability Wrayth adds becomes another thing Ray quietly handles on your behalf.
+          </p>
+        </div>
+      </section>
+
+      {/* PRICING */}
+      <section id="pricing" className="py-24 border-t border-[#3A3A3A] bg-[#0d0d0d]">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mb-14">
+            <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+              Pricing
+            </div>
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-[#F3F3F3]">
+              Hire Ray. Upgrade anytime.
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-px bg-[#3A3A3A] border border-[#3A3A3A] wrayth-chamfer overflow-hidden">
             {Object.values(SAFESUITE_TIERS).map((tier) => (
-              <Card
+              <div
                 key={tier.id}
-                className={`relative transition-all duration-300 hover:-translate-y-2 ${tier.popular ? 'border-primary shadow-lg shadow-primary/20 scale-105 z-10' : 'hover:shadow-lg hover:shadow-primary/10'}`}
+                className={`relative bg-[#181818] p-8 flex flex-col ${tier.popular ? 'ring-1 ring-primary/50' : ''}`}
               >
                 {tier.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="gap-1 bg-primary">
+                  <div className="absolute -top-px left-0 right-0 flex justify-center">
+                    <Badge className="rounded-none bg-primary text-primary-foreground gap-1 px-3 py-1 text-[10px] uppercase tracking-widest">
                       <Star className="h-3 w-3" />
-                      Most Popular
+                      Most popular
                     </Badge>
                   </div>
                 )}
-                <CardHeader className="text-center pb-2">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    {tier.id === 'business' && <Crown className="h-5 w-5 text-amber-500" />}
-                    <CardTitle>{tier.name}</CardTitle>
-                  </div>
-                  <CardDescription>{tier.description}</CardDescription>
-                  <div className="pt-4">
-                    <span className="text-4xl font-bold">
-                      {tier.price === 0 ? 'Free' : `$${(tier.price / 100).toFixed(0)}`}
-                    </span>
-                    {tier.price > 0 && (
-                      <span className="text-muted-foreground">{tier.priceLabel || '/month'}</span>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3">
-                    {(['safepass', 'safescan', 'safeweb', 'team', 'whitelabeling'] as const).map((key) => {
-                      const value = tier.features[key];
-                      const featureInfo = FEATURE_DESCRIPTIONS[key];
-                      return (
-                        <li key={key} className="flex items-center gap-2">
-                          {value.enabled ? (
-                            <Check className="h-4 w-4 text-success flex-shrink-0" />
-                          ) : (
-                            <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                          )}
-                          <span className={!value.enabled ? 'text-muted-foreground' : ''}>
-                            {featureInfo.name}
-                            {value.enabled && value.limit > 0 && (
-                              <span className="text-muted-foreground text-sm ml-1">
-                                ({value.limit === -1 ? '∞' : value.limit})
-                              </span>
-                            )}
-                          </span>
-                        </li>
-                      );
-                    })}
-                    <li className="flex items-center gap-2 pt-1 border-t border-border/40 mt-2">
-                      <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                      <span className="text-sm">
-                        <span className="font-medium">Ray</span>
-                        <span className="text-muted-foreground"> — AI intelligence across Wrayth</span>
-                      </span>
-                    </li>
-                  </ul>
-                </CardContent>
-                <div className="p-6 pt-0">
-                  <Link to="/auth?tab=signup">
-                    <Button 
-                      variant={tier.popular ? 'default' : 'outline'} 
-                      className="w-full"
-                    >
-                      {tier.price === 0 ? 'Get Started Free' : `Start ${tier.name}`}
-                    </Button>
-                  </Link>
+                <div className="flex items-center gap-2 mb-2">
+                  {tier.id === 'business' && <Crown className="h-4 w-4 text-primary" />}
+                  <span className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{tier.name}</span>
                 </div>
-              </Card>
+                <p className="text-sm text-muted-foreground mb-6">{tier.description}</p>
+                <div className="mb-8">
+                  <span className="text-5xl font-semibold text-[#F3F3F3] tabular-nums">
+                    {tier.price === 0 ? 'Free' : `$${(tier.price / 100).toFixed(0)}`}
+                  </span>
+                  {tier.price > 0 && (
+                    <span className="text-muted-foreground ml-1">{tier.priceLabel || '/month'}</span>
+                  )}
+                </div>
+
+                <ul className="space-y-3 mb-8 flex-1">
+                  <li className="flex items-start gap-2 text-sm text-[#F3F3F3]">
+                    <Check className="h-4 w-4 text-primary mt-0.5" />
+                    <span><span className="font-medium">Ray</span> — always on, across everything</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-sm text-[#F3F3F3]">
+                    <Check className="h-4 w-4 text-primary mt-0.5" />
+                    <span>Password protection (Vault)</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-sm text-[#F3F3F3]">
+                    <Check className="h-4 w-4 text-primary mt-0.5" />
+                    <span>Threat analysis (Scan)</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-sm text-[#F3F3F3]">
+                    <Check className="h-4 w-4 text-primary mt-0.5" />
+                    <span>Dark web monitoring (Watch)</span>
+                  </li>
+                  {tier.features.team?.enabled && (
+                    <li className="flex items-start gap-2 text-sm text-[#F3F3F3]">
+                      <Check className="h-4 w-4 text-primary mt-0.5" />
+                      <span>Team collaboration</span>
+                    </li>
+                  )}
+                  {tier.features.whitelabeling?.enabled && (
+                    <li className="flex items-start gap-2 text-sm text-[#F3F3F3]">
+                      <Check className="h-4 w-4 text-primary mt-0.5" />
+                      <span>White-labeling</span>
+                    </li>
+                  )}
+                </ul>
+
+                <Link to="/auth?tab=signup" className="mt-auto">
+                  <Button
+                    variant={tier.popular ? 'default' : 'outline'}
+                    className={`w-full wrayth-chamfer-sm ${
+                      tier.popular
+                        ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                        : 'border-[#3A3A3A] text-[#F3F3F3] hover:bg-[#242424]'
+                    }`}
+                  >
+                    {tier.price === 0 ? 'Start free' : `Start ${tier.name}`}
+                  </Button>
+                </Link>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-primary/5">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">
-            Ready to Secure Your Digital Life?
+      {/* FINAL CTA */}
+      <section className="py-28">
+        <div className="container mx-auto px-4 max-w-3xl">
+          <h2 className="text-3xl md:text-5xl font-semibold tracking-tight text-[#F3F3F3] mb-6 leading-tight">
+            Stop managing security tools.
+            <br />
+            <span className="text-muted-foreground">Start working with Ray.</span>
           </h2>
-          <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Join thousands of users who trust Wrayth to protect their passwords, 
-            scan for threats, and monitor the dark web.
+          <p className="text-muted-foreground mb-10 max-w-xl">
+            Ray is always watching, always learning, and always one message away. Meet your new cybersecurity teammate.
           </p>
           <Link to="/auth?tab=signup">
-            <Button size="lg" className="gap-2">
-              Start Your Free Trial
+            <Button size="lg" className="wrayth-chamfer-sm gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
+              Experience Ray
               <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
@@ -249,16 +288,15 @@ export default function WraythLanding() {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 border-t border-border">
+      <footer className="py-10 border-t border-[#3A3A3A] bg-[#0d0d0d]">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary" />
-              <span className="font-semibold">Wrayth</span>
-              <span className="text-muted-foreground">by UltriumAI</span>
+              <img src={wraythLogo} alt="" className="h-6 w-auto" />
+              <span className="font-semibold text-[#F3F3F3]">Wrayth</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} UltriumAI. All rights reserved.
+              © {new Date().getFullYear()} Wrayth. Ray is always watching.
             </p>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
               <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
