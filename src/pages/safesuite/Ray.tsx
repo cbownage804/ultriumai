@@ -13,6 +13,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { RayPageHeader } from '@/components/ray/RayPageHeader';
 import { AskRay } from '@/components/ray/AskRay';
 import { RayNoticesPanel } from '@/components/ray/RayNoticesPanel';
+import { FixWithRayButton } from '@/components/ray/FixWithRayButton';
+import {
+  listRuns,
+  resumeRun,
+  archiveRun,
+  playbookForRecommendation,
+  findTemplate,
+  startPlaybook,
+  type PlaybookRun,
+} from '@/lib/ray/playbooks';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -22,8 +32,10 @@ import {
   CheckCircle2,
   Clock,
   MessageSquare,
+  Pause,
   Play,
   Shield,
+  Sparkles,
   X,
 } from 'lucide-react';
 
@@ -39,17 +51,6 @@ const SUGGESTED_QUESTIONS = [
   'What happened overnight?',
 ];
 
-function pageHrefFor(area?: string | null): string {
-  switch (area) {
-    case 'passwords': return '/app/passwords';
-    case 'threats': return '/app/threats';
-    case 'exposure': return '/app/exposure';
-    case 'identity': return '/app/identity';
-    case 'devices': return '/app/devices';
-    case 'reports': return '/app/timeline';
-    default: return '/app/missions';
-  }
-}
 
 function priorityTone(p: number) {
   if (p >= 70) return 'border-red-500/30 bg-red-500/[0.04]';
@@ -74,13 +75,13 @@ export default function Ray() {
   const {
     recommendations,
     memory,
-    startRecommendation,
     snoozeRecommendation,
     completeRecommendation,
     dismissRecommendation,
   } = useRayBrain();
   const [recent, setRecent] = useState<RecentAction[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [runs, setRuns] = useState<PlaybookRun[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -92,6 +93,9 @@ export default function Ray() {
       .order('created_at', { ascending: false })
       .limit(6)
       .then(({ data }) => { if (active) setRecent((data ?? []) as RecentAction[]); });
+    void listRuns(user.id, ['in_progress', 'paused', 'completed']).then((r) => {
+      if (active) setRuns(r);
+    });
     return () => { active = false; };
   }, [user]);
 
@@ -100,6 +104,21 @@ export default function Ray() {
     () => memory.slice().sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0)).slice(0, 5),
     [memory],
   );
+  const currentPlaybook = useMemo(() => runs.find((r) => r.status === 'in_progress') ?? null, [runs]);
+  const pausedPlaybooks = useMemo(() => runs.filter((r) => r.status === 'paused'), [runs]);
+  const completedPlaybooks = useMemo(
+    () => runs.filter((r) => r.status === 'completed').slice(0, 5),
+    [runs],
+  );
+
+  const suggestedNext = useMemo(() => {
+    const topRec = recs[0];
+    if (!topRec) return null;
+    const slug = playbookForRecommendation(topRec);
+    const template = findTemplate(slug);
+    if (!template) return null;
+    return { recommendation: topRec, template };
+  }, [recs]);
 
   function askRay(q: string) {
     window.dispatchEvent(new CustomEvent('ray:ask', { detail: q }));
@@ -109,6 +128,24 @@ export default function Ray() {
   async function withBusy(id: string, fn: () => Promise<unknown>) {
     setBusyId(id);
     try { await fn(); } finally { setBusyId(null); }
+  }
+
+  async function handleResume(run: PlaybookRun) {
+    await resumeRun(run.id);
+    navigate(`/app/ray/playbook/${run.id}`);
+  }
+
+  async function handleArchive(run: PlaybookRun) {
+    await archiveRun(run.id);
+    setRuns((prev) => prev.filter((r) => r.id !== run.id));
+  }
+
+  async function startSuggested() {
+    if (!user || !suggestedNext) return;
+    const run = await startPlaybook(user.id, suggestedNext.template.slug, {
+      sourceRecommendationId: suggestedNext.recommendation.id,
+    });
+    if (run) navigate(`/app/ray/playbook/${run.id}`);
   }
 
   return (
@@ -123,9 +160,57 @@ export default function Ray() {
 
       <RayNoticesPanel />
 
+      {/* Current playbook in progress */}
+      {currentPlaybook && (
+        <section>
+          <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
+            Current playbook
+          </div>
+          <div className="rounded-md border border-violet-400/30 bg-violet-500/[0.04] p-5">
+            <div className="flex items-start gap-3">
+              <Sparkles className="h-4 w-4 mt-1 text-violet-300 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="text-base font-light tracking-tight text-foreground">{currentPlaybook.title}</div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  {currentPlaybook.progress}% complete · {currentPlaybook.estimated_minutes} min · +{currentPlaybook.reward_score} score
+                </div>
+                <div className="mt-3 h-1 rounded-full bg-muted overflow-hidden max-w-md">
+                  <div className="h-full bg-violet-400 transition-all" style={{ width: `${currentPlaybook.progress}%` }} />
+                </div>
+              </div>
+              <Button onClick={() => navigate(`/app/ray/playbook/${currentPlaybook.id}`)} className="bg-violet-500 hover:bg-violet-600 text-white">
+                Continue <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
 
+      {/* Suggested next mission */}
+      {!currentPlaybook && suggestedNext && (
+        <section>
+          <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
+            Suggested next
+          </div>
+          <div className="rounded-md border border-border bg-card/40 p-5">
+            <div className="flex items-start gap-3">
+              <Sparkles className="h-4 w-4 mt-1 text-violet-300 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="text-base font-light tracking-tight text-foreground">{suggestedNext.template.title}</div>
+                <p className="mt-1 text-xs text-muted-foreground">{suggestedNext.template.description}</p>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  {suggestedNext.template.estimated_minutes} min · +{suggestedNext.template.reward_score} score
+                </div>
+              </div>
+              <Button onClick={startSuggested} className="bg-violet-500 hover:bg-violet-600 text-white">
+                Start with Ray <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
 
-      {/* Current recommendations with lifecycle controls */}
+      {/* Current recommendations with Fix with Ray launcher */}
       <section>
         <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
           Ray's current recommendations
@@ -154,14 +239,7 @@ export default function Ray() {
                       </div>
                       {r.body && <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{r.body}</p>}
                       <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => navigate(pageHrefFor(r.page_context))}>
-                          Fix with Ray <ArrowRight className="h-3 w-3 ml-1" />
-                        </Button>
-                        {!inProgress && (
-                          <Button size="sm" variant="ghost" disabled={isBusy} className="h-7 px-2 text-xs text-violet-300 hover:text-violet-200" onClick={() => withBusy(r.id, () => startRecommendation(r.id))}>
-                            <Play className="h-3 w-3 mr-1" /> Start
-                          </Button>
-                        )}
+                        <FixWithRayButton recommendation={r} className="h-7 px-2 text-xs" />
                         <Button size="sm" variant="ghost" disabled={isBusy} className="h-7 px-2 text-xs text-emerald-300 hover:text-emerald-200" onClick={() => withBusy(r.id, () => completeRecommendation(r.id))}>
                           <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Mark handled
                         </Button>
@@ -180,6 +258,46 @@ export default function Ray() {
           </div>
         )}
       </section>
+
+      {/* Paused playbooks */}
+      {pausedPlaybooks.length > 0 && (
+        <section>
+          <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-2 inline-flex items-center gap-2">
+            <Pause className="h-3 w-3" /> Paused playbooks
+          </div>
+          <ul className="rounded-sm border border-border bg-card/40 divide-y divide-border">
+            {pausedPlaybooks.map((p) => (
+              <li key={p.id} className="flex items-center gap-3 px-4 py-3 text-sm">
+                <span className="flex-1 truncate">{p.title}</span>
+                <span className="text-xs text-muted-foreground tabular-nums">{p.progress}%</span>
+                <Button size="sm" variant="ghost" onClick={() => handleResume(p)}>Resume</Button>
+                <Button size="sm" variant="ghost" className="text-muted-foreground" onClick={() => handleArchive(p)}>Archive</Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Completed playbooks — recent wins */}
+      {completedPlaybooks.length > 0 && (
+        <section>
+          <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
+            Recent wins
+          </div>
+          <ul className="rounded-sm border border-border bg-card/40 divide-y divide-border">
+            {completedPlaybooks.map((p) => (
+              <li key={p.id} className="flex items-center gap-3 px-4 py-3 text-sm">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                <span className="flex-1 truncate">{p.title}</span>
+                <span className="text-xs text-violet-300 tabular-nums">+{p.score_delta_actual ?? p.reward_score}</span>
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {p.completed_at ? new Date(p.completed_at).toLocaleDateString() : ''}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Recently, Ray... */}

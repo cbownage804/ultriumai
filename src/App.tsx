@@ -63,6 +63,7 @@ const Trends = lazy(() => import('@/pages/safesuite/Trends'));
 const TrustCenter = lazy(() => import('@/pages/safesuite/TrustCenter'));
 const RayOnboarding = lazy(() => import('@/pages/onboarding/RayOnboarding'));
 const RayTimelinePage = lazy(() => import('@/pages/safesuite/RayTimelinePage'));
+const PlaybookRunnerPage = lazy(() => import('@/pages/safesuite/PlaybookRunnerPage'));
 
 // Public/legal pages
 const Contact = lazy(() => import('@/pages/Contact'));
@@ -165,6 +166,7 @@ function AppRouter() {
           <Route path="/app/brief" element={<SuspenseWrapper><MorningBrief /></SuspenseWrapper>} />
           <Route path="/app/assist" element={<SuspenseWrapper><WraythAssist /></SuspenseWrapper>} />
           <Route path="/app/ray" element={<SuspenseWrapper><Ray /></SuspenseWrapper>} />
+          <Route path="/app/ray/playbook/:runId" element={<SuspenseWrapper><PlaybookRunnerPage /></SuspenseWrapper>} />
           <Route path="/app/timeline" element={<SuspenseWrapper><RayTimelinePage /></SuspenseWrapper>} />
           <Route path="/app/missions" element={<SuspenseWrapper><Missions /></SuspenseWrapper>} />
           <Route path="/app/trends" element={<SuspenseWrapper><Trends /></SuspenseWrapper>} />

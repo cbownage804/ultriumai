@@ -17684,6 +17684,75 @@ export type Database = {
         }
         Relationships: []
       }
+      ray_playbook_runs: {
+        Row: {
+          affected_assets: Json
+          archived_at: string | null
+          category: string | null
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          estimated_minutes: number
+          id: string
+          paused_at: string | null
+          progress: number
+          reward_score: number
+          score_delta_actual: number | null
+          slug: string
+          source_recommendation_id: string | null
+          started_at: string
+          status: string
+          tasks: Json
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          affected_assets?: Json
+          archived_at?: string | null
+          category?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_minutes?: number
+          id?: string
+          paused_at?: string | null
+          progress?: number
+          reward_score?: number
+          score_delta_actual?: number | null
+          slug: string
+          source_recommendation_id?: string | null
+          started_at?: string
+          status?: string
+          tasks?: Json
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          affected_assets?: Json
+          archived_at?: string | null
+          category?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_minutes?: number
+          id?: string
+          paused_at?: string | null
+          progress?: number
+          reward_score?: number
+          score_delta_actual?: number | null
+          slug?: string
+          source_recommendation_id?: string | null
+          started_at?: string
+          status?: string
+          tasks?: Json
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ray_profiles: {
         Row: {
           audience: string | null
@@ -17735,6 +17804,7 @@ export type Database = {
           estimated_fix_seconds: number | null
           id: string
           page_context: string | null
+          playbook_run_id: string | null
           priority: number
           snoozed_until: string | null
           source_finding_ids: Json
@@ -17751,6 +17821,7 @@ export type Database = {
           estimated_fix_seconds?: number | null
           id?: string
           page_context?: string | null
+          playbook_run_id?: string | null
           priority?: number
           snoozed_until?: string | null
           source_finding_ids?: Json
@@ -17767,6 +17838,7 @@ export type Database = {
           estimated_fix_seconds?: number | null
           id?: string
           page_context?: string | null
+          playbook_run_id?: string | null
           priority?: number
           snoozed_until?: string | null
           source_finding_ids?: Json
