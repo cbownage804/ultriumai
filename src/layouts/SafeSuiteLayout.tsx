@@ -49,6 +49,7 @@ import {
   Share2,
   Plug,
   Code2,
+  Activity,
 } from 'lucide-react';
 import { AppSwitcher } from '@/components/AppSwitcher';
 import { HelpCenter } from '@/components/onboarding/HelpCenter';
