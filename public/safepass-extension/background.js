@@ -1463,10 +1463,21 @@ async function wraythPasswordIntel({ host, username, pageType, passkeySupported,
 }
 
 // ---- Timeline sync (best-effort) ----
+function wraythDecodeJwtSub(token) {
+  try {
+    const part = token.split('.')[1];
+    if (!part) return null;
+    const json = atob(part.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(json)?.sub || null;
+  } catch (_) { return null; }
+}
+
 async function wraythSyncTimeline({ event_type, summary, severity = 'info', payload = {} }) {
   try {
     const session = await chrome.storage.session.get(['authToken']);
     if (!session.authToken) return;
+    const userId = wraythDecodeJwtSub(session.authToken);
+    if (!userId) return;
     await fetch(`${API_URL}/rest/v1/ray_timeline`, {
       method: 'POST',
       headers: {
@@ -1475,10 +1486,17 @@ async function wraythSyncTimeline({ event_type, summary, severity = 'info', payl
         'Content-Type': 'application/json',
         Prefer: 'return=minimal',
       },
-      body: JSON.stringify({ event_type, summary, severity, payload, source: 'extension' }),
+      body: JSON.stringify({
+        user_id: userId,
+        event_type,
+        summary,
+        severity,
+        payload: { ...payload, source: 'extension' },
+      }),
     });
   } catch (_) {}
 }
+
 
 // ---- Extra message handlers ----
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
