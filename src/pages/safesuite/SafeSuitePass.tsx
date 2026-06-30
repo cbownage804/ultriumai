@@ -194,6 +194,10 @@ export default function WraythPass() {
               
               {/* Tier Limit Info - Always visible for upselling */}
               <TierLimitInfo feature="safepass" />
+
+              {/* Ray's per-page insight */}
+              <RayInsightPanel context="passwords" />
+
               
               {/* Security Badge - shows architecture on click */}
               <div className="flex justify-center">
