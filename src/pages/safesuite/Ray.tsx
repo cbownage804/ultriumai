@@ -172,9 +172,57 @@ export default function Ray() {
 
       <RayNoticesPanel />
 
+      {/* Current playbook in progress */}
+      {currentPlaybook && (
+        <section>
+          <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
+            Current playbook
+          </div>
+          <div className="rounded-md border border-violet-400/30 bg-violet-500/[0.04] p-5">
+            <div className="flex items-start gap-3">
+              <Sparkles className="h-4 w-4 mt-1 text-violet-300 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="text-base font-light tracking-tight text-foreground">{currentPlaybook.title}</div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  {currentPlaybook.progress}% complete · {currentPlaybook.estimated_minutes} min · +{currentPlaybook.reward_score} score
+                </div>
+                <div className="mt-3 h-1 rounded-full bg-muted overflow-hidden max-w-md">
+                  <div className="h-full bg-violet-400 transition-all" style={{ width: `${currentPlaybook.progress}%` }} />
+                </div>
+              </div>
+              <Button onClick={() => navigate(`/app/ray/playbook/${currentPlaybook.id}`)} className="bg-violet-500 hover:bg-violet-600 text-white">
+                Continue <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
 
+      {/* Suggested next mission */}
+      {!currentPlaybook && suggestedNext && (
+        <section>
+          <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
+            Suggested next
+          </div>
+          <div className="rounded-md border border-border bg-card/40 p-5">
+            <div className="flex items-start gap-3">
+              <Sparkles className="h-4 w-4 mt-1 text-violet-300 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="text-base font-light tracking-tight text-foreground">{suggestedNext.template.title}</div>
+                <p className="mt-1 text-xs text-muted-foreground">{suggestedNext.template.description}</p>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  {suggestedNext.template.estimated_minutes} min · +{suggestedNext.template.reward_score} score
+                </div>
+              </div>
+              <Button onClick={startSuggested} className="bg-violet-500 hover:bg-violet-600 text-white">
+                Start with Ray <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
 
-      {/* Current recommendations with lifecycle controls */}
+      {/* Current recommendations with Fix with Ray launcher */}
       <section>
         <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
           Ray's current recommendations
@@ -203,14 +251,7 @@ export default function Ray() {
                       </div>
                       {r.body && <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{r.body}</p>}
                       <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => navigate(pageHrefFor(r.page_context))}>
-                          Fix with Ray <ArrowRight className="h-3 w-3 ml-1" />
-                        </Button>
-                        {!inProgress && (
-                          <Button size="sm" variant="ghost" disabled={isBusy} className="h-7 px-2 text-xs text-violet-300 hover:text-violet-200" onClick={() => withBusy(r.id, () => startRecommendation(r.id))}>
-                            <Play className="h-3 w-3 mr-1" /> Start
-                          </Button>
-                        )}
+                        <FixWithRayButton recommendation={r} className="h-7 px-2 text-xs" />
                         <Button size="sm" variant="ghost" disabled={isBusy} className="h-7 px-2 text-xs text-emerald-300 hover:text-emerald-200" onClick={() => withBusy(r.id, () => completeRecommendation(r.id))}>
                           <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Mark handled
                         </Button>
@@ -229,6 +270,46 @@ export default function Ray() {
           </div>
         )}
       </section>
+
+      {/* Paused playbooks */}
+      {pausedPlaybooks.length > 0 && (
+        <section>
+          <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-2 inline-flex items-center gap-2">
+            <Pause className="h-3 w-3" /> Paused playbooks
+          </div>
+          <ul className="rounded-sm border border-border bg-card/40 divide-y divide-border">
+            {pausedPlaybooks.map((p) => (
+              <li key={p.id} className="flex items-center gap-3 px-4 py-3 text-sm">
+                <span className="flex-1 truncate">{p.title}</span>
+                <span className="text-xs text-muted-foreground tabular-nums">{p.progress}%</span>
+                <Button size="sm" variant="ghost" onClick={() => handleResume(p)}>Resume</Button>
+                <Button size="sm" variant="ghost" className="text-muted-foreground" onClick={() => handleArchive(p)}>Archive</Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Completed playbooks — recent wins */}
+      {completedPlaybooks.length > 0 && (
+        <section>
+          <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
+            Recent wins
+          </div>
+          <ul className="rounded-sm border border-border bg-card/40 divide-y divide-border">
+            {completedPlaybooks.map((p) => (
+              <li key={p.id} className="flex items-center gap-3 px-4 py-3 text-sm">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                <span className="flex-1 truncate">{p.title}</span>
+                <span className="text-xs text-violet-300 tabular-nums">+{p.score_delta_actual ?? p.reward_score}</span>
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {p.completed_at ? new Date(p.completed_at).toLocaleDateString() : ''}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Recently, Ray... */}
