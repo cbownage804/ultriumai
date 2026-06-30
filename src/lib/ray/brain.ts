@@ -28,15 +28,23 @@ export type RayTimelineEvent = {
   occurred_at: string;
 };
 
+export type RayRecommendationStatus =
+  | 'new'
+  | 'snoozed'
+  | 'in_progress'
+  | 'completed'
+  | 'dismissed';
+
 export type RayRecommendation = {
   id: string;
   user_id: string;
   title: string;
   body: string | null;
   priority: number;
-  status: string;
+  status: RayRecommendationStatus | string;
   dismissed_at: string | null;
   completed_at: string | null;
+  snoozed_until: string | null;
   estimated_fix_seconds: number | null;
   page_context: string | null;
   created_at: string;
