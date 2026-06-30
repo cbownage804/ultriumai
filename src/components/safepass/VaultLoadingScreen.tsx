@@ -63,7 +63,7 @@ export const VaultLoadingScreen = ({ isLoading }: VaultLoadingScreenProps) => {
           <div className="relative mb-8">
             {/* Outer ring animation */}
             <motion.div
-              className="absolute inset-0 rounded-full border-2 border-amber-500/30"
+              className="absolute inset-0 rounded-full border-2 border-primary/30"
               style={{ width: 120, height: 120, margin: -20 }}
               animate={{ rotate: 360 }}
               transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
@@ -71,7 +71,7 @@ export const VaultLoadingScreen = ({ isLoading }: VaultLoadingScreenProps) => {
             
             {/* Middle ring animation */}
             <motion.div
-              className="absolute inset-0 rounded-full border-2 border-amber-500/20"
+              className="absolute inset-0 rounded-full border-2 border-primary/20"
               style={{ width: 100, height: 100, margin: -10 }}
               animate={{ rotate: -360 }}
               transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
@@ -79,7 +79,7 @@ export const VaultLoadingScreen = ({ isLoading }: VaultLoadingScreenProps) => {
             
             {/* Icon container */}
             <motion.div
-              className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-500/20 to-amber-600/10 flex items-center justify-center border border-amber-500/30"
+              className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center border border-primary/30"
               animate={{ 
                 scale: [1, 1.05, 1],
                 boxShadow: [
@@ -98,7 +98,7 @@ export const VaultLoadingScreen = ({ isLoading }: VaultLoadingScreenProps) => {
                   exit={{ scale: 0.5, opacity: 0, rotate: 180 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <IconComponent className="h-10 w-10 text-amber-500" />
+                  <IconComponent className="h-10 w-10 text-primary" />
                 </motion.div>
               </AnimatePresence>
             </motion.div>
@@ -112,16 +112,16 @@ export const VaultLoadingScreen = ({ isLoading }: VaultLoadingScreenProps) => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.3 }}
-              className="text-amber-500 font-medium text-lg mb-6 text-center"
+              className="text-primary font-medium text-lg mb-6 text-center"
             >
               {currentMessage.text}
             </motion.p>
           </AnimatePresence>
 
           {/* Progress bar */}
-          <div className="w-64 h-1 bg-amber-500/10 rounded-full overflow-hidden">
+          <div className="w-64 h-1 bg-primary/10 rounded-full overflow-hidden">
             <motion.div
-              className="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full"
+              className="h-full bg-gradient-to-r from-primary to-primary rounded-full"
               initial={{ width: 0 }}
               animate={{ width: `${Math.min(progress, 90)}%` }}
               transition={{ duration: 0.3 }}
@@ -135,7 +135,7 @@ export const VaultLoadingScreen = ({ isLoading }: VaultLoadingScreenProps) => {
             transition={{ delay: 0.5 }}
             className="mt-8 flex items-center gap-2 text-xs text-muted-foreground"
           >
-            <Shield className="h-3 w-3 text-amber-500/60" />
+            <Shield className="h-3 w-3 text-primary/60" />
             <span>Protected with military-grade encryption</span>
           </motion.div>
         </motion.div>

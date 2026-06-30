@@ -208,8 +208,8 @@ export const PasswordHealthDashboard = () => {
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-500';
-    if (score >= 60) return 'text-yellow-500';
-    if (score >= 40) return 'text-orange-500';
+    if (score >= 60) return 'text-primary';
+    if (score >= 40) return 'text-primary';
     return 'text-red-500';
   };
 
@@ -225,7 +225,7 @@ export const PasswordHealthDashboard = () => {
       case 'critical':
         return <XCircle className="h-4 w-4 text-red-500" />;
       case 'warning':
-        return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
+        return <AlertTriangle className="h-4 w-4 text-primary" />;
       default:
         return <Clock className="h-4 w-4 text-blue-500" />;
     }
@@ -363,8 +363,8 @@ export const PasswordHealthDashboard = () => {
         >
           <Card className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-yellow-500/10 flex items-center justify-center">
-                <TrendingUp className="h-5 w-5 text-yellow-500" />
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <TrendingUp className="h-5 w-5 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.medium}</p>
@@ -399,8 +399,8 @@ export const PasswordHealthDashboard = () => {
         >
           <Card className="p-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-orange-500/10 flex items-center justify-center">
-                <CopyIcon className="h-5 w-5 text-orange-500" />
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <CopyIcon className="h-5 w-5 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.reused}</p>
@@ -431,7 +431,7 @@ export const PasswordHealthDashboard = () => {
           <div>
             <div className="flex justify-between text-sm mb-1">
               <span className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-yellow-500" />
+                <div className="h-3 w-3 rounded-full bg-primary" />
                 Medium ({stats.medium})
               </span>
               <span>{stats.total > 0 ? Math.round((stats.medium / stats.total) * 100) : 0}%</span>
@@ -457,7 +457,7 @@ export const PasswordHealthDashboard = () => {
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-yellow-500" />
+              <AlertTriangle className="h-4 w-4 text-primary" />
               Issues Found ({issues.length})
             </CardTitle>
           </CardHeader>

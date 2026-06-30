@@ -13,7 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useWraythSubscription } from '@/hooks/useSafeSuite';
 import { SAFESUITE_TIERS } from '@/config/safeSuiteTiers';
 import { isWraythDomain } from '@/utils/subdomain';
-import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';
+
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -188,11 +188,12 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
 
   return (
     <aside className="flex flex-col h-full bg-card border-r border-border">
-      {/* Wordmark */}
-      <div className="px-4 pt-4 pb-3 border-b border-border">
-        <Link to={landingPath} className="flex items-center gap-2">
-          <img src={safesuiteLogo} alt="Wrayth" className="h-7 w-auto object-contain" />
-          <span className="text-sm tracking-[0.28em] text-foreground/90">WRAYTH</span>
+      {/* Wordmark — single mark, white, vertically centered */}
+      <div className="h-16 px-5 flex items-center border-b border-border">
+        <Link to={landingPath} className="flex items-center" aria-label="Wrayth">
+          <span className="text-[15px] font-light tracking-[0.42em] text-foreground select-none">
+            WRAYTH
+          </span>
         </Link>
       </div>
 
@@ -271,14 +272,19 @@ function WraythLayoutInner() {
   const userInitials = user?.email?.split('@')[0].slice(0, 2).toUpperCase() || 'U';
 
   return (
-    <div className="min-h-screen flex bg-background">
-      <div className="hidden lg:block w-64 flex-shrink-0">
+    <div className="min-h-screen flex bg-background relative">
+      {/* Ambient violet — Ray's signature */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <div className="absolute -top-32 -left-32 h-[480px] w-[480px] rounded-full bg-[hsl(262_70%_55%/0.08)] blur-[120px]" />
+        <div className="absolute top-1/3 -right-40 h-[520px] w-[520px] rounded-full bg-[hsl(252_70%_55%/0.06)] blur-[140px]" />
+      </div>
+      <div className="hidden lg:block w-64 flex-shrink-0 relative z-10">
         <div className="fixed top-0 left-0 h-full w-64 overflow-y-auto">
           <Sidebar />
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col min-h-screen w-full">
+      <div className="flex-1 flex flex-col min-h-screen w-full relative z-10">
         <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 border-b border-border safe-area-inset-top">
           <div className="flex items-center justify-between h-14 sm:h-16 px-3 sm:px-4 lg:px-6">
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>

@@ -101,13 +101,13 @@ export const VaultLandingDemo = () => {
 
   const getStrengthColor = (strength: number) => {
     if (strength >= 80) return 'text-emerald-500';
-    if (strength >= 60) return 'text-amber-500';
+    if (strength >= 60) return 'text-primary';
     return 'text-red-500';
   };
 
   const getStrengthBg = (strength: number) => {
     if (strength >= 80) return 'bg-emerald-500';
-    if (strength >= 60) return 'bg-amber-500';
+    if (strength >= 60) return 'bg-primary';
     return 'bg-red-500';
   };
 
@@ -313,8 +313,8 @@ export const VaultLandingDemo = () => {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                        <FileText className="h-5 w-5 text-amber-500" />
+                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <FileText className="h-5 w-5 text-primary" />
                       </div>
                       <div>
                         <div className="font-medium">{note.title}</div>
@@ -348,7 +348,7 @@ export const VaultLandingDemo = () => {
               <Card key={card.id} className="bg-gradient-to-br from-slate-800 to-slate-900 text-white overflow-hidden">
                 <CardContent className="p-6">
                   <div className="flex justify-between items-start mb-8">
-                    <div className="h-10 w-14 bg-amber-400 rounded opacity-80" />
+                    <div className="h-10 w-14 bg-primary rounded opacity-80" />
                     <Badge variant="secondary" className="bg-white/20 text-white">
                       {card.type.toUpperCase()}
                     </Badge>
@@ -374,10 +374,10 @@ export const VaultLandingDemo = () => {
 
         {/* Breach Monitor Tab */}
         <TabsContent value="breach" className="space-y-4">
-          <Card className="border-amber-500/30 bg-amber-500/5">
+          <Card className="border-primary/30 bg-primary/5">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-amber-500" />
+                <Shield className="h-5 w-5 text-primary" />
                 Breach Monitoring
               </CardTitle>
             </CardHeader>

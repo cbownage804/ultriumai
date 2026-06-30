@@ -347,7 +347,7 @@ export const ExpirationReminders = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-yellow-500" />
+              <AlertTriangle className="h-5 w-5 text-primary" />
               Passwords Needing Attention ({expiringEntries.length})
             </CardTitle>
             <CardDescription>
@@ -388,7 +388,7 @@ export const ExpirationReminders = () => {
                       <Button 
                         size="sm" 
                         onClick={() => markAsRotated(entry.id)}
-                        className="bg-amber-500 hover:bg-amber-600 text-black"
+                        className="bg-primary hover:bg-primary text-black"
                       >
                         <RefreshCw className="h-3 w-3 mr-1" />
                         Mark as Rotated

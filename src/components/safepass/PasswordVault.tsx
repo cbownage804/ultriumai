@@ -484,28 +484,28 @@ export const PasswordVault = () => {
     <div className="space-y-4 sm:space-y-6">
       {/* Tabs Navigation */}
       <Tabs defaultValue="passwords" className="w-full">
-        <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid mb-4 sm:mb-6 bg-[#1a1a1a] border border-amber-500/10 h-auto p-1">
-          <TabsTrigger value="passwords" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500 touch-target py-2.5 sm:py-2">
+        <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid mb-4 sm:mb-6 bg-[#1a1a1a] border border-primary/10 h-auto p-1">
+          <TabsTrigger value="passwords" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-primary/20 data-[state=active]:text-primary touch-target py-2.5 sm:py-2">
             <Key className="h-4 w-4" />
             <span className="hidden sm:inline text-sm">Passwords</span>
           </TabsTrigger>
-          <TabsTrigger value="notes" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500 touch-target py-2.5 sm:py-2">
+          <TabsTrigger value="notes" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-primary/20 data-[state=active]:text-primary touch-target py-2.5 sm:py-2">
             <FileText className="h-4 w-4" />
             <span className="hidden sm:inline text-sm">Notes</span>
           </TabsTrigger>
-          <TabsTrigger value="cards" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500 touch-target py-2.5 sm:py-2">
+          <TabsTrigger value="cards" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-primary/20 data-[state=active]:text-primary touch-target py-2.5 sm:py-2">
             <CreditCard className="h-4 w-4" />
             <span className="hidden sm:inline text-sm">Cards</span>
           </TabsTrigger>
-          <TabsTrigger value="identity" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500 touch-target py-2.5 sm:py-2">
+          <TabsTrigger value="identity" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-primary/20 data-[state=active]:text-primary touch-target py-2.5 sm:py-2">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline text-sm">Identity</span>
           </TabsTrigger>
-          <TabsTrigger value="2fa" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500 touch-target py-2.5 sm:py-2">
+          <TabsTrigger value="2fa" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-primary/20 data-[state=active]:text-primary touch-target py-2.5 sm:py-2">
             <Lock className="h-4 w-4" />
             <span className="hidden sm:inline text-sm">2FA</span>
           </TabsTrigger>
-          <TabsTrigger value="health" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500 touch-target py-2.5 sm:py-2">
+          <TabsTrigger value="health" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-primary/20 data-[state=active]:text-primary touch-target py-2.5 sm:py-2">
             <Heart className="h-4 w-4" />
             <span className="hidden sm:inline text-sm">Health</span>
           </TabsTrigger>
@@ -515,31 +515,30 @@ export const PasswordVault = () => {
         <TabsContent value="passwords" className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-white">Password Vault</h2>
-          <p className="text-gray-400 text-sm sm:text-base">Securely store and manage your passwords</p>
+        <div className="sr-only">
+          <h2>Passwords</h2>
         </div>
         
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" onClick={() => navigate('/app/pass/import')} className="border-amber-500/30 text-amber-500 hover:bg-amber-500/10 hover:text-amber-400 h-10 sm:h-9 touch-target tap-scale flex-1 sm:flex-initial min-w-[100px]">
+          <Button variant="outline" onClick={() => navigate('/app/pass/import')} className="border-primary/30 text-primary hover:bg-primary/10 hover:text-primary h-10 sm:h-9 touch-target tap-scale flex-1 sm:flex-initial min-w-[100px]">
             <Upload className="w-4 h-4 mr-1 sm:mr-2" />
             <span className="text-sm">Import</span>
           </Button>
-          <Button variant="outline" onClick={() => navigate('/app/pass/export')} className="border-amber-500/30 text-amber-500 hover:bg-amber-500/10 hover:text-amber-400 h-10 sm:h-9 touch-target tap-scale flex-1 sm:flex-initial min-w-[100px]">
+          <Button variant="outline" onClick={() => navigate('/app/pass/export')} className="border-primary/30 text-primary hover:bg-primary/10 hover:text-primary h-10 sm:h-9 touch-target tap-scale flex-1 sm:flex-initial min-w-[100px]">
             <Download className="w-4 h-4 mr-1 sm:mr-2" />
             <span className="text-sm">Export</span>
           </Button>
           
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-amber-500 hover:bg-amber-600 text-black h-10 sm:h-9 touch-target tap-scale flex-1 sm:flex-initial min-w-[140px]">
+              <Button className="bg-primary hover:bg-primary text-black h-10 sm:h-9 touch-target tap-scale flex-1 sm:flex-initial min-w-[140px]">
                 <Plus className="w-4 h-4 mr-1 sm:mr-2" />
                 <span className="text-sm">Add Password</span>
               </Button>
             </DialogTrigger>
-          <DialogContent className="max-w-md border-amber-500/30 mx-4 sm:mx-auto max-h-[85vh] overflow-y-auto">
+          <DialogContent className="max-w-md border-primary/30 mx-4 sm:mx-auto max-h-[85vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-amber-400 text-lg sm:text-xl">
+              <DialogTitle className="text-primary text-lg sm:text-xl">
                 {editingEntry ? 'Edit Password Entry' : 'Add New Password'}
               </DialogTitle>
               <DialogDescription className="text-sm">
@@ -549,23 +548,23 @@ export const PasswordVault = () => {
             
             <div className="space-y-4">
               <div>
-                <Label htmlFor="title" className="text-amber-200/80 text-sm">Title *</Label>
+                <Label htmlFor="title" className="text-primary/80 text-sm">Title *</Label>
                 <Input
                   id="title"
                   value={newEntry.title}
                   onChange={(e) => setNewEntry(prev => ({ ...prev, title: e.target.value }))}
                   placeholder="e.g., Gmail Account"
-                  className="border-amber-500/30 focus:border-amber-500 focus:ring-amber-500/20 h-11 sm:h-10 text-base sm:text-sm"
+                  className="border-primary/30 focus:border-primary focus:ring-primary/20 h-11 sm:h-10 text-base sm:text-sm"
                 />
               </div>
 
               <div>
-                <Label htmlFor="category" className="text-amber-200/80">Category</Label>
+                <Label htmlFor="category" className="text-primary/80">Category</Label>
                 <Select
                   value={newEntry.category}
                   onValueChange={(value) => setNewEntry(prev => ({ ...prev, category: value }))}
                 >
-                  <SelectTrigger className="border-amber-500/30 focus:border-amber-500 focus:ring-amber-500/20">
+                  <SelectTrigger className="border-primary/30 focus:border-primary focus:ring-primary/20">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -579,36 +578,36 @@ export const PasswordVault = () => {
               </div>
 
               <div>
-                <Label htmlFor="website" className="text-amber-200/80">Website</Label>
+                <Label htmlFor="website" className="text-primary/80">Website</Label>
                 <Input
                   id="website"
                   value={newEntry.website}
                   onChange={(e) => setNewEntry(prev => ({ ...prev, website: e.target.value }))}
                   placeholder="https://example.com"
-                  className="border-amber-500/30 focus:border-amber-500 focus:ring-amber-500/20"
+                  className="border-primary/30 focus:border-primary focus:ring-primary/20"
                 />
               </div>
 
               <div>
-                <Label htmlFor="username" className="text-amber-200/80">Username/Email</Label>
+                <Label htmlFor="username" className="text-primary/80">Username/Email</Label>
                 <Input
                   id="username"
                   value={newEntry.username}
                   onChange={(e) => setNewEntry(prev => ({ ...prev, username: e.target.value }))}
                   placeholder="your@email.com"
-                  className="border-amber-500/30 focus:border-amber-500 focus:ring-amber-500/20"
+                  className="border-primary/30 focus:border-primary focus:ring-primary/20"
                 />
               </div>
 
               <div>
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-amber-200/80">Password *</Label>
+                  <Label htmlFor="password" className="text-primary/80">Password *</Label>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     onClick={handleGeneratePassword}
-                    className="border-amber-500/30 hover:bg-amber-500/10 hover:text-amber-400"
+                    className="border-primary/30 hover:bg-primary/10 hover:text-primary"
                   >
                     <RefreshCw className="w-3 h-3 mr-1" />
                     Generate
@@ -621,13 +620,13 @@ export const PasswordVault = () => {
                     value={newEntry.password}
                     onChange={(e) => setNewEntry(prev => ({ ...prev, password: e.target.value }))}
                     placeholder="Enter or generate password"
-                    className="pr-10 border-amber-500/30 focus:border-amber-500 focus:ring-amber-500/20"
+                    className="pr-10 border-primary/30 focus:border-primary focus:ring-primary/20"
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0 hover:text-amber-400"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0 hover:text-primary"
                     onClick={() => setShowNewPassword(!showNewPassword)}
                   >
                     {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -643,14 +642,14 @@ export const PasswordVault = () => {
               </div>
 
               <div>
-                <Label htmlFor="notes" className="text-amber-200/80">Notes</Label>
+                <Label htmlFor="notes" className="text-primary/80">Notes</Label>
                 <Textarea
                   id="notes"
                   value={newEntry.notes}
                   onChange={(e) => setNewEntry(prev => ({ ...prev, notes: e.target.value }))}
                   placeholder="Additional notes..."
                   rows={3}
-                  className="border-amber-500/30 focus:border-amber-500 focus:ring-amber-500/20"
+                  className="border-primary/30 focus:border-primary focus:ring-primary/20"
                 />
               </div>
 
@@ -658,7 +657,7 @@ export const PasswordVault = () => {
                 <Button 
                   onClick={handleSaveEntry}
                   disabled={!newEntry.title || !newEntry.password || !isUnlocked || isSaving}
-                  className="flex-1 bg-amber-500 hover:bg-amber-600 text-black"
+                  className="flex-1 bg-primary hover:bg-primary text-black"
                 >
                   {isSaving ? (
                     <>
@@ -701,22 +700,22 @@ export const PasswordVault = () => {
       {/* Security Overview - Clickable to sort */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card 
-          className={`border-amber-500/20 bg-card/80 cursor-pointer transition-all hover:border-amber-500/50 ${sortBy === 'strong' ? 'ring-2 ring-amber-500 ring-offset-2 ring-offset-background' : ''}`}
+          className={`border-primary/20 bg-card/80 cursor-pointer transition-all hover:border-primary/50 ${sortBy === 'strong' ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}`}
           onClick={() => setSortBy(sortBy === 'strong' ? 'all' : 'strong')}
         >
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="p-2 rounded-lg bg-amber-500/10">
-                  <Shield className="h-5 w-5 text-amber-500" />
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Shield className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">No Breaches</p>
-                  <p className="text-2xl font-bold text-amber-500">{strongPasswords}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Security Health</p>
+                  <p className="text-2xl font-light text-primary tabular-nums">{strongPasswords}<span className="text-sm text-muted-foreground font-light ml-1">strong</span></p>
                 </div>
               </div>
               {sortBy === 'strong' && (
-                <Badge variant="outline" className="border-amber-500/50 text-amber-500 text-xs">
+                <Badge variant="outline" className="border-primary/50 text-primary text-xs">
                   Sorted
                 </Badge>
               )}
@@ -735,8 +734,8 @@ export const PasswordVault = () => {
                   <AlertTriangle className="h-5 w-5 text-red-500" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Weak</p>
-                  <p className="text-2xl font-bold text-red-500">{weakPasswords}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Breach Status</p>
+                  <p className="text-2xl font-light text-red-500 tabular-nums">{weakPasswords}<span className="text-sm text-muted-foreground font-light ml-1">need attention</span></p>
                 </div>
               </div>
               {sortBy === 'weak' && (
@@ -748,15 +747,15 @@ export const PasswordVault = () => {
           </CardContent>
         </Card>
 
-        <Card className="border-amber-500/20 bg-card/80">
+        <Card className="border-primary/20 bg-card/80">
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-amber-500/10">
-                <Lock className="h-5 w-5 text-amber-500" />
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Lock className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Entries</p>
-                <p className="text-2xl font-bold text-amber-500">{entries.length}</p>
+                <p className="text-sm font-medium text-muted-foreground">Passwords Stored</p>
+                <p className="text-2xl font-light text-foreground tabular-nums">{entries.length}</p>
               </div>
             </div>
           </CardContent>

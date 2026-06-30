@@ -209,7 +209,7 @@ export const TOTPManager = () => {
         
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-black">
+            <Button size="sm" className="bg-primary hover:bg-primary text-black">
               <Plus className="h-4 w-4 mr-1" />
               Add 2FA
             </Button>
@@ -251,7 +251,7 @@ export const TOTPManager = () => {
                 </p>
               </div>
               <div className="flex gap-2">
-                <Button onClick={handleAddCode} className="flex-1 bg-amber-500 hover:bg-amber-600 text-black">
+                <Button onClick={handleAddCode} className="flex-1 bg-primary hover:bg-primary text-black">
                   Add Code
                 </Button>
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>

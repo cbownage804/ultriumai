@@ -78,8 +78,8 @@ export const ScanHistory = ({ scans, onScanDeleted, onScanSelect }: ScanHistoryP
 
   const getScoreBg = (score: number) => {
     if (score >= 80) return 'bg-green-500/10';
-    if (score >= 60) return 'bg-yellow-500/10';
-    if (score >= 40) return 'bg-orange-500/10';
+    if (score >= 60) return 'bg-primary/10';
+    if (score >= 40) return 'bg-primary/10';
     return 'bg-red-500/10';
   };
 
@@ -139,13 +139,13 @@ export const ScanHistory = ({ scans, onScanDeleted, onScanSelect }: ScanHistoryP
                         </span>
                       )}
                       {scan.weak_count > 0 && (
-                        <span className="flex items-center gap-1 text-yellow-500">
+                        <span className="flex items-center gap-1 text-primary">
                           <AlertTriangle className="h-3 w-3" />
                           {scan.weak_count} weak
                         </span>
                       )}
                       {scan.reused_count > 0 && (
-                        <span className="flex items-center gap-1 text-orange-500">
+                        <span className="flex items-center gap-1 text-primary">
                           <RefreshCw className="h-3 w-3" />
                           {scan.reused_count} reused
                         </span>

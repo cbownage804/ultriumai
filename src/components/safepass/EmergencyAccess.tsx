@@ -153,7 +153,7 @@ export const EmergencyAccess = () => {
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-amber-500 hover:bg-amber-600 text-black">
+            <Button className="bg-primary hover:bg-primary text-black">
               <UserPlus className="w-4 h-4 mr-2" />
               Add Trusted Contact
             </Button>
@@ -197,7 +197,7 @@ export const EmergencyAccess = () => {
                   Time to deny the request before access is granted
                 </p>
               </div>
-              <Button onClick={handleAddContact} disabled={isAdding} className="w-full bg-amber-500 hover:bg-amber-600 text-black">
+              <Button onClick={handleAddContact} disabled={isAdding} className="w-full bg-primary hover:bg-primary text-black">
                 {isAdding ? (
                   <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Adding...</>
                 ) : (
@@ -210,10 +210,10 @@ export const EmergencyAccess = () => {
       </div>
 
       {/* Info Card */}
-      <Card className="bg-gradient-to-r from-amber-500/10 to-red-500/10 border-amber-500/20">
+      <Card className="bg-gradient-to-r from-primary/10 to-red-500/10 border-primary/20">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+            <AlertTriangle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
             <div className="space-y-1">
               <h4 className="font-medium">How Emergency Access Works</h4>
               <ul className="text-sm text-muted-foreground space-y-1">
@@ -320,8 +320,8 @@ export const EmergencyAccess = () => {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center">
-                        <HeartPulse className="w-5 h-5 text-amber-500" />
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <HeartPulse className="w-5 h-5 text-primary" />
                       </div>
                       <div>
                         <p className="font-medium">Emergency Access Request</p>

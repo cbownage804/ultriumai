@@ -289,7 +289,7 @@ export const IdentityProfiles = () => {
         
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-amber-500 hover:bg-amber-600 text-black" onClick={() => {
+            <Button className="bg-primary hover:bg-primary text-black" onClick={() => {
               setEditingIdentity(null);
               setNewIdentity({
                 name: '', firstName: '', lastName: '', email: '', phone: '',
@@ -413,7 +413,7 @@ export const IdentityProfiles = () => {
               </div>
               
               <div className="flex gap-2 pt-4">
-                <Button onClick={handleSaveIdentity} className="flex-1 bg-amber-500 hover:bg-amber-600 text-black">
+                <Button onClick={handleSaveIdentity} className="flex-1 bg-primary hover:bg-primary text-black">
                   {editingIdentity ? 'Update' : 'Save'} Identity
                 </Button>
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
@@ -446,7 +446,7 @@ export const IdentityProfiles = () => {
           <User className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
           <h3 className="text-lg font-semibold mb-2">No Identity Profiles</h3>
           <p className="text-muted-foreground mb-4">Save your information for quick checkout</p>
-          <Button className="bg-amber-500 hover:bg-amber-600 text-black" onClick={() => setIsAddDialogOpen(true)}>
+          <Button className="bg-primary hover:bg-primary text-black" onClick={() => setIsAddDialogOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Add Identity
           </Button>
