@@ -17,6 +17,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle2, X, Lock, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AnimatedHeader, GlowContainer, SAFESUITE_THEMES } from '@/components/safesuite/SafeSuiteEffects';
+import { RayInsightPanel } from '@/components/ray/RayInsightPanel';
 import safepassLogo from '@/assets/safepass-logo.png';
 import heroSafepassBg from '@/assets/hero-safepass-bg.jpg';
 
