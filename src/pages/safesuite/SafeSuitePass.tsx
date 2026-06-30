@@ -8,17 +8,15 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { FeatureGate, TierLimitInfo } from '@/components/safesuite/SafeSuitePaywall';
+import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
 import { PasswordVault } from '@/components/safepass/PasswordVault';
 import { MasterPasswordSetup } from '@/components/safepass/MasterPasswordSetup';
-import { MFARecommendationBanner } from '@/components/safepass/MFARecommendationBanner';
-import { SecurityTipsModal } from '@/components/safepass/SecurityTipsModal';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle2, X, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RayInsightPanel } from '@/components/ray/RayInsightPanel';
+import { RayConversationCard } from '@/components/ray/RayConversationCard';
 import { RayPageHeader } from '@/components/ray/RayPageHeader';
 
 export default function PasswordsPage() {
@@ -154,13 +152,7 @@ export default function PasswordsPage() {
                 description="Securely stores your credentials and continuously monitors password health."
               />
 
-              <TierLimitInfo feature="safepass" />
-
-              <RayInsightPanel context="passwords" />
-
-              <MFARecommendationBanner />
-
-              <SecurityTipsModal />
+              <RayConversationCard context="passwords" />
 
               <PasswordVault />
             </motion.div>
