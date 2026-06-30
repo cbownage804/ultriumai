@@ -559,6 +559,97 @@ export default function RayOnboarding() {
           </div>
         )}
 
+        {step === 'mfa' && (
+          <div className="space-y-8">
+            <RaySays>
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Optional · second factor</p>
+              <p className="text-lg text-foreground">
+                Want to add a second login factor? I recommend it, but it's optional.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                If someone ever gets your password, a code from your phone keeps them out. You can always set this up later in Settings.
+              </p>
+            </RaySays>
+
+            <div className="ml-[72px] space-y-6 max-w-md">
+              {mfaPhase === 'offer' && (
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    size="lg"
+                    onClick={beginMfaSetup}
+                    disabled={mfaBusy}
+                    className="rounded-sm bg-foreground text-background hover:bg-foreground/90"
+                  >
+                    {mfaBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+                    Enable 2FA
+                  </Button>
+                  <Button size="lg" variant="ghost" onClick={() => setStep('import')} className="rounded-sm">
+                    Maybe later
+                  </Button>
+                </div>
+              )}
+
+              {mfaPhase === 'qr' && (
+                <div className="space-y-5">
+                  {mfaQr && (
+                    <div className="flex justify-center">
+                      <div className="bg-white p-3 rounded-sm">
+                        <img src={mfaQr} alt="2FA QR code" className="w-44 h-44" />
+                      </div>
+                    </div>
+                  )}
+                  <div className="space-y-2">
+                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Or enter manually</p>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 rounded-sm border border-border bg-card/40 px-3 py-2 text-xs font-mono break-all">
+                        {mfaSecret}
+                      </code>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="rounded-sm"
+                        onClick={() => navigator.clipboard.writeText(mfaSecret)}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <Input
+                    inputMode="numeric"
+                    placeholder="6-digit code"
+                    value={mfaCode}
+                    onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    className="rounded-sm text-center text-xl font-mono tracking-[0.4em]"
+                    maxLength={6}
+                  />
+                  {mfaErr && <div className="text-sm text-red-400">{mfaErr}</div>}
+                  <div className="flex flex-wrap gap-3">
+                    <Button
+                      size="lg"
+                      onClick={verifyMfaCode}
+                      disabled={mfaBusy || mfaCode.length !== 6}
+                      className="rounded-sm bg-foreground text-background hover:bg-foreground/90"
+                    >
+                      {mfaBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                      Verify & continue
+                    </Button>
+                    <Button size="lg" variant="ghost" onClick={() => setStep('import')} className="rounded-sm">
+                      Skip
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {mfaPhase === 'done' && (
+                <div className="flex items-center gap-3 text-emerald-400">
+                  <ShieldCheck className="h-5 w-5" />
+                  <span className="text-sm">2FA is on. Taking you to the next step…</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {step === 'import' && (
           <div className="space-y-6">
             <RaySays>
