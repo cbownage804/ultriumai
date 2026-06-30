@@ -558,16 +558,7 @@ export default function WraythDashboard() {
         <MorningBriefHero firstName={firstName} />
       </div>
       <RayNoticesPanel variant="hero" />
-      {!isSubscribed && (
-        <div className="wrayth-chamfer border border-[#3A3A3A] bg-[#181818] px-5 py-3 flex flex-wrap items-center justify-between gap-3">
-          <span className="text-xs text-muted-foreground">Unlock more of Ray&rsquo;s capabilities.</span>
-          <Link to="/app/billing">
-            <Button variant="outline" className="wrayth-chamfer-sm border-primary/40 text-primary hover:bg-primary/10">
-              Upgrade
-            </Button>
-          </Link>
-        </div>
-      )}
+      {/* Upgrade prompts stay contextual (password/seat limits) — Home is focused on security. */}
 
 
       {/* Subscription Status Banner */}
