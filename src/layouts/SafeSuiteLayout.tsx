@@ -87,6 +87,7 @@ function getSections(): NavSection[] {
       id: 'main',
       items: [
         { label: 'Home', path: getWraythPath('/dashboard'), icon: Home },
+        { label: 'Morning Brief', path: getWraythPath('/brief'), icon: Sparkles },
         { label: 'Ray', path: getWraythPath('/ray'), icon: Eye },
         { label: 'Timeline', path: getWraythPath('/timeline'), icon: Activity },
       ],
@@ -95,24 +96,24 @@ function getSections(): NavSection[] {
       id: 'protection',
       label: 'Protection',
       items: [
-        { label: 'Passwords', path: getWraythPath('/pass'), icon: KeyRound, feature: 'safepass' },
-        { label: '2FA',       path: getWraythPath('/mfa'),  icon: ShieldCheck, feature: 'safepass' },
-        { label: 'Threats',   path: getWraythPath('/scan'), icon: ShieldAlert, feature: 'safescan' },
-        { label: 'Exposure',  path: getWraythPath('/web'),  icon: Globe, feature: 'safeweb' },
-        { label: 'Identity',  path: getWraythPath('/identity'), icon: UserCircle2, badge: 'SOON' },
-        { label: 'Devices',   path: getWraythPath('/devices'),  icon: Monitor, badge: 'SOON' },
-        { label: 'Reports',   path: getWraythPath('/reports'),  icon: FileText, badge: 'SOON' },
+        { label: 'Passwords', path: getWraythPath('/passwords'), icon: KeyRound, feature: 'safepass' },
+        { label: '2FA',       path: getWraythPath('/mfa'),       icon: ShieldCheck, feature: 'safepass' },
+        { label: 'Threats',   path: getWraythPath('/threats'),   icon: ShieldAlert, feature: 'safescan' },
+        { label: 'Exposure',  path: getWraythPath('/exposure'),  icon: Globe, feature: 'safeweb' },
+        { label: 'Identity',  path: getWraythPath('/identity'),  icon: UserCircle2 },
+        { label: 'Devices',   path: getWraythPath('/devices'),   icon: Monitor },
+        { label: 'Reports',   path: getWraythPath('/reports'),   icon: FileText, badge: 'SOON' },
       ],
     },
     {
       id: 'workspace',
       label: 'Workspace',
       items: [
-        { label: 'Organizations', path: getWraythPath('/pass/users'), icon: Building2 },
-        { label: 'Team',          path: getWraythPath('/pass/team'),  icon: Users },
-        { label: 'Shared',        path: getWraythPath('/pass/shared'), icon: Share2 },
+        { label: 'Organizations', path: getWraythPath('/passwords/users'), icon: Building2 },
+        { label: 'Team',          path: getWraythPath('/passwords/team'),  icon: Users },
+        { label: 'Shared',        path: getWraythPath('/passwords/shared'), icon: Share2 },
         { label: 'API',           path: getWraythPath('/settings'),    icon: Code2, badge: 'SOON' },
-        { label: 'Extensions',    path: getWraythPath('/pass/extension'), icon: Plug },
+        { label: 'Extensions',    path: getWraythPath('/passwords/extension'), icon: Plug },
       ],
     },
   ];
@@ -190,9 +191,12 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
     <aside className="flex flex-col h-full bg-card border-r border-border">
       {/* Wordmark — single mark, white, vertically centered */}
       <div className="h-16 px-5 flex items-center border-b border-border">
-        <Link to={landingPath} className="flex items-center" aria-label="Wrayth">
+        <Link to={landingPath} className="flex items-center gap-2" aria-label="Wrayth">
           <span className="text-[15px] font-light tracking-[0.42em] text-foreground select-none">
             WRAYTH
+          </span>
+          <span className="text-[9px] font-medium tracking-[0.18em] uppercase px-1.5 py-0.5 rounded-sm border border-violet-500/30 text-violet-300/80">
+            Beta
           </span>
         </Link>
       </div>

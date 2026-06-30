@@ -164,10 +164,10 @@ function SecurityScoreCard({ stats }: { stats: DashboardStats }) {
 
 function QuickActionsCard() {
   const options = [
-    { to: '/app/pass', label: 'Save a password' },
-    { to: '/app/scan', label: 'Check an email or file' },
-    { to: '/app/scan', label: 'Scan a website' },
-    { to: '/app/web', label: 'Review my exposure' },
+    { to: '/app/passwords', label: 'Save a password' },
+    { to: '/app/threats', label: 'Check an email or file' },
+    { to: '/app/threats', label: 'Scan a website' },
+    { to: '/app/exposure', label: 'Review my exposure' },
   ];
 
   const openAskRay = () => {
@@ -364,7 +364,7 @@ const productCardsConfig = [
     productLogo: safeSuiteProducts.safepass.logo,
     title: 'Passwords',
     description: 'Ray keeps every credential strong and unique.',
-    path: '/app/pass',
+    path: '/app/passwords',
     statLabel: 'Stored'
   },
   {
@@ -373,7 +373,7 @@ const productCardsConfig = [
     productLogo: safeSuiteProducts.safescan.logo,
     title: 'Threats',
     description: 'Ray analyzes anything suspicious you send over.',
-    path: '/app/scan',
+    path: '/app/threats',
     statLabel: 'Analyzed this month'
   },
   {
@@ -382,7 +382,7 @@ const productCardsConfig = [
     productLogo: safeSuiteProducts.safeweb.logo,
     title: 'Exposure',
     description: 'Ray watches the dark web for your identity.',
-    path: '/app/web',
+    path: '/app/exposure',
     statLabel: 'Identities watched'
   },
 ];

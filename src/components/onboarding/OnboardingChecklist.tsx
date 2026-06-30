@@ -83,7 +83,7 @@ export const OnboardingChecklist = ({
           title: 'Save your first password',
           description: 'Store a password in Vault vault',
           icon: <Key className="h-4 w-4" />,
-          href: '/app/pass',
+          href: '/app/passwords',
           isComplete: completedItems.includes('first_password'),
         },
         {
@@ -91,7 +91,7 @@ export const OnboardingChecklist = ({
           title: 'Run your first security scan',
           description: 'Check your digital security posture',
           icon: <Zap className="h-4 w-4" />,
-          href: '/app/scan',
+          href: '/app/threats',
           isComplete: completedItems.includes('first_scan'),
           reward: 'Free threat report',
         },

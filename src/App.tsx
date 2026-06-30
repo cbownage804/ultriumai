@@ -27,9 +27,10 @@ const WraythAuth = lazy(() => import('@/pages/safesuite/SafeSuiteAuth'));
 const WraythDashboard = lazy(() => import('@/pages/safesuite/SafeSuiteDashboard'));
 const WraythBilling = lazy(() => import('@/pages/safesuite/SafeSuiteBilling'));
 const WraythSettings = lazy(() => import('@/pages/safesuite/SafeSuiteSettings'));
-const WraythPass = lazy(() => import('@/pages/safesuite/SafeSuitePass'));
-const WraythScan = lazy(() => import('@/pages/safesuite/SafeSuiteScan'));
-const WraythWeb = lazy(() => import('@/pages/safesuite/SafeSuiteWeb'));
+const Passwords = lazy(() => import('@/pages/safesuite/Passwords'));
+const Threats = lazy(() => import('@/pages/safesuite/Threats'));
+const Exposure = lazy(() => import('@/pages/safesuite/Exposure'));
+const MorningBrief = lazy(() => import('@/pages/safesuite/MorningBrief'));
 const VaultSettings = lazy(() => import('@/pages/safesuite/SafePassSettings'));
 const VaultReminders = lazy(() => import('@/pages/safesuite/SafePassReminders'));
 const VaultBreach = lazy(() => import('@/pages/safesuite/SafePassBreach'));
@@ -158,29 +159,54 @@ function AppRouter() {
           </ProtectedRoute>
         }>
           <Route path="/app/dashboard" element={<SuspenseWrapper><WraythDashboard /></SuspenseWrapper>} />
+          <Route path="/app/brief" element={<SuspenseWrapper><MorningBrief /></SuspenseWrapper>} />
           <Route path="/app/assist" element={<SuspenseWrapper><WraythAssist /></SuspenseWrapper>} />
           <Route path="/app/ray" element={<SuspenseWrapper><Ray /></SuspenseWrapper>} />
           <Route path="/app/timeline" element={<SuspenseWrapper><RayTimelinePage /></SuspenseWrapper>} />
           <Route path="/app/identity" element={<SuspenseWrapper><Identity /></SuspenseWrapper>} />
           <Route path="/app/devices" element={<SuspenseWrapper><Devices /></SuspenseWrapper>} />
           <Route path="/app/reports" element={<SuspenseWrapper><Reports /></SuspenseWrapper>} />
-          <Route path="/app/pass" element={<SuspenseWrapper><WraythPass /></SuspenseWrapper>} />
+
+          {/* Canonical product routes */}
+          <Route path="/app/passwords" element={<SuspenseWrapper><Passwords /></SuspenseWrapper>} />
+          <Route path="/app/threats" element={<SuspenseWrapper><Threats /></SuspenseWrapper>} />
+          <Route path="/app/exposure" element={<SuspenseWrapper><Exposure /></SuspenseWrapper>} />
+
+          {/* Legacy product routes — redirect to canonical */}
+          <Route path="/app/pass" element={<Navigate to="/app/passwords" replace />} />
+          <Route path="/app/scan" element={<Navigate to="/app/threats" replace />} />
+          <Route path="/app/scan/settings" element={<Navigate to="/app/threats/settings" replace />} />
+          <Route path="/app/web" element={<Navigate to="/app/exposure" replace />} />
+          <Route path="/app/web/settings" element={<Navigate to="/app/exposure/settings" replace />} />
+
           <Route path="/app/mfa" element={<SuspenseWrapper><RayMFAHub /></SuspenseWrapper>} />
-          <Route path="/app/pass/shared" element={<SuspenseWrapper><VaultShared /></SuspenseWrapper>} />
-          <Route path="/app/pass/emergency" element={<SuspenseWrapper><VaultEmergency /></SuspenseWrapper>} />
-          <Route path="/app/pass/extension" element={<SuspenseWrapper><VaultExtension /></SuspenseWrapper>} />
-          <Route path="/app/pass/reminders" element={<SuspenseWrapper><VaultReminders /></SuspenseWrapper>} />
-          <Route path="/app/pass/breach" element={<SuspenseWrapper><VaultBreach /></SuspenseWrapper>} />
-          <Route path="/app/pass/settings" element={<SuspenseWrapper variant="form"><VaultSettings /></SuspenseWrapper>} />
-          <Route path="/app/pass/notes" element={<SuspenseWrapper><VaultNotes /></SuspenseWrapper>} />
-          <Route path="/app/pass/cards" element={<SuspenseWrapper><VaultCards /></SuspenseWrapper>} />
-          <Route path="/app/pass/identity" element={<SuspenseWrapper><VaultIdentity /></SuspenseWrapper>} />
-          <Route path="/app/pass/health" element={<SuspenseWrapper><VaultHealth /></SuspenseWrapper>} />
-          <Route path="/app/pass/users" element={<SuspenseWrapper><VaultUsers /></SuspenseWrapper>} />
-          <Route path="/app/scan" element={<SuspenseWrapper><WraythScan /></SuspenseWrapper>} />
-          <Route path="/app/scan/settings" element={<SuspenseWrapper variant="form"><ScanSettings /></SuspenseWrapper>} />
-          <Route path="/app/web" element={<SuspenseWrapper><WraythWeb /></SuspenseWrapper>} />
-          <Route path="/app/web/settings" element={<SuspenseWrapper variant="form"><WatchSettings /></SuspenseWrapper>} />
+          <Route path="/app/passwords/shared" element={<SuspenseWrapper><VaultShared /></SuspenseWrapper>} />
+          <Route path="/app/passwords/emergency" element={<SuspenseWrapper><VaultEmergency /></SuspenseWrapper>} />
+          <Route path="/app/passwords/extension" element={<SuspenseWrapper><VaultExtension /></SuspenseWrapper>} />
+          <Route path="/app/passwords/reminders" element={<SuspenseWrapper><VaultReminders /></SuspenseWrapper>} />
+          <Route path="/app/passwords/breach" element={<SuspenseWrapper><VaultBreach /></SuspenseWrapper>} />
+          <Route path="/app/passwords/settings" element={<SuspenseWrapper variant="form"><VaultSettings /></SuspenseWrapper>} />
+          <Route path="/app/passwords/notes" element={<SuspenseWrapper><VaultNotes /></SuspenseWrapper>} />
+          <Route path="/app/passwords/cards" element={<SuspenseWrapper><VaultCards /></SuspenseWrapper>} />
+          <Route path="/app/passwords/identity" element={<SuspenseWrapper><VaultIdentity /></SuspenseWrapper>} />
+          <Route path="/app/passwords/health" element={<SuspenseWrapper><VaultHealth /></SuspenseWrapper>} />
+          <Route path="/app/passwords/users" element={<SuspenseWrapper><VaultUsers /></SuspenseWrapper>} />
+
+          {/* Legacy /app/pass/* sub-routes → /app/passwords/* */}
+          <Route path="/app/pass/shared" element={<Navigate to="/app/passwords/shared" replace />} />
+          <Route path="/app/pass/emergency" element={<Navigate to="/app/passwords/emergency" replace />} />
+          <Route path="/app/pass/extension" element={<Navigate to="/app/passwords/extension" replace />} />
+          <Route path="/app/pass/reminders" element={<Navigate to="/app/passwords/reminders" replace />} />
+          <Route path="/app/pass/breach" element={<Navigate to="/app/passwords/breach" replace />} />
+          <Route path="/app/pass/settings" element={<Navigate to="/app/passwords/settings" replace />} />
+          <Route path="/app/pass/notes" element={<Navigate to="/app/passwords/notes" replace />} />
+          <Route path="/app/pass/cards" element={<Navigate to="/app/passwords/cards" replace />} />
+          <Route path="/app/pass/identity" element={<Navigate to="/app/passwords/identity" replace />} />
+          <Route path="/app/pass/health" element={<Navigate to="/app/passwords/health" replace />} />
+          <Route path="/app/pass/users" element={<Navigate to="/app/passwords/users" replace />} />
+
+          <Route path="/app/threats/settings" element={<SuspenseWrapper variant="form"><ScanSettings /></SuspenseWrapper>} />
+          <Route path="/app/exposure/settings" element={<SuspenseWrapper variant="form"><WatchSettings /></SuspenseWrapper>} />
           <Route path="/app/billing" element={<SuspenseWrapper><WraythBilling /></SuspenseWrapper>} />
           <Route path="/app/settings" element={<SuspenseWrapper variant="form"><WraythSettings /></SuspenseWrapper>} />
         </Route>

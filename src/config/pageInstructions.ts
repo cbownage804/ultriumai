@@ -248,7 +248,7 @@ export const PAGE_INSTRUCTIONS: Record<string, PageInstruction> = {
       },
     ],
   },
-  '/app/pass': {
+  '/app/passwords': {
     id: 'safesuite-pass',
     title: 'Vault – Password Manager',
     description: 'Securely store, generate, and manage all your passwords with zero-knowledge encryption.',
@@ -270,7 +270,7 @@ export const PAGE_INSTRUCTIONS: Record<string, PageInstruction> = {
       },
     ],
   },
-  '/app/scan': {
+  '/app/threats': {
     id: 'safesuite-scan',
     title: 'Scan – Threat Scanner',
     description: 'Scan URLs, emails, and files for malware, phishing, and other threats.',
@@ -288,7 +288,7 @@ export const PAGE_INSTRUCTIONS: Record<string, PageInstruction> = {
       },
     ],
   },
-  '/app/web': {
+  '/app/exposure': {
     id: 'safesuite-web',
     title: 'Watch – Dark Web Monitor',
     description: 'Continuous monitoring of the dark web for your exposed credentials and personal data.',
