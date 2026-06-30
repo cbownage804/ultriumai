@@ -46,6 +46,7 @@ import { AppSwitcher } from '@/components/AppSwitcher';
 import { HelpCenter } from '@/components/onboarding/HelpCenter';
 import { cn } from '@/lib/utils';
 import { FloatingSafeAssist } from '@/components/safeassist/FloatingSafeAssist';
+import { AskRayPalette } from '@/components/safeassist/AskRayPalette';
 import { FloatingSafeAssistProvider, useFloatingSafeAssist } from '@/contexts/FloatingSafeAssistContext';
 import { MFAOnboardingGate } from '@/components/safesuite/MFAOnboardingGate';
 
