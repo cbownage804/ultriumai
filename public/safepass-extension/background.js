@@ -1285,7 +1285,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
-  // Ray chat relay -> Lovable AI via the existing safeassist edge function
+  // Open arbitrary Wrayth URLs (e.g. /app/ray/secure/:provider from the context-bar)
+  if (message?.type === 'wrayth:open-url' && typeof message.url === 'string') {
+    try {
+      chrome.tabs.create({ url: message.url });
+      sendResponse({ ok: true });
+    } catch (e) {
+      sendResponse({ ok: false, error: String(e?.message || e) });
+    }
+    return true;
+  }
+
+
   if (message?.type === 'wrayth:chat') {
     (async () => {
       try {
