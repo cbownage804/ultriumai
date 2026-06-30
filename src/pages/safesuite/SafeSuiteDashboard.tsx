@@ -40,6 +40,7 @@ import {
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { MorningBriefHero } from '@/components/ray/MorningBriefHero';
+import { RayNoticesPanel } from '@/components/ray/RayNoticesPanel';
 import { RayTimeline } from '@/components/ray/RayTimeline';
 
 interface DashboardStats {
@@ -554,6 +555,7 @@ export default function WraythDashboard() {
     <div className="min-h-screen bg-[#0a0a0a] -m-4 lg:-m-6 p-4 lg:p-6 space-y-4 sm:space-y-6">
       {/* Ray's morning brief — same brief as /app/brief, lives on Home */}
       <MorningBriefHero firstName={firstName} />
+      <RayNoticesPanel variant="hero" />
       {!isSubscribed && (
         <div className="wrayth-chamfer border border-[#3A3A3A] bg-[#181818] px-5 py-3 flex flex-wrap items-center justify-between gap-3">
           <span className="text-xs text-muted-foreground">Unlock more of Ray&rsquo;s capabilities.</span>

@@ -12,6 +12,7 @@ import { useRayBrain } from '@/lib/ray/brain';
 import { supabase } from '@/integrations/supabase/client';
 import { RayPageHeader } from '@/components/ray/RayPageHeader';
 import { AskRay } from '@/components/ray/AskRay';
+import { RayNoticesPanel } from '@/components/ray/RayNoticesPanel';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -119,6 +120,8 @@ export default function Ray() {
       />
 
       <AskRay />
+
+      <RayNoticesPanel />
 
 
 

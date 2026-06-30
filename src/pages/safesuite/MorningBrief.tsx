@@ -11,6 +11,7 @@ import { Link } from "react-router-dom";
 import { ThumbsUp, ThumbsDown, AlertCircle } from "lucide-react";
 import { RayPageHeader } from "@/components/ray/RayPageHeader";
 import { MorningBriefHero } from "@/components/ray/MorningBriefHero";
+import { RayNoticesPanel } from "@/components/ray/RayNoticesPanel";
 import { useMorningBrief, type RayBriefRow } from "@/lib/ray/morningBrief";
 import { cn } from "@/lib/utils";
 
@@ -62,6 +63,8 @@ export default function MorningBrief() {
       />
 
       <MorningBriefHero variant="page" showFullBriefLink={false} />
+
+      <RayNoticesPanel />
 
       {stats && (
         <section className="grid grid-cols-2 sm:grid-cols-4 gap-3">

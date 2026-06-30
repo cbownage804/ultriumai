@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { askRay, type RayAnswer, type AnswerTone } from '@/lib/ray/intent';
 import { raySearch, labelForKind, type RaySearchResult } from '@/lib/ray/search';
+import { recordAskedQuestion } from '@/lib/ray/notices';
 import { cn } from '@/lib/utils';
 import { ArrowRight, Loader2, Sparkles } from 'lucide-react';
 
@@ -63,6 +64,7 @@ export function AskRay() {
     let active = true;
     setLoading(true);
     const question = isQuestionish(debounced);
+    if (question) void recordAskedQuestion(user.id, debounced);
     const work = question
       ? askRay(user.id, debounced).then((a) => { if (active) { setAnswer(a); setResults([]); } })
       : raySearch(user.id, debounced).then((r) => { if (active) { setResults(r); setAnswer(null); } });
