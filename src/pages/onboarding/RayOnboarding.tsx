@@ -13,7 +13,9 @@ import { useMasterPassword } from '@/hooks/useMasterPassword';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Check, Eye, Loader2, ShieldCheck, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Check, Eye, Loader2, ShieldCheck, AlertTriangle, ArrowRight, Copy, QrCode } from 'lucide-react';
+import QRCode from 'qrcode';
+import { useSecurity } from '@/hooks/useSecurity';
 import { cn } from '@/lib/utils';
 import { PasswordImportStep } from '@/components/onboarding/PasswordImportStep';
 import {
@@ -36,6 +38,7 @@ type Step =
   | 'ecosystem'
   | 'existing'
   | 'master'
+  | 'mfa'
   | 'import'
   | 'running'
   | 'report'
@@ -200,6 +203,50 @@ export default function RayOnboarding() {
   const [result, setResult] = useState<PipelineResult | null>(null);
   const [runErr, setRunErr] = useState<string | null>(null);
 
+  // Optional MFA setup (inline in onboarding).
+  const { setupTwoFactor, enableTwoFactor } = useSecurity();
+  const [mfaPhase, setMfaPhase] = useState<'offer' | 'qr' | 'done'>('offer');
+  const [mfaQr, setMfaQr] = useState<string | null>(null);
+  const [mfaSecret, setMfaSecret] = useState('');
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaErr, setMfaErr] = useState<string | null>(null);
+  const [mfaBusy, setMfaBusy] = useState(false);
+
+  const beginMfaSetup = async () => {
+    setMfaErr(null);
+    setMfaBusy(true);
+    try {
+      const result = await setupTwoFactor();
+      if (!result) { setMfaErr('Could not start 2FA setup.'); return; }
+      setMfaSecret(result.secret);
+      if (result.qr_code) {
+        const dataUrl = await QRCode.toDataURL(result.qr_code, {
+          width: 200, margin: 2, color: { dark: '#000000', light: '#ffffff' },
+        });
+        setMfaQr(dataUrl);
+      }
+      setMfaPhase('qr');
+    } catch (e) {
+      setMfaErr((e as Error).message);
+    } finally {
+      setMfaBusy(false);
+    }
+  };
+
+  const verifyMfaCode = async () => {
+    if (mfaCode.length !== 6) { setMfaErr('Enter the 6-digit code.'); return; }
+    setMfaErr(null);
+    setMfaBusy(true);
+    try {
+      const ok = await enableTwoFactor(mfaCode);
+      if (!ok) { setMfaErr('That code didn\'t match. Try the latest one in your app.'); return; }
+      setMfaPhase('done');
+      setTimeout(() => setStep('import'), 700);
+    } finally {
+      setMfaBusy(false);
+    }
+  };
+
   const advanceTimer = useRef<number | null>(null);
   const queueAdvance = (next: Step, delay = 450) => {
     if (advanceTimer.current) window.clearTimeout(advanceTimer.current);
@@ -234,7 +281,7 @@ export default function RayOnboarding() {
     const res = await mp.setMasterPassword(masterPw);
     if (!res.success) { setMpError(res.errors?.[0] ?? 'Could not set master password.'); return; }
     setMasterPw(''); setMasterPw2('');
-    setStep('import');
+    setStep('mfa');
   };
 
   const handleUnlock = async () => {
@@ -243,7 +290,7 @@ export default function RayOnboarding() {
     const res = await mp.unlockWithPassword(masterPw);
     if (!res.success) { setMpError(res.error ?? 'Could not unlock.'); return; }
     setMasterPw('');
-    setStep('import');
+    setStep('mfa');
   };
 
   const startPipeline = async (source: ImportSource, text: string) => {
@@ -508,6 +555,97 @@ export default function RayOnboarding() {
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {step === 'mfa' && (
+          <div className="space-y-8">
+            <RaySays>
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Optional · second factor</p>
+              <p className="text-lg text-foreground">
+                Want to add a second login factor? I recommend it, but it's optional.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                If someone ever gets your password, a code from your phone keeps them out. You can always set this up later in Settings.
+              </p>
+            </RaySays>
+
+            <div className="ml-[72px] space-y-6 max-w-md">
+              {mfaPhase === 'offer' && (
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    size="lg"
+                    onClick={beginMfaSetup}
+                    disabled={mfaBusy}
+                    className="rounded-sm bg-foreground text-background hover:bg-foreground/90"
+                  >
+                    {mfaBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+                    Enable 2FA
+                  </Button>
+                  <Button size="lg" variant="ghost" onClick={() => setStep('import')} className="rounded-sm">
+                    Maybe later
+                  </Button>
+                </div>
+              )}
+
+              {mfaPhase === 'qr' && (
+                <div className="space-y-5">
+                  {mfaQr && (
+                    <div className="flex justify-center">
+                      <div className="bg-white p-3 rounded-sm">
+                        <img src={mfaQr} alt="2FA QR code" className="w-44 h-44" />
+                      </div>
+                    </div>
+                  )}
+                  <div className="space-y-2">
+                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Or enter manually</p>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 rounded-sm border border-border bg-card/40 px-3 py-2 text-xs font-mono break-all">
+                        {mfaSecret}
+                      </code>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="rounded-sm"
+                        onClick={() => navigator.clipboard.writeText(mfaSecret)}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <Input
+                    inputMode="numeric"
+                    placeholder="6-digit code"
+                    value={mfaCode}
+                    onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    className="rounded-sm text-center text-xl font-mono tracking-[0.4em]"
+                    maxLength={6}
+                  />
+                  {mfaErr && <div className="text-sm text-red-400">{mfaErr}</div>}
+                  <div className="flex flex-wrap gap-3">
+                    <Button
+                      size="lg"
+                      onClick={verifyMfaCode}
+                      disabled={mfaBusy || mfaCode.length !== 6}
+                      className="rounded-sm bg-foreground text-background hover:bg-foreground/90"
+                    >
+                      {mfaBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                      Verify & continue
+                    </Button>
+                    <Button size="lg" variant="ghost" onClick={() => setStep('import')} className="rounded-sm">
+                      Skip
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {mfaPhase === 'done' && (
+                <div className="flex items-center gap-3 text-emerald-400">
+                  <ShieldCheck className="h-5 w-5" />
+                  <span className="text-sm">2FA is on. Taking you to the next step…</span>
+                </div>
+              )}
             </div>
           </div>
         )}

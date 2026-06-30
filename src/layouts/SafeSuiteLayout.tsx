@@ -61,7 +61,6 @@ import { cn } from '@/lib/utils';
 import { FloatingSafeAssist } from '@/components/safeassist/FloatingSafeAssist';
 import { AskRayPalette } from '@/components/safeassist/AskRayPalette';
 import { FloatingSafeAssistProvider } from '@/contexts/FloatingSafeAssistContext';
-import { MFAOnboardingGate } from '@/components/safesuite/MFAOnboardingGate';
 import { RayContextProvider } from '@/components/ray/RayContext';
 import { SidebarBriefing } from '@/components/ray/SidebarBriefing';
 
@@ -357,13 +356,13 @@ function WraythLayoutInner() {
 }
 
 export default function WraythLayout() {
+  // MFA is optional and lives inside Ray onboarding + /app/mfa. We no longer
+  // force a 2FA wall in front of the app.
   return (
-    <MFAOnboardingGate>
-      <FloatingSafeAssistProvider>
-        <RayContextProvider>
-          <WraythLayoutInner />
-        </RayContextProvider>
-      </FloatingSafeAssistProvider>
-    </MFAOnboardingGate>
+    <FloatingSafeAssistProvider>
+      <RayContextProvider>
+        <WraythLayoutInner />
+      </RayContextProvider>
+    </FloatingSafeAssistProvider>
   );
 }
