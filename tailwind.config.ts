@@ -306,11 +306,16 @@ export default {
 				'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
 				'shimmer': 'shimmer 2s linear infinite',
 				'rotate-slow': 'rotate-slow 20s linear infinite',
-				
+
+				// Ray thinking
+				'ray-pulse': 'ray-pulse 6s ease-in-out infinite',
+				'ray-pulse-fast': 'ray-pulse-fast 3.2s ease-in-out infinite',
+				'ray-particle': 'ray-particle 10s ease-out infinite',
+
 				// 3D Effects
 				'fold-in': 'fold-in 0.8s ease-in-out',
 				'unfold': 'unfold 0.8s ease-in-out',
-				
+
 				// Combined Animations
 				'enter': 'fade-in 0.3s ease-out, scale-in 0.2s ease-out',
 				'exit': 'fade-out 0.3s ease-out, scale-out 0.2s ease-out'
