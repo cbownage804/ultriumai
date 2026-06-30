@@ -127,7 +127,7 @@ export const RAY_TASKS: Record<RayTaskId, RayTask> = {
   },
   review_exposure: {
     id: 'review_exposure',
-    label: 'Review what's exposed',
+    label: "Review what's exposed",
     rayPrompt:
       "Here's what I found. Let's go through it together and decide what to act on first.",
   },
@@ -139,7 +139,7 @@ export const RAY_TASKS: Record<RayTaskId, RayTask> = {
   },
   confirm_done: {
     id: 'confirm_done',
-    label: 'Confirm we're done',
+    label: "Confirm we're done",
     rayPrompt:
       "We've covered everything. Click Continue and I'll lock in your progress.",
   },
