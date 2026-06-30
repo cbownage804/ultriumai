@@ -13,7 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useWraythSubscription } from '@/hooks/useSafeSuite';
 import { SAFESUITE_TIERS } from '@/config/safeSuiteTiers';
 import { isWraythDomain } from '@/utils/subdomain';
-import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';
+
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
