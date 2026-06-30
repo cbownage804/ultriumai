@@ -114,7 +114,7 @@ function AppRouter() {
         <Route path="/payment-cancel" element={<SuspenseWrapper><PaymentCancel /></SuspenseWrapper>} />
 
         {/* Auth */}
-        {/* Onboarding gate is enforced at /safesuite/dashboard from the DB. */}
+        {/* Onboarding gate is enforced at /app/dashboard from the DB. */}
         <Route path="/auth" element={user ? <Navigate to="/app/dashboard" replace /> : <SuspenseWrapper><WraythAuth /></SuspenseWrapper>} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/auth/confirm" element={<AuthConfirm />} />
@@ -122,7 +122,7 @@ function AppRouter() {
         <Route path="/auth/reset-password" element={<SuspenseWrapper variant="form"><ResetPasswordPage /></SuspenseWrapper>} />
         <Route path="/auth/mfa-recovery" element={<SuspenseWrapper variant="form"><MFARecoveryPage /></SuspenseWrapper>} />
 
-        {/* Wrayth app (keep /safesuite/* paths intact — layout has hardcoded links) */}
+        {/* Wrayth app — canonical prefix is /app/*. Legacy /safesuite/* redirects below. */}
         <Route path="/app" element={<Navigate to="/app/dashboard" replace />} />
         <Route path="/app/auth" element={<Navigate to="/auth" replace />} />
         <Route path="/app/auth/forgot-password" element={<Navigate to="/auth/forgot-password" replace />} />
