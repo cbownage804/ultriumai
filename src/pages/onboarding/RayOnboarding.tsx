@@ -571,14 +571,19 @@ export default function RayOnboarding() {
         {step === 'finale' && (
           <div className="space-y-10 animate-fade-in">
             <RayEye thinking size={88} />
-            <div className="space-y-4">
+            <div className="space-y-5 max-w-xl">
               <h2 className="text-2xl sm:text-3xl font-light tracking-tight text-foreground">
-                I'm on watch now.
+                Welcome to Wrayth.
               </h2>
-              <p className="text-lg text-muted-foreground leading-relaxed max-w-xl">
-                If something important happens, I'll let you know.
-                Until then, I'll quietly keep an eye on things.
-              </p>
+              <div className="space-y-3 text-lg text-muted-foreground leading-relaxed">
+                <p className="text-foreground">I'm on watch now.</p>
+                <p>I'll quietly monitor your security from here.</p>
+                <p>If something important happens, I'll let you know.</p>
+                <p className="text-foreground/90">
+                  You don't have to think about cybersecurity anymore.
+                </p>
+                <p className="text-foreground">That's my job.</p>
+              </div>
             </div>
             <Button
               size="lg"
