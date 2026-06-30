@@ -799,10 +799,8 @@ export const PasswordVault = () => {
           <IdentityProfiles />
         </TabsContent>
 
-        {/* 2FA / TOTP Tab */}
-        <TabsContent value="2fa">
-          <TOTPManager />
-        </TabsContent>
+
+
 
         {/* Password Health Tab */}
         <TabsContent value="health">
