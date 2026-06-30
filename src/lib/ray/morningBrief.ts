@@ -149,5 +149,11 @@ export function useMorningBrief() {
 
   const lastBrief = useMemo(() => history.find((h) => h.id !== today?.id) ?? null, [history, today]);
 
-  return { today, history, lastBrief, timezone, isLoading, isGenerating, refresh: load };
+  const sendFeedback = useCallback(async (feedback: RayBriefFeedback, note?: string) => {
+    if (!today?.id) return;
+    await submitBriefFeedback(today.id, feedback, note);
+    setToday((prev) => (prev ? { ...prev, feedback, feedback_note: note ?? null, feedback_at: new Date().toISOString() } : prev));
+  }, [today?.id]);
+
+  return { today, history, lastBrief, timezone, isLoading, isGenerating, refresh: load, sendFeedback };
 }
