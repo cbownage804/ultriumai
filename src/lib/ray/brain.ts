@@ -110,14 +110,30 @@ export async function recordTimelineEvent(
 export async function completeRecommendation(id: string) {
   await supabase
     .from('ray_recommendations')
-    .update({ completed_at: new Date().toISOString(), status: 'completed' })
+    .update({ completed_at: new Date().toISOString(), status: 'completed', snoozed_until: null })
     .eq('id', id);
 }
 
 export async function dismissRecommendation(id: string) {
   await supabase
     .from('ray_recommendations')
-    .update({ dismissed_at: new Date().toISOString(), status: 'dismissed' })
+    .update({ dismissed_at: new Date().toISOString(), status: 'dismissed', snoozed_until: null })
+    .eq('id', id);
+}
+
+export async function startRecommendation(id: string) {
+  await supabase
+    .from('ray_recommendations')
+    .update({ status: 'in_progress', snoozed_until: null })
+    .eq('id', id);
+}
+
+/** Snooze a recommendation for N hours (default 24). */
+export async function snoozeRecommendation(id: string, hours = 24) {
+  const until = new Date(Date.now() + Math.max(1, hours) * 3600_000).toISOString();
+  await supabase
+    .from('ray_recommendations')
+    .update({ status: 'snoozed', snoozed_until: until })
     .eq('id', id);
 }
 
