@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRayBrain } from '@/lib/ray/brain';
 import { supabase } from '@/integrations/supabase/client';
 import { RayPageHeader } from '@/components/ray/RayPageHeader';
+import { RaySearchBar } from '@/components/ray/RaySearchBar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -116,6 +117,10 @@ export default function Ray() {
         subtitle="Your AI cybersecurity teammate"
         description="Ask me anything about your security. I remember our conversations and surface what needs attention."
       />
+
+      <RaySearchBar />
+
+
 
       {/* Current recommendations with lifecycle controls */}
       <section>
