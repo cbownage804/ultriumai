@@ -54,7 +54,10 @@ export default function WraythAuth() {
         return;
       }
       toast.success('Welcome back!');
-      navigate('/dashboard');
+      // Send first-time users to Ray. Returning users go straight to dashboard.
+      const { data: { user: signedIn } } = await supabase.auth.getUser();
+      const onboarded = signedIn && localStorage.getItem(`wrayth.ray.onboarded:${signedIn.id}`) === 'true';
+      navigate(onboarded ? '/safesuite/dashboard' : '/onboarding/ray');
     } catch (err) {
       setError('An unexpected error occurred');
     }
