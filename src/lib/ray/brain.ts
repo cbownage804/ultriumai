@@ -108,10 +108,20 @@ export async function recordTimelineEvent(
 }
 
 export async function completeRecommendation(id: string) {
-  await supabase
+  const { data } = await supabase
     .from('ray_recommendations')
     .update({ completed_at: new Date().toISOString(), status: 'completed', snoozed_until: null })
-    .eq('id', id);
+    .eq('id', id)
+    .select('user_id,title')
+    .maybeSingle();
+  if (data?.user_id) {
+    await recordTimelineEvent(data.user_id, {
+      event_type: 'recommendation_completed',
+      summary: `Marked handled: ${data.title}`,
+      payload: { id, title: data.title },
+      severity: 'low',
+    });
+  }
 }
 
 export async function dismissRecommendation(id: string) {
@@ -122,10 +132,20 @@ export async function dismissRecommendation(id: string) {
 }
 
 export async function startRecommendation(id: string) {
-  await supabase
+  const { data } = await supabase
     .from('ray_recommendations')
     .update({ status: 'in_progress', snoozed_until: null })
-    .eq('id', id);
+    .eq('id', id)
+    .select('user_id,title')
+    .maybeSingle();
+  if (data?.user_id) {
+    await recordTimelineEvent(data.user_id, {
+      event_type: 'recommendation_started',
+      summary: `Started: ${data.title}`,
+      payload: { id, title: data.title },
+      severity: 'info',
+    });
+  }
 }
 
 /** Snooze a recommendation for N hours (default 24). */
