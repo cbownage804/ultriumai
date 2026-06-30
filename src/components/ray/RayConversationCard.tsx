@@ -8,7 +8,7 @@ import { useRayBrain } from '@/lib/ray/brain';
 import { useRayContext, type RayPageContext } from '@/components/ray/RayContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Link } from 'react-router-dom';
+
 
 const HEALTHY_LINE: Record<RayPageContext, string> = {
   home: "Everything looks calm. I'll keep watch.",
