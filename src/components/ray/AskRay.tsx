@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { askRay, type RayAnswer, type AnswerTone } from '@/lib/ray/intent';
 import { raySearch, labelForKind, type RaySearchResult } from '@/lib/ray/search';
+import { recordAskedQuestion } from '@/lib/ray/notices';
 import { cn } from '@/lib/utils';
 import { ArrowRight, Loader2, Sparkles } from 'lucide-react';
 
