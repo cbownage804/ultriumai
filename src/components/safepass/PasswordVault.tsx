@@ -479,12 +479,15 @@ export const PasswordVault = () => {
 
   const weakPasswords = entries.filter(entry => entry.password_strength < 60).length;
   const strongPasswords = entries.filter(entry => entry.password_strength >= 80).length;
+  const overallScore = entries.length === 0
+    ? 100
+    : Math.round(entries.reduce((sum, e) => sum + (e.password_strength || 0), 0) / entries.length);
 
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Tabs Navigation */}
       <Tabs defaultValue="passwords" className="w-full">
-        <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid mb-4 sm:mb-6 bg-[#1a1a1a] border border-primary/10 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid mb-4 sm:mb-6 bg-[#1a1a1a] border border-primary/10 h-auto p-1">
           <TabsTrigger value="passwords" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-primary/20 data-[state=active]:text-primary touch-target py-2.5 sm:py-2">
             <Key className="h-4 w-4" />
             <span className="hidden sm:inline text-sm">Passwords</span>
@@ -500,10 +503,6 @@ export const PasswordVault = () => {
           <TabsTrigger value="identity" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-primary/20 data-[state=active]:text-primary touch-target py-2.5 sm:py-2">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline text-sm">Identity</span>
-          </TabsTrigger>
-          <TabsTrigger value="2fa" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-primary/20 data-[state=active]:text-primary touch-target py-2.5 sm:py-2">
-            <Lock className="h-4 w-4" />
-            <span className="hidden sm:inline text-sm">2FA</span>
           </TabsTrigger>
           <TabsTrigger value="health" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-primary/20 data-[state=active]:text-primary touch-target py-2.5 sm:py-2">
             <Heart className="h-4 w-4" />
