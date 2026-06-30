@@ -161,6 +161,19 @@ function SecurityScoreCard({ stats }: { stats: DashboardStats }) {
 }
 
 function QuickActionsCard() {
+  const options = [
+    { to: '/safesuite/pass', label: 'Save a password' },
+    { to: '/safesuite/scan', label: 'Check an email or file' },
+    { to: '/safesuite/scan', label: 'Scan a website' },
+    { to: '/safesuite/web', label: 'Review my exposure' },
+  ];
+
+  const openAskRay = () => {
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }));
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -168,40 +181,28 @@ function QuickActionsCard() {
       transition={{ delay: 0.2 }}
       className="h-full"
     >
-      <GlowContainer theme="safepass" className="p-4 sm:p-6 h-full">
-        <div className="flex items-center gap-2 mb-3 sm:mb-4">
-          <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-amber-400" />
-          <h3 className="font-semibold text-white text-sm sm:text-base">Quick Actions</h3>
+      <div className="wrayth-chamfer border border-[#3A3A3A] bg-[#181818] p-5 sm:p-6 h-full">
+        <div className="flex items-center gap-2 mb-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+          Ray
         </div>
-        
-        <div className="space-y-2 sm:space-y-3">
-          {[
-            { to: '/safesuite/pass', icon: safeSuiteProducts.safepass.logo, label: 'Add New Password', theme: 'safepass' },
-            { to: '/safesuite/scan', icon: safeSuiteProducts.safescan.logo, label: 'Scan a URL', theme: 'safescan' },
-            { to: '/safesuite/web', icon: safeSuiteProducts.safeweb.logo, label: 'Check for Breaches', theme: 'safeweb' }
-          ].map((action, idx) => (
-            <motion.div
-              key={action.to}
-              whileHover={{ x: 4, scale: 1.01 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Link to={action.to}>
-                <Button 
-                  variant="outline" 
-                  className={cn(
-                    'w-full justify-start gap-2 sm:gap-3 min-h-[44px] sm:h-12 px-3 sm:px-4',
-                    'bg-white/5 border-white/10 hover:bg-white/10',
-                    'transition-all duration-200 text-sm sm:text-base'
-                  )}
-                >
-                  <img src={action.icon} alt="" className="h-4 w-4 sm:h-5 sm:w-5 rounded object-contain flex-shrink-0" />
-                  <span className="text-gray-200 truncate">{action.label}</span>
-                </Button>
-              </Link>
-            </motion.div>
+        <h3 className="text-base sm:text-lg font-light text-[#F3F3F3] mb-4">What would you like to do?</h3>
+        <div className="space-y-1.5">
+          {options.map((o) => (
+            <Link key={o.label} to={o.to}>
+              <button className="w-full text-left text-sm text-[#F3F3F3] hover:text-primary transition-colors py-2 px-1 border-b border-[#2A2A2A] last:border-0 min-h-[40px]">
+                <span className="text-muted-foreground mr-2">○</span>{o.label}
+              </button>
+            </Link>
           ))}
+          <button
+            onClick={openAskRay}
+            className="w-full text-left text-sm text-primary hover:text-primary/80 transition-colors py-2 px-1 min-h-[40px]"
+          >
+            <span className="mr-2">○</span>Ask Ray something…
+          </button>
         </div>
-      </GlowContainer>
+      </div>
     </motion.div>
   );
 }
@@ -359,28 +360,28 @@ const productCardsConfig = [
     id: 'safepass',
     feature: 'safepass' as keyof TierFeatures,
     productLogo: safeSuiteProducts.safepass.logo,
-    title: 'Vault',
-    description: 'Password Manager',
+    title: 'Passwords',
+    description: 'Ray keeps every credential strong and unique.',
     path: '/safesuite/pass',
-    statLabel: 'Passwords'
+    statLabel: 'Stored'
   },
   {
     id: 'safescan',
     feature: 'safescan' as keyof TierFeatures,
     productLogo: safeSuiteProducts.safescan.logo,
-    title: 'Scan',
-    description: 'Security Scanner',
+    title: 'Threats',
+    description: 'Ray analyzes anything suspicious you send over.',
     path: '/safesuite/scan',
-    statLabel: 'Scans this month'
+    statLabel: 'Analyzed this month'
   },
   {
     id: 'safeweb',
     feature: 'safeweb' as keyof TierFeatures,
     productLogo: safeSuiteProducts.safeweb.logo,
-    title: 'Watch',
-    description: 'Dark Web Monitoring',
+    title: 'Exposure',
+    description: 'Ray watches the dark web for your identity.',
     path: '/safesuite/web',
-    statLabel: 'Assets monitored'
+    statLabel: 'Identities watched'
   },
 ];
 
@@ -454,23 +455,30 @@ export default function WraythDashboard() {
         const mappedActivities: ActivityItem[] = (auditLogsResult.data || []).map(log => {
           let text = log.action;
           let type: 'password' | 'scan' | 'breach' | 'asset' = 'password';
-          
-          if (log.resource_type === 'password_entry') {
+          const details = log.details as any;
+          const actionLower = (log.action || '').toLowerCase();
+          const resourceLower = (log.resource_type || '').toLowerCase();
+
+          if (resourceLower === 'password_entry') {
             type = 'password';
-            const details = log.details as any;
             if (log.action === 'created') {
-              text = `Added password${details?.title ? ` for ${details.title}` : ''}`;
+              text = `Ray saved a password${details?.title ? ` for ${details.title}` : ''}`;
             } else if (log.action === 'updated') {
-              text = `Updated password${details?.title ? ` for ${details.title}` : ''}`;
+              text = `Ray updated a password${details?.title ? ` for ${details.title}` : ''}`;
             } else if (log.action === 'deleted') {
-              text = `Deleted password${details?.title ? ` for ${details.title}` : ''}`;
+              text = `Ray removed a password${details?.title ? ` for ${details.title}` : ''}`;
             }
-          } else if (log.resource_type === 'scan') {
+          } else if (resourceLower === 'scan') {
             type = 'scan';
-            text = 'Completed security scan';
-          } else if (log.resource_type === 'breach_check') {
+            text = 'Ray analyzed a threat';
+          } else if (resourceLower === 'breach_check') {
             type = 'breach';
-            text = 'Ran breach check';
+            text = 'Ray ran an exposure check';
+          } else if (actionLower.includes('safeassist') || actionLower.includes('ray') || actionLower.includes('assist')) {
+            type = 'password';
+            text = 'Ray conversation';
+          } else {
+            text = 'Ray activity';
           }
 
           return {
@@ -600,46 +608,15 @@ export default function WraythDashboard() {
         <UsageLimitBanner feature="safepass" />
       </div>
 
-      {/* Stats row - responsive grid */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <AnimatedStatsCard
-          icon={<KeyRound className="h-4 w-4 sm:h-5 sm:w-5" />}
-          label="Passwords"
-          value={stats.passwordCount}
-          theme="safepass"
-          delay={0}
-        />
-        <AnimatedStatsCard
-          icon={<ScanSearch className="h-4 w-4 sm:h-5 sm:w-5" />}
-          label="Scans"
-          value={stats.scanCount}
-          theme="safescan"
-          delay={0.1}
-        />
-        <AnimatedStatsCard
-          icon={<Globe className="h-4 w-4 sm:h-5 sm:w-5" />}
-          label="Monitored"
-          value={stats.monitoredAssets}
-          theme="safeweb"
-          delay={0.2}
-        />
+      {/* Ray's conversational quick actions */}
+      <div data-tour="quick-actions">
+        <QuickActionsCard />
       </div>
 
-      {/* Main grid - responsive layout */}
-      <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {/* Security Score - full width on mobile, 2 cols on tablet+ */}
-        <div className="col-span-1 md:col-span-2" data-tour="security-score">
-          <SecurityScoreCard stats={stats} />
-        </div>
-
-        {/* Quick Actions */}
-        <div className="col-span-1" data-tour="quick-actions">
-          <QuickActionsCard />
-        </div>
-
-        {/* Product Cards - responsive */}
+      {/* Outcome tiles — Passwords / Threats / Exposure */}
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-3">
         {productCardsConfig.map((product, index) => (
-          <div key={product.id} className="col-span-1" data-tour={product.id}>
+          <div key={product.id} data-tour={product.id}>
             <ProductCard
               product={product}
               isLocked={!canUseFeature(product.feature)}
@@ -648,11 +625,11 @@ export default function WraythDashboard() {
             />
           </div>
         ))}
+      </div>
 
-        {/* Recent Activity */}
-        <div className="col-span-1 md:col-span-2 lg:col-span-1">
-          <RecentActivityCard activities={activities} />
-        </div>
+      {/* Recent Activity */}
+      <div>
+        <RecentActivityCard activities={activities} />
       </div>
 
       {/* Product Tour */}
