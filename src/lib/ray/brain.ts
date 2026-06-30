@@ -28,15 +28,23 @@ export type RayTimelineEvent = {
   occurred_at: string;
 };
 
+export type RayRecommendationStatus =
+  | 'new'
+  | 'snoozed'
+  | 'in_progress'
+  | 'completed'
+  | 'dismissed';
+
 export type RayRecommendation = {
   id: string;
   user_id: string;
   title: string;
   body: string | null;
   priority: number;
-  status: string;
+  status: RayRecommendationStatus | string;
   dismissed_at: string | null;
   completed_at: string | null;
+  snoozed_until: string | null;
   estimated_fix_seconds: number | null;
   page_context: string | null;
   created_at: string;
@@ -102,14 +110,30 @@ export async function recordTimelineEvent(
 export async function completeRecommendation(id: string) {
   await supabase
     .from('ray_recommendations')
-    .update({ completed_at: new Date().toISOString(), status: 'completed' })
+    .update({ completed_at: new Date().toISOString(), status: 'completed', snoozed_until: null })
     .eq('id', id);
 }
 
 export async function dismissRecommendation(id: string) {
   await supabase
     .from('ray_recommendations')
-    .update({ dismissed_at: new Date().toISOString(), status: 'dismissed' })
+    .update({ dismissed_at: new Date().toISOString(), status: 'dismissed', snoozed_until: null })
+    .eq('id', id);
+}
+
+export async function startRecommendation(id: string) {
+  await supabase
+    .from('ray_recommendations')
+    .update({ status: 'in_progress', snoozed_until: null })
+    .eq('id', id);
+}
+
+/** Snooze a recommendation for N hours (default 24). */
+export async function snoozeRecommendation(id: string, hours = 24) {
+  const until = new Date(Date.now() + Math.max(1, hours) * 3600_000).toISOString();
+  await supabase
+    .from('ray_recommendations')
+    .update({ status: 'snoozed', snoozed_until: until })
     .eq('id', id);
 }
 
@@ -164,8 +188,9 @@ export function useRayBrain(options?: { pageContext?: string }) {
         .eq('user_id', user.id)
         .is('dismissed_at', null)
         .is('completed_at', null)
+        .or(`snoozed_until.is.null,snoozed_until.lt.${new Date().toISOString()}`)
         .order('priority', { ascending: false })
-        .limit(10),
+        .limit(20),
       supabase.from('ray_memory').select('*').eq('user_id', user.id),
       supabase
         .from('ray_timeline')
@@ -218,6 +243,14 @@ export function useRayBrain(options?: { pageContext?: string }) {
     },
     dismissRecommendation: async (id: string) => {
       await dismissRecommendation(id);
+      await refresh();
+    },
+    startRecommendation: async (id: string) => {
+      await startRecommendation(id);
+      await refresh();
+    },
+    snoozeRecommendation: async (id: string, hours = 24) => {
+      await snoozeRecommendation(id, hours);
       await refresh();
     },
   };

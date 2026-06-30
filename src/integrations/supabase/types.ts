@@ -17369,6 +17369,9 @@ export type Database = {
           brief_date: string
           bullets: Json
           created_at: string
+          feedback: string | null
+          feedback_at: string | null
+          feedback_note: string | null
           generated_at: string
           generation_ms: number | null
           greeting: string | null
@@ -17389,6 +17392,9 @@ export type Database = {
           brief_date: string
           bullets?: Json
           created_at?: string
+          feedback?: string | null
+          feedback_at?: string | null
+          feedback_note?: string | null
           generated_at?: string
           generation_ms?: number | null
           greeting?: string | null
@@ -17409,6 +17415,9 @@ export type Database = {
           brief_date?: string
           bullets?: Json
           created_at?: string
+          feedback?: string | null
+          feedback_at?: string | null
+          feedback_note?: string | null
           generated_at?: string
           generation_ms?: number | null
           greeting?: string | null
@@ -17607,6 +17616,7 @@ export type Database = {
           id: string
           page_context: string | null
           priority: number
+          snoozed_until: string | null
           source_finding_ids: Json
           status: string
           title: string
@@ -17622,6 +17632,7 @@ export type Database = {
           id?: string
           page_context?: string | null
           priority?: number
+          snoozed_until?: string | null
           source_finding_ids?: Json
           status?: string
           title: string
@@ -17637,6 +17648,7 @@ export type Database = {
           id?: string
           page_context?: string | null
           priority?: number
+          snoozed_until?: string | null
           source_finding_ids?: Json
           status?: string
           title?: string
