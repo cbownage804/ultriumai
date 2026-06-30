@@ -1341,3 +1341,170 @@ function localRayReply(ctx, msgs) {
 }
 
 console.log('[SafePass] Background service worker v2.2 initialized');
+// =====================================================================
+// Wrayth 3.1 — Page-aware engine
+// Domain trust, password intelligence, identity awareness, timeline sync
+// =====================================================================
+
+const WRAYTH_INTEL_TTL_MS = 60 * 60 * 1000; // 1 hour cache per host
+const wraythIntelCache = new Map(); // host -> { intel, expires }
+const wraythLastIntelByTab = new Map(); // tabId -> host (for de-dupe)
+const wraythBrowsingMemory = []; // session memory (rolling 50 events)
+
+function wraythRememberEvent(evt) {
+  wraythBrowsingMemory.push({ t: Date.now(), ...evt });
+  if (wraythBrowsingMemory.length > 50) wraythBrowsingMemory.shift();
+  try { chrome.storage.session.set({ wraythMemory: wraythBrowsingMemory.slice(-50) }); } catch (_) {}
+}
+
+async function wraythFetchDomainIntel(host, isHTTPS) {
+  const key = host.toLowerCase().replace(/^www\./, '');
+  const hit = wraythIntelCache.get(key);
+  if (hit && hit.expires > Date.now()) return hit.intel;
+  try {
+    const resp = await fetch(`${FUNCTIONS_URL}/wrayth-domain-intel`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: API_KEY, Authorization: `Bearer ${API_KEY}` },
+      body: JSON.stringify({ host: key, https: !!isHTTPS }),
+    });
+    if (!resp.ok) return null;
+    const intel = await resp.json();
+    wraythIntelCache.set(key, { intel, expires: Date.now() + WRAYTH_INTEL_TTL_MS });
+    return intel;
+  } catch (_) { return null; }
+}
+
+async function wraythAnalyzeTab(tabId, url) {
+  try {
+    if (!url || !/^https?:/i.test(url)) return;
+    const u = new URL(url);
+    const host = u.hostname;
+    if (wraythLastIntelByTab.get(tabId) === host) return; // already analyzed
+    wraythLastIntelByTab.set(tabId, host);
+    const intel = await wraythFetchDomainIntel(host, u.protocol === 'https:');
+    if (!intel) return;
+    try { await chrome.tabs.sendMessage(tabId, { type: 'wrayth:domain-intel', intel }); } catch (_) {}
+    // Timeline: visited suspicious site
+    if (intel.level === 'danger') {
+      wraythRememberEvent({ kind: 'visited_suspicious', host, headline: intel.headline });
+      wraythSyncTimeline({
+        event_type: 'browser.visited_suspicious',
+        summary: `Visited a high-risk site (${host}).`,
+        severity: 'warning',
+        payload: { host, intel: { level: intel.level, typosquatOf: intel.typosquatOf, score: intel.score } },
+      });
+    } else {
+      wraythRememberEvent({ kind: 'visited', host, level: intel.level });
+    }
+  } catch (e) { console.warn('[Wrayth] analyze tab failed', e); }
+}
+
+chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
+  if (info.status !== 'complete') return;
+  wraythAnalyzeTab(tabId, tab?.url);
+});
+chrome.tabs.onActivated.addListener(async ({ tabId }) => {
+  try {
+    const tab = await chrome.tabs.get(tabId);
+    wraythLastIntelByTab.delete(tabId);
+    if (tab?.url) wraythAnalyzeTab(tabId, tab.url);
+  } catch (_) {}
+});
+
+// ---- Password intelligence ----
+async function wraythPasswordIntel({ host, username, pageType, passkeySupported, tabId }) {
+  const intel = {
+    host,
+    username: username || null,
+    savedCount: 0,
+    reused: false,
+    weak: false,
+    passkeySupported: !!passkeySupported,
+    identityMonitored: false,
+    identityBreached: false,
+    breachCount: 0,
+  };
+  try {
+    // 1) Saved credentials for this site
+    const match = await getPasswordsForSite(host).catch(() => ({ entries: [] }));
+    if (match?.entries?.length) {
+      intel.savedCount = match.entries.length;
+      intel.weak = match.entries.some((e) => e.isWeak);
+    }
+
+    // 2) Identity monitoring (best-effort against ray_profiles via REST)
+    const session = await chrome.storage.session.get(['authToken']);
+    if (session.authToken && username && /@/.test(username)) {
+      try {
+        const r = await fetch(`${API_URL}/rest/v1/safepass_breach_database?email=eq.${encodeURIComponent(username.toLowerCase())}&select=email,breach_name,breach_date&limit=5`, {
+          headers: { apikey: API_KEY, Authorization: `Bearer ${session.authToken}` },
+        });
+        if (r.ok) {
+          const rows = await r.json();
+          if (Array.isArray(rows) && rows.length) {
+            intel.identityMonitored = true;
+            intel.identityBreached = true;
+            intel.breachCount = rows.length;
+          }
+        }
+      } catch (_) {}
+    }
+  } catch (_) {}
+
+  try { await chrome.tabs.sendMessage(tabId, { type: 'wrayth:password-intel', intel }); } catch (_) {}
+  // Timeline note (non-noisy)
+  if (pageType === 'login' && intel.savedCount === 0) {
+    wraythRememberEvent({ kind: 'password_focus_new_site', host });
+  }
+  if (intel.identityBreached) {
+    wraythRememberEvent({ kind: 'breach_seen', host, count: intel.breachCount });
+  }
+  return intel;
+}
+
+// ---- Timeline sync (best-effort) ----
+async function wraythSyncTimeline({ event_type, summary, severity = 'info', payload = {} }) {
+  try {
+    const session = await chrome.storage.session.get(['authToken']);
+    if (!session.authToken) return;
+    await fetch(`${API_URL}/rest/v1/ray_timeline`, {
+      method: 'POST',
+      headers: {
+        apikey: API_KEY,
+        Authorization: `Bearer ${session.authToken}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify({ event_type, summary, severity, payload, source: 'extension' }),
+    });
+  } catch (_) {}
+}
+
+// ---- Extra message handlers ----
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type === 'wrayth:password-field-focus') {
+    const tabId = sender?.tab?.id;
+    if (tabId != null) {
+      wraythPasswordIntel({ ...message, tabId }).catch(() => {});
+    }
+    return false;
+  }
+  if (message?.type === 'wrayth:get-domain-intel') {
+    (async () => {
+      const host = message.host || (sender?.tab?.url ? new URL(sender.tab.url).hostname : null);
+      const intel = host ? await wraythFetchDomainIntel(host, true) : null;
+      sendResponse({ ok: !!intel, intel });
+    })();
+    return true;
+  }
+  if (message?.type === 'wrayth:get-memory') {
+    sendResponse({ ok: true, memory: wraythBrowsingMemory.slice(-15) });
+    return false;
+  }
+  if (message?.type === 'wrayth:timeline-event') {
+    wraythSyncTimeline(message.event || {}).catch(() => {});
+    wraythRememberEvent({ kind: 'logged', ...(message.event || {}) });
+    return false;
+  }
+  return undefined;
+});
