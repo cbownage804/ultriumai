@@ -35,7 +35,7 @@ function setTab(name) {
   document.querySelectorAll('.sp-panel').forEach((p) => p.classList.toggle('is-active', p.dataset.panel === name));
 }
 
-function renderContext(ctx) {
+async function renderContext(ctx) {
   if (!ctx) return;
   currentContext = ctx;
   $('sp-host').textContent = ctx.host || '—';
@@ -44,18 +44,28 @@ function renderContext(ctx) {
   $('sp-https').textContent = ctx.signals?.isHTTPS ? 'Yes' : 'No';
   $('sp-passkey').textContent = ctx.signals?.passkeySupported ? 'Supported' : '—';
 
-  // Reputation indicator
+  // Domain intel (cached server-side; ~50ms typical)
+  let intel = null;
+  try {
+    const reply = await chrome.runtime.sendMessage({ type: 'wrayth:get-domain-intel', host: ctx.host });
+    intel = reply?.intel || null;
+  } catch (_) {}
+
+  // Reputation indicator — driven by intel when available, else heuristics
   let level = 'ok';
-  if (!ctx.signals?.isHTTPS && ctx.type === 'login') level = 'warn';
-  if (ctx.type === 'mfa' || ctx.signals?.passkeySupported) level = 'info';
+  if (intel?.level) level = intel.level === 'danger' ? 'warn' : intel.level; // map danger -> warn dot
+  else if (!ctx.signals?.isHTTPS && ctx.type === 'login') level = 'warn';
+  else if (ctx.type === 'mfa' || ctx.signals?.passkeySupported) level = 'info';
   $('sp-rep').dataset.level = level;
+  if (intel?.headline) $('sp-pagehint').textContent = intel.headline;
 
   // Recommendation
-  const rec = recommendFor(ctx);
+  const rec = recommendFor(ctx, intel);
   $('sp-rec-body').textContent = rec.body;
   $('sp-rec-go').textContent = rec.cta;
   $('sp-rec-go').onclick = rec.action;
 }
+
 
 function recommendFor(ctx) {
   switch (ctx.type) {
