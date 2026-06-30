@@ -57,6 +57,7 @@ const Identity = lazy(() => import('@/pages/safesuite/Identity'));
 const Devices = lazy(() => import('@/pages/safesuite/Devices'));
 const Reports = lazy(() => import('@/pages/safesuite/Reports'));
 const RayOnboarding = lazy(() => import('@/pages/onboarding/RayOnboarding'));
+const RayTimelinePage = lazy(() => import('@/pages/safesuite/RayTimelinePage'));
 
 // Public/legal pages
 const Contact = lazy(() => import('@/pages/Contact'));
