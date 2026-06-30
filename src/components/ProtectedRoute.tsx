@@ -110,7 +110,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       
       // Check URL path prefix
       if (location.pathname.startsWith('/app')) {
-        return `${window.location.origin}/safesuite/dashboard`;
+        return `${window.location.origin}/app/dashboard`;
       }
       if (location.pathname.startsWith('/vanguard')) {
         return `${window.location.origin}/vanguard/dashboard`;
