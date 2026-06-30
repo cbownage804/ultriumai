@@ -433,3 +433,6 @@ verify_jwt = true
 
 [functions.ray-scheduler]
 verify_jwt = false
+
+[functions.ray-tts]
+verify_jwt = true
