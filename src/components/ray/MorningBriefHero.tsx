@@ -115,10 +115,47 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
 
   const brief = today;
   const greeting = brief?.greeting ?? (firstName ? `Good morning, ${firstName}.` : "Good morning.");
-  const bullets = brief?.bullets?.length ? brief.bullets : ["I'm catching up on your environment."];
 
-  // Top recommendations: keep brief's first (so it matches what AI summarised),
-  // but always pull live records so lifecycle status is fresh.
+  // Ray's one-line personality flourish — rotates daily so he feels alive.
+  const personalityLines = [
+    "Nothing unusual happened overnight.",
+    "Everything looks healthy this morning.",
+    "I've already reviewed your latest activity.",
+    "You're in good shape today.",
+    "Quiet night. I kept watch.",
+    "Caught up on everything while you slept.",
+  ];
+  const personality = personalityLines[new Date().getDate() % personalityLines.length];
+
+  // Build status cards from real brief.stats — facts at a glance.
+  const s = brief?.stats ?? null;
+  const score = brief?.score ?? null;
+  const passwordsHealthy = !s?.passwords || (s.passwords.weak === 0 && s.passwords.reused === 0 && s.passwords.breached === 0);
+  const threatsCount = s?.threats?.open ?? 0;
+  const exposureCount = s?.exposure?.monitored ?? 0;
+  const statusCards: { label: string; value: string; ok: boolean }[] = [
+    {
+      label: "Security Score",
+      value: score != null ? String(score) : "—",
+      ok: score == null ? true : score >= 80,
+    },
+    {
+      label: "Threats",
+      value: threatsCount === 0 ? "None detected" : `${threatsCount} open`,
+      ok: threatsCount === 0,
+    },
+    {
+      label: "Exposure",
+      value: exposureCount === 0 ? "Nothing new" : `${exposureCount} identit${exposureCount === 1 ? "y" : "ies"} watched`,
+      ok: !s?.exposure?.new_breaches,
+    },
+    {
+      label: "Passwords",
+      value: passwordsHealthy ? "Healthy" : `${s?.passwords?.weak ?? 0} to strengthen`,
+      ok: passwordsHealthy,
+    },
+  ];
+
   const top = recommendations.slice(0, variant === "home" ? 3 : 6);
 
   async function withBusy(id: string, fn: () => Promise<unknown>) {
@@ -151,18 +188,37 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
         {brief && <ScoreBadge score={brief.score} delta={brief.score_delta} />}
       </div>
 
+      {/* Conversational greeting — Ray talks like a teammate, not a report. */}
       <h1 className="relative text-2xl sm:text-3xl font-semibold text-white tracking-tight">
         {greeting}
       </h1>
       <p className="relative mt-1 text-sm text-slate-400">
-        Ray checked everything overnight. Here's what matters.
+        I checked everything overnight. Here's what matters today.
       </p>
+      <p className="relative mt-1 text-xs text-slate-500 italic">{personality}</p>
 
-      <ul className="relative mt-4 space-y-1.5">
-        {bullets.map((b, i) => (
-          <li key={i} className="text-[15px] text-slate-200/90 leading-relaxed">• {b}</li>
+      {/* Status cards — scannable in one second. */}
+      <div className="relative mt-5 grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {statusCards.map((c) => (
+          <div
+            key={c.label}
+            className={cn(
+              "rounded-xl border px-3 py-2.5",
+              c.ok
+                ? "border-emerald-500/20 bg-emerald-500/[0.04]"
+                : "border-amber-500/30 bg-amber-500/[0.05]",
+            )}
+          >
+            <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-slate-400">
+              <span className={cn("inline-block h-1.5 w-1.5 rounded-full", c.ok ? "bg-emerald-400" : "bg-amber-400")} />
+              {c.label}
+            </div>
+            <div className={cn("mt-1 text-sm font-medium", c.ok ? "text-slate-100" : "text-amber-100")}>
+              {c.value}
+            </div>
+          </div>
         ))}
-      </ul>
+      </div>
 
       {brief?.guidance && (
         <p className="relative mt-4 text-[15px] text-violet-200/90 border-l-2 border-violet-400/40 pl-3">
@@ -170,7 +226,7 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
         </p>
       )}
 
-      {/* Lifecycle-aware recommendations */}
+      {/* Lifecycle-aware recommendations — Start is the clear primary action. */}
       {top.length > 0 && (
         <div className="relative mt-5 space-y-2">
           {top.map((rec) => {
@@ -195,14 +251,19 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
                   </div>
                   {rec.body && <p className="mt-1 text-xs text-slate-400 leading-relaxed">{rec.body}</p>}
                   <div className="mt-2 flex items-center flex-wrap gap-1.5">
-                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-slate-300 hover:text-white" onClick={() => navigate(pageHrefFor(rec.page_context))}>
-                      Open <ArrowRight className="h-3 w-3 ml-1" />
-                    </Button>
                     {!inProgress && (
-                      <Button size="sm" variant="ghost" disabled={isBusy} className="h-7 px-2 text-xs text-violet-200 hover:text-violet-100" onClick={() => withBusy(rec.id, () => startRecommendation(rec.id))}>
+                      <Button
+                        size="sm"
+                        disabled={isBusy}
+                        className="h-7 px-3 text-xs bg-violet-500 hover:bg-violet-400 text-white border-0"
+                        onClick={() => withBusy(rec.id, () => startRecommendation(rec.id))}
+                      >
                         <Play className="h-3 w-3 mr-1" /> Start
                       </Button>
                     )}
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-slate-300 hover:text-white" onClick={() => navigate(pageHrefFor(rec.page_context))}>
+                      Open <ArrowRight className="h-3 w-3 ml-1" />
+                    </Button>
                     <Button size="sm" variant="ghost" disabled={isBusy} className="h-7 px-2 text-xs text-emerald-300 hover:text-emerald-200" onClick={() => withBusy(rec.id, () => completeRecommendation(rec.id))}>
                       <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Mark handled
                     </Button>
@@ -235,7 +296,7 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
           disabled={isGenerating}
         >
           {isGenerating ? <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 mr-2" />}
-          Re-run the brief
+          Ask Ray to check again
         </Button>
         {showFullBriefLink && (
           <Button asChild variant="ghost" size="sm" className="text-slate-300 hover:text-white">

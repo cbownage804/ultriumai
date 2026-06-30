@@ -16,10 +16,10 @@ function greet(now = new Date()) {
 }
 
 function headline(ctx: RayContext | null): string {
-  if (!ctx) return '';
+  if (!ctx) return 'Ray is checking…';
   if (!ctx.hasOnboarded) return "Let's get you set up.";
   const score = ctx.latestScore?.score ?? null;
-  if (score === null) return 'Calibrating.';
+  if (score === null) return "Building today's assessment…";
   if (score >= 90) return 'Everything looks healthy.';
   if (score >= 70) return "You're in good shape.";
   if (score >= 50) return 'A few things to tighten up.';

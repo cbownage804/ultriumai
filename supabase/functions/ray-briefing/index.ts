@@ -112,19 +112,23 @@ serve(async (req) => {
       });
     }
 
-    const userPrompt = `Generate a calm morning briefing for ${firstName}.
-Use the context below to write 2-5 short bullets describing what you (Ray) observed,
-then 0-3 prioritized recommendations. If there is nothing urgent, say so plainly.
+    const userPrompt = `Generate a short, conversational morning briefing for ${firstName}.
+Greeting must be 1 short sentence (e.g. "Good morning, ${firstName}.").
+Bullets: 2-4 plain, calm observations grounded in the context.
+Recommendations: 0-3 items. TITLES MUST BE OUTCOME-FOCUSED and written as something you (Ray) will do FOR the user.
+GOOD titles: "Start protecting your passwords", "Let me monitor your dark-web exposure", "Turn on MFA for your Google account".
+BAD titles: "Establish password monitoring", "Configure breach detection", "Setup 2FA".
+The body explains what it actually does in 1 sentence.
 
 Context JSON:
 ${JSON.stringify(contextPayload).slice(0, 8000)}
 
 Return JSON ONLY in this exact shape:
 {
-  "greeting": "Good morning, <name>." or similar,
+  "greeting": "Good morning, <name>.",
   "bullets": ["short observation", "..."],
   "recommendations": [
-    { "title": "...", "body": "...", "priority": 0-100, "estimated_fix_seconds": <int>, "page_context": "passwords"|"threats"|"exposure"|"identity"|"devices"|"reports"|"home" }
+    { "title": "outcome-focused action Ray will take", "body": "what it does", "priority": 0-100, "estimated_fix_seconds": <int>, "page_context": "passwords"|"threats"|"exposure"|"identity"|"devices"|"reports"|"home" }
   ]
 }`;
 
