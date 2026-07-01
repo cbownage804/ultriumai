@@ -93,8 +93,8 @@ const Terms = () => {
                     <li>Vault – Password vault and management</li>
                     <li>Scan – Threat detection and scanning</li>
                     <li>Watch – Browser security and monitoring</li>
-                    <li>SafeTrack – Asset and device tracking</li>
-                    <li>SafeAssist – AI-powered support assistant</li>
+                    <li>Ray – Your AI security teammate</li>
+
                   </ul>
                 </div>
                 <div className="bg-muted/50 p-4 rounded-lg">
