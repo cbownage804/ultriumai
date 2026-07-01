@@ -92,7 +92,6 @@ export default function AiCredits() {
     <PageMotion>
       <div className="max-w-6xl mx-auto p-6 space-y-6">
         <RayPageHeader
-          icon={Coins}
           title="AI Credits"
           question="How much of Ray's brain have you used this cycle?"
           explain={{ title: 'How Ray tracks credits', body: "Credits power Ray's AI actions — briefings, analyses, conversations. Ray tracks daily and monthly usage separately so a busy Tuesday doesn't burn your month." }}
