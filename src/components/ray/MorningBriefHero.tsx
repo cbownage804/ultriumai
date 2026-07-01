@@ -154,6 +154,7 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
   const { user } = useAuth();
   const sub = useUserSubscription();
   const voiceUnlocked = sub?.tier === 'pro' || sub?.tier === 'business' || sub?.tier === 'enterprise';
+  const { activeOrg } = useActiveOrg();
 
   const brief = today;
   const greeting = brief?.greeting ?? (firstName ? `Good morning, ${firstName}.` : "Good morning.");
