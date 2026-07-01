@@ -28,6 +28,7 @@ const WraythDashboard = lazy(() => import('@/pages/safesuite/SafeSuiteDashboard'
 const WraythBilling = lazy(() => import('@/pages/safesuite/SafeSuiteBilling'));
 const WraythSettings = lazy(() => import('@/pages/safesuite/SafeSuiteSettings'));
 const Passwords = lazy(() => import('@/pages/safesuite/Passwords'));
+const PasswordImportPage = lazy(() => import('@/pages/safesuite/PasswordImportPage'));
 const Threats = lazy(() => import('@/pages/safesuite/Threats'));
 const Exposure = lazy(() => import('@/pages/safesuite/Exposure'));
 const MorningBrief = lazy(() => import('@/pages/safesuite/MorningBrief'));
@@ -205,6 +206,7 @@ function AppRouter() {
 
           <Route path="/app/mfa" element={<SuspenseWrapper><RayMFAHub /></SuspenseWrapper>} />
           <Route path="/app/passwords/shared" element={<SuspenseWrapper><VaultShared /></SuspenseWrapper>} />
+          <Route path="/app/passwords/import" element={<SuspenseWrapper><PasswordImportPage /></SuspenseWrapper>} />
           <Route path="/app/passwords/emergency" element={<SuspenseWrapper><VaultEmergency /></SuspenseWrapper>} />
           <Route path="/app/passwords/extension" element={<SuspenseWrapper><VaultExtension /></SuspenseWrapper>} />
           <Route path="/app/passwords/reminders" element={<SuspenseWrapper><VaultReminders /></SuspenseWrapper>} />
