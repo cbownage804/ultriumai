@@ -1,0 +1,17 @@
+{
+  "generatedAt": null,
+  "totals": {
+    "filesScanned": 0,
+    "legacyBrand": 0,
+    "todos": 0,
+    "consoles": 0,
+    "hardcodedHex": 0,
+    "arbitraryColors": 0,
+    "anyTypes": 0
+  },
+  "legacyBrand": [],
+  "todos": [],
+  "consoles": [],
+  "hardcodedHex": [],
+  "arbitraryColors": []
+}

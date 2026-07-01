@@ -1,137 +1,54 @@
-import * as React from "react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { LucideIcon, Inbox } from "lucide-react";
+import { type LucideIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
-/** Type for any component that accepts className */
-type IconComponent = React.ComponentType<{ className?: string }>;
-
-export interface EmptyStateProps {
-  /** Icon to display - can be a LucideIcon, any component with className, or ReactNode */
-  icon?: LucideIcon | IconComponent | React.ReactNode;
-  /** Main title text */
+interface EmptyStateProps {
+  icon?: LucideIcon;
   title: string;
-  /** Description text below the title */
-  description?: string;
-  /** Primary action button */
+  /** One short sentence — ideally sourced from src/lib/ray/voice.ts. */
+  body?: string;
   action?: {
     label: string;
-    onClick: () => void;
-    variant?: "default" | "outline" | "secondary";
+    onClick?: () => void;
+    href?: string;
   };
-  /** Secondary action button */
-  secondaryAction?: {
-    label: string;
-    onClick: () => void;
-  };
-  /** Additional className for the container */
   className?: string;
-  /** Size variant */
-  size?: "sm" | "md" | "lg";
 }
 
 /**
- * Reusable empty state component with icon, title, description, and optional CTAs.
- * Use this for tables, lists, and dashboards when no data is available.
+ * Shared empty state primitive. Every list / dashboard route with a possible
+ * "no data yet" moment should render this — never a bare "Nothing here" div.
  */
-export function EmptyState({
-  icon: IconProp,
-  title,
-  description,
-  action,
-  secondaryAction,
-  className,
-  size = "md"
-}: EmptyStateProps) {
-  const sizeStyles = {
-    sm: {
-      container: "py-6",
-      iconWrapper: "h-10 w-10",
-      iconSize: "h-5 w-5",
-      title: "text-sm font-medium",
-      description: "text-xs",
-    },
-    md: {
-      container: "py-12",
-      iconWrapper: "h-14 w-14",
-      iconSize: "h-7 w-7",
-      title: "text-lg font-semibold",
-      description: "text-sm",
-    },
-    lg: {
-      container: "py-16",
-      iconWrapper: "h-20 w-20",
-      iconSize: "h-10 w-10",
-      title: "text-xl font-bold",
-      description: "text-base",
-    },
-  };
-
-  const styles = sizeStyles[size];
-
-  // Render the icon
-  const renderIcon = () => {
-    if (!IconProp) {
-      return <Inbox className={cn(styles.iconSize, "text-muted-foreground")} />;
-    }
-    
-    // Check if it's a React component (function or forwardRef)
-    if (typeof IconProp === "function" || (typeof IconProp === "object" && IconProp !== null && '$$typeof' in IconProp)) {
-      const IconComponent = IconProp as React.ComponentType<{ className?: string }>;
-      return <IconComponent className={cn(styles.iconSize, "text-muted-foreground")} />;
-    }
-    
-    // It's a ReactNode
-    return IconProp;
-  };
-
+export function EmptyState({ icon: Icon, title, body, action, className }: EmptyStateProps) {
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center text-center",
-        styles.container,
-        className
+        'flex flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/40 px-6 py-16 text-center',
+        className,
       )}
+      role="status"
+      aria-live="polite"
     >
-      <div
-        className={cn(
-          "flex items-center justify-center rounded-full bg-muted mb-4",
-          styles.iconWrapper
-        )}
-      >
-        {renderIcon()}
-      </div>
-      
-      <h3 className={cn(styles.title, "text-foreground mb-1")}>{title}</h3>
-      
-      {description && (
-        <p className={cn(styles.description, "text-muted-foreground max-w-sm mb-4")}>
-          {description}
-        </p>
-      )}
-      
-      {(action || secondaryAction) && (
-        <div className="flex items-center gap-2 mt-2">
-          {action && (
-            <Button
-              onClick={action.onClick}
-              variant={action.variant || "default"}
-              size={size === "sm" ? "sm" : "default"}
-            >
+      {Icon ? (
+        <div className="mb-5 flex size-12 items-center justify-center rounded-xl bg-muted/60 text-muted-foreground">
+          <Icon className="size-6" aria-hidden="true" />
+        </div>
+      ) : null}
+      <h3 className="text-base font-medium text-foreground">{title}</h3>
+      {body ? <p className="mt-2 max-w-sm text-sm text-muted-foreground">{body}</p> : null}
+      {action ? (
+        <div className="mt-6">
+          {action.href ? (
+            <Button asChild size="sm">
+              <a href={action.href}>{action.label}</a>
+            </Button>
+          ) : (
+            <Button size="sm" onClick={action.onClick}>
               {action.label}
             </Button>
           )}
-          {secondaryAction && (
-            <Button
-              onClick={secondaryAction.onClick}
-              variant="outline"
-              size={size === "sm" ? "sm" : "default"}
-            >
-              {secondaryAction.label}
-            </Button>
-          )}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

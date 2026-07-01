@@ -1,83 +1,90 @@
 /**
- * Browser-native voice input for Ray.
+ * Ray Voice — single source of truth for anything Ray says.
  *
- * Uses the Web Speech API (SpeechRecognition) — no external deps, no audio
- * upload. Falls back gracefully when unavailable (Firefox, older browsers).
+ * Tone rules:
+ *  - Calm. Confident. Plain English.
+ *  - Speak in first person ("I'll…", "I noticed…").
+ *  - Never dramatic. Never robotic. Never repeat the same phrase twice in a row.
+ *  - Prefer outcomes over features ("I'll take care of your passwords",
+ *    not "Vault module enabled").
  */
 
-type SpeechRecognitionCtor = new () => SpeechRecognition;
+export type VoiceKey =
+  | 'greetingMorning'
+  | 'greetingAfternoon'
+  | 'greetingEvening'
+  | 'thinking'
+  | 'briefReady'
+  | 'briefBuilding'
+  | 'briefAskAgain'
+  | 'emptyPasswords'
+  | 'emptyThreats'
+  | 'emptyExposure'
+  | 'emptyTimeline'
+  | 'emptyIntegrations'
+  | 'emptyDevices'
+  | 'errorOffline'
+  | 'errorTimeout'
+  | 'errorAuth'
+  | 'errorRate'
+  | 'errorServer'
+  | 'errorUnknown';
 
-interface SpeechRecognition extends EventTarget {
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  maxAlternatives: number;
-  start: () => void;
-  stop: () => void;
-  abort: () => void;
-  onresult: ((this: SpeechRecognition, ev: any) => void) | null;
-  onerror: ((this: SpeechRecognition, ev: any) => void) | null;
-  onend: ((this: SpeechRecognition, ev: any) => void) | null;
+type Phrase = string | ((v: Record<string, string | number>) => string);
+
+const RAY_PHRASES: Record<VoiceKey, Phrase> = {
+  greetingMorning: ({ name = 'there' }) => `Good morning, ${name}. I've been keeping watch.`,
+  greetingAfternoon: ({ name = 'there' }) => `Good afternoon, ${name}. Here's where things stand.`,
+  greetingEvening: ({ name = 'there' }) => `Evening, ${name}. Let's close out the day.`,
+
+  thinking: 'Working on it.',
+  briefReady: "Today's briefing is ready.",
+  briefBuilding: "Building today's assessment…",
+  briefAskAgain: 'Ask Ray to check again',
+
+  emptyPasswords: "No passwords yet. Let's secure your first account together.",
+  emptyThreats: "Nothing suspicious detected. That's exactly what we want.",
+  emptyExposure: "You're not monitoring any identities yet. Let's add one.",
+  emptyTimeline: 'No activity yet. Once I start protecting you, everything will appear here.',
+  emptyIntegrations: 'No accounts connected. Connect one and I can start protecting it.',
+  emptyDevices: "No devices linked yet. Add one and I'll keep an eye on it.",
+
+  errorOffline: "I can't reach the internet right now. I'll pick this back up as soon as you're online.",
+  errorTimeout: 'That took longer than expected. Give it another try in a moment.',
+  errorAuth: 'Your session expired. Sign back in and I\'ll pick up where we left off.',
+  errorRate: 'A lot of activity happening at once. Give it a few seconds, then try again.',
+  errorServer: "Something on my side isn't responding. I'll be back shortly — try again in a minute.",
+  errorUnknown: "Something didn't go through. Try that again and I'll take another look.",
+};
+
+/**
+ * Look up a Ray phrase. Never renders anything else — if a key is missing,
+ * returns an empty string so the UI never leaks internal identifiers.
+ */
+export function say(key: VoiceKey, vars: Record<string, string | number> = {}): string {
+  const phrase = RAY_PHRASES[key];
+  if (!phrase) return '';
+  return typeof phrase === 'function' ? phrase(vars) : phrase;
 }
 
-export function isVoiceSupported(): boolean {
-  if (typeof window === 'undefined') return false;
-  return Boolean(
-    (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition,
-  );
+/** Convenience: pick the right greeting based on local time. */
+export function rayGreeting(name?: string): string {
+  const hour = new Date().getHours();
+  const vars = { name: name ?? 'there' };
+  if (hour < 12) return say('greetingMorning', vars);
+  if (hour < 18) return say('greetingAfternoon', vars);
+  return say('greetingEvening', vars);
 }
 
-export interface VoiceSession {
-  stop: () => void;
-}
-
-export function startVoiceCapture(opts: {
-  onInterim?: (text: string) => void;
-  onFinal: (text: string) => void;
-  onError?: (msg: string) => void;
-  onEnd?: () => void;
-}): VoiceSession | null {
-  const Ctor =
-    ((window as any).SpeechRecognition as SpeechRecognitionCtor | undefined) ||
-    ((window as any).webkitSpeechRecognition as SpeechRecognitionCtor | undefined);
-  if (!Ctor) {
-    opts.onError?.('Voice input is not supported in this browser.');
-    return null;
-  }
-
-  const rec = new Ctor();
-  rec.lang = 'en-US';
-  rec.continuous = false;
-  rec.interimResults = true;
-  rec.maxAlternatives = 1;
-
-  rec.onresult = (event: any) => {
-    let interim = '';
-    let final = '';
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      const result = event.results[i];
-      const text = result[0]?.transcript ?? '';
-      if (result.isFinal) final += text;
-      else interim += text;
-    }
-    if (interim) opts.onInterim?.(interim);
-    if (final) opts.onFinal(final.trim());
-  };
-  rec.onerror = (event: any) => {
-    opts.onError?.(event?.error || 'Voice capture failed.');
-  };
-  rec.onend = () => opts.onEnd?.();
-
-  try {
-    rec.start();
-  } catch (err) {
-    opts.onError?.(String(err));
-    return null;
-  }
-
-  return {
-    stop: () => {
-      try { rec.stop(); } catch { /* noop */ }
-    },
-  };
+/** Convenience: map an EdgeResult error code to a Ray sentence. */
+export function rayError(code: 'offline' | 'timeout' | 'auth' | 'rate' | 'server' | 'unknown'): string {
+  const map = {
+    offline: 'errorOffline',
+    timeout: 'errorTimeout',
+    auth: 'errorAuth',
+    rate: 'errorRate',
+    server: 'errorServer',
+    unknown: 'errorUnknown',
+  } as const;
+  return say(map[code]);
 }
