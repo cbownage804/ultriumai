@@ -55,13 +55,13 @@ const WraythTeamsApps = ({ organizationName = "Your Company" }: WraythTeamsAppsP
       features: ["Password Vault", "Secure Sharing", "Breach Monitoring"]
     },
     {
-      id: "safeassist",
-      name: "SafeAssist",
+      id: "ray",
+      name: "Ray",
       icon: MessageSquare,
-      description: "AI-powered IT support assistant with voice capabilities",
+      description: "Your AI cybersecurity teammate — always on, always watching.",
       color: "#7c3aed",
-      embedPath: "/app/assist",
-      features: ["AI Chat", "Voice Support", "Ticket Creation"]
+      embedPath: "/app/ray",
+      features: ["Morning Brief", "Ask Ray", "Playbooks"]
     },
     {
       id: "safeshield",
