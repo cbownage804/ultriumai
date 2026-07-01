@@ -278,11 +278,12 @@ export const TOTPManager = () => {
       ) : codes.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center">
-            <QrCode className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="font-medium">No 2FA codes yet</p>
-            <p className="text-sm text-muted-foreground">
-              Add your authenticator codes for quick access
+            <QrCode className="h-12 w-12 mx-auto text-violet-400/70 mb-4" />
+            <p className="font-medium">Let me hold your 2FA codes</p>
+            <p className="text-sm text-muted-foreground max-w-sm mx-auto mt-1">
+              Add your authenticator codes here and I'll keep them synced across your devices — one tap to copy when you need one.
             </p>
+
           </CardContent>
         </Card>
       ) : (
