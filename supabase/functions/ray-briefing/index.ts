@@ -218,7 +218,42 @@ Return JSON ONLY in this exact shape:
       ? (openRecs.data ?? []).slice(0, 5).map((r: any) => r.id)
       : [];
 
-    if (Array.isArray(parsed.recommendations)) {
+    // Lifecycle-aware: if the user's vault is empty, Ray's single, top
+    // recommendation is "Protect your passwords with Wrayth" (objective
+    // = import_passwords). Anything the AI tries to add about password
+    // monitoring/breach detection is redundant until credentials exist.
+    const vaultEmpty = passwordStats.total === 0;
+    if (vaultEmpty) {
+      const { data: existingImport } = await supabase
+        .from("ray_recommendations")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("objective", "import_passwords")
+        .is("completed_at", null)
+        .is("dismissed_at", null)
+        .maybeSingle();
+      let importRecId = existingImport?.id as string | undefined;
+      if (!importRecId) {
+        const { data: created } = await supabase
+          .from("ray_recommendations")
+          .insert({
+            user_id: user.id,
+            title: "Protect your passwords with Wrayth",
+            body: "Import from your browser or password manager, or save your first password. Once your vault is set up, monitoring, breach detection, and Ray's guidance follow automatically.",
+            priority: 1,
+            status: "open",
+            estimated_fix_seconds: 180,
+            page_context: "passwords",
+            objective: "import_passwords",
+          })
+          .select("id")
+          .single();
+        importRecId = created?.id;
+      }
+      if (importRecId && !recIds.includes(importRecId)) recIds.unshift(importRecId);
+    }
+
+    if (Array.isArray(parsed.recommendations) && !vaultEmpty) {
       for (const rec of parsed.recommendations.slice(0, 5)) {
         const title = String(rec.title ?? "").slice(0, 200);
         if (!title) continue;
