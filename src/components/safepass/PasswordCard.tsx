@@ -215,7 +215,35 @@ export const PasswordCard = ({
             <Trash2 className="w-3.5 h-3.5" />
           </Button>
         </div>
+
+        {/* Ray details toggle */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 shrink-0"
+                onClick={() => setExpanded((v) => !v)}
+                aria-label={expanded ? 'Hide Ray details' : 'Show Ray details'}
+                aria-expanded={expanded}
+              >
+                <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', expanded && 'rotate-180')} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{expanded ? 'Hide Ray details' : "Ask Ray about this"}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <PasswordProfilePanel
+            profile={profile}
+            onAction={profile.rayAction ? onEdit : undefined}
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
+
   );
 };
