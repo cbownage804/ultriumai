@@ -194,7 +194,9 @@ function AppRouter() {
           <Route path="/app/msp" element={<SuspenseWrapper><MspDashboard /></SuspenseWrapper>} />
 
           {/* Canonical product routes */}
-          <Route path="/app/passwords" element={<SuspenseWrapper><Passwords /></SuspenseWrapper>} />
+          <Route path="/app/passwords" element={<SuspenseWrapper><VaultHealth /></SuspenseWrapper>} />
+          <Route path="/app/passwords/list" element={<SuspenseWrapper><Passwords /></SuspenseWrapper>} />
+
           <Route path="/app/threats" element={<SuspenseWrapper><Threats /></SuspenseWrapper>} />
           <Route path="/app/exposure" element={<SuspenseWrapper><Exposure /></SuspenseWrapper>} />
 
