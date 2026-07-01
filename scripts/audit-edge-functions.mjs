@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Wrayth Edge Function Audit
- * For each supabase/functions/*/index.ts, verify baseline resilience.
+ * For each supabase/functions/[name]/index.ts, verify baseline resilience.
  */
 import { readdirSync, readFileSync, statSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, relative, dirname } from 'node:path';
