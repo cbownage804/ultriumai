@@ -84,27 +84,8 @@ const tools = [
       { icon: Clock, title: "Historical Data", description: "Track breaches over time with trend analysis" },
     ],
   },
-  {
-    id: "safetrack",
-    name: "SafeTrack",
-    tagline: "Asset Lifecycle Management",
-    description: "Complete IT asset tracking with depreciation, maintenance, and compliance reporting.",
-    icon: Package,
-    logo: safetrackLogo,
-    color: "text-emerald-500",
-    bgColor: "bg-emerald-500/10",
-    borderColor: "border-emerald-500/30",
-    shadowColor: "shadow-emerald-500/20",
-    features: [
-      { icon: Brain, title: "AI Warranty Lookup", description: "Instant warranty status by serial number using AI" },
-      { icon: Laptop, title: "Hardware Inventory", description: "Track all physical IT assets and equipment" },
-      { icon: QrCode, title: "QR Code Scanning", description: "Instant asset lookup with mobile scanning" },
-      { icon: DollarSign, title: "Depreciation Tracking", description: "Automatic calculations for accounting" },
-      { icon: Calendar, title: "Maintenance Schedules", description: "Preventive maintenance reminders" },
-      { icon: History, title: "Audit Trail", description: "Complete history of every asset change" },
-    ],
-  },
 ];
+
 
 export default function WraythFeatures() {
   return (
