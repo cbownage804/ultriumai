@@ -392,6 +392,29 @@ const productCardsConfig = [
   },
 ];
 
+/**
+ * Renders either the "Protect your passwords" onboarding card (when the
+ * vault is empty) or the full Morning Brief. This guarantees the Home
+ * dashboard, Passwords page, and Recommendations engine all reflect the
+ * same lifecycle stage instead of showing conflicting CTAs.
+ */
+function LifecycleAwareTop({ firstName }: { firstName: string }) {
+  const { stage } = usePasswordLifecycle();
+  if (stage === 'not_started') {
+    return (
+      <div data-tour="security-score" className="space-y-4 sm:space-y-6">
+        <PasswordProtectionCard />
+        <MorningBriefHero firstName={firstName} showFullBriefLink={false} />
+      </div>
+    );
+  }
+  return (
+    <div data-tour="security-score">
+      <MorningBriefHero firstName={firstName} />
+    </div>
+  );
+}
+
 export default function WraythDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
