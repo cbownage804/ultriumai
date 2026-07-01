@@ -19,7 +19,7 @@ import AuthConfirm from '@/pages/AuthConfirm';
 import NotFound from '@/pages/NotFound';
 
 // Wrayth layout
-const WraythLayout = lazy(() => import('@/layouts/SafeSuiteLayout'));
+const WraythLayout = lazy(() => import('@/layouts/WraythLayout'));
 
 // Wrayth pages
 const WraythLanding = lazy(() => import('@/pages/safesuite/SafeSuiteLanding'));
@@ -52,7 +52,7 @@ const VaultIdentity = lazy(() => import('@/pages/safesuite/SafePassIdentity'));
 const RayMFAHub = lazy(() => import('@/pages/safesuite/RayMFAHub'));
 const VaultHealth = lazy(() => import('@/pages/safesuite/SafePassHealth'));
 const VaultUsers = lazy(() => import('@/pages/safesuite/SafePassUsers'));
-const WraythPricing = lazy(() => import('@/pages/pricing/SafeSuitePricing'));
+const WraythPricing = lazy(() => import('@/pages/pricing/WraythPricing'));
 
 const Ray = lazy(() => import('@/pages/safesuite/Ray'));
 const Identity = lazy(() => import('@/pages/safesuite/Identity'));
