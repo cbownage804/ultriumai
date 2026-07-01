@@ -145,7 +145,7 @@ serve(async (req) => {
           return new Response(JSON.stringify({ 
             success: true,
             upgraded: true,
-            message: `Successfully upgraded to SafeSuite ${tier.charAt(0).toUpperCase() + tier.slice(1)}`,
+            message: `Successfully upgraded to Wrayth ${tier.charAt(0).toUpperCase() + tier.slice(1)}`,
             redirectUrl: `${origin}/safesuite/billing?upgraded=true&tier=${tier}`
           }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
