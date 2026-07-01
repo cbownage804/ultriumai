@@ -219,7 +219,7 @@ export const useOrganization = () => {
       toast({ title: 'Invitation sent', description: `An invite email has been sent to ${email}.` });
       await fetchOrgDetails(organization.id);
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
       return false;
     }
@@ -538,7 +538,7 @@ export const useOrganization = () => {
       });
       await fetchOrgDetails(organization.id);
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({ title: 'Migration error', description: err.message, variant: 'destructive' });
       return false;
     }
