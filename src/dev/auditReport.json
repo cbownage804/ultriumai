@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-07-01T14:47:50.459Z",
+  "generatedAt": "2026-07-01T14:51:16.519Z",
   "totals": {
     "filesScanned": 324,
     "legacyBrand": 1,
     "todos": 3,
-    "consoles": 54,
+    "consoles": 50,
     "hardcodedHex": 275,
     "arbitraryColors": 0,
     "anyTypes": 88
@@ -35,11 +35,6 @@
   ],
   "consoles": [
     {
-      "file": "src/hooks/useRayLiveSignals.ts",
-      "line": 35,
-      "text": "console.warn(\"[useRayLiveSignals] sync failed\", error);"
-    },
-    {
       "file": "src/integrations/supabase/client.ts",
       "line": 75,
       "text": "console.warn('[Supabase] Could not sync cookie to localStorage:', e);"
@@ -53,11 +48,6 @@
       "file": "src/integrations/supabase/client.ts",
       "line": 129,
       "text": "console.warn('[Supabase] Could not remove from localStorage:', e);"
-    },
-    {
-      "file": "src/lib/import/onboardingPipeline.ts",
-      "line": 82,
-      "text": "console.warn('[onboarding] pre-warm briefing failed', e);"
     },
     {
       "file": "src/lib/logger.ts",
@@ -78,16 +68,6 @@
       "file": "src/lib/logger.ts",
       "line": 23,
       "text": "if (isDev) console.debug(...args);"
-    },
-    {
-      "file": "src/lib/ray/notices.ts",
-      "line": 432,
-      "text": "console.warn('[ray.notices] synthesize failed', e);"
-    },
-    {
-      "file": "src/pages/safesuite/SafePassExtension.tsx",
-      "line": 51,
-      "text": "console.warn(`Could not fetch ${file}`, e);"
     },
     {
       "file": "supabase/functions/check-subscription/index.ts",
