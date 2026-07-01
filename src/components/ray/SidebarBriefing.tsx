@@ -1,11 +1,13 @@
 /**
- * SidebarBriefing — the compact "Good afternoon · Score · headline" block
- * that lives at the top of the Wrayth sidebar.
+ * SidebarBriefing — the compact Ray status block that lives at the top
+ * of the Wrayth sidebar. Shows greeting, live "Ray is watching" status,
+ * current security score, and last sync time.
  */
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { getRayContext, type RayContext } from '@/lib/ray';
-import { Eye } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { formatDistanceToNow } from 'date-fns';
 
 function greet(now = new Date()) {
   const h = now.getHours();
@@ -29,6 +31,8 @@ function headline(ctx: RayContext | null): string {
 export function SidebarBriefing() {
   const { user } = useAuth();
   const [ctx, setCtx] = useState<RayContext | null>(null);
+  const [lastSync] = useState(() => new Date());
+  const [, force] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -36,6 +40,12 @@ export function SidebarBriefing() {
     void getRayContext(user.id).then((c) => { if (active) setCtx(c); });
     return () => { active = false; };
   }, [user]);
+
+  // Refresh "last sync" label every minute without changing the timestamp.
+  useEffect(() => {
+    const id = setInterval(() => force((n) => n + 1), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   const firstName = useMemo(() => {
     const meta = (user?.user_metadata ?? {}) as Record<string, unknown>;
@@ -46,18 +56,43 @@ export function SidebarBriefing() {
   }, [user]);
 
   const score = ctx?.latestScore?.score ?? null;
+  const scoreTone =
+    score == null ? 'text-foreground' : score >= 80 ? 'text-emerald-300' : score >= 60 ? 'text-amber-300' : 'text-red-300';
 
   return (
-    <div className="px-4 py-4 border-b border-border">
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <Eye className="h-3.5 w-3.5" />
-        <span>{greet()}, {firstName}</span>
+    <div className="px-4 py-4 border-b border-border space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">{greet()}, {firstName}</span>
+        <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-emerald-300/80">
+          <motion.span
+            aria-hidden
+            className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400"
+            animate={{ opacity: [0.35, 1, 0.35], scale: [1, 1.15, 1] }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          Watching
+        </span>
       </div>
-      <div className="mt-3 flex items-baseline gap-2">
-        <span className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Security Score</span>
-        <span className="text-2xl font-light tabular-nums text-foreground">{score ?? '—'}</span>
+
+      <div>
+        <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+          Security Score
+        </div>
+        <motion.div
+          animate={{ opacity: [0.85, 1, 0.85] }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+          className={`mt-0.5 text-2xl font-light tabular-nums ${scoreTone}`}
+        >
+          {score ?? '—'}
+        </motion.div>
       </div>
-      <p className="mt-1 text-xs text-muted-foreground leading-snug">{headline(ctx)}</p>
+
+      <p className="text-xs text-muted-foreground leading-snug">{headline(ctx)}</p>
+
+      <div className="pt-2 border-t border-border/60 flex items-center justify-between text-[10px] text-muted-foreground">
+        <span className="uppercase tracking-[0.18em]">Last sync</span>
+        <span>{formatDistanceToNow(lastSync, { addSuffix: true })}</span>
+      </div>
     </div>
   );
 }
