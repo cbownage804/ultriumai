@@ -368,7 +368,7 @@ const productCardsConfig = [
     id: 'vault',
     feature: 'vault' as keyof TierFeatures,
     productLogo: safeSuiteProducts.vault.logo,
-    title: 'Passwords',
+    title: 'Vault',
     description: 'Ray keeps every credential strong and unique.',
     path: '/app/passwords',
     statLabel: 'Stored'

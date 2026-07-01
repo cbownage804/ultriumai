@@ -39,7 +39,7 @@ import { cn } from "@/lib/utils";
 import { ScoreCelebration } from "@/components/ray/ScoreCelebration";
 import { toast } from "sonner";
 
-/** Compose Ray's spoken brief: greeting → reassurance → top recommendation → close. */
+/** Compose Ray's spoken brief: greeting → reassurance → score → close. */
 function buildSpokenBrief(opts: {
   greeting: string;
   personality: string;
@@ -49,22 +49,20 @@ function buildSpokenBrief(opts: {
 }): string {
   const lines: string[] = [];
   lines.push(opts.greeting);
-  if (opts.brief?.summary) lines.push(opts.brief.summary);
-  lines.push(opts.personality);
-  if (opts.memoryLine) lines.push(opts.memoryLine);
+  lines.push("I checked everything while you were away.");
+  if (opts.topRec) {
+    lines.push(`The one thing worth your attention: ${opts.topRec.title}.`);
+  } else {
+    lines.push("Nothing needs your attention today.");
+  }
   if (opts.brief?.score != null) {
     const delta = opts.brief.score_delta ?? 0;
-    if (delta > 0) lines.push(`You're at ${opts.brief.score}, up ${delta} since we last spoke.`);
-    else if (delta < 0) lines.push(`You're at ${opts.brief.score}, down ${Math.abs(delta)} since we last spoke.`);
-    else lines.push(`Still holding at ${opts.brief.score}.`);
+    if (delta > 0) lines.push(`Your score is ${opts.brief.score}, up ${delta}.`);
+    else if (delta < 0) lines.push(`Your score is ${opts.brief.score}, down ${Math.abs(delta)}.`);
+    else lines.push(`Your score remains ${opts.brief.score}.`);
   }
-
-  if (opts.topRec) {
-    lines.push(`The one thing I'd focus on today: ${opts.topRec.title}.`);
-    if (opts.topRec.body) lines.push(opts.topRec.body);
-  }
-  if (opts.brief?.guidance) lines.push(opts.brief.guidance);
-  lines.push("Whenever you're ready, I'm here.");
+  lines.push("I'll continue monitoring your passwords, identities, and threats in the background.");
+  if (opts.memoryLine) lines.push(opts.memoryLine);
   return lines.join(" ");
 }
 
@@ -166,19 +164,21 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
   const { activeOrg } = useActiveOrg();
 
   const brief = today;
-  const greeting = brief?.greeting ?? (firstName ? `Good morning, ${firstName}.` : "Good morning.");
+  const hour = new Date().getHours();
+  const partOfDay = hour < 5 ? 'evening' : hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
+  const greeting = firstName
+    ? `Good ${partOfDay}, ${firstName}.`
+    : brief?.greeting ?? `Good ${partOfDay}.`;
 
-  // Ray's one-line personality flourish — rotates daily so he feels alive.
-  const personalityLines = [
-    "I reviewed everything overnight. Nothing needs your attention today.",
-    "Everything still looks healthy. I'll keep watching in the background.",
-    "Quiet so far. I'll speak up the moment anything changes.",
-    "All quiet. I've already caught up on your latest activity.",
-    "Nothing unusual to report. I'm right here if you need me.",
-    "Kept an eye on things while you were away. All good.",
-  ];
-  const personality = personalityLines[new Date().getDate() % personalityLines.length];
+  // Ray's Jarvis-like reassurance. Conversational, singular, present-tense.
+  const reassurance = "I checked everything while you were away.";
 
+  // Build status cards from real brief.stats — facts at a glance.
+  const s = brief?.stats ?? null;
+  const score = brief?.score ?? null;
+  const passwordsHealthy = !s?.passwords || (s.passwords.weak === 0 && s.passwords.reused === 0 && s.passwords.breached === 0);
+  const threatsCount = s?.threats?.open ?? 0;
+  const exposureCount = s?.exposure?.monitored ?? 0;
 
   // "Ray remembers" — a continuity nudge built from the most recent meaningful event.
   const lastCompleted = timeline.find((e) => e.event_type === "recommendation_completed");
@@ -189,12 +189,15 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
       ? `You started "${(lastStarted.payload?.title as string) ?? "a playbook"}" last time. Want to pick it back up?`
       : null;
 
-  // Build status cards from real brief.stats — facts at a glance.
-  const s = brief?.stats ?? null;
-  const score = brief?.score ?? null;
-  const passwordsHealthy = !s?.passwords || (s.passwords.weak === 0 && s.passwords.reused === 0 && s.passwords.breached === 0);
-  const threatsCount = s?.threats?.open ?? 0;
-  const exposureCount = s?.exposure?.monitored ?? 0;
+  // The single-line "verdict" sentence Ray delivers under the greeting.
+  const top = recommendations.slice(0, variant === "home" ? 3 : 6);
+  const hasAttention = top.length > 0 || threatsCount > 0 || !passwordsHealthy;
+  const verdict = hasAttention
+    ? "One or two things could use your attention."
+    : "Nothing needs your attention today.";
+  const scoreLine = score != null ? `Your score remains ${score}.` : null;
+  const closingLine = "I'll continue monitoring your passwords, identities, and threats in the background.";
+
   const statusCards: { label: string; value: string; ok: boolean }[] = [
     {
       label: "Security Score",
@@ -212,13 +215,13 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
       ok: !s?.exposure?.new_breaches,
     },
     {
-      label: "Passwords",
+      label: "Vault",
       value: passwordsHealthy ? "Healthy" : `${s?.passwords?.weak ?? 0} to strengthen`,
       ok: passwordsHealthy,
     },
   ];
 
-  const top = recommendations.slice(0, variant === "home" ? 3 : 6);
+
 
   async function withBusy(id: string, fn: () => Promise<unknown>) {
     setBusyId(id);
@@ -254,7 +257,12 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
       <h1 className="relative text-2xl sm:text-3xl font-semibold text-white tracking-tight">
         {greeting}
       </h1>
-      <p className="relative mt-1 text-sm text-slate-400">{personality}</p>
+      <div className="relative mt-2 space-y-1 text-[15px] leading-relaxed text-slate-300">
+        <p>{reassurance}</p>
+        <p className={hasAttention ? "text-amber-200/90" : "text-slate-300"}>{verdict}</p>
+        {scoreLine && <p className="text-slate-400">{scoreLine}</p>}
+        <p className="text-slate-500 text-sm">{closingLine}</p>
+      </div>
 
       {memoryLine && (
         <p className="relative mt-2 inline-flex items-center gap-1.5 rounded-full border border-violet-400/20 bg-violet-500/5 px-2.5 py-1 text-[11px] text-violet-200/90">
@@ -284,7 +292,7 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
               navigate('/app/billing');
               return;
             }
-            voice.speak(buildSpokenBrief({ greeting, personality, brief, topRec: top[0] ?? null, memoryLine }));
+            voice.speak(buildSpokenBrief({ greeting, personality: reassurance, brief, topRec: top[0] ?? null, memoryLine }));
           }}
           disabled={voice.isLoading}
           className={cn(

@@ -179,7 +179,7 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
           <img
             src={wraythBrandSidebar.url}
             alt="Wrayth"
-            className="h-10 w-auto object-contain"
+            className="h-8 w-auto object-contain"
           />
         </Link>
       </div>

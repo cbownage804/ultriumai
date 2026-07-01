@@ -136,10 +136,10 @@ export function SubscriptionBanner({ className, variant = 'full' }: Subscription
         <CardContent className="p-5">
           <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-violet-300/80">
             <Sparkles className="h-3 w-3" />
-            Ray suggests
+            Ray's recommendation
           </div>
           <h3 className="mt-2 text-base sm:text-lg font-light text-foreground">
-            I think <span className="font-medium text-foreground">{nextTier.name}</span> would help you, because…
+            Based on your current setup, I'd recommend <span className="font-medium text-foreground">{nextTier.name}</span> because it unlocks:
           </h3>
           <ul className="mt-3 space-y-1.5">
             {reasons.slice(0, 4).map((r) => (
