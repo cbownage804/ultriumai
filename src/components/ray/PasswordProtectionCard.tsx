@@ -6,6 +6,7 @@
  * goal is to *protect their passwords*; monitoring, breach detection,
  * and AI guidance flow naturally once credentials are in the vault.
  */
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, Chrome, FileText, KeyRound, Loader2, ShieldCheck, Wallet } from 'lucide-react';
