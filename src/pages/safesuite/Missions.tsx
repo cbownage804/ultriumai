@@ -219,10 +219,10 @@ export default function Missions() {
           </div>
           <div className="mt-2">
             <Button asChild variant="ghost" size="sm"><a href="/app/timeline">View timeline →</a></Button>
-    </PageMotion>
-
+          </div>
         </section>
       )}
-    </div>
+    </PageMotion>
   );
+
 }
