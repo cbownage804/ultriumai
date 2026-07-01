@@ -26,6 +26,8 @@ import {
   type RayOrgHealth, type RayOrgProfile, type RayOrgMission,
   type RayOrgTimelineEvent, type RayOrgBriefing, type RayOrgDepartmentScore,
 } from '@/lib/ray/org';
+import { PageMotion } from '@/components/ray/PageMotion';
+
 
 const HEALTH_AREAS: Array<{ key: keyof RayOrgHealth; label: string; icon: any }> = [
   { key: 'identity_score',   label: 'Identities',  icon: Users },
