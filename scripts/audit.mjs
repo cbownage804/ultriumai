@@ -45,9 +45,12 @@ function scan(pattern, { skipSelf = true } = {}) {
   return hits;
 }
 
-// Exclude import/require lines: legacy names in internal file paths are not user-facing.
+// Exclude import/require/dynamic-import lines: legacy names in internal file paths are not user-facing.
 const legacyBrand = scan('SafePass|SafeScan|SafeWeb|SafeSuite|SafeAssist|SafeTrack').filter(
-  (h) => !/^\s*(import|export)\s.+from\s+['"]/.test(h.text) && !/require\(['"][^'"]*(SafePass|SafeScan|SafeWeb|SafeSuite|SafeAssist|SafeTrack)/.test(h.text)
+  (h) =>
+    !/^\s*(import|export)\s.+from\s+['"]/.test(h.text) &&
+    !/import\(['"][^'"]*(SafePass|SafeScan|SafeWeb|SafeSuite|SafeAssist|SafeTrack)/.test(h.text) &&
+    !/require\(['"][^'"]*(SafePass|SafeScan|SafeWeb|SafeSuite|SafeAssist|SafeTrack)/.test(h.text)
 );
 const todos = scan('\\b(TODO|FIXME|XXX|HACK)\\b');
 const consoles = scan("console\\.(log|debug|info|warn)\\(");
