@@ -352,7 +352,7 @@ export default function WraythWeb() {
     switch (severity?.toLowerCase()) {
       case 'critical': return 'bg-red-600 text-white';
       case 'high': return 'bg-red-500 text-white';
-      case 'medium': return 'bg-orange-500 text-white';
+      case 'medium': return 'bg-yellow-500 text-black';
       case 'low': return 'bg-yellow-500 text-black';
       default: return 'bg-gray-500 text-white';
     }
