@@ -519,13 +519,14 @@ export default function WraythWeb() {
           {assets.length === 0 ? (
             <Card className="bg-card border-violet-500/10">
               <CardContent className="py-12 text-center">
-                <Globe className="h-12 w-12 mx-auto text-gray-500 mb-4" />
-                <p className="text-lg font-medium text-white">No assets monitored yet</p>
-                <p className="text-gray-400">
-                  Add an email or domain above to start monitoring
+                <Globe className="h-12 w-12 mx-auto text-violet-400/70 mb-4" />
+                <p className="text-lg font-medium text-white">Let me watch the dark web for you</p>
+                <p className="text-gray-400 max-w-md mx-auto mt-1">
+                  Add an email address or a domain above. I'll check it against known breach corpora and flag anything new — quietly, in the background.
                 </p>
               </CardContent>
             </Card>
+
           ) : (
             assets.map((asset) => (
               <Card key={asset.id} className="bg-card border-violet-500/10 hover:border-violet-500/30 transition-colors">
