@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-07-01T13:22:29.091Z",
+  "generatedAt": "2026-07-01T13:25:38.467Z",
   "totals": {
-    "filesScanned": 860,
+    "filesScanned": 776,
     "legacyBrand": 196,
     "todos": 10,
-    "consoles": 99,
-    "hardcodedHex": 470,
+    "consoles": 95,
+    "hardcodedHex": 450,
     "arbitraryColors": 0,
-    "anyTypes": 205
+    "anyTypes": 198
   },
   "legacyBrand": [
     {
@@ -1050,11 +1050,6 @@
       "text": "console.warn('No text returned from transcription');"
     },
     {
-      "file": "src/components/apiManager/SDKSnippets.tsx",
-      "line": 54,
-      "text": "console.log(result.choices[0].message.content);`;"
-    },
-    {
       "file": "src/components/client-portal/ClientPortal.tsx",
       "line": 577,
       "text": "console.log('Viewing article:', article.id);"
@@ -1065,11 +1060,6 @@
       "text": "console.log(response.message);"
     },
     {
-      "file": "src/components/deployment/GPTDeployment.tsx",
-      "line": 67,
-      "text": ".then(data => console.log(data));`;"
-    },
-    {
       "file": "src/components/knowledgebase/ContextualKnowledgeBase.tsx",
       "line": 400,
       "text": "console.log('Open article:', article.id);"
@@ -1078,16 +1068,6 @@
       "file": "src/components/reports/ReportGenerator.tsx",
       "line": 100,
       "text": "console.log('Generating report:', {"
-    },
-    {
-      "file": "src/components/safenet/AgentInstallationPanel.tsx",
-      "line": 45,
-      "text": "console.log('Function response:', response);"
-    },
-    {
-      "file": "src/components/safenet/SafeNetDashboard.tsx",
-      "line": 45,
-      "text": "console.log('Starting SafeNet Connector download...');"
     },
     {
       "file": "src/config/vanguardMeshCentral.ts",
@@ -1897,109 +1877,9 @@
       "text": "themeColor: '#2563eb',"
     },
     {
-      "file": "src/components/deployment/GPTDeploymentCenter.tsx",
-      "line": 188,
-      "text": "background-color: #f5f5f5;"
-    },
-    {
-      "file": "src/components/deployment/GPTDeploymentCenter.tsx",
-      "line": 281,
-      "text": "style={{ backgroundColor: gpt.theme_color || '#3b82f6' }}"
-    },
-    {
-      "file": "src/components/deployment/SafeSuiteTeamsApps.tsx",
-      "line": 32,
-      "text": "primaryColor: \"#0078d4\","
-    },
-    {
-      "file": "src/components/deployment/SafeSuiteTeamsApps.tsx",
-      "line": 44,
-      "text": "color: \"#2563eb\","
-    },
-    {
-      "file": "src/components/deployment/SafeSuiteTeamsApps.tsx",
-      "line": 53,
-      "text": "color: \"#059669\","
-    },
-    {
-      "file": "src/components/deployment/SafeSuiteTeamsApps.tsx",
-      "line": 62,
-      "text": "color: \"#7c3aed\","
-    },
-    {
-      "file": "src/components/deployment/SafeSuiteTeamsApps.tsx",
-      "line": 71,
-      "text": "color: \"#dc2626\","
-    },
-    {
-      "file": "src/components/deployment/SafeSuiteTeamsApps.tsx",
-      "line": 198,
-      "text": "placeholder=\"#0078d4\""
-    },
-    {
-      "file": "src/components/deployment/TeamsIntegrationConfig.tsx",
-      "line": 68,
-      "text": "\"accentColor\": \"#0078D4\","
-    },
-    {
       "file": "src/components/embed/SafePassEmbed.tsx",
       "line": 39,
       "text": "primaryColor = '#3b82f6',"
-    },
-    {
-      "file": "src/components/safedesk/TicketAnalyticsDashboard.tsx",
-      "line": 35,
-      "text": "const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];"
-    },
-    {
-      "file": "src/components/safedesk/TicketAnalyticsDashboard.tsx",
-      "line": 379,
-      "text": "stroke=\"#3b82f6\""
-    },
-    {
-      "file": "src/components/safedesk/TicketAnalyticsDashboard.tsx",
-      "line": 380,
-      "text": "fill=\"#3b82f6\""
-    },
-    {
-      "file": "src/components/safedesk/TicketAnalyticsDashboard.tsx",
-      "line": 388,
-      "text": "stroke=\"#10b981\""
-    },
-    {
-      "file": "src/components/safedesk/TicketAnalyticsDashboard.tsx",
-      "line": 389,
-      "text": "fill=\"#10b981\""
-    },
-    {
-      "file": "src/components/safedesk/TicketAnalyticsDashboard.tsx",
-      "line": 397,
-      "text": "stroke=\"#8b5cf6\""
-    },
-    {
-      "file": "src/components/safedesk/TicketAnalyticsDashboard.tsx",
-      "line": 398,
-      "text": "fill=\"#8b5cf6\""
-    },
-    {
-      "file": "src/components/safedesk/TicketAnalyticsDashboard.tsx",
-      "line": 424,
-      "text": "fill=\"#8884d8\""
-    },
-    {
-      "file": "src/components/safedesk/TicketAnalyticsDashboard.tsx",
-      "line": 448,
-      "text": "<Bar dataKey=\"tickets\" fill=\"#3b82f6\" name=\"Total Tickets\" />"
-    },
-    {
-      "file": "src/components/safedesk/TicketAnalyticsDashboard.tsx",
-      "line": 449,
-      "text": "<Bar dataKey=\"resolved\" fill=\"#10b981\" name=\"Resolved\" />"
-    },
-    {
-      "file": "src/components/safedesk/TicketAnalyticsDashboard.tsx",
-      "line": 513,
-      "text": "stroke=\"#3b82f6\""
     },
     {
       "file": "src/components/safesuite/MFAOnboardingGate.tsx",
@@ -2540,6 +2420,106 @@
       "file": "src/index.css",
       "line": 1762,
       "text": "background: #181818;"
+    },
+    {
+      "file": "src/index.css",
+      "line": 1763,
+      "text": "border: 1px solid #3A3A3A;"
+    },
+    {
+      "file": "src/index.css",
+      "line": 1768,
+      "text": "background: #242424;"
+    },
+    {
+      "file": "src/index.css",
+      "line": 1769,
+      "text": "border-color: #4a4a4a;"
+    },
+    {
+      "file": "src/index.css",
+      "line": 1772,
+      "text": "color: #ffffff;"
+    },
+    {
+      "file": "src/pages/onboarding/RayOnboarding.tsx",
+      "line": 224,
+      "text": "width: 200, margin: 2, color: { dark: '#000000', light: '#ffffff' },"
+    },
+    {
+      "file": "src/utils/pdfExport.ts",
+      "line": 34,
+      "text": "primary: '#7c3aed', // violet-600"
+    },
+    {
+      "file": "src/utils/pdfExport.ts",
+      "line": 35,
+      "text": "danger: '#ef4444',"
+    },
+    {
+      "file": "src/utils/pdfExport.ts",
+      "line": 36,
+      "text": "warning: '#f59e0b',"
+    },
+    {
+      "file": "src/utils/pdfExport.ts",
+      "line": 37,
+      "text": "success: '#22c55e',"
+    },
+    {
+      "file": "src/utils/pdfExport.ts",
+      "line": 38,
+      "text": "muted: '#6b7280',"
+    },
+    {
+      "file": "src/utils/pdfExport.ts",
+      "line": 39,
+      "text": "background: '#f9fafb'"
+    },
+    {
+      "file": "src/utils/pdfExport.ts",
+      "line": 132,
+      "text": "critical: '#ef4444',"
+    },
+    {
+      "file": "src/utils/pdfExport.ts",
+      "line": 133,
+      "text": "high: '#f59e0b',"
+    },
+    {
+      "file": "src/utils/pdfExport.ts",
+      "line": 134,
+      "text": "medium: '#eab308',"
+    },
+    {
+      "file": "src/utils/pdfExport.ts",
+      "line": 135,
+      "text": "low: '#22c55e'"
+    },
+    {
+      "file": "src/utils/pdfExport.ts",
+      "line": 138,
+      "text": "doc.setFillColor(severityColors[threat.severity] || '#6b7280');"
+    },
+    {
+      "file": "src/utils/pdfExport.ts",
+      "line": 195,
+      "text": "doc.setTextColor(asset.threatsFound > 0 ? '#ef4444' : '#22c55e');"
+    },
+    {
+      "file": "supabase/functions/ms-graph-oauth-callback/index.ts",
+      "line": 12,
+      "text": "<style>body{background:#0b0b10;color:#e8e8ef;font-family:ui-sans-serif,system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}.c"
+    },
+    {
+      "file": "supabase/functions/safepass-reset-master-password/index.ts",
+      "line": 203,
+      "text": "<h1 style=\"color: #f59e0b;\">SafePass Master Password Reset</h1>"
+    },
+    {
+      "file": "supabase/functions/safepass-reset-master-password/index.ts",
+      "line": 205,
+      "text": "<p style=\"color: #10b981;\"><strong>✓ MFA verification completed successfully</strong></p>"
     }
   ],
   "arbitraryColors": []
