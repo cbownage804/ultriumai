@@ -193,9 +193,33 @@ async function syncOrg(sb: SupabaseClient, orgId: string) {
   const exposureScore = clamp(100 - exposurePct * 80);
   const threatScore = clamp(100 - breachedEmployees * 6);
   const complianceScore = clamp((identityScore + exposureScore) / 2);
-  const trainingScore = 80;   // TODO wire to training records when available
-  const softwareScore = 90;   // TODO wire to ms_graph_sync software inventory
-  const domainScore = 95;     // TODO wire to safeweb_threats
+  // Best-effort proxies until dedicated data sources are wired:
+  // - Training: healthy accounts (no breaches AND no weak/reused passwords AND MFA on) as a readiness proxy.
+  // - Software: freshness of the org's Microsoft Graph sync (stale sync => lower posture confidence).
+  // - Domain: derived from active safeweb threat rows for this org.
+  const readyEmployees = signals.filter(
+    s => s.mfa_enabled && s.breach_count === 0 && (s.weak_password_count + s.reused_password_count) === 0,
+  ).length;
+  const trainingScore = clamp(60 + (readyEmployees / totalEmployees) * 40);
+
+  const { data: graphSync } = await sb
+    .from('ms_graph_sync')
+    .select('last_synced_at')
+    .eq('org_id', orgId)
+    .order('last_synced_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const graphAgeDays = graphSync?.last_synced_at
+    ? Math.max(0, (Date.now() - new Date(graphSync.last_synced_at as string).getTime()) / 86400000)
+    : 30;
+  const softwareScore = clamp(100 - Math.min(graphAgeDays * 2, 60));
+
+  const { count: activeThreats } = await sb
+    .from('safeweb_threats')
+    .select('id', { count: 'exact', head: true })
+    .eq('org_id', orgId)
+    .eq('status', 'active');
+  const domainScore = clamp(100 - Math.min((activeThreats ?? 0) * 8, 70));
 
   const overall = clamp(
     (identityScore * WEIGHTS.identity +
