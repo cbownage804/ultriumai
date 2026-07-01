@@ -50,6 +50,8 @@ import { RayWatchingCard } from '@/components/ray/RayWatchingCard';
 import { usePasswordLifecycle } from '@/lib/ray/passwordLifecycle';
 import { CisoNextAction } from '@/components/ray/CisoNextAction';
 import { nextBestAction } from '@/lib/ray/ciso';
+import { VaultLockedCard } from '@/components/ray/VaultLockedCard';
+import { useMasterPassword } from '@/hooks/useMasterPassword';
 
 interface DashboardStats {
   passwordCount: number;
@@ -449,6 +451,8 @@ export default function WraythDashboard() {
   const { tier, tierConfig, isSubscribed } = useWraythSubscription();
   const { canUseFeature } = useFeatureAccess();
   const { entries } = useVault();
+  const { isUnlocked, hasUserSetMasterPassword } = useMasterPassword();
+  const vaultLocked = hasUserSetMasterPassword() && !isUnlocked;
   // Track 1: refresh Ray's unified findings from Vault/Scan/Watch on mount.
   useRayLiveSignals();
 
