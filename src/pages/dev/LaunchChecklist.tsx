@@ -71,10 +71,11 @@ export default function LaunchChecklist() {
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-10">
-      <Helmet>
-        <title>Launch Checklist · Wrayth (dev)</title>
-        <meta name="robots" content="noindex,nofollow" />
-      </Helmet>
+      {typeof document !== 'undefined' ? (() => {
+        document.title = 'Launch Checklist · Wrayth (dev)';
+        return null;
+      })() : null}
+
 
       <header className="mb-8">
         <p className="text-xs uppercase tracking-widest text-muted-foreground">Internal · not shipped</p>
