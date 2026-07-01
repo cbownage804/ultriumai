@@ -50,15 +50,15 @@ function buildSpokenBrief(opts: {
   const lines: string[] = [];
   lines.push(opts.greeting);
   if (opts.brief?.summary) lines.push(opts.brief.summary);
-  else lines.push("I checked everything overnight. Here's what matters today.");
   lines.push(opts.personality);
   if (opts.memoryLine) lines.push(opts.memoryLine);
   if (opts.brief?.score != null) {
     const delta = opts.brief.score_delta ?? 0;
-    if (delta > 0) lines.push(`Your security score is ${opts.brief.score}, up ${delta} since the last brief.`);
-    else if (delta < 0) lines.push(`Your security score is ${opts.brief.score}, down ${Math.abs(delta)} since the last brief.`);
-    else lines.push(`Your security score remains at ${opts.brief.score}.`);
+    if (delta > 0) lines.push(`You're at ${opts.brief.score}, up ${delta} since we last spoke.`);
+    else if (delta < 0) lines.push(`You're at ${opts.brief.score}, down ${Math.abs(delta)} since we last spoke.`);
+    else lines.push(`Still holding at ${opts.brief.score}.`);
   }
+
   if (opts.topRec) {
     lines.push(`The one thing I'd focus on today: ${opts.topRec.title}.`);
     if (opts.topRec.body) lines.push(opts.topRec.body);
@@ -85,7 +85,13 @@ function ScoreBadge({ score, delta }: { score: number | null; delta: number | nu
   const tone = score >= 80 ? "text-emerald-300" : score >= 60 ? "text-amber-300" : "text-red-300";
   return (
     <div className="flex items-center gap-3">
-      <div className={cn("text-3xl font-semibold tabular-nums", tone)}>{score}</div>
+      <motion.div
+        animate={{ opacity: [0.88, 1, 0.88], scale: [1, 1.015, 1] }}
+        transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
+        className={cn("text-3xl font-semibold tabular-nums", tone)}
+      >
+        {score}
+      </motion.div>
       <div className="flex flex-col">
         <div className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Ray score</div>
         {delta != null && delta !== 0 ? (
@@ -100,6 +106,7 @@ function ScoreBadge({ score, delta }: { score: number | null; delta: number | nu
     </div>
   );
 }
+
 
 function FeedbackBar({ brief, onSend }: { brief: RayBriefRow; onSend: (f: RayBriefFeedback) => void | Promise<void> }) {
   const current = (brief.feedback ?? null) as RayBriefFeedback | null;
@@ -163,14 +170,15 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
 
   // Ray's one-line personality flourish — rotates daily so he feels alive.
   const personalityLines = [
-    "Nothing unusual happened overnight.",
-    "Everything looks healthy this morning.",
-    "I've already reviewed your latest activity.",
-    "You're in good shape today.",
-    "Quiet night. I kept watch.",
-    "Caught up on everything while you slept.",
+    "I reviewed everything overnight. Nothing needs your attention today.",
+    "Everything still looks healthy. I'll keep watching in the background.",
+    "Quiet so far. I'll speak up the moment anything changes.",
+    "All quiet. I've already caught up on your latest activity.",
+    "Nothing unusual to report. I'm right here if you need me.",
+    "Kept an eye on things while you were away. All good.",
   ];
   const personality = personalityLines[new Date().getDate() % personalityLines.length];
+
 
   // "Ray remembers" — a continuity nudge built from the most recent meaningful event.
   const lastCompleted = timeline.find((e) => e.event_type === "recommendation_completed");
@@ -246,10 +254,8 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
       <h1 className="relative text-2xl sm:text-3xl font-semibold text-white tracking-tight">
         {greeting}
       </h1>
-      <p className="relative mt-1 text-sm text-slate-400">
-        I checked everything overnight. Here's what matters today.
-      </p>
-      <p className="relative mt-1 text-xs text-slate-500 italic">{personality}</p>
+      <p className="relative mt-1 text-sm text-slate-400">{personality}</p>
+
       {memoryLine && (
         <p className="relative mt-2 inline-flex items-center gap-1.5 rounded-full border border-violet-400/20 bg-violet-500/5 px-2.5 py-1 text-[11px] text-violet-200/90">
           <Sparkles className="h-3 w-3" />

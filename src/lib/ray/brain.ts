@@ -49,7 +49,37 @@ export type RayRecommendation = {
   estimated_fix_seconds: number | null;
   page_context: string | null;
   created_at: string;
+  objective?: string | null;
 };
+
+/**
+ * Client-side consolidation: even if two open rows share an objective (a
+ * DB race, an older row from before the unique index, or an AI-generated
+ * rec whose objective was slugged from the title), Ray only ever shows
+ * one card per objective. Highest priority wins; ties break to most recent.
+ */
+export function consolidateByObjective(recs: RayRecommendation[]): RayRecommendation[] {
+  const seen = new Map<string, RayRecommendation>();
+  const out: RayRecommendation[] = [];
+  for (const r of recs) {
+    const key = (r.objective && r.objective.trim()) || `title:${r.title.toLowerCase().trim()}`;
+    const existing = seen.get(key);
+    if (!existing) {
+      seen.set(key, r);
+      out.push(r);
+      continue;
+    }
+    const better =
+      r.priority > existing.priority ||
+      (r.priority === existing.priority && r.created_at > existing.created_at);
+    if (better) {
+      const idx = out.indexOf(existing);
+      if (idx >= 0) out[idx] = r;
+      seen.set(key, r);
+    }
+  }
+  return out;
+}
 
 export type RayBriefing = {
   id: string;
@@ -221,10 +251,11 @@ export function useRayBrain(options?: { pageContext?: string }) {
         .limit(25),
     ]);
     setBriefing(b);
-    setRecommendations((recs.data as RayRecommendation[]) ?? []);
+    setRecommendations(consolidateByObjective((recs.data as RayRecommendation[]) ?? []));
     setMemory((mem.data as RayMemoryRecord[]) ?? []);
     setTimeline((tl.data as RayTimelineEvent[]) ?? []);
     setIsLoading(false);
+
 
     if (!isBriefingFresh(b)) {
       setIsGenerating(true);
