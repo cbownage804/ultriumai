@@ -11,7 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { SAFESUITE_TIERS, formatMonthlyPrice } from '@/config/safeSuiteTiers';
 import heroWrayth from '@/assets/hero-wrayth.jpg';
-import wraythLogo from '@/assets/wrayth-logo.png';
+import wraythLogo from '@/assets/wrayth-logo-v4.png';
 import {
   ArrowRight,
   Check,
