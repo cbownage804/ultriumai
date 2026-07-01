@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import wraythLogo from '@/assets/wrayth-logo-v4.png';
+import wraythBrand from '@/assets/wrayth-brand.png.asset.json';
 
 export default function WraythNav() {
   const { user, signOut } = useAuth();
@@ -9,9 +9,8 @@ export default function WraythNav() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link to="/" className="flex items-center gap-2">
-          <img src={wraythLogo} alt="Wrayth" className="h-8 w-auto" width={32} height={32} />
-          <span className="font-bold text-lg">Wrayth</span>
+        <Link to="/" className="flex items-center">
+          <img src={wraythBrand.url} alt="Wrayth — AI Security Companion" className="h-10 w-auto" />
         </Link>
         <nav className="hidden md:flex items-center gap-8 text-sm">
           <Link to="/app#platform" className="text-muted-foreground hover:text-foreground transition-colors">Platform</Link>
