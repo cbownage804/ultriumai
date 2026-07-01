@@ -376,7 +376,8 @@ export default function WraythWeb() {
       <div className="space-y-6">
         <RayPageHeader
           title="Exposure"
-          description="Monitoring the internet for compromised identities and leaked credentials."
+          question="Which of your identities should I keep watch over?"
+          description="I monitor the open and dark web for leaked emails, credentials, and personal data — and let you know the moment something surfaces."
           right={
             <Button variant="outline" onClick={() => loadData()} className="border-primary/30 text-primary hover:bg-primary/10">
               <RefreshCw className="h-4 w-4 mr-2" />

@@ -14,7 +14,8 @@ export default function WraythScan() {
       <div className="space-y-6">
         <RayPageHeader
           title="Threats"
-          description="AI-powered analysis of files, emails, URLs, and suspicious activity."
+          question="Got something suspicious? Send it to me and I'll take a look."
+          description="I analyze files, emails, URLs, and unusual activity — then tell you plainly whether it's safe."
         />
 
         <RayConversationCard context="threats" />
