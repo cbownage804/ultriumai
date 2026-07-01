@@ -28,7 +28,7 @@ const capabilities = [
     icon: KeyRound,
     title: 'Ray protects your passwords.',
     blurb:
-      "Ray stores every credential under zero-knowledge encryption, flags weak or reused passwords, generates stronger ones on request, and quietly monitors password health over time.",
+      "A complete zero-knowledge password manager, with Ray watching over it. Import from any browser or password manager, and Ray flags weak or reused passwords, checks each one against known breaches, and offers stronger replacements when you're ready.",
     bullets: [
       'Secure credential vault',
       'Weak-password detection',
