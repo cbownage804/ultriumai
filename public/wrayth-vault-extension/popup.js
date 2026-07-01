@@ -1,4 +1,4 @@
-// SafePass Extension Popup Script v2.1
+// Wrayth Vault Extension Popup Script v2.1
 // Enhanced with Password Health Dashboard, Form Fill Profiles, and Biometric Unlock
 
 const API_URL = 'https://nsyobmjpdpvesjwdphlh.supabase.co';
@@ -71,7 +71,7 @@ function setupSyncListener() {
   // Listen for sync complete messages from background
   chrome.runtime.onMessage.addListener((message) => {
     if (message.action === 'syncComplete') {
-      console.log('[SafePass] Sync complete notification received');
+      console.log('[Wrayth Vault] Sync complete notification received');
       loadAllData().then(() => {
         renderPasswords();
         updateSyncIndicator();
@@ -562,7 +562,7 @@ async function loadGeneratorSettings() {
       document.getElementById('pw-pronounceable').checked = generatorSettings.pronounceable;
     }
   } catch (e) {
-    console.error('[SafePass] Failed to load generator settings:', e);
+    console.error('[Wrayth Vault] Failed to load generator settings:', e);
   }
 }
 
@@ -580,7 +580,7 @@ async function saveGeneratorSettings() {
     await chrome.runtime.sendMessage({ action: 'saveGeneratorSettings', settings });
     generatorSettings = settings;
   } catch (e) {
-    console.error('[SafePass] Failed to save generator settings:', e);
+    console.error('[Wrayth Vault] Failed to save generator settings:', e);
   }
 }
 

@@ -1,4 +1,4 @@
-// SafePass Background Service Worker v2.2
+// Wrayth Vault Background Service Worker v2.2
 // Enhanced with auto-sync, keyboard shortcuts, context menus, TOTP, Notes, Cards, Identity support
 
 const API_URL = 'https://nsyobmjpdpvesjwdphlh.supabase.co';
@@ -31,7 +31,7 @@ async function checkAutoLock() {
   if (session.unlocked && session.lastActivity) {
     const elapsed = Date.now() - session.lastActivity;
     if (elapsed > timeout) {
-      console.log('[SafePass] Auto-locking vault due to inactivity');
+      console.log('[Wrayth Vault] Auto-locking vault due to inactivity');
       await chrome.storage.session.clear();
       cachedEntries = [];
       cachedSharedEntries = [];
@@ -51,7 +51,7 @@ async function autoSync() {
   
   // Check if enough time has passed since last sync
   if (Date.now() - lastSyncTime >= SYNC_INTERVAL_MS) {
-    console.log('[SafePass] Auto-sync triggered');
+    console.log('[Wrayth Vault] Auto-sync triggered');
     await syncVaultFromSupabase();
     // Notify popup if open
     try {
@@ -70,31 +70,31 @@ checkAutoLock();
 chrome.runtime.onInstalled.addListener((details) => {
   // Create context menus
   chrome.contextMenus.create({
-    id: 'safepass-autofill',
-    title: 'Autofill with SafePass',
+    id: 'wrayth-vault-autofill',
+    title: 'Autofill with Wrayth Vault',
     contexts: ['editable']
   });
   
   chrome.contextMenus.create({
-    id: 'safepass-generate',
+    id: 'wrayth-vault-generate',
     title: 'Generate Password',
     contexts: ['editable']
   });
   
   chrome.contextMenus.create({
-    id: 'safepass-separator',
+    id: 'wrayth-vault-separator',
     type: 'separator',
     contexts: ['editable']
   });
   
   chrome.contextMenus.create({
-    id: 'safepass-save',
-    title: 'Save to SafePass',
+    id: 'wrayth-vault-save',
+    title: 'Save to Wrayth Vault',
     contexts: ['selection']
   });
   
   if (details.reason === 'install') {
-    console.log('[SafePass] Extension installed');
+    console.log('[Wrayth Vault] Extension installed');
     chrome.tabs.create({ url: `${PORTAL_URL}?extension=installed` });
   }
 });
@@ -102,13 +102,13 @@ chrome.runtime.onInstalled.addListener((details) => {
 // Handle context menu clicks
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   switch (info.menuItemId) {
-    case 'safepass-autofill':
+    case 'wrayth-vault-autofill':
       await triggerAutofill(tab);
       break;
-    case 'safepass-generate':
+    case 'wrayth-vault-generate':
       await generateAndFill(tab);
       break;
-    case 'safepass-save':
+    case 'wrayth-vault-save':
       if (info.selectionText) {
         // Could open save dialog with selected text
         chrome.action.openPopup();
@@ -136,7 +136,7 @@ chrome.commands.onCommand.addListener(async (command) => {
       chrome.notifications.create({
         type: 'basic',
         iconUrl: 'icons/icon128.png',
-        title: 'SafePass',
+        title: 'Wrayth Vault',
         message: 'Vault has been locked'
       });
       break;
@@ -171,7 +171,7 @@ async function triggerAutofill(tab) {
       });
     }
   } catch (error) {
-    console.error('[SafePass] Autofill error:', error);
+    console.error('[Wrayth Vault] Autofill error:', error);
   }
 }
 
@@ -192,7 +192,7 @@ async function generateAndFill(tab) {
     }).catch(() => {});
     
   } catch (error) {
-    console.error('[SafePass] Generate and fill error:', error);
+    console.error('[Wrayth Vault] Generate and fill error:', error);
   }
 }
 
@@ -317,7 +317,7 @@ async function syncVaultFromSupabase() {
     }
 
     // Fetch personal vaults
-    const vaultsResponse = await fetch(`${API_URL}/rest/v1/safepass_vaults?select=id,name`, {
+    const vaultsResponse = await fetch(`${API_URL}/rest/v1/wrayth-vault_vaults?select=id,name`, {
       headers: {
         'apikey': API_KEY,
         'Authorization': `Bearer ${session.authToken}`,
@@ -335,7 +335,7 @@ async function syncVaultFromSupabase() {
       const vaultIds = vaults.map(v => v.id);
       
       const entriesResponse = await fetch(
-        `${API_URL}/rest/v1/safepass_entries?vault_id=in.(${vaultIds.join(',')})&select=id,title,encrypted_username,encrypted_password,encrypted_url,category,is_favorite,url,is_breached,password_strength`, 
+        `${API_URL}/rest/v1/wrayth-vault_entries?vault_id=in.(${vaultIds.join(',')})&select=id,title,encrypted_username,encrypted_password,encrypted_url,category,is_favorite,url,is_breached,password_strength`, 
         {
           headers: {
             'apikey': API_KEY,
@@ -388,11 +388,11 @@ async function syncVaultFromSupabase() {
     ]);
 
     const totalEntries = cachedEntries.length + cachedSharedEntries.length;
-    console.log(`[SafePass] Synced ${cachedEntries.length} personal + ${cachedSharedEntries.length} shared entries`);
+    console.log(`[Wrayth Vault] Synced ${cachedEntries.length} personal + ${cachedSharedEntries.length} shared entries`);
     syncInProgress = false;
     return { success: true, entries: cachedEntries, sharedEntries: cachedSharedEntries, total: totalEntries };
   } catch (error) {
-    console.error('[SafePass] Sync error:', error);
+    console.error('[Wrayth Vault] Sync error:', error);
     syncInProgress = false;
     return { error: error.message };
   }
@@ -487,16 +487,16 @@ async function fetchSharedTeamEntries(authToken) {
         teamId: teamId
       }));
 
-    console.log(`[SafePass] Fetched ${cachedSharedEntries.length} shared team entries`);
+    console.log(`[Wrayth Vault] Fetched ${cachedSharedEntries.length} shared team entries`);
   } catch (error) {
-    console.error('[SafePass] Failed to fetch shared entries:', error);
+    console.error('[Wrayth Vault] Failed to fetch shared entries:', error);
     cachedSharedEntries = [];
   }
 }
 
 async function fetchTOTPEntries(authToken) {
   try {
-    const response = await fetch(`${API_URL}/rest/v1/safepass_totp?select=id,name,encrypted_secret`, {
+    const response = await fetch(`${API_URL}/rest/v1/wrayth-vault_totp?select=id,name,encrypted_secret`, {
       headers: {
         'apikey': API_KEY,
         'Authorization': `Bearer ${authToken}`,
@@ -512,13 +512,13 @@ async function fetchTOTPEntries(authToken) {
       }));
     }
   } catch (error) {
-    console.error('[SafePass] TOTP fetch error:', error);
+    console.error('[Wrayth Vault] TOTP fetch error:', error);
   }
 }
 
 async function fetchSecureNotes(authToken) {
   try {
-    const response = await fetch(`${API_URL}/rest/v1/safepass_notes?select=id,title,encrypted_content`, {
+    const response = await fetch(`${API_URL}/rest/v1/wrayth-vault_notes?select=id,title,encrypted_content`, {
       headers: {
         'apikey': API_KEY,
         'Authorization': `Bearer ${authToken}`,
@@ -535,13 +535,13 @@ async function fetchSecureNotes(authToken) {
       }));
     }
   } catch (error) {
-    console.error('[SafePass] Notes fetch error:', error);
+    console.error('[Wrayth Vault] Notes fetch error:', error);
   }
 }
 
 async function fetchCreditCards(authToken) {
   try {
-    const response = await fetch(`${API_URL}/rest/v1/safepass_cards?select=id,holder_name,last_four,encrypted_data`, {
+    const response = await fetch(`${API_URL}/rest/v1/wrayth-vault_cards?select=id,holder_name,last_four,encrypted_data`, {
       headers: {
         'apikey': API_KEY,
         'Authorization': `Bearer ${authToken}`,
@@ -558,13 +558,13 @@ async function fetchCreditCards(authToken) {
       }));
     }
   } catch (error) {
-    console.error('[SafePass] Cards fetch error:', error);
+    console.error('[Wrayth Vault] Cards fetch error:', error);
   }
 }
 
 async function fetchIdentities(authToken) {
   try {
-    const response = await fetch(`${API_URL}/rest/v1/safepass_identities?select=id,name,encrypted_data`, {
+    const response = await fetch(`${API_URL}/rest/v1/wrayth-vault_identities?select=id,name,encrypted_data`, {
       headers: {
         'apikey': API_KEY,
         'Authorization': `Bearer ${authToken}`,
@@ -580,7 +580,7 @@ async function fetchIdentities(authToken) {
       }));
     }
   } catch (error) {
-    console.error('[SafePass] Identities fetch error:', error);
+    console.error('[Wrayth Vault] Identities fetch error:', error);
   }
 }
 
@@ -624,7 +624,7 @@ async function handleSaveIdentity(data) {
 
     const encryptedData = await encryptField(JSON.stringify(identityData), session.masterKey);
 
-    const response = await fetch(`${API_URL}/rest/v1/safepass_identities`, {
+    const response = await fetch(`${API_URL}/rest/v1/wrayth-vault_identities`, {
       method: 'POST',
       headers: {
         'apikey': API_KEY,
@@ -645,7 +645,7 @@ async function handleSaveIdentity(data) {
     await fetchIdentities(session.authToken);
     return { success: true };
   } catch (error) {
-    console.error('[SafePass] Save identity error:', error);
+    console.error('[Wrayth Vault] Save identity error:', error);
     return { error: error.message };
   }
 }
@@ -714,7 +714,7 @@ async function getPasswordsForSite(hostname) {
           });
         }
       } catch (error) {
-        console.error('[SafePass] Error processing entry:', error);
+        console.error('[Wrayth Vault] Error processing entry:', error);
       }
     }
 
@@ -752,7 +752,7 @@ async function getPasswordsForSite(hostname) {
           });
         }
       } catch (error) {
-        console.error('[SafePass] Error processing shared entry:', error);
+        console.error('[Wrayth Vault] Error processing shared entry:', error);
       }
     }
 
@@ -765,7 +765,7 @@ async function getPasswordsForSite(hostname) {
 
     return { entries: matchingEntries, hasTeam: !!userTeamId };
   } catch (error) {
-    console.error('[SafePass] getPasswordsForSite error:', error);
+    console.error('[Wrayth Vault] getPasswordsForSite error:', error);
     return { entries: [], error: error.message };
   }
 }
@@ -989,7 +989,7 @@ async function handleSavePassword(data) {
     
     if (existingEntry) {
       // Could update existing entry instead - for now just skip
-      console.log('[SafePass] Entry already exists for this site/username');
+      console.log('[Wrayth Vault] Entry already exists for this site/username');
       return { error: 'Entry already exists', duplicate: true };
     }
 
@@ -997,7 +997,7 @@ async function handleSavePassword(data) {
     const encryptedPassword = await encryptField(data.password, session.masterKey);
     const encryptedUrl = await encryptField(data.website, session.masterKey);
 
-    const vaultsResponse = await fetch(`${API_URL}/rest/v1/safepass_vaults?select=id&limit=1`, {
+    const vaultsResponse = await fetch(`${API_URL}/rest/v1/wrayth-vault_vaults?select=id&limit=1`, {
       headers: {
         'apikey': API_KEY,
         'Authorization': `Bearer ${session.authToken}`,
@@ -1009,7 +1009,7 @@ async function handleSavePassword(data) {
       return { error: 'No vault found' };
     }
 
-    const saveResponse = await fetch(`${API_URL}/rest/v1/safepass_entries`, {
+    const saveResponse = await fetch(`${API_URL}/rest/v1/wrayth-vault_entries`, {
       method: 'POST',
       headers: {
         'apikey': API_KEY,
@@ -1035,7 +1035,7 @@ async function handleSavePassword(data) {
     await syncVaultFromSupabase();
     return { success: true };
   } catch (error) {
-    console.error('[SafePass] Save password error:', error);
+    console.error('[Wrayth Vault] Save password error:', error);
     return { error: error.message };
   }
 }
@@ -1055,7 +1055,7 @@ async function handleIgnoreCredential(data) {
     
     return { success: true };
   } catch (error) {
-    console.error('[SafePass] Ignore credential error:', error);
+    console.error('[Wrayth Vault] Ignore credential error:', error);
     return { error: error.message };
   }
 }
@@ -1069,7 +1069,7 @@ async function handleSaveNote(data) {
 
     const encryptedContent = await encryptField(data.content, session.masterKey);
 
-    const response = await fetch(`${API_URL}/rest/v1/safepass_notes`, {
+    const response = await fetch(`${API_URL}/rest/v1/wrayth-vault_notes`, {
       method: 'POST',
       headers: {
         'apikey': API_KEY,
@@ -1090,7 +1090,7 @@ async function handleSaveNote(data) {
     await fetchSecureNotes(session.authToken);
     return { success: true };
   } catch (error) {
-    console.error('[SafePass] Save note error:', error);
+    console.error('[Wrayth Vault] Save note error:', error);
     return { error: error.message };
   }
 }
@@ -1111,7 +1111,7 @@ async function handleSaveCard(data) {
 
     const encryptedData = await encryptField(JSON.stringify(cardData), session.masterKey);
 
-    const response = await fetch(`${API_URL}/rest/v1/safepass_cards`, {
+    const response = await fetch(`${API_URL}/rest/v1/wrayth-vault_cards`, {
       method: 'POST',
       headers: {
         'apikey': API_KEY,
@@ -1133,7 +1133,7 @@ async function handleSaveCard(data) {
     await fetchCreditCards(session.authToken);
     return { success: true };
   } catch (error) {
-    console.error('[SafePass] Save card error:', error);
+    console.error('[Wrayth Vault] Save card error:', error);
     return { error: error.message };
   }
 }
@@ -1146,7 +1146,7 @@ async function handleBreachCheck(passwordHash) {
       return { error: 'Not authenticated' };
     }
 
-    const response = await fetch(`${FUNCTIONS_URL}/safepass-breach-check`, {
+    const response = await fetch(`${FUNCTIONS_URL}/wrayth-vault-breach-check`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1161,7 +1161,7 @@ async function handleBreachCheck(passwordHash) {
 
     return await response.json();
   } catch (error) {
-    console.error('[SafePass] Breach check error:', error);
+    console.error('[Wrayth Vault] Breach check error:', error);
     return { error: error.message };
   }
 }
@@ -1174,19 +1174,19 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === 'periodicSync') {
     const session = await chrome.storage.session.get(['unlocked', 'authToken']);
     if (session.unlocked && session.authToken) {
-      console.log('[SafePass] Periodic sync alarm triggered');
+      console.log('[Wrayth Vault] Periodic sync alarm triggered');
       await syncVaultFromSupabase();
     }
   }
   
   if (alarm.name === 'dailyBreachCheck') {
-    console.log('[SafePass] Running daily breach check');
+    console.log('[Wrayth Vault] Running daily breach check');
     
     const session = await chrome.storage.session.get(['authToken']);
     if (!session.authToken) return;
     
     try {
-      const response = await fetch(`${FUNCTIONS_URL}/safepass-breach-check`, {
+      const response = await fetch(`${FUNCTIONS_URL}/wrayth-vault-breach-check`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1207,7 +1207,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
         });
       }
     } catch (e) {
-      console.error('[SafePass] Daily breach check failed:', e);
+      console.error('[Wrayth Vault] Daily breach check failed:', e);
     }
   }
 });
@@ -1351,7 +1351,7 @@ function localRayReply(ctx, msgs) {
   return "I'm running in offline mode right now. I'll have more context once Wrayth reconnects.";
 }
 
-console.log('[SafePass] Background service worker v2.2 initialized');
+console.log('[Wrayth Vault] Background service worker v2.2 initialized');
 // =====================================================================
 // Wrayth 3.1 — Page-aware engine
 // Domain trust, password intelligence, identity awareness, timeline sync
@@ -1447,7 +1447,7 @@ async function wraythPasswordIntel({ host, username, pageType, passkeySupported,
     const session = await chrome.storage.session.get(['authToken']);
     if (session.authToken && username && /@/.test(username)) {
       try {
-        const r = await fetch(`${API_URL}/rest/v1/safepass_breach_database?email=eq.${encodeURIComponent(username.toLowerCase())}&select=email,breach_name,breach_date&limit=5`, {
+        const r = await fetch(`${API_URL}/rest/v1/wrayth-vault_breach_database?email=eq.${encodeURIComponent(username.toLowerCase())}&select=email,breach_name,breach_date&limit=5`, {
           headers: { apikey: API_KEY, Authorization: `Bearer ${session.authToken}` },
         });
         if (r.ok) {
