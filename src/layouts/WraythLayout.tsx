@@ -1,4 +1,4 @@
-import wraythBrandSidebar from '@/assets/wrayth-brand-sidebar.png.asset.json';
+/**
  * Wrayth Layout — Ray-first navigation.
  *
  * Sidebar grammar: Home / Ray, then Protection (Passwords, Threats,
@@ -6,6 +6,8 @@ import wraythBrandSidebar from '@/assets/wrayth-brand-sidebar.png.asset.json';
  * (Settings, Billing, Account, Admin). Old product names live only in DB and
  * route paths.
  */
+
+import wraythBrandSidebar from '@/assets/wrayth-brand-sidebar.png.asset.json';
 
 import { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
