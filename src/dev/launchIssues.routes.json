@@ -1,13 +1,4 @@
 {
-  "generatedAt": "2026-07-01T15:05:05.750Z",
-  "findings": [
-    {
-      "severity": "P2",
-      "area": "route",
-      "file": "src/pages/onboarding/RayOnboarding.tsx",
-      "line": 1,
-      "message": "List-shaped page has no visible empty-state copy.",
-      "path": "/onboarding/ray"
-    }
-  ]
+  "generatedAt": "2026-07-01T15:06:54.581Z",
+  "findings": []
 }
