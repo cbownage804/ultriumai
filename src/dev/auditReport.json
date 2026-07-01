@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-07-01T14:03:05.086Z",
+  "generatedAt": "2026-07-01T14:04:15.434Z",
   "totals": {
     "filesScanned": 452,
-    "legacyBrand": 166,
+    "legacyBrand": 156,
     "todos": 10,
     "consoles": 92,
     "hardcodedHex": 446,
     "arbitraryColors": 0,
-    "anyTypes": 136
+    "anyTypes": 135
   },
   "legacyBrand": [
     {
@@ -432,28 +432,8 @@
     },
     {
       "file": "supabase/functions/ray-chat/index.ts",
-      "line": 41,
-      "text": "// Fetch SafeWeb monitoring stats"
-    },
-    {
-      "file": "supabase/functions/ray-chat/index.ts",
-      "line": 53,
-      "text": "// Fetch SafeTrack asset stats"
-    },
-    {
-      "file": "supabase/functions/ray-chat/index.ts",
-      "line": 69,
-      "text": "// Fetch SafeScan stats"
-    },
-    {
-      "file": "supabase/functions/ray-chat/index.ts",
-      "line": 141,
+      "line": 125,
       "text": "- Refer to the product as Wrayth. Never reference \"SafeSuite,\" \"SafeAssist,\" \"SafePass,\" \"SafeScan,\" \"SafeWeb,\" \"SafeTrack,\" \"Vanguard,\" \"AI Studio,\" or \"Ultriu"
-    },
-    {
-      "file": "supabase/functions/ray-chat/index.ts",
-      "line": 164,
-      "text": "console.log('SafeAssist AI function called');"
     },
     {
       "file": "supabase/functions/safepass-scanner/index.ts",
@@ -544,36 +524,6 @@
       "file": "supabase/functions/safeweb-scanner/index.ts",
       "line": 121,
       "text": "'User-Agent': 'SafeWeb-Scanner-v1.0',"
-    },
-    {
-      "file": "supabase/functions/send-auth-email/index.ts",
-      "line": 60,
-      "text": "<div class=\"brand-tagline\">Your gateway to AI Studio, SafeSuite & Vanguard</div>"
-    },
-    {
-      "file": "supabase/functions/send-auth-email/index.ts",
-      "line": 92,
-      "text": "<div class=\"brand-tagline\">Your gateway to AI Studio, SafeSuite & Vanguard</div>"
-    },
-    {
-      "file": "supabase/functions/send-auth-email/index.ts",
-      "line": 124,
-      "text": "<div class=\"brand-tagline\">Your gateway to AI Studio, SafeSuite & Vanguard</div>"
-    },
-    {
-      "file": "supabase/functions/send-auth-email/index.ts",
-      "line": 155,
-      "text": "<div class=\"brand-tagline\">Your gateway to AI Studio, SafeSuite & Vanguard</div>"
-    },
-    {
-      "file": "supabase/functions/send-auth-email/index.ts",
-      "line": 186,
-      "text": "<div class=\"brand-tagline\">Your gateway to AI Studio, SafeSuite & Vanguard</div>"
-    },
-    {
-      "file": "supabase/functions/send-auth-email/index.ts",
-      "line": 196,
-      "text": "<span style=\"background: #8b5cf620; color: #a78bfa; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 500;\">SafeSuite</span>"
     },
     {
       "file": "supabase/functions/stripe-webhook/index.ts",
@@ -1101,8 +1051,8 @@
     },
     {
       "file": "supabase/functions/ray-chat/index.ts",
-      "line": 164,
-      "text": "console.log('SafeAssist AI function called');"
+      "line": 148,
+      "text": "console.log('ray-chat function called');"
     },
     {
       "file": "supabase/functions/ray-sync-signals/index.ts",
