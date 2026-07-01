@@ -61,6 +61,7 @@ import { AppSwitcher } from '@/components/AppSwitcher';
 
 import { cn } from '@/lib/utils';
 import { AskRayPalette } from '@/components/ray/AskRayPalette';
+import { RayPresence } from '@/components/ray/RayPresence';
 import { RayContextProvider } from '@/components/ray/RayContext';
 import { SidebarBriefing } from '@/components/ray/SidebarBriefing';
 import { useActiveOrg } from '@/hooks/useActiveOrg';
@@ -291,6 +292,7 @@ function WraythLayoutInner() {
             <div className="hidden lg:block" />
 
             <div className="flex items-center gap-1 sm:gap-2">
+              <RayPresence />
               <AppSwitcher />
               
               <DropdownMenu>

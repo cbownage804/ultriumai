@@ -136,8 +136,18 @@ export function RayWatchingCard({ passwordCount, identityCount, threatCount }: P
         ))}
       </div>
 
-      <div className="mt-3 text-[11px] text-muted-foreground">
-        Last checked {formatDistanceToNow(lastChecked, { addSuffix: true })}
+      <div className="mt-3 flex items-center justify-between gap-3 text-[11px] text-muted-foreground">
+        <span>Last checked {formatDistanceToNow(lastChecked, { addSuffix: true })}</span>
+        <div className="flex items-end gap-[3px] h-3" aria-hidden>
+          {[0, 1, 2, 3, 4, 5, 6].map((n) => (
+            <motion.span
+              key={n}
+              className="w-[2px] rounded-full bg-violet-400/70"
+              animate={{ height: ['20%', '100%', '40%', '80%', '20%'] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut', delay: n * 0.12 }}
+            />
+          ))}
+        </div>
       </div>
     </motion.section>
   );
