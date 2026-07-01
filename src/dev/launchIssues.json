@@ -1,0 +1,349 @@
+{
+  "generatedAt": "2026-07-01T15:01:02.677Z",
+  "totals": {
+    "total": 47,
+    "P0": 0,
+    "P1": 37,
+    "P2": 10,
+    "byArea": {
+      "route": 4,
+      "button": 28,
+      "edge": 15
+    }
+  },
+  "findings": [
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/components/CookieConsent.tsx",
+      "line": 119,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/components/safepass/EmergencyAccess.tsx",
+      "line": 156,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/components/safepass/PasswordVault.tsx",
+      "line": 534,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/components/safepass/TOTPManager.tsx",
+      "line": 212,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/components/safesuite/SafeSuitePaywall.tsx",
+      "line": 80,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/components/safesuite/SafeSuitePaywall.tsx",
+      "line": 171,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/components/safesuite/SafeSuitePaywall.tsx",
+      "line": 231,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/components/safesuite/SafeSuitePaywall.tsx",
+      "line": 338,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/components/safesuite/SubscriptionBanner.tsx",
+      "line": 67,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/components/safesuite/SubscriptionBanner.tsx",
+      "line": 155,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/components/safesuite/TeaserLock.tsx",
+      "line": 174,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/components/safesuite/TeaserLock.tsx",
+      "line": 277,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/components/safesuite/UsageMeter.tsx",
+      "line": 226,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/pages/safesuite/Identity.tsx",
+      "line": 123,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/pages/safesuite/products/SafePassProduct.tsx",
+      "line": 62,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/pages/safesuite/products/SafePassProduct.tsx",
+      "line": 100,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/pages/safesuite/products/SafePassProduct.tsx",
+      "line": 170,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/pages/safesuite/products/SafeScanProduct.tsx",
+      "line": 62,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/pages/safesuite/products/SafeScanProduct.tsx",
+      "line": 100,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/pages/safesuite/products/SafeScanProduct.tsx",
+      "line": 170,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/pages/safesuite/products/SafeWebProduct.tsx",
+      "line": 61,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/pages/safesuite/products/SafeWebProduct.tsx",
+      "line": 101,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/pages/safesuite/products/SafeWebProduct.tsx",
+      "line": 183,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "route",
+      "file": "src/pages/safesuite/SafePassExtension.tsx",
+      "line": 1,
+      "message": "Page fetches data but renders no loading state (no isLoading/Skeleton/Spinner).",
+      "path": "/app/passwords/extension"
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/pages/safesuite/SafePassUsers.tsx",
+      "line": 76,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/pages/safesuite/SafeSuiteFeatures.tsx",
+      "line": 121,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/pages/safesuite/SafeSuiteFeatures.tsx",
+      "line": 221,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 120,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "button",
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 343,
+      "message": "<Button> with no onClick, type, form, or asChild wrapper."
+    },
+    {
+      "severity": "P1",
+      "area": "route",
+      "file": "src/pages/safesuite/Trends.tsx",
+      "line": 62,
+      "message": "Page calls supabase without try/catch or .catch — errors will surface as unhandled promise rejections.",
+      "path": "/app/trends"
+    },
+    {
+      "severity": "P1",
+      "area": "route",
+      "file": "src/pages/safesuite/Trends.tsx",
+      "line": 1,
+      "message": "Page fetches data but renders no loading state (no isLoading/Skeleton/Spinner).",
+      "path": "/app/trends"
+    },
+    {
+      "severity": "P1",
+      "area": "edge",
+      "file": "supabase/functions/ms-graph-oauth-callback/index.ts",
+      "line": 1,
+      "message": "Function \"ms-graph-oauth-callback\" has no CORS headers — browser calls will fail."
+    },
+    {
+      "severity": "P1",
+      "area": "edge",
+      "file": "supabase/functions/ms-graph-oauth-callback/index.ts",
+      "line": 1,
+      "message": "Function \"ms-graph-oauth-callback\" catches errors but doesn't return JSON — clients see raw text."
+    },
+    {
+      "severity": "P1",
+      "area": "edge",
+      "file": "supabase/functions/ray-org-sync/index.ts",
+      "line": 1,
+      "message": "Function \"ray-org-sync\" never verifies caller identity (no getClaims/getUser/Authorization check)."
+    },
+    {
+      "severity": "P1",
+      "area": "edge",
+      "file": "supabase/functions/ray-tts/index.ts",
+      "line": 1,
+      "message": "Function \"ray-tts\" never verifies caller identity (no getClaims/getUser/Authorization check)."
+    },
+    {
+      "severity": "P1",
+      "area": "edge",
+      "file": "supabase/functions/serve-preview/index.ts",
+      "line": 1,
+      "message": "Function \"serve-preview\" has no CORS headers — browser calls will fail."
+    },
+    {
+      "severity": "P1",
+      "area": "edge",
+      "file": "supabase/functions/serve-preview/index.ts",
+      "line": 1,
+      "message": "Function \"serve-preview\" catches errors but doesn't return JSON — clients see raw text."
+    },
+    {
+      "severity": "P2",
+      "area": "route",
+      "file": "src/pages/onboarding/RayOnboarding.tsx",
+      "line": 1,
+      "message": "List-shaped page has no visible empty-state copy.",
+      "path": "/onboarding/ray"
+    },
+    {
+      "severity": "P2",
+      "area": "edge",
+      "file": "supabase/functions/safepass-breach-recommendations/index.ts",
+      "line": 1,
+      "message": "Function \"safepass-breach-recommendations\" still carries a legacy product prefix — rename post-beta or alias."
+    },
+    {
+      "severity": "P2",
+      "area": "edge",
+      "file": "supabase/functions/safesuite-check-subscription/index.ts",
+      "line": 1,
+      "message": "Function \"safesuite-check-subscription\" still carries a legacy product prefix — rename post-beta or alias."
+    },
+    {
+      "severity": "P2",
+      "area": "edge",
+      "file": "supabase/functions/safesuite-checkout/index.ts",
+      "line": 1,
+      "message": "Function \"safesuite-checkout\" still carries a legacy product prefix — rename post-beta or alias."
+    },
+    {
+      "severity": "P2",
+      "area": "edge",
+      "file": "supabase/functions/safesuite-customer-portal/index.ts",
+      "line": 1,
+      "message": "Function \"safesuite-customer-portal\" still carries a legacy product prefix — rename post-beta or alias."
+    },
+    {
+      "severity": "P2",
+      "area": "edge",
+      "file": "supabase/functions/safesuite-data-export/index.ts",
+      "line": 1,
+      "message": "Function \"safesuite-data-export\" still carries a legacy product prefix — rename post-beta or alias."
+    },
+    {
+      "severity": "P2",
+      "area": "edge",
+      "file": "supabase/functions/safesuite-mfa-recovery/index.ts",
+      "line": 1,
+      "message": "Function \"safesuite-mfa-recovery\" still carries a legacy product prefix — rename post-beta or alias."
+    },
+    {
+      "severity": "P2",
+      "area": "edge",
+      "file": "supabase/functions/safesuite-team-checkout/index.ts",
+      "line": 1,
+      "message": "Function \"safesuite-team-checkout\" still carries a legacy product prefix — rename post-beta or alias."
+    },
+    {
+      "severity": "P2",
+      "area": "edge",
+      "file": "supabase/functions/safesuite-user-management/index.ts",
+      "line": 1,
+      "message": "Function \"safesuite-user-management\" still carries a legacy product prefix — rename post-beta or alias."
+    },
+    {
+      "severity": "P2",
+      "area": "edge",
+      "file": "supabase/functions/safeweb-scanner/index.ts",
+      "line": 1,
+      "message": "Function \"safeweb-scanner\" still carries a legacy product prefix — rename post-beta or alias."
+    }
+  ]
+}
