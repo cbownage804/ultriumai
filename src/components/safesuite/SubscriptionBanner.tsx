@@ -73,104 +73,95 @@ export function SubscriptionBanner({ className, variant = 'full' }: Subscription
     );
   }
 
+  // Business tier — no upsell, celebrate the plan.
+  if (isBusiness) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={className}
+      >
+        <Card className="overflow-hidden border border-amber-500/30 bg-gradient-to-r from-amber-500/5 to-orange-500/5">
+          <CardContent className="p-4 flex items-center justify-between gap-4">
+            <div>
+              <Badge className="gap-1 bg-gradient-to-r from-amber-500 to-orange-500 border-0">
+                <Crown className="h-3 w-3" />
+                {currentTier.name} Plan
+              </Badge>
+              <p className="text-sm text-muted-foreground mt-2">{currentTier.description}</p>
+            </div>
+            <div className="flex flex-wrap gap-2 justify-end">
+              {['Unlimited everything', 'Team management', 'Priority support'].map((b) => (
+                <span key={b} className="inline-flex items-center gap-1 text-xs text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded">
+                  <CheckCircle className="h-3 w-3" />
+                  {b}
+                </span>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
+  }
+
+  if (!nextTier) return null;
+
+  // Ray-authored upgrade advice — reads like a teammate suggestion, not an ad.
+  const reasons: string[] = [];
+  if (!currentTier.features.watch.enabled && nextTier.features.watch.enabled) {
+    reasons.push('Dark web monitoring for your identities');
+  }
+  if (currentTier.features.vault.limit !== -1 && nextTier.features.vault.limit === -1) {
+    reasons.push('Unlimited passwords in your vault');
+  } else if (currentTier.features.vault.limit !== -1) {
+    reasons.push(`Room for ${nextTier.features.vault.limit === -1 ? 'unlimited' : nextTier.features.vault.limit} passwords`);
+  }
+  if (currentTier.features.scan.limit !== -1 && nextTier.features.scan.limit === -1) {
+    reasons.push('Unlimited threat scans');
+  }
+  if (!currentTier.features.team?.enabled && nextTier.features.team?.enabled) {
+    reasons.push('Team management for the people you protect');
+  }
+  if (reasons.length === 0) {
+    reasons.push(`Everything in ${nextTier.name}, unlocked`);
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       className={className}
     >
-      <Card className={cn(
-        'overflow-hidden border',
-        isBusiness && 'border-amber-500/30 bg-gradient-to-r from-amber-500/5 to-orange-500/5',
-        isPro && !isBusiness && 'border-violet-500/30 bg-gradient-to-r from-violet-500/5 to-purple-500/5',
-        !isSubscribed && 'border-border bg-card'
-      )}>
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between gap-4">
-            {/* Current Plan Info */}
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <Badge 
-                  variant={isBusiness ? 'default' : isPro ? 'secondary' : 'outline'}
-                  className={cn(
-                    'gap-1',
-                    isBusiness && 'bg-gradient-to-r from-amber-500 to-orange-500 border-0',
-                    isPro && !isBusiness && 'bg-gradient-to-r from-violet-500 to-purple-500 border-0'
-                  )}
-                >
-                  {isBusiness && <Crown className="h-3 w-3" />}
-                  {isPro && !isBusiness && <Zap className="h-3 w-3" />}
-                  {!isSubscribed && <Shield className="h-3 w-3" />}
-                  {currentTier.name} Plan
-                </Badge>
-                {currentTier.badge && tier !== 'free' && (
-                  <span className="text-xs text-muted-foreground">{currentTier.badge}</span>
-                )}
-              </div>
-              
-              <p className="text-sm text-muted-foreground mb-3">
-                {currentTier.description}
-              </p>
+      <Card className="overflow-hidden border border-violet-500/25 bg-gradient-to-br from-violet-500/[0.06] via-card to-card">
+        <CardContent className="p-5">
+          <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-violet-300/80">
+            <Sparkles className="h-3 w-3" />
+            Ray suggests
+          </div>
+          <h3 className="mt-2 text-base sm:text-lg font-light text-foreground">
+            I think <span className="font-medium text-foreground">{nextTier.name}</span> would help you, because…
+          </h3>
+          <ul className="mt-3 space-y-1.5">
+            {reasons.slice(0, 4).map((r) => (
+              <li key={r} className="flex items-start gap-2 text-sm text-muted-foreground">
+                <CheckCircle className="h-4 w-4 mt-0.5 text-emerald-400 shrink-0" />
+                <span>{r}</span>
+              </li>
+            ))}
+          </ul>
 
-              {/* Restrictions for non-business users */}
-              {!isBusiness && restrictions.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {restrictions.slice(0, 3).map((restriction, i) => (
-                    <span 
-                      key={i}
-                      className="inline-flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded"
-                    >
-                      <Lock className="h-3 w-3" />
-                      {restriction}
-                    </span>
-                  ))}
-                  {restrictions.length > 3 && (
-                    <span className="text-xs text-muted-foreground px-2 py-1">
-                      +{restrictions.length - 3} more
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {/* Business tier benefits */}
-              {isBusiness && (
-                <div className="flex flex-wrap gap-2">
-                  {['Unlimited everything', 'Team management', 'Priority support'].map((benefit, i) => (
-                    <span 
-                      key={i}
-                      className="inline-flex items-center gap-1 text-xs text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded"
-                    >
-                      <CheckCircle className="h-3 w-3" />
-                      {benefit}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Upgrade CTA */}
-            {nextTier && (
-              <div className="flex-shrink-0">
-                <Link to={billingPath}>
-                  <Button 
-                    className={cn(
-                      'gap-2',
-                      tier === 'free' && 'bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600',
-                      tier === 'pro' && 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black'
-                    )}
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    Upgrade to {nextTier.name}
-                  </Button>
-                </Link>
-                <p className="text-xs text-muted-foreground text-center mt-1">
-                  Starting at {formatMonthlyPrice(nextTier)}
-                </p>
-              </div>
-            )}
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">
+              Starts at {formatMonthlyPrice(nextTier)} · cancel anytime
+            </p>
+            <Link to={billingPath}>
+              <Button size="sm" className="gap-2">
+                Upgrade to {nextTier.name}
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            </Link>
           </div>
 
-          {/* Usage Summary for free/pro users */}
           {!isBusiness && (
             <div className="mt-4 pt-4 border-t border-border/50">
               <UsageSummary features={['vault', 'scan']} />
