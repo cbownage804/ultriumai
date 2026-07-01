@@ -147,8 +147,27 @@ export default function Integrations() {
               <div className="text-sm text-muted-foreground">
                 Connected as <span className="text-foreground">{m365?.account_email || "your account"}</span>
                 {m365?.provider_tenant_id ? <> · Tenant <code className="text-xs">{m365.provider_tenant_id}</code></> : null}
-                {m365?.last_sync_at ? <> · Last sync {new Date(m365.last_sync_at).toLocaleString()}</> : null}
               </div>
+
+              <div className="rounded-lg border border-violet-500/20 bg-violet-500/[0.04] p-4">
+                <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-violet-300/80">
+                  <Check className="h-3 w-3" /> Ray now checks
+                </div>
+                <ul className="mt-2 grid sm:grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                  <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-green-400" /> MFA coverage</li>
+                  <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-green-400" /> Conditional Access</li>
+                  <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-green-400" /> Secure Score</li>
+                  <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-green-400" /> Admin accounts</li>
+                  <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-green-400" /> Legacy authentication</li>
+                </ul>
+                {m365?.last_sync_at && (
+                  <div className="mt-3 pt-3 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="uppercase tracking-[0.2em]">Last sync</span>
+                    <span>{new Date(m365.last_sync_at).toLocaleString()}</span>
+                  </div>
+                )}
+              </div>
+
               <div className="flex flex-wrap gap-2">
                 <Button onClick={sync} disabled={syncing} variant="default">
                   {syncing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
@@ -156,6 +175,7 @@ export default function Integrations() {
                 </Button>
                 <Button onClick={connect} variant="outline">Reconnect</Button>
               </div>
+
 
               {signals.length > 0 && (
                 <div className="grid sm:grid-cols-2 gap-3 pt-3">

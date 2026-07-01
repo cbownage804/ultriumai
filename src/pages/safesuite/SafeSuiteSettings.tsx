@@ -203,6 +203,58 @@ export default function WraythSettings() {
         </p>
       </div>
 
+      {/* Ray's account briefing */}
+      <Card className="border-violet-500/20 bg-gradient-to-br from-violet-500/[0.04] to-transparent">
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-violet-300/80">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            Ray says
+          </div>
+          <CardTitle className="text-lg font-light mt-1">
+            {securitySettings?.two_factor_enabled
+              ? "Everything looks good."
+              : "Your account is almost fully protected."}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          <ul className="space-y-1.5">
+            <li className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-400" />
+              <span>{tier === 'free' ? 'Free plan' : `${tier[0].toUpperCase()}${tier.slice(1)} plan active`}</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-400" />
+              <span>Notifications {settings?.notifications?.breachAlerts !== false ? 'enabled' : 'configured'}</span>
+            </li>
+            <li className="flex items-center gap-2">
+              {securitySettings?.two_factor_enabled ? (
+                <>
+                  <CheckCircle className="h-4 w-4 text-green-400" />
+                  <span>Two-factor authentication enabled</span>
+                </>
+              ) : (
+                <>
+                  <span className="h-4 w-4 flex items-center justify-center text-yellow-400 text-lg leading-none">✗</span>
+                  <span className="text-muted-foreground">Two-factor authentication</span>
+                </>
+              )}
+            </li>
+          </ul>
+          {!securitySettings?.two_factor_enabled && (
+            <div className="mt-3 pt-3 border-t border-border/60 flex items-center justify-between gap-3">
+              <div>
+                <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Recommended next step</div>
+                <div className="text-sm mt-0.5">Enable 2FA · <span className="text-muted-foreground">about 45 seconds</span></div>
+              </div>
+              <Button size="sm" variant="outline" className="border-violet-500/40 text-violet-200 hover:bg-violet-500/10" onClick={() => setTwoFactorDialog(true)}>
+                Set up
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+
       {/* Profile Section */}
       <Card>
         <CardHeader>

@@ -28,11 +28,14 @@ function headline(ctx: RayContext | null): string {
   return 'We have work to do.';
 }
 
+const STATUS_WORDS = ['Watching', 'Scanning', 'Reviewing', 'Listening', 'Monitoring'];
+
 export function SidebarBriefing() {
   const { user } = useAuth();
   const [ctx, setCtx] = useState<RayContext | null>(null);
   const [lastSync] = useState(() => new Date());
   const [, force] = useState(0);
+  const [statusIdx, setStatusIdx] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -46,6 +49,13 @@ export function SidebarBriefing() {
     const id = setInterval(() => force((n) => n + 1), 60_000);
     return () => clearInterval(id);
   }, []);
+
+  // Rotate the "alive" word every 20s so Ray feels present.
+  useEffect(() => {
+    const id = setInterval(() => setStatusIdx((i) => (i + 1) % STATUS_WORDS.length), 20_000);
+    return () => clearInterval(id);
+  }, []);
+
 
   const firstName = useMemo(() => {
     const meta = (user?.user_metadata ?? {}) as Record<string, unknown>;
@@ -73,7 +83,15 @@ export function SidebarBriefing() {
               animate={{ opacity: [0.35, 1, 0.35], scale: [1, 1.15, 1] }}
               transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
             />
-            Watching
+            <motion.span
+              key={statusIdx}
+              initial={{ opacity: 0, y: -2 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
+            >
+              {STATUS_WORDS[statusIdx]}
+            </motion.span>
+
           </span>
           <div className="pointer-events-none absolute right-0 top-full mt-2 z-50 w-56 rounded-md border border-border bg-popover px-3 py-2.5 text-[11px] text-foreground/90 shadow-lg opacity-0 -translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200">
             <div className="text-[9px] uppercase tracking-[0.22em] text-muted-foreground mb-1.5">Ray is monitoring</div>
