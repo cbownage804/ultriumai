@@ -7,6 +7,7 @@ import { ScanApp } from '@/components/apps/SafeScanApp';
 import { motion } from 'framer-motion';
 import { RayConversationCard } from '@/components/ray/RayConversationCard';
 import { RayPageHeader } from '@/components/ray/RayPageHeader';
+import { RayActivityTicker } from '@/components/ray/RayActivityTicker';
 
 export default function WraythScan() {
   return (
@@ -17,6 +18,10 @@ export default function WraythScan() {
           question="Got something suspicious? Send it to me and I'll take a look."
           description="I analyze files, emails, URLs, and unusual activity — then tell you plainly whether it's safe."
         />
+
+        <div className="wrayth-chamfer border border-border bg-card/60 px-4 py-3">
+          <RayActivityTicker context="threats" />
+        </div>
 
         <RayConversationCard context="threats" />
 

@@ -6,8 +6,8 @@ const VaultCards = () => {
     <FeatureGate feature="vault">
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Credit Cards</h1>
-          <p className="text-muted-foreground">Securely store and manage your payment cards for quick autofill.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Cards</h1>
+          <p className="text-muted-foreground">Store encrypted payment cards. Ray keeps everything encrypted on your device.</p>
         </div>
         <CreditCards />
       </div>
