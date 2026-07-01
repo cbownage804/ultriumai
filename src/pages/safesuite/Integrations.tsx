@@ -108,12 +108,18 @@ export default function Integrations() {
   const isConnected = m365?.status === "connected";
 
   return (
-    <div className="container mx-auto px-4 py-10 max-w-4xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-semibold tracking-tight">Integrations</h1>
-        <p className="text-muted-foreground mt-2">
-          Connect your environments so Ray can read live posture instead of guessing.
-        </p>
+    <PageMotion className="container mx-auto px-4 py-10 max-w-4xl">
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">Integrations</h1>
+          <p className="text-muted-foreground mt-2">
+            Connect your environments so Ray can read live posture instead of guessing.
+          </p>
+        </div>
+        <ExplainThis
+          title="Why Ray asks to connect"
+          body="Without a live connection Ray infers posture from what you tell him. Connecting Microsoft 365 (and soon Google) lets Ray read MFA coverage, admin counts, Conditional Access, and Secure Score directly."
+        />
       </div>
 
       <Card className="border-border/60">
