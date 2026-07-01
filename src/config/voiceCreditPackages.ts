@@ -1,5 +1,5 @@
 /**
- * Voice Credit Packages for SafeAssist
+ * Voice Credit Packages for Ray
  * Purchasable voice minute bundles
  */
 
