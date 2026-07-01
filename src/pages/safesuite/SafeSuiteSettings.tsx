@@ -47,8 +47,54 @@ export default function WraythSettings() {
     .slice(0, 2)
     .toUpperCase() || 'U';
 
+  const [deleteDialog, setDeleteDialog] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+
   const handleSaveSettings = async () => {
     await saveSettings(settings);
+  };
+
+  const handleChangePassword = async () => {
+    if (!user?.email) {
+      toast.error('No email on file for this account.');
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success(`Password reset link sent to ${user.email}.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not start password reset.');
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirm.trim().toUpperCase() !== 'DELETE') {
+      toast.error('Type DELETE to confirm.');
+      return;
+    }
+    setDeleting(true);
+    try {
+      const { error } = await supabase.functions.invoke('safesuite-user-management', {
+        body: { action: 'delete_self' },
+      });
+      if (error) throw error;
+      toast.success('Account deletion requested. You will be signed out shortly.');
+      await supabase.auth.signOut();
+      window.location.href = '/';
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not delete account. Contact support.');
+    } finally {
+      setDeleting(false);
+      setDeleteDialog(false);
+    }
   };
 
   const handleExportData = async () => {
@@ -239,7 +285,9 @@ export default function WraythSettings() {
                 Update your password regularly
               </p>
             </div>
-            <Button variant="outline">Change</Button>
+            <Button variant="outline" onClick={handleChangePassword} disabled={changingPassword}>
+              {changingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Change'}
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -329,7 +377,7 @@ export default function WraythSettings() {
                 Permanently delete your account and all data
               </p>
             </div>
-            <Button variant="destructive">
+            <Button variant="destructive" onClick={() => setDeleteDialog(true)}>
               <Trash2 className="h-4 w-4 mr-2" />
               Delete
             </Button>
