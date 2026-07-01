@@ -152,27 +152,21 @@ export const FEATURE_DESCRIPTIONS: Record<keyof TierFeatures, {
     limitUnit: 'monitored asset',
     limitUnitPlural: 'monitored assets'
   },
-  safetrack: {
-    name: 'SafeTrack',
-    description: 'IT asset lifecycle and inventory management',
-    icon: 'Package',
-    limitUnit: 'tracked asset',
-    limitUnitPlural: 'tracked assets'
-  },
   safeassist: {
-    name: 'SafeAssist',
-    description: 'AI-powered security assistant for plain-language guidance',
+    name: 'Ray',
+    description: 'Your AI security teammate — plain-language guidance and action',
     icon: 'Bot',
     limitUnit: 'message/mo',
     limitUnitPlural: 'messages/mo'
   },
   safeassist_voice: {
-    name: 'SafeAssist Voice',
-    description: 'Voice conversations with SafeAssist AI',
+    name: 'Ray Voice',
+    description: 'Voice conversations with Ray',
     icon: 'Mic',
     limitUnit: 'minute/mo',
     limitUnitPlural: 'minutes/mo'
   },
+
   whitelabeling: {
     name: 'Whitelabeling',
     description: 'Custom branding with your logo, colors, and domain',
