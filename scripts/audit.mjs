@@ -54,7 +54,15 @@ const legacyBrand = scan('SafePass|SafeScan|SafeWeb|SafeSuite|SafeAssist|SafeTra
 );
 const todos = scan('\\b(TODO|FIXME|XXX|HACK)\\b');
 const consoles = scan("console\\.(log|debug|info|warn)\\(");
-const hardcodedHex = scan("#[0-9a-fA-F]{6}\\b").filter((h) => !/(index\.css|tailwind\.config|tokens)/.test(h.file));
+const hardcodedHex = scan("#[0-9a-fA-F]{6}\\b").filter(
+  (h) =>
+    !/(index\.css|tailwind\.config|tokens)/.test(h.file) &&
+    // Standalone browser extension has its own stylesheet (not part of design system)
+    !h.file.startsWith('public/wrayth-vault-extension/') &&
+    // Email templates require inline hex — email clients don't support CSS variables
+    !h.file.includes('send-auth-email/') &&
+    !h.file.includes('ms-graph-oauth-callback/')
+);
 const arbitraryColors = scan("(text|bg|border)-\\[#");
 const anyTypes = scan(":\\s*any(\\s|,|\\)|>|=)");
 
