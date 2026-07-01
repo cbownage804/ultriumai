@@ -6,8 +6,8 @@ const VaultHealth = () => {
     <FeatureGate feature="vault">
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Password Health</h1>
-          <p className="text-muted-foreground">Analyze your passwords for security issues and get recommendations.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Health</h1>
+          <p className="text-muted-foreground">A quick read on your vault — what's strong, what's weak, and what I'd fix next.</p>
         </div>
         <PasswordHealthDashboard />
       </div>
