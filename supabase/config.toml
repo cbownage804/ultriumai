@@ -1,443 +1,121 @@
 project_id = "nsyobmjpdpvesjwdphlh"
 
-# Hardened Edge Functions Configuration
-# Public functions that handle external webhooks/integrations
-[functions.safenet-connector-download]
-verify_jwt = false
+# Wrayth Edge Functions Configuration
+# Keep this file in sync with supabase/functions/*; stale product blocks were removed during Wrayth cleanup.
 
-[functions.stripe-webhook]
-verify_jwt = false
-
-[functions.rmm-checkin]
-verify_jwt = false
-
-[functions.rmm-agent-checkin]
-verify_jwt = false
-
-# Authenticated functions for web app usage
-[functions.rmm-commands]
+[functions.check-subscription]
 verify_jwt = true
 
-[functions.rmm-command-result]
+[functions.create-checkout]
 verify_jwt = true
 
-[functions.rmm-agent-manager]
+[functions.disable-two-factor]
 verify_jwt = true
 
-[functions.rmm-realtime]
+[functions.enable-two-factor]
 verify_jwt = true
 
-[functions.rmm-remote-session]
+[functions.get-billing-data]
 verify_jwt = true
-
-[functions.safedoc-agent-integration]
-verify_jwt = true
-
-[functions.safepass-agent-integration]
-verify_jwt = true
-
-[functions.ai-remote-assistant]
-verify_jwt = true
-
-[functions.business-billing]
-verify_jwt = true
-
-# Security Tools - Require authentication for admin operations
-[functions.siem-event-collector]
-verify_jwt = true
-
-[functions.siem-alert-processor]
-verify_jwt = true
-
-[functions.threat-intelligence-updater]
-verify_jwt = true
-
-[functions.ai-edr-behavioral-engine]
-verify_jwt = true
-
-[functions.incident-manager]
-verify_jwt = true
-
-[functions.safedoc-scanner]
-verify_jwt = false
-
-[functions.safemail-scanner]
-verify_jwt = false
-
-[functions.safenet-scanner]
-verify_jwt = true
-
-[functions.safenet-connector]
-verify_jwt = false
-
-[functions.safepass-scanner]
-verify_jwt = true
-
-
-[functions.security-data-pipeline]
-verify_jwt = true
-
-[functions.security-automation-orchestrator]
-verify_jwt = true
-
-[functions.activate-security-suite]
-verify_jwt = true
-
-[functions.ultrium-safelink-scanner]
-verify_jwt = false
-
-[functions.safenet-topology-processor]
-verify_jwt = true
-
-[functions.safenet-api]
-verify_jwt = true
-
-[functions.vanguard-agent-api]
-verify_jwt = false
-
-[functions.ai-threat-investigator]
-verify_jwt = true
-
-[functions.device-enrich]
-verify_jwt = true
-
-[functions.meraki-networks]
-verify_jwt = true
-
-[functions.threat-intel-lookup]
-verify_jwt = true
-
-[functions.live-response]
-verify_jwt = true
-
-[functions.containment-action]
-verify_jwt = true
-
-[functions.compliance-agent-scan]
-verify_jwt = false
-
-[functions.rmm-agent-ps]
-verify_jwt = false
-
-[functions.vanguard-connectivity-test]
-verify_jwt = true
-
-[functions.vanguard-agentless-scan]
-verify_jwt = false
-
-[functions.vanguard-alerting]
-verify_jwt = true
-
-[functions.siem-log-ingest]
-verify_jwt = false
-
-[functions.scheduled-security-scan]
-verify_jwt = false
-
-[functions.firecrawl-scrape]
-verify_jwt = true
-
-[functions.document-scanner]
-verify_jwt = true
-
-[functions.ip-reputation]
-verify_jwt = true
-
-[functions.malware-scanner]
-verify_jwt = true
-
-[functions.elevenlabs-tts]
-verify_jwt = false
-
-[functions.vanguard-ai-copilot]
-verify_jwt = false
-
-[functions.vanguard-general-chat]
-verify_jwt = false
-
-[functions.pentest-ai-analysis]
-verify_jwt = true
-
-[functions.product-checkout]
-verify_jwt = false
-
-[functions.ai-ticket-agent]
-verify_jwt = false
-
-[functions.helpdesk-ai-features]
-verify_jwt = false
-
-[functions.app-ai-assistant]
-verify_jwt = false
-
-# Ray — conversational intelligence (replaces legacy safeassist-ai)
-[functions.ray-chat]
-verify_jwt = true
-
-
-
-
-
-# Social Media AI Generator
-[functions.generate-social-post]
-verify_jwt = false
-
-[functions.generate-social-image]
-verify_jwt = false
-
-[functions.schedule-bundle-post]
-verify_jwt = false
-
-[functions.get-bundle-accounts]
-verify_jwt = false
-
-[functions.studio-assistant]
-verify_jwt = false
-
-# Cortex AI Tools
-[functions.ai-email-parser]
-verify_jwt = true
-
-[functions.ai-security-report]
-verify_jwt = true
-
-[functions.ai-asset-analyzer]
-verify_jwt = true
-
-[functions.ai-voice-to-ticket]
-verify_jwt = true
-
-[functions.ai-technician-copilot]
-verify_jwt = true
-
-[functions.ai-anomaly-detection]
-verify_jwt = true
-
-[functions.ai-script-generator]
-verify_jwt = true
-
-[functions.ai-sentiment-analyzer]
-verify_jwt = true
-
-[functions.ai-response-draft]
-verify_jwt = true
-
-[functions.ai-sla-predictor]
-verify_jwt = true
-
-[functions.ai-root-cause]
-verify_jwt = true
-
-[functions.ai-customer-health]
-verify_jwt = true
-
-[functions.ai-workload-optimizer]
-verify_jwt = true
-
-[functions.ai-knowledge-search]
-verify_jwt = true
-
-[functions.ai-smart-scheduler]
-verify_jwt = true
-
-[functions.ai-ticket-router]
-verify_jwt = true
-
-[functions.ai-escalation-engine]
-verify_jwt = true
-
-[functions.ai-csat-analyzer]
-verify_jwt = true
-
-[functions.scheduled-report-generator]
-verify_jwt = true
-
-# Enterprise Helpdesk Features
-[functions.ai-ticket-analyzer]
-verify_jwt = true
-
-[functions.process-inbound-email]
-verify_jwt = false
-
-# Vanguard Remote Access
-[functions.vanguard-relay-config]
-verify_jwt = false
-
-# Vanguard Agent Configuration (authenticated - returns secret for downloads)
-[functions.vanguard-agent-config]
-verify_jwt = false
-
-# Script Generation
-[functions.generate-script]
-verify_jwt = false
-
-# XDR Edge Functions
-[functions.xdr-threat-ingestion]
-verify_jwt = false
-
-[functions.xdr-yara-processor]
-verify_jwt = false
-
-[functions.xdr-siem-correlator]
-verify_jwt = true
-
-[functions.xdr-response-executor]
-verify_jwt = false
-
-# Agent Provisioning (redeem action is unauthenticated, create requires auth validated in code)
-[functions.agent-provision]
-verify_jwt = false
-
-# Customer Portal Authentication (public - handles its own auth)
-[functions.portal-auth]
-verify_jwt = false
-
-[functions.portal-ticket-api]
-verify_jwt = false
-
-[functions.portal-notifications]
-verify_jwt = false
-
-[functions.portal-send-invitation]
-verify_jwt = false
-
-[functions.portal-bulk-import]
-verify_jwt = false
-
-# Portal user invitations (validates auth in code)
-[functions.portal-user-invite]
-verify_jwt = false
-
-# Recon Pentest Orchestrator (validates auth in code)
-[functions.recon-scan-orchestrator]
-verify_jwt = false
-
-# Google Workspace Security Monitor (validates auth in code)
-[functions.gws-security-monitor]
-verify_jwt = false
-
-# AI Studio - Data Query & Agent Execution
-[functions.ai-data-query]
-verify_jwt = true
-
-[functions.ai-agent-execute]
-verify_jwt = true
-
-# AI Studio - App Blocks & Workflows
-[functions.ai-generate-block]
-verify_jwt = true
-
-[functions.ai-workflow-execute]
-verify_jwt = true
-
-# Reseller Program
-[functions.provision-client-tenant]
-verify_jwt = false
-
-[functions.generate-marketing-kit]
-verify_jwt = false
-
-[functions.ai-app-builder]
-verify_jwt = false
-
-[functions.ai-builder-background]
-verify_jwt = false
 
 [functions.github-push]
 verify_jwt = false
 
-
-[functions.vercel-deploy]
+[functions.ms-graph-oauth-callback]
 verify_jwt = false
 
-[functions.serve-preview]
-verify_jwt = false
-
-[functions.org-checkout]
-verify_jwt = false
-
-[functions.org-invite-send]
-verify_jwt = false
-
-[functions.org-member-notify]
-verify_jwt = false
-
-[functions.gpt-builder-chat]
-verify_jwt = false
-
-[functions.gpt-test-chat]
-verify_jwt = false
-
-# MeshCentral Remote Access Auth (validates JWT in code)
-[functions.vanguard-meshcentral-auth]
-verify_jwt = false
-
-[functions.slack-teams-notify]
-verify_jwt = false
-
-# No-Code API Gateway (validates API keys in code)
-[functions.api-gateway]
-verify_jwt = false
-
-# Domain verification (requires auth)
-[functions.verify-domain]
-verify_jwt = false
-
-# Domain registrar detection (public)
-[functions.detect-registrar]
-verify_jwt = false
-
-
-# Vite Sandbox compilation (proxies to Droplet)
-[functions.compile-vite]
-verify_jwt = false
-
-[functions.video-generation]
-verify_jwt = false
-
-[functions.image-generation]
-verify_jwt = false
-
-# Real Terminal Execution (sandboxed command runner)
-[functions.terminal-exec]
+[functions.ms-graph-oauth-start]
 verify_jwt = true
 
-[functions.admin-audit-logger]
+[functions.ms-graph-sync]
 verify_jwt = true
 
-[functions.admin-list-users]
-verify_jwt = true
-
-[functions.ai-builder-migrate]
+[functions.ray-action]
 verify_jwt = true
 
 [functions.ray-breach-check]
 verify_jwt = true
 
-[functions.ray-briefing]
-verify_jwt = true
-
 [functions.ray-brief]
 verify_jwt = true
 
-[functions.ray-sync-signals]
+[functions.ray-briefing]
 verify_jwt = true
 
-
-[functions.ray-tts]
+[functions.ray-chat]
 verify_jwt = true
 
-[functions.ms-graph-oauth-start]
-verify_jwt = true
-
-[functions.ms-graph-oauth-callback]
-verify_jwt = false
-
-[functions.ms-graph-sync]
+[functions.ray-org-brief]
 verify_jwt = true
 
 [functions.ray-org-sync]
 verify_jwt = true
 
-[functions.ray-org-brief]
+[functions.ray-sync-signals]
+verify_jwt = true
+
+[functions.ray-tts]
+verify_jwt = true
+
+[functions.ray-watch-recommendations]
+verify_jwt = true
+
+[functions.safepass-breach-recommendations]
+verify_jwt = true
+
+[functions.safepass-scanner]
+verify_jwt = true
+
+[functions.safepass-security-scanner]
+verify_jwt = true
+
+[functions.safesuite-check-subscription]
+verify_jwt = true
+
+[functions.safesuite-checkout]
+verify_jwt = false
+
+[functions.safesuite-customer-portal]
+verify_jwt = false
+
+[functions.safesuite-data-export]
+verify_jwt = true
+
+[functions.safesuite-mfa-recovery]
+verify_jwt = true
+
+[functions.safesuite-team-checkout]
+verify_jwt = false
+
+[functions.safesuite-user-management]
+verify_jwt = true
+
+[functions.safeweb-assets]
+verify_jwt = true
+
+[functions.safeweb-msp-clients]
+verify_jwt = true
+
+[functions.safeweb-scanner]
+verify_jwt = true
+
+[functions.send-auth-email]
+verify_jwt = false
+
+[functions.send-email]
+verify_jwt = false
+
+[functions.serve-preview]
+verify_jwt = false
+
+[functions.setup-two-factor]
+verify_jwt = true
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.verify-mfa-login]
+verify_jwt = true
+
+[functions.wrayth-usage]
 verify_jwt = true
