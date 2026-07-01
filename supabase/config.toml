@@ -83,11 +83,6 @@ verify_jwt = false
 [functions.safesuite-user-management]
 verify_jwt = true
 
-[functions.safeweb-assets]
-verify_jwt = true
-
-[functions.safeweb-msp-clients]
-verify_jwt = true
 
 [functions.safeweb-scanner]
 verify_jwt = true
