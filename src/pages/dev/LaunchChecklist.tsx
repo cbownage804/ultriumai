@@ -9,7 +9,6 @@
  * "ready" during the 5.0 polish sprint.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Helmet } from 'react-helmet-async';
 import { CheckCircle2, Circle, AlertTriangle, XCircle } from 'lucide-react';
 import { CATEGORIES, STORAGE_KEY, type CheckStatus } from '@/dev/launchManifest';
 import auditReport from '@/dev/auditReport.json';
