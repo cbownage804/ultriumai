@@ -7,16 +7,17 @@
  */
 
 import { NavLink } from 'react-router-dom';
-import { Key, StickyNote, CreditCard, IdCard, ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Key, StickyNote, CreditCard, IdCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const TABS = [
-  { to: '/app/passwords', label: 'Passwords', icon: Key, end: true },
+  { to: '/app/passwords', label: 'Health', icon: ShieldCheck, end: true },
+  { to: '/app/passwords/list', label: 'Passwords', icon: Key },
   { to: '/app/passwords/notes', label: 'Notes', icon: StickyNote },
   { to: '/app/passwords/cards', label: 'Cards', icon: CreditCard },
   { to: '/app/passwords/identity', label: 'Identity', icon: IdCard },
-  { to: '/app/passwords/health', label: 'Health', icon: ShieldCheck },
 ];
+
 
 export function VaultTabs() {
   return (
