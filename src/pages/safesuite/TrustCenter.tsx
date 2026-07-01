@@ -22,10 +22,11 @@ export default function TrustCenter() {
   return (
     <div className="flex flex-col gap-6">
       <RayPageHeader
-        title="Trust Center"
-        subtitle="How Ray works"
-        description="This page is maintained by the Wrayth team to answer common security and privacy questions about how Ray operates. It is not an independent certification."
+        title="Why you can trust Ray"
+        subtitle="How Ray protects your data"
+        description="Maintained by the Wrayth team to answer common security and privacy questions about how Ray operates. This is not an independent certification."
       />
+
 
       <div className="grid gap-3 md:grid-cols-2">
         <Section icon={Eye} title="What Ray can see">
