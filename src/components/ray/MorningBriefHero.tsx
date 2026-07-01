@@ -254,6 +254,18 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
           {memoryLine}
         </p>
       )}
+      {activeOrg && (
+        <div className="relative mt-2">
+          <Link
+            to="/app/org"
+            className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[11px] text-slate-200 hover:bg-white/[0.08] hover:text-white transition"
+          >
+            <Building2 className="h-3 w-3" />
+            View organization brief for {activeOrg.name}
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+      )}
 
       {/* ▶ Listen — Ray's voice, Pro-only. */}
       <div className="relative mt-3">
