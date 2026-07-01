@@ -6,8 +6,6 @@ project_id = "nsyobmjpdpvesjwdphlh"
 [functions.check-subscription]
 verify_jwt = true
 
-[functions.create-checkout]
-verify_jwt = true
 
 [functions.disable-two-factor]
 verify_jwt = true
