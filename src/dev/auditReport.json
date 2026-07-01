@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-07-01T14:08:09.246Z",
+  "generatedAt": "2026-07-01T14:10:02.809Z",
   "totals": {
-    "filesScanned": 379,
-    "legacyBrand": 151,
+    "filesScanned": 367,
+    "legacyBrand": 150,
     "todos": 3,
-    "consoles": 77,
+    "consoles": 74,
     "hardcodedHex": 279,
     "arbitraryColors": 0,
-    "anyTypes": 113
+    "anyTypes": 105
   },
   "legacyBrand": [
     {
@@ -264,11 +264,6 @@
       "file": "src/pages/safesuite/SafePassReminders.tsx",
       "line": 5,
       "text": "import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';"
-    },
-    {
-      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
-      "line": 28,
-      "text": "import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';"
     },
     {
       "file": "src/pages/safesuite/SafePassShared.tsx",
@@ -795,11 +790,6 @@
       "text": "console.warn(\"Failed to look up MSP:\", err);"
     },
     {
-      "file": "src/hooks/useAgentBuildVerifier.ts",
-      "line": 40,
-      "text": "console.warn('[build-verifier] esbuild init failed:', err);"
-    },
-    {
       "file": "src/hooks/useAgentWebResearch.ts",
       "line": 48,
       "text": "console.warn('[research] Skipping non-URL query (Firecrawl cannot scrape search engines):', query);"
@@ -858,16 +848,6 @@
       "file": "src/pages/safesuite/SafePassExtension.tsx",
       "line": 51,
       "text": "console.warn(`Could not fetch ${file}`, e);"
-    },
-    {
-      "file": "src/utils/exportUtils.ts",
-      "line": 6,
-      "text": "console.warn('No data to export');"
-    },
-    {
-      "file": "src/utils/generateWindowsMsiInstaller.ts",
-      "line": 358,
-      "text": "console.warn('[generateOneClickInstaller] EXE generation failed, falling back to CMD:', err);"
     },
     {
       "file": "supabase/functions/check-subscription/index.ts",
