@@ -1,16 +1,20 @@
 /**
  * PasswordCard — Apple-Passwords-inspired row. Conversational status,
  * favicon-first identity, Ray annotations on rows that need attention.
+ * Expands to show Ray's deep profile (entropy, reuse chain, breach
+ * hits, MFA, age, verdict).
  */
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Eye, EyeOff, Copy, Star, Globe, Edit, Trash2, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, Copy, Star, Globe, Edit, Trash2, ShieldCheck, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { lookupCatalog } from '@/lib/ray/mfaCatalog';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { computePasswordProfile } from '@/lib/ray/passwordProfile';
+import { PasswordProfilePanel } from './PasswordProfilePanel';
 
 interface PasswordCardProps {
   entry: {
@@ -30,10 +34,17 @@ interface PasswordCardProps {
   hasMfa?: boolean;
   /** True if this service appears in a known breach dataset. */
   hasBreach?: boolean;
+  /** Other entry titles sharing this same password (from vault analyzer). */
+  reusedOn?: string[];
+  /** Named breach datasets this password showed up in. */
+  breachSources?: string[];
+  /** Optional personal words (name, spouse, year) Ray uses to sniff for personal info. */
+  personalHints?: string[];
   onEdit: () => void;
   onDelete: () => void;
   onToggleFavorite: () => void;
 }
+
 
 function hostnameFor(website: string, title: string): string {
   try {
