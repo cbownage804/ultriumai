@@ -526,8 +526,8 @@ export default function WraythDashboard() {
         return { label: 'Scans this month', value: stats.scanCount };
       case 'safeweb':
         return { label: 'Assets monitored', value: stats.monitoredAssets };
-      case 'safetrack':
-        return { label: 'Assets tracked', value: stats.trackedAssets };
+
+
       default:
         return { label: '', value: 0 };
     }
