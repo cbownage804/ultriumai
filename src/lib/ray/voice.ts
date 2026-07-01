@@ -88,3 +88,114 @@ export function rayError(code: 'offline' | 'timeout' | 'auth' | 'rate' | 'server
   } as const;
   return say(map[code]);
 }
+
+/* -------------------------------------------------------------------------- */
+/* Voice capture — thin Web Speech API wrapper used by AskRayPalette.         */
+/* Kept in this module so anything Ray "speaks" or "hears" lives in one file. */
+/* -------------------------------------------------------------------------- */
+
+export interface VoiceSession {
+  stop: () => void;
+}
+
+interface VoiceCallbacks {
+  onInterim?: (text: string) => void;
+  onFinal?: (text: string) => void;
+  onError?: (message: string) => void;
+  onEnd?: () => void;
+}
+
+type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
+
+interface SpeechRecognitionLike extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start: () => void;
+  stop: () => void;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: ((event: { error?: string }) => void) | null;
+  onend: (() => void) | null;
+}
+
+interface SpeechRecognitionEventLike {
+  results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }>;
+  resultIndex: number;
+}
+
+function resolveRecognitionCtor(): SpeechRecognitionCtor | null {
+  if (typeof window === 'undefined') return null;
+  const w = window as unknown as {
+    SpeechRecognition?: SpeechRecognitionCtor;
+    webkitSpeechRecognition?: SpeechRecognitionCtor;
+  };
+  return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
+}
+
+export function isVoiceSupported(): boolean {
+  return resolveRecognitionCtor() !== null;
+}
+
+/**
+ * Start a short-form voice capture session. Returns null if the browser
+ * doesn't support the Web Speech API. Ray never blocks on voice — callers
+ * should keep the keyboard path fully functional either way.
+ */
+export function startVoiceCapture(cb: VoiceCallbacks): VoiceSession | null {
+  const Ctor = resolveRecognitionCtor();
+  if (!Ctor) {
+    cb.onError?.("Voice isn't available in this browser.");
+    return null;
+  }
+
+  const rec = new Ctor();
+  rec.continuous = false;
+  rec.interimResults = true;
+  rec.lang = typeof navigator !== 'undefined' ? navigator.language || 'en-US' : 'en-US';
+
+  rec.onresult = (event) => {
+    let interim = '';
+    let final = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const chunk = event.results[i];
+      const transcript = chunk[0]?.transcript ?? '';
+      if (chunk.isFinal) final += transcript;
+      else interim += transcript;
+    }
+    if (interim) cb.onInterim?.(interim.trim());
+    if (final) cb.onFinal?.(final.trim());
+  };
+
+  rec.onerror = (event) => {
+    const code = event.error ?? 'unknown';
+    const msg =
+      code === 'not-allowed' || code === 'service-not-allowed'
+        ? 'Microphone access was blocked.'
+        : code === 'no-speech'
+          ? "I didn't catch that."
+          : "Voice input didn't work. Try typing instead.";
+    cb.onError?.(msg);
+  };
+
+  rec.onend = () => {
+    cb.onEnd?.();
+  };
+
+  try {
+    rec.start();
+  } catch {
+    cb.onError?.("Voice input didn't start.");
+    return null;
+  }
+
+  return {
+    stop: () => {
+      try {
+        rec.stop();
+      } catch {
+        /* no-op */
+      }
+    },
+  };
+}
+

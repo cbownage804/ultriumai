@@ -159,7 +159,7 @@ export function PortalTicketList({
               <EmptyState
                 icon={Ticket}
                 title="No tickets found"
-                description="No tickets match your current filters. Try adjusting your search criteria."
+                body="No tickets match your current filters. Try adjusting your search criteria."
                 size="sm"
               />
             ) : (
