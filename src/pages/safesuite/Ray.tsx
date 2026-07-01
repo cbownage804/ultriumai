@@ -154,6 +154,7 @@ export default function Ray() {
       <RayPageHeader
         title="Ray"
         subtitle="Your AI cybersecurity teammate"
+        question="What would you like me to look into?"
         description="Ask me anything about your security. I remember our conversations and surface what needs attention."
       />
 
