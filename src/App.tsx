@@ -79,6 +79,12 @@ const PaymentSuccess = lazy(() => import('@/pages/PaymentSuccess'));
 const PaymentCancel = lazy(() => import('@/pages/PaymentCancel'));
 const WraythResources = lazy(() => import('@/pages/WraythResources'));
 
+// Dev-only: internal Launch Checklist (Wrayth 5.0 polish sprint).
+const LaunchChecklist = lazy(() => import('@/pages/dev/LaunchChecklist'));
+const DEV_ROUTES_ENABLED =
+  import.meta.env.DEV ||
+  (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug'));
+
 function SuspenseWrapper({ children, variant = 'dashboard' }: { children: React.ReactNode; variant?: 'dashboard' | 'list' | 'detail' | 'form' | 'cards' }) {
   return (
     <Suspense fallback={<PageSkeleton variant={variant} />}>
@@ -237,6 +243,10 @@ function AppRouter() {
         {/* Legacy /safesuite/* → /app/* (preserves old bookmarks, emails, screenshots) */}
         <Route path="/safesuite" element={<Navigate to="/app/dashboard" replace />} />
         <Route path="/safesuite/*" element={<LegacySafesuiteRedirect />} />
+
+        {DEV_ROUTES_ENABLED ? (
+          <Route path="/_launch" element={<SuspenseWrapper><LaunchChecklist /></SuspenseWrapper>} />
+        ) : null}
 
         <Route path="*" element={<NotFound />} />
       </Routes>
