@@ -28,6 +28,8 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PageMotion } from '@/components/ray/PageMotion';
+import { ExplainThis } from '@/components/ray/ExplainThis';
 
 export default function WraythSettings() {
   const { user } = useAuth();
