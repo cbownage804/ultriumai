@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { isWraythDomain } from '@/utils/subdomain';
 
+import { devLog } from '@/lib/logger';
 export interface BreachFindingDetails {
   entryId: string;
   title: string;
@@ -124,7 +125,7 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
       if (error) {
         // Auto-retry once on initial failure (cold start issues)
         if (retryCount === 0) {
-          console.log('First attempt failed, retrying after delay...');
+          devLog.log('First attempt failed, retrying after delay...');
           await new Promise(resolve => setTimeout(resolve, 1500));
           return fetchRecommendation(1);
         }
@@ -133,7 +134,7 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
       
       if (data?.error) {
         if (retryCount === 0) {
-          console.log('First attempt returned error, retrying after delay...');
+          devLog.log('First attempt returned error, retrying after delay...');
           await new Promise(resolve => setTimeout(resolve, 1500));
           return fetchRecommendation(1);
         }
@@ -151,7 +152,7 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
       } else {
         // Auto-retry once on any failure (cold start issues)
         if (retryCount === 0) {
-          console.log('First attempt failed, retrying after delay...');
+          devLog.log('First attempt failed, retrying after delay...');
           await new Promise(resolve => setTimeout(resolve, 1500));
           return fetchRecommendation(1);
         }

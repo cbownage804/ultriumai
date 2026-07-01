@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-07-01T13:09:34.533Z",
+  "generatedAt": "2026-07-01T13:13:04.892Z",
   "totals": {
-    "filesScanned": 877,
-    "legacyBrand": 217,
+    "filesScanned": 870,
+    "legacyBrand": 210,
     "todos": 11,
-    "consoles": 188,
+    "consoles": 122,
     "hardcodedHex": 590,
     "arbitraryColors": 116,
-    "anyTypes": 266
+    "anyTypes": 235
   },
   "legacyBrand": [
     {
@@ -451,27 +451,27 @@
       "text": "name: \"SafeTrack™\","
     },
     {
-      "file": "supabase/functions/safeassist-ai/index.ts",
+      "file": "supabase/functions/ray-chat/index.ts",
       "line": 41,
       "text": "// Fetch SafeWeb monitoring stats"
     },
     {
-      "file": "supabase/functions/safeassist-ai/index.ts",
+      "file": "supabase/functions/ray-chat/index.ts",
       "line": 53,
       "text": "// Fetch SafeTrack asset stats"
     },
     {
-      "file": "supabase/functions/safeassist-ai/index.ts",
+      "file": "supabase/functions/ray-chat/index.ts",
       "line": 69,
       "text": "// Fetch SafeScan stats"
     },
     {
-      "file": "supabase/functions/safeassist-ai/index.ts",
+      "file": "supabase/functions/ray-chat/index.ts",
       "line": 141,
       "text": "- Refer to the product as Wrayth. Never reference \"SafeSuite,\" \"SafeAssist,\" \"SafePass,\" \"SafeScan,\" \"SafeWeb,\" \"SafeTrack,\" \"Vanguard,\" \"AI Studio,\" or \"Ultriu"
     },
     {
-      "file": "supabase/functions/safeassist-ai/index.ts",
+      "file": "supabase/functions/ray-chat/index.ts",
       "line": 164,
       "text": "console.log('SafeAssist AI function called');"
     },
@@ -574,16 +574,6 @@
       "file": "supabase/functions/safepass-scanner/index.ts",
       "line": 44,
       "text": "console.error('SafePass Scanner Error:', error)"
-    },
-    {
-      "file": "supabase/functions/safescan-scheduled/index.ts",
-      "line": 343,
-      "text": "subject: `⚠️ SafeScan Alert: ${threats.length} threats detected in \"${scan.name}\"`,"
-    },
-    {
-      "file": "supabase/functions/safescan-scheduled/index.ts",
-      "line": 351,
-      "text": "<p>Please review these findings in your SafeScan dashboard.</p>"
     },
     {
       "file": "supabase/functions/safesuite-check-subscription/index.ts",
@@ -706,16 +696,6 @@
       "text": "// SafeSuite price ID to tier mapping (live Stripe IDs)"
     },
     {
-      "file": "supabase/functions/safetrack-ai-lookup/index.ts",
-      "line": 2,
-      "text": "* SafeTrack AI Serial Number Lookup"
-    },
-    {
-      "file": "supabase/functions/safetrack-ai-lookup/index.ts",
-      "line": 149,
-      "text": "console.error(\"SafeTrack AI lookup error:\", error);"
-    },
-    {
       "file": "supabase/functions/safeweb-ai-recommendations/index.ts",
       "line": 50,
       "text": "const systemPrompt = `You are a cybersecurity expert assistant for UltriumAI's SafeWeb dark web monitoring tool. Your job is to analyze data breach threats and "
@@ -779,21 +759,6 @@
       "file": "supabase/functions/safeweb-ai-recommendations/index.ts",
       "line": 71,
       "text": "3. **Long-term Protection** (2-3 bullet points for ongoing security using SafeSuite tools)`;"
-    },
-    {
-      "file": "supabase/functions/safeweb-checkout/index.ts",
-      "line": 59,
-      "text": "basic: { price: 29900, name: 'SafeWeb Basic', assets: 10 },"
-    },
-    {
-      "file": "supabase/functions/safeweb-checkout/index.ts",
-      "line": 60,
-      "text": "professional: { price: 59900, name: 'SafeWeb Professional', assets: 50 },"
-    },
-    {
-      "file": "supabase/functions/safeweb-checkout/index.ts",
-      "line": 61,
-      "text": "enterprise: { price: 129900, name: 'SafeWeb Enterprise', assets: 200 }"
     },
     {
       "file": "supabase/functions/safeweb-scanner/index.ts",
@@ -1009,6 +974,41 @@
       "file": "public/safepass-extension/background.js",
       "line": 1354,
       "text": "console.log('[SafePass] Background service worker v2.2 initialized');"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 1,
+      "text": "/* SafePass Content Script Styles v2.0 */"
+    },
+    {
+      "file": "public/safepass-extension/content.js",
+      "line": 1,
+      "text": "// SafePass Content Script v2.1"
+    },
+    {
+      "file": "public/safepass-extension/content.js",
+      "line": 328,
+      "text": "<span>🔐 SafePass</span>"
+    },
+    {
+      "file": "public/safepass-extension/content.js",
+      "line": 493,
+      "text": "console.error('[SafePass] Fill error:', error);"
+    },
+    {
+      "file": "public/safepass-extension/content.js",
+      "line": 537,
+      "text": "addSafePassIcon(field);"
+    },
+    {
+      "file": "public/safepass-extension/content.js",
+      "line": 546,
+      "text": "function addSafePassIcon(field) {"
+    },
+    {
+      "file": "public/safepass-extension/content.js",
+      "line": 586,
+      "text": "showNotification('Please unlock SafePass first', 'warning');"
     }
   ],
   "todos": [
@@ -1125,21 +1125,6 @@
       "text": "console.log('Starting SafeNet Connector download...');"
     },
     {
-      "file": "src/components/safepass/BreachRecommendationDialog.tsx",
-      "line": 127,
-      "text": "console.log('First attempt failed, retrying after delay...');"
-    },
-    {
-      "file": "src/components/safepass/BreachRecommendationDialog.tsx",
-      "line": 136,
-      "text": "console.log('First attempt returned error, retrying after delay...');"
-    },
-    {
-      "file": "src/components/safepass/BreachRecommendationDialog.tsx",
-      "line": 154,
-      "text": "console.log('First attempt failed, retrying after delay...');"
-    },
-    {
       "file": "src/config/vanguardMeshCentral.ts",
       "line": 43,
       "text": "console.warn(\"Failed to look up MSP:\", err);"
@@ -1170,91 +1155,6 @@
       "text": "console.warn('[research] Skipping non-URL query (Firecrawl cannot scrape search engines):', query);"
     },
     {
-      "file": "src/hooks/useBackgroundGeneration.ts",
-      "line": 170,
-      "text": "console.info('[BG] ✅ Job completed:', job.id, '— calling onComplete callback');"
-    },
-    {
-      "file": "src/hooks/useBackgroundGeneration.ts",
-      "line": 185,
-      "text": "console.info('[BG] Job cancelled:', job.id);"
-    },
-    {
-      "file": "src/hooks/useBackgroundGeneration.ts",
-      "line": 216,
-      "text": "console.warn('[BG SSE] Failed to start stream, falling back to polling');"
-    },
-    {
-      "file": "src/hooks/useBackgroundGeneration.ts",
-      "line": 261,
-      "text": "console.warn('[BG SSE] Stream error, polling handles it:', err.message);"
-    },
-    {
-      "file": "src/hooks/useBackgroundGeneration.ts",
-      "line": 357,
-      "text": "console.info('[BG] Job submitted:', jobId);"
-    },
-    {
-      "file": "src/hooks/useBackgroundGeneration.ts",
-      "line": 438,
-      "text": "console.info('[BG] Job already processed in this session, skipping:', job.id);"
-    },
-    {
-      "file": "src/hooks/useBackgroundGeneration.ts",
-      "line": 441,
-      "text": "console.info('[BG] Found active job from previous session:', job.id);"
-    },
-    {
-      "file": "src/hooks/useBackgroundGeneration.ts",
-      "line": 462,
-      "text": "console.info('[BG] Completed job already processed, skipping:', job.id);"
-    },
-    {
-      "file": "src/hooks/useBackgroundGeneration.ts",
-      "line": 466,
-      "text": "console.info('[BG] Found recently completed job:', job.id);"
-    },
-    {
-      "file": "src/hooks/useCLICompanion.ts",
-      "line": 63,
-      "text": "console.log('🚀 Starting local dev server...');"
-    },
-    {
-      "file": "src/hooks/useCLICompanion.ts",
-      "line": 67,
-      "text": "console.log('📦 Building for production...');"
-    },
-    {
-      "file": "src/hooks/useCLICompanion.ts",
-      "line": 71,
-      "text": "console.log('🔄 Syncing with Ultrium Cloud...');"
-    },
-    {
-      "file": "src/hooks/useCLICompanion.ts",
-      "line": 73,
-      "text": "console.log('✅ Project synced successfully.');"
-    },
-    {
-      "file": "src/hooks/useCLICompanion.ts",
-      "line": 76,
-      "text": "console.log('🚀 Deploying to production...');"
-    },
-    {
-      "file": "src/hooks/useCLICompanion.ts",
-      "line": 78,
-      "text": "console.log('✅ Deploy complete.');"
-    },
-    {
-      "file": "src/hooks/useCLICompanion.ts",
-      "line": 86,
-      "text": "console.log(\\`Unknown command: \\${cmd}\\`);"
-    },
-    {
-      "file": "src/hooks/useCLICompanion.ts",
-      "line": 87,
-      "text": "console.log('Available: ' + Object.keys(COMMANDS).join(', '));"
-    },
-    {
       "file": "src/hooks/useCodePlayground.ts",
       "line": 20,
       "text": "fetchAPI: { name: 'Fetch API', language: 'typescript', code: `const res = await fetch('https://jsonplaceholder.typicode.com/posts/1');\\nconst data = await res.j"
@@ -1263,21 +1163,6 @@
       "file": "src/hooks/useCommandMenuBuilder.ts",
       "line": 81,
       "text": "const itemsCode = m.items.map(i => `  { label: ${JSON.stringify(i.label)}, shortcut: ${JSON.stringify(i.shortcut)}, icon: ${JSON.stringify(i.icon)}, group: ${JS"
-    },
-    {
-      "file": "src/hooks/useDraftPersistence.ts",
-      "line": 68,
-      "text": "console.warn('[Draft] All localStorage writes failed, restoring backup');"
-    },
-    {
-      "file": "src/hooks/useDraftPersistence.ts",
-      "line": 85,
-      "text": "console.info('[Draft] Skipping immediate save — no files or messages');"
-    },
-    {
-      "file": "src/hooks/useDraftPersistence.ts",
-      "line": 89,
-      "text": "console.info('[Draft] Immediate save: %d files, %d msgs, name=%s', files.length, messages.length, name);"
     },
     {
       "file": "src/hooks/useFormBuilder.ts",
@@ -1315,41 +1200,6 @@
       "text": "console.log('Deploy complete:', result.url);"
     },
     {
-      "file": "src/hooks/usePreviewCapture.ts",
-      "line": 52,
-      "text": "console.log('Thumbnail: throttled (last capture was %ds ago)', Math.round((now - lastCaptureTime.current) / 1000));"
-    },
-    {
-      "file": "src/hooks/usePreviewCapture.ts",
-      "line": 59,
-      "text": "console.log('Thumbnail: skipping duplicate capture');"
-    },
-    {
-      "file": "src/hooks/usePreviewCapture.ts",
-      "line": 78,
-      "text": "console.log('Thumbnail captured via edge function');"
-    },
-    {
-      "file": "src/hooks/usePreviewServiceWorker.ts",
-      "line": 52,
-      "text": "console.info('[PreviewSW] Service Workers not supported — using srcdoc fallback');"
-    },
-    {
-      "file": "src/hooks/usePreviewServiceWorker.ts",
-      "line": 72,
-      "text": "console.info('[PreviewSW] Service Worker ready');"
-    },
-    {
-      "file": "src/hooks/usePreviewServiceWorker.ts",
-      "line": 78,
-      "text": "console.info('[PreviewSW] Service Worker activated');"
-    },
-    {
-      "file": "src/hooks/usePreviewServiceWorker.ts",
-      "line": 96,
-      "text": "console.warn('[PreviewSW] Registration failed — using srcdoc fallback:', err);"
-    },
-    {
       "file": "src/hooks/useProjectFileSystem.ts",
       "line": 353,
       "text": "console.log('%c[ENV] Variables loaded:', 'color:#6ee7b7', ${JSON.stringify(maskedObj)});"
@@ -1360,21 +1210,6 @@
       "text": "console.warn('[Preview] Relative fetch URL \"' + req + '\" — returning mock response. Connect a backend to enable API calls.');"
     },
     {
-      "file": "src/hooks/usePushNotificationDesigner.ts",
-      "line": 56,
-      "text": "console.log('Push token:', token.value);"
-    },
-    {
-      "file": "src/hooks/usePushNotificationDesigner.ts",
-      "line": 61,
-      "text": "console.log('Push received:', notification);"
-    },
-    {
-      "file": "src/hooks/usePushNotificationDesigner.ts",
-      "line": 65,
-      "text": "console.log('Push action:', action);"
-    },
-    {
       "file": "src/hooks/useRayLiveSignals.ts",
       "line": 35,
       "text": "console.warn(\"[useRayLiveSignals] sync failed\", error);"
@@ -1383,21 +1218,6 @@
       "file": "src/hooks/useSchemaIntrospection.ts",
       "line": 79,
       "text": "console.warn('[SchemaIntrospection] Error:', msg);"
-    },
-    {
-      "file": "src/hooks/useSubscriptionManager.ts",
-      "line": 115,
-      "text": "console.log('Subscription updated:', sub.id, sub.status);"
-    },
-    {
-      "file": "src/hooks/useSubscriptionManager.ts",
-      "line": 120,
-      "text": "console.log('Subscription canceled:', sub.id);"
-    },
-    {
-      "file": "src/hooks/useSubscriptionManager.ts",
-      "line": 125,
-      "text": "console.log('Payment failed for:', invoice.customer);"
     },
     {
       "file": "src/hooks/useToastDesigner.ts",
@@ -1465,21 +1285,6 @@
       "text": "if (isDev) console.debug(...args);"
     },
     {
-      "file": "src/lib/ray/brain.ts",
-      "line": 86,
-      "text": "if (error) console.warn('[ray.brain] rememberFact failed', error);"
-    },
-    {
-      "file": "src/lib/ray/brain.ts",
-      "line": 107,
-      "text": "if (error) console.warn('[ray.brain] recordTimelineEvent failed', error);"
-    },
-    {
-      "file": "src/lib/ray/brain.ts",
-      "line": 178,
-      "text": "console.warn('[ray.brain] briefing generation failed', error);"
-    },
-    {
       "file": "src/lib/ray/insights.ts",
       "line": 38,
       "text": "console.warn('[ray.insights] list failed', error);"
@@ -1488,21 +1293,6 @@
       "file": "src/lib/ray/insights.ts",
       "line": 53,
       "text": "console.warn('[ray.insights] record failed', error);"
-    },
-    {
-      "file": "src/lib/ray/missions.ts",
-      "line": 110,
-      "text": "if (error) console.warn('[ray.missions] seed failed', error);"
-    },
-    {
-      "file": "src/lib/ray/missions.ts",
-      "line": 121,
-      "text": "console.warn('[ray.missions] list failed', error);"
-    },
-    {
-      "file": "src/lib/ray/missions.ts",
-      "line": 168,
-      "text": "if (error) console.warn('[ray.missions] toggle failed', error);"
     },
     {
       "file": "src/lib/ray/morningBrief.ts",
@@ -1520,46 +1310,6 @@
       "text": "console.warn('[ray.notices] synthesize failed', e);"
     },
     {
-      "file": "src/lib/ray/playbooks/engine.ts",
-      "line": 116,
-      "text": "console.warn('[ray.playbooks] unknown template', slug);"
-    },
-    {
-      "file": "src/lib/ray/playbooks/engine.ts",
-      "line": 160,
-      "text": "console.warn('[ray.playbooks] startPlaybook failed', error);"
-    },
-    {
-      "file": "src/lib/ray/playbooks/engine.ts",
-      "line": 204,
-      "text": "if (error) console.warn('[ray.playbooks] toggleTask failed', error);"
-    },
-    {
-      "file": "src/lib/ray/playbooks/engine.ts",
-      "line": 321,
-      "text": "console.warn('[ray.playbooks] account-health bump failed', err);"
-    },
-    {
-      "file": "src/lib/supabaseResilience.ts",
-      "line": 28,
-      "text": "console.warn(`[Resilience] ${label ?? 'Operation'} timed out after ${timeoutMs}ms — using fallback`);"
-    },
-    {
-      "file": "src/lib/supabaseResilience.ts",
-      "line": 30,
-      "text": "console.warn(`[Resilience] ${label ?? 'Operation'} failed — using fallback`, err?.message);"
-    },
-    {
-      "file": "src/lib/supabaseResilience.ts",
-      "line": 54,
-      "text": "console.warn(`[Resilience] ${label ?? 'Operation'} timed out after ${timeoutMs}ms — using fallback`);"
-    },
-    {
-      "file": "src/lib/supabaseResilience.ts",
-      "line": 71,
-      "text": "console.warn(`[Resilience] ${label ?? 'Operation'} failed — using fallback`, err?.message);"
-    },
-    {
       "file": "src/pages/safesuite/SafePassExtension.tsx",
       "line": 51,
       "text": "console.warn(`Could not fetch ${file}`, e);"
@@ -1568,26 +1318,6 @@
       "file": "src/utils/exportUtils.ts",
       "line": 6,
       "text": "console.warn('No data to export');"
-    },
-    {
-      "file": "src/utils/generateWindowsAgentZip.ts",
-      "line": 52,
-      "text": "console.log(`Agent EXE fetched from ${source.name} (${(cachedExeBlob.size / 1024 / 1024).toFixed(1)} MB)`);"
-    },
-    {
-      "file": "src/utils/generateWindowsAgentZip.ts",
-      "line": 55,
-      "text": "console.warn(`${source.name}: Downloaded file too small, likely not valid EXE`);"
-    },
-    {
-      "file": "src/utils/generateWindowsAgentZip.ts",
-      "line": 60,
-      "text": "console.warn(`Failed to fetch from ${source.name}:`, error);"
-    },
-    {
-      "file": "src/utils/generateWindowsAgentZip.ts",
-      "line": 64,
-      "text": "console.warn('Agent EXE not found in any source, using config-only bundle');"
     },
     {
       "file": "src/utils/generateWindowsMsiInstaller.ts",
@@ -1655,14 +1385,14 @@
       "text": "console.warn(\"[ray-brief-cron] fetch threw\", t.user_id, e);"
     },
     {
+      "file": "supabase/functions/ray-chat/index.ts",
+      "line": 164,
+      "text": "console.log('SafeAssist AI function called');"
+    },
+    {
       "file": "supabase/functions/ray-sync-signals/index.ts",
       "line": 124,
       "text": "console.warn(\"[ray-sync-signals] upsert failed\", upErr);"
-    },
-    {
-      "file": "supabase/functions/safeassist-ai/index.ts",
-      "line": 164,
-      "text": "console.log('SafeAssist AI function called');"
     },
     {
       "file": "supabase/functions/safepass-breach-check/index.ts",
@@ -1725,11 +1455,6 @@
       "text": "console.log('Security scan completed:', scanResult);"
     },
     {
-      "file": "supabase/functions/safescan-ai-analyzer/index.ts",
-      "line": 177,
-      "text": "console.log('Starting automated scan for targets:', targets);"
-    },
-    {
       "file": "supabase/functions/safesuite-check-subscription/index.ts",
       "line": 21,
       "text": "console.log(`[SAFESUITE-CHECK-SUB] ${step}${detailsStr}`);"
@@ -1773,56 +1498,6 @@
       "file": "supabase/functions/safesuite-webhook/index.ts",
       "line": 21,
       "text": "console.log(`[SAFESUITE-WEBHOOK] ${step}${detailsStr}`);"
-    },
-    {
-      "file": "supabase/functions/safetrack-warranty-lookup/index.ts",
-      "line": 247,
-      "text": "console.log('Processing warranty lookup for serial:', cleanSerial, 'device:', deviceName);"
-    },
-    {
-      "file": "supabase/functions/safetrack-warranty-lookup/index.ts",
-      "line": 258,
-      "text": "console.log('Identified manufacturer:', manufacturerInfo.manufacturer);"
-    },
-    {
-      "file": "supabase/functions/safetrack-warranty-lookup/index.ts",
-      "line": 259,
-      "text": "console.log('Scraping manufacturer warranty URL:', manufacturerInfo.warrantyUrl);"
-    },
-    {
-      "file": "supabase/functions/safetrack-warranty-lookup/index.ts",
-      "line": 266,
-      "text": "console.log('Direct scrape successful, got', scrapedContent.length, 'chars');"
-    },
-    {
-      "file": "supabase/functions/safetrack-warranty-lookup/index.ts",
-      "line": 273,
-      "text": "console.log('Searching:', query);"
-    },
-    {
-      "file": "supabase/functions/safetrack-warranty-lookup/index.ts",
-      "line": 296,
-      "text": "console.log('Fallback search:', genericQuery);"
-    },
-    {
-      "file": "supabase/functions/safetrack-warranty-lookup/index.ts",
-      "line": 308,
-      "text": "console.log('Total scraped content:', scrapedContent.length, 'chars from', allSources.length, 'sources');"
-    },
-    {
-      "file": "supabase/functions/safetrack-warranty-lookup/index.ts",
-      "line": 359,
-      "text": "console.log('Sending to AI for analysis...');"
-    },
-    {
-      "file": "supabase/functions/safetrack-warranty-lookup/index.ts",
-      "line": 426,
-      "text": "console.log('AI response received');"
-    },
-    {
-      "file": "supabase/functions/safetrack-warranty-lookup/index.ts",
-      "line": 512,
-      "text": "console.log('Warranty lookup completed successfully');"
     },
     {
       "file": "supabase/functions/safeweb-ai-recommendations/index.ts",
@@ -1883,11 +1558,6 @@
       "file": "supabase/functions/safeweb-assets/index.ts",
       "line": 332,
       "text": "console.log('Asset deleted successfully');"
-    },
-    {
-      "file": "supabase/functions/safeweb-checkout/index.ts",
-      "line": 13,
-      "text": "console.log(`[SAFEWEB-CHECKOUT] ${step}${detailsStr}`);"
     },
     {
       "file": "supabase/functions/safeweb-scanner/index.ts",

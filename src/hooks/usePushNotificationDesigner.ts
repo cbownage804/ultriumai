@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 
+import { devLog } from '@/lib/logger';
 export interface PushNotification {
   id: string;
   title: string;
@@ -53,16 +54,16 @@ export async function registerPush() {
   }
 
   PushNotifications.addListener('registration', (token) => {
-    console.log('Push token:', token.value);
+    devLog.log('Push token:', token.value);
     // Send token to your server
   });
 
   PushNotifications.addListener('pushNotificationReceived', (notification) => {
-    console.log('Push received:', notification);
+    devLog.log('Push received:', notification);
   });
 
   PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
-    console.log('Push action:', action);
+    devLog.log('Push action:', action);
   });
 }
 

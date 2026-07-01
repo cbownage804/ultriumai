@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
+import { devLog } from '@/lib/logger';
 export type RayMemoryRecord = {
   id: string;
   user_id: string;
@@ -83,7 +84,7 @@ export async function rememberFact(
       },
       { onConflict: 'user_id,key' },
     );
-  if (error) console.warn('[ray.brain] rememberFact failed', error);
+  if (error) devLog.warn('[ray.brain] rememberFact failed', error);
 }
 
 export async function recordTimelineEvent(
@@ -104,7 +105,7 @@ export async function recordTimelineEvent(
       severity: event.severity ?? 'info',
     },
   ]);
-  if (error) console.warn('[ray.brain] recordTimelineEvent failed', error);
+  if (error) devLog.warn('[ray.brain] recordTimelineEvent failed', error);
 }
 
 export async function completeRecommendation(id: string) {
@@ -175,7 +176,7 @@ async function generateBriefing(): Promise<RayBriefing | null> {
     body: {},
   });
   if (error) {
-    console.warn('[ray.brain] briefing generation failed', error);
+    devLog.warn('[ray.brain] briefing generation failed', error);
     return null;
   }
   return (data?.briefing as RayBriefing) ?? null;

@@ -1,5 +1,6 @@
 import JSZip from 'jszip';
 
+import { devLog } from '@/lib/logger';
 interface WindowsAgentZipOptions {
   userId: string;
   apiEndpoint: string;
@@ -49,19 +50,19 @@ async function fetchPreBuiltExe(onProgress?: (progress: number, message: string)
         // Verify it's a valid EXE (should be > 1MB for a .NET self-contained app)
         if (cachedExeBlob.size > 1024 * 1024) {
           onProgress?.(80, 'Download complete');
-          console.log(`Agent EXE fetched from ${source.name} (${(cachedExeBlob.size / 1024 / 1024).toFixed(1)} MB)`);
+          devLog.log(`Agent EXE fetched from ${source.name} (${(cachedExeBlob.size / 1024 / 1024).toFixed(1)} MB)`);
           return cachedExeBlob;
         } else {
-          console.warn(`${source.name}: Downloaded file too small, likely not valid EXE`);
+          devLog.warn(`${source.name}: Downloaded file too small, likely not valid EXE`);
           cachedExeBlob = null;
         }
       }
     } catch (error) {
-      console.warn(`Failed to fetch from ${source.name}:`, error);
+      devLog.warn(`Failed to fetch from ${source.name}:`, error);
     }
   }
 
-  console.warn('Agent EXE not found in any source, using config-only bundle');
+  devLog.warn('Agent EXE not found in any source, using config-only bundle');
   return null;
 }
 

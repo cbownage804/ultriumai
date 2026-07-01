@@ -175,10 +175,8 @@ verify_jwt = false
 [functions.app-ai-assistant]
 verify_jwt = false
 
-[functions.safetrack-warranty-lookup]
-verify_jwt = true
-
-[functions.safeassist-ai]
+# Ray — conversational intelligence (replaces legacy safeassist-ai)
+[functions.ray-chat]
 verify_jwt = true
 
 # Wrayth browser extension — domain trust engine (public; no PII)

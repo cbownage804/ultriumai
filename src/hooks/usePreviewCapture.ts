@@ -1,6 +1,7 @@
 import { useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+import { devLog } from '@/lib/logger';
 /**
  * Captures a project thumbnail via a server-side edge function.
  * 
@@ -49,14 +50,14 @@ export function usePreviewCapture() {
     // Throttle: max one capture per 90s
     const now = Date.now();
     if (now - lastCaptureTime.current < THROTTLE_MS) {
-      console.log('Thumbnail: throttled (last capture was %ds ago)', Math.round((now - lastCaptureTime.current) / 1000));
+      devLog.log('Thumbnail: throttled (last capture was %ds ago)', Math.round((now - lastCaptureTime.current) / 1000));
       return null;
     }
 
     // Deduplicate by content hash
     const hash = quickHash(compiledHtml);
     if (hash === lastCapturedHash.current) {
-      console.log('Thumbnail: skipping duplicate capture');
+      devLog.log('Thumbnail: skipping duplicate capture');
       return null;
     }
 
@@ -75,7 +76,7 @@ export function usePreviewCapture() {
       if (data?.success && data?.thumbnailUrl) {
         lastCapturedHash.current = hash;
         lastCaptureTime.current = Date.now();
-        console.log('Thumbnail captured via edge function');
+        devLog.log('Thumbnail captured via edge function');
         return data.thumbnailUrl;
       }
 

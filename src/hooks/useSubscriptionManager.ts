@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 
+import { devLog } from '@/lib/logger';
 export interface SubscriptionPlan {
   id: string;
   name: string;
@@ -112,17 +113,17 @@ export async function handleSubscriptionWebhook(event: Stripe.Event) {
     case 'customer.subscription.updated': {
       const sub = event.data.object as Stripe.Subscription;
       // Update subscriber status in database
-      console.log('Subscription updated:', sub.id, sub.status);
+      devLog.log('Subscription updated:', sub.id, sub.status);
       break;
     }
     case 'customer.subscription.deleted': {
       const sub = event.data.object as Stripe.Subscription;
-      console.log('Subscription canceled:', sub.id);
+      devLog.log('Subscription canceled:', sub.id);
       break;
     }
     case 'invoice.payment_failed': {
       const invoice = event.data.object as Stripe.Invoice;
-      console.log('Payment failed for:', invoice.customer);
+      devLog.log('Payment failed for:', invoice.customer);
       break;
     }
   }

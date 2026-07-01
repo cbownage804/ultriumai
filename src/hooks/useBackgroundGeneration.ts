@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+import { devLog } from '@/lib/logger';
 export interface BackgroundJob {
   id: string;
   status: 'pending' | 'processing' | 'streaming' | 'completed' | 'failed' | 'cancelled';
@@ -167,7 +168,7 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
     } else if (job.status === 'completed') {
       cleanup();
       processedJobIds.add(job.id);
-      console.info('[BG] ✅ Job completed:', job.id, '— calling onComplete callback');
+      devLog.info('[BG] ✅ Job completed:', job.id, '— calling onComplete callback');
       onCompleteRef.current?.(job);
       // Process next queued job
       processQueue();
@@ -182,7 +183,7 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
       processQueue();
     } else if (job.status === 'cancelled') {
       cleanup();
-      console.info('[BG] Job cancelled:', job.id);
+      devLog.info('[BG] Job cancelled:', job.id);
       processQueue();
     }
   }, [cleanup, commitActiveJob, processQueue, throttledSetActiveJob]);
@@ -213,7 +214,7 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
       );
 
       if (!response.ok || !response.body) {
-        console.warn('[BG SSE] Failed to start stream, falling back to polling');
+        devLog.warn('[BG SSE] Failed to start stream, falling back to polling');
         return;
       }
 
@@ -258,7 +259,7 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
       }
     } catch (err: any) {
       if (err.name !== 'AbortError') {
-        console.warn('[BG SSE] Stream error, polling handles it:', err.message);
+        devLog.warn('[BG SSE] Stream error, polling handles it:', err.message);
       }
     }
   }, []);
@@ -354,7 +355,7 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
         return null;
       }
 
-      console.info('[BG] Job submitted:', jobId);
+      devLog.info('[BG] Job submitted:', jobId);
       commitActiveJob({ id: jobId, status: 'pending' });
       startWatching(jobId);
       return jobId;
@@ -435,10 +436,10 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
       if (jobs && jobs.length > 0) {
         const job = jobs[0];
         if (processedJobIds.has(job.id)) {
-          console.info('[BG] Job already processed in this session, skipping:', job.id);
+          devLog.info('[BG] Job already processed in this session, skipping:', job.id);
           return null;
         }
-        console.info('[BG] Found active job from previous session:', job.id);
+        devLog.info('[BG] Found active job from previous session:', job.id);
         toast.info('Resuming your build from where it left off...', { duration: 4000 });
         commitActiveJob({ id: job.id, status: job.status as BackgroundJob['status'], progress_percent: job.progress_percent ?? undefined });
         startWatching(job.id);
@@ -459,11 +460,11 @@ export function useBackgroundGeneration(options: UseBackgroundGenerationOptions 
         const job = completedJobs[0];
         // Skip if this job was already processed in the current session
         if (processedJobIds.has(job.id)) {
-          console.info('[BG] Completed job already processed, skipping:', job.id);
+          devLog.info('[BG] Completed job already processed, skipping:', job.id);
           return null;
         }
         processedJobIds.add(job.id);
-        console.info('[BG] Found recently completed job:', job.id);
+        devLog.info('[BG] Found recently completed job:', job.id);
         toast.success('Your build completed while you were away!', { duration: 5000 });
         const { data: fullJob } = await supabase
           .from('app_builder_jobs')

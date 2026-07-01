@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import type { ProjectFile } from './useProjectFileSystem';
 import { isNewSessionPending } from '@/lib/clearBuilderDraft';
 
+import { devLog } from '@/lib/logger';
 const DRAFT_KEY = 'ai-builder-draft';
 const DEBOUNCE_MS = 1500;
 
@@ -65,7 +66,7 @@ export function useDraftPersistence() {
     }
 
     // ALL tiers failed — restore the backup so we don't lose existing data
-    console.warn('[Draft] All localStorage writes failed, restoring backup');
+    devLog.warn('[Draft] All localStorage writes failed, restoring backup');
     if (backup) {
       try { localStorage.setItem(DRAFT_KEY, backup); } catch { /* truly full */ }
     }
@@ -82,11 +83,11 @@ export function useDraftPersistence() {
   /** Save immediately — use on visibilitychange / beforeunload / unmount */
   const saveDraftImmediate = useCallback((name: string, files: ProjectFile[], messages: any[]) => {
     if (files.length === 0 && messages.length === 0) {
-      console.info('[Draft] Skipping immediate save — no files or messages');
+      devLog.info('[Draft] Skipping immediate save — no files or messages');
       return;
     }
     if (timer.current) clearTimeout(timer.current);
-    console.info('[Draft] Immediate save: %d files, %d msgs, name=%s', files.length, messages.length, name);
+    devLog.info('[Draft] Immediate save: %d files, %d msgs, name=%s', files.length, messages.length, name);
     writeDraft(name, files, messages);
   }, [writeDraft]);
 

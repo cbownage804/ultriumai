@@ -9,6 +9,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { recordTimelineEvent } from '@/lib/ray/brain';
 
+import { devLog } from '@/lib/logger';
 export type MissionStatus = 'new' | 'in_progress' | 'completed' | 'dismissed';
 
 export type MissionStep = {
@@ -107,7 +108,7 @@ async function ensureSeeded(userId: string) {
   }));
   if (toInsert.length === 0) return;
   const { error } = await supabase.from('ray_missions').insert(toInsert);
-  if (error) console.warn('[ray.missions] seed failed', error);
+  if (error) devLog.warn('[ray.missions] seed failed', error);
 }
 
 export async function listMissions(userId: string): Promise<RayMission[]> {
@@ -118,7 +119,7 @@ export async function listMissions(userId: string): Promise<RayMission[]> {
     .eq('user_id', userId)
     .order('priority', { ascending: true });
   if (error) {
-    console.warn('[ray.missions] list failed', error);
+    devLog.warn('[ray.missions] list failed', error);
     return [];
   }
   return (data ?? []).map((row) => ({
@@ -165,7 +166,7 @@ export async function toggleStep(mission: RayMission, stepId: string): Promise<R
     .from('ray_missions')
     .update(updates)
     .eq('id', mission.id);
-  if (error) console.warn('[ray.missions] toggle failed', error);
+  if (error) devLog.warn('[ray.missions] toggle failed', error);
 
   if (allDone) {
     const { data: u } = await supabase.auth.getUser();
