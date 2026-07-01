@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-07-01T14:32:55.198Z",
+  "generatedAt": "2026-07-01T14:33:21.522Z",
   "totals": {
     "filesScanned": 357,
-    "legacyBrand": 137,
+    "legacyBrand": 116,
     "todos": 3,
     "consoles": 54,
     "hardcodedHex": 276,
@@ -346,114 +346,9 @@
       "text": "import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';"
     },
     {
-      "file": "supabase/functions/check-subscription/index.ts",
-      "line": 160,
-      "text": "// SafeSuite Tiers"
-    },
-    {
-      "file": "supabase/functions/check-subscription/index.ts",
-      "line": 161,
-      "text": "\"prod_TsPzD1oR0cpYRl\": \"safesuite_pro\",   // SafeSuite Pro"
-    },
-    {
-      "file": "supabase/functions/check-subscription/index.ts",
-      "line": 162,
-      "text": "\"prod_TsPs3I5eCybg7o\": \"safesuite_pro\",   // SafeSuite Pro (older)"
-    },
-    {
-      "file": "supabase/functions/check-subscription/index.ts",
-      "line": 163,
-      "text": "\"prod_TsPzaw5xfK0fGn\": \"safesuite_business\", // SafeSuite Business"
-    },
-    {
-      "file": "supabase/functions/check-subscription/index.ts",
-      "line": 164,
-      "text": "\"prod_TsPhrnVrS2CTEI\": \"safesuite_enterprise\", // SafeSuite Enterprise"
-    },
-    {
       "file": "supabase/functions/ray-chat/index.ts",
       "line": 125,
       "text": "- Refer to the product as Wrayth. Never reference \"SafeSuite,\" \"SafeAssist,\" \"SafePass,\" \"SafeScan,\" \"SafeWeb,\" \"SafeTrack,\" \"Vanguard,\" \"AI Studio,\" or \"Ultriu"
-    },
-    {
-      "file": "supabase/functions/safesuite-check-subscription/index.ts",
-      "line": 82,
-      "text": "// Look for SafeSuite subscriptions"
-    },
-    {
-      "file": "supabase/functions/safesuite-check-subscription/index.ts",
-      "line": 89,
-      "text": "// Find a SafeSuite subscription"
-    },
-    {
-      "file": "supabase/functions/safesuite-check-subscription/index.ts",
-      "line": 105,
-      "text": "logStep(\"No active SafeSuite subscription found\");"
-    },
-    {
-      "file": "supabase/functions/safesuite-check-subscription/index.ts",
-      "line": 136,
-      "text": "logStep(\"Active SafeSuite subscription found\", {"
-    },
-    {
-      "file": "supabase/functions/safesuite-checkout/index.ts",
-      "line": 10,
-      "text": "// SafeSuite tier price IDs"
-    },
-    {
-      "file": "supabase/functions/safesuite-checkout/index.ts",
-      "line": 26,
-      "text": "// Real SafeSuite product IDs (looked up from live Stripe) for upgrade detection"
-    },
-    {
-      "file": "supabase/functions/safesuite-checkout/index.ts",
-      "line": 89,
-      "text": "// Check for existing SafeSuite subscriptions"
-    },
-    {
-      "file": "supabase/functions/safesuite-checkout/index.ts",
-      "line": 96,
-      "text": "// Find any existing SafeSuite subscription"
-    },
-    {
-      "file": "supabase/functions/safesuite-checkout/index.ts",
-      "line": 107,
-      "text": "logStep(\"Found existing SafeSuite subscription, upgrading instead of creating new\", {"
-    },
-    {
-      "file": "supabase/functions/safesuite-checkout/index.ts",
-      "line": 158,
-      "text": "// No existing SafeSuite subscription - create new checkout session"
-    },
-    {
-      "file": "supabase/functions/safesuite-customer-portal/index.ts",
-      "line": 57,
-      "text": "// by creating a separate portal configuration for SafeSuite products"
-    },
-    {
-      "file": "supabase/functions/safesuite-customer-portal/index.ts",
-      "line": 59,
-      "text": "logStep(\"SafeSuite customer portal session created\", { sessionId: portalSession.id, url: portalSession.url });"
-    },
-    {
-      "file": "supabase/functions/safesuite-data-export/index.ts",
-      "line": 63,
-      "text": "// SafePass passwords (still encrypted)"
-    },
-    {
-      "file": "supabase/functions/safesuite-team-checkout/index.ts",
-      "line": 75,
-      "text": "name: 'SafeSuite Business',"
-    },
-    {
-      "file": "supabase/functions/safeweb-scanner/index.ts",
-      "line": 121,
-      "text": "'User-Agent': 'SafeWeb-Scanner-v1.0',"
-    },
-    {
-      "file": "supabase/functions/stripe-webhook/index.ts",
-      "line": 15,
-      "text": "// Map SafeSuite tier to user_product_access level"
     },
     {
       "file": "public/safepass-extension/background.js",
