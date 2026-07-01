@@ -56,7 +56,7 @@ import {
   Scale,
 } from 'lucide-react';
 import { AppSwitcher } from '@/components/AppSwitcher';
-import { HelpCenter } from '@/components/onboarding/HelpCenter';
+
 import { cn } from '@/lib/utils';
 import { AskRayPalette } from '@/components/ray/AskRayPalette';
 import { RayContextProvider } from '@/components/ray/RayContext';
@@ -291,7 +291,7 @@ function WraythLayoutInner() {
 
             <div className="flex items-center gap-1 sm:gap-2">
               <AppSwitcher />
-              <HelpCenter />
+              
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="gap-2 min-h-[44px] px-2 sm:px-3">
