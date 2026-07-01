@@ -157,7 +157,7 @@ export default function ScanProduct() {
       {/* CTA Section */}
       <section className="py-12 sm:py-20 px-4">
         <div className="container mx-auto max-w-3xl text-center">
-          <div className="inline-block bg-black px-6 sm:px-8 py-3 sm:py-4 rounded-lg mb-4 sm:mb-6 border border-emerald-500/20">
+          <div className="inline-block bg-black px-6 sm:px-8 py-3 sm:py-4 rounded-lg mb-4 sm:mb-6 border border-green-500/20">
             <img src={safesuiteLogo} alt="Wrayth" className="h-12 sm:h-16 w-auto" />
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4">
@@ -167,7 +167,7 @@ export default function ScanProduct() {
             Get Scan plus Vault, and Watch — all in one unified security suite.
           </p>
           <Link to="/auth?tab=signup">
-            <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 text-black gap-2 touch-target">
+            <Button size="lg" className="bg-green-500 hover:bg-green-600 text-black gap-2 touch-target">
               Get Started with Wrayth
               <ArrowRight className="h-4 w-4" />
             </Button>

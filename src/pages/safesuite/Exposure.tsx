@@ -452,7 +452,7 @@ export default function WraythWeb() {
                 >
                   <div
                     className={`text-3xl sm:text-4xl font-extralight tabular-nums leading-none ${
-                      totalThreats > 0 ? 'text-amber-300' : 'text-foreground'
+                      totalThreats > 0 ? 'text-yellow-300' : 'text-foreground'
                     }`}
                   >
                     {totalThreats}
@@ -463,7 +463,7 @@ export default function WraythWeb() {
 
                 </button>
                 <div>
-                  <div className="text-3xl sm:text-4xl font-extralight tabular-nums leading-none text-emerald-300">
+                  <div className="text-3xl sm:text-4xl font-extralight tabular-nums leading-none text-green-300">
                     {cleanCount}
                   </div>
                   <div className="mt-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
@@ -675,7 +675,7 @@ export default function WraythWeb() {
                                     <ul className="space-y-1">
                                       {getRayActions(threat).map((action, i) => (
                                         <li key={i} className="flex items-center gap-2 text-xs text-gray-300">
-                                          <CheckCircle className="h-3 w-3 text-emerald-400 shrink-0" />
+                                          <CheckCircle className="h-3 w-3 text-green-400 shrink-0" />
                                           <span>{action}</span>
                                         </li>
                                       ))}

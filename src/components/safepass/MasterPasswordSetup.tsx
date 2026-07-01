@@ -72,7 +72,7 @@ export const MasterPasswordSetup = ({
       case 'very-weak': return 'bg-red-500';
       case 'weak': return 'bg-primary';
       case 'fair': return 'bg-primary';
-      case 'good': return 'bg-blue-500';
+      case 'good': return 'bg-violet-500';
       case 'strong': return 'bg-green-500';
       default: return 'bg-gray-300';
     }
@@ -171,7 +171,7 @@ export const MasterPasswordSetup = ({
                 <span>Password Strength:</span>
                 <span className={`font-medium ${
                   passwordStrength.level === 'strong' ? 'text-green-600' :
-                  passwordStrength.level === 'good' ? 'text-blue-600' :
+                  passwordStrength.level === 'good' ? 'text-violet-600' :
                   passwordStrength.level === 'fair' ? 'text-yellow-600' :
                   'text-red-600'
                 }`}>

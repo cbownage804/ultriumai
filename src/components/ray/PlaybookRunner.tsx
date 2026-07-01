@@ -90,7 +90,7 @@ export function PlaybookRunner({ runId }: { runId: string }) {
           <div
             className={cn(
               'h-full transition-all duration-700',
-              completed ? 'bg-emerald-500' : 'bg-primary',
+              completed ? 'bg-green-500' : 'bg-primary',
             )}
             style={{ width: `${progress}%` }}
           />
@@ -104,7 +104,7 @@ export function PlaybookRunner({ runId }: { runId: string }) {
                 className={cn(
                   'flex items-start gap-2 rounded-sm border px-3 py-2 text-sm transition-colors',
                   t.done
-                    ? 'border-emerald-500/30 bg-emerald-500/[0.05] text-foreground'
+                    ? 'border-green-500/30 bg-green-500/[0.05] text-foreground'
                     : isCurrent
                       ? 'border-primary/40 bg-primary/[0.05] text-foreground'
                       : 'border-border text-muted-foreground',
@@ -114,7 +114,7 @@ export function PlaybookRunner({ runId }: { runId: string }) {
                   className={cn(
                     'mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-sm border shrink-0',
                     t.done
-                      ? 'border-emerald-500 bg-emerald-500 text-background'
+                      ? 'border-green-500 bg-green-500 text-background'
                       : isCurrent
                         ? 'border-primary'
                         : 'border-muted-foreground/40',

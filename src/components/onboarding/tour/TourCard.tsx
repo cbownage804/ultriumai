@@ -300,7 +300,7 @@ export const TourCard = ({
                   className={cn(
                     "w-full gap-1.5 transition-all shadow-lg",
                     isLastStep 
-                      ? "bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-green-500/25" 
+                      ? "bg-gradient-to-r from-green-500 to-green-500 hover:from-green-600 hover:to-green-600 shadow-green-500/25" 
                       : "bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-primary/25"
                   )}
                 >
@@ -366,7 +366,7 @@ export const TourCard = ({
                   className={cn(
                     "gap-1.5 min-w-[110px] transition-all shadow-lg",
                     isLastStep 
-                      ? "bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-green-500/25" 
+                      ? "bg-gradient-to-r from-green-500 to-green-500 hover:from-green-600 hover:to-green-600 shadow-green-500/25" 
                       : "bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-primary/25"
                   )}
                 >

@@ -18,8 +18,8 @@ import { cn } from "@/lib/utils";
 function StatBlock({ label, value, hint, tone = "neutral" }: { label: string; value: string | number; hint?: string; tone?: "neutral" | "warn" | "danger" | "good" }) {
   const toneCls = {
     neutral: "text-slate-200",
-    good: "text-emerald-300",
-    warn: "text-amber-300",
+    good: "text-green-300",
+    warn: "text-yellow-300",
     danger: "text-red-300",
   }[tone];
   return (
@@ -33,8 +33,8 @@ function StatBlock({ label, value, hint, tone = "neutral" }: { label: string; va
 
 function feedbackBadge(feedback: string | null | undefined) {
   if (!feedback) return null;
-  if (feedback === "helpful") return { Icon: ThumbsUp, tone: "text-emerald-300", label: "Helpful" };
-  if (feedback === "not_helpful") return { Icon: ThumbsDown, tone: "text-amber-300", label: "Not helpful" };
+  if (feedback === "helpful") return { Icon: ThumbsUp, tone: "text-green-300", label: "Helpful" };
+  if (feedback === "not_helpful") return { Icon: ThumbsDown, tone: "text-yellow-300", label: "Not helpful" };
   if (feedback === "wrong") return { Icon: AlertCircle, tone: "text-red-300", label: "Wrong" };
   return null;
 }
@@ -124,7 +124,7 @@ export default function MorningBrief() {
                   <div className="flex items-center gap-2 text-xs">
                     {h.score != null && <span className="tabular-nums text-slate-300">{h.score}</span>}
                     {delta !== 0 && (
-                      <span className={cn("tabular-nums", delta > 0 ? "text-emerald-300" : "text-red-300")}>
+                      <span className={cn("tabular-nums", delta > 0 ? "text-green-300" : "text-red-300")}>
                         {delta > 0 ? "+" : ""}{delta}
                       </span>
                     )}

@@ -87,7 +87,7 @@ const VaultExtension = () => {
       <div>
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-bold">Browser Extension</h1>
-          <Badge variant="outline" className="bg-amber-500/10 text-amber-400 border-amber-500/30 flex items-center gap-1">
+          <Badge variant="outline" className="bg-yellow-500/10 text-yellow-400 border-yellow-500/30 flex items-center gap-1">
             <Beaker className="h-3 w-3" />
             BETA
           </Badge>
@@ -98,10 +98,10 @@ const VaultExtension = () => {
       </div>
 
       {/* Beta Disclaimer */}
-      <Alert className="bg-amber-500/10 border-amber-500/30">
-        <AlertTriangle className="h-4 w-4 text-amber-400" />
-        <AlertDescription className="text-amber-200/80">
-          <span className="font-semibold text-amber-400">Beta Software:</span> This extension is currently in development. 
+      <Alert className="bg-yellow-500/10 border-yellow-500/30">
+        <AlertTriangle className="h-4 w-4 text-yellow-400" />
+        <AlertDescription className="text-yellow-200/80">
+          <span className="font-semibold text-yellow-400">Beta Software:</span> This extension is currently in development. 
           While we've tested core functionality, you may encounter bugs or missing features. 
           Please report any issues to our support team. Your vault data remains encrypted and secure.
         </AlertDescription>

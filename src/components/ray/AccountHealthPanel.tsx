@@ -41,12 +41,12 @@ function ProviderRow({ provider, score, lastDone }: { provider: SecureProvider; 
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-slate-100">{provider.name}</span>
           {isLow && (
-            <span className="text-[10px] uppercase tracking-[0.18em] text-amber-300/80">
+            <span className="text-[10px] uppercase tracking-[0.18em] text-yellow-300/80">
               Needs attention
             </span>
           )}
           {lastDone && score >= 85 && (
-            <span className="text-[10px] uppercase tracking-[0.18em] text-emerald-300/80">
+            <span className="text-[10px] uppercase tracking-[0.18em] text-green-300/80">
               Hardened
             </span>
           )}

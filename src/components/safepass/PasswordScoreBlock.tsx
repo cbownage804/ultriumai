@@ -50,7 +50,7 @@ export function PasswordScoreBlock({ score, stats, className }: Props) {
                 className={cn(
                   'text-2xl font-light tabular-nums',
                   stat.tone === 'warning' && stat.value > 0 && 'text-red-400',
-                  stat.tone === 'success' && stat.value > 0 && 'text-emerald-400',
+                  stat.tone === 'success' && stat.value > 0 && 'text-green-400',
                   (!stat.tone || stat.tone === 'default') && 'text-foreground',
                 )}
               >

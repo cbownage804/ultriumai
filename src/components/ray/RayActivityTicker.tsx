@@ -59,7 +59,7 @@ export function RayActivityTicker({ context = 'home', className = '' }: Props) {
     >
       <motion.span
         aria-hidden
-        className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400"
+        className="inline-block h-1.5 w-1.5 rounded-full bg-green-400"
         animate={{ opacity: [0.35, 1, 0.35], scale: [1, 1.2, 1] }}
         transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
       />

@@ -155,8 +155,8 @@ export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
 
   const getProductIcon = () => {
     if (productInterests.length === 1) {
-      if (productInterests[0] === 'safesuite') return <Lock className="h-12 w-12 text-emerald-500 mx-auto mb-4" />;
-      if (productInterests[0] === 'vanguard') return <Shield className="h-12 w-12 text-cyan-500 mx-auto mb-4" />;
+      if (productInterests[0] === 'safesuite') return <Lock className="h-12 w-12 text-green-500 mx-auto mb-4" />;
+      if (productInterests[0] === 'vanguard') return <Shield className="h-12 w-12 text-violet-500 mx-auto mb-4" />;
       if (productInterests[0] === 'ai_studio') return <Bot className="h-12 w-12 text-primary mx-auto mb-4" />;
     }
     return <User className="h-12 w-12 text-primary mx-auto mb-4" />;
@@ -268,7 +268,7 @@ export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
-              <Shield className="h-12 w-12 text-cyan-500 mx-auto mb-4" />
+              <Shield className="h-12 w-12 text-violet-500 mx-auto mb-4" />
               <h2 className="text-2xl font-bold">Security & Operations Setup</h2>
               <p className="text-muted-foreground">What capabilities are most important to you?</p>
             </div>

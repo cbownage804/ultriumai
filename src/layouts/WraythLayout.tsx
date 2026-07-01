@@ -106,7 +106,7 @@ function TierBadge({ tier }: { tier: string }) {
   const variants: Record<string, string> = {
     free: 'bg-muted text-muted-foreground',
     pro: 'bg-primary/10 text-primary border-primary/20',
-    business: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+    business: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
   };
   const icons: Record<string, React.ReactNode> = {
     free: <Shield className="h-3 w-3" />,
@@ -238,7 +238,7 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
           <Link
             to="/admin"
             onClick={onItemClick}
-            className="flex items-center gap-3 px-3 py-2 rounded-sm text-sm text-orange-500 hover:bg-accent hover:text-orange-400 transition-colors"
+            className="flex items-center gap-3 px-3 py-2 rounded-sm text-sm text-yellow-500 hover:bg-accent hover:text-yellow-400 transition-colors"
           >
             <Crown className="h-4 w-4" />
             <span>Admin</span>

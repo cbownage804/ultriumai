@@ -74,8 +74,8 @@ function SecurityScoreCard({ stats }: { stats: DashboardStats }) {
   };
 
   const score = Math.max(0, Math.min(100, calculateScore()));
-  const scoreColor = score >= 80 ? 'text-emerald-400' : score >= 60 ? 'text-yellow-400' : 'text-red-400';
-  const strokeColor = score >= 80 ? 'stroke-emerald-500' : score >= 60 ? 'stroke-primary' : 'stroke-red-500';
+  const scoreColor = score >= 80 ? 'text-green-400' : score >= 60 ? 'text-yellow-400' : 'text-red-400';
+  const strokeColor = score >= 80 ? 'stroke-green-500' : score >= 60 ? 'stroke-primary' : 'stroke-red-500';
 
   return (
     <motion.div
@@ -138,7 +138,7 @@ function SecurityScoreCard({ stats }: { stats: DashboardStats }) {
                 {stats.strongPasswordCount > 0 && (
                   <StaggerItem>
                     <div className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-emerald-400" />
+                      <CheckCircle className="h-4 w-4 text-green-400" />
                       <span className="text-gray-300">{stats.strongPasswordCount} strong password{stats.strongPasswordCount !== 1 ? 's' : ''} in vault</span>
                     </div>
                   </StaggerItem>
@@ -154,7 +154,7 @@ function SecurityScoreCard({ stats }: { stats: DashboardStats }) {
                 {stats.weakPasswordCount === 0 && stats.passwordCount > 0 && (
                   <StaggerItem>
                     <div className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-emerald-400" />
+                      <CheckCircle className="h-4 w-4 text-green-400" />
                       <span className="text-gray-300">No weak passwords detected</span>
                     </div>
                   </StaggerItem>
@@ -317,7 +317,7 @@ function RecentActivityCard({ activities }: { activities: ActivityItem[] }) {
       case 'password': return 'text-primary bg-primary/10';
       case 'scan': return 'text-red-400 bg-red-500/10';
       case 'breach': return 'text-violet-400 bg-violet-500/10';
-      case 'asset': return 'text-emerald-400 bg-emerald-500/10';
+      case 'asset': return 'text-green-400 bg-green-500/10';
       default: return 'text-gray-400 bg-white/10';
     }
   };

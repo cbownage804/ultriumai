@@ -91,9 +91,9 @@ export function PasswordHealthyCard() {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="relative overflow-hidden rounded-2xl border border-emerald-400/15 bg-emerald-500/[0.03] p-5 sm:p-6"
+      className="relative overflow-hidden rounded-2xl border border-green-400/15 bg-green-500/[0.03] p-5 sm:p-6"
     >
-      <div className="flex items-center gap-2 text-emerald-300/90 text-[11px] uppercase tracking-[0.18em]">
+      <div className="flex items-center gap-2 text-green-300/90 text-[11px] uppercase tracking-[0.18em]">
         <ShieldCheck className="h-3.5 w-3.5" />
         Vault healthy
       </div>
@@ -134,14 +134,14 @@ export function PasswordAnalyzingCard({ count }: { count: number }) {
       className={
         'relative overflow-hidden rounded-2xl border p-5 sm:p-6 ' +
         (isDone
-          ? 'border-emerald-400/15 bg-emerald-500/[0.03]'
+          ? 'border-green-400/15 bg-green-500/[0.03]'
           : 'border-violet-400/15 bg-violet-500/[0.04]')
       }
     >
       <div
         className={
           'flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] ' +
-          (isDone ? 'text-emerald-300/90' : 'text-violet-300/90')
+          (isDone ? 'text-green-300/90' : 'text-violet-300/90')
         }
       >
         {isDone ? <ShieldCheck className="h-3.5 w-3.5" /> : <Loader2 className="h-3.5 w-3.5 animate-spin" />}

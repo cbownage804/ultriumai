@@ -282,9 +282,9 @@ export const PasswordHealthDashboard = () => {
     healthScore >= 80 ? 'LOW' : healthScore >= 50 ? 'MODERATE' : 'HIGH';
   const riskColor =
     riskLevel === 'LOW'
-      ? 'text-emerald-400'
+      ? 'text-green-400'
       : riskLevel === 'MODERATE'
-      ? 'text-amber-400'
+      ? 'text-yellow-400'
       : 'text-red-400';
   const reviewLines = [
     `${stats.total} password${stats.total === 1 ? '' : 's'} reviewed`,
@@ -332,7 +332,7 @@ export const PasswordHealthDashboard = () => {
         <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-violet-300/80">
           <motion.span
             aria-hidden
-            className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400"
+            className="inline-block h-1.5 w-1.5 rounded-full bg-green-400"
             animate={{ opacity: [0.35, 1, 0.35], scale: [1, 1.15, 1] }}
             transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
           />
@@ -350,7 +350,7 @@ export const PasswordHealthDashboard = () => {
               transition={{ duration: 0.3, delay: 0.06 * i }}
               className="flex items-start gap-2 text-sm text-foreground/85"
             >
-              <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-400 shrink-0" />
+              <CheckCircle2 className="mt-0.5 h-4 w-4 text-green-400 shrink-0" />
               <span>{line}</span>
             </motion.li>
           ))}

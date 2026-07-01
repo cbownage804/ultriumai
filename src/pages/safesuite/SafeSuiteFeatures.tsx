@@ -30,10 +30,10 @@ const tools = [
     description: "Military-grade encryption for all your credentials with zero-knowledge architecture.",
     icon: Key,
     logo: vaultLogo,
-    color: "text-amber-500",
-    bgColor: "bg-amber-500/10",
-    borderColor: "border-amber-500/30",
-    shadowColor: "shadow-amber-500/20",
+    color: "text-yellow-500",
+    bgColor: "bg-yellow-500/10",
+    borderColor: "border-yellow-500/30",
+    shadowColor: "shadow-yellow-500/20",
     features: [
       { icon: Lock, title: "Zero-Knowledge Encryption", description: "Your master password never leaves your device" },
       { icon: Users, title: "Secure Sharing", description: "Share credentials with team members safely" },
@@ -112,7 +112,7 @@ export default function WraythFeatures() {
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Link to="/app/auth">
-              <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600">
+              <Button size="lg" className="bg-green-500 hover:bg-green-600">
                 Start Free Trial
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
@@ -193,9 +193,9 @@ export default function WraythFeatures() {
               { tier: "Pro", price: "$9.99", features: ["Unlimited passwords", "100 scans/month", "5 monitored assets"], popular: true },
               { tier: "Business", price: "$15", features: ["Per-seat pricing", "Unlimited everything", "Team features"], perUser: true },
             ].map((plan) => (
-              <Card key={plan.tier} className={`relative ${plan.popular ? "border-emerald-500 shadow-lg shadow-emerald-500/10" : ""}`}>
+              <Card key={plan.tier} className={`relative ${plan.popular ? "border-green-500 shadow-lg shadow-green-500/10" : ""}`}>
                 {plan.popular && (
-                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-emerald-500">
+                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-500">
                     Most Popular
                   </Badge>
                 )}
@@ -212,13 +212,13 @@ export default function WraythFeatures() {
                   <ul className="space-y-2 mb-6">
                     {plan.features.map((f) => (
                       <li key={f} className="flex items-center gap-2 text-sm">
-                        <Check className="h-4 w-4 text-emerald-500" />
+                        <Check className="h-4 w-4 text-green-500" />
                         {f}
                       </li>
                     ))}
                   </ul>
                   <Link to="/app/auth">
-                    <Button className={`w-full ${plan.popular ? "bg-emerald-500 hover:bg-emerald-600" : ""}`} variant={plan.popular ? "default" : "outline"}>
+                    <Button className={`w-full ${plan.popular ? "bg-green-500 hover:bg-green-600" : ""}`} variant={plan.popular ? "default" : "outline"}>
                       Get Started
                     </Button>
                   </Link>

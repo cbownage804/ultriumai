@@ -16,7 +16,7 @@ const productIcons: Record<string, React.ReactNode> = {
 };
 
 const productColors: Record<string, string> = {
-  safesuite: 'border-green-500/30 bg-gradient-to-r from-green-500/5 to-teal-500/5',
+  safesuite: 'border-green-500/30 bg-gradient-to-r from-green-500/5 to-green-500/5',
   ai_studio: 'border-violet-500/30 bg-gradient-to-r from-violet-500/5 to-purple-500/5',
   vanguard: 'border-yellow-500/30 bg-gradient-to-r from-yellow-500/5 to-yellow-500/5',
 };

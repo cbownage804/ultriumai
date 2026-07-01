@@ -11,8 +11,8 @@ import { formatDistanceToNow } from 'date-fns';
 const SEVERITY: Record<RayTimelineEvent['severity'], { ring: string; text: string; dot: string }> = {
   critical: { ring: 'ring-red-500/30', text: 'text-red-300', dot: 'bg-red-500' },
   high:     { ring: 'ring-red-500/30', text: 'text-red-300', dot: 'bg-red-500' },
-  medium:   { ring: 'ring-amber-500/30', text: 'text-amber-300', dot: 'bg-amber-500' },
-  low:      { ring: 'ring-emerald-500/30', text: 'text-emerald-300', dot: 'bg-emerald-500' },
+  medium:   { ring: 'ring-yellow-500/30', text: 'text-yellow-300', dot: 'bg-yellow-500' },
+  low:      { ring: 'ring-green-500/30', text: 'text-green-300', dot: 'bg-green-500' },
   info:     { ring: 'ring-violet-500/25', text: 'text-violet-300', dot: 'bg-violet-500' },
 };
 
