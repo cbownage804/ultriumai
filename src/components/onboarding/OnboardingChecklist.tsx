@@ -257,70 +257,69 @@ export const OnboardingChecklist = ({
   }
 
   return (
-    <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Gift className="h-5 w-5 text-primary" />
-              <CardTitle className="text-base">Getting Started</CardTitle>
-              <Badge variant="secondary" className="text-xs">
-                {completedCount}/{items.length}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-1">
-              {minimizable && (
-                <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    {isOpen ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
-                  </Button>
-                </CollapsibleTrigger>
-              )}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={handleDismiss}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+    <div className="rounded-xl border border-border bg-card/40 p-4 sm:p-5">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Getting started</div>
+          <div className="mt-0.5 text-sm text-foreground">
+            {Math.round(progress)}% complete
           </div>
-          <Progress value={progress} className="h-1.5 mt-2" />
-        </CardHeader>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-muted-foreground hover:text-foreground"
+          onClick={handleDismiss}
+          aria-label="Dismiss"
+        >
+          <X className="h-3.5 w-3.5" />
+        </Button>
+      </div>
 
-        <CollapsibleContent>
-          <CardContent className="pt-2 pb-4">
-            <div className="space-y-2">
-              <AnimatePresence>
-                {items.map((item, index) => (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    {item.href ? (
-                      <Link to={item.href}>
-                        <ChecklistItemRow item={item} />
-                      </Link>
-                    ) : (
-                      <div onClick={item.action} className={item.action ? 'cursor-pointer' : ''}>
-                        <ChecklistItemRow item={item} />
-                      </div>
-                    )}
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+      {/* Slim progress bar */}
+      <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-border/60">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          className="h-full bg-gradient-to-r from-violet-400 to-violet-500"
+        />
+      </div>
+
+      {/* Compact item list */}
+      <ul className="mt-4 space-y-1.5">
+        {items.map((item) => {
+          const row = (
+            <div className="flex items-center gap-2.5 py-1.5 text-sm">
+              {item.isComplete ? (
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+              ) : (
+                <Circle className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
+              )}
+              <span
+                className={cn(
+                  'flex-1 truncate',
+                  item.isComplete ? 'text-muted-foreground line-through' : 'text-foreground/90',
+                )}
+              >
+                {item.title}
+              </span>
             </div>
-          </CardContent>
-        </CollapsibleContent>
-      </Collapsible>
-    </Card>
+          );
+          return (
+            <li key={item.id}>
+              {item.href && !item.isComplete ? (
+                <Link to={item.href} className="block hover:text-primary transition-colors">
+                  {row}
+                </Link>
+              ) : (
+                row
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 };
 
