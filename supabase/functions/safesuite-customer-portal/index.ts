@@ -54,9 +54,9 @@ serve(async (req) => {
       customer: customerId,
       return_url: `${origin}/safesuite`,
       // Note: You'll configure which products appear in this portal via Stripe Dashboard
-      // by creating a separate portal configuration for SafeSuite products
+      // by creating a separate portal configuration for Wrayth products
     });
-    logStep("SafeSuite customer portal session created", { sessionId: portalSession.id, url: portalSession.url });
+    logStep("Wrayth customer portal session created", { sessionId: portalSession.id, url: portalSession.url });
 
     return new Response(JSON.stringify({ url: portalSession.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

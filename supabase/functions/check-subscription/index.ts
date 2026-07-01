@@ -157,11 +157,11 @@ serve(async (req) => {
           "prod_TsPhgvwhBCk4tn": "website_basic",   // Website Basic (older)
           "prod_TsQhRCAEIpxai1": "website_pro",     // Website Pro $79
           "prod_TsPhciN9yjVX1c": "website_pro",     // Website Pro (older)
-          // SafeSuite Tiers
-          "prod_TsPzD1oR0cpYRl": "safesuite_pro",   // SafeSuite Pro
-          "prod_TsPs3I5eCybg7o": "safesuite_pro",   // SafeSuite Pro (older)
-          "prod_TsPzaw5xfK0fGn": "safesuite_business", // SafeSuite Business
-          "prod_TsPhrnVrS2CTEI": "safesuite_enterprise", // SafeSuite Enterprise
+          // Wrayth Tiers
+          "prod_TsPzD1oR0cpYRl": "safesuite_pro",   // Wrayth Pro
+          "prod_TsPs3I5eCybg7o": "safesuite_pro",   // Wrayth Pro (older)
+          "prod_TsPzaw5xfK0fGn": "safesuite_business", // Wrayth Business
+          "prod_TsPhrnVrS2CTEI": "safesuite_enterprise", // Wrayth Enterprise
         };
 
         // Prefer AI Studio products when multiple subscriptions exist

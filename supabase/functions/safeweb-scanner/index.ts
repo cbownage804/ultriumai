@@ -118,7 +118,7 @@ async function scanWithHaveIBeenPwned(email: string, apiKey: string): Promise<Sc
     
     const response = await fetch(`https://haveibeenpwned.com/api/v3/breachedaccount/${encodeURIComponent(email)}?truncateResponse=false`, {
       headers: {
-        'User-Agent': 'SafeWeb-Scanner-v1.0',
+        'User-Agent': 'Watch-Scanner-v1.0',
         'hibp-api-key': apiKey
       }
     });

@@ -7,7 +7,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// SafeSuite tier price IDs
+// Wrayth tier price IDs
 const TIER_PRICES = {
   pro: {
     monthly: "price_1SrTegH1u6E0bsJTKpGm5qxr",
@@ -23,7 +23,7 @@ const TIER_PRICES = {
   }
 };
 
-// Real SafeSuite product IDs (looked up from live Stripe) for upgrade detection
+// Real Wrayth product IDs (looked up from live Stripe) for upgrade detection
 const SAFESUITE_PRODUCT_IDS = [
   "prod_Tp7uzqASD23WKz", // Pro monthly
   "prod_Tp7uGQiqO9MvZo", // Pro yearly
@@ -86,14 +86,14 @@ serve(async (req) => {
       customerId = customers.data[0].id;
       logStep("Existing customer found", { customerId });
       
-      // Check for existing SafeSuite subscriptions
+      // Check for existing Wrayth subscriptions
       const subscriptions = await stripe.subscriptions.list({
         customer: customerId,
         status: 'active',
         limit: 10,
       });
       
-      // Find any existing SafeSuite subscription
+      // Find any existing Wrayth subscription
       const existingSafesuiteSubItem = subscriptions.data.find(sub => {
         return sub.items.data.some(item => {
           const productId = typeof item.price.product === 'string' 
@@ -104,7 +104,7 @@ serve(async (req) => {
       });
       
       if (existingSafesuiteSubItem) {
-        logStep("Found existing SafeSuite subscription, upgrading instead of creating new", {
+        logStep("Found existing Wrayth subscription, upgrading instead of creating new", {
           subscriptionId: existingSafesuiteSubItem.id,
           currentTier: existingSafesuiteSubItem.metadata?.tier
         });
@@ -155,7 +155,7 @@ serve(async (req) => {
       }
     }
 
-    // No existing SafeSuite subscription - create new checkout session
+    // No existing Wrayth subscription - create new checkout session
     const origin = req.headers.get("origin") || "https://ultriumai.lovable.app";
     
     logStep("Creating new checkout session", { tier, billingCycle, priceId });

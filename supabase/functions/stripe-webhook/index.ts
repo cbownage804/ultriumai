@@ -12,7 +12,7 @@ const logStep = (step: string, details?: any) => {
   console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
 };
 
-// Map SafeSuite tier to user_product_access level
+// Map Wrayth tier to user_product_access level
 const tierToAccessLevel = (tier: string): string => {
   switch (tier) {
     case 'business':

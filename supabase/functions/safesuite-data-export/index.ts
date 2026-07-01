@@ -60,7 +60,7 @@ serve(async (req: Request): Promise<Response> => {
       { data: notificationPrefs },
       { data: twoFactorSettings }
     ] = await Promise.all([
-      // SafePass passwords (still encrypted)
+      // Vault passwords (still encrypted)
       supabase
         .from('password_entries')
         .select('id, site_name, username, url, notes, category, is_favorite, password_strength, created_at, updated_at')

@@ -72,7 +72,7 @@ serve(async (req) => {
               interval: yearly ? 'year' : 'month',
             },
             product_data: {
-              name: 'SafeSuite Business',
+              name: 'Wrayth Business',
               description: `Team password management - ${seats} seats`,
             },
           },

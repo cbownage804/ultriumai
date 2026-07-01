@@ -79,14 +79,14 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Found Stripe customer", { customerId });
 
-    // Look for SafeSuite subscriptions
+    // Look for Wrayth subscriptions
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "active",
       limit: 10,
     });
 
-    // Find a SafeSuite subscription
+    // Find a Wrayth subscription
     let safeSuiteSubscription = null;
     for (const sub of subscriptions.data) {
       if (sub.metadata?.product === 'safesuite') {
@@ -102,7 +102,7 @@ serve(async (req) => {
     }
 
     if (!safeSuiteSubscription) {
-      logStep("No active SafeSuite subscription found");
+      logStep("No active Wrayth subscription found");
       
       // Ensure user has a free subscription record
       await supabaseClient
@@ -133,7 +133,7 @@ serve(async (req) => {
     const subscriptionEnd = periodEnd ? new Date(periodEnd * 1000).toISOString() : null;
     const subscriptionStart = periodStart ? new Date(periodStart * 1000).toISOString() : null;
     
-    logStep("Active SafeSuite subscription found", { 
+    logStep("Active Wrayth subscription found", { 
       subscriptionId: safeSuiteSubscription.id, 
       tier, 
       endDate: subscriptionEnd 
