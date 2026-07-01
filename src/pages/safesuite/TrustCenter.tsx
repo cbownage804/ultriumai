@@ -3,6 +3,8 @@
  * App-owned content. Not a certification page.
  */
 import { RayPageHeader } from '@/components/ray/RayPageHeader';
+import { PageMotion } from '@/components/ray/PageMotion';
+import { ExplainThis } from '@/components/ray/ExplainThis';
 import { Eye, EyeOff, Lock, KeyRound, Clock, Brain, ShieldCheck } from 'lucide-react';
 
 function Section({
