@@ -486,33 +486,8 @@ export const PasswordVault = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Tabs Navigation */}
-      <Tabs defaultValue="passwords" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid mb-4 sm:mb-6 bg-muted border border-primary/10 h-auto p-1">
-          <TabsTrigger value="passwords" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-primary/20 data-[state=active]:text-primary touch-target py-2.5 sm:py-2">
-            <Key className="h-4 w-4" />
-            <span className="hidden sm:inline text-sm">Passwords</span>
-          </TabsTrigger>
-          <TabsTrigger value="notes" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-primary/20 data-[state=active]:text-primary touch-target py-2.5 sm:py-2">
-            <FileText className="h-4 w-4" />
-            <span className="hidden sm:inline text-sm">Notes</span>
-          </TabsTrigger>
-          <TabsTrigger value="cards" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-primary/20 data-[state=active]:text-primary touch-target py-2.5 sm:py-2">
-            <CreditCard className="h-4 w-4" />
-            <span className="hidden sm:inline text-sm">Cards</span>
-          </TabsTrigger>
-          <TabsTrigger value="identity" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-primary/20 data-[state=active]:text-primary touch-target py-2.5 sm:py-2">
-            <User className="h-4 w-4" />
-            <span className="hidden sm:inline text-sm">Identity</span>
-          </TabsTrigger>
-          <TabsTrigger value="health" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-primary/20 data-[state=active]:text-primary touch-target py-2.5 sm:py-2">
-            <Heart className="h-4 w-4" />
-            <span className="hidden sm:inline text-sm">Health</span>
-          </TabsTrigger>
-        </TabsList>
+      <div className="space-y-4 sm:space-y-6">
 
-        {/* Passwords Tab */}
-        <TabsContent value="passwords" className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div className="sr-only">
