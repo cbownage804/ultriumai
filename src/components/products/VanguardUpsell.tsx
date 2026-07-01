@@ -33,7 +33,7 @@ const VANGUARD_TIERS: VanguardTier[] = [
     description: 'Security + Asset Management',
     includes: [
       'Everything in Starter',
-      'SafeTrack™ - IT Asset Management',
+      'IT Asset Management',
       'Depreciation Tracking',
       'QR Asset Labels',
       'Maintenance Scheduling',
