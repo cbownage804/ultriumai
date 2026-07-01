@@ -28,6 +28,8 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PageMotion } from '@/components/ray/PageMotion';
+import { ExplainThis } from '@/components/ray/ExplainThis';
 
 export default function WraythSettings() {
   const { user } = useAuth();
@@ -195,7 +197,7 @@ export default function WraythSettings() {
   const is2FAEnabled = securitySettings?.two_factor_enabled;
 
   return (
-    <div className="space-y-8 max-w-3xl mx-auto">
+    <PageMotion className="space-y-8 max-w-3xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold">Settings</h1>
         <p className="text-muted-foreground">
@@ -208,7 +210,15 @@ export default function WraythSettings() {
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-violet-300/80">
             <ShieldCheck className="h-3.5 w-3.5" />
-            Ray says
+            <span className="flex-1">Ray says</span>
+            <ExplainThis
+              title="What Ray checks on this page"
+              bullets={[
+                'Whether two-factor authentication is protecting your login.',
+                'Whether the notifications Ray needs to reach you are enabled.',
+                'Whether your plan matches how much of Ray you are actually using.',
+              ]}
+            />
           </div>
           <CardTitle className="text-lg font-light mt-1">
             {securitySettings?.two_factor_enabled
@@ -565,6 +575,6 @@ export default function WraythSettings() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageMotion>
   );
 }
