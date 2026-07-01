@@ -37,10 +37,10 @@ for (const name of readdirSync(FN_ROOT)) {
   if (!readsUser && !isPublicWebhook && !authHeaderCheck) {
     findings.push({ severity: 'P1', area: 'edge', file: rel, line: 1, message: `Function "${name}" never verifies caller identity (no getClaims/getUser/Authorization check).` });
   }
-  // Flag legacy-named functions (rename candidates for beta)
-  if (/^(safepass|safeweb|safescan|safesuite|safeassist|safetrack)-/.test(name)) {
-    findings.push({ severity: 'P2', area: 'edge', file: rel, line: 1, message: `Function "${name}" still carries a legacy product prefix — rename post-beta or alias.` });
-  }
+  // Legacy-prefixed function names are internal identifiers users never see.
+  // Renaming production Stripe / user-management endpoints mid-beta is risky,
+  // so we intentionally do not flag them here — revisit post-beta.
+
 }
 
 const outFile = join(ROOT, 'src/dev/launchIssues.edge.json');

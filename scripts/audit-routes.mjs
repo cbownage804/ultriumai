@@ -73,9 +73,11 @@ for (const route of routes) {
   }
 
   // Missing empty state for list-shaped pages
+  // Wizards / onboarding flows are step-driven, not list-shaped — exempt them.
+  const isWizard = /onboarding|wizard|setup|tour/i.test(file) || /type\s+Step\s*=/.test(src);
   const looksLikeList = /\.map\s*\(\s*\(?\w+\)?\s*=>/.test(src) && /(items|rows|records|list|data)\s*\??\.length/.test(src);
   const hasEmptyState = /(No\s+\w+\s+yet|Nothing here|empty state|EmptyState|No results)/i.test(src);
-  if (looksLikeList && !hasEmptyState) {
+  if (looksLikeList && !hasEmptyState && !isWizard) {
     findings.push({
       severity: 'P2',
       area: 'route',
