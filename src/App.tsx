@@ -79,6 +79,7 @@ const SecurityPolicy = lazy(() => import('@/pages/SecurityPolicy'));
 const PaymentSuccess = lazy(() => import('@/pages/PaymentSuccess'));
 const PaymentCancel = lazy(() => import('@/pages/PaymentCancel'));
 const WraythResources = lazy(() => import('@/pages/WraythResources'));
+const AiCredits = lazy(() => import('@/pages/safesuite/AiCredits'));
 
 // Dev-only: internal Launch Checklist (Wrayth 5.0 polish sprint).
 const LaunchChecklist = lazy(() => import('@/pages/dev/LaunchChecklist'));
@@ -234,12 +235,14 @@ function AppRouter() {
           <Route path="/app/threats/settings" element={<SuspenseWrapper variant="form"><ScanSettings /></SuspenseWrapper>} />
           <Route path="/app/exposure/settings" element={<SuspenseWrapper variant="form"><WatchSettings /></SuspenseWrapper>} />
           <Route path="/app/billing" element={<SuspenseWrapper><WraythBilling /></SuspenseWrapper>} />
+          <Route path="/app/credits" element={<SuspenseWrapper><AiCredits /></SuspenseWrapper>} />
           <Route path="/app/settings" element={<SuspenseWrapper variant="form"><WraythSettings /></SuspenseWrapper>} />
         </Route>
 
         {/* Convenience aliases */}
         <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />
         <Route path="/billing" element={<Navigate to="/app/billing" replace />} />
+        <Route path="/credits" element={<Navigate to="/app/credits" replace />} />
         <Route path="/settings" element={<Navigate to="/app/settings" replace />} />
 
         {/* Legacy /safesuite/* → /app/* (preserves old bookmarks, emails, screenshots) */}
