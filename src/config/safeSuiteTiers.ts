@@ -15,7 +15,6 @@ export interface TierFeatures {
   safepass: FeatureLimit;
   safescan: FeatureLimit;
   safeweb: FeatureLimit;
-  safetrack: FeatureLimit;
   safeassist: FeatureLimit;
   safeassist_voice: FeatureLimit;  // Voice minutes per month
   whitelabeling: FeatureLimit;
@@ -49,7 +48,6 @@ export const SAFESUITE_TIERS: Record<WraythTier, TierConfig> = {
       safepass: { enabled: true, limit: 25 },      // 25 passwords
       safescan: { enabled: true, limit: 5 },       // 5 scans/month
       safeweb: { enabled: false, limit: 0 },
-      safetrack: { enabled: false, limit: 0 },
       safeassist: { enabled: true, limit: 25 },    // 25 AI messages/month
       safeassist_voice: { enabled: false, limit: 0 }, // No voice for free tier
       whitelabeling: { enabled: false, limit: 0 }, // Not available on free
@@ -70,7 +68,6 @@ export const SAFESUITE_TIERS: Record<WraythTier, TierConfig> = {
       safepass: { enabled: true, limit: 100 },     // 100 passwords
       safescan: { enabled: true, limit: 100 },     // 100 scans/month
       safeweb: { enabled: true, limit: 5 },        // 5 monitored assets
-      safetrack: { enabled: false, limit: 0 },
       safeassist: { enabled: true, limit: 100 },   // 100 AI messages/month
       safeassist_voice: { enabled: true, limit: 2 }, // 2 voice minutes/month
       whitelabeling: { enabled: false, limit: 0 }, // Not available on pro
@@ -92,7 +89,6 @@ export const SAFESUITE_TIERS: Record<WraythTier, TierConfig> = {
       safepass: { enabled: true, limit: 500, team: true },  // 500 passwords + Team sharing
       safescan: { enabled: true, limit: 500 },              // 500 scans/month
       safeweb: { enabled: true, limit: 50 },                // 50 monitored assets
-      safetrack: { enabled: true, limit: 500 },             // 500 tracked assets
       safeassist: { enabled: true, limit: 250 },            // 250 AI messages/month
       safeassist_voice: { enabled: true, limit: 5 },        // 5 voice minutes/month
       whitelabeling: { enabled: true, limit: 1 },           // 1 brand (Business)
@@ -114,7 +110,6 @@ export const SAFESUITE_TIERS: Record<WraythTier, TierConfig> = {
       safepass: { enabled: true, limit: 1500, team: true }, // 1500 passwords + Team sharing
       safescan: { enabled: true, limit: 1500 },             // 1500 scans/month
       safeweb: { enabled: true, limit: 150 },               // 150 monitored assets
-      safetrack: { enabled: true, limit: 1500 },            // 1500 tracked assets
       safeassist: { enabled: true, limit: 750 },            // 750 AI messages/month
       safeassist_voice: { enabled: true, limit: 15 },       // 15 voice minutes/month
       whitelabeling: { enabled: true, limit: -1 },          // Unlimited brands
