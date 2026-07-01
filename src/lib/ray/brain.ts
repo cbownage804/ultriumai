@@ -251,10 +251,11 @@ export function useRayBrain(options?: { pageContext?: string }) {
         .limit(25),
     ]);
     setBriefing(b);
-    setRecommendations((recs.data as RayRecommendation[]) ?? []);
+    setRecommendations(consolidateByObjective((recs.data as RayRecommendation[]) ?? []));
     setMemory((mem.data as RayMemoryRecord[]) ?? []);
     setTimeline((tl.data as RayTimelineEvent[]) ?? []);
     setIsLoading(false);
+
 
     if (!isBriefingFresh(b)) {
       setIsGenerating(true);
