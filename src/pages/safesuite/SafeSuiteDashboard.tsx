@@ -217,12 +217,18 @@ function QuickActionsCard() {
   );
 }
 
-function ProductCard({ 
+const LOCKED_LABELS: Record<string, { tier: string; feature: string }> = {
+  vault:  { tier: 'PRO', feature: 'Unlimited Vault' },
+  scan:   { tier: 'PRO', feature: 'Advanced Threat Scans' },
+  watch:  { tier: 'PRO', feature: 'Dark Web Monitoring' },
+};
+
+function ProductCard({
   product,
   isLocked,
   stat,
   index
-}: { 
+}: {
   product: { id: string; productLogo: string; title: string; description: string; path: string };
   isLocked: boolean;
   stat: { label: string; value: number };
@@ -230,50 +236,56 @@ function ProductCard({
 }) {
   const theme = product.id as keyof typeof SAFESUITE_THEMES;
   const colors = SAFESUITE_THEMES[theme] || SAFESUITE_THEMES.scan;
+  const lockLabel = LOCKED_LABELS[product.id];
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 * (index + 3) }}
-      whileHover={{ y: -4, scale: 1.01 }}
-      className="h-full"
+      whileHover={{ y: -2 }}
+      className="h-full group"
     >
       <Link to={product.path} className="block h-full">
-        <GlowContainer 
+        <GlowContainer
           theme={theme}
           className={cn(
             'p-4 sm:p-6 h-full transition-all duration-300',
-            isLocked && 'opacity-60'
+            'group-hover:shadow-[0_10px_40px_-10px_hsl(262_60%_50%/0.35)] group-hover:border-violet-400/30',
+            isLocked && 'opacity-70'
           )}
         >
           <div className="flex items-start justify-between mb-3 sm:mb-4">
-            <motion.div
-              whileHover={{ rotate: 5, scale: 1.1 }}
+            <div
               className={cn(
-                'p-1.5 sm:p-2 rounded-lg sm:rounded-xl',
+                'p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-transform duration-300 group-hover:scale-105',
                 colors.bg
               )}
             >
-              <img 
-                src={product.productLogo} 
-                alt={product.title} 
+              <img
+                src={product.productLogo}
+                alt={product.title}
                 className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg object-contain"
               />
-            </motion.div>
+            </div>
             {isLocked ? (
-              <Badge variant="secondary" className="gap-1 bg-white/10">
-                <Lock className="h-3 w-3" />
-                Upgrade
-              </Badge>
+              <div className="flex flex-col items-end gap-0.5">
+                <Badge variant="outline" className="gap-1 border-violet-400/40 text-violet-300 bg-violet-500/10 text-[10px] tracking-wider">
+                  <Lock className="h-2.5 w-2.5" />
+                  {lockLabel?.tier ?? 'PRO'}
+                </Badge>
+                {lockLabel?.feature && (
+                  <span className="text-[10px] text-muted-foreground">{lockLabel.feature}</span>
+                )}
+              </div>
             ) : (
-              <ArrowRight className="h-5 w-5 text-gray-500" />
+              <ArrowRight className="h-5 w-5 text-gray-500 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-violet-300" />
             )}
           </div>
           <h3 className="font-semibold text-white mb-1">{product.title}</h3>
           <p className="text-sm text-gray-400 mb-4">{product.description}</p>
           {!isLocked && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 + index * 0.1 }}
