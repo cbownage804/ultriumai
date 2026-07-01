@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-07-01T13:49:04.470Z",
+  "generatedAt": "2026-07-01T14:03:05.086Z",
   "totals": {
-    "filesScanned": 453,
-    "legacyBrand": 191,
+    "filesScanned": 452,
+    "legacyBrand": 166,
     "todos": 10,
-    "consoles": 93,
+    "consoles": 92,
     "hardcodedHex": 446,
     "arbitraryColors": 0,
-    "anyTypes": 133
+    "anyTypes": 136
   },
   "legacyBrand": [
     {
@@ -431,26 +431,6 @@
       "text": "'prod_TsQkzLTz3wBSa2': { name: 'SafeSuite Enterprise', product: 'safesuite' },"
     },
     {
-      "file": "supabase/functions/product-checkout/index.ts",
-      "line": 14,
-      "text": "name: \"SafeScan™\","
-    },
-    {
-      "file": "supabase/functions/product-checkout/index.ts",
-      "line": 19,
-      "text": "name: \"SafePass™\","
-    },
-    {
-      "file": "supabase/functions/product-checkout/index.ts",
-      "line": 34,
-      "text": "name: \"SafeWeb™\","
-    },
-    {
-      "file": "supabase/functions/product-checkout/index.ts",
-      "line": 39,
-      "text": "name: \"SafeTrack™\","
-    },
-    {
       "file": "supabase/functions/ray-chat/index.ts",
       "line": 41,
       "text": "// Fetch SafeWeb monitoring stats"
@@ -559,111 +539,6 @@
       "file": "supabase/functions/safesuite-team-checkout/index.ts",
       "line": 75,
       "text": "name: 'SafeSuite Business',"
-    },
-    {
-      "file": "supabase/functions/safesuite-usage/index.ts",
-      "line": 62,
-      "text": "// SafePass: Count actual password entries (not incremental tracking)"
-    },
-    {
-      "file": "supabase/functions/safesuite-usage/index.ts",
-      "line": 71,
-      "text": "logStep(\"SafePass entries counted\", { count: usage.safepass });"
-    },
-    {
-      "file": "supabase/functions/safesuite-usage/index.ts",
-      "line": 73,
-      "text": "// SafeScan: Aggregate counts from multiple scan tables this billing period"
-    },
-    {
-      "file": "supabase/functions/safesuite-usage/index.ts",
-      "line": 104,
-      "text": "logStep(\"SafeScan scans counted\", { count: usage.safescan, docScanCount, emailScanCount, secScanCount });"
-    },
-    {
-      "file": "supabase/functions/safesuite-usage/index.ts",
-      "line": 106,
-      "text": "// SafeWeb: Count monitored assets (status = 'active')"
-    },
-    {
-      "file": "supabase/functions/safesuite-usage/index.ts",
-      "line": 116,
-      "text": "logStep(\"SafeWeb assets counted\", { count: usage.safeweb });"
-    },
-    {
-      "file": "supabase/functions/safesuite-usage/index.ts",
-      "line": 118,
-      "text": "// SafeTrack: Count tracked assets"
-    },
-    {
-      "file": "supabase/functions/safesuite-usage/index.ts",
-      "line": 127,
-      "text": "logStep(\"SafeTrack assets counted\", { count: usage.safetrack });"
-    },
-    {
-      "file": "supabase/functions/safeweb-ai-recommendations/index.ts",
-      "line": 50,
-      "text": "const systemPrompt = `You are a cybersecurity expert assistant for UltriumAI's SafeWeb dark web monitoring tool. Your job is to analyze data breach threats and "
-    },
-    {
-      "file": "supabase/functions/safeweb-ai-recommendations/index.ts",
-      "line": 54,
-      "text": "- When users need password management → recommend **SafePass** (UltriumAI's password manager)"
-    },
-    {
-      "file": "supabase/functions/safeweb-ai-recommendations/index.ts",
-      "line": 55,
-      "text": "- When users need ongoing breach monitoring → recommend **SafeWeb** (already using it)"
-    },
-    {
-      "file": "supabase/functions/safeweb-ai-recommendations/index.ts",
-      "line": 56,
-      "text": "- When users need URL/email/document scanning → recommend **SafeScan**"
-    },
-    {
-      "file": "supabase/functions/safeweb-ai-recommendations/index.ts",
-      "line": 57,
-      "text": "- When users need asset tracking → recommend **SafeTrack**"
-    },
-    {
-      "file": "supabase/functions/safeweb-ai-recommendations/index.ts",
-      "line": 59,
-      "text": "**UltriumAI SafeSuite Products (recommend ONLY these):**"
-    },
-    {
-      "file": "supabase/functions/safeweb-ai-recommendations/index.ts",
-      "line": 60,
-      "text": "- **SafePass** - Enterprise password manager with zero-knowledge encryption"
-    },
-    {
-      "file": "supabase/functions/safeweb-ai-recommendations/index.ts",
-      "line": 61,
-      "text": "- **SafeScan** - URL, email, and document threat scanning"
-    },
-    {
-      "file": "supabase/functions/safeweb-ai-recommendations/index.ts",
-      "line": 62,
-      "text": "- **SafeWeb** - Dark web monitoring (the current tool)"
-    },
-    {
-      "file": "supabase/functions/safeweb-ai-recommendations/index.ts",
-      "line": 63,
-      "text": "- **SafeTrack** - IT asset management"
-    },
-    {
-      "file": "supabase/functions/safeweb-ai-recommendations/index.ts",
-      "line": 64,
-      "text": "- **SafeAssist** - AI-powered security assistant"
-    },
-    {
-      "file": "supabase/functions/safeweb-ai-recommendations/index.ts",
-      "line": 70,
-      "text": "2. **Immediate Actions** (3-5 bullet points of urgent steps - always recommend SafePass for password management)"
-    },
-    {
-      "file": "supabase/functions/safeweb-ai-recommendations/index.ts",
-      "line": 71,
-      "text": "3. **Long-term Protection** (2-3 bullet points for ongoing security using SafeSuite tools)`;"
     },
     {
       "file": "supabase/functions/safeweb-scanner/index.ts",
@@ -1215,11 +1090,6 @@
       "text": "console.log(`[github-push] Creating new repo: ${repoName}`);"
     },
     {
-      "file": "supabase/functions/product-checkout/index.ts",
-      "line": 51,
-      "text": "console.log(`[PRODUCT-CHECKOUT] ${step}${detailsStr}`);"
-    },
-    {
       "file": "supabase/functions/ray-brief/index.ts",
       "line": 267,
       "text": "console.warn(\"[ray-brief] AI gateway non-ok\", aiRes.status);"
@@ -1238,6 +1108,11 @@
       "file": "supabase/functions/ray-sync-signals/index.ts",
       "line": 124,
       "text": "console.warn(\"[ray-sync-signals] upsert failed\", upErr);"
+    },
+    {
+      "file": "supabase/functions/ray-watch-recommendations/index.ts",
+      "line": 10,
+      "text": "console.log(`[RAY-WATCH] ${step}${detailsStr}`);"
     },
     {
       "file": "supabase/functions/safepass-scanner/index.ts",
@@ -1295,19 +1170,9 @@
       "text": "console.log(`[SAFESUITE-TEAM-CHECKOUT] ${step}${detailsStr}`);"
     },
     {
-      "file": "supabase/functions/safesuite-usage/index.ts",
-      "line": 11,
-      "text": "console.log(`[SAFESUITE-USAGE] ${step}${detailsStr}`);"
-    },
-    {
       "file": "supabase/functions/safesuite-user-management/index.ts",
       "line": 20,
       "text": "console.log(`[SAFESUITE-USER-MGMT] ${step}${detailsStr}`);"
-    },
-    {
-      "file": "supabase/functions/safeweb-ai-recommendations/index.ts",
-      "line": 10,
-      "text": "console.log(`[SAFEWEB-AI] ${step}${detailsStr}`);"
     },
     {
       "file": "supabase/functions/safeweb-assets/index.ts",
@@ -1413,6 +1278,11 @@
       "file": "supabase/functions/verify-mfa-login/index.ts",
       "line": 11,
       "text": "console.log(`[VERIFY-MFA-LOGIN] ${step}${detailsStr}`);"
+    },
+    {
+      "file": "supabase/functions/wrayth-usage/index.ts",
+      "line": 11,
+      "text": "console.log(`[WRAYTH-USAGE] ${step}${detailsStr}`);"
     },
     {
       "file": "public/safepass-extension/background.js",
