@@ -211,7 +211,7 @@ export default function WraythSettings() {
             Ray says
           </div>
           <CardTitle className="text-lg font-light mt-1">
-            {securitySettings?.twoFactorEnabled
+            {securitySettings?.two_factor_enabled
               ? "Everything looks good."
               : "Your account is almost fully protected."}
           </CardTitle>
@@ -224,10 +224,10 @@ export default function WraythSettings() {
             </li>
             <li className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-400" />
-              <span>Notifications {settings?.notifications?.email !== false ? 'enabled' : 'configured'}</span>
+              <span>Notifications {settings?.notifications?.breachAlerts !== false ? 'enabled' : 'configured'}</span>
             </li>
             <li className="flex items-center gap-2">
-              {securitySettings?.twoFactorEnabled ? (
+              {securitySettings?.two_factor_enabled ? (
                 <>
                   <CheckCircle className="h-4 w-4 text-green-400" />
                   <span>Two-factor authentication enabled</span>
@@ -240,7 +240,7 @@ export default function WraythSettings() {
               )}
             </li>
           </ul>
-          {!securitySettings?.twoFactorEnabled && (
+          {!securitySettings?.two_factor_enabled && (
             <div className="mt-3 pt-3 border-t border-border/60 flex items-center justify-between gap-3">
               <div>
                 <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Recommended next step</div>
