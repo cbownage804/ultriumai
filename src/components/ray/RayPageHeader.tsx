@@ -3,6 +3,7 @@
  * Every module reads "<Title> · Managed by Ray" instead of bespoke titles.
  */
 import { cn } from '@/lib/utils';
+import { ExplainThis } from '@/components/ray/ExplainThis';
 
 interface Props {
   title: string;
@@ -14,6 +15,11 @@ interface Props {
    * violet, so every module opens with one intent rather than a menu.
    */
   question?: string;
+  /**
+   * Optional "Explain this" pill Ray renders next to the subtitle so any
+   * page can offer a plain-English breakdown of what it's showing.
+   */
+  explain?: { title: string; body?: string; bullets?: string[] };
   right?: React.ReactNode;
   className?: string;
 }
@@ -23,13 +29,17 @@ export function RayPageHeader({
   subtitle = 'Managed by Ray',
   description,
   question,
+  explain,
   right,
   className,
 }: Props) {
   return (
     <header className={cn('mb-6 sm:mb-8 flex flex-wrap items-end justify-between gap-4', className)}>
       <div>
-        <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">{subtitle}</div>
+        <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+          <span>{subtitle}</span>
+          {explain && <ExplainThis {...explain} />}
+        </div>
         <h1 className="mt-1 text-2xl sm:text-3xl font-light tracking-tight text-foreground">{title}</h1>
         {question && (
           <p className="mt-3 text-base sm:text-lg font-light text-foreground/90 max-w-xl">

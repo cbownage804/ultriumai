@@ -17,6 +17,14 @@ export default function WraythScan() {
           title="Threats"
           question="Got something suspicious? Send it to me and I'll take a look."
           description="I analyze files, emails, URLs, and unusual activity — then tell you plainly whether it's safe."
+          explain={{
+            title: 'How Ray decides what is a threat',
+            bullets: [
+              'Files and URLs are scored by known-malware signatures, reputation feeds, and heuristic analysis.',
+              'Emails are checked for phishing patterns, spoofed senders, and suspicious links.',
+              'Ray always tells you plainly: safe, suspicious, or malicious — never just a raw score.',
+            ],
+          }}
         />
 
         <div className="wrayth-chamfer border border-border bg-card/60 px-4 py-3">
