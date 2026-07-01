@@ -19,7 +19,7 @@ interface ConversationContext {
 interface UserSecurityContext {
   passwordVault: { total: number; weak: number; reused: number; compromised: number };
   threats: { monitored: number; found: number; lastScan: string | null };
-  assets: { total: number; expiringSoon: number };
+  
   scans: { total: number; threatsDetected: number };
 }
 
