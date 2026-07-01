@@ -169,45 +169,47 @@ function SecurityScoreCard({ stats }: { stats: DashboardStats }) {
 }
 
 function QuickActionsCard() {
-  const options = [
-    { to: '/app/passwords', label: 'Save a password' },
-    { to: '/app/threats', label: 'Check an email or file' },
-    { to: '/app/threats', label: 'Scan a website' },
-    { to: '/app/exposure', label: 'Review my exposure' },
-  ];
-
-  const openAskRay = () => {
+  const [value, setValue] = useState('');
+  const submit = () => {
     if (typeof window === 'undefined') return;
+    if (value.trim()) {
+      window.dispatchEvent(new CustomEvent('ray:ask', { detail: value.trim() }));
+    }
+    // Open the Ask Ray palette
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }));
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2 }}
-      className="h-full"
+      transition={{ delay: 0.15 }}
     >
-      <div className="wrayth-chamfer border border-border bg-secondary p-5 sm:p-6 h-full">
-        <div className="flex items-center gap-2 mb-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-          <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-          Ray
+      <div className="wrayth-chamfer border border-border bg-card/40 p-4 sm:p-5">
+        <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+          <motion.span
+            className="h-1.5 w-1.5 rounded-full bg-violet-400"
+            animate={{ opacity: [0.4, 1, 0.4] }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          Ask Ray
         </div>
-        <h3 className="text-base sm:text-lg font-light text-foreground mb-4">What would you like to do?</h3>
-        <div className="space-y-1.5">
-          {options.map((o) => (
-            <Link key={o.label} to={o.to}>
-              <button className="w-full text-left text-sm text-foreground hover:text-primary transition-colors py-2 px-1 border-b border-border last:border-0 min-h-[40px]">
-                <span className="text-muted-foreground mr-2">○</span>{o.label}
-              </button>
-            </Link>
-          ))}
+        <div className="mt-3 flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-violet-300/70 shrink-0" />
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
+            placeholder="Ask Ray anything…"
+            className="flex-1 bg-transparent border-0 outline-none text-sm sm:text-base text-foreground placeholder:text-muted-foreground min-h-[36px]"
+          />
           <button
-            onClick={openAskRay}
-            className="w-full text-left text-sm text-primary hover:text-primary/80 transition-colors py-2 px-1 min-h-[40px]"
+            onClick={submit}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
-            <span className="mr-2">○</span>Ask Ray something…
+            ⌘K
           </button>
         </div>
       </div>
@@ -215,12 +217,18 @@ function QuickActionsCard() {
   );
 }
 
-function ProductCard({ 
+const LOCKED_LABELS: Record<string, { tier: string; feature: string }> = {
+  vault:  { tier: 'PRO', feature: 'Unlimited Vault' },
+  scan:   { tier: 'PRO', feature: 'Advanced Threat Scans' },
+  watch:  { tier: 'PRO', feature: 'Dark Web Monitoring' },
+};
+
+function ProductCard({
   product,
   isLocked,
   stat,
   index
-}: { 
+}: {
   product: { id: string; productLogo: string; title: string; description: string; path: string };
   isLocked: boolean;
   stat: { label: string; value: number };
@@ -228,50 +236,56 @@ function ProductCard({
 }) {
   const theme = product.id as keyof typeof SAFESUITE_THEMES;
   const colors = SAFESUITE_THEMES[theme] || SAFESUITE_THEMES.scan;
+  const lockLabel = LOCKED_LABELS[product.id];
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 * (index + 3) }}
-      whileHover={{ y: -4, scale: 1.01 }}
-      className="h-full"
+      whileHover={{ y: -2 }}
+      className="h-full group"
     >
       <Link to={product.path} className="block h-full">
-        <GlowContainer 
+        <GlowContainer
           theme={theme}
           className={cn(
             'p-4 sm:p-6 h-full transition-all duration-300',
-            isLocked && 'opacity-60'
+            'group-hover:shadow-[0_10px_40px_-10px_hsl(262_60%_50%/0.35)] group-hover:border-violet-400/30',
+            isLocked && 'opacity-70'
           )}
         >
           <div className="flex items-start justify-between mb-3 sm:mb-4">
-            <motion.div
-              whileHover={{ rotate: 5, scale: 1.1 }}
+            <div
               className={cn(
-                'p-1.5 sm:p-2 rounded-lg sm:rounded-xl',
+                'p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-transform duration-300 group-hover:scale-105',
                 colors.bg
               )}
             >
-              <img 
-                src={product.productLogo} 
-                alt={product.title} 
+              <img
+                src={product.productLogo}
+                alt={product.title}
                 className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg object-contain"
               />
-            </motion.div>
+            </div>
             {isLocked ? (
-              <Badge variant="secondary" className="gap-1 bg-white/10">
-                <Lock className="h-3 w-3" />
-                Upgrade
-              </Badge>
+              <div className="flex flex-col items-end gap-0.5">
+                <Badge variant="outline" className="gap-1 border-violet-400/40 text-violet-300 bg-violet-500/10 text-[10px] tracking-wider">
+                  <Lock className="h-2.5 w-2.5" />
+                  {lockLabel?.tier ?? 'PRO'}
+                </Badge>
+                {lockLabel?.feature && (
+                  <span className="text-[10px] text-muted-foreground">{lockLabel.feature}</span>
+                )}
+              </div>
             ) : (
-              <ArrowRight className="h-5 w-5 text-gray-500" />
+              <ArrowRight className="h-5 w-5 text-gray-500 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-violet-300" />
             )}
           </div>
           <h3 className="font-semibold text-white mb-1">{product.title}</h3>
           <p className="text-sm text-gray-400 mb-4">{product.description}</p>
           {!isLocked && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 + index * 0.1 }}
@@ -587,36 +601,15 @@ export default function WraythDashboard() {
 
   return (
     <div className="min-h-screen bg-background -m-4 lg:-m-6 p-4 lg:p-6 space-y-4 sm:space-y-6">
-      {/* Lifecycle-aware onboarding: while the vault is empty, Ray's clearest
-          message is "Protect your passwords with Wrayth." */}
+      {/* 1. Morning Brief (lifecycle-aware) */}
       <LifecycleAwareTop firstName={firstName} />
-      <RayWatchingCard
-        passwordCount={stats.passwordCount}
-        identityCount={stats.monitoredAssets}
-        threatCount={0}
-      />
-      <RayNoticesPanel variant="hero" />
-      <AccountHealthPanel />
 
-
-      {/* Subscription Status Banner */}
-      <SubscriptionBanner />
-
-      {/* Onboarding Checklist for new users */}
-      <OnboardingChecklist product="safesuite" />
-
-      {/* Usage limit banners */}
-      <div className="space-y-2">
-        <UsageLimitBanner feature="scan" />
-        <UsageLimitBanner feature="vault" />
-      </div>
-
-      {/* Ray's conversational quick actions */}
+      {/* 2. Ask Ray — reinforces AI-first experience */}
       <div data-tour="quick-actions">
         <QuickActionsCard />
       </div>
 
-      {/* Outcome tiles — Passwords / Threats / Exposure */}
+      {/* 3. Outcome tiles — Vault / Threats / Exposure */}
       <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-3">
         {productCardsConfig.map((product, index) => (
           <div key={product.id} data-tour={product.id}>
@@ -630,7 +623,22 @@ export default function WraythDashboard() {
         ))}
       </div>
 
-      {/* Ray's security timeline (preview) */}
+      {/* 4. Recommendations — Ray watching + notices + account health */}
+      <RayWatchingCard
+        passwordCount={stats.passwordCount}
+        identityCount={stats.monitoredAssets}
+        threatCount={0}
+      />
+      <RayNoticesPanel variant="hero" />
+      <AccountHealthPanel />
+
+      {/* Usage limit banners (only render when hit) */}
+      <div className="space-y-2">
+        <UsageLimitBanner feature="scan" />
+        <UsageLimitBanner feature="vault" />
+      </div>
+
+      {/* 5. Timeline — the single source of truth for Ray's actions */}
       <div className="wrayth-chamfer border border-border bg-card p-5">
         <div className="mb-4 flex items-center justify-between">
           <div>
@@ -641,13 +649,14 @@ export default function WraythDashboard() {
             View all <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
-        <RayTimeline limit={6} embedded />
+        <RayTimeline limit={8} embedded />
       </div>
 
-      {/* Recent Activity */}
-      <div>
-        <RecentActivityCard activities={activities} />
-      </div>
+      {/* 6. Getting Started — hides itself when complete */}
+      <OnboardingChecklist product="safesuite" />
+
+      {/* 7. Upgrade — framed as Ray's recommendation */}
+      <SubscriptionBanner />
 
 
       {/* Product Tour */}
