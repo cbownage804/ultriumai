@@ -370,10 +370,6 @@ export default function Ray() {
           ))}
         </div>
       </section>
-
-      <Suspense fallback={null}>
-        <WraythAssist />
-      </Suspense>
     </div>
   );
 }
