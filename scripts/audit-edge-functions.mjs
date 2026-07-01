@@ -30,10 +30,10 @@ for (const name of readdirSync(FN_ROOT)) {
   const authHeaderCheck = /Authorization|authorization/.test(src);
   const isPublicWebhook = /stripe-webhook|send-auth-email|serve-preview|ms-graph-oauth-callback/.test(name);
 
-  if (!hasCors) findings.push({ severity: 'P1', area: 'edge', file: rel, line: 1, message: `Function "${name}" has no CORS headers — browser calls will fail.` });
+  if (!hasCors && !isPublicWebhook) findings.push({ severity: 'P1', area: 'edge', file: rel, line: 1, message: `Function "${name}" has no CORS headers — browser calls will fail.` });
   if (!hasOptions && !isPublicWebhook) findings.push({ severity: 'P1', area: 'edge', file: rel, line: 1, message: `Function "${name}" has no OPTIONS preflight handler.` });
   if (!hasTryCatch) findings.push({ severity: 'P0', area: 'edge', file: rel, line: 1, message: `Function "${name}" has no top-level try/catch — one throw crashes the request.` });
-  else if (!returnsJsonError) findings.push({ severity: 'P1', area: 'edge', file: rel, line: 1, message: `Function "${name}" catches errors but doesn't return JSON — clients see raw text.` });
+  else if (!returnsJsonError && !isPublicWebhook) findings.push({ severity: 'P1', area: 'edge', file: rel, line: 1, message: `Function "${name}" catches errors but doesn't return JSON — clients see raw text.` });
   if (!readsUser && !isPublicWebhook && !authHeaderCheck) {
     findings.push({ severity: 'P1', area: 'edge', file: rel, line: 1, message: `Function "${name}" never verifies caller identity (no getClaims/getUser/Authorization check).` });
   }

@@ -73,7 +73,7 @@ function UsersTeaserContent() {
           <h2 className="text-2xl font-bold">Team Members</h2>
           <p className="text-muted-foreground">Manage users and their access permissions</p>
         </div>
-        <Button className="gap-2">
+        <Button type="button" disabled aria-disabled className="gap-2 pointer-events-none opacity-70">
           <UserPlus className="h-4 w-4" />
           Invite User
         </Button>
@@ -126,7 +126,7 @@ function UsersTeaserContent() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="sm">
+                    <Button type="button" disabled aria-disabled variant="ghost" size="sm" className="pointer-events-none opacity-70">
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </TableCell>

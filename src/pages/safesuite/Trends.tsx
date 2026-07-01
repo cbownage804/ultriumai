@@ -58,15 +58,23 @@ export default function Trends() {
   useEffect(() => {
     if (!user) return;
     let alive = true;
-    Promise.all([
-      supabase.from('ray_security_scores').select('score,created_at').eq('user_id', user.id).order('created_at', { ascending: true }).limit(180),
-      supabase.from('ray_timeline').select('event_type,created_at').eq('user_id', user.id).order('created_at', { ascending: true }).limit(500),
-    ]).then(([sRes, eRes]) => {
-      if (!alive) return;
-      setScores((sRes.data ?? []) as ScoreRow[]);
-      setEvents((eRes.data ?? []) as EventRow[]);
-      setLoading(false);
-    });
+    (async () => {
+      try {
+        const [sRes, eRes] = await Promise.all([
+          supabase.from('ray_security_scores').select('score,created_at').eq('user_id', user.id).order('created_at', { ascending: true }).limit(180),
+          supabase.from('ray_timeline').select('event_type,created_at').eq('user_id', user.id).order('created_at', { ascending: true }).limit(500),
+        ]);
+        if (!alive) return;
+        setScores((sRes.data ?? []) as ScoreRow[]);
+        setEvents((eRes.data ?? []) as EventRow[]);
+      } catch {
+        if (!alive) return;
+        setScores([]);
+        setEvents([]);
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
     return () => { alive = false; };
   }, [user]);
 

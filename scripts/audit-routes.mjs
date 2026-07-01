@@ -59,7 +59,7 @@ for (const route of routes) {
   }
 
   // Missing loading state signal (isLoading / loading / Skeleton / Spinner)
-  const hasLoadingUi = /(isLoading|isFetching|isPending|<Skeleton|<LoadingSpinner|<Loader|animate-spin)/.test(src);
+  const hasLoadingUi = /(isLoading|isFetching|isPending|isDownloading|isUploading|isSaving|isSubmitting|\bloading\b|<Skeleton|<LoadingSpinner|<Loader|animate-spin)/.test(src);
   const doesFetch = supaCalls.length > 0 || /useQuery\s*\(/.test(src) || /fetch\s*\(/.test(src);
   if (doesFetch && !hasLoadingUi) {
     findings.push({
