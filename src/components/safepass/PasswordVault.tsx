@@ -757,31 +757,7 @@ export const PasswordVault = () => {
           </AnimatePresence>
         )}
       </div>
-        </TabsContent>
-
-        {/* Secure Notes Tab */}
-        <TabsContent value="notes">
-          <SecureNotes />
-        </TabsContent>
-
-        {/* Credit Cards Tab */}
-        <TabsContent value="cards">
-          <CreditCards />
-        </TabsContent>
-
-        {/* Identity Tab */}
-        <TabsContent value="identity">
-          <IdentityProfiles />
-        </TabsContent>
-
-
-
-
-        {/* Password Health Tab */}
-        <TabsContent value="health">
-          <PasswordHealthDashboard />
-        </TabsContent>
-      </Tabs>
+      </div>
     </div>
   );
 };
