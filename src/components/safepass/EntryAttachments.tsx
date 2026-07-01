@@ -252,9 +252,10 @@ export const EntryAttachments = ({ entryId, entryTitle }: EntryAttachmentsProps)
               <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
             </div>
           ) : attachments.length === 0 ? (
-            <p className="text-center py-4 text-muted-foreground text-sm">
-              No attachments yet
+            <p className="text-center py-6 text-muted-foreground text-sm max-w-xs mx-auto">
+              Attach recovery codes, license PDFs, or ID scans. I'll encrypt them alongside this entry.
             </p>
+
           ) : (
             attachments.map((attachment) => {
               const FileIcon = getFileIcon(attachment.type);
