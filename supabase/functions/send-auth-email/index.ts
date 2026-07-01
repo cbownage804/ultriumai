@@ -57,7 +57,7 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
               <div class="logo">
                 <img src="${logoUrl}" alt="UltriumAI" width="48" height="48" style="height:48px;width:48px;object-fit:contain;" />
                 <div class="brand-name">UltriumAI</div>
-                <div class="brand-tagline">Your gateway to AI Studio, SafeSuite & Vanguard</div>
+                <div class="brand-tagline">Wrayth — AI cybersecurity teammate</div>
               </div>
               <h1>Welcome${data.name ? `, ${data.name}` : ''}!</h1>
               <p>Thanks for creating your UltriumAI account. To get started, please confirm your email address by clicking the button below.</p>
@@ -89,7 +89,7 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
               <div class="logo">
                 <img src="${logoUrl}" alt="UltriumAI" width="48" height="48" style="height:48px;width:48px;object-fit:contain;" />
                 <div class="brand-name">UltriumAI</div>
-                <div class="brand-tagline">Your gateway to AI Studio, SafeSuite & Vanguard</div>
+                <div class="brand-tagline">Wrayth — AI cybersecurity teammate</div>
               </div>
               <h1>Password Reset Request</h1>
               <p>We received a request to reset the password for your UltriumAI account. Click the button below to set a new password.</p>
@@ -121,7 +121,7 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
               <div class="logo">
                 <img src="${logoUrl}" alt="UltriumAI" width="48" height="48" style="height:48px;width:48px;object-fit:contain;" />
                 <div class="brand-name">UltriumAI</div>
-                <div class="brand-tagline">Your gateway to AI Studio, SafeSuite & Vanguard</div>
+                <div class="brand-tagline">Wrayth — AI cybersecurity teammate</div>
               </div>
               <h1>Sign in to UltriumAI</h1>
               <p>Click the button below to securely sign in to your UltriumAI account. No password needed!</p>
@@ -152,7 +152,7 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
               <div class="logo">
                 <img src="${logoUrl}" alt="UltriumAI" width="48" height="48" style="height:48px;width:48px;object-fit:contain;" />
                 <div class="brand-name">UltriumAI</div>
-                <div class="brand-tagline">Your gateway to AI Studio, SafeSuite & Vanguard</div>
+                <div class="brand-tagline">Wrayth — AI cybersecurity teammate</div>
               </div>
               <h1>Confirm Email Change</h1>
               <p>You requested to change your UltriumAI account email to <span class="highlight">${data.newEmail || 'a new address'}</span>. Click the button below to confirm this change.</p>
@@ -183,7 +183,7 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
               <div class="logo">
                 <img src="${logoUrl}" alt="UltriumAI" />
                 <div class="brand-name">UltriumAI</div>
-                <div class="brand-tagline">Your gateway to AI Studio, SafeSuite & Vanguard</div>
+                <div class="brand-tagline">Wrayth — AI cybersecurity teammate</div>
               </div>
               <h1>Welcome${data.name ? `, ${data.name}` : ''}!</h1>
               <p>Your UltriumAI account is now active. You have access to our complete product suite:</p>
@@ -193,7 +193,7 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
                   <span style="color: #a1a1aa; font-size: 14px; margin-left: 8px;">Build custom GPTs and AI agents</span>
                 </div>
                 <div style="margin-bottom: 12px;">
-                  <span style="background: #8b5cf620; color: #a78bfa; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 500;">SafeSuite</span>
+                  <span style="background: #8b5cf620; color: #a78bfa; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 500;">Wrayth</span>
                   <span style="color: #a1a1aa; font-size: 14px; margin-left: 8px;">Enterprise security tools & password vault</span>
                 </div>
                 <div style="margin-bottom: 12px;">
