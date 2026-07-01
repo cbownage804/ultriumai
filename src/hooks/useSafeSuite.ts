@@ -120,18 +120,26 @@ export function useWraythSubscription() {
     return fetchSubscription();
   }, [fetchSubscription]);
 
+  // Admin override: internal @ultriumai.com users get full access to all features
+  const isAdmin = !!user?.email?.endsWith('@ultriumai.com') && !!user?.email_confirmed_at;
+  const effectiveTier: WraythTier = isAdmin ? 'business' : (subscription?.tier || 'free');
+
   return {
-    subscription,
-    tier: subscription?.tier || 'free',
-    tierConfig: SAFESUITE_TIERS[subscription?.tier || 'free'],
+    subscription: isAdmin
+      ? { tier: 'business' as WraythTier, status: 'active' as const, currentPeriodEnd: null, stripeSubscriptionId: null, stripeCustomerId: null }
+      : subscription,
+    tier: effectiveTier,
+    tierConfig: SAFESUITE_TIERS[effectiveTier],
     loading,
     error,
     refreshSubscription,
-    isSubscribed: subscription?.tier !== 'free',
-    isPro: subscription?.tier === 'pro' || subscription?.tier === 'business',
-    isBusiness: subscription?.tier === 'business'
+    isAdmin,
+    isSubscribed: isAdmin || subscription?.tier !== 'free',
+    isPro: isAdmin || subscription?.tier === 'pro' || subscription?.tier === 'business',
+    isBusiness: isAdmin || subscription?.tier === 'business'
   };
 }
+
 
 export function useWraythUsage() {
   const { user } = useAuth();
