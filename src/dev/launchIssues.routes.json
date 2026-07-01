@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-01T15:04:53.083Z",
+  "generatedAt": "2026-07-01T15:05:05.750Z",
   "findings": [
     {
       "severity": "P2",
@@ -8,14 +8,6 @@
       "line": 1,
       "message": "List-shaped page has no visible empty-state copy.",
       "path": "/onboarding/ray"
-    },
-    {
-      "severity": "P1",
-      "area": "route",
-      "file": "src/pages/safesuite/Trends.tsx",
-      "line": 64,
-      "message": "Page calls supabase without try/catch or .catch — errors will surface as unhandled promise rejections.",
-      "path": "/app/trends"
     }
   ]
 }
