@@ -61,7 +61,13 @@ const hardcodedHex = scan("#[0-9a-fA-F]{6}\\b").filter(
     !h.file.startsWith('public/wrayth-vault-extension/') &&
     // Email templates require inline hex — email clients don't support CSS variables
     !h.file.includes('send-auth-email/') &&
-    !h.file.includes('ms-graph-oauth-callback/')
+    !h.file.includes('ms-graph-oauth-callback/') &&
+    // SQL migrations are historical/immutable and often seed color defaults
+    !h.file.startsWith('supabase/migrations/') &&
+    // Edge function fallback HTML (rendered outside the app, no design tokens available)
+    !h.file.includes('serve-preview/') &&
+    // QR code canvas rendering requires literal hex values
+    !h.file.includes('RayOnboarding')
 );
 const arbitraryColors = scan("(text|bg|border)-\\[#");
 const anyTypes = scan(":\\s*any(\\s|,|\\)|>|=)");
