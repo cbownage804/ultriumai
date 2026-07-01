@@ -92,7 +92,13 @@ function ScoreBadge({ score, delta }: { score: number | null; delta: number | nu
         {score}
       </motion.div>
       <div className="flex flex-col">
-        <div className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Ray score</div>
+        <div className="flex items-center gap-1.5">
+          <div className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Ray score</div>
+          <ExplainThis
+            title="How Ray calculates your score"
+            body="Ray combines vault health (strength, reuse, breach exposure), threat scan results, exposure signals, and any connected tenants into a single 0–100 posture score. 80+ is healthy, 60–79 warrants attention, below 60 is urgent."
+          />
+        </div>
         {delta != null && delta !== 0 ? (
           <div className={cn("text-xs flex items-center gap-1", delta > 0 ? "text-green-300" : "text-red-300")}>
             {delta > 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
