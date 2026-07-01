@@ -1,6 +1,13 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+/**
+ * ScanApp — Ray's device-scanning surface.
+ *
+ * The agent installer isn't shipped yet, so this card sets expectations
+ * in Ray's voice instead of leaving the page feeling empty. Once the
+ * agent is available, this file becomes the launcher.
+ */
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ScanAppProps {
@@ -9,31 +16,45 @@ interface ScanAppProps {
   hideHeader?: boolean;
 }
 
-export function ScanApp({ brandName = 'Scan' }: ScanAppProps) {
-  const handleDownload = () => {
-    toast.info(`${brandName} agent installer is coming soon — we'll email you the moment it's ready.`);
+export function ScanApp({ brandName = 'Wrayth' }: ScanAppProps) {
+  const handleNotify = () => {
+    toast.success("I'll let you know", {
+      description: `The ${brandName} device agent is in final testing. I'll email you the moment it's ready to install.`,
+    });
   };
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <ShieldCheck className="h-8 w-8 text-primary" />
-            <div>
-              <CardTitle>{brandName} Device Scanner</CardTitle>
-              <CardDescription>Scan your devices for security risks and misconfigurations.</CardDescription>
-            </div>
+    <Card className="border-violet-500/10 bg-card/60">
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-violet-500/10 p-2">
+            <ShieldCheck className="h-5 w-5 text-violet-300" />
           </div>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground mb-4">
-            The {brandName} agent watches device health, patch status, and vulnerable services.
-            Install the agent on each endpoint to begin reporting.
-          </p>
-          <Button onClick={handleDownload}>Notify me when the {brandName} agent ships</Button>
-        </CardContent>
-      </Card>
-    </div>
+          <CardTitle className="text-lg font-medium text-foreground">
+            Device scanning is on its way
+          </CardTitle>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground leading-relaxed max-w-xl">
+          Soon I'll be able to watch every device you own — patch levels,
+          vulnerable services, misconfigurations — and quietly fix what I
+          can. The agent is small, silent, and installs in a single click.
+        </p>
+        <p className="text-xs text-muted-foreground/80 max-w-xl">
+          In the meantime, paste a suspicious file, URL, or email above and
+          I'll analyze it right now.
+        </p>
+        <Button
+          onClick={handleNotify}
+          variant="outline"
+          className="border-violet-500/30 text-violet-200 hover:bg-violet-500/10 hover:text-violet-100"
+        >
+          <Sparkles className="w-4 h-4 mr-2" />
+          Notify me when the agent ships
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 
