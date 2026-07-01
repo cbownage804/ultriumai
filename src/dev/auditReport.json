@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-07-01T14:24:14.543Z",
+  "generatedAt": "2026-07-01T14:27:03.512Z",
   "totals": {
-    "filesScanned": 358,
-    "legacyBrand": 140,
+    "filesScanned": 357,
+    "legacyBrand": 137,
     "todos": 3,
     "consoles": 54,
     "hardcodedHex": 276,
@@ -10,11 +10,6 @@
     "anyTypes": 97
   },
   "legacyBrand": [
-    {
-      "file": "src/App.tsx",
-      "line": 22,
-      "text": "const WraythLayout = lazy(() => import('@/layouts/SafeSuiteLayout'));"
-    },
     {
       "file": "src/App.tsx",
       "line": 25,
@@ -126,11 +121,6 @@
       "text": "const VaultUsers = lazy(() => import('@/pages/safesuite/SafePassUsers'));"
     },
     {
-      "file": "src/App.tsx",
-      "line": 55,
-      "text": "const WraythPricing = lazy(() => import('@/pages/pricing/SafeSuitePricing'));"
-    },
-    {
       "file": "src/components/Navigation.tsx",
       "line": 1,
       "text": "export { default } from '@/components/safesuite/SafeSuiteNav';"
@@ -191,12 +181,7 @@
       "text": "import { useFeatureAccess, useWraythSubscription, useWraythUsage } from '@/hooks/useSafeSuite';"
     },
     {
-      "file": "src/layouts/SafePassLayout.tsx",
-      "line": 26,
-      "text": "import { safeSuiteProducts } from '@/components/safesuite/SafeSuiteProductIcons';"
-    },
-    {
-      "file": "src/layouts/SafeSuiteLayout.tsx",
+      "file": "src/layouts/WraythLayout.tsx",
       "line": 13,
       "text": "import { useWraythSubscription } from '@/hooks/useSafeSuite';"
     },
@@ -206,7 +191,7 @@
       "text": "import Navigation from \"@/components/safesuite/SafeSuiteNav\";"
     },
     {
-      "file": "src/pages/pricing/SafeSuitePricing.tsx",
+      "file": "src/pages/pricing/WraythPricing.tsx",
       "line": 7,
       "text": "import WraythNav from '@/components/safesuite/SafeSuiteNav';"
     },
