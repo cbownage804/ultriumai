@@ -48,6 +48,8 @@ import { RayTimeline } from '@/components/ray/RayTimeline';
 import { PasswordProtectionCard, PasswordAnalyzingCard } from '@/components/ray/PasswordProtectionCard';
 import { RayWatchingCard } from '@/components/ray/RayWatchingCard';
 import { usePasswordLifecycle } from '@/lib/ray/passwordLifecycle';
+import { CisoNextAction } from '@/components/ray/CisoNextAction';
+import { nextBestAction } from '@/lib/ray/ciso';
 
 interface DashboardStats {
   passwordCount: number;
@@ -474,6 +476,7 @@ export default function WraythDashboard() {
     scanCount: 0,
     monitoredAssets: 0
   });
+  const [breachedEmailCount, setBreachedEmailCount] = useState(0);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -495,6 +498,16 @@ export default function WraythDashboard() {
           .select('id', { count: 'exact', head: true })
           .eq('user_id', user.id)
           .eq('status', 'active');
+
+        // Breached email assets — feeds Ray's CISO synthesis.
+        const breachedAssetsResult = await supabase
+          .from('safeweb_assets')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('status', 'active')
+          .eq('asset_type', 'email')
+          .gt('threats_found', 0);
+        setBreachedEmailCount(breachedAssetsResult.count || 0);
         
         const auditLogsResult = await supabase
           .from('audit_logs')
