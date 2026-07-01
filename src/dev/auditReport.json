@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-07-01T14:51:16.519Z",
+  "generatedAt": "2026-07-01T14:51:33.626Z",
   "totals": {
     "filesScanned": 324,
     "legacyBrand": 1,
     "todos": 3,
     "consoles": 50,
-    "hardcodedHex": 275,
+    "hardcodedHex": 249,
     "arbitraryColors": 0,
     "anyTypes": 88
   },
@@ -286,136 +286,6 @@
     }
   ],
   "hardcodedHex": [
-    {
-      "file": "src/index.css",
-      "line": 521,
-      "text": "Base #090909 · Surface #181818 · Cards #242424"
-    },
-    {
-      "file": "src/index.css",
-      "line": 522,
-      "text": "Borders #3A3A3A · Text #F3F3F3 · Accent Electric Violet */"
-    },
-    {
-      "file": "src/index.css",
-      "line": 523,
-      "text": "--background: 0 0% 3.5%;        /* #090909 */"
-    },
-    {
-      "file": "src/index.css",
-      "line": 524,
-      "text": "--foreground: 0 0% 95%;         /* #F3F3F3 */"
-    },
-    {
-      "file": "src/index.css",
-      "line": 526,
-      "text": "--card: 0 0% 14%;               /* #242424 */"
-    },
-    {
-      "file": "src/index.css",
-      "line": 529,
-      "text": "--popover: 0 0% 9%;             /* #181818 */"
-    },
-    {
-      "file": "src/index.css",
-      "line": 539,
-      "text": "--secondary: 0 0% 9%;           /* #181818 */"
-    },
-    {
-      "file": "src/index.css",
-      "line": 545,
-      "text": "--accent: 0 0% 14%;             /* #242424 */"
-    },
-    {
-      "file": "src/index.css",
-      "line": 560,
-      "text": "--border: 0 0% 23%;             /* #3A3A3A */"
-    },
-    {
-      "file": "src/index.css",
-      "line": 1715,
-      "text": "/* Hairline outline — #3A3A3A, thin, restrained */"
-    },
-    {
-      "file": "src/index.css",
-      "line": 1717,
-      "text": "border: 1px solid #3A3A3A;"
-    },
-    {
-      "file": "src/index.css",
-      "line": 1718,
-      "text": "background: #181818;"
-    },
-    {
-      "file": "src/index.css",
-      "line": 1724,
-      "text": "border-color: #4a4a4a;"
-    },
-    {
-      "file": "src/index.css",
-      "line": 1725,
-      "text": "background: #1f1f1f;"
-    },
-    {
-      "file": "src/index.css",
-      "line": 1729,
-      "text": ".wrayth-surface-0 { background: #090909; }  /* Base */"
-    },
-    {
-      "file": "src/index.css",
-      "line": 1730,
-      "text": ".wrayth-surface-1 { background: #181818; }  /* Surface */"
-    },
-    {
-      "file": "src/index.css",
-      "line": 1731,
-      "text": ".wrayth-surface-2 { background: #242424; }  /* Cards */"
-    },
-    {
-      "file": "src/index.css",
-      "line": 1732,
-      "text": ".wrayth-text       { color: #F3F3F3; }"
-    },
-    {
-      "file": "src/index.css",
-      "line": 1733,
-      "text": ".wrayth-text-muted { color: #8a8a8a; }"
-    },
-    {
-      "file": "src/index.css",
-      "line": 1734,
-      "text": ".wrayth-border     { border-color: #3A3A3A; }"
-    },
-    {
-      "file": "src/index.css",
-      "line": 1761,
-      "text": "color: #F3F3F3;"
-    },
-    {
-      "file": "src/index.css",
-      "line": 1762,
-      "text": "background: #181818;"
-    },
-    {
-      "file": "src/index.css",
-      "line": 1763,
-      "text": "border: 1px solid #3A3A3A;"
-    },
-    {
-      "file": "src/index.css",
-      "line": 1768,
-      "text": "background: #242424;"
-    },
-    {
-      "file": "src/index.css",
-      "line": 1769,
-      "text": "border-color: #4a4a4a;"
-    },
-    {
-      "file": "src/index.css",
-      "line": 1772,
-      "text": "color: #ffffff;"
-    },
     {
       "file": "src/pages/onboarding/RayOnboarding.tsx",
       "line": 224,
@@ -1285,6 +1155,136 @@
       "file": "public/wrayth-vault-extension/popup.css",
       "line": 599,
       "text": "color: #22d3ee;"
+    },
+    {
+      "file": "public/wrayth-vault-extension/popup.css",
+      "line": 629,
+      "text": "background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);"
+    },
+    {
+      "file": "public/wrayth-vault-extension/popup.css",
+      "line": 630,
+      "text": "border: 1px solid #334155;"
+    },
+    {
+      "file": "public/wrayth-vault-extension/popup.css",
+      "line": 660,
+      "text": "color: #22c55e;"
+    },
+    {
+      "file": "public/wrayth-vault-extension/popup.css",
+      "line": 665,
+      "text": "color: #64748b;"
+    },
+    {
+      "file": "public/wrayth-vault-extension/popup.css",
+      "line": 674,
+      "text": "border-top: 1px solid #334155;"
+    },
+    {
+      "file": "public/wrayth-vault-extension/popup.css",
+      "line": 685,
+      "text": "color: #e2e8f0;"
+    },
+    {
+      "file": "public/wrayth-vault-extension/popup.css",
+      "line": 690,
+      "text": "color: #64748b;"
+    },
+    {
+      "file": "public/wrayth-vault-extension/popup.css",
+      "line": 694,
+      "text": ".health-stat.danger .stat-number { color: #f87171; }"
+    },
+    {
+      "file": "public/wrayth-vault-extension/popup.css",
+      "line": 695,
+      "text": ".health-stat.warning .stat-number { color: #fbbf24; }"
+    },
+    {
+      "file": "public/wrayth-vault-extension/popup.css",
+      "line": 696,
+      "text": ".health-stat.critical .stat-number { color: #ef4444; }"
+    },
+    {
+      "file": "public/wrayth-vault-extension/popup.css",
+      "line": 700,
+      "text": "color: #94a3b8;"
+    },
+    {
+      "file": "public/wrayth-vault-extension/popup.css",
+      "line": 708,
+      "text": "background: #1e293b;"
+    },
+    {
+      "file": "public/wrayth-vault-extension/popup.css",
+      "line": 714,
+      "text": ".issue-item.critical { border-left-color: #ef4444; }"
+    },
+    {
+      "file": "public/wrayth-vault-extension/popup.css",
+      "line": 715,
+      "text": ".issue-item.warning { border-left-color: #f59e0b; }"
+    },
+    {
+      "file": "public/wrayth-vault-extension/popup.css",
+      "line": 716,
+      "text": ".issue-item.info { border-left-color: #0891b2; }"
+    },
+    {
+      "file": "public/wrayth-vault-extension/popup.css",
+      "line": 735,
+      "text": "color: #64748b;"
+    },
+    {
+      "file": "public/wrayth-vault-extension/popup.css",
+      "line": 749,
+      "text": "background: #1e293b;"
+    },
+    {
+      "file": "public/wrayth-vault-extension/popup.css",
+      "line": 751,
+      "text": "border: 1px solid #334155;"
+    },
+    {
+      "file": "public/wrayth-vault-extension/popup.css",
+      "line": 757,
+      "text": "border-color: #0891b2;"
+    },
+    {
+      "file": "public/wrayth-vault-extension/popup.css",
+      "line": 774,
+      "text": "color: #22d3ee;"
+    },
+    {
+      "file": "public/wrayth-vault-extension/popup.css",
+      "line": 782,
+      "text": "border: 3px solid #334155;"
+    },
+    {
+      "file": "public/wrayth-vault-extension/popup.css",
+      "line": 788,
+      "text": "color: #94a3b8;"
+    },
+    {
+      "file": "public/wrayth-vault-extension/popup.css",
+      "line": 792,
+      "text": "border-color: #f59e0b;"
+    },
+    {
+      "file": "public/wrayth-vault-extension/popup.css",
+      "line": 793,
+      "text": "color: #f59e0b;"
+    },
+    {
+      "file": "public/wrayth-vault-extension/popup.css",
+      "line": 797,
+      "text": "border-color: #ef4444;"
+    },
+    {
+      "file": "public/wrayth-vault-extension/popup.css",
+      "line": 798,
+      "text": "color: #ef4444;"
     }
   ],
   "arbitraryColors": []
