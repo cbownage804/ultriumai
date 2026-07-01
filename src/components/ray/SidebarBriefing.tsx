@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { getRayContext, type RayContext } from '@/lib/ray';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
+import { ExplainThis } from './ExplainThis';
 
 function greet(now = new Date()) {
   const h = now.getHours();
