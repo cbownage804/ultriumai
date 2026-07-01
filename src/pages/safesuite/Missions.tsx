@@ -154,8 +154,9 @@ export default function Missions() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <PageMotion className="flex flex-col gap-6">
       <RayPageHeader
+
         title="Missions"
         subtitle="One mission at a time, guided by Ray"
         description="Ray picks the most valuable next thing to secure and walks you through it. Finish a mission, earn score, move on."
