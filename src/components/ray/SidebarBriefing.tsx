@@ -59,6 +59,8 @@ export function SidebarBriefing() {
   const scoreTone =
     score == null ? 'text-foreground' : score >= 80 ? 'text-emerald-300' : score >= 60 ? 'text-amber-300' : 'text-red-300';
 
+  const isPerfect = score === 100;
+
   return (
     <div className="px-4 py-4 border-b border-border space-y-3">
       <div className="flex items-center justify-between">
@@ -75,8 +77,17 @@ export function SidebarBriefing() {
       </div>
 
       <div>
-        <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+        <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground flex items-center gap-1.5">
           Security Score
+          {isPerfect && (
+            <motion.span
+              aria-hidden
+              className="inline-block h-1 w-1 rounded-full bg-emerald-400"
+              // Every 20s: quiet fade-in, hold, fade-out. Very subtle.
+              animate={{ opacity: [0, 0, 0.9, 0, 0] }}
+              transition={{ duration: 20, repeat: Infinity, times: [0, 0.35, 0.5, 0.65, 1], ease: 'easeInOut' }}
+            />
+          )}
         </div>
         <motion.div
           animate={{ opacity: [0.85, 1, 0.85] }}
