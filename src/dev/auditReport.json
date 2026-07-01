@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-07-01T13:17:30.601Z",
+  "generatedAt": "2026-07-01T13:17:40.810Z",
   "totals": {
     "filesScanned": 870,
     "legacyBrand": 210,
     "todos": 11,
     "consoles": 122,
-    "hardcodedHex": 490,
-    "arbitraryColors": 17,
+    "hardcodedHex": 470,
+    "arbitraryColors": 0,
     "anyTypes": 235
   },
   "legacyBrand": [
@@ -2037,11 +2037,6 @@
       "text": "themeColor: '#2563eb',"
     },
     {
-      "file": "src/components/demos/VanguardDemo.tsx",
-      "line": 173,
-      "text": "<div className=\"p-4 space-y-4 bg-[#050a0a] min-h-screen\" role=\"region\" aria-label=\"Vanguard Platform Demo\">"
-    },
-    {
       "file": "src/components/deployment/GPTDeploymentCenter.tsx",
       "line": 188,
       "text": "background-color: #f5f5f5;"
@@ -2147,16 +2142,6 @@
       "text": "stroke=\"#3b82f6\""
     },
     {
-      "file": "src/components/safepass/AutofillSuggestions.tsx",
-      "line": 108,
-      "text": "index === 0 ? \"bg-primary/20\" : \"bg-[#252525]\""
-    },
-    {
-      "file": "src/components/safepass/SafePassAISearch.tsx",
-      "line": 196,
-      "text": "<div className=\"h-8 w-8 rounded-lg bg-[#252525] flex items-center justify-center flex-shrink-0\">"
-    },
-    {
       "file": "src/components/safesuite/MFAOnboardingGate.tsx",
       "line": 123,
       "text": "dark: '#000000',"
@@ -2180,66 +2165,6 @@
       "file": "src/components/settings/GlobalSettingsHub.tsx",
       "line": 72,
       "text": "accentColor: '#10b981',"
-    },
-    {
-      "file": "src/components/ui/alert-dialog.tsx",
-      "line": 37,
-      "text": "\"fixed left-[50%] top-[50%] z-[100] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/50 bg-background p-6 shadow-2xl durati"
-    },
-    {
-      "file": "src/components/ui/command.tsx",
-      "line": 16,
-      "text": "\"flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground dark:bg-[#0f0f14]\","
-    },
-    {
-      "file": "src/components/ui/command.tsx",
-      "line": 29,
-      "text": "<DialogContent className=\"overflow-hidden p-0 shadow-2xl shadow-black/80 border-white/10 bg-[#0f0f14] gap-0 max-w-lg\">"
-    },
-    {
-      "file": "src/components/ui/command.tsx",
-      "line": 30,
-      "text": "<Command className=\"bg-[#0f0f14] [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-grou"
-    },
-    {
-      "file": "src/components/ui/context-menu.tsx",
-      "line": 47,
-      "text": "\"z-[100] min-w-[8rem] overflow-hidden rounded-md border border-border/50 bg-popover p-1 text-popover-foreground shadow-xl dark:bg-[#0f0f14] dark:border-white/10"
-    },
-    {
-      "file": "src/components/ui/context-menu.tsx",
-      "line": 63,
-      "text": "\"z-[100] min-w-[8rem] overflow-hidden rounded-md border border-border/50 bg-popover p-1 text-popover-foreground shadow-xl dark:bg-[#0f0f14] dark:border-white/10"
-    },
-    {
-      "file": "src/components/ui/dialog.tsx",
-      "line": 39,
-      "text": "\"fixed left-[50%] top-[50%] z-[100] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/50 bg-background p-6 shadow-2xl durati"
-    },
-    {
-      "file": "src/components/ui/dropdown-menu.tsx",
-      "line": 48,
-      "text": "\"z-[100] min-w-[8rem] overflow-hidden rounded-md border border-border/50 bg-popover p-1 text-popover-foreground shadow-xl dark:bg-[#0f0f14] dark:border-white/10"
-    },
-    {
-      "file": "src/components/ui/dropdown-menu.tsx",
-      "line": 66,
-      "text": "\"z-[100] min-w-[8rem] overflow-hidden rounded-md border border-border/50 bg-popover p-1 text-popover-foreground shadow-xl dark:bg-[#0f0f14] dark:border-white/10"
-    },
-    {
-      "file": "src/components/ui/popover.tsx",
-      "line": 20,
-      "text": "\"z-[100] w-72 rounded-md border border-border/50 bg-popover p-4 text-popover-foreground shadow-xl outline-none dark:bg-[#0f0f14] dark:border-white/10 data-[stat"
-    },
-    {
-      "file": "src/components/ui/select.tsx",
-      "line": 76,
-      "text": "\"relative z-[100] max-h-96 min-w-[8rem] overflow-hidden rounded-md border border-border/50 bg-popover text-popover-foreground shadow-xl dark:bg-[#0f0f14] dark:b"
-    },
-    {
-      "file": "src/components/ui/tooltip.tsx",
-      "line": 20,
-      "text": "\"z-[100] overflow-hidden rounded-md border border-border/50 bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-xl dark:bg-[#0f0f14] dark:border-white"
     },
     {
       "file": "src/hooks/useAppStoreAssets.ts",
@@ -2680,93 +2605,82 @@
       "file": "src/index.css",
       "line": 539,
       "text": "--secondary: 0 0% 9%;           /* #181818 */"
+    },
+    {
+      "file": "src/index.css",
+      "line": 545,
+      "text": "--accent: 0 0% 14%;             /* #242424 */"
+    },
+    {
+      "file": "src/index.css",
+      "line": 560,
+      "text": "--border: 0 0% 23%;             /* #3A3A3A */"
+    },
+    {
+      "file": "src/index.css",
+      "line": 1715,
+      "text": "/* Hairline outline — #3A3A3A, thin, restrained */"
+    },
+    {
+      "file": "src/index.css",
+      "line": 1717,
+      "text": "border: 1px solid #3A3A3A;"
+    },
+    {
+      "file": "src/index.css",
+      "line": 1718,
+      "text": "background: #181818;"
+    },
+    {
+      "file": "src/index.css",
+      "line": 1724,
+      "text": "border-color: #4a4a4a;"
+    },
+    {
+      "file": "src/index.css",
+      "line": 1725,
+      "text": "background: #1f1f1f;"
+    },
+    {
+      "file": "src/index.css",
+      "line": 1729,
+      "text": ".wrayth-surface-0 { background: #090909; }  /* Base */"
+    },
+    {
+      "file": "src/index.css",
+      "line": 1730,
+      "text": ".wrayth-surface-1 { background: #181818; }  /* Surface */"
+    },
+    {
+      "file": "src/index.css",
+      "line": 1731,
+      "text": ".wrayth-surface-2 { background: #242424; }  /* Cards */"
+    },
+    {
+      "file": "src/index.css",
+      "line": 1732,
+      "text": ".wrayth-text       { color: #F3F3F3; }"
+    },
+    {
+      "file": "src/index.css",
+      "line": 1733,
+      "text": ".wrayth-text-muted { color: #8a8a8a; }"
+    },
+    {
+      "file": "src/index.css",
+      "line": 1734,
+      "text": ".wrayth-border     { border-color: #3A3A3A; }"
+    },
+    {
+      "file": "src/index.css",
+      "line": 1761,
+      "text": "color: #F3F3F3;"
+    },
+    {
+      "file": "src/index.css",
+      "line": 1762,
+      "text": "background: #181818;"
     }
   ],
-  "arbitraryColors": [
-    {
-      "file": "src/components/demos/VanguardDemo.tsx",
-      "line": 173,
-      "text": "<div className=\"p-4 space-y-4 bg-[#050a0a] min-h-screen\" role=\"region\" aria-label=\"Vanguard Platform Demo\">"
-    },
-    {
-      "file": "src/components/safepass/AutofillSuggestions.tsx",
-      "line": 108,
-      "text": "index === 0 ? \"bg-primary/20\" : \"bg-[#252525]\""
-    },
-    {
-      "file": "src/components/safepass/SafePassAISearch.tsx",
-      "line": 196,
-      "text": "<div className=\"h-8 w-8 rounded-lg bg-[#252525] flex items-center justify-center flex-shrink-0\">"
-    },
-    {
-      "file": "src/components/ui/alert-dialog.tsx",
-      "line": 37,
-      "text": "\"fixed left-[50%] top-[50%] z-[100] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/50 bg-background p-6 shadow-2xl durati"
-    },
-    {
-      "file": "src/components/ui/command.tsx",
-      "line": 16,
-      "text": "\"flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground dark:bg-[#0f0f14]\","
-    },
-    {
-      "file": "src/components/ui/command.tsx",
-      "line": 29,
-      "text": "<DialogContent className=\"overflow-hidden p-0 shadow-2xl shadow-black/80 border-white/10 bg-[#0f0f14] gap-0 max-w-lg\">"
-    },
-    {
-      "file": "src/components/ui/command.tsx",
-      "line": 30,
-      "text": "<Command className=\"bg-[#0f0f14] [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-grou"
-    },
-    {
-      "file": "src/components/ui/context-menu.tsx",
-      "line": 47,
-      "text": "\"z-[100] min-w-[8rem] overflow-hidden rounded-md border border-border/50 bg-popover p-1 text-popover-foreground shadow-xl dark:bg-[#0f0f14] dark:border-white/10"
-    },
-    {
-      "file": "src/components/ui/context-menu.tsx",
-      "line": 63,
-      "text": "\"z-[100] min-w-[8rem] overflow-hidden rounded-md border border-border/50 bg-popover p-1 text-popover-foreground shadow-xl dark:bg-[#0f0f14] dark:border-white/10"
-    },
-    {
-      "file": "src/components/ui/dialog.tsx",
-      "line": 39,
-      "text": "\"fixed left-[50%] top-[50%] z-[100] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/50 bg-background p-6 shadow-2xl durati"
-    },
-    {
-      "file": "src/components/ui/dropdown-menu.tsx",
-      "line": 48,
-      "text": "\"z-[100] min-w-[8rem] overflow-hidden rounded-md border border-border/50 bg-popover p-1 text-popover-foreground shadow-xl dark:bg-[#0f0f14] dark:border-white/10"
-    },
-    {
-      "file": "src/components/ui/dropdown-menu.tsx",
-      "line": 66,
-      "text": "\"z-[100] min-w-[8rem] overflow-hidden rounded-md border border-border/50 bg-popover p-1 text-popover-foreground shadow-xl dark:bg-[#0f0f14] dark:border-white/10"
-    },
-    {
-      "file": "src/components/ui/popover.tsx",
-      "line": 20,
-      "text": "\"z-[100] w-72 rounded-md border border-border/50 bg-popover p-4 text-popover-foreground shadow-xl outline-none dark:bg-[#0f0f14] dark:border-white/10 data-[stat"
-    },
-    {
-      "file": "src/components/ui/select.tsx",
-      "line": 76,
-      "text": "\"relative z-[100] max-h-96 min-w-[8rem] overflow-hidden rounded-md border border-border/50 bg-popover text-popover-foreground shadow-xl dark:bg-[#0f0f14] dark:b"
-    },
-    {
-      "file": "src/components/ui/tooltip.tsx",
-      "line": 20,
-      "text": "\"z-[100] overflow-hidden rounded-md border border-border/50 bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-xl dark:bg-[#0f0f14] dark:border-white"
-    },
-    {
-      "file": "src/pages/NotFound.tsx",
-      "line": 19,
-      "text": "<div className=\"min-h-screen flex items-center justify-center bg-[#050a0a] relative overflow-hidden\">"
-    },
-    {
-      "file": "src/pages/safesuite/SafeSuiteDashboard.tsx",
-      "line": 198,
-      "text": "<button className=\"w-full text-left text-sm text-foreground hover:text-primary transition-colors py-2 px-1 border-b border-[#2A2A2A] last:border-0 min-h-[40px]\""
-    }
-  ]
+  "arbitraryColors": []
 }

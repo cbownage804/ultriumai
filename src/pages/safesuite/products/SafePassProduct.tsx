@@ -73,7 +73,7 @@ export default function VaultProduct() {
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${heroPassword})` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a]/90 via-[#0a0a0a]/70 to-[#0a0a0a]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/70 to-background" />
         
         <div className="relative z-10 text-center px-4 py-12 sm:py-20">
           <Badge className="mb-4 sm:mb-6 bg-amber-500/10 text-amber-400 border-amber-500/30">

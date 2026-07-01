@@ -170,7 +170,7 @@ export const VanguardDemo = () => {
   };
 
   return (
-    <div className="p-4 space-y-4 bg-[#050a0a] min-h-screen" role="region" aria-label="Vanguard Platform Demo">
+    <div className="p-4 space-y-4 bg-background min-h-screen" role="region" aria-label="Vanguard Platform Demo">
       {/* Demo Mode Banner */}
       <div className="bg-gradient-to-r from-cyan-500/20 via-cyan-500/10 to-purple-500/20 border border-cyan-500/30 rounded-lg p-3 flex items-center justify-center gap-2">
         <Badge className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 text-white border-0 animate-pulse">

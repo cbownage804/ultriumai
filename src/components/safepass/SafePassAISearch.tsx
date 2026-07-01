@@ -193,7 +193,7 @@ export function VaultAISearch({
                       : "hover:bg-primary/10"
                   )}
                 >
-                  <div className="h-8 w-8 rounded-lg bg-[#252525] flex items-center justify-center flex-shrink-0">
+                  <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
                     <Globe className="h-4 w-4 text-gray-400" />
                   </div>
                   

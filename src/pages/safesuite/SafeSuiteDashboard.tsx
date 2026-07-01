@@ -195,7 +195,7 @@ function QuickActionsCard() {
         <div className="space-y-1.5">
           {options.map((o) => (
             <Link key={o.label} to={o.to}>
-              <button className="w-full text-left text-sm text-foreground hover:text-primary transition-colors py-2 px-1 border-b border-[#2A2A2A] last:border-0 min-h-[40px]">
+              <button className="w-full text-left text-sm text-foreground hover:text-primary transition-colors py-2 px-1 border-b border-border last:border-0 min-h-[40px]">
                 <span className="text-muted-foreground mr-2">○</span>{o.label}
               </button>
             </Link>

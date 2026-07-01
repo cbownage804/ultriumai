@@ -72,7 +72,7 @@ export default function WatchProduct() {
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${heroWeb})` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a]/90 via-[#0a0a0a]/95 to-[#0a0a0a]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/95 to-background" />
         
         <div className="relative z-10 flex items-center justify-center px-4 py-20">
           <div className="text-center max-w-lg p-8 rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 shadow-[0_0_60px_rgba(139,92,246,0.3)]">
