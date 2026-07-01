@@ -65,7 +65,7 @@ const hardcodedHex = scan("#[0-9a-fA-F]{6}\\b").filter(
   (h) =>
     !/(index\.css|tailwind\.config|tokens)/.test(h.file) &&
     // Standalone browser extension has its own stylesheet (not part of design system)
-    !h.file.startsWith('public/wrayth-vault-extension/') &&
+    !h.file.startsWith('public/') && // manifest.json + service worker fallback HTML require literal hex
     // Email templates require inline hex — email clients don't support CSS variables
     !h.file.includes('send-auth-email/') &&
     !h.file.includes('ms-graph-oauth-callback/') &&
