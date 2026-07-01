@@ -507,8 +507,9 @@ export const PasswordHealthDashboard = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.reused}</p>
-                <p className="text-xs text-muted-foreground">Reused</p>
+                <p className="text-xs text-muted-foreground">Duplicate</p>
               </div>
+
             </div>
           </Card>
         </motion.div>
