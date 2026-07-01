@@ -1,97 +1,68 @@
-# Wrayth 5.0 — Polish & Production Readiness
+## Wrayth 5.1 — Product QA & Polish Sprint
 
-No new features. Every change must answer: *does this make Wrayth more polished, trustworthy, or enjoyable?* If not, it goes to backlog.
+**Rule:** No new capabilities. If I find something missing that isn't a bug, I log it as "post-beta" and move on.
 
-## The spine: internal Launch Checklist
+**Deliverable:** a `Launch Issues` checklist that starts populated and gets driven to zero P0/P1 items.
 
-Before touching anything else, build a dev-only page at `/app/_launch` (hidden from nav, gated by `import.meta.env.DEV || ?debug=1`). It's the measurable definition of "ready" and the dashboard we work against for the rest of the sprint.
+---
 
-Categories, each with checks that resolve to pass / warn / fail:
-- Branding & Legacy — automated grep for `SafePass|SafeScan|SafeWeb|SafeSuite|SafeAssist|SafeTrack`, old routes, old asset paths
-- UI Consistency — token audit (hardcoded colors, arbitrary radii, non-token spacing)
-- Copy & Ray Voice — sampled phrases + a Ray glossary check
-- Extension QA — manual checklist with per-item status persisted to `localStorage`
-- Mobile Responsive — viewport screenshots at 375 / 768 / 1440
-- Performance — Lighthouse-lite metrics + bundle size budget
-- Accessibility — axe-core in dev
-- Error Handling — coverage matrix per surface
-- Security — headers, RLS coverage, session expiration
-- Analytics & Monitoring — event coverage
-- Empty / Loading / Error states — per-route matrix
-- Beta blockers — free-form list
+### Phase 1 — Instrumented audit (build the checklist)
 
-Each item links to the file or route it references so we can fix in place.
+Extend `scripts/audit.mjs` and add companion scanners so the "Launch Issues" list is generated, not guessed:
 
-## Phase order & scope
+1. **`scripts/audit-routes.mjs`** — enumerate every `<Route path=...>` in `src/App.tsx` and each route's page component. Flag: pages with no loading state, no empty state, no error boundary, or that call `supabase` without a `try/catch`.
+2. **`scripts/audit-buttons.mjs`** — grep for `<Button` / `onClick` without a handler, `onClick={() => {}}`, `disabled` with no reason comment, and `TODO`/`FIXME`/`console.log` inside handlers.
+3. **`scripts/audit-copy.mjs`** — flag remaining `SafePass|SafeScan|SafeWeb|SafeSuite|SafeAssist|SafeTrack` outside Ray's system prompt, and inconsistent Ray voice ("I", "we", "the system" in the same file).
+4. **`scripts/audit-edge-functions.mjs`** — for each `supabase/functions/*/index.ts`: has CORS handler, wraps handler in `try/catch`, returns JSON on error, calls `getClaims()` when it touches user data.
 
-Executed in this order, one phase per iteration, each ending with the Launch Checklist recomputed:
+Everything writes into `src/dev/launchIssues.json` with `{ severity, area, file, line, message }`. `LaunchChecklist.tsx` renders it grouped by severity so we can drive it down in the dev-only checklist page.
 
-```text
-1  Legacy Purge          → grep-driven deletion + rename sweep
-2  Design System Audit   → tokens, radii, spacing, shadow, typography scale
-3  Interaction Audit     → focus, hover, disabled, transitions
-4  Ray Voice Pass        → single source of Ray phrases + tone rules
-5  Copy Review           → plain-English rewrite across UI
-6  Performance           → lazy routes, query dedup, memoization
-7  Accessibility         → keyboard, ARIA, contrast, reduced motion
-8  Error Handling        → global boundary + typed edge-function errors
-9  Empty States          → per-page intentional zero-data screens
-10 Visual Polish         → motion review, skeletons, gradients, glow discipline
-11 Extension QA          → popup / side panel / context bar walkthrough
-12 End-to-End QA         → 7 documented user journeys
-13 Production Readiness  → headers, secrets, indexes, rate limits, backups
-```
+### Phase 2 — Fix by severity (P0 → P1 → P2)
 
-## Phase 1 — Legacy Purge (concrete)
+Work top-down through the generated list:
 
-Run a single sweep that deletes / renames:
-- All `Safe*` string references in `src/`, `supabase/functions/`, `public/`, `extension/`
-- Routes: any surviving `/safesuite/*`, `/safepass/*`, `/safescan/*`, `/safeweb/*` → 301 to `/app/*` equivalents, then remove after one release
-- Components: `grep`-find unused exports and delete
-- Icons: remove unused Lucide imports (biome or a small script)
-- Demo data files, `TODO` / `FIXME` comments, stray `console.log`, dev-only UI
-- DB: audit `Safe*` tables that are no longer read from any code path; produce a *drop candidates* list in the Launch Checklist rather than dropping immediately (destructive → user confirms per table)
+- **P0 — hard failures.** Page crashes, dead routes, edge functions that always 500, buttons with no handler, workflows that write partial data.
+- **P1 — customer-visible gaps.** Missing loading/empty/error states, unhandled promise rejections, legacy brand strings, Ray speaking inconsistently, silent auth failures.
+- **P2 — polish.** Copy consistency, spacing, toast wording, Ray tone drift.
 
-## Phase 2–5 — Design & Language
+Each fix updates `launchIssues.json` by removing the addressed entries and re-running the relevant scanner.
 
-- Introduce `src/design/tokens.ts` as the single source of truth for spacing / radius / shadow scales and lint arbitrary Tailwind values via a small codemod report in the Launch Checklist
-- Consolidate Ray's phrases into `src/lib/ray/voice.ts` with a `say()` helper and tone rules (calm, plain, never dramatic). All Ray UI reads from here.
-- Copy pass on every page's headings, empty states, error toasts, button labels — reviewed against a short style guide added to `docs/voice.md`
+### Phase 3 — Workflow verification (real data only, no seeded demos)
 
-## Phase 6–10 — Quality gates
+Walk each critical flow end-to-end against the live Supabase backend and document the result in `docs/qa/workflows.md`:
 
-- Performance: React Query cache tuning, `React.lazy` per route, drop duplicate `supabase.from()` calls, defer non-critical animations
-- Accessibility: axe-core dev overlay, focus ring audit, `prefers-reduced-motion` respected in all custom keyframes, 44px min touch targets
-- Error handling: one `<RayErrorBoundary>`, a typed `edgeInvoke()` wrapper that maps failures to human copy ("Ray couldn't reach that just now. Try again in a moment.")
-- Empty states: one `<EmptyState>` primitive with icon / title / body / CTA; every list route uses it
-- Visual polish: motion budget — no animation > 300ms, no decorative-only motion; skeleton library standardized
+- Auth: sign-up → email verify → onboarding → dashboard.
+- Onboarding: real HIBP scan, real M365 import path, real vault seeding — no mock inserts.
+- Ray Morning Brief: cron trigger → `ray-morning-brief` edge fn → `ray_briefings` row → UI render → voice playback.
+- Recommendations: generate → surface in UI → user acts → status transitions (`pending` → `in_progress` → `resolved`).
+- Extension: install → domain trust lookup → autofill request → vault unlock → log entry.
+- Org dashboard: `ray_org_health` snapshot writes, department roll-ups, delta vs. prior day.
+- MSP dashboard: multi-client roll-up, per-client drill-down, RLS boundary check (staff from MSP A cannot read MSP B).
 
-## Phase 11–13 — Ship-ready
+For each, capture: does it load, does every button do what it says, does every API call succeed, does the empty state read well, does an error surface humanely.
 
-- Extension: manual QA script in `extension/QA.md`, side panel + context bar smoke tests
-- E2E: 7 documented journeys in `docs/journeys.md`, each walked and screenshotted into the Launch Checklist
-- Production readiness: security headers on published site, rate limits on public edge functions, session expiration UX, DB index review, secrets audit, backup posture note
+### Phase 4 — Edge function health sweep
 
-## Ground rules for the sprint
+For every deployed function, verify: fresh deploy succeeds, cold-start latency, structured JSON error on failure, CORS preflight OK, `verify_jwt` matches intent. Any function that isn't reachable from the app anymore gets deleted.
 
-- **No new features.** New ideas → append to `docs/backlog.md`, do not build.
-- **No new pages** except `/app/_launch` (dev-only).
-- **Every PR-sized change** ends with the Launch Checklist recomputed so we can see progress.
-- **Destructive DB drops** are proposed, not executed, until you approve per table.
+### Phase 5 — Final gate
 
-## Technical details
+Ship criteria before I call the sprint done:
+- `launchIssues.json` has zero P0 and zero P1.
+- Every workflow in Phase 3 has a green checkbox in `docs/qa/workflows.md`.
+- Supabase linter clean (or every remaining warning has an explicit note in `@security-memory`).
+- `scripts/audit.mjs` still shows: 0 consoles, 0 arbitrary hex, 0 TODOs, ≤1 legacy brand hit (Ray's prompt).
 
-- Launch Checklist lives at `src/pages/dev/LaunchChecklist.tsx`, route registered only when `import.meta.env.DEV` or `?debug=1`; not linked from nav
-- Automated checks run client-side against a static manifest (`src/dev/launchManifest.ts`) plus a Node script `scripts/audit.mjs` for grep-based checks written into `src/dev/auditReport.json` at build time
-- Ray voice module: `src/lib/ray/voice.ts` exports `RAY_PHRASES` and `say(key, vars)`; existing components migrate incrementally, tracked by the checklist
-- Error wrapper: `src/lib/edge.ts` exports `edgeInvoke<T>()` that normalizes `FunctionsHttpError`, offline, and timeout into a `{ ok, data, message }` shape
-- Empty state: `src/components/ui/empty-state.tsx`
-- Backlog file: `docs/backlog.md`
+### Out of scope (explicitly)
+- Multi-tenant KB, new tenancy models, MSP hierarchy redesign.
+- Any new page, feature, or Ray capability.
+- Visual redesign beyond fixing broken/inconsistent copy and states.
 
-## What I'll do first if you approve
+### Technical notes
+- Scanners are Node ESM under `scripts/`, driven by `rg` and simple AST-free regex — same approach as existing `audit.mjs`.
+- `launchIssues.json` lives under `src/dev/` (already git-ignored from audit's own scan via the `src/dev/` skip).
+- Workflow verification uses Playwright via shell against `http://localhost:8080` with the injected Supabase session — no seeded demo data.
 
-1. Build the dev-only Launch Checklist page + the audit script so we have a scoreboard
-2. Run Phase 1 legacy purge and commit the diff
-3. Report Launch Checklist scores and pause for you to pick the next phase to drive
+---
 
-Confirm and I'll start with the Launch Checklist + Phase 1.
+**First action if approved:** build the four scanners in Phase 1, generate the initial `launchIssues.json`, and report the P0/P1 counts before touching any fixes.

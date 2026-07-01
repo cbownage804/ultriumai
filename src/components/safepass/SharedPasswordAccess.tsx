@@ -255,8 +255,8 @@ export const SharedPasswordAccess = () => {
                 Autofill shared passwords directly without ever seeing them.
               </p>
             </div>
-            <Button variant="default" size="sm">
-              Get Extension
+            <Button asChild variant="default" size="sm">
+              <a href="/app/safepass/extension">Get Extension</a>
             </Button>
           </div>
         </CardContent>

@@ -280,16 +280,59 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
   try {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+    const ANON = Deno.env.get('SUPABASE_ANON_KEY')!;
     const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE);
+
+    // Verify caller — either service-role (cron) or an authenticated org admin.
+    const authHeader = req.headers.get('Authorization') ?? '';
+    const isServiceRole = authHeader.includes(SERVICE_ROLE);
+    let callerUserId: string | null = null;
+    if (!isServiceRole) {
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: 'unauthenticated' }), {
+          status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const userClient = createClient(SUPABASE_URL, ANON, { global: { headers: { Authorization: authHeader } } });
+      const { data: ud, error: uerr } = await userClient.auth.getUser();
+      if (uerr || !ud?.user) {
+        return new Response(JSON.stringify({ error: 'unauthenticated' }), {
+          status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      callerUserId = ud.user.id;
+    }
+
     const body = await req.json().catch(() => ({} as any));
 
     let orgIds: string[] = [];
     if (body?.all === true) {
+      if (!isServiceRole) {
+        return new Response(JSON.stringify({ error: 'forbidden' }), {
+          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
       const { data } = await sb.from('org_teams').select('id');
       orgIds = (data ?? []).map((r: any) => r.id as string);
     } else if (body?.org_id) {
-      orgIds = [String(body.org_id)];
+      const targetOrg = String(body.org_id);
+      if (!isServiceRole && callerUserId) {
+        // Confirm caller is an admin/owner of that org.
+        const { data: membership } = await sb
+          .from('org_team_members')
+          .select('role')
+          .eq('org_id', targetOrg)
+          .eq('user_id', callerUserId)
+          .maybeSingle();
+        const role = membership?.role ?? '';
+        if (!['owner', 'admin'].includes(role)) {
+          return new Response(JSON.stringify({ error: 'forbidden' }), {
+            status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      }
+      orgIds = [targetOrg];
     } else {
       return new Response(JSON.stringify({ error: 'org_id required' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
