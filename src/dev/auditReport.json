@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-07-01T13:09:14.127Z",
+  "generatedAt": "2026-07-01T13:09:34.533Z",
   "totals": {
     "filesScanned": 877,
-    "legacyBrand": 218,
+    "legacyBrand": 217,
     "todos": 11,
     "consoles": 188,
     "hardcodedHex": 590,
@@ -154,11 +154,6 @@
       "file": "src/components/auth/AuthBrandHeader.tsx",
       "line": 2,
       "text": "import { safesuiteLogo } from \"@/components/safesuite/SafeSuiteProductIcons\";"
-    },
-    {
-      "file": "src/components/products/VanguardUpsell.tsx",
-      "line": 36,
-      "text": "'SafeTrack™ - IT Asset Management',"
     },
     {
       "file": "src/components/safepass/BreachMonitor.tsx",
@@ -1009,6 +1004,11 @@
       "file": "public/safepass-extension/background.js",
       "line": 1210,
       "text": "console.error('[SafePass] Daily breach check failed:', e);"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 1354,
+      "text": "console.log('[SafePass] Background service worker v2.2 initialized');"
     }
   ],
   "todos": [
