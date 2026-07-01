@@ -45,7 +45,7 @@ import { AccountHealthPanel } from '@/components/ray/AccountHealthPanel';
 import { useRayLiveSignals } from '@/hooks/useRayLiveSignals';
 import { RayNoticesPanel } from '@/components/ray/RayNoticesPanel';
 import { RayTimeline } from '@/components/ray/RayTimeline';
-import { PasswordProtectionCard } from '@/components/ray/PasswordProtectionCard';
+import { PasswordProtectionCard, PasswordAnalyzingCard } from '@/components/ray/PasswordProtectionCard';
 import { RayWatchingCard } from '@/components/ray/RayWatchingCard';
 import { usePasswordLifecycle } from '@/lib/ray/passwordLifecycle';
 
