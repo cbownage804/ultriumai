@@ -286,20 +286,12 @@ export async function runRayOnboardingPipeline(
     factors: { factors: score.factors, total: intel.total } as any,
   });
 
-  // 8. Recommendations
+  // 8. Recommendations — upsert by objective so Ray never surfaces two
+  // active copies of the same goal. Any previously-open "import_passwords"
+  // recommendation is completed the moment we finish importing.
+  await completeObjective(userId, 'import_passwords');
   const recs = generateRecommendations(intel, profile, breach.degraded);
-  if (recs.length > 0) {
-    await supabase.from('ray_recommendations').insert(
-      recs.map((r) => ({
-        user_id: userId,
-        title: r.title,
-        body: r.body,
-        priority: r.priority,
-        source_finding_ids: [] as any,
-        status: 'open',
-      })),
-    );
-  }
+  await upsertRecommendationsByObjective(userId, recs);
 
   // 9. Mark profile onboarded
   await supabase
@@ -380,18 +372,7 @@ export async function runRayBaseline(
     factors: { factors: score.factors, total: intel.total } as any,
   });
   const recs = generateRecommendations(intel, profile, breach.degraded);
-  if (recs.length > 0) {
-    await supabase.from('ray_recommendations').insert(
-      recs.map((r) => ({
-        user_id: userId,
-        title: r.title,
-        body: r.body,
-        priority: r.priority,
-        source_finding_ids: [] as any,
-        status: 'open',
-      })),
-    );
-  }
+  await upsertRecommendationsByObjective(userId, recs);
   await supabase
     .from('ray_profiles')
     .update({ onboarded_at: new Date().toISOString(), import_source: 'baseline' })
