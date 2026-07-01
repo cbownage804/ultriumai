@@ -100,7 +100,7 @@ export function AskRayPalette() {
       }
 
       // For 'ask' (and 'scan' fallback today), let Ray answer conversationally.
-      const { data, error } = await supabase.functions.invoke('safeassist-ai', {
+      const { data, error } = await supabase.functions.invoke('ray-chat', {
         body: {
           message: question,
           context: { source: 'ask-ray-palette', rayIntent: action.intent },
