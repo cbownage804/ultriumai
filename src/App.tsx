@@ -53,7 +53,7 @@ const RayMFAHub = lazy(() => import('@/pages/safesuite/RayMFAHub'));
 const VaultHealth = lazy(() => import('@/pages/safesuite/SafePassHealth'));
 const VaultUsers = lazy(() => import('@/pages/safesuite/SafePassUsers'));
 const WraythPricing = lazy(() => import('@/pages/pricing/SafeSuitePricing'));
-const WraythAssist = lazy(() => import('@/pages/safesuite/SafeSuiteAssist'));
+
 const Ray = lazy(() => import('@/pages/safesuite/Ray'));
 const Identity = lazy(() => import('@/pages/safesuite/Identity'));
 const Devices = lazy(() => import('@/pages/safesuite/Devices'));
@@ -176,7 +176,7 @@ function AppRouter() {
         }>
           <Route path="/app/dashboard" element={<SuspenseWrapper><WraythDashboard /></SuspenseWrapper>} />
           <Route path="/app/brief" element={<SuspenseWrapper><MorningBrief /></SuspenseWrapper>} />
-          <Route path="/app/assist" element={<SuspenseWrapper><WraythAssist /></SuspenseWrapper>} />
+          
           <Route path="/app/ray" element={<SuspenseWrapper><Ray /></SuspenseWrapper>} />
           <Route path="/app/ray/playbook/:runId" element={<SuspenseWrapper><PlaybookRunnerPage /></SuspenseWrapper>} />
           <Route path="/app/ray/secure/:provider" element={<SuspenseWrapper><SecureProviderLauncher /></SuspenseWrapper>} />

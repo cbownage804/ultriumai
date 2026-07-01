@@ -5,7 +5,7 @@
  * recommendations (with lifecycle controls), recently completed work,
  * what Ray remembers about the user, and suggested questions.
  */
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useRayBrain } from '@/lib/ray/brain';
@@ -40,7 +40,7 @@ import {
   X,
 } from 'lucide-react';
 
-const WraythAssist = lazy(() => import('@/pages/safesuite/SafeSuiteAssist'));
+
 
 type RecentAction = { event_type: string; summary: string; created_at: string };
 
@@ -370,10 +370,6 @@ export default function Ray() {
           ))}
         </div>
       </section>
-
-      <Suspense fallback={null}>
-        <WraythAssist />
-      </Suspense>
     </div>
   );
 }
