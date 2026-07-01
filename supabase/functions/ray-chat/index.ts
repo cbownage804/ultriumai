@@ -50,21 +50,6 @@ async function fetchUserSecurityContext(supabase: any, userId: string): Promise<
       lastScan: monitoredAssets?.[0]?.last_scan_at || null
     };
 
-    // Fetch asset stats
-    const { data: assets } = await supabase
-      .from('assets')
-      .select('id, warranty_expiry')
-      .eq('user_id', userId);
-    
-    const now = new Date();
-    const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-    
-    const assetStats = {
-      total: assets?.length || 0,
-      expiringSoon: assets?.filter((a: any) => 
-        a.warranty_expiry && new Date(a.warranty_expiry) <= thirtyDaysFromNow
-      ).length || 0
-    };
 
     // Fetch Scan stats
     const { data: scanLogs } = await supabase
