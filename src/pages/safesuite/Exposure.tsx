@@ -596,6 +596,20 @@ export default function WraythWeb() {
                                       {new Date(threat.first_seen).toLocaleDateString()}
                                     </span>
                                   </div>
+                                  {/* Ray recommends — actionable next steps derived from the threat */}
+                                  <div className="mt-3 rounded-md border border-violet-500/15 bg-violet-500/[0.04] px-3 py-2">
+                                    <div className="text-[10px] uppercase tracking-[0.22em] text-violet-300/80 mb-1.5">
+                                      Ray recommends
+                                    </div>
+                                    <ul className="space-y-1">
+                                      {getRayActions(threat).map((action, i) => (
+                                        <li key={i} className="flex items-center gap-2 text-xs text-gray-300">
+                                          <CheckCircle className="h-3 w-3 text-emerald-400 shrink-0" />
+                                          <span>{action}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
                                 </div>
                                 <Button
                                   variant="ghost"
