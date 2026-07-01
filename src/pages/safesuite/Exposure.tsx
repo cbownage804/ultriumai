@@ -427,8 +427,9 @@ export default function WraythWeb() {
                     {totalThreats}
                   </div>
                   <div className="mt-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-                    Exposures found
+                    Historical breaches
                   </div>
+
                 </button>
                 <div>
                   <div className="text-3xl sm:text-4xl font-extralight tabular-nums leading-none text-emerald-300">
