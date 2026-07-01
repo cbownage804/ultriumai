@@ -346,8 +346,6 @@ verify_jwt = false
 [functions.github-push]
 verify_jwt = false
 
-[functions.github-pull]
-verify_jwt = false
 
 [functions.vercel-deploy]
 verify_jwt = false
