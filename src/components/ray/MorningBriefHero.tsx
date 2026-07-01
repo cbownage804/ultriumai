@@ -164,19 +164,21 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
   const { activeOrg } = useActiveOrg();
 
   const brief = today;
-  const greeting = brief?.greeting ?? (firstName ? `Good morning, ${firstName}.` : "Good morning.");
+  const hour = new Date().getHours();
+  const partOfDay = hour < 5 ? 'evening' : hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
+  const greeting = firstName
+    ? `Good ${partOfDay}, ${firstName}.`
+    : brief?.greeting ?? `Good ${partOfDay}.`;
 
-  // Ray's one-line personality flourish — rotates daily so he feels alive.
-  const personalityLines = [
-    "I reviewed everything overnight. Nothing needs your attention today.",
-    "Everything still looks healthy. I'll keep watching in the background.",
-    "Quiet so far. I'll speak up the moment anything changes.",
-    "All quiet. I've already caught up on your latest activity.",
-    "Nothing unusual to report. I'm right here if you need me.",
-    "Kept an eye on things while you were away. All good.",
-  ];
-  const personality = personalityLines[new Date().getDate() % personalityLines.length];
+  // Ray's Jarvis-like reassurance. Conversational, singular, present-tense.
+  const reassurance = "I checked everything while you were away.";
 
+  // Build status cards from real brief.stats — facts at a glance.
+  const s = brief?.stats ?? null;
+  const score = brief?.score ?? null;
+  const passwordsHealthy = !s?.passwords || (s.passwords.weak === 0 && s.passwords.reused === 0 && s.passwords.breached === 0);
+  const threatsCount = s?.threats?.open ?? 0;
+  const exposureCount = s?.exposure?.monitored ?? 0;
 
   // "Ray remembers" — a continuity nudge built from the most recent meaningful event.
   const lastCompleted = timeline.find((e) => e.event_type === "recommendation_completed");
@@ -187,12 +189,15 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
       ? `You started "${(lastStarted.payload?.title as string) ?? "a playbook"}" last time. Want to pick it back up?`
       : null;
 
-  // Build status cards from real brief.stats — facts at a glance.
-  const s = brief?.stats ?? null;
-  const score = brief?.score ?? null;
-  const passwordsHealthy = !s?.passwords || (s.passwords.weak === 0 && s.passwords.reused === 0 && s.passwords.breached === 0);
-  const threatsCount = s?.threats?.open ?? 0;
-  const exposureCount = s?.exposure?.monitored ?? 0;
+  // The single-line "verdict" sentence Ray delivers under the greeting.
+  const top = recommendations.slice(0, variant === "home" ? 3 : 6);
+  const hasAttention = top.length > 0 || threatsCount > 0 || !passwordsHealthy;
+  const verdict = hasAttention
+    ? "One or two things could use your attention."
+    : "Nothing needs your attention today.";
+  const scoreLine = score != null ? `Your score remains ${score}.` : null;
+  const closingLine = "I'll continue monitoring your passwords, identities, and threats in the background.";
+
   const statusCards: { label: string; value: string; ok: boolean }[] = [
     {
       label: "Security Score",
@@ -210,7 +215,7 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
       ok: !s?.exposure?.new_breaches,
     },
     {
-      label: "Passwords",
+      label: "Vault",
       value: passwordsHealthy ? "Healthy" : `${s?.passwords?.weak ?? 0} to strengthen`,
       ok: passwordsHealthy,
     },
