@@ -1,17 +1,3647 @@
 {
-  "generatedAt": null,
+  "generatedAt": "2026-07-01T12:55:25.069Z",
   "totals": {
-    "filesScanned": 0,
-    "legacyBrand": 0,
-    "todos": 0,
-    "consoles": 0,
-    "hardcodedHex": 0,
-    "arbitraryColors": 0,
-    "anyTypes": 0
+    "filesScanned": 884,
+    "legacyBrand": 292,
+    "todos": 11,
+    "consoles": 188,
+    "hardcodedHex": 602,
+    "arbitraryColors": 126,
+    "anyTypes": 272
   },
-  "legacyBrand": [],
-  "todos": [],
-  "consoles": [],
-  "hardcodedHex": [],
-  "arbitraryColors": []
+  "legacyBrand": [
+    {
+      "file": "src/App.tsx",
+      "line": 22,
+      "text": "const WraythLayout = lazy(() => import('@/layouts/SafeSuiteLayout'));"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 25,
+      "text": "const WraythLanding = lazy(() => import('@/pages/safesuite/SafeSuiteLanding'));"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 26,
+      "text": "const WraythAuth = lazy(() => import('@/pages/safesuite/SafeSuiteAuth'));"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 27,
+      "text": "const WraythDashboard = lazy(() => import('@/pages/safesuite/SafeSuiteDashboard'));"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 28,
+      "text": "const WraythBilling = lazy(() => import('@/pages/safesuite/SafeSuiteBilling'));"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 29,
+      "text": "const WraythSettings = lazy(() => import('@/pages/safesuite/SafeSuiteSettings'));"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 34,
+      "text": "const VaultSettings = lazy(() => import('@/pages/safesuite/SafePassSettings'));"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 35,
+      "text": "const VaultReminders = lazy(() => import('@/pages/safesuite/SafePassReminders'));"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 36,
+      "text": "const VaultBreach = lazy(() => import('@/pages/safesuite/SafePassBreach'));"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 37,
+      "text": "const VaultShared = lazy(() => import('@/pages/safesuite/SafePassShared'));"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 38,
+      "text": "const VaultEmergency = lazy(() => import('@/pages/safesuite/SafePassEmergency'));"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 39,
+      "text": "const VaultExtension = lazy(() => import('@/pages/safesuite/SafePassExtension'));"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 40,
+      "text": "const ScanSettings = lazy(() => import('@/pages/safesuite/SafeScanSettings'));"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 41,
+      "text": "const WatchSettings = lazy(() => import('@/pages/safesuite/SafeWebSettings'));"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 45,
+      "text": "const VaultProduct = lazy(() => import('@/pages/safesuite/products/SafePassProduct'));"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 46,
+      "text": "const ScanProduct = lazy(() => import('@/pages/safesuite/products/SafeScanProduct'));"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 47,
+      "text": "const WatchProduct = lazy(() => import('@/pages/safesuite/products/SafeWebProduct'));"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 48,
+      "text": "const WraythFeatures = lazy(() => import('@/pages/safesuite/SafeSuiteFeatures'));"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 49,
+      "text": "const VaultNotes = lazy(() => import('@/pages/safesuite/SafePassNotes'));"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 50,
+      "text": "const VaultCards = lazy(() => import('@/pages/safesuite/SafePassCards'));"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 51,
+      "text": "const VaultIdentity = lazy(() => import('@/pages/safesuite/SafePassIdentity'));"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 53,
+      "text": "const VaultHealth = lazy(() => import('@/pages/safesuite/SafePassHealth'));"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 54,
+      "text": "const VaultUsers = lazy(() => import('@/pages/safesuite/SafePassUsers'));"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 55,
+      "text": "const WraythPricing = lazy(() => import('@/pages/pricing/SafeSuitePricing'));"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 56,
+      "text": "const WraythAssist = lazy(() => import('@/pages/safesuite/SafeSuiteAssist'));"
+    },
+    {
+      "file": "src/components/Navigation.tsx",
+      "line": 1,
+      "text": "export { default } from '@/components/safesuite/SafeSuiteNav';"
+    },
+    {
+      "file": "src/components/SafeWebAssetManager.tsx",
+      "line": 8,
+      "text": "import { useWatchData, WatchAsset } from \"@/hooks/useSafeWebData\";"
+    },
+    {
+      "file": "src/components/SafeWebAssetManager.tsx",
+      "line": 9,
+      "text": "import { useWraythUsage } from \"@/hooks/useSafeSuite\";"
+    },
+    {
+      "file": "src/components/ThreatAnalytics.tsx",
+      "line": 10,
+      "text": "import { useWatchData } from '@/hooks/useSafeWebData';"
+    },
+    {
+      "file": "src/components/auth/AuthBrandHeader.tsx",
+      "line": 2,
+      "text": "import { safesuiteLogo } from \"@/components/safesuite/SafeSuiteProductIcons\";"
+    },
+    {
+      "file": "src/components/demos/SafeAssistDemo.tsx",
+      "line": 136,
+      "text": "answer: `SafeTrack helps you **inventory and manage all your assets**! 📱💻"
+    },
+    {
+      "file": "src/components/demos/SafeAssistDemo.tsx",
+      "line": 138,
+      "text": "🏷️ **SafeTrack Asset Management:**"
+    },
+    {
+      "file": "src/components/demos/SafeAssistDemo.tsx",
+      "line": 161,
+      "text": "1. Open **SafeTrack** from Wrayth"
+    },
+    {
+      "file": "src/components/demos/SafeAssistDemo.tsx",
+      "line": 166,
+      "text": "💡 **Tip:** For businesses, SafeTrack integrates with Vanguard for advanced endpoint monitoring!`"
+    },
+    {
+      "file": "src/components/demos/SafeAssistDemo.tsx",
+      "line": 231,
+      "text": "**📱 Device Security with SafeTrack**"
+    },
+    {
+      "file": "src/components/demos/SafeAssistDemo.tsx",
+      "line": 248,
+      "text": "const initialMessage = `Hi! I'm **SafeAssist**, your AI-powered security advisor. 🛡️"
+    },
+    {
+      "file": "src/components/demos/SafeAssistDemo.tsx",
+      "line": 254,
+      "text": "export const SafeAssistDemo = ({ compactMode = false }: CompactProps) => {"
+    },
+    {
+      "file": "src/components/demos/SafeAssistDemo.tsx",
+      "line": 344,
+      "text": "📱 **SafeTrack** - Device and asset inventory management"
+    },
+    {
+      "file": "src/components/demos/SafeAssistDemo.tsx",
+      "line": 345,
+      "text": "🤖 **SafeAssist** - That's me! 24/7 security guidance"
+    },
+    {
+      "file": "src/components/demos/SafeAssistDemo.tsx",
+      "line": 367,
+      "text": "{/* Header with SafeAssist branding - centered logo only */}"
+    },
+    {
+      "file": "src/components/demos/SafeAssistDemo.tsx",
+      "line": 370,
+      "text": "<img src={safeassistLogo} alt=\"SafeAssist\" className=\"h-28 w-auto\" />"
+    },
+    {
+      "file": "src/components/demos/SafeAssistDemo.tsx",
+      "line": 464,
+      "text": "SafeAssist provides security guidance. For emergencies, contact your IT team."
+    },
+    {
+      "file": "src/components/demos/SafeAssistDemo.tsx",
+      "line": 474,
+      "text": "<img src={safeassistLogo} alt=\"SafeAssist\" className=\"h-16 w-auto\" />"
+    },
+    {
+      "file": "src/components/deployment/SafeSuiteTeamsApps.tsx",
+      "line": 59,
+      "text": "name: \"SafeAssist\","
+    },
+    {
+      "file": "src/components/products/VanguardUpsell.tsx",
+      "line": 36,
+      "text": "'SafeTrack™ - IT Asset Management',"
+    },
+    {
+      "file": "src/components/safeassist/FloatingSafeAssist.tsx",
+      "line": 8,
+      "text": "import { useSafeAssist } from '@/hooks/useSafeAssist';"
+    },
+    {
+      "file": "src/components/safeassist/FloatingSafeAssist.tsx",
+      "line": 9,
+      "text": "import { useFloatingSafeAssist } from '@/contexts/FloatingSafeAssistContext';"
+    },
+    {
+      "file": "src/components/safeassist/FloatingSafeAssist.tsx",
+      "line": 16,
+      "text": "export function FloatingSafeAssist() {"
+    },
+    {
+      "file": "src/components/safeassist/FloatingSafeAssist.tsx",
+      "line": 17,
+      "text": "const { isOpen, isOnAssistPage, openAssistant, closeAssistant } = useFloatingSafeAssist();"
+    },
+    {
+      "file": "src/components/safeassist/FloatingSafeAssist.tsx",
+      "line": 18,
+      "text": "const { messages, isTyping, credits, sendMessage } = useSafeAssist();"
+    },
+    {
+      "file": "src/components/safeassist/FloatingSafeAssist.tsx",
+      "line": 153,
+      "text": "export default FloatingSafeAssist;"
+    },
+    {
+      "file": "src/components/safeassist/VoiceButton.tsx",
+      "line": 2,
+      "text": "* VoiceButton - ElevenLabs voice interaction for SafeAssist"
+    },
+    {
+      "file": "src/components/safepass/BreachMonitor.tsx",
+      "line": 3,
+      "text": "import { useVault } from '@/hooks/useSafePass';"
+    },
+    {
+      "file": "src/components/safepass/ExpirationReminders.tsx",
+      "line": 3,
+      "text": "import { useVault } from '@/hooks/useSafePass';"
+    },
+    {
+      "file": "src/components/safepass/MSPConsole.tsx",
+      "line": 13,
+      "text": "import { useVaultMSP } from '@/hooks/useSafePassMSP';"
+    },
+    {
+      "file": "src/components/safepass/PasswordHealthDashboard.tsx",
+      "line": 4,
+      "text": "import { useVault } from '@/hooks/useSafePass';"
+    },
+    {
+      "file": "src/components/safepass/PasswordVault.tsx",
+      "line": 4,
+      "text": "import { useVault, PasswordEntry as VaultEntry } from '@/hooks/useSafePass';"
+    },
+    {
+      "file": "src/components/safepass/SecurityDashboard.tsx",
+      "line": 12,
+      "text": "import { useVaultSecurity } from '@/hooks/useSafePassSecurity';"
+    },
+    {
+      "file": "src/components/safepass/TeamManagement.tsx",
+      "line": 13,
+      "text": "import { useVaultTeams } from '@/hooks/useSafePassTeams';"
+    },
+    {
+      "file": "src/components/safepass/TeamManagement.tsx",
+      "line": 14,
+      "text": "import { useVault } from '@/hooks/useSafePass';"
+    },
+    {
+      "file": "src/components/safesuite/SafeSuitePaywall.tsx",
+      "line": 7,
+      "text": "import { useFeatureAccess, useWraythSubscription } from '@/hooks/useSafeSuite';"
+    },
+    {
+      "file": "src/components/safesuite/SubscriptionBanner.tsx",
+      "line": 7,
+      "text": "import { useWraythSubscription } from '@/hooks/useSafeSuite';"
+    },
+    {
+      "file": "src/components/safesuite/TeaserLock.tsx",
+      "line": 8,
+      "text": "import { useFeatureAccess, useWraythSubscription } from '@/hooks/useSafeSuite';"
+    },
+    {
+      "file": "src/components/safesuite/UsageMeter.tsx",
+      "line": 7,
+      "text": "import { useFeatureAccess, useWraythSubscription, useWraythUsage } from '@/hooks/useSafeSuite';"
+    },
+    {
+      "file": "src/config/safeSuiteTiers.ts",
+      "line": 156,
+      "text": "name: 'SafeTrack',"
+    },
+    {
+      "file": "src/config/safeSuiteTiers.ts",
+      "line": 163,
+      "text": "name: 'SafeAssist',"
+    },
+    {
+      "file": "src/config/safeSuiteTiers.ts",
+      "line": 170,
+      "text": "name: 'SafeAssist Voice',"
+    },
+    {
+      "file": "src/config/safeSuiteTiers.ts",
+      "line": 171,
+      "text": "description: 'Voice conversations with SafeAssist AI',"
+    },
+    {
+      "file": "src/config/voiceCreditPackages.ts",
+      "line": 2,
+      "text": "* Voice Credit Packages for SafeAssist"
+    },
+    {
+      "file": "src/contexts/FloatingSafeAssistContext.tsx",
+      "line": 2,
+      "text": "* Context for managing the FloatingSafeAssist widget state"
+    },
+    {
+      "file": "src/contexts/FloatingSafeAssistContext.tsx",
+      "line": 29,
+      "text": "interface FloatingSafeAssistContextType {"
+    },
+    {
+      "file": "src/contexts/FloatingSafeAssistContext.tsx",
+      "line": 49,
+      "text": "const FloatingSafeAssistContext = createContext<FloatingSafeAssistContextType | null>(null);"
+    },
+    {
+      "file": "src/contexts/FloatingSafeAssistContext.tsx",
+      "line": 51,
+      "text": "export function FloatingSafeAssistProvider({ children }: { children: ReactNode }) {"
+    },
+    {
+      "file": "src/contexts/FloatingSafeAssistContext.tsx",
+      "line": 66,
+      "text": "// Check if on SafeAssist full page"
+    },
+    {
+      "file": "src/contexts/FloatingSafeAssistContext.tsx",
+      "line": 220,
+      "text": "// Auto-open popup when leaving SafeAssist page"
+    },
+    {
+      "file": "src/contexts/FloatingSafeAssistContext.tsx",
+      "line": 229,
+      "text": "// Auto-close popup when navigating to SafeAssist page"
+    },
+    {
+      "file": "src/contexts/FloatingSafeAssistContext.tsx",
+      "line": 347,
+      "text": "<FloatingSafeAssistContext.Provider value={{"
+    },
+    {
+      "file": "src/contexts/FloatingSafeAssistContext.tsx",
+      "line": 366,
+      "text": "</FloatingSafeAssistContext.Provider>"
+    },
+    {
+      "file": "src/contexts/FloatingSafeAssistContext.tsx",
+      "line": 370,
+      "text": "export function useFloatingSafeAssist() {"
+    },
+    {
+      "file": "src/contexts/FloatingSafeAssistContext.tsx",
+      "line": 371,
+      "text": "const context = useContext(FloatingSafeAssistContext);"
+    },
+    {
+      "file": "src/contexts/FloatingSafeAssistContext.tsx",
+      "line": 373,
+      "text": "throw new Error('useFloatingSafeAssist must be used within FloatingSafeAssistProvider');"
+    },
+    {
+      "file": "src/hooks/useI18n.tsx",
+      "line": 47,
+      "text": "'products.safetrack': 'SafeTrack',"
+    },
+    {
+      "file": "src/hooks/useI18n.tsx",
+      "line": 48,
+      "text": "'products.safeassist': 'SafeAssist',"
+    },
+    {
+      "file": "src/hooks/useSafeAssist.ts",
+      "line": 6,
+      "text": "export interface SafeAssistMessage {"
+    },
+    {
+      "file": "src/hooks/useSafeAssist.ts",
+      "line": 15,
+      "text": "export interface SafeAssistConversation {"
+    },
+    {
+      "file": "src/hooks/useSafeAssist.ts",
+      "line": 34,
+      "text": "interface UseSafeAssistReturn {"
+    },
+    {
+      "file": "src/hooks/useSafeAssist.ts",
+      "line": 35,
+      "text": "messages: SafeAssistMessage[];"
+    },
+    {
+      "file": "src/hooks/useSafeAssist.ts",
+      "line": 36,
+      "text": "conversations: SafeAssistConversation[];"
+    },
+    {
+      "file": "src/hooks/useSafeAssist.ts",
+      "line": 66,
+      "text": "export function useSafeAssist(): UseSafeAssistReturn {"
+    },
+    {
+      "file": "src/hooks/useSafeAssist.ts",
+      "line": 70,
+      "text": "const [messages, setMessages] = useState<SafeAssistMessage[]>([{"
+    },
+    {
+      "file": "src/hooks/useSafeAssist.ts",
+      "line": 76,
+      "text": "const [conversations, setConversations] = useState<SafeAssistConversation[]>([]);"
+    },
+    {
+      "file": "src/hooks/useSafeAssist.ts",
+      "line": 372,
+      "text": "const userMessage: SafeAssistMessage = {"
+    },
+    {
+      "file": "src/hooks/useSafeAssist.ts",
+      "line": 457,
+      "text": "const assistantMessage: SafeAssistMessage = {"
+    },
+    {
+      "file": "src/hooks/useSafeAssist.ts",
+      "line": 481,
+      "text": "console.error('SafeAssist error:', error);"
+    },
+    {
+      "file": "src/layouts/SafePassLayout.tsx",
+      "line": 26,
+      "text": "import { safeSuiteProducts } from '@/components/safesuite/SafeSuiteProductIcons';"
+    },
+    {
+      "file": "src/layouts/SafeSuiteLayout.tsx",
+      "line": 13,
+      "text": "import { useWraythSubscription } from '@/hooks/useSafeSuite';"
+    },
+    {
+      "file": "src/layouts/SafeSuiteLayout.tsx",
+      "line": 61,
+      "text": "import { FloatingSafeAssist } from '@/components/safeassist/FloatingSafeAssist';"
+    },
+    {
+      "file": "src/layouts/SafeSuiteLayout.tsx",
+      "line": 63,
+      "text": "import { FloatingSafeAssistProvider } from '@/contexts/FloatingSafeAssistContext';"
+    },
+    {
+      "file": "src/layouts/SafeSuiteLayout.tsx",
+      "line": 334,
+      "text": "<FloatingSafeAssist />"
+    },
+    {
+      "file": "src/layouts/SafeSuiteLayout.tsx",
+      "line": 343,
+      "text": "<FloatingSafeAssistProvider>"
+    },
+    {
+      "file": "src/layouts/SafeSuiteLayout.tsx",
+      "line": 347,
+      "text": "</FloatingSafeAssistProvider>"
+    },
+    {
+      "file": "src/pages/Privacy.tsx",
+      "line": 61,
+      "text": "<p className=\"text-xs text-muted-foreground\">Vault, Scan, Watch, SafeTrack, SafeAssist</p>"
+    },
+    {
+      "file": "src/pages/Terms.tsx",
+      "line": 96,
+      "text": "<li>SafeTrack – Asset and device tracking</li>"
+    },
+    {
+      "file": "src/pages/Terms.tsx",
+      "line": 97,
+      "text": "<li>SafeAssist – AI-powered support assistant</li>"
+    },
+    {
+      "file": "src/pages/WraythResources.tsx",
+      "line": 8,
+      "text": "import Navigation from \"@/components/safesuite/SafeSuiteNav\";"
+    },
+    {
+      "file": "src/pages/pricing/SafeSuitePricing.tsx",
+      "line": 7,
+      "text": "import WraythNav from '@/components/safesuite/SafeSuiteNav';"
+    },
+    {
+      "file": "src/pages/pricing/SafeSuitePricing.tsx",
+      "line": 18,
+      "text": "All plans include Vault, Scan, Watch, and SafeTrack. Cancel anytime."
+    },
+    {
+      "file": "src/pages/safesuite/Exposure.tsx",
+      "line": 6,
+      "text": "import { FeatureGate, UsageLimitBanner } from '@/components/safesuite/SafeSuitePaywall';"
+    },
+    {
+      "file": "src/pages/safesuite/Exposure.tsx",
+      "line": 8,
+      "text": "import { useFeatureAccess, useWraythUsage } from '@/hooks/useSafeSuite';"
+    },
+    {
+      "file": "src/pages/safesuite/Passwords.tsx",
+      "line": 11,
+      "text": "import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';"
+    },
+    {
+      "file": "src/pages/safesuite/Ray.tsx",
+      "line": 43,
+      "text": "const WraythAssist = lazy(() => import('@/pages/safesuite/SafeSuiteAssist'));"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassBreach.tsx",
+      "line": 5,
+      "text": "import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassCards.tsx",
+      "line": 2,
+      "text": "import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassEmergency.tsx",
+      "line": 5,
+      "text": "import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassExtension.tsx",
+      "line": 2,
+      "text": "import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassHealth.tsx",
+      "line": 2,
+      "text": "import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassIdentity.tsx",
+      "line": 2,
+      "text": "import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassNotes.tsx",
+      "line": 2,
+      "text": "import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassReminders.tsx",
+      "line": 5,
+      "text": "import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
+      "line": 28,
+      "text": "import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassShared.tsx",
+      "line": 5,
+      "text": "import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassShared.tsx",
+      "line": 7,
+      "text": "import { useWraythSubscription } from '@/hooks/useSafeSuite';"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassTeam.tsx",
+      "line": 7,
+      "text": "import { useWraythTeam, useSharedVault } from '@/hooks/useSafeSuiteTeam';"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassTeam.tsx",
+      "line": 8,
+      "text": "import { useWraythSubscription } from '@/hooks/useSafeSuite';"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassUsers.tsx",
+      "line": 41,
+      "text": "import { useWraythSubscription } from \"@/hooks/useSafeSuite\";"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteAssist.tsx",
+      "line": 2,
+      "text": "* SafeAssist — full-page AI security assistant"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteAssist.tsx",
+      "line": 3,
+      "text": "* Uses the existing useSafeAssist hook + safeassist-ai edge function."
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteAssist.tsx",
+      "line": 7,
+      "text": "import { useSafeAssist } from '@/hooks/useSafeAssist';"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteAssist.tsx",
+      "line": 8,
+      "text": "import { useFloatingSafeAssist } from '@/contexts/FloatingSafeAssistContext';"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteAssist.tsx",
+      "line": 30,
+      "text": "} = useSafeAssist();"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteAssist.tsx",
+      "line": 32,
+      "text": "const { setOnVoiceTranscript } = useFloatingSafeAssist();"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteBilling.tsx",
+      "line": 7,
+      "text": "import { useWraythSubscription, useWraythCheckout } from '@/hooks/useSafeSuite';"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteDashboard.tsx",
+      "line": 9,
+      "text": "import { useWraythSubscription, useFeatureAccess } from '@/hooks/useSafeSuite';"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteDashboard.tsx",
+      "line": 10,
+      "text": "import { useVault } from '@/hooks/useSafePass';"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteDashboard.tsx",
+      "line": 13,
+      "text": "import { safeSuiteProducts } from '@/components/safesuite/SafeSuiteProductIcons';"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteDashboard.tsx",
+      "line": 17,
+      "text": "import { UsageLimitBanner } from '@/components/safesuite/SafeSuitePaywall';"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteDashboard.tsx",
+      "line": 22,
+      "text": "import { GlowContainer, AnimatedStatsCard, StaggerContainer, StaggerItem, SAFESUITE_THEMES } from '@/components/safesuite/SafeSuiteEffects';"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteFeatures.tsx",
+      "line": 3,
+      "text": "* Consolidates Vault, Scan, Watch, SafeTrack into one clean experience"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteFeatures.tsx",
+      "line": 89,
+      "text": "name: \"SafeTrack\","
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteFeatures.tsx",
+      "line": 207,
+      "text": "Wrayth includes Vault, Scan, Watch, and SafeTrack — all integrated and working together to protect your digital life."
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 8,
+      "text": "import Navigation from '@/components/safesuite/SafeSuiteNav';"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteSettings.tsx",
+      "line": 7,
+      "text": "import { useWraythSubscription } from '@/hooks/useSafeSuite';"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteSettings.tsx",
+      "line": 9,
+      "text": "import { useWraythSettings } from '@/hooks/useSafeSuiteSettings';"
+    },
+    {
+      "file": "src/pages/safesuite/Threats.tsx",
+      "line": 5,
+      "text": "import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';"
+    },
+    {
+      "file": "src/pages/safesuite/Threats.tsx",
+      "line": 6,
+      "text": "import { ScanApp } from '@/components/apps/SafeScanApp';"
+    },
+    {
+      "file": "src/pages/safesuite/products/SafePassProduct.tsx",
+      "line": 23,
+      "text": "import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';"
+    },
+    {
+      "file": "src/pages/safesuite/products/SafePassProduct.tsx",
+      "line": 167,
+      "text": "Get Vault plus Scan, Watch, and SafeTrack — all in one unified security suite."
+    },
+    {
+      "file": "src/pages/safesuite/products/SafeScanProduct.tsx",
+      "line": 23,
+      "text": "import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';"
+    },
+    {
+      "file": "src/pages/safesuite/products/SafeScanProduct.tsx",
+      "line": 167,
+      "text": "Get Scan plus Vault, Watch, and SafeTrack — all in one unified security suite."
+    },
+    {
+      "file": "src/pages/safesuite/products/SafeWebProduct.tsx",
+      "line": 23,
+      "text": "import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';"
+    },
+    {
+      "file": "src/pages/safesuite/products/SafeWebProduct.tsx",
+      "line": 180,
+      "text": "Get Watch plus Vault, Scan, and SafeTrack — all in one unified security suite."
+    },
+    {
+      "file": "supabase/functions/check-subscription/index.ts",
+      "line": 160,
+      "text": "// SafeSuite Tiers"
+    },
+    {
+      "file": "supabase/functions/check-subscription/index.ts",
+      "line": 161,
+      "text": "\"prod_TsPzD1oR0cpYRl\": \"safesuite_pro\",   // SafeSuite Pro"
+    },
+    {
+      "file": "supabase/functions/check-subscription/index.ts",
+      "line": 162,
+      "text": "\"prod_TsPs3I5eCybg7o\": \"safesuite_pro\",   // SafeSuite Pro (older)"
+    },
+    {
+      "file": "supabase/functions/check-subscription/index.ts",
+      "line": 163,
+      "text": "\"prod_TsPzaw5xfK0fGn\": \"safesuite_business\", // SafeSuite Business"
+    },
+    {
+      "file": "supabase/functions/check-subscription/index.ts",
+      "line": 164,
+      "text": "\"prod_TsPhrnVrS2CTEI\": \"safesuite_enterprise\", // SafeSuite Enterprise"
+    },
+    {
+      "file": "supabase/functions/get-billing-data/index.ts",
+      "line": 17,
+      "text": "'prod_TnSxL9TgGCz1jI': { name: 'SafeSuite Pro', product: 'safesuite' },"
+    },
+    {
+      "file": "supabase/functions/get-billing-data/index.ts",
+      "line": 18,
+      "text": "'prod_TnSxu5PsRCLf38': { name: 'SafeSuite Business', product: 'safesuite' },"
+    },
+    {
+      "file": "supabase/functions/get-billing-data/index.ts",
+      "line": 19,
+      "text": "'prod_TsQkzLTz3wBSa2': { name: 'SafeSuite Enterprise', product: 'safesuite' },"
+    },
+    {
+      "file": "supabase/functions/product-checkout/index.ts",
+      "line": 14,
+      "text": "name: \"SafeScan™\","
+    },
+    {
+      "file": "supabase/functions/product-checkout/index.ts",
+      "line": 19,
+      "text": "name: \"SafePass™\","
+    },
+    {
+      "file": "supabase/functions/product-checkout/index.ts",
+      "line": 34,
+      "text": "name: \"SafeWeb™\","
+    },
+    {
+      "file": "supabase/functions/product-checkout/index.ts",
+      "line": 39,
+      "text": "name: \"SafeTrack™\","
+    },
+    {
+      "file": "supabase/functions/safeassist-ai/index.ts",
+      "line": 41,
+      "text": "// Fetch SafeWeb monitoring stats"
+    },
+    {
+      "file": "supabase/functions/safeassist-ai/index.ts",
+      "line": 53,
+      "text": "// Fetch SafeTrack asset stats"
+    },
+    {
+      "file": "supabase/functions/safeassist-ai/index.ts",
+      "line": 69,
+      "text": "// Fetch SafeScan stats"
+    },
+    {
+      "file": "supabase/functions/safeassist-ai/index.ts",
+      "line": 141,
+      "text": "- Refer to the product as Wrayth. Never reference \"SafeSuite,\" \"SafeAssist,\" \"SafePass,\" \"SafeScan,\" \"SafeWeb,\" \"SafeTrack,\" \"Vanguard,\" \"AI Studio,\" or \"Ultriu"
+    },
+    {
+      "file": "supabase/functions/safeassist-ai/index.ts",
+      "line": 164,
+      "text": "console.log('SafeAssist AI function called');"
+    },
+    {
+      "file": "supabase/functions/safepass-breach-check/index.ts",
+      "line": 49,
+      "text": "console.error('[SafePass Breach Check] Invalid JWT:', claimsError);"
+    },
+    {
+      "file": "supabase/functions/safepass-breach-check/index.ts",
+      "line": 57,
+      "text": "console.log(`[SafePass Breach Check] Authenticated user: ${userId}`);"
+    },
+    {
+      "file": "supabase/functions/safepass-breach-check/index.ts",
+      "line": 63,
+      "text": "console.log(`[SafePass Breach Check] action: ${action}, user_id: ${userId}`);"
+    },
+    {
+      "file": "supabase/functions/safepass-breach-check/index.ts",
+      "line": 69,
+      "text": "console.log(`[SafePass Breach Check] Checking ${password_hashes.length} password hashes`);"
+    },
+    {
+      "file": "supabase/functions/safepass-breach-check/index.ts",
+      "line": 74,
+      "text": "console.log('[SafePass Breach Check] No Dehashed API key configured');"
+    },
+    {
+      "file": "supabase/functions/safepass-breach-check/index.ts",
+      "line": 137,
+      "text": "console.error(`[SafePass Breach Check] Error checking hash`);"
+    },
+    {
+      "file": "supabase/functions/safepass-breach-check/index.ts",
+      "line": 153,
+      "text": "console.log(`[SafePass Breach Check] Running daily scan for user: ${userId}`);"
+    },
+    {
+      "file": "supabase/functions/safepass-breach-check/index.ts",
+      "line": 162,
+      "text": "console.error('[SafePass Breach Check] Error fetching entries:', fetchError);"
+    },
+    {
+      "file": "supabase/functions/safepass-breach-check/index.ts",
+      "line": 176,
+      "text": "console.log(`[SafePass Breach Check] Found ${entries.length} entries to check`);"
+    },
+    {
+      "file": "supabase/functions/safepass-breach-check/index.ts",
+      "line": 240,
+      "text": "console.error(`[SafePass Breach Check] Error checking entry`);"
+    },
+    {
+      "file": "supabase/functions/safepass-breach-check/index.ts",
+      "line": 272,
+      "text": "console.log(`[SafePass Breach Check] Scan complete. Found ${breachResults.length} breached entries.`);"
+    },
+    {
+      "file": "supabase/functions/safepass-breach-check/index.ts",
+      "line": 311,
+      "text": "console.error('[SafePass Breach Check] Error:', error);"
+    },
+    {
+      "file": "supabase/functions/safepass-rate-limiter/index.ts",
+      "line": 2,
+      "text": "* SafePass Rate Limiter Edge Function"
+    },
+    {
+      "file": "supabase/functions/safepass-reset-master-password/index.ts",
+      "line": 198,
+      "text": "from: \"SafePass Security <security@send.ultriumai.com>\","
+    },
+    {
+      "file": "supabase/functions/safepass-reset-master-password/index.ts",
+      "line": 200,
+      "text": "subject: \"Reset Your SafePass Master Password\","
+    },
+    {
+      "file": "supabase/functions/safepass-reset-master-password/index.ts",
+      "line": 203,
+      "text": "<h1 style=\"color: #f59e0b;\">SafePass Master Password Reset</h1>"
+    },
+    {
+      "file": "supabase/functions/safepass-reset-master-password/index.ts",
+      "line": 204,
+      "text": "<p>You requested to reset your SafePass master password.</p>"
+    },
+    {
+      "file": "supabase/functions/safepass-reset-master-password/index.ts",
+      "line": 210,
+      "text": "<p style=\"margin: 8px 0 0 0;\">This action cannot be undone because SafePass uses zero-knowledge encryption.</p>"
+    },
+    {
+      "file": "supabase/functions/safepass-scanner/index.ts",
+      "line": 22,
+      "text": "console.log('SafePass Scanner - Action:', action, 'Payload:', JSON.stringify(payload).substring(0, 100))"
+    },
+    {
+      "file": "supabase/functions/safepass-scanner/index.ts",
+      "line": 44,
+      "text": "console.error('SafePass Scanner Error:', error)"
+    },
+    {
+      "file": "supabase/functions/safescan-scheduled/index.ts",
+      "line": 343,
+      "text": "subject: `⚠️ SafeScan Alert: ${threats.length} threats detected in \"${scan.name}\"`,"
+    },
+    {
+      "file": "supabase/functions/safescan-scheduled/index.ts",
+      "line": 351,
+      "text": "<p>Please review these findings in your SafeScan dashboard.</p>"
+    },
+    {
+      "file": "supabase/functions/safesuite-check-subscription/index.ts",
+      "line": 82,
+      "text": "// Look for SafeSuite subscriptions"
+    },
+    {
+      "file": "supabase/functions/safesuite-check-subscription/index.ts",
+      "line": 89,
+      "text": "// Find a SafeSuite subscription"
+    },
+    {
+      "file": "supabase/functions/safesuite-check-subscription/index.ts",
+      "line": 105,
+      "text": "logStep(\"No active SafeSuite subscription found\");"
+    },
+    {
+      "file": "supabase/functions/safesuite-check-subscription/index.ts",
+      "line": 136,
+      "text": "logStep(\"Active SafeSuite subscription found\", {"
+    },
+    {
+      "file": "supabase/functions/safesuite-checkout/index.ts",
+      "line": 10,
+      "text": "// SafeSuite tier price IDs"
+    },
+    {
+      "file": "supabase/functions/safesuite-checkout/index.ts",
+      "line": 26,
+      "text": "// Real SafeSuite product IDs (looked up from live Stripe) for upgrade detection"
+    },
+    {
+      "file": "supabase/functions/safesuite-checkout/index.ts",
+      "line": 89,
+      "text": "// Check for existing SafeSuite subscriptions"
+    },
+    {
+      "file": "supabase/functions/safesuite-checkout/index.ts",
+      "line": 96,
+      "text": "// Find any existing SafeSuite subscription"
+    },
+    {
+      "file": "supabase/functions/safesuite-checkout/index.ts",
+      "line": 107,
+      "text": "logStep(\"Found existing SafeSuite subscription, upgrading instead of creating new\", {"
+    },
+    {
+      "file": "supabase/functions/safesuite-checkout/index.ts",
+      "line": 148,
+      "text": "message: `Successfully upgraded to SafeSuite ${tier.charAt(0).toUpperCase() + tier.slice(1)}`,"
+    }
+  ],
+  "todos": [
+    {
+      "file": "src/hooks/useAICodeReview.ts",
+      "line": 56,
+      "text": "{ id: 'bp-todo', category: 'best-practice', severity: 'info', title: 'TODO comment found', pattern: /\\/\\/\\s*TODO|\\/\\*\\s*TODO/gi, description: 'Unresolved TODO i"
+    },
+    {
+      "file": "src/hooks/useAIConfidence.ts",
+      "line": 154,
+      "text": "if (f.content.includes('// TODO') || f.content.includes('/* TODO')) qualityDeductions += 5;"
+    },
+    {
+      "file": "src/hooks/useCustomBuildScripts.ts",
+      "line": 17,
+      "text": "{ name: 'Lint Check', hook: 'pre-build', type: 'lint', enabled: false, script: 'check for console.log, debugger, and TODO comments' },"
+    },
+    {
+      "file": "src/hooks/useCustomBuildScripts.ts",
+      "line": 53,
+      "text": "const todos = f.content.match(/\\/\\/\\s*TODO/gi);"
+    },
+    {
+      "file": "src/hooks/useCustomBuildScripts.ts",
+      "line": 54,
+      "text": "if (todos) issues.push(`${f.path}: ${todos.length} TODO(s)`);"
+    },
+    {
+      "file": "src/hooks/useGraphQLBuilder.ts",
+      "line": 86,
+      "text": "type, args: [], returnType: 'String', resolver: '// TODO: implement resolver',"
+    },
+    {
+      "file": "src/hooks/useSmartScaffolding.ts",
+      "line": 20,
+      "text": "files: [{ path: 'hooks/use{{Name}}.ts', content: `import { useState, useCallback } from 'react';\\n\\nexport function use{{Name}}() {\\n  const [data, setData] = u"
+    },
+    {
+      "file": "supabase/functions/ray-org-sync/index.ts",
+      "line": 196,
+      "text": "const trainingScore = 80;   // TODO wire to training records when available"
+    },
+    {
+      "file": "supabase/functions/ray-org-sync/index.ts",
+      "line": 197,
+      "text": "const softwareScore = 90;   // TODO wire to ms_graph_sync software inventory"
+    },
+    {
+      "file": "supabase/functions/ray-org-sync/index.ts",
+      "line": 198,
+      "text": "const domainScore = 95;     // TODO wire to safeweb_threats"
+    },
+    {
+      "file": "supabase/functions/safepass-rate-limiter/index.ts",
+      "line": 200,
+      "text": "// TODO: Replace with actual CAPTCHA verification"
+    }
+  ],
+  "consoles": [
+    {
+      "file": "src/components/VoiceControls.tsx",
+      "line": 195,
+      "text": "console.warn('No text returned from transcription');"
+    },
+    {
+      "file": "src/components/apiManager/SDKSnippets.tsx",
+      "line": 54,
+      "text": "console.log(result.choices[0].message.content);`;"
+    },
+    {
+      "file": "src/components/client-portal/ClientPortal.tsx",
+      "line": 577,
+      "text": "console.log('Viewing article:', article.id);"
+    },
+    {
+      "file": "src/components/demos/TemplateInteractiveDemo.tsx",
+      "line": 157,
+      "text": "console.log(response.message);"
+    },
+    {
+      "file": "src/components/deployment/GPTDeployment.tsx",
+      "line": 67,
+      "text": ".then(data => console.log(data));`;"
+    },
+    {
+      "file": "src/components/help/BugReportModal.tsx",
+      "line": 75,
+      "text": "console.warn('Screenshot capture failed:', err);"
+    },
+    {
+      "file": "src/components/help/BugReportModal.tsx",
+      "line": 155,
+      "text": "console.warn('Bug report email notification failed:', emailErr);"
+    },
+    {
+      "file": "src/components/knowledgebase/ContextualKnowledgeBase.tsx",
+      "line": 400,
+      "text": "console.log('Open article:', article.id);"
+    },
+    {
+      "file": "src/components/reports/ReportGenerator.tsx",
+      "line": 100,
+      "text": "console.log('Generating report:', {"
+    },
+    {
+      "file": "src/components/safenet/AgentInstallationPanel.tsx",
+      "line": 45,
+      "text": "console.log('Function response:', response);"
+    },
+    {
+      "file": "src/components/safenet/SafeNetDashboard.tsx",
+      "line": 45,
+      "text": "console.log('Starting SafeNet Connector download...');"
+    },
+    {
+      "file": "src/components/safepass/BreachRecommendationDialog.tsx",
+      "line": 127,
+      "text": "console.log('First attempt failed, retrying after delay...');"
+    },
+    {
+      "file": "src/components/safepass/BreachRecommendationDialog.tsx",
+      "line": 136,
+      "text": "console.log('First attempt returned error, retrying after delay...');"
+    },
+    {
+      "file": "src/components/safepass/BreachRecommendationDialog.tsx",
+      "line": 154,
+      "text": "console.log('First attempt failed, retrying after delay...');"
+    },
+    {
+      "file": "src/config/vanguardMeshCentral.ts",
+      "line": 43,
+      "text": "console.warn(\"Failed to look up MSP:\", err);"
+    },
+    {
+      "file": "src/hooks/useAIPerformanceOptimizer.ts",
+      "line": 91,
+      "text": "console.log(\\`[Perf] \\${entry.name}: \\${entry.duration.toFixed(2)}ms\\`);"
+    },
+    {
+      "file": "src/hooks/useAffiliateTracking.ts",
+      "line": 83,
+      "text": "console.log('[Affiliate] Tracking referral:', ref);"
+    },
+    {
+      "file": "src/hooks/useAgentBuildVerifier.ts",
+      "line": 40,
+      "text": "console.warn('[build-verifier] esbuild init failed:', err);"
+    },
+    {
+      "file": "src/hooks/useAgentMode.ts",
+      "line": 302,
+      "text": "console.warn('[Agent] Wall-clock timeout reached, aborting');"
+    },
+    {
+      "file": "src/hooks/useAgentWebResearch.ts",
+      "line": 48,
+      "text": "console.warn('[research] Skipping non-URL query (Firecrawl cannot scrape search engines):', query);"
+    },
+    {
+      "file": "src/hooks/useBackgroundGeneration.ts",
+      "line": 170,
+      "text": "console.info('[BG] ✅ Job completed:', job.id, '— calling onComplete callback');"
+    },
+    {
+      "file": "src/hooks/useBackgroundGeneration.ts",
+      "line": 185,
+      "text": "console.info('[BG] Job cancelled:', job.id);"
+    },
+    {
+      "file": "src/hooks/useBackgroundGeneration.ts",
+      "line": 216,
+      "text": "console.warn('[BG SSE] Failed to start stream, falling back to polling');"
+    },
+    {
+      "file": "src/hooks/useBackgroundGeneration.ts",
+      "line": 261,
+      "text": "console.warn('[BG SSE] Stream error, polling handles it:', err.message);"
+    },
+    {
+      "file": "src/hooks/useBackgroundGeneration.ts",
+      "line": 357,
+      "text": "console.info('[BG] Job submitted:', jobId);"
+    },
+    {
+      "file": "src/hooks/useBackgroundGeneration.ts",
+      "line": 438,
+      "text": "console.info('[BG] Job already processed in this session, skipping:', job.id);"
+    },
+    {
+      "file": "src/hooks/useBackgroundGeneration.ts",
+      "line": 441,
+      "text": "console.info('[BG] Found active job from previous session:', job.id);"
+    },
+    {
+      "file": "src/hooks/useBackgroundGeneration.ts",
+      "line": 462,
+      "text": "console.info('[BG] Completed job already processed, skipping:', job.id);"
+    },
+    {
+      "file": "src/hooks/useBackgroundGeneration.ts",
+      "line": 466,
+      "text": "console.info('[BG] Found recently completed job:', job.id);"
+    },
+    {
+      "file": "src/hooks/useCLICompanion.ts",
+      "line": 63,
+      "text": "console.log('🚀 Starting local dev server...');"
+    },
+    {
+      "file": "src/hooks/useCLICompanion.ts",
+      "line": 67,
+      "text": "console.log('📦 Building for production...');"
+    },
+    {
+      "file": "src/hooks/useCLICompanion.ts",
+      "line": 71,
+      "text": "console.log('🔄 Syncing with Ultrium Cloud...');"
+    },
+    {
+      "file": "src/hooks/useCLICompanion.ts",
+      "line": 73,
+      "text": "console.log('✅ Project synced successfully.');"
+    },
+    {
+      "file": "src/hooks/useCLICompanion.ts",
+      "line": 76,
+      "text": "console.log('🚀 Deploying to production...');"
+    },
+    {
+      "file": "src/hooks/useCLICompanion.ts",
+      "line": 78,
+      "text": "console.log('✅ Deploy complete.');"
+    },
+    {
+      "file": "src/hooks/useCLICompanion.ts",
+      "line": 86,
+      "text": "console.log(\\`Unknown command: \\${cmd}\\`);"
+    },
+    {
+      "file": "src/hooks/useCLICompanion.ts",
+      "line": 87,
+      "text": "console.log('Available: ' + Object.keys(COMMANDS).join(', '));"
+    },
+    {
+      "file": "src/hooks/useCodePlayground.ts",
+      "line": 20,
+      "text": "fetchAPI: { name: 'Fetch API', language: 'typescript', code: `const res = await fetch('https://jsonplaceholder.typicode.com/posts/1');\\nconst data = await res.j"
+    },
+    {
+      "file": "src/hooks/useCommandMenuBuilder.ts",
+      "line": 81,
+      "text": "const itemsCode = m.items.map(i => `  { label: ${JSON.stringify(i.label)}, shortcut: ${JSON.stringify(i.shortcut)}, icon: ${JSON.stringify(i.icon)}, group: ${JS"
+    },
+    {
+      "file": "src/hooks/useDraftPersistence.ts",
+      "line": 68,
+      "text": "console.warn('[Draft] All localStorage writes failed, restoring backup');"
+    },
+    {
+      "file": "src/hooks/useDraftPersistence.ts",
+      "line": 85,
+      "text": "console.info('[Draft] Skipping immediate save — no files or messages');"
+    },
+    {
+      "file": "src/hooks/useDraftPersistence.ts",
+      "line": 89,
+      "text": "console.info('[Draft] Immediate save: %d files, %d msgs, name=%s', files.length, messages.length, name);"
+    },
+    {
+      "file": "src/hooks/useFormBuilder.ts",
+      "line": 113,
+      "text": "return `import { useForm } from 'react-hook-form';\\n\\nexport function ${name}Form() {\\n  const { register, handleSubmit } = useForm();\\n  const onSubmit = (data"
+    },
+    {
+      "file": "src/hooks/useIndexedDBPersistence.ts",
+      "line": 106,
+      "text": "console.warn('IndexedDB save failed:', err);"
+    },
+    {
+      "file": "src/hooks/useIndexedDBPersistence.ts",
+      "line": 184,
+      "text": "console.warn('IndexedDB immediate save failed:', err);"
+    },
+    {
+      "file": "src/hooks/useOrganization.ts",
+      "line": 14,
+      "text": "console.warn('Failed to send member notification:', err);"
+    },
+    {
+      "file": "src/hooks/usePluginRegistry.ts",
+      "line": 428,
+      "text": "console.warn(`Plugin ${pluginId} hook ${hook} error:`, e);"
+    },
+    {
+      "file": "src/hooks/usePluginSDK.ts",
+      "line": 110,
+      "text": "console.log('Running pre-deploy checks...');"
+    },
+    {
+      "file": "src/hooks/usePluginSDK.ts",
+      "line": 116,
+      "text": "console.log('Deploy complete:', result.url);"
+    },
+    {
+      "file": "src/hooks/usePreviewCapture.ts",
+      "line": 52,
+      "text": "console.log('Thumbnail: throttled (last capture was %ds ago)', Math.round((now - lastCaptureTime.current) / 1000));"
+    },
+    {
+      "file": "src/hooks/usePreviewCapture.ts",
+      "line": 59,
+      "text": "console.log('Thumbnail: skipping duplicate capture');"
+    },
+    {
+      "file": "src/hooks/usePreviewCapture.ts",
+      "line": 78,
+      "text": "console.log('Thumbnail captured via edge function');"
+    },
+    {
+      "file": "src/hooks/usePreviewServiceWorker.ts",
+      "line": 52,
+      "text": "console.info('[PreviewSW] Service Workers not supported — using srcdoc fallback');"
+    },
+    {
+      "file": "src/hooks/usePreviewServiceWorker.ts",
+      "line": 72,
+      "text": "console.info('[PreviewSW] Service Worker ready');"
+    },
+    {
+      "file": "src/hooks/usePreviewServiceWorker.ts",
+      "line": 78,
+      "text": "console.info('[PreviewSW] Service Worker activated');"
+    },
+    {
+      "file": "src/hooks/usePreviewServiceWorker.ts",
+      "line": 96,
+      "text": "console.warn('[PreviewSW] Registration failed — using srcdoc fallback:', err);"
+    },
+    {
+      "file": "src/hooks/useProjectFileSystem.ts",
+      "line": 353,
+      "text": "console.log('%c[ENV] Variables loaded:', 'color:#6ee7b7', ${JSON.stringify(maskedObj)});"
+    },
+    {
+      "file": "src/hooks/useProjectFileSystem.ts",
+      "line": 527,
+      "text": "console.warn('[Preview] Relative fetch URL \"' + req + '\" — returning mock response. Connect a backend to enable API calls.');"
+    },
+    {
+      "file": "src/hooks/usePushNotificationDesigner.ts",
+      "line": 56,
+      "text": "console.log('Push token:', token.value);"
+    },
+    {
+      "file": "src/hooks/usePushNotificationDesigner.ts",
+      "line": 61,
+      "text": "console.log('Push received:', notification);"
+    },
+    {
+      "file": "src/hooks/usePushNotificationDesigner.ts",
+      "line": 65,
+      "text": "console.log('Push action:', action);"
+    },
+    {
+      "file": "src/hooks/useRayLiveSignals.ts",
+      "line": 35,
+      "text": "console.warn(\"[useRayLiveSignals] sync failed\", error);"
+    },
+    {
+      "file": "src/hooks/useSchemaIntrospection.ts",
+      "line": 79,
+      "text": "console.warn('[SchemaIntrospection] Error:', msg);"
+    },
+    {
+      "file": "src/hooks/useSubscriptionManager.ts",
+      "line": 115,
+      "text": "console.log('Subscription updated:', sub.id, sub.status);"
+    },
+    {
+      "file": "src/hooks/useSubscriptionManager.ts",
+      "line": 120,
+      "text": "console.log('Subscription canceled:', sub.id);"
+    },
+    {
+      "file": "src/hooks/useSubscriptionManager.ts",
+      "line": 125,
+      "text": "console.log('Payment failed for:', invoice.customer);"
+    },
+    {
+      "file": "src/hooks/useToastDesigner.ts",
+      "line": 59,
+      "text": "if (p.hasAction) args.push(`action: { label: '${p.actionLabel}', onClick: () => console.log('action clicked') }`);"
+    },
+    {
+      "file": "src/hooks/useVersionTimeline.ts",
+      "line": 53,
+      "text": "console.warn('[VersionTimeline] IDB save failed:', err);"
+    },
+    {
+      "file": "src/hooks/useVisualDiff.ts",
+      "line": 60,
+      "text": "console.warn('[VisualDiff] Before capture failed:', err);"
+    },
+    {
+      "file": "src/hooks/useVisualDiff.ts",
+      "line": 107,
+      "text": "console.warn('[VisualDiff] After capture failed:', err);"
+    },
+    {
+      "file": "src/hooks/useWebVitals.ts",
+      "line": 172,
+      "text": "*   onReport: (metric) => console.log(metric),"
+    },
+    {
+      "file": "src/integrations/supabase/client.ts",
+      "line": 75,
+      "text": "console.warn('[Supabase] Could not sync cookie to localStorage:', e);"
+    },
+    {
+      "file": "src/integrations/supabase/client.ts",
+      "line": 86,
+      "text": "console.warn('[Supabase] Could not read from localStorage:', e);"
+    },
+    {
+      "file": "src/integrations/supabase/client.ts",
+      "line": 129,
+      "text": "console.warn('[Supabase] Could not remove from localStorage:', e);"
+    },
+    {
+      "file": "src/lib/import/onboardingPipeline.ts",
+      "line": 82,
+      "text": "console.warn('[onboarding] pre-warm briefing failed', e);"
+    },
+    {
+      "file": "src/lib/logger.ts",
+      "line": 10,
+      "text": "if (isDev) console.log(...args);"
+    },
+    {
+      "file": "src/lib/logger.ts",
+      "line": 13,
+      "text": "if (isDev) console.info(...args);"
+    },
+    {
+      "file": "src/lib/logger.ts",
+      "line": 16,
+      "text": "if (isDev) console.warn(...args);"
+    },
+    {
+      "file": "src/lib/logger.ts",
+      "line": 23,
+      "text": "if (isDev) console.debug(...args);"
+    },
+    {
+      "file": "src/lib/ray/brain.ts",
+      "line": 86,
+      "text": "if (error) console.warn('[ray.brain] rememberFact failed', error);"
+    },
+    {
+      "file": "src/lib/ray/brain.ts",
+      "line": 107,
+      "text": "if (error) console.warn('[ray.brain] recordTimelineEvent failed', error);"
+    },
+    {
+      "file": "src/lib/ray/brain.ts",
+      "line": 178,
+      "text": "console.warn('[ray.brain] briefing generation failed', error);"
+    },
+    {
+      "file": "src/lib/ray/insights.ts",
+      "line": 38,
+      "text": "console.warn('[ray.insights] list failed', error);"
+    },
+    {
+      "file": "src/lib/ray/insights.ts",
+      "line": 53,
+      "text": "console.warn('[ray.insights] record failed', error);"
+    },
+    {
+      "file": "src/lib/ray/missions.ts",
+      "line": 110,
+      "text": "if (error) console.warn('[ray.missions] seed failed', error);"
+    },
+    {
+      "file": "src/lib/ray/missions.ts",
+      "line": 121,
+      "text": "console.warn('[ray.missions] list failed', error);"
+    },
+    {
+      "file": "src/lib/ray/missions.ts",
+      "line": 168,
+      "text": "if (error) console.warn('[ray.missions] toggle failed', error);"
+    },
+    {
+      "file": "src/lib/ray/morningBrief.ts",
+      "line": 49,
+      "text": "if (error) console.warn(\"[morningBrief] feedback failed\", error);"
+    },
+    {
+      "file": "src/lib/ray/morningBrief.ts",
+      "line": 86,
+      "text": "console.warn(\"[morningBrief] generation failed\", error);"
+    },
+    {
+      "file": "src/lib/ray/notices.ts",
+      "line": 432,
+      "text": "console.warn('[ray.notices] synthesize failed', e);"
+    },
+    {
+      "file": "src/lib/ray/playbooks/engine.ts",
+      "line": 116,
+      "text": "console.warn('[ray.playbooks] unknown template', slug);"
+    },
+    {
+      "file": "src/lib/ray/playbooks/engine.ts",
+      "line": 160,
+      "text": "console.warn('[ray.playbooks] startPlaybook failed', error);"
+    },
+    {
+      "file": "src/lib/ray/playbooks/engine.ts",
+      "line": 204,
+      "text": "if (error) console.warn('[ray.playbooks] toggleTask failed', error);"
+    },
+    {
+      "file": "src/lib/ray/playbooks/engine.ts",
+      "line": 321,
+      "text": "console.warn('[ray.playbooks] account-health bump failed', err);"
+    },
+    {
+      "file": "src/lib/supabaseResilience.ts",
+      "line": 28,
+      "text": "console.warn(`[Resilience] ${label ?? 'Operation'} timed out after ${timeoutMs}ms — using fallback`);"
+    },
+    {
+      "file": "src/lib/supabaseResilience.ts",
+      "line": 30,
+      "text": "console.warn(`[Resilience] ${label ?? 'Operation'} failed — using fallback`, err?.message);"
+    },
+    {
+      "file": "src/lib/supabaseResilience.ts",
+      "line": 54,
+      "text": "console.warn(`[Resilience] ${label ?? 'Operation'} timed out after ${timeoutMs}ms — using fallback`);"
+    },
+    {
+      "file": "src/lib/supabaseResilience.ts",
+      "line": 71,
+      "text": "console.warn(`[Resilience] ${label ?? 'Operation'} failed — using fallback`, err?.message);"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassExtension.tsx",
+      "line": 51,
+      "text": "console.warn(`Could not fetch ${file}`, e);"
+    },
+    {
+      "file": "src/utils/exportUtils.ts",
+      "line": 6,
+      "text": "console.warn('No data to export');"
+    },
+    {
+      "file": "src/utils/generateWindowsAgentZip.ts",
+      "line": 52,
+      "text": "console.log(`Agent EXE fetched from ${source.name} (${(cachedExeBlob.size / 1024 / 1024).toFixed(1)} MB)`);"
+    },
+    {
+      "file": "src/utils/generateWindowsAgentZip.ts",
+      "line": 55,
+      "text": "console.warn(`${source.name}: Downloaded file too small, likely not valid EXE`);"
+    },
+    {
+      "file": "src/utils/generateWindowsAgentZip.ts",
+      "line": 60,
+      "text": "console.warn(`Failed to fetch from ${source.name}:`, error);"
+    },
+    {
+      "file": "src/utils/generateWindowsAgentZip.ts",
+      "line": 64,
+      "text": "console.warn('Agent EXE not found in any source, using config-only bundle');"
+    },
+    {
+      "file": "src/utils/generateWindowsMsiInstaller.ts",
+      "line": 358,
+      "text": "console.warn('[generateOneClickInstaller] EXE generation failed, falling back to CMD:', err);"
+    },
+    {
+      "file": "supabase/functions/check-subscription/index.ts",
+      "line": 12,
+      "text": "console.log(`[CHECK-SUBSCRIPTION] ${step}${detailsStr}`);"
+    },
+    {
+      "file": "supabase/functions/create-checkout/index.ts",
+      "line": 12,
+      "text": "console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);"
+    },
+    {
+      "file": "supabase/functions/disable-two-factor/index.ts",
+      "line": 11,
+      "text": "console.log(`[DISABLE-TWO-FACTOR] ${step}${detailsStr}`);"
+    },
+    {
+      "file": "supabase/functions/enable-two-factor/index.ts",
+      "line": 11,
+      "text": "console.log(`[ENABLE-TWO-FACTOR] ${step}${detailsStr}`);"
+    },
+    {
+      "file": "supabase/functions/get-billing-data/index.ts",
+      "line": 12,
+      "text": "console.log(`[GET-BILLING-DATA] ${step}${detailsStr}`);"
+    },
+    {
+      "file": "supabase/functions/github-push/index.ts",
+      "line": 51,
+      "text": "console.log(`[github-push] Repo exists: ${owner}/${repoName}, updating...`);"
+    },
+    {
+      "file": "supabase/functions/github-push/index.ts",
+      "line": 66,
+      "text": "console.log(`[github-push] Creating new repo: ${repoName}`);"
+    },
+    {
+      "file": "supabase/functions/product-checkout/index.ts",
+      "line": 51,
+      "text": "console.log(`[PRODUCT-CHECKOUT] ${step}${detailsStr}`);"
+    },
+    {
+      "file": "supabase/functions/ray-brief/index.ts",
+      "line": 267,
+      "text": "console.warn(\"[ray-brief] AI gateway non-ok\", aiRes.status);"
+    },
+    {
+      "file": "supabase/functions/ray-brief/index.ts",
+      "line": 270,
+      "text": "console.warn(\"[ray-brief] AI gateway threw\", e);"
+    },
+    {
+      "file": "supabase/functions/ray-brief-cron/index.ts",
+      "line": 82,
+      "text": "if (res.ok) okCount += 1; else { errCount += 1; console.warn(\"[ray-brief-cron] non-ok\", t.user_id, res.status); }"
+    },
+    {
+      "file": "supabase/functions/ray-brief-cron/index.ts",
+      "line": 85,
+      "text": "console.warn(\"[ray-brief-cron] fetch threw\", t.user_id, e);"
+    },
+    {
+      "file": "supabase/functions/ray-sync-signals/index.ts",
+      "line": 124,
+      "text": "console.warn(\"[ray-sync-signals] upsert failed\", upErr);"
+    },
+    {
+      "file": "supabase/functions/safeassist-ai/index.ts",
+      "line": 164,
+      "text": "console.log('SafeAssist AI function called');"
+    },
+    {
+      "file": "supabase/functions/safepass-breach-check/index.ts",
+      "line": 57,
+      "text": "console.log(`[SafePass Breach Check] Authenticated user: ${userId}`);"
+    },
+    {
+      "file": "supabase/functions/safepass-breach-check/index.ts",
+      "line": 63,
+      "text": "console.log(`[SafePass Breach Check] action: ${action}, user_id: ${userId}`);"
+    },
+    {
+      "file": "supabase/functions/safepass-breach-check/index.ts",
+      "line": 69,
+      "text": "console.log(`[SafePass Breach Check] Checking ${password_hashes.length} password hashes`);"
+    },
+    {
+      "file": "supabase/functions/safepass-breach-check/index.ts",
+      "line": 74,
+      "text": "console.log('[SafePass Breach Check] No Dehashed API key configured');"
+    },
+    {
+      "file": "supabase/functions/safepass-breach-check/index.ts",
+      "line": 153,
+      "text": "console.log(`[SafePass Breach Check] Running daily scan for user: ${userId}`);"
+    },
+    {
+      "file": "supabase/functions/safepass-breach-check/index.ts",
+      "line": 176,
+      "text": "console.log(`[SafePass Breach Check] Found ${entries.length} entries to check`);"
+    },
+    {
+      "file": "supabase/functions/safepass-breach-check/index.ts",
+      "line": 272,
+      "text": "console.log(`[SafePass Breach Check] Scan complete. Found ${breachResults.length} breached entries.`);"
+    },
+    {
+      "file": "supabase/functions/safepass-scanner/index.ts",
+      "line": 22,
+      "text": "console.log('SafePass Scanner - Action:', action, 'Payload:', JSON.stringify(payload).substring(0, 100))"
+    },
+    {
+      "file": "supabase/functions/safepass-scanner/index.ts",
+      "line": 144,
+      "text": "console.warn('DEHASHED_API_KEY not configured, using heuristics only')"
+    },
+    {
+      "file": "supabase/functions/safepass-scanner/index.ts",
+      "line": 169,
+      "text": "console.warn(`DeHashed API returned ${response.status}`)"
+    },
+    {
+      "file": "supabase/functions/safepass-security-scanner/index.ts",
+      "line": 48,
+      "text": "console.log('Starting security scan for user:', user_id);"
+    },
+    {
+      "file": "supabase/functions/safepass-security-scanner/index.ts",
+      "line": 214,
+      "text": "console.log('Security scan completed:', scanResult);"
+    },
+    {
+      "file": "supabase/functions/safescan-ai-analyzer/index.ts",
+      "line": 177,
+      "text": "console.log('Starting automated scan for targets:', targets);"
+    },
+    {
+      "file": "supabase/functions/safesuite-check-subscription/index.ts",
+      "line": 21,
+      "text": "console.log(`[SAFESUITE-CHECK-SUB] ${step}${detailsStr}`);"
+    },
+    {
+      "file": "supabase/functions/safesuite-checkout/index.ts",
+      "line": 37,
+      "text": "console.log(`[SAFESUITE-CHECKOUT] ${step}${detailsStr}`);"
+    },
+    {
+      "file": "supabase/functions/safesuite-customer-portal/index.ts",
+      "line": 12,
+      "text": "console.log(`[SAFESUITE-CUSTOMER-PORTAL] ${step}${detailsStr}`);"
+    },
+    {
+      "file": "supabase/functions/safesuite-data-export/index.ts",
+      "line": 11,
+      "text": "console.log(`[SAFESUITE-EXPORT] ${step}${detailsStr}`);"
+    },
+    {
+      "file": "supabase/functions/safesuite-mfa-recovery/index.ts",
+      "line": 17,
+      "text": "console.log(`[MFA-RECOVERY] ${step}`, details ? JSON.stringify(details) : '');"
+    },
+    {
+      "file": "supabase/functions/safesuite-team-checkout/index.ts",
+      "line": 12,
+      "text": "console.log(`[SAFESUITE-TEAM-CHECKOUT] ${step}${detailsStr}`);"
+    },
+    {
+      "file": "supabase/functions/safesuite-usage/index.ts",
+      "line": 11,
+      "text": "console.log(`[SAFESUITE-USAGE] ${step}${detailsStr}`);"
+    },
+    {
+      "file": "supabase/functions/safesuite-user-management/index.ts",
+      "line": 20,
+      "text": "console.log(`[SAFESUITE-USER-MGMT] ${step}${detailsStr}`);"
+    },
+    {
+      "file": "supabase/functions/safesuite-webhook/index.ts",
+      "line": 21,
+      "text": "console.log(`[SAFESUITE-WEBHOOK] ${step}${detailsStr}`);"
+    },
+    {
+      "file": "supabase/functions/safetrack-warranty-lookup/index.ts",
+      "line": 247,
+      "text": "console.log('Processing warranty lookup for serial:', cleanSerial, 'device:', deviceName);"
+    },
+    {
+      "file": "supabase/functions/safetrack-warranty-lookup/index.ts",
+      "line": 258,
+      "text": "console.log('Identified manufacturer:', manufacturerInfo.manufacturer);"
+    },
+    {
+      "file": "supabase/functions/safetrack-warranty-lookup/index.ts",
+      "line": 259,
+      "text": "console.log('Scraping manufacturer warranty URL:', manufacturerInfo.warrantyUrl);"
+    },
+    {
+      "file": "supabase/functions/safetrack-warranty-lookup/index.ts",
+      "line": 266,
+      "text": "console.log('Direct scrape successful, got', scrapedContent.length, 'chars');"
+    },
+    {
+      "file": "supabase/functions/safetrack-warranty-lookup/index.ts",
+      "line": 273,
+      "text": "console.log('Searching:', query);"
+    },
+    {
+      "file": "supabase/functions/safetrack-warranty-lookup/index.ts",
+      "line": 296,
+      "text": "console.log('Fallback search:', genericQuery);"
+    },
+    {
+      "file": "supabase/functions/safetrack-warranty-lookup/index.ts",
+      "line": 308,
+      "text": "console.log('Total scraped content:', scrapedContent.length, 'chars from', allSources.length, 'sources');"
+    },
+    {
+      "file": "supabase/functions/safetrack-warranty-lookup/index.ts",
+      "line": 359,
+      "text": "console.log('Sending to AI for analysis...');"
+    },
+    {
+      "file": "supabase/functions/safetrack-warranty-lookup/index.ts",
+      "line": 426,
+      "text": "console.log('AI response received');"
+    },
+    {
+      "file": "supabase/functions/safetrack-warranty-lookup/index.ts",
+      "line": 512,
+      "text": "console.log('Warranty lookup completed successfully');"
+    },
+    {
+      "file": "supabase/functions/safeweb-ai-recommendations/index.ts",
+      "line": 10,
+      "text": "console.log(`[SAFEWEB-AI] ${step}${detailsStr}`);"
+    },
+    {
+      "file": "supabase/functions/safeweb-assets/index.ts",
+      "line": 85,
+      "text": "console.log('DELETE via POST request received for asset:', assetId);"
+    },
+    {
+      "file": "supabase/functions/safeweb-assets/index.ts",
+      "line": 86,
+      "text": "console.log('User ID:', user.id);"
+    },
+    {
+      "file": "supabase/functions/safeweb-assets/index.ts",
+      "line": 89,
+      "text": "console.log('No asset ID provided');"
+    },
+    {
+      "file": "supabase/functions/safeweb-assets/index.ts",
+      "line": 96,
+      "text": "console.log('Attempting to delete asset:', assetId, 'for user:', user.id);"
+    },
+    {
+      "file": "supabase/functions/safeweb-assets/index.ts",
+      "line": 111,
+      "text": "console.log('Asset deleted successfully via POST');"
+    },
+    {
+      "file": "supabase/functions/safeweb-assets/index.ts",
+      "line": 286,
+      "text": "console.log('DELETE request received');"
+    },
+    {
+      "file": "supabase/functions/safeweb-assets/index.ts",
+      "line": 306,
+      "text": "console.log('Asset ID from request:', assetId);"
+    },
+    {
+      "file": "supabase/functions/safeweb-assets/index.ts",
+      "line": 307,
+      "text": "console.log('User ID:', user.id);"
+    },
+    {
+      "file": "supabase/functions/safeweb-assets/index.ts",
+      "line": 310,
+      "text": "console.log('No asset ID provided');"
+    },
+    {
+      "file": "supabase/functions/safeweb-assets/index.ts",
+      "line": 317,
+      "text": "console.log('Attempting to delete asset:', assetId, 'for user:', user.id);"
+    },
+    {
+      "file": "supabase/functions/safeweb-assets/index.ts",
+      "line": 332,
+      "text": "console.log('Asset deleted successfully');"
+    },
+    {
+      "file": "supabase/functions/safeweb-checkout/index.ts",
+      "line": 13,
+      "text": "console.log(`[SAFEWEB-CHECKOUT] ${step}${detailsStr}`);"
+    },
+    {
+      "file": "supabase/functions/safeweb-scanner/index.ts",
+      "line": 12,
+      "text": "console.log(`[SAFEWEB-SCANNER] ${step}${detailsStr}`);"
+    },
+    {
+      "file": "supabase/functions/send-auth-email/index.ts",
+      "line": 229,
+      "text": "console.log(\"Received payload:\", JSON.stringify(payload, null, 2));"
+    },
+    {
+      "file": "supabase/functions/send-auth-email/index.ts",
+      "line": 255,
+      "text": "console.log(\"Auth Hook - Email type:\", emailType, \"Email:\", email, \"Action URL:\", actionUrl);"
+    },
+    {
+      "file": "supabase/functions/send-auth-email/index.ts",
+      "line": 271,
+      "text": "console.log(`Sending ${emailType} email to ${email} from UltriumAI Security <security@send.ultriumai.com>`);"
+    },
+    {
+      "file": "supabase/functions/send-auth-email/index.ts",
+      "line": 280,
+      "text": "console.log(\"Email sent successfully:\", emailResponse);"
+    },
+    {
+      "file": "supabase/functions/send-email/index.ts",
+      "line": 12,
+      "text": "console.log(`[SEND-EMAIL] ${step}${detailsStr}`);"
+    },
+    {
+      "file": "supabase/functions/serve-preview/index.ts",
+      "line": 135,
+      "text": "console.log(`[serve-preview] Custom domain ${host} → slug ${data.project_slug}`)"
+    },
+    {
+      "file": "supabase/functions/setup-two-factor/index.ts",
+      "line": 11,
+      "text": "console.log(`[SETUP-TWO-FACTOR] ${step}${detailsStr}`);"
+    },
+    {
+      "file": "supabase/functions/stripe-webhook/index.ts",
+      "line": 12,
+      "text": "console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);"
+    },
+    {
+      "file": "supabase/functions/verify-mfa-login/index.ts",
+      "line": 11,
+      "text": "console.log(`[VERIFY-MFA-LOGIN] ${step}${detailsStr}`);"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 34,
+      "text": "console.log('[SafePass] Auto-locking vault due to inactivity');"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 54,
+      "text": "console.log('[SafePass] Auto-sync triggered');"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 97,
+      "text": "console.log('[SafePass] Extension installed');"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 391,
+      "text": "console.log(`[SafePass] Synced ${cachedEntries.length} personal + ${cachedSharedEntries.length} shared entries`);"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 490,
+      "text": "console.log(`[SafePass] Fetched ${cachedSharedEntries.length} shared team entries`);"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 992,
+      "text": "console.log('[SafePass] Entry already exists for this site/username');"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 1177,
+      "text": "console.log('[SafePass] Periodic sync alarm triggered');"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 1183,
+      "text": "console.log('[SafePass] Running daily breach check');"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 1255,
+      "text": "} catch (e) { console.warn('[Wrayth] open-ray failed', e); }"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 1354,
+      "text": "console.log('[SafePass] Background service worker v2.2 initialized');"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 1410,
+      "text": "} catch (e) { console.warn('[Wrayth] analyze tab failed', e); }"
+    },
+    {
+      "file": "public/safepass-extension/content.js",
+      "line": 865,
+      "text": "console.log('[SafePass] Content script v2.1 loaded');"
+    },
+    {
+      "file": "public/safepass-extension/popup.js",
+      "line": 74,
+      "text": "console.log('[SafePass] Sync complete notification received');"
+    },
+    {
+      "file": "public/safepass-extension/sidepanel.js",
+      "line": 128,
+      "text": "console.warn('Wrayth sidepanel refresh', e);"
+    }
+  ],
+  "hardcodedHex": [
+    {
+      "file": "src/components/TeamAnalytics.tsx",
+      "line": 41,
+      "text": "const COLORS = ['#3b82f6', '#8b5cf6', '#ef4444', '#f97316', '#eab308', '#22c55e'];"
+    },
+    {
+      "file": "src/components/TeamAnalytics.tsx",
+      "line": 289,
+      "text": "stroke=\"#3b82f6\""
+    },
+    {
+      "file": "src/components/TeamAnalytics.tsx",
+      "line": 296,
+      "text": "stroke=\"#8b5cf6\""
+    },
+    {
+      "file": "src/components/TeamAnalytics.tsx",
+      "line": 317,
+      "text": "<Bar dataKey=\"conversations\" fill=\"#3b82f6\" name=\"Conversations\" />"
+    },
+    {
+      "file": "src/components/VisualReportDisplay.tsx",
+      "line": 56,
+      "text": "primary: '#3b82f6',"
+    },
+    {
+      "file": "src/components/VisualReportDisplay.tsx",
+      "line": 57,
+      "text": "secondary: '#1e40af',"
+    },
+    {
+      "file": "src/components/VisualReportDisplay.tsx",
+      "line": 58,
+      "text": "success: '#10b981',"
+    },
+    {
+      "file": "src/components/VisualReportDisplay.tsx",
+      "line": 59,
+      "text": "warning: '#f59e0b',"
+    },
+    {
+      "file": "src/components/VisualReportDisplay.tsx",
+      "line": 60,
+      "text": "danger: '#ef4444',"
+    },
+    {
+      "file": "src/components/VisualReportDisplay.tsx",
+      "line": 61,
+      "text": "dark: '#1f2937',"
+    },
+    {
+      "file": "src/components/VisualReportDisplay.tsx",
+      "line": 62,
+      "text": "background: '#0f172a'"
+    },
+    {
+      "file": "src/components/VisualReportDisplay.tsx",
+      "line": 101,
+      "text": "el.style.color = '#1f2937'; // Dark gray for readability"
+    },
+    {
+      "file": "src/components/VisualReportDisplay.tsx",
+      "line": 107,
+      "text": "backgroundColor: '#ffffff',"
+    },
+    {
+      "file": "src/components/VisualReportDisplay.tsx",
+      "line": 470,
+      "text": "fill=\"#8884d8\""
+    },
+    {
+      "file": "src/components/VisualReportDisplay.tsx",
+      "line": 493,
+      "text": "<CartesianGrid strokeDasharray=\"3 3\" stroke=\"#374151\" />"
+    },
+    {
+      "file": "src/components/VisualReportDisplay.tsx",
+      "line": 494,
+      "text": "<XAxis dataKey=\"category\" stroke=\"#9ca3af\" />"
+    },
+    {
+      "file": "src/components/VisualReportDisplay.tsx",
+      "line": 495,
+      "text": "<YAxis stroke=\"#9ca3af\" />"
+    },
+    {
+      "file": "src/components/WhiteLabelCustomizer.tsx",
+      "line": 52,
+      "text": "primary: \"#3b82f6\","
+    },
+    {
+      "file": "src/components/WhiteLabelCustomizer.tsx",
+      "line": 53,
+      "text": "secondary: \"#64748b\","
+    },
+    {
+      "file": "src/components/WhiteLabelCustomizer.tsx",
+      "line": 54,
+      "text": "accent: \"#10b981\","
+    },
+    {
+      "file": "src/components/WhiteLabelCustomizer.tsx",
+      "line": 55,
+      "text": "background: \"#ffffff\","
+    },
+    {
+      "file": "src/components/WhiteLabelCustomizer.tsx",
+      "line": 56,
+      "text": "foreground: \"#0f172a\""
+    },
+    {
+      "file": "src/components/analytics/ExecutiveDashboard.tsx",
+      "line": 32,
+      "text": "{ name: 'MSP Clients', value: 45, color: '#8884d8' },"
+    },
+    {
+      "file": "src/components/analytics/ExecutiveDashboard.tsx",
+      "line": 33,
+      "text": "{ name: 'Direct SMBs', value: 30, color: '#82ca9d' },"
+    },
+    {
+      "file": "src/components/analytics/ExecutiveDashboard.tsx",
+      "line": 34,
+      "text": "{ name: 'Enterprise', value: 20, color: '#ffc658' },"
+    },
+    {
+      "file": "src/components/analytics/ExecutiveDashboard.tsx",
+      "line": 35,
+      "text": "{ name: 'Internal Depts', value: 5, color: '#ff7300' }"
+    },
+    {
+      "file": "src/components/analytics/ExecutiveDashboard.tsx",
+      "line": 159,
+      "text": "stroke=\"#3b82f6\""
+    },
+    {
+      "file": "src/components/analytics/ExecutiveDashboard.tsx",
+      "line": 161,
+      "text": "dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}"
+    },
+    {
+      "file": "src/components/analytics/ExecutiveDashboard.tsx",
+      "line": 166,
+      "text": "stroke=\"#94a3b8\""
+    },
+    {
+      "file": "src/components/analytics/ExecutiveDashboard.tsx",
+      "line": 169,
+      "text": "dot={{ fill: '#94a3b8', strokeWidth: 2, r: 3 }}"
+    },
+    {
+      "file": "src/components/analytics/ExecutiveDashboard.tsx",
+      "line": 195,
+      "text": "fill=\"#8884d8\""
+    },
+    {
+      "file": "src/components/analytics/FinancialAnalytics.tsx",
+      "line": 40,
+      "text": "{ name: 'Personnel', value: 320000, color: '#8884d8' },"
+    },
+    {
+      "file": "src/components/analytics/FinancialAnalytics.tsx",
+      "line": 41,
+      "text": "{ name: 'Software & Tools', value: 85000, color: '#82ca9d' },"
+    },
+    {
+      "file": "src/components/analytics/FinancialAnalytics.tsx",
+      "line": 42,
+      "text": "{ name: 'Infrastructure', value: 45000, color: '#ffc658' },"
+    },
+    {
+      "file": "src/components/analytics/FinancialAnalytics.tsx",
+      "line": 43,
+      "text": "{ name: 'Marketing', value: 25000, color: '#ff7300' },"
+    },
+    {
+      "file": "src/components/analytics/FinancialAnalytics.tsx",
+      "line": 44,
+      "text": "{ name: 'Other', value: 15000, color: '#8dd1e1' }"
+    },
+    {
+      "file": "src/components/analytics/FinancialAnalytics.tsx",
+      "line": 141,
+      "text": "<Bar dataKey=\"revenue\" fill=\"#3b82f6\" name=\"revenue\" />"
+    },
+    {
+      "file": "src/components/analytics/FinancialAnalytics.tsx",
+      "line": 142,
+      "text": "<Bar dataKey=\"expenses\" fill=\"#ef4444\" name=\"expenses\" />"
+    },
+    {
+      "file": "src/components/analytics/FinancialAnalytics.tsx",
+      "line": 143,
+      "text": "<Bar dataKey=\"profit\" fill=\"#10b981\" name=\"profit\" />"
+    },
+    {
+      "file": "src/components/analytics/FinancialAnalytics.tsx",
+      "line": 168,
+      "text": "fill=\"#8884d8\""
+    },
+    {
+      "file": "src/components/analytics/FinancialAnalytics.tsx",
+      "line": 208,
+      "text": "<Bar dataKey=\"inflow\" fill=\"#10b981\" />"
+    },
+    {
+      "file": "src/components/analytics/FinancialAnalytics.tsx",
+      "line": 209,
+      "text": "<Bar dataKey=\"outflow\" fill=\"#ef4444\" />"
+    },
+    {
+      "file": "src/components/analytics/FinancialAnalytics.tsx",
+      "line": 210,
+      "text": "<Line dataKey=\"net\" stroke=\"#3b82f6\" strokeWidth={2} />"
+    },
+    {
+      "file": "src/components/analytics/OperationalMetrics.tsx",
+      "line": 159,
+      "text": "stroke=\"#3b82f6\""
+    },
+    {
+      "file": "src/components/analytics/OperationalMetrics.tsx",
+      "line": 166,
+      "text": "stroke=\"#10b981\""
+    },
+    {
+      "file": "src/components/analytics/PredictiveAnalytics.tsx",
+      "line": 169,
+      "text": "stroke=\"#3b82f6\""
+    },
+    {
+      "file": "src/components/analytics/PredictiveAnalytics.tsx",
+      "line": 177,
+      "text": "stroke=\"#10b981\""
+    },
+    {
+      "file": "src/components/analytics/PredictiveAnalytics.tsx",
+      "line": 212,
+      "text": "stroke=\"#10b981\""
+    },
+    {
+      "file": "src/components/analytics/PredictiveAnalytics.tsx",
+      "line": 213,
+      "text": "fill=\"#10b981\""
+    },
+    {
+      "file": "src/components/analytics/PredictiveAnalytics.tsx",
+      "line": 220,
+      "text": "stroke=\"#3b82f6\""
+    },
+    {
+      "file": "src/components/analytics/PredictiveAnalytics.tsx",
+      "line": 221,
+      "text": "fill=\"#3b82f6\""
+    },
+    {
+      "file": "src/components/billing/UsageTracking.tsx",
+      "line": 214,
+      "text": "<Line type=\"monotone\" dataKey=\"apiCalls\" stroke=\"#3b82f6\" strokeWidth={2} />"
+    },
+    {
+      "file": "src/components/billing/UsageTracking.tsx",
+      "line": 215,
+      "text": "<Line type=\"monotone\" dataKey=\"storage\" stroke=\"#10b981\" strokeWidth={2} />"
+    },
+    {
+      "file": "src/components/billing/UsageTracking.tsx",
+      "line": 216,
+      "text": "<Line type=\"monotone\" dataKey=\"supportHours\" stroke=\"#f59e0b\" strokeWidth={2} />"
+    },
+    {
+      "file": "src/components/billing/UsageTracking.tsx",
+      "line": 217,
+      "text": "<Line type=\"monotone\" dataKey=\"devices\" stroke=\"#8b5cf6\" strokeWidth={2} />"
+    },
+    {
+      "file": "src/components/client-portal/ClientPortal.tsx",
+      "line": 574,
+      "text": "primaryColor: '#0d9488'"
+    },
+    {
+      "file": "src/components/demos/AIStudioProductDemo.tsx",
+      "line": 179,
+      "text": "themeColor: '#2563eb',"
+    },
+    {
+      "file": "src/components/demos/AIStudioProductDemo.tsx",
+      "line": 210,
+      "text": "const [selectedColor, setSelectedColor] = useState('#2563eb');"
+    },
+    {
+      "file": "src/components/demos/AIStudioProductDemo.tsx",
+      "line": 299,
+      "text": "{ value: '#2563eb', name: 'Blue' },"
+    },
+    {
+      "file": "src/components/demos/AIStudioProductDemo.tsx",
+      "line": 300,
+      "text": "{ value: '#10b981', name: 'Emerald' },"
+    },
+    {
+      "file": "src/components/demos/AIStudioProductDemo.tsx",
+      "line": 301,
+      "text": "{ value: '#8b5cf6', name: 'Violet' },"
+    },
+    {
+      "file": "src/components/demos/AIStudioProductDemo.tsx",
+      "line": 302,
+      "text": "{ value: '#f59e0b', name: 'Amber' },"
+    },
+    {
+      "file": "src/components/demos/CustomGPTBuilderDemo.tsx",
+      "line": 54,
+      "text": "const [brandColor, setBrandColor] = useState('#2563eb');"
+    },
+    {
+      "file": "src/components/demos/CustomGPTBuilderDemo.tsx",
+      "line": 86,
+      "text": "themeColor: '#2563eb',"
+    },
+    {
+      "file": "src/components/demos/CustomGPTBuilderDemo.tsx",
+      "line": 104,
+      "text": "themeColor: '#16a34a',"
+    },
+    {
+      "file": "src/components/demos/CustomGPTBuilderDemo.tsx",
+      "line": 122,
+      "text": "themeColor: '#9333ea',"
+    },
+    {
+      "file": "src/components/demos/CustomGPTBuilderDemo.tsx",
+      "line": 140,
+      "text": "themeColor: '#ea580c',"
+    },
+    {
+      "file": "src/components/demos/CustomGPTBuilderDemo.tsx",
+      "line": 158,
+      "text": "themeColor: '#0891b2',"
+    },
+    {
+      "file": "src/components/demos/CustomGPTBuilderDemo.tsx",
+      "line": 176,
+      "text": "themeColor: '#d97706',"
+    },
+    {
+      "file": "src/components/demos/CustomGPTBuilderDemo.tsx",
+      "line": 354,
+      "text": "placeholder=\"#2563eb\""
+    },
+    {
+      "file": "src/components/demos/GPTBuilderWizardDemo.tsx",
+      "line": 49,
+      "text": "themeColor: '#2563eb',"
+    },
+    {
+      "file": "src/components/demos/VanguardDemo.tsx",
+      "line": 173,
+      "text": "<div className=\"p-4 space-y-4 bg-[#050a0a] min-h-screen\" role=\"region\" aria-label=\"Vanguard Platform Demo\">"
+    },
+    {
+      "file": "src/components/deployment/GPTDeploymentCenter.tsx",
+      "line": 188,
+      "text": "background-color: #f5f5f5;"
+    },
+    {
+      "file": "src/components/deployment/GPTDeploymentCenter.tsx",
+      "line": 281,
+      "text": "style={{ backgroundColor: gpt.theme_color || '#3b82f6' }}"
+    },
+    {
+      "file": "src/components/deployment/SafeSuiteTeamsApps.tsx",
+      "line": 32,
+      "text": "primaryColor: \"#0078d4\","
+    },
+    {
+      "file": "src/components/deployment/SafeSuiteTeamsApps.tsx",
+      "line": 44,
+      "text": "color: \"#2563eb\","
+    },
+    {
+      "file": "src/components/deployment/SafeSuiteTeamsApps.tsx",
+      "line": 53,
+      "text": "color: \"#059669\","
+    },
+    {
+      "file": "src/components/deployment/SafeSuiteTeamsApps.tsx",
+      "line": 62,
+      "text": "color: \"#7c3aed\","
+    },
+    {
+      "file": "src/components/deployment/SafeSuiteTeamsApps.tsx",
+      "line": 71,
+      "text": "color: \"#dc2626\","
+    },
+    {
+      "file": "src/components/deployment/SafeSuiteTeamsApps.tsx",
+      "line": 198,
+      "text": "placeholder=\"#0078d4\""
+    },
+    {
+      "file": "src/components/deployment/TeamsIntegrationConfig.tsx",
+      "line": 68,
+      "text": "\"accentColor\": \"#0078D4\","
+    },
+    {
+      "file": "src/components/embed/SafePassEmbed.tsx",
+      "line": 39,
+      "text": "primaryColor = '#3b82f6',"
+    },
+    {
+      "file": "src/components/safeassist/FloatingSafeAssist.tsx",
+      "line": 62,
+      "text": "'bg-[#181818] text-[#F3F3F3] border border-[#3A3A3A] hover:border-primary/60',"
+    },
+    {
+      "file": "src/components/safeassist/FloatingSafeAssist.tsx",
+      "line": 78,
+      "text": "'flex flex-col border bg-[#181818] text-[#F3F3F3] shadow-2xl overflow-hidden',"
+    },
+    {
+      "file": "src/components/safeassist/FloatingSafeAssist.tsx",
+      "line": 80,
+      "text": "active ? 'border-primary/50' : 'border-[#3A3A3A]'"
+    },
+    {
+      "file": "src/components/safeassist/FloatingSafeAssist.tsx",
+      "line": 83,
+      "text": "<header className=\"flex items-center justify-between px-3 py-2 border-b border-[#3A3A3A]\">"
+    },
+    {
+      "file": "src/components/safeassist/FloatingSafeAssist.tsx",
+      "line": 88,
+      "text": "isTyping ? 'bg-primary wrayth-thinking' : 'bg-[#3A3A3A]'"
+    },
+    {
+      "file": "src/components/safeassist/FloatingSafeAssist.tsx",
+      "line": 111,
+      "text": "<div className=\"max-w-[85%] bg-[#242424] border border-[#3A3A3A] text-[#F3F3F3] px-3 py-2 text-sm whitespace-pre-wrap wrayth-chamfer-sm\">"
+    },
+    {
+      "file": "src/components/safeassist/FloatingSafeAssist.tsx",
+      "line": 115,
+      "text": "<div className=\"max-w-[90%] text-sm text-[#F3F3F3] prose prose-sm prose-invert prose-p:my-1.5\">"
+    },
+    {
+      "file": "src/components/safeassist/FloatingSafeAssist.tsx",
+      "line": 129,
+      "text": "<form onSubmit={handleSubmit} className=\"flex items-center gap-2 border-t border-[#3A3A3A] p-2\">"
+    },
+    {
+      "file": "src/components/safeassist/FloatingSafeAssist.tsx",
+      "line": 136,
+      "text": "className=\"h-9 bg-[#0F0F0F] border-[#3A3A3A] focus-visible:ring-primary/40\""
+    },
+    {
+      "file": "src/components/safeassist/VoiceOrb.tsx",
+      "line": 77,
+      "text": "? 'conic-gradient(from 0deg, #0ea5e9, #3b82f6, #1e40af, #0c4a6e, #0ea5e9)'"
+    },
+    {
+      "file": "src/components/safeassist/VoiceOrb.tsx",
+      "line": 78,
+      "text": ": 'conic-gradient(from 0deg, #374151, #4b5563, #374151, #1f2937, #374151)'"
+    },
+    {
+      "file": "src/components/safedesk/TicketAnalyticsDashboard.tsx",
+      "line": 35,
+      "text": "const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];"
+    },
+    {
+      "file": "src/components/safedesk/TicketAnalyticsDashboard.tsx",
+      "line": 379,
+      "text": "stroke=\"#3b82f6\""
+    },
+    {
+      "file": "src/components/safedesk/TicketAnalyticsDashboard.tsx",
+      "line": 380,
+      "text": "fill=\"#3b82f6\""
+    },
+    {
+      "file": "src/components/safedesk/TicketAnalyticsDashboard.tsx",
+      "line": 388,
+      "text": "stroke=\"#10b981\""
+    },
+    {
+      "file": "src/components/safedesk/TicketAnalyticsDashboard.tsx",
+      "line": 389,
+      "text": "fill=\"#10b981\""
+    },
+    {
+      "file": "src/components/safedesk/TicketAnalyticsDashboard.tsx",
+      "line": 397,
+      "text": "stroke=\"#8b5cf6\""
+    },
+    {
+      "file": "src/components/safedesk/TicketAnalyticsDashboard.tsx",
+      "line": 398,
+      "text": "fill=\"#8b5cf6\""
+    },
+    {
+      "file": "src/components/safedesk/TicketAnalyticsDashboard.tsx",
+      "line": 424,
+      "text": "fill=\"#8884d8\""
+    },
+    {
+      "file": "src/components/safedesk/TicketAnalyticsDashboard.tsx",
+      "line": 448,
+      "text": "<Bar dataKey=\"tickets\" fill=\"#3b82f6\" name=\"Total Tickets\" />"
+    },
+    {
+      "file": "src/components/safedesk/TicketAnalyticsDashboard.tsx",
+      "line": 449,
+      "text": "<Bar dataKey=\"resolved\" fill=\"#10b981\" name=\"Resolved\" />"
+    },
+    {
+      "file": "src/components/safedesk/TicketAnalyticsDashboard.tsx",
+      "line": 513,
+      "text": "stroke=\"#3b82f6\""
+    },
+    {
+      "file": "src/components/safepass/AccountSwitcher.tsx",
+      "line": 139,
+      "text": "className=\"w-64 bg-[#1a1a1a] border-primary/20\""
+    },
+    {
+      "file": "src/components/safepass/AddAccountDialog.tsx",
+      "line": 102,
+      "text": "<DialogContent className=\"bg-[#141414] border-primary/20 sm:max-w-md\">"
+    },
+    {
+      "file": "src/components/safepass/AddAccountDialog.tsx",
+      "line": 138,
+      "text": "className=\"pl-10 bg-[#1a1a1a] border-primary/20 focus:border-primary\""
+    },
+    {
+      "file": "src/components/safepass/AddAccountDialog.tsx",
+      "line": 156,
+      "text": "className=\"pl-10 bg-[#1a1a1a] border-primary/20 focus:border-primary\""
+    },
+    {
+      "file": "src/components/safepass/AddAccountDialog.tsx",
+      "line": 199,
+      "text": "className=\"pl-10 bg-[#1a1a1a] border-primary/20 focus:border-primary\""
+    },
+    {
+      "file": "src/components/safepass/AddAccountDialog.tsx",
+      "line": 218,
+      "text": "className=\"pl-10 bg-[#1a1a1a] border-primary/20 focus:border-primary\""
+    },
+    {
+      "file": "src/components/safepass/AutofillSuggestions.tsx",
+      "line": 108,
+      "text": "index === 0 ? \"bg-primary/20\" : \"bg-[#252525]\""
+    },
+    {
+      "file": "src/components/safepass/PasswordVault.tsx",
+      "line": 491,
+      "text": "<TabsList className=\"grid w-full grid-cols-5 lg:w-auto lg:inline-grid mb-4 sm:mb-6 bg-[#1a1a1a] border border-primary/10 h-auto p-1\">"
+    },
+    {
+      "file": "src/components/safepass/SafePassAISearch.tsx",
+      "line": 149,
+      "text": "className=\"pl-10 pr-10 bg-[#1a1a1a] border-primary/20 focus:border-primary text-white placeholder:text-gray-500\""
+    },
+    {
+      "file": "src/components/safepass/SafePassAISearch.tsx",
+      "line": 171,
+      "text": "className=\"w-[var(--radix-popover-trigger-width)] p-0 bg-[#1a1a1a] border-primary/20\""
+    },
+    {
+      "file": "src/components/safepass/SafePassAISearch.tsx",
+      "line": 196,
+      "text": "<div className=\"h-8 w-8 rounded-lg bg-[#252525] flex items-center justify-center flex-shrink-0\">"
+    },
+    {
+      "file": "src/components/safepass/SecurityArchitectureBadge.tsx",
+      "line": 123,
+      "text": "<DialogContent className=\"sm:max-w-lg bg-[#0a0a0a] border-primary/30 max-h-[85vh] overflow-y-auto\">"
+    },
+    {
+      "file": "src/components/safepass/SecurityTipsModal.tsx",
+      "line": 100,
+      "text": "<DialogContent className=\"sm:max-w-md bg-[#0a0a0a] border-primary/30 overflow-hidden\">"
+    },
+    {
+      "file": "src/components/safesuite/MFAOnboardingGate.tsx",
+      "line": 123,
+      "text": "dark: '#000000',"
+    },
+    {
+      "file": "src/components/safesuite/MFAOnboardingGate.tsx",
+      "line": 124,
+      "text": "light: '#ffffff'"
+    },
+    {
+      "file": "src/components/safesuite/SafeSuiteEffects.tsx",
+      "line": 103,
+      "text": "'border bg-[#141414]',"
+    },
+    {
+      "file": "src/components/safesuite/SafeSuiteEffects.tsx",
+      "line": 219,
+      "text": "'p-4 rounded-xl bg-[#141414] border',"
+    },
+    {
+      "file": "src/components/safesuite/SafeSuiteEffects.tsx",
+      "line": 454,
+      "text": "'p-4 rounded-lg bg-[#141414] border transition-all duration-200',"
+    },
+    {
+      "file": "src/components/safeweb/AIRecommendationsDisplay.tsx",
+      "line": 259,
+      "text": "className=\"p-4 rounded-xl bg-[#141414] border border-white/5 animate-pulse\""
+    },
+    {
+      "file": "src/components/safeweb/AIRecommendationsDisplay.tsx",
+      "line": 442,
+      "text": "className=\"flex items-start gap-3 p-3 rounded-lg bg-[#0d0d0d] border border-white/5\""
+    },
+    {
+      "file": "src/components/safeweb/AIRecommendationsDisplay.tsx",
+      "line": 517,
+      "text": "className=\"p-4 rounded-xl bg-[#141414] border border-white/5\""
+    },
+    {
+      "file": "src/components/settings/GlobalSettingsHub.tsx",
+      "line": 70,
+      "text": "primaryColor: '#0891b2',"
+    },
+    {
+      "file": "src/components/settings/GlobalSettingsHub.tsx",
+      "line": 71,
+      "text": "secondaryColor: '#7c3aed',"
+    },
+    {
+      "file": "src/components/settings/GlobalSettingsHub.tsx",
+      "line": 72,
+      "text": "accentColor: '#10b981',"
+    },
+    {
+      "file": "src/components/shared/AppAIChat.tsx",
+      "line": 291,
+      "text": "<Card className={`bg-[#0f0f0f] border-white/10 flex flex-col ${isExpanded ? 'fixed inset-4 z-50' : 'h-[500px]'}`}>"
+    },
+    {
+      "file": "src/components/shared/AppAIChat.tsx",
+      "line": 349,
+      "text": ": 'bg-[#1a1a1a] border border-white/10 text-gray-200'"
+    },
+    {
+      "file": "src/components/shared/AppAIChat.tsx",
+      "line": 365,
+      "text": "<div className=\"bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-3\">"
+    },
+    {
+      "file": "src/components/shared/AppAIChat.tsx",
+      "line": 403,
+      "text": "className=\"flex-1 bg-[#1a1a1a] border-white/10 text-white placeholder:text-gray-500\""
+    },
+    {
+      "file": "src/components/shared/DarkWebCheck.tsx",
+      "line": 142,
+      "text": "className=\"flex-1 bg-[#0f0f0f] border-white/10 text-white\""
+    },
+    {
+      "file": "src/components/shared/DarkWebCheck.tsx",
+      "line": 182,
+      "text": "<Card className=\"bg-[#0f0f0f] border-purple-500/20\">"
+    },
+    {
+      "file": "src/components/shared/DarkWebCheck.tsx",
+      "line": 208,
+      "text": "className=\"flex-1 bg-[#141414] border-purple-500/20 text-white\""
+    },
+    {
+      "file": "src/components/shared/DarkWebCheck.tsx",
+      "line": 270,
+      "text": "<div key={i} className=\"p-3 rounded-lg bg-[#141414] border border-orange-500/20\">"
+    },
+    {
+      "file": "src/components/shared/DarkWebCheck.tsx",
+      "line": 309,
+      "text": "<div key={i} className=\"p-3 rounded-lg bg-[#141414] border border-red-500/20\">"
+    },
+    {
+      "file": "src/components/ui/alert-dialog.tsx",
+      "line": 37,
+      "text": "\"fixed left-[50%] top-[50%] z-[100] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/50 bg-background p-6 shadow-2xl durati"
+    },
+    {
+      "file": "src/components/ui/command.tsx",
+      "line": 16,
+      "text": "\"flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground dark:bg-[#0f0f14]\","
+    },
+    {
+      "file": "src/components/ui/command.tsx",
+      "line": 29,
+      "text": "<DialogContent className=\"overflow-hidden p-0 shadow-2xl shadow-black/80 border-white/10 bg-[#0f0f14] gap-0 max-w-lg\">"
+    },
+    {
+      "file": "src/components/ui/command.tsx",
+      "line": 30,
+      "text": "<Command className=\"bg-[#0f0f14] [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-grou"
+    },
+    {
+      "file": "src/components/ui/context-menu.tsx",
+      "line": 47,
+      "text": "\"z-[100] min-w-[8rem] overflow-hidden rounded-md border border-border/50 bg-popover p-1 text-popover-foreground shadow-xl dark:bg-[#0f0f14] dark:border-white/10"
+    },
+    {
+      "file": "src/components/ui/context-menu.tsx",
+      "line": 63,
+      "text": "\"z-[100] min-w-[8rem] overflow-hidden rounded-md border border-border/50 bg-popover p-1 text-popover-foreground shadow-xl dark:bg-[#0f0f14] dark:border-white/10"
+    },
+    {
+      "file": "src/components/ui/dialog.tsx",
+      "line": 39,
+      "text": "\"fixed left-[50%] top-[50%] z-[100] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/50 bg-background p-6 shadow-2xl durati"
+    },
+    {
+      "file": "src/components/ui/dropdown-menu.tsx",
+      "line": 48,
+      "text": "\"z-[100] min-w-[8rem] overflow-hidden rounded-md border border-border/50 bg-popover p-1 text-popover-foreground shadow-xl dark:bg-[#0f0f14] dark:border-white/10"
+    },
+    {
+      "file": "src/components/ui/dropdown-menu.tsx",
+      "line": 66,
+      "text": "\"z-[100] min-w-[8rem] overflow-hidden rounded-md border border-border/50 bg-popover p-1 text-popover-foreground shadow-xl dark:bg-[#0f0f14] dark:border-white/10"
+    },
+    {
+      "file": "src/components/ui/popover.tsx",
+      "line": 20,
+      "text": "\"z-[100] w-72 rounded-md border border-border/50 bg-popover p-4 text-popover-foreground shadow-xl outline-none dark:bg-[#0f0f14] dark:border-white/10 data-[stat"
+    },
+    {
+      "file": "src/components/ui/select.tsx",
+      "line": 76,
+      "text": "\"relative z-[100] max-h-96 min-w-[8rem] overflow-hidden rounded-md border border-border/50 bg-popover text-popover-foreground shadow-xl dark:bg-[#0f0f14] dark:b"
+    },
+    {
+      "file": "src/components/ui/tooltip.tsx",
+      "line": 20,
+      "text": "\"z-[100] overflow-hidden rounded-md border border-border/50 bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-xl dark:bg-[#0f0f14] dark:border-white"
+    },
+    {
+      "file": "src/hooks/useAppStoreAssets.ts",
+      "line": 65,
+      "text": "backgroundColor: '#ffffff',"
+    },
+    {
+      "file": "src/hooks/useAppStoreAssets.ts",
+      "line": 113,
+      "text": "body { font-family: -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; background: #f5f5f7; }"
+    },
+    {
+      "file": "src/hooks/useAppStoreAssets.ts",
+      "line": 119,
+      "text": ".keywords { display: flex; flex-wrap: wrap; gap: 0.5rem; } .keyword { background: #e0e0e0; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; }"
+    },
+    {
+      "file": "src/hooks/useCapacitorExport.ts",
+      "line": 25,
+      "text": "splashColor: '#ffffff',"
+    },
+    {
+      "file": "src/hooks/useChartDashboardBuilder.ts",
+      "line": 63,
+      "text": "color: '#3b82f6',"
+    },
+    {
+      "file": "src/hooks/useChatWidgetBuilder.ts",
+      "line": 19,
+      "text": "primaryColor: '#6366f1',"
+    },
+    {
+      "file": "src/hooks/useChatWidgetBuilder.ts",
+      "line": 102,
+      "text": "<span style={{ display: 'inline-block', padding: '8px 12px', borderRadius: 12, background: m.role === 'user' ? '${config.primaryColor}' : '#f3f4f6', color: m.ro"
+    },
+    {
+      "file": "src/hooks/useChatWidgetBuilder.ts",
+      "line": 109,
+      "text": "<div style={{ padding: 12, borderTop: '1px solid #e5e7eb', display: 'flex', gap: 8 }}>"
+    },
+    {
+      "file": "src/hooks/useChatWidgetBuilder.ts",
+      "line": 110,
+      "text": "<input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMessage()} placeholder=\"${config.placeholder}\" style={{ f"
+    },
+    {
+      "file": "src/hooks/useCollaborationEngine.ts",
+      "line": 61,
+      "text": "'#06b6d4', '#8b5cf6', '#f43f5e', '#22c55e',"
+    },
+    {
+      "file": "src/hooks/useCollaborationEngine.ts",
+      "line": 62,
+      "text": "'#f59e0b', '#3b82f6', '#ec4899', '#14b8a6',"
+    },
+    {
+      "file": "src/hooks/useCollaborationEngine.ts",
+      "line": 63,
+      "text": "'#a855f7', '#ef4444', '#10b981', '#6366f1',"
+    },
+    {
+      "file": "src/hooks/useCollaborativeWhiteboard.ts",
+      "line": 35,
+      "text": "const [strokeColor, setStrokeColor] = useState('#06b6d4');"
+    },
+    {
+      "file": "src/hooks/useColorContrastChecker.ts",
+      "line": 46,
+      "text": "const [fg, setFg] = useState('#ffffff');"
+    },
+    {
+      "file": "src/hooks/useColorContrastChecker.ts",
+      "line": 47,
+      "text": "const [bg, setBg] = useState('#1a1a2e');"
+    },
+    {
+      "file": "src/hooks/useCommentSystem.ts",
+      "line": 49,
+      "text": "authorColor: '#06b6d4',"
+    },
+    {
+      "file": "src/hooks/useEmailTemplateBuilder.ts",
+      "line": 23,
+      "text": "<h1 style=\"color:#6366f1;\">Welcome, {{userName}}! 🎉</h1>"
+    },
+    {
+      "file": "src/hooks/useEmailTemplateBuilder.ts",
+      "line": 25,
+      "text": "<a href=\"{{loginUrl}}\" style=\"display:inline-block;padding:12px 24px;background:#6366f1;color:white;text-decoration:none;border-radius:8px;margin-top:1rem;\">Get"
+    },
+    {
+      "file": "src/hooks/useEmailTemplateBuilder.ts",
+      "line": 35,
+      "text": "<a href=\"{{resetUrl}}\" style=\"display:inline-block;padding:12px 24px;background:#ef4444;color:white;text-decoration:none;border-radius:8px;\">Reset Password</a>"
+    },
+    {
+      "file": "src/hooks/useEmailTemplateBuilder.ts",
+      "line": 45,
+      "text": "<a href=\"{{paymentUrl}}\" style=\"display:inline-block;padding:12px 24px;background:#10b981;color:white;text-decoration:none;border-radius:8px;\">Pay Now</a>"
+    },
+    {
+      "file": "src/hooks/useKPIDashboardBuilder.ts",
+      "line": 26,
+      "text": "color: '#22c55e',"
+    },
+    {
+      "file": "src/hooks/useLayoutGridEditor.ts",
+      "line": 34,
+      "text": "{ name: 'header', gridColumn: '1 / -1', gridRow: '1', backgroundColor: '#e2e8f0' },"
+    },
+    {
+      "file": "src/hooks/useLayoutGridEditor.ts",
+      "line": 35,
+      "text": "{ name: 'sidebar', gridColumn: '1', gridRow: '2', backgroundColor: '#f1f5f9' },"
+    },
+    {
+      "file": "src/hooks/useLayoutGridEditor.ts",
+      "line": 36,
+      "text": "{ name: 'main', gridColumn: '2 / 4', gridRow: '2', backgroundColor: '#ffffff' },"
+    },
+    {
+      "file": "src/hooks/useLayoutGridEditor.ts",
+      "line": 37,
+      "text": "{ name: 'footer', gridColumn: '1 / -1', gridRow: '3', backgroundColor: '#e2e8f0' },"
+    },
+    {
+      "file": "src/hooks/useLayoutGridEditor.ts",
+      "line": 46,
+      "text": "{ name: 'left', gridColumn: '1', gridRow: '1', backgroundColor: '#f1f5f9' },"
+    },
+    {
+      "file": "src/hooks/useLayoutGridEditor.ts",
+      "line": 47,
+      "text": "{ name: 'right', gridColumn: '2', gridRow: '1', backgroundColor: '#ffffff' },"
+    },
+    {
+      "file": "src/hooks/useLayoutGridEditor.ts",
+      "line": 56,
+      "text": "{ name: 'header', gridColumn: '1 / -1', gridRow: '1', backgroundColor: '#1e293b', content: 'Header' },"
+    },
+    {
+      "file": "src/hooks/useLayoutGridEditor.ts",
+      "line": 57,
+      "text": "{ name: 'sidebar', gridColumn: '1', gridRow: '2 / 4', backgroundColor: '#f1f5f9', content: 'Sidebar' },"
+    },
+    {
+      "file": "src/hooks/useLayoutGridEditor.ts",
+      "line": 58,
+      "text": "{ name: 'widget1', gridColumn: '2', gridRow: '2', backgroundColor: '#dbeafe', content: 'Widget 1' },"
+    },
+    {
+      "file": "src/hooks/useLayoutGridEditor.ts",
+      "line": 59,
+      "text": "{ name: 'widget2', gridColumn: '3', gridRow: '2', backgroundColor: '#dcfce7', content: 'Widget 2' },"
+    },
+    {
+      "file": "src/hooks/useLayoutGridEditor.ts",
+      "line": 60,
+      "text": "{ name: 'widget3', gridColumn: '4', gridRow: '2', backgroundColor: '#fef3c7', content: 'Widget 3' },"
+    },
+    {
+      "file": "src/hooks/useLayoutGridEditor.ts",
+      "line": 61,
+      "text": "{ name: 'main', gridColumn: '2 / -1', gridRow: '3', backgroundColor: '#ffffff', content: 'Main Content' },"
+    },
+    {
+      "file": "src/hooks/useLayoutGridEditor.ts",
+      "line": 70,
+      "text": "{ name: 'a', gridColumn: '1', gridRow: '1 / 3', backgroundColor: '#dbeafe' },"
+    },
+    {
+      "file": "src/hooks/useLayoutGridEditor.ts",
+      "line": 71,
+      "text": "{ name: 'b', gridColumn: '2', gridRow: '1', backgroundColor: '#dcfce7' },"
+    },
+    {
+      "file": "src/hooks/useLayoutGridEditor.ts",
+      "line": 72,
+      "text": "{ name: 'c', gridColumn: '3', gridRow: '1 / 3', backgroundColor: '#fef3c7' },"
+    },
+    {
+      "file": "src/hooks/useLayoutGridEditor.ts",
+      "line": 73,
+      "text": "{ name: 'd', gridColumn: '2', gridRow: '2 / 4', backgroundColor: '#fce7f3' },"
+    },
+    {
+      "file": "src/hooks/useLayoutGridEditor.ts",
+      "line": 74,
+      "text": "{ name: 'e', gridColumn: '1', gridRow: '3 / 5', backgroundColor: '#e0e7ff' },"
+    },
+    {
+      "file": "src/hooks/useLayoutGridEditor.ts",
+      "line": 75,
+      "text": "{ name: 'f', gridColumn: '3', gridRow: '3', backgroundColor: '#f3e8ff' },"
+    },
+    {
+      "file": "src/hooks/useLayoutGridEditor.ts",
+      "line": 107,
+      "text": "const area: GridArea = { id: crypto.randomUUID(), name: 'area', gridColumn: '1', gridRow: '1', backgroundColor: '#f1f5f9' };"
+    },
+    {
+      "file": "src/hooks/useMSP.ts",
+      "line": 422,
+      "text": "brand_color: mspData.brand_color || '#3b82f6'"
+    },
+    {
+      "file": "src/hooks/useMSP.ts",
+      "line": 557,
+      "text": "primaryColor: msp?.brand_color || '#3b82f6',"
+    },
+    {
+      "file": "src/hooks/useMarkdownPreview.ts",
+      "line": 97,
+      "text": "body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; color: #1a1a2e; }"
+    },
+    {
+      "file": "src/hooks/useMarkdownPreview.ts",
+      "line": 99,
+      "text": "code { background: #f4f4f5; padding: 0.2em 0.4em; border-radius: 3px; font-size: 0.9em; }"
+    },
+    {
+      "file": "src/hooks/useMarkdownPreview.ts",
+      "line": 100,
+      "text": "pre code { display: block; padding: 1em; overflow-x: auto; background: #1a1a2e; color: #e0e0e0; border-radius: 6px; }"
+    },
+    {
+      "file": "src/hooks/useMarkdownPreview.ts",
+      "line": 101,
+      "text": "blockquote { border-left: 4px solid #0ea5e9; margin: 0; padding: 0.5em 1em; color: #555; }"
+    },
+    {
+      "file": "src/hooks/useMarkdownPreview.ts",
+      "line": 104,
+      "text": "th { background: #f4f4f5; }"
+    },
+    {
+      "file": "src/hooks/useNLToRegex.ts",
+      "line": 35,
+      "text": "const [testInput, setTestInput] = useState('Hello world test@email.com 192.168.1.1 https://example.com #ff0000');"
+    },
+    {
+      "file": "src/hooks/useNotificationCenterGenerator.ts",
+      "line": 21,
+      "text": "{ id: '1', name: 'info', icon: 'Info', color: '#3b82f6', enabled: true },"
+    },
+    {
+      "file": "src/hooks/useNotificationCenterGenerator.ts",
+      "line": 22,
+      "text": "{ id: '2', name: 'success', icon: 'CheckCircle', color: '#22c55e', enabled: true },"
+    },
+    {
+      "file": "src/hooks/useNotificationCenterGenerator.ts",
+      "line": 23,
+      "text": "{ id: '3', name: 'warning', icon: 'AlertTriangle', color: '#f59e0b', enabled: true },"
+    }
+  ],
+  "arbitraryColors": [
+    {
+      "file": "src/components/demos/VanguardDemo.tsx",
+      "line": 173,
+      "text": "<div className=\"p-4 space-y-4 bg-[#050a0a] min-h-screen\" role=\"region\" aria-label=\"Vanguard Platform Demo\">"
+    },
+    {
+      "file": "src/components/safeassist/FloatingSafeAssist.tsx",
+      "line": 62,
+      "text": "'bg-[#181818] text-[#F3F3F3] border border-[#3A3A3A] hover:border-primary/60',"
+    },
+    {
+      "file": "src/components/safeassist/FloatingSafeAssist.tsx",
+      "line": 78,
+      "text": "'flex flex-col border bg-[#181818] text-[#F3F3F3] shadow-2xl overflow-hidden',"
+    },
+    {
+      "file": "src/components/safeassist/FloatingSafeAssist.tsx",
+      "line": 80,
+      "text": "active ? 'border-primary/50' : 'border-[#3A3A3A]'"
+    },
+    {
+      "file": "src/components/safeassist/FloatingSafeAssist.tsx",
+      "line": 83,
+      "text": "<header className=\"flex items-center justify-between px-3 py-2 border-b border-[#3A3A3A]\">"
+    },
+    {
+      "file": "src/components/safeassist/FloatingSafeAssist.tsx",
+      "line": 88,
+      "text": "isTyping ? 'bg-primary wrayth-thinking' : 'bg-[#3A3A3A]'"
+    },
+    {
+      "file": "src/components/safeassist/FloatingSafeAssist.tsx",
+      "line": 111,
+      "text": "<div className=\"max-w-[85%] bg-[#242424] border border-[#3A3A3A] text-[#F3F3F3] px-3 py-2 text-sm whitespace-pre-wrap wrayth-chamfer-sm\">"
+    },
+    {
+      "file": "src/components/safeassist/FloatingSafeAssist.tsx",
+      "line": 115,
+      "text": "<div className=\"max-w-[90%] text-sm text-[#F3F3F3] prose prose-sm prose-invert prose-p:my-1.5\">"
+    },
+    {
+      "file": "src/components/safeassist/FloatingSafeAssist.tsx",
+      "line": 129,
+      "text": "<form onSubmit={handleSubmit} className=\"flex items-center gap-2 border-t border-[#3A3A3A] p-2\">"
+    },
+    {
+      "file": "src/components/safeassist/FloatingSafeAssist.tsx",
+      "line": 136,
+      "text": "className=\"h-9 bg-[#0F0F0F] border-[#3A3A3A] focus-visible:ring-primary/40\""
+    },
+    {
+      "file": "src/components/safepass/AccountSwitcher.tsx",
+      "line": 139,
+      "text": "className=\"w-64 bg-[#1a1a1a] border-primary/20\""
+    },
+    {
+      "file": "src/components/safepass/AddAccountDialog.tsx",
+      "line": 102,
+      "text": "<DialogContent className=\"bg-[#141414] border-primary/20 sm:max-w-md\">"
+    },
+    {
+      "file": "src/components/safepass/AddAccountDialog.tsx",
+      "line": 138,
+      "text": "className=\"pl-10 bg-[#1a1a1a] border-primary/20 focus:border-primary\""
+    },
+    {
+      "file": "src/components/safepass/AddAccountDialog.tsx",
+      "line": 156,
+      "text": "className=\"pl-10 bg-[#1a1a1a] border-primary/20 focus:border-primary\""
+    },
+    {
+      "file": "src/components/safepass/AddAccountDialog.tsx",
+      "line": 199,
+      "text": "className=\"pl-10 bg-[#1a1a1a] border-primary/20 focus:border-primary\""
+    },
+    {
+      "file": "src/components/safepass/AddAccountDialog.tsx",
+      "line": 218,
+      "text": "className=\"pl-10 bg-[#1a1a1a] border-primary/20 focus:border-primary\""
+    },
+    {
+      "file": "src/components/safepass/AutofillSuggestions.tsx",
+      "line": 108,
+      "text": "index === 0 ? \"bg-primary/20\" : \"bg-[#252525]\""
+    },
+    {
+      "file": "src/components/safepass/PasswordVault.tsx",
+      "line": 491,
+      "text": "<TabsList className=\"grid w-full grid-cols-5 lg:w-auto lg:inline-grid mb-4 sm:mb-6 bg-[#1a1a1a] border border-primary/10 h-auto p-1\">"
+    },
+    {
+      "file": "src/components/safepass/SafePassAISearch.tsx",
+      "line": 149,
+      "text": "className=\"pl-10 pr-10 bg-[#1a1a1a] border-primary/20 focus:border-primary text-white placeholder:text-gray-500\""
+    },
+    {
+      "file": "src/components/safepass/SafePassAISearch.tsx",
+      "line": 171,
+      "text": "className=\"w-[var(--radix-popover-trigger-width)] p-0 bg-[#1a1a1a] border-primary/20\""
+    },
+    {
+      "file": "src/components/safepass/SafePassAISearch.tsx",
+      "line": 196,
+      "text": "<div className=\"h-8 w-8 rounded-lg bg-[#252525] flex items-center justify-center flex-shrink-0\">"
+    },
+    {
+      "file": "src/components/safepass/SecurityArchitectureBadge.tsx",
+      "line": 123,
+      "text": "<DialogContent className=\"sm:max-w-lg bg-[#0a0a0a] border-primary/30 max-h-[85vh] overflow-y-auto\">"
+    },
+    {
+      "file": "src/components/safepass/SecurityTipsModal.tsx",
+      "line": 100,
+      "text": "<DialogContent className=\"sm:max-w-md bg-[#0a0a0a] border-primary/30 overflow-hidden\">"
+    },
+    {
+      "file": "src/components/safesuite/SafeSuiteEffects.tsx",
+      "line": 103,
+      "text": "'border bg-[#141414]',"
+    },
+    {
+      "file": "src/components/safesuite/SafeSuiteEffects.tsx",
+      "line": 219,
+      "text": "'p-4 rounded-xl bg-[#141414] border',"
+    },
+    {
+      "file": "src/components/safesuite/SafeSuiteEffects.tsx",
+      "line": 454,
+      "text": "'p-4 rounded-lg bg-[#141414] border transition-all duration-200',"
+    },
+    {
+      "file": "src/components/safeweb/AIRecommendationsDisplay.tsx",
+      "line": 259,
+      "text": "className=\"p-4 rounded-xl bg-[#141414] border border-white/5 animate-pulse\""
+    },
+    {
+      "file": "src/components/safeweb/AIRecommendationsDisplay.tsx",
+      "line": 442,
+      "text": "className=\"flex items-start gap-3 p-3 rounded-lg bg-[#0d0d0d] border border-white/5\""
+    },
+    {
+      "file": "src/components/safeweb/AIRecommendationsDisplay.tsx",
+      "line": 517,
+      "text": "className=\"p-4 rounded-xl bg-[#141414] border border-white/5\""
+    },
+    {
+      "file": "src/components/shared/AppAIChat.tsx",
+      "line": 291,
+      "text": "<Card className={`bg-[#0f0f0f] border-white/10 flex flex-col ${isExpanded ? 'fixed inset-4 z-50' : 'h-[500px]'}`}>"
+    },
+    {
+      "file": "src/components/shared/AppAIChat.tsx",
+      "line": 349,
+      "text": ": 'bg-[#1a1a1a] border border-white/10 text-gray-200'"
+    },
+    {
+      "file": "src/components/shared/AppAIChat.tsx",
+      "line": 365,
+      "text": "<div className=\"bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-3\">"
+    },
+    {
+      "file": "src/components/shared/AppAIChat.tsx",
+      "line": 403,
+      "text": "className=\"flex-1 bg-[#1a1a1a] border-white/10 text-white placeholder:text-gray-500\""
+    },
+    {
+      "file": "src/components/shared/DarkWebCheck.tsx",
+      "line": 142,
+      "text": "className=\"flex-1 bg-[#0f0f0f] border-white/10 text-white\""
+    },
+    {
+      "file": "src/components/shared/DarkWebCheck.tsx",
+      "line": 182,
+      "text": "<Card className=\"bg-[#0f0f0f] border-purple-500/20\">"
+    },
+    {
+      "file": "src/components/shared/DarkWebCheck.tsx",
+      "line": 208,
+      "text": "className=\"flex-1 bg-[#141414] border-purple-500/20 text-white\""
+    },
+    {
+      "file": "src/components/shared/DarkWebCheck.tsx",
+      "line": 270,
+      "text": "<div key={i} className=\"p-3 rounded-lg bg-[#141414] border border-orange-500/20\">"
+    },
+    {
+      "file": "src/components/shared/DarkWebCheck.tsx",
+      "line": 309,
+      "text": "<div key={i} className=\"p-3 rounded-lg bg-[#141414] border border-red-500/20\">"
+    },
+    {
+      "file": "src/components/ui/alert-dialog.tsx",
+      "line": 37,
+      "text": "\"fixed left-[50%] top-[50%] z-[100] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/50 bg-background p-6 shadow-2xl durati"
+    },
+    {
+      "file": "src/components/ui/command.tsx",
+      "line": 16,
+      "text": "\"flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground dark:bg-[#0f0f14]\","
+    },
+    {
+      "file": "src/components/ui/command.tsx",
+      "line": 29,
+      "text": "<DialogContent className=\"overflow-hidden p-0 shadow-2xl shadow-black/80 border-white/10 bg-[#0f0f14] gap-0 max-w-lg\">"
+    },
+    {
+      "file": "src/components/ui/command.tsx",
+      "line": 30,
+      "text": "<Command className=\"bg-[#0f0f14] [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-grou"
+    },
+    {
+      "file": "src/components/ui/context-menu.tsx",
+      "line": 47,
+      "text": "\"z-[100] min-w-[8rem] overflow-hidden rounded-md border border-border/50 bg-popover p-1 text-popover-foreground shadow-xl dark:bg-[#0f0f14] dark:border-white/10"
+    },
+    {
+      "file": "src/components/ui/context-menu.tsx",
+      "line": 63,
+      "text": "\"z-[100] min-w-[8rem] overflow-hidden rounded-md border border-border/50 bg-popover p-1 text-popover-foreground shadow-xl dark:bg-[#0f0f14] dark:border-white/10"
+    },
+    {
+      "file": "src/components/ui/dialog.tsx",
+      "line": 39,
+      "text": "\"fixed left-[50%] top-[50%] z-[100] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border/50 bg-background p-6 shadow-2xl durati"
+    },
+    {
+      "file": "src/components/ui/dropdown-menu.tsx",
+      "line": 48,
+      "text": "\"z-[100] min-w-[8rem] overflow-hidden rounded-md border border-border/50 bg-popover p-1 text-popover-foreground shadow-xl dark:bg-[#0f0f14] dark:border-white/10"
+    },
+    {
+      "file": "src/components/ui/dropdown-menu.tsx",
+      "line": 66,
+      "text": "\"z-[100] min-w-[8rem] overflow-hidden rounded-md border border-border/50 bg-popover p-1 text-popover-foreground shadow-xl dark:bg-[#0f0f14] dark:border-white/10"
+    },
+    {
+      "file": "src/components/ui/popover.tsx",
+      "line": 20,
+      "text": "\"z-[100] w-72 rounded-md border border-border/50 bg-popover p-4 text-popover-foreground shadow-xl outline-none dark:bg-[#0f0f14] dark:border-white/10 data-[stat"
+    },
+    {
+      "file": "src/components/ui/select.tsx",
+      "line": 76,
+      "text": "\"relative z-[100] max-h-96 min-w-[8rem] overflow-hidden rounded-md border border-border/50 bg-popover text-popover-foreground shadow-xl dark:bg-[#0f0f14] dark:b"
+    },
+    {
+      "file": "src/components/ui/tooltip.tsx",
+      "line": 20,
+      "text": "\"z-[100] overflow-hidden rounded-md border border-border/50 bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-xl dark:bg-[#0f0f14] dark:border-white"
+    },
+    {
+      "file": "src/layouts/SafePassLayout.tsx",
+      "line": 54,
+      "text": "<div className=\"min-h-screen bg-[#0a0a0a]\">"
+    },
+    {
+      "file": "src/layouts/SafePassLayout.tsx",
+      "line": 56,
+      "text": "<header className=\"sticky top-0 z-50 w-full border-b border-amber-500/10 bg-[#0f0f0f]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0f0f0f]/60\">"
+    },
+    {
+      "file": "src/layouts/SafePassLayout.tsx",
+      "line": 153,
+      "text": "<div className=\"md:hidden border-t border-amber-500/10 bg-[#0f0f0f]\">"
+    },
+    {
+      "file": "src/layouts/SafePassLayout.tsx",
+      "line": 180,
+      "text": "<main className=\"container py-6 bg-[#0a0a0a]\">"
+    },
+    {
+      "file": "src/layouts/SafePassLayout.tsx",
+      "line": 185,
+      "text": "<footer className=\"border-t border-amber-500/10 py-6 mt-auto bg-[#0a0a0a]\">"
+    },
+    {
+      "file": "src/pages/NotFound.tsx",
+      "line": 19,
+      "text": "<div className=\"min-h-screen flex items-center justify-center bg-[#050a0a] relative overflow-hidden\">"
+    },
+    {
+      "file": "src/pages/safesuite/Exposure.tsx",
+      "line": 487,
+      "text": "<Card className=\"bg-[#141414] border-violet-500/10\">"
+    },
+    {
+      "file": "src/pages/safesuite/Exposure.tsx",
+      "line": 498,
+      "text": "<Card key={asset.id} className=\"bg-[#141414] border-violet-500/10 hover:border-violet-500/30 transition-colors\">"
+    },
+    {
+      "file": "src/pages/safesuite/Exposure.tsx",
+      "line": 572,
+      "text": "className=\"p-4 bg-[#1a1a1a] rounded-lg border border-red-500/20 hover:border-red-500/40 transition-colors cursor-pointer\""
+    },
+    {
+      "file": "src/pages/safesuite/Exposure.tsx",
+      "line": 626,
+      "text": "<DialogContent className=\"max-w-2xl bg-[#141414] border-violet-500/20 text-white\">"
+    },
+    {
+      "file": "src/pages/safesuite/Exposure.tsx",
+      "line": 739,
+      "text": "<div className=\"bg-[#1a1a1a] p-4 rounded-lg space-y-2\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
+      "line": 163,
+      "text": "<div className=\"min-h-screen bg-[#0a0a0a]\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
+      "line": 165,
+      "text": "<header className=\"sticky top-0 z-50 bg-[#0a0a0a]/95 backdrop-blur border-b border-amber-500/10\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
+      "line": 234,
+      "text": "<section className=\"py-8 px-4 border-y border-amber-500/10 bg-[#0d0d0d]\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
+      "line": 270,
+      "text": "<Card key={index} className=\"bg-[#141414] border-amber-500/10 hover:border-amber-500/30 transition-all\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
+      "line": 299,
+      "text": "<section className=\"py-20 px-4 bg-[#0d0d0d]\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
+      "line": 333,
+      "text": "<div key={index} className=\"flex gap-4 p-6 rounded-xl bg-[#141414] border border-amber-500/10\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
+      "line": 365,
+      "text": "<Card className=\"bg-[#141414] border-gray-700\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
+      "line": 389,
+      "text": "<Card className=\"bg-[#141414] border-amber-500/30\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
+      "line": 431,
+      "text": "<tr className=\"bg-[#141414]\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
+      "line": 452,
+      "text": "<div className=\"p-6 rounded-xl bg-[#141414] border border-amber-500/10\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
+      "line": 477,
+      "text": "<div className=\"p-6 rounded-xl bg-[#141414] border border-amber-500/10\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
+      "line": 522,
+      "text": "<section className=\"py-20 px-4 bg-[#0d0d0d]\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
+      "line": 536,
+      "text": "<tr className=\"bg-[#141414]\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
+      "line": 569,
+      "text": "<section className=\"py-20 px-4 bg-[#0d0d0d]\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
+      "line": 579,
+      "text": "<div key={index} className=\"p-6 rounded-xl bg-[#141414] border border-amber-500/10\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteAssist.tsx",
+      "line": 137,
+      "text": "<div className=\"max-w-[80%] bg-[#242424] border border-[#3A3A3A] text-[#F3F3F3] px-4 py-2.5 whitespace-pre-wrap wrayth-chamfer-sm\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteDashboard.tsx",
+      "line": 189,
+      "text": "<div className=\"wrayth-chamfer border border-[#3A3A3A] bg-[#181818] p-5 sm:p-6 h-full\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteDashboard.tsx",
+      "line": 194,
+      "text": "<h3 className=\"text-base sm:text-lg font-light text-[#F3F3F3] mb-4\">What would you like to do?</h3>"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteDashboard.tsx",
+      "line": 198,
+      "text": "<button className=\"w-full text-left text-sm text-[#F3F3F3] hover:text-primary transition-colors py-2 px-1 border-b border-[#2A2A2A] last:border-0 min-h-[40px]\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteDashboard.tsx",
+      "line": 559,
+      "text": "<div className=\"min-h-screen bg-[#0a0a0a] -m-4 lg:-m-6 p-4 lg:p-6 space-y-4 sm:space-y-6\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteDashboard.tsx",
+      "line": 601,
+      "text": "<div className=\"wrayth-chamfer border border-[#3A3A3A] bg-[#0f0f0f] p-5\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 71,
+      "text": "<section className=\"relative overflow-hidden border-b border-[#3A3A3A]\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 106,
+      "text": "<h1 className=\"text-5xl md:text-7xl font-semibold tracking-tight text-[#F3F3F3] mb-8 leading-[1.05]\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 131,
+      "text": "className=\"wrayth-chamfer-sm w-full sm:w-auto border-[#3A3A3A] text-[#F3F3F3] hover:bg-[#181818]\""
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 144,
+      "text": "<section className=\"border-b border-[#3A3A3A] bg-[#0d0d0d]\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 146,
+      "text": "<p className=\"max-w-3xl text-xl md:text-2xl text-[#F3F3F3] font-light leading-snug\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 160,
+      "text": "<h2 className=\"text-3xl md:text-4xl font-semibold tracking-tight text-[#F3F3F3]\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 165,
+      "text": "<div className=\"grid gap-px bg-[#3A3A3A] border border-[#3A3A3A] wrayth-chamfer overflow-hidden\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 169,
+      "text": "className=\"bg-[#0d0d0d] p-8 md:p-10 grid md:grid-cols-[1fr_1.5fr] gap-6 md:gap-12\""
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 172,
+      "text": "<div className=\"inline-flex items-center justify-center h-11 w-11 border border-[#3A3A3A] wrayth-chamfer-sm mb-6\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 173,
+      "text": "<cap.icon className=\"h-5 w-5 text-[#F3F3F3]\" />"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 175,
+      "text": "<h3 className=\"text-xl md:text-2xl font-semibold text-[#F3F3F3] leading-snug\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 183,
+      "text": "<li key={b} className=\"flex items-start gap-2 text-sm text-[#F3F3F3]\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 201,
+      "text": "<section className=\"py-24 border-t border-[#3A3A3A]\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 238,
+      "text": "<section id=\"pricing\" className=\"py-24 border-t border-[#3A3A3A] bg-[#0d0d0d]\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 245,
+      "text": "<h2 className=\"text-3xl md:text-4xl font-semibold tracking-tight text-[#F3F3F3]\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 250,
+      "text": "<div className=\"grid md:grid-cols-3 gap-px bg-[#3A3A3A] border border-[#3A3A3A] wrayth-chamfer overflow-hidden\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 254,
+      "text": "className={`relative bg-[#181818] p-8 flex flex-col ${tier.popular ? 'ring-1 ring-primary/50' : ''}`}"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 270,
+      "text": "<span className=\"text-5xl font-semibold text-[#F3F3F3] tabular-nums\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 279,
+      "text": "<li className=\"flex items-start gap-2 text-sm text-[#F3F3F3]\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 283,
+      "text": "<li className=\"flex items-start gap-2 text-sm text-[#F3F3F3]\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 287,
+      "text": "<li className=\"flex items-start gap-2 text-sm text-[#F3F3F3]\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 291,
+      "text": "<li className=\"flex items-start gap-2 text-sm text-[#F3F3F3]\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 295,
+      "text": "<li className=\"flex items-start gap-2 text-sm text-[#F3F3F3]\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 300,
+      "text": "<li className=\"flex items-start gap-2 text-sm text-[#F3F3F3]\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 306,
+      "text": "<li className=\"flex items-start gap-2 text-sm text-[#F3F3F3]\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 319,
+      "text": ": 'border-[#3A3A3A] text-[#F3F3F3] hover:bg-[#242424]'"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 334,
+      "text": "<h2 className=\"text-3xl md:text-5xl font-semibold tracking-tight text-[#F3F3F3] mb-6 leading-tight\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 352,
+      "text": "<footer className=\"py-10 border-t border-[#3A3A3A] bg-[#0d0d0d]\">"
+    },
+    {
+      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
+      "line": 357,
+      "text": "<span className=\"font-semibold text-[#F3F3F3]\">Wrayth</span>"
+    },
+    {
+      "file": "src/pages/safesuite/products/SafePassProduct.tsx",
+      "line": 45,
+      "text": "<div className=\"min-h-screen bg-[#0a0a0a] safe-area-inset-bottom\">"
+    },
+    {
+      "file": "src/pages/safesuite/products/SafePassProduct.tsx",
+      "line": 47,
+      "text": "<header className=\"sticky top-0 z-50 bg-[#0a0a0a]/95 backdrop-blur border-b border-amber-500/10 safe-area-inset-top\">"
+    },
+    {
+      "file": "src/pages/safesuite/products/SafePassProduct.tsx",
+      "line": 123,
+      "text": "<Card key={index} className=\"bg-[#141414] border-amber-500/10 hover:border-amber-500/30 transition-all\">"
+    },
+    {
+      "file": "src/pages/safesuite/products/SafePassProduct.tsx",
+      "line": 138,
+      "text": "<section className=\"py-12 sm:py-20 px-4 bg-[#0d0d0d]\">"
+    },
+    {
+      "file": "src/pages/safesuite/products/SafePassProduct.tsx",
+      "line": 148,
+      "text": "<div key={index} className=\"flex items-center gap-3 p-3 sm:p-4 rounded-lg bg-[#141414] border border-amber-500/10\">"
+    },
+    {
+      "file": "src/pages/safesuite/products/SafeScanProduct.tsx",
+      "line": 45,
+      "text": "<div className=\"min-h-screen bg-[#0a0a0a] safe-area-inset-bottom\">"
+    },
+    {
+      "file": "src/pages/safesuite/products/SafeScanProduct.tsx",
+      "line": 47,
+      "text": "<header className=\"sticky top-0 z-50 bg-[#0a0a0a]/95 backdrop-blur border-b border-red-500/10 safe-area-inset-top\">"
+    },
+    {
+      "file": "src/pages/safesuite/products/SafeScanProduct.tsx",
+      "line": 123,
+      "text": "<Card key={index} className=\"bg-[#141414] border-red-500/10 hover:border-red-500/30 transition-all\">"
+    },
+    {
+      "file": "src/pages/safesuite/products/SafeScanProduct.tsx",
+      "line": 138,
+      "text": "<section className=\"py-12 sm:py-20 px-4 bg-[#0d0d0d]\">"
+    },
+    {
+      "file": "src/pages/safesuite/products/SafeScanProduct.tsx",
+      "line": 148,
+      "text": "<div key={index} className=\"flex items-center gap-3 p-3 sm:p-4 rounded-lg bg-[#141414] border border-red-500/10\">"
+    },
+    {
+      "file": "src/pages/safesuite/products/SafeWebProduct.tsx",
+      "line": 45,
+      "text": "<div className=\"min-h-screen bg-[#0a0a0a]\">"
+    },
+    {
+      "file": "src/pages/safesuite/products/SafeWebProduct.tsx",
+      "line": 47,
+      "text": "<header className=\"sticky top-0 z-50 bg-[#0a0a0a]/95 backdrop-blur border-b border-violet-500/10\">"
+    },
+    {
+      "file": "src/pages/safesuite/products/SafeWebProduct.tsx",
+      "line": 136,
+      "text": "<Card key={index} className=\"bg-[#141414] border-violet-500/10 hover:border-violet-500/30 transition-all\">"
+    },
+    {
+      "file": "src/pages/safesuite/products/SafeWebProduct.tsx",
+      "line": 151,
+      "text": "<section className=\"py-20 px-4 bg-[#0d0d0d]\">"
+    },
+    {
+      "file": "src/pages/safesuite/products/SafeWebProduct.tsx",
+      "line": 161,
+      "text": "<div key={index} className=\"flex items-center gap-3 p-4 rounded-lg bg-[#141414] border border-violet-500/10\">"
+    }
+  ]
 }
