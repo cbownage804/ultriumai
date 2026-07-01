@@ -65,15 +65,26 @@ export function SidebarBriefing() {
     <div className="px-4 py-4 border-b border-border space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-xs text-muted-foreground">{greet()}, {firstName}</span>
-        <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-emerald-300/80">
-          <motion.span
-            aria-hidden
-            className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400"
-            animate={{ opacity: [0.35, 1, 0.35], scale: [1, 1.15, 1] }}
-            transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
-          />
-          Watching
-        </span>
+        <div className="group relative">
+          <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-emerald-300/80 cursor-default">
+            <motion.span
+              aria-hidden
+              className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400"
+              animate={{ opacity: [0.35, 1, 0.35], scale: [1, 1.15, 1] }}
+              transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            Watching
+          </span>
+          <div className="pointer-events-none absolute right-0 top-full mt-2 z-50 w-56 rounded-md border border-border bg-popover px-3 py-2.5 text-[11px] text-foreground/90 shadow-lg opacity-0 -translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200">
+            <div className="text-[9px] uppercase tracking-[0.22em] text-muted-foreground mb-1.5">Ray is monitoring</div>
+            <ul className="space-y-1">
+              <li className="flex items-center gap-1.5"><span className="h-1 w-1 rounded-full bg-emerald-400" /> Microsoft advisories</li>
+              <li className="flex items-center gap-1.5"><span className="h-1 w-1 rounded-full bg-emerald-400" /> Breach databases</li>
+              <li className="flex items-center gap-1.5"><span className="h-1 w-1 rounded-full bg-emerald-400" /> Saved passwords</li>
+              <li className="flex items-center gap-1.5"><span className="h-1 w-1 rounded-full bg-emerald-400" /> Identity changes</li>
+            </ul>
+          </div>
+        </div>
       </div>
 
       <div>
