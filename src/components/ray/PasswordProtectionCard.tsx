@@ -106,4 +106,31 @@ export function PasswordHealthyCard() {
   );
 }
 
+/**
+ * PasswordAnalyzingCard — shown right after import while Ray is
+ * scoring the vault. Keeps the user oriented instead of jumping
+ * straight into recommendations.
+ */
+export function PasswordAnalyzingCard({ count }: { count: number }) {
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="relative overflow-hidden rounded-2xl border border-violet-400/15 bg-violet-500/[0.04] p-5 sm:p-6"
+    >
+      <div className="flex items-center gap-2 text-violet-300/90 text-[11px] uppercase tracking-[0.18em]">
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        Analyzing
+      </div>
+      <p className="mt-2 text-base sm:text-lg font-light text-foreground">
+        Reviewing {count.toLocaleString()} {count === 1 ? 'password' : 'passwords'}.
+      </p>
+      <p className="mt-1 text-sm text-muted-foreground">
+        I'm checking for breaches, weak passwords, and reuse. This usually takes a moment.
+      </p>
+    </motion.section>
+  );
+}
+
 export default PasswordProtectionCard;
