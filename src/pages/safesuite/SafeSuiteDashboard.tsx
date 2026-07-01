@@ -601,36 +601,15 @@ export default function WraythDashboard() {
 
   return (
     <div className="min-h-screen bg-background -m-4 lg:-m-6 p-4 lg:p-6 space-y-4 sm:space-y-6">
-      {/* Lifecycle-aware onboarding: while the vault is empty, Ray's clearest
-          message is "Protect your passwords with Wrayth." */}
+      {/* 1. Morning Brief (lifecycle-aware) */}
       <LifecycleAwareTop firstName={firstName} />
-      <RayWatchingCard
-        passwordCount={stats.passwordCount}
-        identityCount={stats.monitoredAssets}
-        threatCount={0}
-      />
-      <RayNoticesPanel variant="hero" />
-      <AccountHealthPanel />
 
-
-      {/* Subscription Status Banner */}
-      <SubscriptionBanner />
-
-      {/* Onboarding Checklist for new users */}
-      <OnboardingChecklist product="safesuite" />
-
-      {/* Usage limit banners */}
-      <div className="space-y-2">
-        <UsageLimitBanner feature="scan" />
-        <UsageLimitBanner feature="vault" />
-      </div>
-
-      {/* Ray's conversational quick actions */}
+      {/* 2. Ask Ray — reinforces AI-first experience */}
       <div data-tour="quick-actions">
         <QuickActionsCard />
       </div>
 
-      {/* Outcome tiles — Passwords / Threats / Exposure */}
+      {/* 3. Outcome tiles — Vault / Threats / Exposure */}
       <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-3">
         {productCardsConfig.map((product, index) => (
           <div key={product.id} data-tour={product.id}>
@@ -644,7 +623,22 @@ export default function WraythDashboard() {
         ))}
       </div>
 
-      {/* Ray's security timeline (preview) */}
+      {/* 4. Recommendations — Ray watching + notices + account health */}
+      <RayWatchingCard
+        passwordCount={stats.passwordCount}
+        identityCount={stats.monitoredAssets}
+        threatCount={0}
+      />
+      <RayNoticesPanel variant="hero" />
+      <AccountHealthPanel />
+
+      {/* Usage limit banners (only render when hit) */}
+      <div className="space-y-2">
+        <UsageLimitBanner feature="scan" />
+        <UsageLimitBanner feature="vault" />
+      </div>
+
+      {/* 5. Timeline — the single source of truth for Ray's actions */}
       <div className="wrayth-chamfer border border-border bg-card p-5">
         <div className="mb-4 flex items-center justify-between">
           <div>
@@ -655,13 +649,14 @@ export default function WraythDashboard() {
             View all <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
-        <RayTimeline limit={6} embedded />
+        <RayTimeline limit={8} embedded />
       </div>
 
-      {/* Recent Activity */}
-      <div>
-        <RecentActivityCard activities={activities} />
-      </div>
+      {/* 6. Getting Started — hides itself when complete */}
+      <OnboardingChecklist product="safesuite" />
+
+      {/* 7. Upgrade — framed as Ray's recommendation */}
+      <SubscriptionBanner />
 
 
       {/* Product Tour */}
