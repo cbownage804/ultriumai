@@ -49,12 +49,15 @@ for (const f of files) {
     if (/href=(?:"|')#(?:"|')/.test(line) && /<a\s/.test(line)) {
       findings.push({ severity: 'P1', area: 'button', file: rel, line: ln, message: 'Anchor with href="#" — dead link.' });
     }
-    // <Button ...> without onClick / type / asChild / form on same line (best-effort)
-    if (/<Button(\s|>)/.test(line) && !/onClick|type=|asChild|form=|<Button variant/.test(line) && !/<Button.*>[^<]*<\//.test(line)) {
-      // multi-line: check next 6 lines for onClick/type/asChild
-      const chunk = lines.slice(i, i + 6).join(' ');
-      if (!/(onClick|type=|asChild|form=|<Link|to=)/.test(chunk)) {
-        findings.push({ severity: 'P1', area: 'button', file: rel, line: ln, message: '<Button> with no onClick, type, form, or asChild wrapper.' });
+    // <Button ...> with no obvious handler: look at 3 lines back + 6 forward for Link/DialogTrigger asChild/onClick/type/form/asChild
+    if (/<Button(\s|>)/.test(line) && !/onClick|type=|asChild|form=/.test(line)) {
+      const start = Math.max(0, i - 3);
+      const chunk = lines.slice(start, i + 6).join(' ');
+      const wrappedByLink = /<Link[\s\S]*?<Button/.test(chunk);
+      const insideAsChild = /asChild[\s\S]*?<Button/.test(chunk);
+      const hasHandler = /(onClick|type=|form=|to=|href=)/.test(chunk);
+      if (!wrappedByLink && !insideAsChild && !hasHandler) {
+        findings.push({ severity: 'P1', area: 'button', file: rel, line: ln, message: '<Button> with no onClick, type, form, Link wrapper, or asChild parent.' });
       }
     }
   });
