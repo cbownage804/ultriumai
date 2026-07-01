@@ -19,6 +19,7 @@ import { Sparkles } from 'lucide-react';
 import { AIRecommendationsDisplay } from '@/components/safeweb/AIRecommendationsDisplay';
 import { RayConversationCard } from '@/components/ray/RayConversationCard';
 import { ExposureVaultImpact } from '@/components/ray/ExposureVaultImpact';
+import { ExposureLockedBridge } from '@/components/ray/ExposureLockedBridge';
 
 import { RayPageHeader } from '@/components/ray/RayPageHeader';
 import {
@@ -429,6 +430,7 @@ export default function WraythWeb() {
 
         <RayConversationCard context="exposure" />
 
+        <ExposureLockedBridge assets={assets} />
         <ExposureVaultImpact assets={assets} />
 
 
