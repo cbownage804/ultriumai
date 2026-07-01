@@ -23,17 +23,25 @@ import { usePasswordLifecycle } from '@/lib/ray/passwordLifecycle';
 
 function PasswordsHeaderAndOnboarding() {
   const { stage } = usePasswordLifecycle();
+  const question =
+    stage === 'not_started'
+      ? "Ready to hand your passwords over to me?"
+      : stage === 'imported'
+        ? "I'm reading through your vault now — one moment."
+        : stage === 'analyzed'
+          ? "Want me to walk you through what needs fixing?"
+          : "Everything looks healthy — anything you'd like me to check?";
   const description =
     stage === 'not_started'
-      ? 'Bring your passwords in and Ray becomes your zero-knowledge password manager, breach watcher, and security guide — all at once.'
+      ? 'Import them once and I become your zero-knowledge password manager, breach watcher, and security guide — all at once.'
       : stage === 'imported'
-        ? "Ray is analyzing your vault. I'll surface anything that needs attention as soon as it lands."
+        ? "I'll surface anything that needs attention as soon as the analysis lands."
         : stage === 'analyzed'
-          ? "Here's what to focus on today. Ray keeps watch on everything else."
-          : 'Your vault is healthy. Ray keeps quiet watch and will speak up if anything changes.';
+          ? "Here's what to focus on today. I keep watch on everything else."
+          : 'I keep quiet watch and will speak up the moment anything changes.';
   return (
     <>
-      <RayPageHeader title="Passwords" description={description} />
+      <RayPageHeader title="Passwords" question={question} description={description} />
       {stage === 'not_started' && <PasswordProtectionCard />}
     </>
   );
