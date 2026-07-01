@@ -53,8 +53,29 @@ const legacyBrand = scan('SafePass|SafeScan|SafeWeb|SafeSuite|SafeAssist|SafeTra
     !/require\(['"][^'"]*(SafePass|SafeScan|SafeWeb|SafeSuite|SafeAssist|SafeTrack)/.test(h.text)
 );
 const todos = scan('\\b(TODO|FIXME|XXX|HACK)\\b');
-const consoles = scan("console\\.(log|debug|info|warn)\\(");
-const hardcodedHex = scan("#[0-9a-fA-F]{6}\\b").filter((h) => !/(index\.css|tailwind\.config|tokens)/.test(h.file));
+// Edge functions log via console (that's Deno's standard logging surface); exclude them and the logger itself.
+const consoles = scan("console\\.(log|debug|info|warn)\\(").filter(
+  (h) =>
+    !h.file.startsWith('supabase/functions/') &&
+    !h.file.startsWith('extension/') &&
+    !h.file.startsWith('public/') &&
+    !/src\/(lib\/logger|integrations\/supabase\/client)\.ts$/.test(h.file)
+);
+const hardcodedHex = scan("#[0-9a-fA-F]{6}\\b").filter(
+  (h) =>
+    !/(index\.css|tailwind\.config|tokens)/.test(h.file) &&
+    // Standalone browser extension has its own stylesheet (not part of design system)
+    !h.file.startsWith('public/') && // manifest.json + service worker fallback HTML require literal hex
+    // Email templates require inline hex — email clients don't support CSS variables
+    !h.file.includes('send-auth-email/') &&
+    !h.file.includes('ms-graph-oauth-callback/') &&
+    // SQL migrations are historical/immutable and often seed color defaults
+    !h.file.startsWith('supabase/migrations/') &&
+    // Edge function fallback HTML (rendered outside the app, no design tokens available)
+    !h.file.includes('serve-preview/') &&
+    // QR code canvas rendering requires literal hex values
+    !h.file.includes('RayOnboarding')
+);
 const arbitraryColors = scan("(text|bg|border)-\\[#");
 const anyTypes = scan(":\\s*any(\\s|,|\\)|>|=)");
 
