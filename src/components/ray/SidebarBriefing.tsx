@@ -107,12 +107,20 @@ export function SidebarBriefing() {
 
       <div>
         <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground flex items-center gap-1.5">
-          Security Score
+          <span>Security Score</span>
+          <ExplainThis
+            title="How Ray scores your security"
+            body="A single 0–100 view of how protected you are right now. Ray weighs vault health, active threats, exposed identities, and account hardening."
+            bullets={[
+              '80+ means you\'re in good shape.',
+              '60–79 means there\'s something worth tightening.',
+              'Below 60 means Ray wants your attention today.',
+            ]}
+          />
           {isPerfect && (
             <motion.span
               aria-hidden
               className="inline-block h-1 w-1 rounded-full bg-green-400"
-              // Every 20s: quiet fade-in, hold, fade-out. Very subtle.
               animate={{ opacity: [0, 0, 0.9, 0, 0] }}
               transition={{ duration: 20, repeat: Infinity, times: [0, 0.35, 0.5, 0.65, 1], ease: 'easeInOut' }}
             />
