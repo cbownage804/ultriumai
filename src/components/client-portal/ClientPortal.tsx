@@ -573,8 +573,8 @@ const ClientPortal = () => {
               companyName: 'Knowledge Base',
               primaryColor: '#0d9488'
             }}
-            onViewArticle={(article) => {
-              console.log('Viewing article:', article.id);
+            onViewArticle={() => {
+              /* view tracking handled elsewhere */
             }}
             onMarkHelpful={(articleId) => {
               setKnowledgeBase(prev => prev.map(a => 

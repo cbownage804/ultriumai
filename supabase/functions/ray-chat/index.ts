@@ -235,8 +235,8 @@ serve(async (req) => {
         .from('audit_logs')
         .insert({
           user_id: userId,
-          action: 'safeassist_query',
-          resource_type: 'safeassist',
+          action: 'ray_query',
+          resource_type: 'ray',
           details: {
             query_length: message.length,
             response_length: aiResponse.length,
