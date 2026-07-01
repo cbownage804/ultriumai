@@ -630,8 +630,12 @@ export default function WraythDashboard() {
       {/* 1. Morning Brief (lifecycle-aware) */}
       <LifecycleAwareTop firstName={firstName} />
 
-      {/* 1b. CISO synthesis — the one directive that matters right now */}
-      {stats.passwordCount > 0 && <CisoNextAction directive={cisoDirective} />}
+      {/* 1b. Vault: encrypted black box until unlocked. */}
+      {vaultLocked ? (
+        <VaultLockedCard />
+      ) : (
+        stats.passwordCount > 0 && <CisoNextAction directive={cisoDirective} />
+      )}
 
       {/* 2. Ask Ray — reinforces AI-first experience */}
       <div data-tour="quick-actions">
@@ -652,14 +656,16 @@ export default function WraythDashboard() {
         ))}
       </div>
 
-      {/* 4. Recommendations — Ray watching + notices + account health */}
+      {/* 4. Recommendations — Ray watching + notices + account health.
+          When vault is locked, hide the password-count tile so Ray doesn't
+          leak metadata about a resource it claims not to see. */}
       <RayWatchingCard
-        passwordCount={stats.passwordCount}
+        passwordCount={vaultLocked ? 0 : stats.passwordCount}
         identityCount={stats.monitoredAssets}
         threatCount={0}
       />
       <RayNoticesPanel variant="hero" />
-      <AccountHealthPanel />
+      {!vaultLocked && <AccountHealthPanel />}
 
       {/* Usage limit banners (only render when hit) */}
       <div className="space-y-2">
