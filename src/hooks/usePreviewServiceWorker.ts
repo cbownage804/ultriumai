@@ -8,6 +8,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 
+import { devLog } from '@/lib/logger';
 const PREVIEW_PATH = '/__preview__/index.html';
 
 const noop = () => {};
@@ -49,7 +50,7 @@ export function usePreviewServiceWorker(options?: { useSrcdoc?: boolean }): Prev
   useEffect(() => {
     if (useSrcdoc) return;
     if (!('serviceWorker' in navigator)) {
-      console.info('[PreviewSW] Service Workers not supported — using srcdoc fallback');
+      devLog.info('[PreviewSW] Service Workers not supported — using srcdoc fallback');
       return;
     }
 
@@ -69,13 +70,13 @@ export function usePreviewServiceWorker(options?: { useSrcdoc?: boolean }): Prev
           if (sw.state === 'activated') {
             swRef.current = sw;
             setIsReady(true);
-            console.info('[PreviewSW] Service Worker ready');
+            devLog.info('[PreviewSW] Service Worker ready');
           } else {
             sw.addEventListener('statechange', () => {
               if (sw.state === 'activated' && !cancelled) {
                 swRef.current = sw;
                 setIsReady(true);
-                console.info('[PreviewSW] Service Worker activated');
+                devLog.info('[PreviewSW] Service Worker activated');
               }
             });
           }
@@ -93,7 +94,7 @@ export function usePreviewServiceWorker(options?: { useSrcdoc?: boolean }): Prev
           }
         });
       } catch (err) {
-        console.warn('[PreviewSW] Registration failed — using srcdoc fallback:', err);
+        devLog.warn('[PreviewSW] Registration failed — using srcdoc fallback:', err);
       }
     };
 

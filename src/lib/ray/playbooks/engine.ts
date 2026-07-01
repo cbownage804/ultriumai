@@ -12,6 +12,7 @@ import { rememberFact, recordTimelineEvent } from '@/lib/ray/brain';
 import { RAY_TASKS, type RayTaskId } from './catalog';
 import { findTemplate, type PlaybookTemplate } from './templates';
 
+import { devLog } from '@/lib/logger';
 export type PlaybookStatus =
   | 'new'
   | 'ready'
@@ -113,7 +114,7 @@ export async function startPlaybook(
 ): Promise<PlaybookRun | null> {
   const template = findTemplate(slug);
   if (!template) {
-    console.warn('[ray.playbooks] unknown template', slug);
+    devLog.warn('[ray.playbooks] unknown template', slug);
     return null;
   }
 
@@ -157,7 +158,7 @@ export async function startPlaybook(
     .select('*')
     .single();
   if (error || !data) {
-    console.warn('[ray.playbooks] startPlaybook failed', error);
+    devLog.warn('[ray.playbooks] startPlaybook failed', error);
     return null;
   }
 
@@ -201,7 +202,7 @@ export async function toggleTask(run: PlaybookRun, taskId: RayTaskId): Promise<P
     .from('ray_playbook_runs')
     .update(updates)
     .eq('id', run.id);
-  if (error) console.warn('[ray.playbooks] toggleTask failed', error);
+  if (error) devLog.warn('[ray.playbooks] toggleTask failed', error);
 
   const next: PlaybookRun = { ...run, tasks, progress, status,
     completed_at: allDone ? now : null };
@@ -318,7 +319,7 @@ async function handleCompletion(run: PlaybookRun) {
           { onConflict: 'user_id,provider' },
         );
     } catch (err) {
-      console.warn('[ray.playbooks] account-health bump failed', err);
+      devLog.warn('[ray.playbooks] account-health bump failed', err);
     }
   }
 

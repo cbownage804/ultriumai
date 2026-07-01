@@ -1,3 +1,4 @@
+import { devLog } from '@/lib/logger';
 /**
  * Supabase Resilience Utilities
  * Provides timeout wrappers and graceful fallbacks for all Supabase operations
@@ -25,9 +26,9 @@ export async function withTimeout<T>(
     return result;
   } catch (err: any) {
     if (err?.name === 'AbortError' || controller.signal.aborted) {
-      console.warn(`[Resilience] ${label ?? 'Operation'} timed out after ${timeoutMs}ms — using fallback`);
+      devLog.warn(`[Resilience] ${label ?? 'Operation'} timed out after ${timeoutMs}ms — using fallback`);
     } else {
-      console.warn(`[Resilience] ${label ?? 'Operation'} failed — using fallback`, err?.message);
+      devLog.warn(`[Resilience] ${label ?? 'Operation'} failed — using fallback`, err?.message);
     }
     return fallback;
   } finally {
@@ -51,7 +52,7 @@ export function withDeadline<T>(
     const timer = setTimeout(() => {
       if (!settled) {
         settled = true;
-        console.warn(`[Resilience] ${label ?? 'Operation'} timed out after ${timeoutMs}ms — using fallback`);
+        devLog.warn(`[Resilience] ${label ?? 'Operation'} timed out after ${timeoutMs}ms — using fallback`);
         resolve(fallback);
       }
     }, timeoutMs);
@@ -68,7 +69,7 @@ export function withDeadline<T>(
         if (!settled) {
           settled = true;
           clearTimeout(timer);
-          console.warn(`[Resilience] ${label ?? 'Operation'} failed — using fallback`, err?.message);
+          devLog.warn(`[Resilience] ${label ?? 'Operation'} failed — using fallback`, err?.message);
           resolve(fallback);
         }
       });

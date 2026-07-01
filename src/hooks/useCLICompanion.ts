@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { ProjectFile } from '@/hooks/useProjectFileSystem';
 
+import { devLog } from '@/lib/logger';
 export interface CLIConfig {
   projectName: string;
   projectSlug: string;
@@ -60,22 +61,22 @@ const path = require('path');
 
 const COMMANDS = {
   dev: () => {
-    console.log('🚀 Starting local dev server...');
+    devLog.log('🚀 Starting local dev server...');
     execSync('npx vite', { stdio: 'inherit' });
   },
   build: () => {
-    console.log('📦 Building for production...');
+    devLog.log('📦 Building for production...');
     execSync('npx vite build', { stdio: 'inherit' });
   },
   sync: async () => {
-    console.log('🔄 Syncing with Ultrium Cloud...');
+    devLog.log('🔄 Syncing with Ultrium Cloud...');
     // Placeholder: would call Supabase API to fetch latest project files
-    console.log('✅ Project synced successfully.');
+    devLog.log('✅ Project synced successfully.');
   },
   deploy: () => {
-    console.log('🚀 Deploying to production...');
+    devLog.log('🚀 Deploying to production...');
     execSync('npx vite build', { stdio: 'inherit' });
-    console.log('✅ Deploy complete.');
+    devLog.log('✅ Deploy complete.');
   },
 };
 
@@ -83,8 +84,8 @@ const cmd = process.argv[2] || 'dev';
 if (COMMANDS[cmd]) {
   COMMANDS[cmd]();
 } else {
-  console.log(\`Unknown command: \${cmd}\`);
-  console.log('Available: ' + Object.keys(COMMANDS).join(', '));
+  devLog.log(\`Unknown command: \${cmd}\`);
+  devLog.log('Available: ' + Object.keys(COMMANDS).join(', '));
 }
 `;
   }, []);
