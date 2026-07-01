@@ -47,6 +47,8 @@ export default function WraythScan() {
           confidence={72}
         />
 
+        <ThreatScanInput />
+
         <RayConversationCard context="threats" />
 
         <motion.div
