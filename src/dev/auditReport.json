@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-07-01T13:00:39.938Z",
+  "generatedAt": "2026-07-01T13:09:34.533Z",
   "totals": {
     "filesScanned": 877,
-    "legacyBrand": 235,
+    "legacyBrand": 217,
     "todos": 11,
     "consoles": 188,
     "hardcodedHex": 590,
@@ -156,11 +156,6 @@
       "text": "import { safesuiteLogo } from \"@/components/safesuite/SafeSuiteProductIcons\";"
     },
     {
-      "file": "src/components/products/VanguardUpsell.tsx",
-      "line": 36,
-      "text": "'SafeTrack™ - IT Asset Management',"
-    },
-    {
       "file": "src/components/safepass/BreachMonitor.tsx",
       "line": 3,
       "text": "import { useVault } from '@/hooks/useSafePass';"
@@ -221,41 +216,6 @@
       "text": "import { useFeatureAccess, useWraythSubscription, useWraythUsage } from '@/hooks/useSafeSuite';"
     },
     {
-      "file": "src/config/safeSuiteTiers.ts",
-      "line": 156,
-      "text": "name: 'SafeTrack',"
-    },
-    {
-      "file": "src/config/safeSuiteTiers.ts",
-      "line": 163,
-      "text": "name: 'SafeAssist',"
-    },
-    {
-      "file": "src/config/safeSuiteTiers.ts",
-      "line": 170,
-      "text": "name: 'SafeAssist Voice',"
-    },
-    {
-      "file": "src/config/safeSuiteTiers.ts",
-      "line": 171,
-      "text": "description: 'Voice conversations with SafeAssist AI',"
-    },
-    {
-      "file": "src/config/voiceCreditPackages.ts",
-      "line": 2,
-      "text": "* Voice Credit Packages for SafeAssist"
-    },
-    {
-      "file": "src/hooks/useI18n.tsx",
-      "line": 47,
-      "text": "'products.safetrack': 'SafeTrack',"
-    },
-    {
-      "file": "src/hooks/useI18n.tsx",
-      "line": 48,
-      "text": "'products.safeassist': 'SafeAssist',"
-    },
-    {
       "file": "src/layouts/SafePassLayout.tsx",
       "line": 26,
       "text": "import { safeSuiteProducts } from '@/components/safesuite/SafeSuiteProductIcons';"
@@ -266,21 +226,6 @@
       "text": "import { useWraythSubscription } from '@/hooks/useSafeSuite';"
     },
     {
-      "file": "src/pages/Privacy.tsx",
-      "line": 61,
-      "text": "<p className=\"text-xs text-muted-foreground\">Vault, Scan, Watch, SafeTrack, SafeAssist</p>"
-    },
-    {
-      "file": "src/pages/Terms.tsx",
-      "line": 96,
-      "text": "<li>SafeTrack – Asset and device tracking</li>"
-    },
-    {
-      "file": "src/pages/Terms.tsx",
-      "line": 97,
-      "text": "<li>SafeAssist – AI-powered support assistant</li>"
-    },
-    {
       "file": "src/pages/WraythResources.tsx",
       "line": 8,
       "text": "import Navigation from \"@/components/safesuite/SafeSuiteNav\";"
@@ -289,11 +234,6 @@
       "file": "src/pages/pricing/SafeSuitePricing.tsx",
       "line": 7,
       "text": "import WraythNav from '@/components/safesuite/SafeSuiteNav';"
-    },
-    {
-      "file": "src/pages/pricing/SafeSuitePricing.tsx",
-      "line": 18,
-      "text": "All plans include Vault, Scan, Watch, and SafeTrack. Cancel anytime."
     },
     {
       "file": "src/pages/safesuite/Exposure.tsx",
@@ -411,21 +351,6 @@
       "text": "import { GlowContainer, AnimatedStatsCard, StaggerContainer, StaggerItem, SAFESUITE_THEMES } from '@/components/safesuite/SafeSuiteEffects';"
     },
     {
-      "file": "src/pages/safesuite/SafeSuiteFeatures.tsx",
-      "line": 3,
-      "text": "* Consolidates Vault, Scan, Watch, SafeTrack into one clean experience"
-    },
-    {
-      "file": "src/pages/safesuite/SafeSuiteFeatures.tsx",
-      "line": 89,
-      "text": "name: \"SafeTrack\","
-    },
-    {
-      "file": "src/pages/safesuite/SafeSuiteFeatures.tsx",
-      "line": 207,
-      "text": "Wrayth includes Vault, Scan, Watch, and SafeTrack — all integrated and working together to protect your digital life."
-    },
-    {
       "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
       "line": 8,
       "text": "import Navigation from '@/components/safesuite/SafeSuiteNav';"
@@ -456,29 +381,14 @@
       "text": "import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';"
     },
     {
-      "file": "src/pages/safesuite/products/SafePassProduct.tsx",
-      "line": 167,
-      "text": "Get Vault plus Scan, Watch, and SafeTrack — all in one unified security suite."
-    },
-    {
       "file": "src/pages/safesuite/products/SafeScanProduct.tsx",
       "line": 23,
       "text": "import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';"
     },
     {
-      "file": "src/pages/safesuite/products/SafeScanProduct.tsx",
-      "line": 167,
-      "text": "Get Scan plus Vault, Watch, and SafeTrack — all in one unified security suite."
-    },
-    {
       "file": "src/pages/safesuite/products/SafeWebProduct.tsx",
       "line": 23,
       "text": "import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';"
-    },
-    {
-      "file": "src/pages/safesuite/products/SafeWebProduct.tsx",
-      "line": 180,
-      "text": "Get Watch plus Vault, Scan, and SafeTrack — all in one unified security suite."
     },
     {
       "file": "supabase/functions/check-subscription/index.ts",
@@ -1009,6 +919,96 @@
       "file": "public/safepass-extension/background.js",
       "line": 492,
       "text": "console.error('[SafePass] Failed to fetch shared entries:', error);"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 515,
+      "text": "console.error('[SafePass] TOTP fetch error:', error);"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 538,
+      "text": "console.error('[SafePass] Notes fetch error:', error);"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 561,
+      "text": "console.error('[SafePass] Cards fetch error:', error);"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 583,
+      "text": "console.error('[SafePass] Identities fetch error:', error);"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 648,
+      "text": "console.error('[SafePass] Save identity error:', error);"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 717,
+      "text": "console.error('[SafePass] Error processing entry:', error);"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 755,
+      "text": "console.error('[SafePass] Error processing shared entry:', error);"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 768,
+      "text": "console.error('[SafePass] getPasswordsForSite error:', error);"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 992,
+      "text": "console.log('[SafePass] Entry already exists for this site/username');"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 1038,
+      "text": "console.error('[SafePass] Save password error:', error);"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 1058,
+      "text": "console.error('[SafePass] Ignore credential error:', error);"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 1093,
+      "text": "console.error('[SafePass] Save note error:', error);"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 1136,
+      "text": "console.error('[SafePass] Save card error:', error);"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 1164,
+      "text": "console.error('[SafePass] Breach check error:', error);"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 1177,
+      "text": "console.log('[SafePass] Periodic sync alarm triggered');"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 1183,
+      "text": "console.log('[SafePass] Running daily breach check');"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 1210,
+      "text": "console.error('[SafePass] Daily breach check failed:', e);"
+    },
+    {
+      "file": "public/safepass-extension/background.js",
+      "line": 1354,
+      "text": "console.log('[SafePass] Background service worker v2.2 initialized');"
     }
   ],
   "todos": [

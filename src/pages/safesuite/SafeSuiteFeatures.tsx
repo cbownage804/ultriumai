@@ -1,6 +1,6 @@
 /**
  * Wrayth Features - Unified page showcasing all Wrayth tools
- * Consolidates Vault, Scan, Watch, SafeTrack into one clean experience
+ * Consolidates Vault, Scan, and Watch into one clean experience
  */
 
 import Navigation from "@/components/Navigation";
@@ -84,27 +84,8 @@ const tools = [
       { icon: Clock, title: "Historical Data", description: "Track breaches over time with trend analysis" },
     ],
   },
-  {
-    id: "safetrack",
-    name: "SafeTrack",
-    tagline: "Asset Lifecycle Management",
-    description: "Complete IT asset tracking with depreciation, maintenance, and compliance reporting.",
-    icon: Package,
-    logo: safetrackLogo,
-    color: "text-emerald-500",
-    bgColor: "bg-emerald-500/10",
-    borderColor: "border-emerald-500/30",
-    shadowColor: "shadow-emerald-500/20",
-    features: [
-      { icon: Brain, title: "AI Warranty Lookup", description: "Instant warranty status by serial number using AI" },
-      { icon: Laptop, title: "Hardware Inventory", description: "Track all physical IT assets and equipment" },
-      { icon: QrCode, title: "QR Code Scanning", description: "Instant asset lookup with mobile scanning" },
-      { icon: DollarSign, title: "Depreciation Tracking", description: "Automatic calculations for accounting" },
-      { icon: Calendar, title: "Maintenance Schedules", description: "Preventive maintenance reminders" },
-      { icon: History, title: "Audit Trail", description: "Complete history of every asset change" },
-    ],
-  },
 ];
+
 
 export default function WraythFeatures() {
   return (
@@ -204,7 +185,7 @@ export default function WraythFeatures() {
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">Get All Tools in One Suite</h2>
           <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Wrayth includes Vault, Scan, Watch, and SafeTrack — all integrated and working together to protect your digital life.
+            Wrayth includes Vault, Scan, and Watch — all integrated and working together to protect your digital life.
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">

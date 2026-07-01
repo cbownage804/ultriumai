@@ -15,7 +15,7 @@ export default function WraythPricing() {
           <Badge className="mb-4">Simple, transparent pricing</Badge>
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Choose your plan</h1>
           <p className="text-lg text-muted-foreground">
-            All plans include Vault, Scan, Watch, and SafeTrack. Cancel anytime.
+            All plans include Vault, Scan, and Watch. Cancel anytime.
           </p>
         </div>
         <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">

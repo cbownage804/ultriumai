@@ -177,7 +177,7 @@ export default function WatchProduct() {
             Watch is Included with Wrayth
           </h2>
           <p className="text-gray-400 mb-8">
-            Get Watch plus Vault, Scan, and SafeTrack — all in one unified security suite.
+            Get Watch plus Vault, and Scan — all in one unified security suite.
           </p>
           <Link to="/auth?tab=signup">
             <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 text-black gap-2">

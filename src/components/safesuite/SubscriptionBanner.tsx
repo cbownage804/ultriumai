@@ -40,7 +40,7 @@ export function SubscriptionBanner({ className, variant = 'full' }: Subscription
   // Get key restrictions for current tier
   const restrictions: string[] = [];
   if (!currentTier.features.safeweb.enabled) restrictions.push('No dark web monitoring');
-  if (!currentTier.features.safetrack.enabled) restrictions.push('No asset tracking');
+  
   if (!currentTier.features.team.enabled) restrictions.push('No team features');
   if (currentTier.features.safepass.limit !== -1) restrictions.push(`${currentTier.features.safepass.limit} password limit`);
   if (currentTier.features.safescan.limit !== -1 && currentTier.features.safescan.limit > 0) {
