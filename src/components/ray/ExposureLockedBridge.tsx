@@ -70,6 +70,12 @@ export function ExposureLockedBridge({ assets }: Props) {
         </div>
         <VaultUnlockDialog
           reason={reason}
+          capabilities={[
+            'Check whether you still use the breached password',
+            'Find every other account where it is reused',
+            'Rank which account to rotate first',
+            'Confirm whether MFA already protects each one',
+          ]}
           trigger={
             <Button className="bg-violet-500 text-white hover:bg-violet-500/90 shrink-0">
               Unlock Vault

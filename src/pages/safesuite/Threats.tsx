@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { RayConversationCard } from '@/components/ray/RayConversationCard';
 import { RayPageHeader } from '@/components/ray/RayPageHeader';
 import { RayActivityTicker } from '@/components/ray/RayActivityTicker';
+import { RayContextBridge } from '@/components/ray/RayContextBridge';
 
 export default function WraythScan() {
   return (
@@ -30,6 +31,20 @@ export default function WraythScan() {
         <div className="wrayth-chamfer border border-border bg-card/60 px-4 py-3">
           <RayActivityTicker context="threats" />
         </div>
+
+        <RayContextBridge
+          headline="I can tell you what a threat is — I can only tell you if it affects you with your vault open."
+          knows="When you send me a URL, file, or email, I score it against reputation feeds and heuristics on my own. To connect that verdict to your actual accounts — 'this phishing page targets your Microsoft 365' or 'this stealer would have taken your Gmail and GitHub' — I need to read the vault."
+          needs={['vault']}
+          reason="A threat verdict is only useful if I can tell you whether it touches an account you actually use. Unlock so I can cross-reference."
+          capabilities={[
+            'Match phishing URLs to accounts you actually have',
+            'Tell you which stored credentials a stealer would take',
+            'Flag CVEs against browsers and apps your vault syncs with',
+            'Prioritize rotations by real blast radius',
+          ]}
+          confidence={72}
+        />
 
         <RayConversationCard context="threats" />
 

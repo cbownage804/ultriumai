@@ -21,9 +21,11 @@ interface Props {
   trigger: React.ReactNode;
   /** Optional context line — e.g. "so I can check whether this breach affects you". */
   reason?: string;
+  /** Override the default capability bullets shown in the preamble. */
+  capabilities?: string[];
 }
 
-const CAPABILITIES = [
+const DEFAULT_CAPABILITIES = [
   'Detect reused passwords',
   'Check breach exposure',
   'Measure password strength',
@@ -31,7 +33,8 @@ const CAPABILITIES = [
   'Connect breaches to real accounts',
 ];
 
-export function VaultUnlockDialog({ trigger, reason }: Props) {
+export function VaultUnlockDialog({ trigger, reason, capabilities }: Props) {
+  const bullets = capabilities && capabilities.length > 0 ? capabilities : DEFAULT_CAPABILITIES;
   const [open, setOpen] = useState(false);
   const { unlockWithPassword } = useMasterPassword();
   const { toast } = useToast();
@@ -57,7 +60,7 @@ export function VaultUnlockDialog({ trigger, reason }: Props) {
         Ray can now
       </div>
       <ul className="mt-2 space-y-1.5 text-sm text-foreground/90">
-        {CAPABILITIES.map((c) => (
+        {bullets.map((c) => (
           <li key={c} className="flex items-center gap-2">
             <Check className="h-3.5 w-3.5 text-violet-300 shrink-0" />
             {c}
