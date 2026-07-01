@@ -46,6 +46,7 @@ import { useRayLiveSignals } from '@/hooks/useRayLiveSignals';
 import { RayNoticesPanel } from '@/components/ray/RayNoticesPanel';
 import { RayTimeline } from '@/components/ray/RayTimeline';
 import { PasswordProtectionCard } from '@/components/ray/PasswordProtectionCard';
+import { RayWatchingCard } from '@/components/ray/RayWatchingCard';
 import { usePasswordLifecycle } from '@/lib/ray/passwordLifecycle';
 
 interface DashboardStats {
@@ -401,10 +402,13 @@ const productCardsConfig = [
 function LifecycleAwareTop({ firstName }: { firstName: string }) {
   const { stage } = usePasswordLifecycle();
   if (stage === 'not_started') {
+    // Ray owns ONE recommendation at this stage — the protection card.
+    // MorningBrief still greets, but suppresses its recommendations list
+    // so the user never sees "Protect your passwords" duplicated.
     return (
       <div data-tour="security-score" className="space-y-4 sm:space-y-6">
         <PasswordProtectionCard />
-        <MorningBriefHero firstName={firstName} showFullBriefLink={false} />
+        <MorningBriefHero firstName={firstName} showFullBriefLink={false} hideRecommendations />
       </div>
     );
   }
@@ -578,9 +582,13 @@ export default function WraythDashboard() {
       {/* Lifecycle-aware onboarding: while the vault is empty, Ray's clearest
           message is "Protect your passwords with Wrayth." */}
       <LifecycleAwareTop firstName={firstName} />
+      <RayWatchingCard
+        passwordCount={stats.passwordCount}
+        identityCount={stats.monitoredAssets}
+        threatCount={0}
+      />
       <RayNoticesPanel variant="hero" />
       <AccountHealthPanel />
-      {/* Upgrade prompts stay contextual (password/seat limits) — Home is focused on security. */}
 
 
       {/* Subscription Status Banner */}

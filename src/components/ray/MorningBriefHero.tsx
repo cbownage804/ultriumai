@@ -94,7 +94,7 @@ function ScoreBadge({ score, delta }: { score: number | null; delta: number | nu
             {Math.abs(delta)} vs last brief
           </div>
         ) : (
-          <div className="text-xs text-slate-400">No change</div>
+          <div className="text-xs text-emerald-300/80">Stable</div>
         )}
       </div>
     </div>
@@ -142,9 +142,11 @@ export interface MorningBriefHeroProps {
   /** Compact mode hides recommendations & history (used inline on Home). */
   variant?: "home" | "page";
   firstName?: string;
+  /** Suppress the recommendations list (used when another surface owns the objective). */
+  hideRecommendations?: boolean;
 }
 
-export function MorningBriefHero({ showFullBriefLink = true, variant = "home", firstName }: MorningBriefHeroProps) {
+export function MorningBriefHero({ showFullBriefLink = true, variant = "home", firstName, hideRecommendations = false }: MorningBriefHeroProps) {
   const navigate = useNavigate();
   const { today, isLoading, isGenerating, refresh, sendFeedback, timezone } = useMorningBrief();
   const { recommendations, completeRecommendation, dismissRecommendation, snoozeRecommendation, startRecommendation, timeline } =
@@ -335,7 +337,7 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
       )}
 
       {/* Lifecycle-aware recommendations — Start is the clear primary action. */}
-      {top.length > 0 && (
+      {!hideRecommendations && top.length > 0 && (
         <div className="relative mt-5 space-y-2">
           {top.map((rec) => {
             const tone = rec.priority >= 70
