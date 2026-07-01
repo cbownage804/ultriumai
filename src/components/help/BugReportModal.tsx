@@ -73,7 +73,7 @@ export function BugReportModal({ open, onOpenChange }: BugReportModalProps) {
         });
         screenshot = canvas.toDataURL('image/webp', 0.7);
       } catch (err) {
-        devLog('Screenshot capture failed:', err);
+        devLog.log('Screenshot capture failed:', err);
       }
 
       // Collect console errors (from window.onerror buffer if available)
@@ -153,7 +153,7 @@ export function BugReportModal({ open, onOpenChange }: BugReportModalProps) {
           },
         });
       } catch (emailErr) {
-        devLog('Bug report email notification failed:', emailErr);
+        devLog.log('Bug report email notification failed:', emailErr);
         // Don't block submission if email fails
       }
 

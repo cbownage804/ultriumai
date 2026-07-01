@@ -36,7 +36,7 @@ export async function listInsights(
   if (opts.status) q = q.eq('status', opts.status);
   const { data, error } = await q;
   if (error) {
-    devLog('[ray.insights] list failed', error);
+    devLog.log('[ray.insights] list failed', error);
     return [];
   }
   return (data as RayInsight[]) ?? [];
@@ -51,7 +51,7 @@ export async function recordInsight(
     .select()
     .single();
   if (error) {
-    devLog('[ray.insights] record failed', error);
+    devLog.log('[ray.insights] record failed', error);
     return null;
   }
   return data as RayInsight;

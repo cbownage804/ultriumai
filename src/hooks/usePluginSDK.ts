@@ -108,13 +108,13 @@ export default definePlugin({
   
   deployHook: {
     beforeDeploy: async (files, config) => {
-      devLog('Running pre-deploy checks...');
+      devLog.log('Running pre-deploy checks...');
       // Validate, lint, etc.
       return { proceed: true };
     },
     
     afterDeploy: async (result) => {
-      devLog('Deploy complete:', result.url);
+      devLog.log('Deploy complete:', result.url);
       // Send notification, update status, etc.
     },
   },

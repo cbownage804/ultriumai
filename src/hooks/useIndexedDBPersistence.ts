@@ -104,7 +104,7 @@ export function useIndexedDBPersistence() {
         lastSavedHash.current = hash;
         setSyncStatus('synced');
       } catch (err) {
-        devLog('IndexedDB save failed:', err);
+        devLog.log('IndexedDB save failed:', err);
         setSyncStatus('offline');
       }
     }, SAVE_DEBOUNCE_MS);
@@ -182,7 +182,7 @@ export function useIndexedDBPersistence() {
         idbSet(META_STORE, SESSION_KEY, { projectId, name, savedAt: timestamp }),
       ]);
     } catch (err) {
-      devLog('IndexedDB immediate save failed:', err);
+      devLog.log('IndexedDB immediate save failed:', err);
     }
   }, []);
 

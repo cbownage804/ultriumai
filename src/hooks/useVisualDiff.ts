@@ -58,7 +58,7 @@ export function useVisualDiff() {
       setBeforeSnapshot({ dataUrl, timestamp: Date.now(), label: 'Before' });
       return true;
     } catch (err) {
-      devLog('[VisualDiff] Before capture failed:', err);
+      devLog.log('[VisualDiff] Before capture failed:', err);
       return false;
     } finally {
       captureInProgress.current = false;
@@ -105,7 +105,7 @@ export function useVisualDiff() {
       setAfterSnapshot({ dataUrl, timestamp: Date.now(), label: 'After' });
       return true;
     } catch (err) {
-      devLog('[VisualDiff] After capture failed:', err);
+      devLog.log('[VisualDiff] After capture failed:', err);
       return false;
     } finally {
       captureInProgress.current = false;
