@@ -125,7 +125,8 @@ export default function OrgDashboard() {
   const topPriority = describeTopPriority(profiles);
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+    <PageMotion className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+
       {/* Hero — Ray's executive brief */}
       <Card className="p-6 md:p-8 bg-card border-border">
         <div className="flex items-start justify-between gap-4">
