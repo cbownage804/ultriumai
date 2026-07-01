@@ -257,7 +257,12 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
       <h1 className="relative text-2xl sm:text-3xl font-semibold text-white tracking-tight">
         {greeting}
       </h1>
-      <p className="relative mt-1 text-sm text-slate-400">{personality}</p>
+      <div className="relative mt-2 space-y-1 text-[15px] leading-relaxed text-slate-300">
+        <p>{reassurance}</p>
+        <p className={hasAttention ? "text-amber-200/90" : "text-slate-300"}>{verdict}</p>
+        {scoreLine && <p className="text-slate-400">{scoreLine}</p>}
+        <p className="text-slate-500 text-sm">{closingLine}</p>
+      </div>
 
       {memoryLine && (
         <p className="relative mt-2 inline-flex items-center gap-1.5 rounded-full border border-violet-400/20 bg-violet-500/5 px-2.5 py-1 text-[11px] text-violet-200/90">
