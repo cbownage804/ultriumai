@@ -442,15 +442,18 @@ export const IdentityProfiles = () => {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : filteredIdentities.length === 0 ? (
-        <Card className="p-8 text-center">
-          <User className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-semibold mb-2">No Identity Profiles</h3>
-          <p className="text-muted-foreground mb-4">Save your information for quick checkout</p>
+        <Card className="p-10 text-center">
+          <User className="h-12 w-12 mx-auto mb-4 text-violet-400/70" />
+          <h3 className="text-lg font-semibold mb-2">One profile, every form filled</h3>
+          <p className="text-muted-foreground mb-5 max-w-sm mx-auto">
+            Save your name, address, and contact details once. I'll autofill signups, checkouts, and applications for you — encrypted end-to-end.
+          </p>
           <Button className="bg-primary hover:bg-primary text-black" onClick={() => setIsAddDialogOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
-            Add Identity
+            Add your first identity
           </Button>
         </Card>
+
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <AnimatePresence>
