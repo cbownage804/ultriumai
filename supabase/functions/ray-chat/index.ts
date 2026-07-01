@@ -19,7 +19,7 @@ interface ConversationContext {
 interface UserSecurityContext {
   passwordVault: { total: number; weak: number; reused: number; compromised: number };
   threats: { monitored: number; found: number; lastScan: string | null };
-  assets: { total: number; expiringSoon: number };
+  
   scans: { total: number; threatsDetected: number };
 }
 
@@ -38,7 +38,7 @@ async function fetchUserSecurityContext(supabase: any, userId: string): Promise<
       compromised: 0
     };
 
-    // Fetch SafeWeb monitoring stats
+    // Fetch Watch monitoring stats
     const { data: monitoredAssets } = await supabase
       .from('monitored_assets')
       .select('id, threats_found, last_scan_at')
@@ -50,23 +50,8 @@ async function fetchUserSecurityContext(supabase: any, userId: string): Promise<
       lastScan: monitoredAssets?.[0]?.last_scan_at || null
     };
 
-    // Fetch SafeTrack asset stats
-    const { data: assets } = await supabase
-      .from('assets')
-      .select('id, warranty_expiry')
-      .eq('user_id', userId);
-    
-    const now = new Date();
-    const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-    
-    const assetStats = {
-      total: assets?.length || 0,
-      expiringSoon: assets?.filter((a: any) => 
-        a.warranty_expiry && new Date(a.warranty_expiry) <= thirtyDaysFromNow
-      ).length || 0
-    };
 
-    // Fetch SafeScan stats
+    // Fetch Scan stats
     const { data: scanLogs } = await supabase
       .from('audit_logs')
       .select('details')
@@ -84,7 +69,6 @@ async function fetchUserSecurityContext(supabase: any, userId: string): Promise<
     return {
       passwordVault: passwordStats,
       threats: threatStats,
-      assets: assetStats,
       scans: scanStats
     };
   } catch (error) {
@@ -161,7 +145,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log('SafeAssist AI function called');
+    console.log('ray-chat function called');
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
