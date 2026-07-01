@@ -482,6 +482,37 @@ export default function WraythSettings() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Account Dialog */}
+      <Dialog open={deleteDialog} onOpenChange={(o) => { setDeleteDialog(o); if (!o) setDeleteConfirm(''); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="h-5 w-5" />
+              Delete Account
+            </DialogTitle>
+            <DialogDescription>
+              This permanently deletes your Wrayth account, vault entries, and history. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Label htmlFor="delete-confirm">Type <span className="font-mono">DELETE</span> to confirm</Label>
+            <Input
+              id="delete-confirm"
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+              autoComplete="off"
+            />
+            <div className="flex gap-2 justify-end pt-2">
+              <Button variant="outline" onClick={() => setDeleteDialog(false)} disabled={deleting}>Cancel</Button>
+              <Button variant="destructive" onClick={handleDeleteAccount} disabled={deleting || deleteConfirm.trim().toUpperCase() !== 'DELETE'}>
+                {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                Delete my account
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
