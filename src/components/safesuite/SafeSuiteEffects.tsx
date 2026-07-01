@@ -100,7 +100,7 @@ export function GlowContainer({ children, theme, className, animate = true }: Gl
         'relative overflow-hidden rounded-xl',
         colors.glow,
         colors.border,
-        'border bg-[#141414]',
+        'border bg-card',
         className
       )}
     >
@@ -216,7 +216,7 @@ export function AnimatedStatsCard({ icon, label, value, theme, delay = 0 }: Anim
       transition={{ duration: 0.4, delay }}
       whileHover={{ scale: 1.02, y: -2 }}
       className={cn(
-        'p-4 rounded-xl bg-[#141414] border',
+        'p-4 rounded-xl bg-card border',
         colors.border,
         'transition-shadow duration-300',
         'hover:shadow-lg'
@@ -451,7 +451,7 @@ export function AnimatedListItem({ children, delay = 0, theme }: AnimatedListIte
       transition={{ duration: 0.3, delay }}
       whileHover={{ x: 4 }}
       className={cn(
-        'p-4 rounded-lg bg-[#141414] border transition-all duration-200',
+        'p-4 rounded-lg bg-card border transition-all duration-200',
         colors.border,
         'hover:' + colors.glow
       )}

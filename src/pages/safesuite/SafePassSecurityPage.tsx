@@ -160,9 +160,9 @@ const faqs = [
 
 export default function VaultSecurityPage() {
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-[#0a0a0a]/95 backdrop-blur border-b border-amber-500/10">
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-amber-500/10">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/app/products/safepass" className="flex items-center gap-3">
             <div className="h-12 w-12 rounded-xl bg-black flex items-center justify-center overflow-hidden border border-amber-500/30 shadow-lg shadow-amber-500/10">
@@ -267,7 +267,7 @@ export default function VaultSecurityPage() {
           
           <div className="grid md:grid-cols-2 gap-6">
             {securityPillars.map((pillar, index) => (
-              <Card key={index} className="bg-[#141414] border-amber-500/10 hover:border-amber-500/30 transition-all">
+              <Card key={index} className="bg-card border-amber-500/10 hover:border-amber-500/30 transition-all">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
                     <div className="h-12 w-12 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0">
@@ -330,7 +330,7 @@ export default function VaultSecurityPage() {
                 description: 'When you access your vault, encrypted data is downloaded and decrypted locally in your browser. Plaintext passwords never transit the network.'
               }
             ].map((item, index) => (
-              <div key={index} className="flex gap-4 p-6 rounded-xl bg-[#141414] border border-amber-500/10">
+              <div key={index} className="flex gap-4 p-6 rounded-xl bg-card border border-amber-500/10">
                 <div className="h-10 w-10 rounded-full bg-amber-500/10 flex items-center justify-center flex-shrink-0">
                   <span className="text-amber-400 font-bold">{item.step}</span>
                 </div>
@@ -362,7 +362,7 @@ export default function VaultSecurityPage() {
           
           {/* Core Difference */}
           <div className="grid md:grid-cols-2 gap-6 mb-12">
-            <Card className="bg-[#141414] border-gray-700">
+            <Card className="bg-card border-gray-700">
               <CardContent className="p-6">
                 <h3 className="text-lg font-semibold text-gray-400 mb-4">Browser Password Managers</h3>
                 <ul className="space-y-3 text-sm text-gray-500">
@@ -386,7 +386,7 @@ export default function VaultSecurityPage() {
               </CardContent>
             </Card>
             
-            <Card className="bg-[#141414] border-amber-500/30">
+            <Card className="bg-card border-amber-500/30">
               <CardContent className="p-6">
                 <h3 className="text-lg font-semibold text-amber-400 mb-4">Vault</h3>
                 <ul className="space-y-3 text-sm text-gray-300">
@@ -428,7 +428,7 @@ export default function VaultSecurityPage() {
             <div className="rounded-xl overflow-hidden border border-amber-500/10">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-[#141414]">
+                  <tr className="bg-card">
                     <th className="text-left p-4 text-gray-400 font-medium">Security Feature</th>
                     <th className="text-center p-4 text-amber-400 font-medium">Vault</th>
                     <th className="text-center p-4 text-gray-400 font-medium">Typical Browser Manager</th>
@@ -449,7 +449,7 @@ export default function VaultSecurityPage() {
           
           {/* Breach Scenario */}
           <div className="grid md:grid-cols-2 gap-6 mb-12">
-            <div className="p-6 rounded-xl bg-[#141414] border border-amber-500/10">
+            <div className="p-6 rounded-xl bg-card border border-amber-500/10">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                 <Shield className="h-5 w-5 text-amber-400" />
                 Designed for Breach Scenarios
@@ -474,7 +474,7 @@ export default function VaultSecurityPage() {
               </ul>
             </div>
             
-            <div className="p-6 rounded-xl bg-[#141414] border border-amber-500/10">
+            <div className="p-6 rounded-xl bg-card border border-amber-500/10">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                 <ShieldCheck className="h-5 w-5 text-amber-400" />
                 Protection Against Real-World Attacks
@@ -533,7 +533,7 @@ export default function VaultSecurityPage() {
           <div className="rounded-xl overflow-hidden border border-amber-500/10">
             <table className="w-full">
               <thead>
-                <tr className="bg-[#141414]">
+                <tr className="bg-card">
                   <th className="text-left p-4 text-gray-400 font-medium">Feature</th>
                   <th className="text-center p-4 text-amber-400 font-medium">Vault</th>
                   <th className="text-center p-4 text-gray-400 font-medium">Others</th>
@@ -576,7 +576,7 @@ export default function VaultSecurityPage() {
           
           <div className="space-y-4">
             {faqs.map((faq, index) => (
-              <div key={index} className="p-6 rounded-xl bg-[#141414] border border-amber-500/10">
+              <div key={index} className="p-6 rounded-xl bg-card border border-amber-500/10">
                 <h3 className="text-white font-semibold mb-3 flex items-start gap-2">
                   <AlertTriangle className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
                   {faq.question}

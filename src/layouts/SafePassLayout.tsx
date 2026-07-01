@@ -51,9 +51,9 @@ export function VaultLayout() {
     : user?.email?.substring(0, 2).toUpperCase() || 'SP';
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="min-h-screen bg-background">
       {/* Top Navigation */}
-      <header className="sticky top-0 z-50 w-full border-b border-amber-500/10 bg-[#0f0f0f]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0f0f0f]/60">
+      <header className="sticky top-0 z-50 w-full border-b border-amber-500/10 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="container flex h-16 items-center justify-between">
           {/* Logo */}
           <Link to="/safepass" className="flex items-center space-x-2">
@@ -150,7 +150,7 @@ export function VaultLayout() {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-amber-500/10 bg-[#0f0f0f]">
+          <div className="md:hidden border-t border-amber-500/10 bg-card">
             <nav className="container py-4 space-y-2">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.path;
@@ -177,12 +177,12 @@ export function VaultLayout() {
       </header>
 
       {/* Main Content */}
-      <main className="container py-6 bg-[#0a0a0a]">
+      <main className="container py-6 bg-background">
         <Outlet />
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-amber-500/10 py-6 mt-auto bg-[#0a0a0a]">
+      <footer className="border-t border-amber-500/10 py-6 mt-auto bg-background">
         <div className="container flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-gray-500">
             © {new Date().getFullYear()} Vault by Ultrium. All rights reserved.

@@ -556,7 +556,7 @@ export default function WraythDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] -m-4 lg:-m-6 p-4 lg:p-6 space-y-4 sm:space-y-6">
+    <div className="min-h-screen bg-background -m-4 lg:-m-6 p-4 lg:p-6 space-y-4 sm:space-y-6">
       {/* Ray's morning brief — same brief as /app/brief, lives on Home */}
       <div data-tour="security-score">
         <MorningBriefHero firstName={firstName} />
@@ -598,7 +598,7 @@ export default function WraythDashboard() {
       </div>
 
       {/* Ray's security timeline (preview) */}
-      <div className="wrayth-chamfer border border-border bg-[#0f0f0f] p-5">
+      <div className="wrayth-chamfer border border-border bg-card p-5">
         <div className="mb-4 flex items-center justify-between">
           <div>
             <div className="text-[11px] uppercase tracking-[0.22em] text-violet-300/80">Ray's timeline</div>

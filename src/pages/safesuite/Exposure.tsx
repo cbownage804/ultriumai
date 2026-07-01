@@ -484,7 +484,7 @@ export default function WraythWeb() {
         {/* Assets list */}
         <div className="space-y-2">
           {assets.length === 0 ? (
-            <Card className="bg-[#141414] border-violet-500/10">
+            <Card className="bg-card border-violet-500/10">
               <CardContent className="py-12 text-center">
                 <Globe className="h-12 w-12 mx-auto text-gray-500 mb-4" />
                 <p className="text-lg font-medium text-white">No assets monitored yet</p>
@@ -495,7 +495,7 @@ export default function WraythWeb() {
             </Card>
           ) : (
             assets.map((asset) => (
-              <Card key={asset.id} className="bg-[#141414] border-violet-500/10 hover:border-violet-500/30 transition-colors">
+              <Card key={asset.id} className="bg-card border-violet-500/10 hover:border-violet-500/30 transition-colors">
                 <CardContent className="py-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -569,7 +569,7 @@ export default function WraythWeb() {
                           {threats[asset.id].map((threat) => (
                             <div
                               key={threat.id}
-                              className="p-4 bg-[#1a1a1a] rounded-lg border border-red-500/20 hover:border-red-500/40 transition-colors cursor-pointer"
+                              className="p-4 bg-muted rounded-lg border border-red-500/20 hover:border-red-500/40 transition-colors cursor-pointer"
                               onClick={() => setSelectedThreat(threat)}
                             >
                               <div className="flex items-start justify-between gap-4">
@@ -623,7 +623,7 @@ export default function WraythWeb() {
 
         {/* Threat Detail Modal */}
         <Dialog open={!!selectedThreat} onOpenChange={() => setSelectedThreat(null)}>
-          <DialogContent className="max-w-2xl bg-[#141414] border-violet-500/20 text-white">
+          <DialogContent className="max-w-2xl bg-card border-violet-500/20 text-white">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-red-400">
                 <ShieldAlert className="h-5 w-5" />
@@ -736,7 +736,7 @@ export default function WraythWeb() {
                   {selectedThreat.threat_indicators?.breach_date && (
                     <div>
                       <h4 className="text-sm font-medium text-gray-400 mb-2">Breach Information</h4>
-                      <div className="bg-[#1a1a1a] p-4 rounded-lg space-y-2">
+                      <div className="bg-muted p-4 rounded-lg space-y-2">
                         <div className="flex justify-between">
                           <span className="text-gray-400">Breach Date:</span>
                           <span className="text-white">{selectedThreat.threat_indicators.breach_date}</span>

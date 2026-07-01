@@ -256,7 +256,7 @@ export function AIRecommendationsDisplay({
         {[1, 2, 3].map((i) => (
           <div 
             key={i}
-            className="p-4 rounded-xl bg-[#141414] border border-white/5 animate-pulse"
+            className="p-4 rounded-xl bg-card border border-white/5 animate-pulse"
             style={{ animationDelay: `${i * 150}ms` }}
           >
             <div className="flex items-center gap-2 mb-3">
@@ -514,7 +514,7 @@ export function AIRecommendationsDisplay({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="p-4 rounded-xl bg-[#141414] border border-white/5"
+          className="p-4 rounded-xl bg-card border border-white/5"
         >
           <div className="flex items-start gap-2">
             <AlertCircle className="h-4 w-4 text-violet-400 mt-0.5 shrink-0" />

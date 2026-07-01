@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-07-01T13:17:04.149Z",
+  "generatedAt": "2026-07-01T13:17:30.601Z",
   "totals": {
     "filesScanned": 870,
     "legacyBrand": 210,
     "todos": 11,
     "consoles": 122,
-    "hardcodedHex": 550,
-    "arbitraryColors": 77,
+    "hardcodedHex": 490,
+    "arbitraryColors": 17,
     "anyTypes": 235
   },
   "legacyBrand": [
@@ -2147,69 +2147,14 @@
       "text": "stroke=\"#3b82f6\""
     },
     {
-      "file": "src/components/safepass/AccountSwitcher.tsx",
-      "line": 139,
-      "text": "className=\"w-64 bg-[#1a1a1a] border-primary/20\""
-    },
-    {
-      "file": "src/components/safepass/AddAccountDialog.tsx",
-      "line": 102,
-      "text": "<DialogContent className=\"bg-[#141414] border-primary/20 sm:max-w-md\">"
-    },
-    {
-      "file": "src/components/safepass/AddAccountDialog.tsx",
-      "line": 138,
-      "text": "className=\"pl-10 bg-[#1a1a1a] border-primary/20 focus:border-primary\""
-    },
-    {
-      "file": "src/components/safepass/AddAccountDialog.tsx",
-      "line": 156,
-      "text": "className=\"pl-10 bg-[#1a1a1a] border-primary/20 focus:border-primary\""
-    },
-    {
-      "file": "src/components/safepass/AddAccountDialog.tsx",
-      "line": 199,
-      "text": "className=\"pl-10 bg-[#1a1a1a] border-primary/20 focus:border-primary\""
-    },
-    {
-      "file": "src/components/safepass/AddAccountDialog.tsx",
-      "line": 218,
-      "text": "className=\"pl-10 bg-[#1a1a1a] border-primary/20 focus:border-primary\""
-    },
-    {
       "file": "src/components/safepass/AutofillSuggestions.tsx",
       "line": 108,
       "text": "index === 0 ? \"bg-primary/20\" : \"bg-[#252525]\""
     },
     {
-      "file": "src/components/safepass/PasswordVault.tsx",
-      "line": 491,
-      "text": "<TabsList className=\"grid w-full grid-cols-5 lg:w-auto lg:inline-grid mb-4 sm:mb-6 bg-[#1a1a1a] border border-primary/10 h-auto p-1\">"
-    },
-    {
-      "file": "src/components/safepass/SafePassAISearch.tsx",
-      "line": 149,
-      "text": "className=\"pl-10 pr-10 bg-[#1a1a1a] border-primary/20 focus:border-primary text-white placeholder:text-gray-500\""
-    },
-    {
-      "file": "src/components/safepass/SafePassAISearch.tsx",
-      "line": 171,
-      "text": "className=\"w-[var(--radix-popover-trigger-width)] p-0 bg-[#1a1a1a] border-primary/20\""
-    },
-    {
       "file": "src/components/safepass/SafePassAISearch.tsx",
       "line": 196,
       "text": "<div className=\"h-8 w-8 rounded-lg bg-[#252525] flex items-center justify-center flex-shrink-0\">"
-    },
-    {
-      "file": "src/components/safepass/SecurityArchitectureBadge.tsx",
-      "line": 123,
-      "text": "<DialogContent className=\"sm:max-w-lg bg-[#0a0a0a] border-primary/30 max-h-[85vh] overflow-y-auto\">"
-    },
-    {
-      "file": "src/components/safepass/SecurityTipsModal.tsx",
-      "line": 100,
-      "text": "<DialogContent className=\"sm:max-w-md bg-[#0a0a0a] border-primary/30 overflow-hidden\">"
     },
     {
       "file": "src/components/safesuite/MFAOnboardingGate.tsx",
@@ -2220,31 +2165,6 @@
       "file": "src/components/safesuite/MFAOnboardingGate.tsx",
       "line": 124,
       "text": "light: '#ffffff'"
-    },
-    {
-      "file": "src/components/safesuite/SafeSuiteEffects.tsx",
-      "line": 103,
-      "text": "'border bg-[#141414]',"
-    },
-    {
-      "file": "src/components/safesuite/SafeSuiteEffects.tsx",
-      "line": 219,
-      "text": "'p-4 rounded-xl bg-[#141414] border',"
-    },
-    {
-      "file": "src/components/safesuite/SafeSuiteEffects.tsx",
-      "line": 454,
-      "text": "'p-4 rounded-lg bg-[#141414] border transition-all duration-200',"
-    },
-    {
-      "file": "src/components/safeweb/AIRecommendationsDisplay.tsx",
-      "line": 259,
-      "text": "className=\"p-4 rounded-xl bg-[#141414] border border-white/5 animate-pulse\""
-    },
-    {
-      "file": "src/components/safeweb/AIRecommendationsDisplay.tsx",
-      "line": 517,
-      "text": "className=\"p-4 rounded-xl bg-[#141414] border border-white/5\""
     },
     {
       "file": "src/components/settings/GlobalSettingsHub.tsx",
@@ -2260,51 +2180,6 @@
       "file": "src/components/settings/GlobalSettingsHub.tsx",
       "line": 72,
       "text": "accentColor: '#10b981',"
-    },
-    {
-      "file": "src/components/shared/AppAIChat.tsx",
-      "line": 291,
-      "text": "<Card className={`bg-[#0f0f0f] border-white/10 flex flex-col ${isExpanded ? 'fixed inset-4 z-50' : 'h-[500px]'}`}>"
-    },
-    {
-      "file": "src/components/shared/AppAIChat.tsx",
-      "line": 349,
-      "text": ": 'bg-[#1a1a1a] border border-white/10 text-gray-200'"
-    },
-    {
-      "file": "src/components/shared/AppAIChat.tsx",
-      "line": 365,
-      "text": "<div className=\"bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-3\">"
-    },
-    {
-      "file": "src/components/shared/AppAIChat.tsx",
-      "line": 403,
-      "text": "className=\"flex-1 bg-[#1a1a1a] border-white/10 text-white placeholder:text-gray-500\""
-    },
-    {
-      "file": "src/components/shared/DarkWebCheck.tsx",
-      "line": 142,
-      "text": "className=\"flex-1 bg-[#0f0f0f] border-white/10 text-white\""
-    },
-    {
-      "file": "src/components/shared/DarkWebCheck.tsx",
-      "line": 182,
-      "text": "<Card className=\"bg-[#0f0f0f] border-purple-500/20\">"
-    },
-    {
-      "file": "src/components/shared/DarkWebCheck.tsx",
-      "line": 208,
-      "text": "className=\"flex-1 bg-[#141414] border-purple-500/20 text-white\""
-    },
-    {
-      "file": "src/components/shared/DarkWebCheck.tsx",
-      "line": 270,
-      "text": "<div key={i} className=\"p-3 rounded-lg bg-[#141414] border border-orange-500/20\">"
-    },
-    {
-      "file": "src/components/shared/DarkWebCheck.tsx",
-      "line": 309,
-      "text": "<div key={i} className=\"p-3 rounded-lg bg-[#141414] border border-red-500/20\">"
     },
     {
       "file": "src/components/ui/alert-dialog.tsx",
@@ -2680,6 +2555,131 @@
       "file": "src/hooks/useResponsiveBreakpointEditor.ts",
       "line": 21,
       "text": "{ id: 'xs', name: 'Mobile S', minWidth: 320, maxWidth: 374, icon: '📱', color: '#f43f5e' },"
+    },
+    {
+      "file": "src/hooks/useResponsiveBreakpointEditor.ts",
+      "line": 22,
+      "text": "{ id: 'sm', name: 'Mobile', minWidth: 375, maxWidth: 639, icon: '📱', color: '#f97316' },"
+    },
+    {
+      "file": "src/hooks/useResponsiveBreakpointEditor.ts",
+      "line": 23,
+      "text": "{ id: 'md', name: 'Tablet', minWidth: 640, maxWidth: 767, icon: '📋', color: '#eab308' },"
+    },
+    {
+      "file": "src/hooks/useResponsiveBreakpointEditor.ts",
+      "line": 24,
+      "text": "{ id: 'lg', name: 'Laptop', minWidth: 768, maxWidth: 1023, icon: '💻', color: '#22c55e' },"
+    },
+    {
+      "file": "src/hooks/useResponsiveBreakpointEditor.ts",
+      "line": 25,
+      "text": "{ id: 'xl', name: 'Desktop', minWidth: 1024, maxWidth: 1279, icon: '🖥️', color: '#06b6d4' },"
+    },
+    {
+      "file": "src/hooks/useResponsiveBreakpointEditor.ts",
+      "line": 26,
+      "text": "{ id: '2xl', name: 'Wide', minWidth: 1280, maxWidth: 1920, icon: '🖥️', color: '#8b5cf6' },"
+    },
+    {
+      "file": "src/hooks/useRevenueDashboard.ts",
+      "line": 128,
+      "text": "<Bar dataKey=\"amount\" fill=\"#3b82f6\" radius={[4, 4, 0, 0]} />"
+    },
+    {
+      "file": "src/hooks/useScreenShare.ts",
+      "line": 32,
+      "text": "const [annotationColor, setAnnotationColor] = useState('#f43f5e');"
+    },
+    {
+      "file": "src/hooks/useTagCategorySystem.ts",
+      "line": 38,
+      "text": "${config.tagColors ? \"color TEXT DEFAULT '#6366f1',\\n  \" : ''}created_at TIMESTAMPTZ NOT NULL DEFAULT now()"
+    },
+    {
+      "file": "src/hooks/useTeamActivityFeed.ts",
+      "line": 35,
+      "text": "userId: 'self', userName, userColor: '#06b6d4',"
+    },
+    {
+      "file": "src/hooks/useTeamActivityFeed.ts",
+      "line": 44,
+      "text": "userId: 'self', userName, userColor: '#06b6d4',"
+    },
+    {
+      "file": "src/hooks/useTeamActivityFeed.ts",
+      "line": 51,
+      "text": "userId: 'self', userName, userColor: '#06b6d4',"
+    },
+    {
+      "file": "src/hooks/useTeamActivityFeed.ts",
+      "line": 58,
+      "text": "userId: 'self', userName, userColor: '#06b6d4',"
+    },
+    {
+      "file": "src/hooks/useTeamActivityFeed.ts",
+      "line": 65,
+      "text": "userId: 'self', userName, userColor: '#06b6d4',"
+    },
+    {
+      "file": "src/hooks/useThemeVariants.ts",
+      "line": 179,
+      "text": "bg: '#ffffff',"
+    },
+    {
+      "file": "src/hooks/useThemeVariants.ts",
+      "line": 180,
+      "text": "fg: '#000000',"
+    },
+    {
+      "file": "src/hooks/useUsageMetering.ts",
+      "line": 118,
+      "text": "<div className=\"h-full rounded-full transition-all\" style={{ width: pct + '%', backgroundColor: pct > 90 ? '#ef4444' : pct > 70 ? '#f59e0b' : '#22c55e' }} />"
+    },
+    {
+      "file": "src/hooks/useVisualDiff.ts",
+      "line": 44,
+      "text": "backgroundColor: '#ffffff',"
+    },
+    {
+      "file": "src/hooks/useVisualDiff.ts",
+      "line": 91,
+      "text": "backgroundColor: '#ffffff',"
+    },
+    {
+      "file": "src/index.css",
+      "line": 521,
+      "text": "Base #090909 · Surface #181818 · Cards #242424"
+    },
+    {
+      "file": "src/index.css",
+      "line": 522,
+      "text": "Borders #3A3A3A · Text #F3F3F3 · Accent Electric Violet */"
+    },
+    {
+      "file": "src/index.css",
+      "line": 523,
+      "text": "--background: 0 0% 3.5%;        /* #090909 */"
+    },
+    {
+      "file": "src/index.css",
+      "line": 524,
+      "text": "--foreground: 0 0% 95%;         /* #F3F3F3 */"
+    },
+    {
+      "file": "src/index.css",
+      "line": 526,
+      "text": "--card: 0 0% 14%;               /* #242424 */"
+    },
+    {
+      "file": "src/index.css",
+      "line": 529,
+      "text": "--popover: 0 0% 9%;             /* #181818 */"
+    },
+    {
+      "file": "src/index.css",
+      "line": 539,
+      "text": "--secondary: 0 0% 9%;           /* #181818 */"
     }
   ],
   "arbitraryColors": [
@@ -2689,139 +2689,14 @@
       "text": "<div className=\"p-4 space-y-4 bg-[#050a0a] min-h-screen\" role=\"region\" aria-label=\"Vanguard Platform Demo\">"
     },
     {
-      "file": "src/components/safepass/AccountSwitcher.tsx",
-      "line": 139,
-      "text": "className=\"w-64 bg-[#1a1a1a] border-primary/20\""
-    },
-    {
-      "file": "src/components/safepass/AddAccountDialog.tsx",
-      "line": 102,
-      "text": "<DialogContent className=\"bg-[#141414] border-primary/20 sm:max-w-md\">"
-    },
-    {
-      "file": "src/components/safepass/AddAccountDialog.tsx",
-      "line": 138,
-      "text": "className=\"pl-10 bg-[#1a1a1a] border-primary/20 focus:border-primary\""
-    },
-    {
-      "file": "src/components/safepass/AddAccountDialog.tsx",
-      "line": 156,
-      "text": "className=\"pl-10 bg-[#1a1a1a] border-primary/20 focus:border-primary\""
-    },
-    {
-      "file": "src/components/safepass/AddAccountDialog.tsx",
-      "line": 199,
-      "text": "className=\"pl-10 bg-[#1a1a1a] border-primary/20 focus:border-primary\""
-    },
-    {
-      "file": "src/components/safepass/AddAccountDialog.tsx",
-      "line": 218,
-      "text": "className=\"pl-10 bg-[#1a1a1a] border-primary/20 focus:border-primary\""
-    },
-    {
       "file": "src/components/safepass/AutofillSuggestions.tsx",
       "line": 108,
       "text": "index === 0 ? \"bg-primary/20\" : \"bg-[#252525]\""
     },
     {
-      "file": "src/components/safepass/PasswordVault.tsx",
-      "line": 491,
-      "text": "<TabsList className=\"grid w-full grid-cols-5 lg:w-auto lg:inline-grid mb-4 sm:mb-6 bg-[#1a1a1a] border border-primary/10 h-auto p-1\">"
-    },
-    {
-      "file": "src/components/safepass/SafePassAISearch.tsx",
-      "line": 149,
-      "text": "className=\"pl-10 pr-10 bg-[#1a1a1a] border-primary/20 focus:border-primary text-white placeholder:text-gray-500\""
-    },
-    {
-      "file": "src/components/safepass/SafePassAISearch.tsx",
-      "line": 171,
-      "text": "className=\"w-[var(--radix-popover-trigger-width)] p-0 bg-[#1a1a1a] border-primary/20\""
-    },
-    {
       "file": "src/components/safepass/SafePassAISearch.tsx",
       "line": 196,
       "text": "<div className=\"h-8 w-8 rounded-lg bg-[#252525] flex items-center justify-center flex-shrink-0\">"
-    },
-    {
-      "file": "src/components/safepass/SecurityArchitectureBadge.tsx",
-      "line": 123,
-      "text": "<DialogContent className=\"sm:max-w-lg bg-[#0a0a0a] border-primary/30 max-h-[85vh] overflow-y-auto\">"
-    },
-    {
-      "file": "src/components/safepass/SecurityTipsModal.tsx",
-      "line": 100,
-      "text": "<DialogContent className=\"sm:max-w-md bg-[#0a0a0a] border-primary/30 overflow-hidden\">"
-    },
-    {
-      "file": "src/components/safesuite/SafeSuiteEffects.tsx",
-      "line": 103,
-      "text": "'border bg-[#141414]',"
-    },
-    {
-      "file": "src/components/safesuite/SafeSuiteEffects.tsx",
-      "line": 219,
-      "text": "'p-4 rounded-xl bg-[#141414] border',"
-    },
-    {
-      "file": "src/components/safesuite/SafeSuiteEffects.tsx",
-      "line": 454,
-      "text": "'p-4 rounded-lg bg-[#141414] border transition-all duration-200',"
-    },
-    {
-      "file": "src/components/safeweb/AIRecommendationsDisplay.tsx",
-      "line": 259,
-      "text": "className=\"p-4 rounded-xl bg-[#141414] border border-white/5 animate-pulse\""
-    },
-    {
-      "file": "src/components/safeweb/AIRecommendationsDisplay.tsx",
-      "line": 517,
-      "text": "className=\"p-4 rounded-xl bg-[#141414] border border-white/5\""
-    },
-    {
-      "file": "src/components/shared/AppAIChat.tsx",
-      "line": 291,
-      "text": "<Card className={`bg-[#0f0f0f] border-white/10 flex flex-col ${isExpanded ? 'fixed inset-4 z-50' : 'h-[500px]'}`}>"
-    },
-    {
-      "file": "src/components/shared/AppAIChat.tsx",
-      "line": 349,
-      "text": ": 'bg-[#1a1a1a] border border-white/10 text-gray-200'"
-    },
-    {
-      "file": "src/components/shared/AppAIChat.tsx",
-      "line": 365,
-      "text": "<div className=\"bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-3\">"
-    },
-    {
-      "file": "src/components/shared/AppAIChat.tsx",
-      "line": 403,
-      "text": "className=\"flex-1 bg-[#1a1a1a] border-white/10 text-white placeholder:text-gray-500\""
-    },
-    {
-      "file": "src/components/shared/DarkWebCheck.tsx",
-      "line": 142,
-      "text": "className=\"flex-1 bg-[#0f0f0f] border-white/10 text-white\""
-    },
-    {
-      "file": "src/components/shared/DarkWebCheck.tsx",
-      "line": 182,
-      "text": "<Card className=\"bg-[#0f0f0f] border-purple-500/20\">"
-    },
-    {
-      "file": "src/components/shared/DarkWebCheck.tsx",
-      "line": 208,
-      "text": "className=\"flex-1 bg-[#141414] border-purple-500/20 text-white\""
-    },
-    {
-      "file": "src/components/shared/DarkWebCheck.tsx",
-      "line": 270,
-      "text": "<div key={i} className=\"p-3 rounded-lg bg-[#141414] border border-orange-500/20\">"
-    },
-    {
-      "file": "src/components/shared/DarkWebCheck.tsx",
-      "line": 309,
-      "text": "<div key={i} className=\"p-3 rounded-lg bg-[#141414] border border-red-500/20\">"
     },
     {
       "file": "src/components/ui/alert-dialog.tsx",
@@ -2884,189 +2759,14 @@
       "text": "\"z-[100] overflow-hidden rounded-md border border-border/50 bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-xl dark:bg-[#0f0f14] dark:border-white"
     },
     {
-      "file": "src/layouts/SafePassLayout.tsx",
-      "line": 54,
-      "text": "<div className=\"min-h-screen bg-[#0a0a0a]\">"
-    },
-    {
-      "file": "src/layouts/SafePassLayout.tsx",
-      "line": 56,
-      "text": "<header className=\"sticky top-0 z-50 w-full border-b border-amber-500/10 bg-[#0f0f0f]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0f0f0f]/60\">"
-    },
-    {
-      "file": "src/layouts/SafePassLayout.tsx",
-      "line": 153,
-      "text": "<div className=\"md:hidden border-t border-amber-500/10 bg-[#0f0f0f]\">"
-    },
-    {
-      "file": "src/layouts/SafePassLayout.tsx",
-      "line": 180,
-      "text": "<main className=\"container py-6 bg-[#0a0a0a]\">"
-    },
-    {
-      "file": "src/layouts/SafePassLayout.tsx",
-      "line": 185,
-      "text": "<footer className=\"border-t border-amber-500/10 py-6 mt-auto bg-[#0a0a0a]\">"
-    },
-    {
       "file": "src/pages/NotFound.tsx",
       "line": 19,
       "text": "<div className=\"min-h-screen flex items-center justify-center bg-[#050a0a] relative overflow-hidden\">"
     },
     {
-      "file": "src/pages/safesuite/Exposure.tsx",
-      "line": 487,
-      "text": "<Card className=\"bg-[#141414] border-violet-500/10\">"
-    },
-    {
-      "file": "src/pages/safesuite/Exposure.tsx",
-      "line": 498,
-      "text": "<Card key={asset.id} className=\"bg-[#141414] border-violet-500/10 hover:border-violet-500/30 transition-colors\">"
-    },
-    {
-      "file": "src/pages/safesuite/Exposure.tsx",
-      "line": 572,
-      "text": "className=\"p-4 bg-[#1a1a1a] rounded-lg border border-red-500/20 hover:border-red-500/40 transition-colors cursor-pointer\""
-    },
-    {
-      "file": "src/pages/safesuite/Exposure.tsx",
-      "line": 626,
-      "text": "<DialogContent className=\"max-w-2xl bg-[#141414] border-violet-500/20 text-white\">"
-    },
-    {
-      "file": "src/pages/safesuite/Exposure.tsx",
-      "line": 739,
-      "text": "<div className=\"bg-[#1a1a1a] p-4 rounded-lg space-y-2\">"
-    },
-    {
-      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
-      "line": 163,
-      "text": "<div className=\"min-h-screen bg-[#0a0a0a]\">"
-    },
-    {
-      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
-      "line": 165,
-      "text": "<header className=\"sticky top-0 z-50 bg-[#0a0a0a]/95 backdrop-blur border-b border-amber-500/10\">"
-    },
-    {
-      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
-      "line": 270,
-      "text": "<Card key={index} className=\"bg-[#141414] border-amber-500/10 hover:border-amber-500/30 transition-all\">"
-    },
-    {
-      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
-      "line": 333,
-      "text": "<div key={index} className=\"flex gap-4 p-6 rounded-xl bg-[#141414] border border-amber-500/10\">"
-    },
-    {
-      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
-      "line": 365,
-      "text": "<Card className=\"bg-[#141414] border-gray-700\">"
-    },
-    {
-      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
-      "line": 389,
-      "text": "<Card className=\"bg-[#141414] border-amber-500/30\">"
-    },
-    {
-      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
-      "line": 431,
-      "text": "<tr className=\"bg-[#141414]\">"
-    },
-    {
-      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
-      "line": 452,
-      "text": "<div className=\"p-6 rounded-xl bg-[#141414] border border-amber-500/10\">"
-    },
-    {
-      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
-      "line": 477,
-      "text": "<div className=\"p-6 rounded-xl bg-[#141414] border border-amber-500/10\">"
-    },
-    {
-      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
-      "line": 536,
-      "text": "<tr className=\"bg-[#141414]\">"
-    },
-    {
-      "file": "src/pages/safesuite/SafePassSecurityPage.tsx",
-      "line": 579,
-      "text": "<div key={index} className=\"p-6 rounded-xl bg-[#141414] border border-amber-500/10\">"
-    },
-    {
       "file": "src/pages/safesuite/SafeSuiteDashboard.tsx",
       "line": 198,
       "text": "<button className=\"w-full text-left text-sm text-foreground hover:text-primary transition-colors py-2 px-1 border-b border-[#2A2A2A] last:border-0 min-h-[40px]\""
-    },
-    {
-      "file": "src/pages/safesuite/SafeSuiteDashboard.tsx",
-      "line": 559,
-      "text": "<div className=\"min-h-screen bg-[#0a0a0a] -m-4 lg:-m-6 p-4 lg:p-6 space-y-4 sm:space-y-6\">"
-    },
-    {
-      "file": "src/pages/safesuite/SafeSuiteDashboard.tsx",
-      "line": 601,
-      "text": "<div className=\"wrayth-chamfer border border-border bg-[#0f0f0f] p-5\">"
-    },
-    {
-      "file": "src/pages/safesuite/products/SafePassProduct.tsx",
-      "line": 45,
-      "text": "<div className=\"min-h-screen bg-[#0a0a0a] safe-area-inset-bottom\">"
-    },
-    {
-      "file": "src/pages/safesuite/products/SafePassProduct.tsx",
-      "line": 47,
-      "text": "<header className=\"sticky top-0 z-50 bg-[#0a0a0a]/95 backdrop-blur border-b border-amber-500/10 safe-area-inset-top\">"
-    },
-    {
-      "file": "src/pages/safesuite/products/SafePassProduct.tsx",
-      "line": 123,
-      "text": "<Card key={index} className=\"bg-[#141414] border-amber-500/10 hover:border-amber-500/30 transition-all\">"
-    },
-    {
-      "file": "src/pages/safesuite/products/SafePassProduct.tsx",
-      "line": 148,
-      "text": "<div key={index} className=\"flex items-center gap-3 p-3 sm:p-4 rounded-lg bg-[#141414] border border-amber-500/10\">"
-    },
-    {
-      "file": "src/pages/safesuite/products/SafeScanProduct.tsx",
-      "line": 45,
-      "text": "<div className=\"min-h-screen bg-[#0a0a0a] safe-area-inset-bottom\">"
-    },
-    {
-      "file": "src/pages/safesuite/products/SafeScanProduct.tsx",
-      "line": 47,
-      "text": "<header className=\"sticky top-0 z-50 bg-[#0a0a0a]/95 backdrop-blur border-b border-red-500/10 safe-area-inset-top\">"
-    },
-    {
-      "file": "src/pages/safesuite/products/SafeScanProduct.tsx",
-      "line": 123,
-      "text": "<Card key={index} className=\"bg-[#141414] border-red-500/10 hover:border-red-500/30 transition-all\">"
-    },
-    {
-      "file": "src/pages/safesuite/products/SafeScanProduct.tsx",
-      "line": 148,
-      "text": "<div key={index} className=\"flex items-center gap-3 p-3 sm:p-4 rounded-lg bg-[#141414] border border-red-500/10\">"
-    },
-    {
-      "file": "src/pages/safesuite/products/SafeWebProduct.tsx",
-      "line": 45,
-      "text": "<div className=\"min-h-screen bg-[#0a0a0a]\">"
-    },
-    {
-      "file": "src/pages/safesuite/products/SafeWebProduct.tsx",
-      "line": 47,
-      "text": "<header className=\"sticky top-0 z-50 bg-[#0a0a0a]/95 backdrop-blur border-b border-violet-500/10\">"
-    },
-    {
-      "file": "src/pages/safesuite/products/SafeWebProduct.tsx",
-      "line": 136,
-      "text": "<Card key={index} className=\"bg-[#141414] border-violet-500/10 hover:border-violet-500/30 transition-all\">"
-    },
-    {
-      "file": "src/pages/safesuite/products/SafeWebProduct.tsx",
-      "line": 161,
-      "text": "<div key={index} className=\"flex items-center gap-3 p-4 rounded-lg bg-[#141414] border border-violet-500/10\">"
     }
   ]
 }

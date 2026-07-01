@@ -42,9 +42,9 @@ const highlights = [
 
 export default function VaultProduct() {
   return (
-    <div className="min-h-screen bg-[#0a0a0a] safe-area-inset-bottom">
+    <div className="min-h-screen bg-background safe-area-inset-bottom">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-[#0a0a0a]/95 backdrop-blur border-b border-amber-500/10 safe-area-inset-top">
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-amber-500/10 safe-area-inset-top">
         <div className="container mx-auto px-4 h-16 sm:h-20 flex items-center justify-between">
           <Link to="/app" className="flex items-center">
             <div className="h-10 sm:h-14 rounded-xl bg-black flex items-center justify-center overflow-hidden border border-amber-500/20 px-3 sm:px-4 shadow-lg shadow-amber-500/10">
@@ -120,7 +120,7 @@ export default function VaultProduct() {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {features.map((feature, index) => (
-              <Card key={index} className="bg-[#141414] border-amber-500/10 hover:border-amber-500/30 transition-all">
+              <Card key={index} className="bg-card border-amber-500/10 hover:border-amber-500/30 transition-all">
                 <CardContent className="p-4 sm:p-6">
                   <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg bg-amber-500/10 flex items-center justify-center mb-3 sm:mb-4">
                     <feature.icon className="h-5 w-5 sm:h-6 sm:w-6 text-amber-400" />
@@ -145,7 +145,7 @@ export default function VaultProduct() {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {highlights.map((highlight, index) => (
-              <div key={index} className="flex items-center gap-3 p-3 sm:p-4 rounded-lg bg-[#141414] border border-amber-500/10">
+              <div key={index} className="flex items-center gap-3 p-3 sm:p-4 rounded-lg bg-card border border-amber-500/10">
                 <CheckCircle2 className="h-5 w-5 text-amber-400 flex-shrink-0" />
                 <span className="text-gray-300 text-sm sm:text-base">{highlight}</span>
               </div>

@@ -97,7 +97,7 @@ export function SecurityTipsModal({ forceShow = false, onClose }: SecurityTipsMo
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-md bg-[#0a0a0a] border-primary/30 overflow-hidden">
+      <DialogContent className="sm:max-w-md bg-background border-primary/30 overflow-hidden">
         {/* Background glow */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 pointer-events-none" />
         
