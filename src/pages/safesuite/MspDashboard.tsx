@@ -20,6 +20,8 @@ import {
   fetchMspBriefing, fetchLatestHealth, triggerOrgSync, triggerMspBrief,
   type RayOrgBriefing, type RayOrgHealth,
 } from '@/lib/ray/org';
+import { PageMotion } from '@/components/ray/PageMotion';
+
 
 interface ClientRow {
   id: string;
