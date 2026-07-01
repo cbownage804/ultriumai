@@ -174,13 +174,6 @@ verify_jwt = false
 [functions.ray-chat]
 verify_jwt = true
 
-# Wrayth browser extension — domain trust engine (public; no PII)
-[functions.wrayth-domain-intel]
-verify_jwt = false
-
-# Wrayth 4.1 — Explain This Page (public; no PII, page snapshot only)
-[functions.wrayth-explain-page]
-verify_jwt = false
 
 
 
