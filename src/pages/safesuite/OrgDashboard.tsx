@@ -39,16 +39,16 @@ const HEALTH_AREAS: Array<{ key: keyof RayOrgHealth; label: string; icon: any }>
 ];
 
 function scoreTone(s: number) {
-  if (s >= 90) return 'text-emerald-400';
+  if (s >= 90) return 'text-green-400';
   if (s >= 75) return 'text-violet-300';
-  if (s >= 60) return 'text-amber-400';
-  return 'text-rose-400';
+  if (s >= 60) return 'text-yellow-400';
+  return 'text-red-400';
 }
 
 function DeltaPill({ delta }: { delta: number }) {
   if (delta === 0) return <span className="inline-flex items-center gap-1 text-xs text-muted-foreground"><Minus className="h-3 w-3" /> no change</span>;
-  if (delta > 0) return <span className="inline-flex items-center gap-1 text-xs text-emerald-400"><ArrowUp className="h-3 w-3" /> +{delta}</span>;
-  return <span className="inline-flex items-center gap-1 text-xs text-rose-400"><ArrowDown className="h-3 w-3" /> {delta}</span>;
+  if (delta > 0) return <span className="inline-flex items-center gap-1 text-xs text-green-400"><ArrowUp className="h-3 w-3" /> +{delta}</span>;
+  return <span className="inline-flex items-center gap-1 text-xs text-red-400"><ArrowDown className="h-3 w-3" /> {delta}</span>;
 }
 
 export default function OrgDashboard() {
@@ -209,9 +209,9 @@ export default function OrgDashboard() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm text-foreground font-medium">{p.display_name}</span>
                     {p.mfa_enabled
-                      ? <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-400">MFA on</Badge>
-                      : <Badge variant="outline" className="text-[10px] border-rose-500/30 text-rose-400">No MFA</Badge>}
-                    {p.breach_count > 0 && <Badge variant="outline" className="text-[10px] border-rose-500/30 text-rose-400">{p.breach_count} breached</Badge>}
+                      ? <Badge variant="outline" className="text-[10px] border-green-500/30 text-green-400">MFA on</Badge>
+                      : <Badge variant="outline" className="text-[10px] border-red-500/30 text-red-400">No MFA</Badge>}
+                    {p.breach_count > 0 && <Badge variant="outline" className="text-[10px] border-red-500/30 text-red-400">{p.breach_count} breached</Badge>}
                     {p.department && <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{p.department}</span>}
                   </div>
                   {p.ray_note && <div className="text-xs text-muted-foreground mt-1.5">Ray says: {p.ray_note}</div>}

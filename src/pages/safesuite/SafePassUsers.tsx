@@ -115,13 +115,13 @@ function UsersTeaserContent() {
                   </TableCell>
                   <TableCell>
                     {user.mfa ? (
-                      <Shield className="h-4 w-4 text-emerald-500" />
+                      <Shield className="h-4 w-4 text-green-500" />
                     ) : (
                       <ShieldOff className="h-4 w-4 text-muted-foreground" />
                     )}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={user.active ? 'outline' : 'secondary'} className={user.active ? 'text-emerald-500 border-emerald-500/30' : ''}>
+                    <Badge variant={user.active ? 'outline' : 'secondary'} className={user.active ? 'text-green-500 border-green-500/30' : ''}>
                       {user.active ? 'Active' : 'Inactive'}
                     </Badge>
                   </TableCell>
@@ -407,7 +407,7 @@ const VaultUsers = () => {
         return {
           title: "Reset Multi-Factor Authentication",
           description: `Reset MFA for ${actionDialog.user.full_name}? They will need to set up MFA again on their next login.`,
-          icon: <Smartphone className="h-6 w-6 text-orange-500" />,
+          icon: <Smartphone className="h-6 w-6 text-yellow-500" />,
           confirmText: "Reset MFA",
           onConfirm: handleMFAReset
         };
@@ -656,7 +656,7 @@ const VaultUsers = () => {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-blue-500" />
+              <Shield className="h-4 w-4 text-violet-500" />
               <span className="text-sm font-medium">MFA Enabled</span>
             </div>
             <div className="text-2xl font-bold mt-2">
@@ -667,7 +667,7 @@ const VaultUsers = () => {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-orange-500" />
+              <AlertCircle className="h-4 w-4 text-yellow-500" />
               <span className="text-sm font-medium">Inactive</span>
             </div>
             <div className="text-2xl font-bold mt-2">

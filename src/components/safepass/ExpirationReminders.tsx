@@ -200,9 +200,9 @@ export const ExpirationReminders = () => {
 
   const getUrgencyColor = (days: number) => {
     if (days < 0) return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
-    if (days <= 7) return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400';
+    if (days <= 7) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
     if (days <= 14) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
-    return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+    return 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400';
   };
 
   const expiredCount = expiringEntries.filter(e => e.daysUntilExpiry < 0).length;
@@ -330,7 +330,7 @@ export const ExpirationReminders = () => {
         <Card>
           <CardContent className="p-4 sm:p-6">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center shrink-0">
                 <Bell className="h-5 w-5 sm:h-6 sm:w-6" />
               </div>
               <div>

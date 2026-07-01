@@ -184,7 +184,7 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
   const getRiskStyles = (level: string) => {
     switch (level) {
       case 'critical': return { bg: 'bg-red-500/10', border: 'border-red-500/30', text: 'text-red-400', badge: 'bg-red-500/20 text-red-300' };
-      case 'high': return { bg: 'bg-primary/10', border: 'border-primary/30', text: 'text-orange-400', badge: 'bg-primary/20 text-orange-300' };
+      case 'high': return { bg: 'bg-primary/10', border: 'border-primary/30', text: 'text-yellow-400', badge: 'bg-primary/20 text-yellow-300' };
       case 'low': return { bg: 'bg-green-500/10', border: 'border-green-500/30', text: 'text-green-400', badge: 'bg-green-500/20 text-green-300' };
       default: return { bg: 'bg-primary/10', border: 'border-primary/30', text: 'text-primary', badge: 'bg-primary/20 text-primary' };
     }
@@ -387,16 +387,16 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
                   {/* Additional Protection */}
                   {parsed.additionalProtection.length > 0 && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                      className="rounded-xl overflow-hidden border bg-emerald-500/10 border-emerald-500/20">
+                      className="rounded-xl overflow-hidden border bg-green-500/10 border-green-500/20">
                       <button onClick={() => toggleSection('additional')} 
                         className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-colors">
                         <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-lg bg-emerald-500/20">
-                            <Shield className="h-4 w-4 text-emerald-400" />
+                          <div className="p-2 rounded-lg bg-green-500/20">
+                            <Shield className="h-4 w-4 text-green-400" />
                           </div>
                           <div className="text-left">
                             <h4 className="text-sm font-semibold">Extra Protection</h4>
-                            <span className="text-xs text-emerald-400/80">Recommended security steps</span>
+                            <span className="text-xs text-green-400/80">Recommended security steps</span>
                           </div>
                         </div>
                         {expandedSections.has('additional') ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
@@ -407,7 +407,7 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
                             <div className="px-4 pb-4 space-y-2">
                               {parsed.additionalProtection.map((item, i) => (
                                 <div key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                                  <CheckCircle2 className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" />
+                                  <CheckCircle2 className="h-4 w-4 text-green-400 mt-0.5 shrink-0" />
                                   <span>{item}</span>
                                 </div>
                               ))}

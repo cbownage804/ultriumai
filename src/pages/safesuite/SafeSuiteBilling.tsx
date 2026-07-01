@@ -126,12 +126,12 @@ export default function WraythBilling() {
         >
           <Card className={cn(
             'overflow-hidden',
-            tier === 'business' && 'border-amber-500/30 bg-gradient-to-r from-amber-500/5 to-orange-500/5',
+            tier === 'business' && 'border-yellow-500/30 bg-gradient-to-r from-yellow-500/5 to-yellow-500/5',
             tier === 'pro' && 'border-violet-500/30 bg-gradient-to-r from-violet-500/5 to-purple-500/5'
           )}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                {tier === 'business' && <Crown className="h-5 w-5 text-amber-500" />}
+                {tier === 'business' && <Crown className="h-5 w-5 text-yellow-500" />}
                 {tier === 'pro' && <Zap className="h-5 w-5 text-violet-500" />}
                 {tier === 'free' && <Shield className="h-5 w-5" />}
                 Current Plan
@@ -145,7 +145,7 @@ export default function WraythBilling() {
                     <Badge 
                       variant={tier === 'free' ? 'secondary' : 'default'}
                       className={cn(
-                        tier === 'business' && 'bg-gradient-to-r from-amber-500 to-orange-500 border-0',
+                        tier === 'business' && 'bg-gradient-to-r from-yellow-500 to-yellow-500 border-0',
                         tier === 'pro' && 'bg-gradient-to-r from-violet-500 to-purple-500 border-0'
                       )}
                     >
@@ -204,7 +204,7 @@ export default function WraythBilling() {
         />
         <Label htmlFor="billing-toggle" className={cn(yearlyBilling && 'text-foreground font-medium')}>
           Yearly
-          <Badge variant="secondary" className="ml-2 bg-emerald-500/20 text-emerald-400">Save 20%</Badge>
+          <Badge variant="secondary" className="ml-2 bg-green-500/20 text-green-400">Save 20%</Badge>
         </Label>
       </motion.div>
 
@@ -243,7 +243,7 @@ export default function WraythBilling() {
               )}
               <CardHeader className="text-center pb-2">
                 <div className="flex items-center justify-center gap-2 mb-2">
-                  {tierConfig.id === 'business' && <Crown className="h-5 w-5 text-amber-500" />}
+                  {tierConfig.id === 'business' && <Crown className="h-5 w-5 text-yellow-500" />}
                   <CardTitle>{tierConfig.name}</CardTitle>
                 </div>
                 <CardDescription>{tierConfig.description}</CardDescription>
@@ -364,7 +364,7 @@ export default function WraythBilling() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Crown className="h-5 w-5 text-amber-500" />
+              <Crown className="h-5 w-5 text-yellow-500" />
               Upgrade to Business
             </DialogTitle>
             <DialogDescription>
