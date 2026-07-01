@@ -33,8 +33,10 @@ import {
   Users,
   Star,
   Zap,
-  Shield
+  Shield,
+  Eye
 } from 'lucide-react';
+
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
