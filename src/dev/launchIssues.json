@@ -1,124 +1,23 @@
 {
-  "generatedAt": "2026-07-01T15:02:03.456Z",
+  "generatedAt": "2026-07-01T15:04:39.524Z",
   "totals": {
-    "total": 25,
+    "total": 11,
     "P0": 0,
-    "P1": 15,
+    "P1": 1,
     "P2": 10,
     "byArea": {
-      "route": 4,
-      "button": 6,
-      "edge": 15
+      "route": 2,
+      "edge": 9
     }
   },
   "findings": [
     {
       "severity": "P1",
-      "area": "button",
-      "file": "src/components/apps/SafeScanApp.tsx",
-      "line": 29,
-      "message": "<Button> with no onClick, type, form, Link wrapper, or asChild parent."
-    },
-    {
-      "severity": "P1",
-      "area": "button",
-      "file": "src/components/safepass/SharedPasswordAccess.tsx",
-      "line": 258,
-      "message": "<Button> with no onClick, type, form, Link wrapper, or asChild parent."
-    },
-    {
-      "severity": "P1",
-      "area": "route",
-      "file": "src/pages/safesuite/SafePassExtension.tsx",
-      "line": 1,
-      "message": "Page fetches data but renders no loading state (no isLoading/Skeleton/Spinner).",
-      "path": "/app/passwords/extension"
-    },
-    {
-      "severity": "P1",
-      "area": "button",
-      "file": "src/pages/safesuite/SafePassUsers.tsx",
-      "line": 76,
-      "message": "<Button> with no onClick, type, form, Link wrapper, or asChild parent."
-    },
-    {
-      "severity": "P1",
-      "area": "button",
-      "file": "src/pages/safesuite/SafePassUsers.tsx",
-      "line": 129,
-      "message": "<Button> with no onClick, type, form, Link wrapper, or asChild parent."
-    },
-    {
-      "severity": "P1",
-      "area": "button",
-      "file": "src/pages/safesuite/SafeSuiteSettings.tsx",
-      "line": 242,
-      "message": "<Button> with no onClick, type, form, Link wrapper, or asChild parent."
-    },
-    {
-      "severity": "P1",
-      "area": "button",
-      "file": "src/pages/safesuite/SafeSuiteSettings.tsx",
-      "line": 332,
-      "message": "<Button> with no onClick, type, form, Link wrapper, or asChild parent."
-    },
-    {
-      "severity": "P1",
       "area": "route",
       "file": "src/pages/safesuite/Trends.tsx",
-      "line": 62,
+      "line": 64,
       "message": "Page calls supabase without try/catch or .catch — errors will surface as unhandled promise rejections.",
       "path": "/app/trends"
-    },
-    {
-      "severity": "P1",
-      "area": "route",
-      "file": "src/pages/safesuite/Trends.tsx",
-      "line": 1,
-      "message": "Page fetches data but renders no loading state (no isLoading/Skeleton/Spinner).",
-      "path": "/app/trends"
-    },
-    {
-      "severity": "P1",
-      "area": "edge",
-      "file": "supabase/functions/ms-graph-oauth-callback/index.ts",
-      "line": 1,
-      "message": "Function \"ms-graph-oauth-callback\" has no CORS headers — browser calls will fail."
-    },
-    {
-      "severity": "P1",
-      "area": "edge",
-      "file": "supabase/functions/ms-graph-oauth-callback/index.ts",
-      "line": 1,
-      "message": "Function \"ms-graph-oauth-callback\" catches errors but doesn't return JSON — clients see raw text."
-    },
-    {
-      "severity": "P1",
-      "area": "edge",
-      "file": "supabase/functions/ray-org-sync/index.ts",
-      "line": 1,
-      "message": "Function \"ray-org-sync\" never verifies caller identity (no getClaims/getUser/Authorization check)."
-    },
-    {
-      "severity": "P1",
-      "area": "edge",
-      "file": "supabase/functions/ray-tts/index.ts",
-      "line": 1,
-      "message": "Function \"ray-tts\" never verifies caller identity (no getClaims/getUser/Authorization check)."
-    },
-    {
-      "severity": "P1",
-      "area": "edge",
-      "file": "supabase/functions/serve-preview/index.ts",
-      "line": 1,
-      "message": "Function \"serve-preview\" has no CORS headers — browser calls will fail."
-    },
-    {
-      "severity": "P1",
-      "area": "edge",
-      "file": "supabase/functions/serve-preview/index.ts",
-      "line": 1,
-      "message": "Function \"serve-preview\" catches errors but doesn't return JSON — clients see raw text."
     },
     {
       "severity": "P2",

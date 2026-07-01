@@ -1,47 +1,4 @@
 {
-  "generatedAt": "2026-07-01T15:02:03.175Z",
-  "findings": [
-    {
-      "severity": "P1",
-      "area": "button",
-      "file": "src/components/apps/SafeScanApp.tsx",
-      "line": 29,
-      "message": "<Button> with no onClick, type, form, Link wrapper, or asChild parent."
-    },
-    {
-      "severity": "P1",
-      "area": "button",
-      "file": "src/components/safepass/SharedPasswordAccess.tsx",
-      "line": 258,
-      "message": "<Button> with no onClick, type, form, Link wrapper, or asChild parent."
-    },
-    {
-      "severity": "P1",
-      "area": "button",
-      "file": "src/pages/safesuite/SafePassUsers.tsx",
-      "line": 76,
-      "message": "<Button> with no onClick, type, form, Link wrapper, or asChild parent."
-    },
-    {
-      "severity": "P1",
-      "area": "button",
-      "file": "src/pages/safesuite/SafePassUsers.tsx",
-      "line": 129,
-      "message": "<Button> with no onClick, type, form, Link wrapper, or asChild parent."
-    },
-    {
-      "severity": "P1",
-      "area": "button",
-      "file": "src/pages/safesuite/SafeSuiteSettings.tsx",
-      "line": 242,
-      "message": "<Button> with no onClick, type, form, Link wrapper, or asChild parent."
-    },
-    {
-      "severity": "P1",
-      "area": "button",
-      "file": "src/pages/safesuite/SafeSuiteSettings.tsx",
-      "line": 332,
-      "message": "<Button> with no onClick, type, form, Link wrapper, or asChild parent."
-    }
-  ]
+  "generatedAt": "2026-07-01T15:04:39.289Z",
+  "findings": []
 }

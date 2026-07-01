@@ -1,34 +1,6 @@
 {
-  "generatedAt": "2026-07-01T15:02:03.441Z",
+  "generatedAt": "2026-07-01T15:04:39.509Z",
   "findings": [
-    {
-      "severity": "P1",
-      "area": "edge",
-      "file": "supabase/functions/ms-graph-oauth-callback/index.ts",
-      "line": 1,
-      "message": "Function \"ms-graph-oauth-callback\" has no CORS headers — browser calls will fail."
-    },
-    {
-      "severity": "P1",
-      "area": "edge",
-      "file": "supabase/functions/ms-graph-oauth-callback/index.ts",
-      "line": 1,
-      "message": "Function \"ms-graph-oauth-callback\" catches errors but doesn't return JSON — clients see raw text."
-    },
-    {
-      "severity": "P1",
-      "area": "edge",
-      "file": "supabase/functions/ray-org-sync/index.ts",
-      "line": 1,
-      "message": "Function \"ray-org-sync\" never verifies caller identity (no getClaims/getUser/Authorization check)."
-    },
-    {
-      "severity": "P1",
-      "area": "edge",
-      "file": "supabase/functions/ray-tts/index.ts",
-      "line": 1,
-      "message": "Function \"ray-tts\" never verifies caller identity (no getClaims/getUser/Authorization check)."
-    },
     {
       "severity": "P2",
       "area": "edge",
@@ -91,20 +63,6 @@
       "file": "supabase/functions/safeweb-scanner/index.ts",
       "line": 1,
       "message": "Function \"safeweb-scanner\" still carries a legacy product prefix — rename post-beta or alias."
-    },
-    {
-      "severity": "P1",
-      "area": "edge",
-      "file": "supabase/functions/serve-preview/index.ts",
-      "line": 1,
-      "message": "Function \"serve-preview\" has no CORS headers — browser calls will fail."
-    },
-    {
-      "severity": "P1",
-      "area": "edge",
-      "file": "supabase/functions/serve-preview/index.ts",
-      "line": 1,
-      "message": "Function \"serve-preview\" catches errors but doesn't return JSON — clients see raw text."
     }
   ]
 }
