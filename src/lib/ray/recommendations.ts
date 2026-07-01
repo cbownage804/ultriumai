@@ -10,12 +10,29 @@ export interface Recommendation {
   priority: number; // 1 (highest) .. 100
   source_finding_ids: string[]; // populated after findings are persisted
   source_kinds: PasswordFinding['kind'][];
+  /**
+   * Stable key identifying the goal this recommendation exists to achieve.
+   * Ray never shows two active recommendations with the same objective for
+   * the same user — enforced by a partial unique index on
+   * `ray_recommendations(user_id, objective)` where the row is still open.
+   */
+  objective: string;
 }
 
-export interface RayProfileInput {
-  audience?: 'personal' | 'family' | 'business' | null;
-  providers?: Record<string, boolean>;
-  existing_manager?: string | null;
+/**
+ * The "start here" recommendation for a user whose vault is empty.
+ * Kept as its own helper so onboarding, the morning brief, and the
+ * dashboard can all emit the same one without duplicating copy.
+ */
+export function importPasswordsRecommendation(): Recommendation {
+  return {
+    title: 'Protect your passwords with Wrayth',
+    body: 'Import from your browser or password manager, or save your first password. Once your vault is set up, Ray takes over — monitoring, breach detection, and guidance follow automatically.',
+    priority: 1,
+    source_finding_ids: [],
+    source_kinds: [],
+    objective: 'import_passwords',
+  };
 }
 
 export function generateRecommendations(
@@ -26,6 +43,11 @@ export function generateRecommendations(
   const recs: Recommendation[] = [];
   const breached = intel.findings.filter((f) => f.kind === 'breached').length;
 
+  // Lifecycle: an empty vault has exactly one objective — get passwords in.
+  if (intel.total === 0) {
+    return [importPasswordsRecommendation()];
+  }
+
   if (breached > 0) {
     recs.push({
       title: `Rotate ${breached} breached password${breached === 1 ? '' : 's'} first`,
@@ -33,6 +55,7 @@ export function generateRecommendations(
       priority: 1,
       source_finding_ids: [],
       source_kinds: ['breached'],
+      objective: 'rotate_breached',
     });
   }
 
@@ -43,6 +66,7 @@ export function generateRecommendations(
       priority: 10,
       source_finding_ids: [],
       source_kinds: ['reused'],
+      objective: 'stop_password_reuse',
     });
   }
 
@@ -53,6 +77,7 @@ export function generateRecommendations(
       priority: 20,
       source_finding_ids: [],
       source_kinds: ['weak'],
+      objective: 'strengthen_weak_passwords',
     });
   }
 
@@ -63,6 +88,7 @@ export function generateRecommendations(
       priority: 30,
       source_finding_ids: [],
       source_kinds: ['empty'],
+      objective: 'fill_empty_entries',
     });
   }
 
@@ -73,6 +99,7 @@ export function generateRecommendations(
       priority: 40,
       source_finding_ids: [],
       source_kinds: ['old'],
+      objective: 'refresh_old_passwords',
     });
   }
 
@@ -83,6 +110,7 @@ export function generateRecommendations(
       priority: 50,
       source_finding_ids: [],
       source_kinds: ['no_mfa'],
+      objective: 'mfa_microsoft',
     });
   }
   if (profile.providers?.google) {
@@ -92,6 +120,7 @@ export function generateRecommendations(
       priority: 51,
       source_finding_ids: [],
       source_kinds: ['no_mfa'],
+      objective: 'mfa_google',
     });
   }
   if (profile.providers?.apple) {
@@ -101,6 +130,7 @@ export function generateRecommendations(
       priority: 52,
       source_finding_ids: [],
       source_kinds: ['no_mfa'],
+      objective: 'mfa_apple',
     });
   }
 
@@ -111,6 +141,7 @@ export function generateRecommendations(
       priority: 70,
       source_finding_ids: [],
       source_kinds: ['missing_url', 'missing_username'],
+      objective: 'fill_metadata',
     });
   }
 
@@ -121,6 +152,7 @@ export function generateRecommendations(
       priority: 90,
       source_finding_ids: [],
       source_kinds: ['breached'],
+      objective: 'retry_breach_check',
     });
   }
 
