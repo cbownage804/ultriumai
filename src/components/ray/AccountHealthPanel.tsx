@@ -114,14 +114,16 @@ export function AccountHealthPanel() {
   }, [user]);
 
   const ordered = useMemo(() => {
-    // Show detected providers first, then the rest with score >= 1, then top 3 fallbacks.
+    // Only show providers Ray has real signal for: either the user has a
+    // matching vault entry, or Ray has already recorded a health score.
+    // No detected accounts + no scores → render nothing (no placeholder bars).
     const inVault = SECURE_PROVIDERS.filter((p) => detected.has(p.id));
     const known = SECURE_PROVIDERS.filter((p) => !detected.has(p.id) && health[p.id]);
-    if (inVault.length + known.length > 0) return [...inVault, ...known];
-    return SECURE_PROVIDERS.slice(0, 4);
+    return [...inVault, ...known];
   }, [detected, health]);
 
   if (loading) return null;
+  if (ordered.length === 0) return null;
 
   return (
     <section className="relative rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-950/60 p-5">
@@ -144,7 +146,7 @@ export function AccountHealthPanel() {
           <ProviderRow
             key={p.id}
             provider={p}
-            score={health[p.id]?.score ?? (detected.has(p.id) ? 50 : 30)}
+            score={health[p.id]?.score ?? 50}
             lastDone={health[p.id]?.last_completed_at ?? null}
           />
         ))}
