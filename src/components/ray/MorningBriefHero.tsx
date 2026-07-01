@@ -38,6 +38,7 @@ import { Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScoreCelebration } from "@/components/ray/ScoreCelebration";
 import { toast } from "sonner";
+import { ExplainThis } from "@/components/ray/ExplainThis";
 
 /** Compose Ray's spoken brief: greeting → reassurance → score → close. */
 function buildSpokenBrief(opts: {
