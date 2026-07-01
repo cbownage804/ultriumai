@@ -1,137 +1,91 @@
-import * as React from "react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { LucideIcon, Inbox } from "lucide-react";
+import type { ComponentType, ReactNode } from 'react';
+import { cn } from '@/lib/utils';
+import { Button, type buttonVariants } from '@/components/ui/button';
+import type { VariantProps } from 'class-variance-authority';
 
-/** Type for any component that accepts className */
-type IconComponent = React.ComponentType<{ className?: string }>;
+type ButtonVariant = VariantProps<typeof buttonVariants>['variant'];
 
-export interface EmptyStateProps {
-  /** Icon to display - can be a LucideIcon, any component with className, or ReactNode */
-  icon?: LucideIcon | IconComponent | React.ReactNode;
-  /** Main title text */
+interface EmptyStateAction {
+  label: string;
+  onClick?: () => void;
+  href?: string;
+  variant?: ButtonVariant;
+}
+
+interface EmptyStateProps {
+  /** Any icon component that renders an SVG (lucide, custom, mock). */
+  icon?: ComponentType<{ className?: string }>;
   title: string;
-  /** Description text below the title */
-  description?: string;
-  /** Primary action button */
-  action?: {
-    label: string;
-    onClick: () => void;
-    variant?: "default" | "outline" | "secondary";
-  };
-  /** Secondary action button */
-  secondaryAction?: {
-    label: string;
-    onClick: () => void;
-  };
-  /** Additional className for the container */
+  /** One short sentence — ideally sourced from src/lib/ray/voice.ts. */
+  body?: ReactNode;
+  /** Alias for `body`, kept for compatibility with earlier call sites. */
+  description?: ReactNode;
+  action?: EmptyStateAction;
+  secondaryAction?: EmptyStateAction;
+  /** Visual density. `sm` shrinks padding for use inside cards / tables. */
+  size?: 'sm' | 'md';
   className?: string;
-  /** Size variant */
-  size?: "sm" | "md" | "lg";
 }
 
 /**
- * Reusable empty state component with icon, title, description, and optional CTAs.
- * Use this for tables, lists, and dashboards when no data is available.
+ * Shared empty state primitive. Every list / dashboard route with a possible
+ * "no data yet" moment should render this — never a bare "Nothing here" div.
  */
 export function EmptyState({
-  icon: IconProp,
+  icon: Icon,
   title,
+  body,
   description,
   action,
   secondaryAction,
+  size = 'md',
   className,
-  size = "md"
 }: EmptyStateProps) {
-  const sizeStyles = {
-    sm: {
-      container: "py-6",
-      iconWrapper: "h-10 w-10",
-      iconSize: "h-5 w-5",
-      title: "text-sm font-medium",
-      description: "text-xs",
-    },
-    md: {
-      container: "py-12",
-      iconWrapper: "h-14 w-14",
-      iconSize: "h-7 w-7",
-      title: "text-lg font-semibold",
-      description: "text-sm",
-    },
-    lg: {
-      container: "py-16",
-      iconWrapper: "h-20 w-20",
-      iconSize: "h-10 w-10",
-      title: "text-xl font-bold",
-      description: "text-base",
-    },
-  };
-
-  const styles = sizeStyles[size];
-
-  // Render the icon
-  const renderIcon = () => {
-    if (!IconProp) {
-      return <Inbox className={cn(styles.iconSize, "text-muted-foreground")} />;
-    }
-    
-    // Check if it's a React component (function or forwardRef)
-    if (typeof IconProp === "function" || (typeof IconProp === "object" && IconProp !== null && '$$typeof' in IconProp)) {
-      const IconComponent = IconProp as React.ComponentType<{ className?: string }>;
-      return <IconComponent className={cn(styles.iconSize, "text-muted-foreground")} />;
-    }
-    
-    // It's a ReactNode
-    return IconProp;
-  };
+  const copy = body ?? description;
+  const pad = size === 'sm' ? 'px-4 py-8' : 'px-6 py-16';
 
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center text-center",
-        styles.container,
-        className
+        'flex flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/40 text-center',
+        pad,
+        className,
       )}
+      role="status"
+      aria-live="polite"
     >
-      <div
-        className={cn(
-          "flex items-center justify-center rounded-full bg-muted mb-4",
-          styles.iconWrapper
-        )}
-      >
-        {renderIcon()}
-      </div>
-      
-      <h3 className={cn(styles.title, "text-foreground mb-1")}>{title}</h3>
-      
-      {description && (
-        <p className={cn(styles.description, "text-muted-foreground max-w-sm mb-4")}>
-          {description}
-        </p>
-      )}
-      
-      {(action || secondaryAction) && (
-        <div className="flex items-center gap-2 mt-2">
-          {action && (
-            <Button
-              onClick={action.onClick}
-              variant={action.variant || "default"}
-              size={size === "sm" ? "sm" : "default"}
-            >
-              {action.label}
-            </Button>
-          )}
-          {secondaryAction && (
-            <Button
-              onClick={secondaryAction.onClick}
-              variant="outline"
-              size={size === "sm" ? "sm" : "default"}
-            >
-              {secondaryAction.label}
-            </Button>
-          )}
+      {Icon ? (
+        <div className={cn(
+          'mb-5 flex items-center justify-center rounded-xl bg-muted/60 text-muted-foreground',
+          size === 'sm' ? 'size-10' : 'size-12',
+        )}>
+          <Icon className={size === 'sm' ? 'size-5' : 'size-6'} aria-hidden="true" />
         </div>
-      )}
+      ) : null}
+      <h3 className="text-base font-medium text-foreground">{title}</h3>
+      {copy ? <p className="mt-2 max-w-sm text-sm text-muted-foreground">{copy}</p> : null}
+      {(action || secondaryAction) ? (
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          {action ? renderAction(action, 'default') : null}
+          {secondaryAction ? renderAction(secondaryAction, 'outline') : null}
+        </div>
+      ) : null}
     </div>
+  );
+}
+
+function renderAction(action: EmptyStateAction, fallbackVariant: ButtonVariant) {
+  const variant = action.variant ?? fallbackVariant;
+  if (action.href) {
+    return (
+      <Button asChild size="sm" variant={variant}>
+        <a href={action.href}>{action.label}</a>
+      </Button>
+    );
+  }
+  return (
+    <Button size="sm" variant={variant} onClick={action.onClick}>
+      {action.label}
+    </Button>
   );
 }
