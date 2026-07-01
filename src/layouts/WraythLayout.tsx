@@ -7,7 +7,7 @@
  * route paths.
  */
 
-import wraythBrandSidebar from '@/assets/wrayth-brand-sidebar.png.asset.json';
+import wraythBrandSidebar from '@/assets/wrayth-brand-sidebar-white.png.asset.json';
 
 import { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
