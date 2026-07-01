@@ -429,6 +429,9 @@ export default function WraythWeb() {
 
         <RayConversationCard context="exposure" />
 
+        <ExposureVaultImpact assets={assets} />
+
+
 
 
 
