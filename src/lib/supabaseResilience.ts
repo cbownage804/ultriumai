@@ -24,7 +24,7 @@ export async function withTimeout<T>(
   try {
     const result = await operation(controller.signal);
     return result;
-  } catch (err: any) {
+  } catch (err: unknown) {
     if (err?.name === 'AbortError' || controller.signal.aborted) {
       devLog.warn(`[Resilience] ${label ?? 'Operation'} timed out after ${timeoutMs}ms — using fallback`);
     } else {

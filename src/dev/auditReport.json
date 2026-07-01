@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-07-01T13:41:44.995Z",
+  "generatedAt": "2026-07-01T13:44:37.977Z",
   "totals": {
-    "filesScanned": 456,
-    "legacyBrand": 196,
+    "filesScanned": 453,
+    "legacyBrand": 191,
     "todos": 10,
-    "consoles": 95,
-    "hardcodedHex": 450,
+    "consoles": 93,
+    "hardcodedHex": 446,
     "arbitraryColors": 0,
-    "anyTypes": 147
+    "anyTypes": 128
   },
   "legacyBrand": [
     {
@@ -474,31 +474,6 @@
       "file": "supabase/functions/ray-chat/index.ts",
       "line": 164,
       "text": "console.log('SafeAssist AI function called');"
-    },
-    {
-      "file": "supabase/functions/safepass-reset-master-password/index.ts",
-      "line": 198,
-      "text": "from: \"SafePass Security <security@send.ultriumai.com>\","
-    },
-    {
-      "file": "supabase/functions/safepass-reset-master-password/index.ts",
-      "line": 200,
-      "text": "subject: \"Reset Your SafePass Master Password\","
-    },
-    {
-      "file": "supabase/functions/safepass-reset-master-password/index.ts",
-      "line": 203,
-      "text": "<h1 style=\"color: #f59e0b;\">SafePass Master Password Reset</h1>"
-    },
-    {
-      "file": "supabase/functions/safepass-reset-master-password/index.ts",
-      "line": 204,
-      "text": "<p>You requested to reset your SafePass master password.</p>"
-    },
-    {
-      "file": "supabase/functions/safepass-reset-master-password/index.ts",
-      "line": 210,
-      "text": "<p style=\"margin: 8px 0 0 0;\">This action cannot be undone because SafePass uses zero-knowledge encryption.</p>"
     },
     {
       "file": "supabase/functions/safepass-scanner/index.ts",
@@ -1253,16 +1228,6 @@
       "file": "supabase/functions/ray-brief/index.ts",
       "line": 270,
       "text": "console.warn(\"[ray-brief] AI gateway threw\", e);"
-    },
-    {
-      "file": "supabase/functions/ray-brief-cron/index.ts",
-      "line": 82,
-      "text": "if (res.ok) okCount += 1; else { errCount += 1; console.warn(\"[ray-brief-cron] non-ok\", t.user_id, res.status); }"
-    },
-    {
-      "file": "supabase/functions/ray-brief-cron/index.ts",
-      "line": 85,
-      "text": "console.warn(\"[ray-brief-cron] fetch threw\", t.user_id, e);"
     },
     {
       "file": "supabase/functions/ray-chat/index.ts",
@@ -2512,14 +2477,14 @@
       "text": "<style>body{background:#0b0b10;color:#e8e8ef;font-family:ui-sans-serif,system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}.c"
     },
     {
-      "file": "supabase/functions/safepass-reset-master-password/index.ts",
-      "line": 203,
-      "text": "<h1 style=\"color: #f59e0b;\">SafePass Master Password Reset</h1>"
+      "file": "supabase/functions/safeweb-msp-clients/index.ts",
+      "line": 131,
+      "text": "primary_color: '#3b82f6',"
     },
     {
-      "file": "supabase/functions/safepass-reset-master-password/index.ts",
-      "line": 205,
-      "text": "<p style=\"color: #10b981;\"><strong>✓ MFA verification completed successfully</strong></p>"
+      "file": "supabase/functions/send-auth-email/index.ts",
+      "line": 28,
+      "text": "body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: #0a0a0a; }"
     }
   ],
   "arbitraryColors": []
