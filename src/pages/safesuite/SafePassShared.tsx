@@ -68,7 +68,7 @@ export default function VaultShared() {
   }
 
   return (
-    <FeatureGate feature="safepass">
+    <FeatureGate feature="vault">
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Shared With Me</h1>

@@ -39,12 +39,12 @@ export function SubscriptionBanner({ className, variant = 'full' }: Subscription
 
   // Get key restrictions for current tier
   const restrictions: string[] = [];
-  if (!currentTier.features.safeweb.enabled) restrictions.push('No dark web monitoring');
+  if (!currentTier.features.watch.enabled) restrictions.push('No dark web monitoring');
   
   if (!currentTier.features.team.enabled) restrictions.push('No team features');
-  if (currentTier.features.safepass.limit !== -1) restrictions.push(`${currentTier.features.safepass.limit} password limit`);
-  if (currentTier.features.safescan.limit !== -1 && currentTier.features.safescan.limit > 0) {
-    restrictions.push(`${currentTier.features.safescan.limit} scans/month`);
+  if (currentTier.features.vault.limit !== -1) restrictions.push(`${currentTier.features.vault.limit} password limit`);
+  if (currentTier.features.scan.limit !== -1 && currentTier.features.scan.limit > 0) {
+    restrictions.push(`${currentTier.features.scan.limit} scans/month`);
   }
 
   if (variant === 'compact') {
@@ -173,7 +173,7 @@ export function SubscriptionBanner({ className, variant = 'full' }: Subscription
           {/* Usage Summary for free/pro users */}
           {!isBusiness && (
             <div className="mt-4 pt-4 border-t border-border/50">
-              <UsageSummary features={['safepass', 'safescan']} />
+              <UsageSummary features={['vault', 'scan']} />
             </div>
           )}
         </CardContent>

@@ -127,7 +127,7 @@ export default function VaultSettings() {
                 </p>
               </div>
               <Switch
-                variant="safepass"
+                variant="vault"
                 checked={settings.biometricUnlock}
                 onCheckedChange={(checked) => 
                   setSettings(prev => ({ ...prev, biometricUnlock: checked }))
@@ -162,7 +162,7 @@ export default function VaultSettings() {
                 </p>
               </div>
               <Switch
-                variant="safepass"
+                variant="vault"
                 checked={aiEnabled}
                 onCheckedChange={setAiEnabled}
               />
@@ -179,7 +179,7 @@ export default function VaultSettings() {
                 </p>
               </div>
               <Switch
-                variant="safepass"
+                variant="vault"
                 checked={learnPatterns}
                 onCheckedChange={setLearnPatterns}
                 disabled={!aiEnabled}
@@ -260,7 +260,7 @@ export default function VaultSettings() {
               </p>
             </div>
               <Switch
-                variant="safepass"
+                variant="vault"
                 checked={settings.showPasswords}
                 onCheckedChange={(checked) => 
                   setSettings(prev => ({ ...prev, showPasswords: checked }))
@@ -276,7 +276,7 @@ export default function VaultSettings() {
               </p>
             </div>
               <Switch
-                variant="safepass"
+                variant="vault"
                 checked={settings.autoFill}
                 onCheckedChange={(checked) => 
                   setSettings(prev => ({ ...prev, autoFill: checked }))
@@ -319,7 +319,7 @@ export default function VaultSettings() {
               <div className="flex items-center justify-between">
                 <Label>Include Numbers (0-9)</Label>
                 <Switch
-                  variant="safepass"
+                  variant="vault"
                   checked={settings.passwordGenerator.includeNumbers}
                   onCheckedChange={(checked) => 
                     setSettings(prev => ({ 
@@ -332,7 +332,7 @@ export default function VaultSettings() {
               <div className="flex items-center justify-between">
                 <Label>Include Symbols (!@#$...)</Label>
                 <Switch
-                  variant="safepass"
+                  variant="vault"
                   checked={settings.passwordGenerator.includeSymbols}
                   onCheckedChange={(checked) => 
                     setSettings(prev => ({ 
@@ -345,7 +345,7 @@ export default function VaultSettings() {
               <div className="flex items-center justify-between">
                 <Label>Include Uppercase (A-Z)</Label>
                 <Switch
-                  variant="safepass"
+                  variant="vault"
                   checked={settings.passwordGenerator.includeUppercase}
                   onCheckedChange={(checked) => 
                     setSettings(prev => ({ 
@@ -358,7 +358,7 @@ export default function VaultSettings() {
               <div className="flex items-center justify-between">
                 <Label>Exclude Ambiguous (0, O, l, 1, etc.)</Label>
                 <Switch
-                  variant="safepass"
+                  variant="vault"
                   checked={settings.passwordGenerator.excludeAmbiguous}
                   onCheckedChange={(checked) => 
                     setSettings(prev => ({ 

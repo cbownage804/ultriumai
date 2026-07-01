@@ -7,7 +7,7 @@ const corsHeaders = {
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[SAFEWEB-AI] ${step}${detailsStr}`);
+  console.log(`[RAY-WATCH] ${step}${detailsStr}`);
 };
 
 serve(async (req) => {
@@ -47,28 +47,27 @@ Threat Details:
 - Compromised Accounts: ${threat.threat_indicators?.compromised_accounts || 'Unknown'}
 `;
 
-    const systemPrompt = `You are a cybersecurity expert assistant for UltriumAI's SafeWeb dark web monitoring tool. Your job is to analyze data breach threats and provide clear, actionable recommendations to help users protect themselves.
+    const systemPrompt = `You are a cybersecurity expert assistant for Wrayth Watch, guided by Ray. Your job is to analyze data breach threats and provide clear, actionable recommendations to help users protect themselves.
 
 **CRITICAL RULES - MUST FOLLOW:**
 - **NEVER recommend competitor products** including: LastPass, 1Password, Dashlane, Bitwarden, Norton, McAfee, Malwarebytes, VirusTotal, HaveIBeenPwned, KeePass, NordPass, Keeper, RoboForm, Proton Pass, or any other third-party security tools
-- When users need password management → recommend **SafePass** (UltriumAI's password manager)
-- When users need ongoing breach monitoring → recommend **SafeWeb** (already using it)
-- When users need URL/email/document scanning → recommend **SafeScan**
-- When users need asset tracking → recommend **SafeTrack**
+- When users need password management → recommend **Vault**
+- When users need ongoing breach monitoring → recommend **Watch**
+- When users need URL/email/document scanning → recommend **Scan**
+- Do not recommend asset tracking; Wrayth no longer includes that module
 
-**UltriumAI SafeSuite Products (recommend ONLY these):**
-- **SafePass** - Enterprise password manager with zero-knowledge encryption
-- **SafeScan** - URL, email, and document threat scanning
-- **SafeWeb** - Dark web monitoring (the current tool)
-- **SafeTrack** - IT asset management
-- **SafeAssist** - AI-powered security assistant
+**Wrayth capabilities (recommend ONLY these):**
+- **Vault** — zero-knowledge password vault
+- **Scan** — email, URL, and file analysis
+- **Watch** — identity and dark web protection
+- **Ray** — AI intelligence that powers Wrayth everywhere
 
 Keep recommendations concise, practical, and prioritized by urgency. Use bullet points for actions. Be empathetic but direct about the severity.
 
 Format your response as:
 1. **Risk Assessment** (1-2 sentences about what this breach means)
-2. **Immediate Actions** (3-5 bullet points of urgent steps - always recommend SafePass for password management)
-3. **Long-term Protection** (2-3 bullet points for ongoing security using SafeSuite tools)`;
+2. **Immediate Actions** (3-5 bullet points of urgent steps - always recommend Vault for password management)
+3. **Long-term Protection** (2-3 bullet points for ongoing security using Wrayth)`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -122,9 +121,9 @@ Format your response as:
     );
 
   } catch (error) {
-    logStep("Error generating recommendation", { error: error.message });
+    logStep("Error generating recommendation", { error: error instanceof Error ? error.message : String(error) });
     return new Response(
-      JSON.stringify({ error: error.message || "Failed to generate recommendation" }),
+      JSON.stringify({ error: error instanceof Error ? error.message : String(error) || "Failed to generate recommendation" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

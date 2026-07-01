@@ -79,7 +79,7 @@ export default function ScanSettings() {
               </p>
             </div>
             <Switch
-              variant="safescan"
+              variant="scan"
               checked={settings.autoScanEmails}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ ...prev, autoScanEmails: checked }))
@@ -98,7 +98,7 @@ export default function ScanSettings() {
               </p>
             </div>
             <Switch
-              variant="safescan"
+              variant="scan"
               checked={settings.autoScanLinks}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ ...prev, autoScanLinks: checked }))
@@ -117,7 +117,7 @@ export default function ScanSettings() {
               </p>
             </div>
             <Switch
-              variant="safescan"
+              variant="scan"
               checked={settings.autoScanDownloads}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ ...prev, autoScanDownloads: checked }))
@@ -171,7 +171,7 @@ export default function ScanSettings() {
               </p>
             </div>
             <Switch
-              variant="safescan"
+              variant="scan"
               checked={settings.realTimeProtection}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ ...prev, realTimeProtection: checked }))
@@ -201,7 +201,7 @@ export default function ScanSettings() {
               </p>
             </div>
             <Switch
-              variant="safescan"
+              variant="scan"
               checked={settings.notifications.threatDetected}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ 
@@ -220,7 +220,7 @@ export default function ScanSettings() {
               </p>
             </div>
             <Switch
-              variant="safescan"
+              variant="scan"
               checked={settings.notifications.scanComplete}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ 
@@ -239,7 +239,7 @@ export default function ScanSettings() {
               </p>
             </div>
             <Switch
-              variant="safescan"
+              variant="scan"
               checked={settings.notifications.weeklyReport}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ 

@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 
 // Theme colors for each Wrayth product
 export const SAFESUITE_THEMES = {
-  safepass: {
+  vault: {
     primary: 'amber',
     gradient: 'from-amber-500/20 via-yellow-500/10 to-orange-500/20',
     glow: 'shadow-[0_0_60px_rgba(245,158,11,0.15)]',
@@ -20,7 +20,7 @@ export const SAFESUITE_THEMES = {
     bg: 'bg-amber-500/10',
     buttonGradient: 'from-amber-500 to-orange-500'
   },
-  safescan: {
+  scan: {
     primary: 'red',
     gradient: 'from-red-500/20 via-pink-500/10 to-rose-500/20',
     glow: 'shadow-[0_0_60px_rgba(239,68,68,0.15)]',
@@ -29,7 +29,7 @@ export const SAFESUITE_THEMES = {
     bg: 'bg-red-500/10',
     buttonGradient: 'from-red-500 to-pink-500'
   },
-  safeweb: {
+  watch: {
     primary: 'violet',
     gradient: 'from-violet-500/20 via-purple-500/10 to-fuchsia-500/20',
     glow: 'shadow-[0_0_60px_rgba(139,92,246,0.15)]',
@@ -38,7 +38,7 @@ export const SAFESUITE_THEMES = {
     bg: 'bg-violet-500/10',
     buttonGradient: 'from-violet-500 to-purple-500'
   },
-  safetrack: {
+  devices: {
     primary: 'emerald',
     gradient: 'from-emerald-500/20 via-green-500/10 to-teal-500/20',
     glow: 'shadow-[0_0_60px_rgba(16,185,129,0.15)]',
@@ -47,7 +47,7 @@ export const SAFESUITE_THEMES = {
     bg: 'bg-emerald-500/10',
     buttonGradient: 'from-emerald-500 to-teal-500'
   },
-  safeassist: {
+  ray: {
     primary: 'cyan',
     gradient: 'from-cyan-500/20 via-teal-500/10 to-cyan-500/20',
     glow: 'shadow-[0_0_60px_rgba(6,182,212,0.15)]',
@@ -56,7 +56,7 @@ export const SAFESUITE_THEMES = {
     bg: 'bg-cyan-500/10',
     buttonGradient: 'from-cyan-500 to-teal-500'
   },
-  safeops: {
+  operations: {
     primary: 'green',
     gradient: 'from-green-500/20 via-emerald-500/10 to-lime-500/20',
     glow: 'shadow-[0_0_60px_rgba(34,197,94,0.15)]',
@@ -65,7 +65,7 @@ export const SAFESUITE_THEMES = {
     bg: 'bg-green-500/10',
     buttonGradient: 'from-green-500 to-emerald-500'
   },
-  safedesk: {
+  support: {
     primary: 'cyan',
     gradient: 'from-cyan-500/20 via-blue-500/10 to-sky-500/20',
     glow: 'shadow-[0_0_60px_rgba(6,182,212,0.15)]',

@@ -22,10 +22,13 @@ export interface WraythSubscription {
 }
 
 export interface WraythUsage {
-  safepass: number;
-  safescan: number;
-  safeweb: number;
-  safetrack: number;
+  vault: number;
+  scan: number;
+  watch: number;
+  ray: number;
+  ray_voice: number;
+  whitelabeling: number;
+  team: number;
 }
 
 export function useWraythSubscription() {
@@ -133,10 +136,13 @@ export function useWraythSubscription() {
 export function useWraythUsage() {
   const { user } = useAuth();
   const [usage, setUsage] = useState<WraythUsage>({
-    safepass: 0,
-    safescan: 0,
-    safeweb: 0,
-    safetrack: 0
+    vault: 0,
+    scan: 0,
+    watch: 0,
+    ray: 0,
+    ray_voice: 0,
+    whitelabeling: 0,
+    team: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -148,12 +154,12 @@ export function useWraythUsage() {
 
     try {
       // Fetch usage from edge function (no body needed for get all)
-      const { data, error } = await supabase.functions.invoke('safesuite-usage');
+      const { data, error } = await supabase.functions.invoke('wrayth-usage');
 
       if (error) throw error;
 
       if (data?.usage) {
-        setUsage(data.usage);
+        setUsage((current) => ({ ...current, ...data.usage }));
       }
     } catch (err) {
       console.error('Error fetching Wrayth usage:', err);
@@ -198,7 +204,7 @@ export function useFeatureAccess() {
     }
 
     // Check usage against limit
-    const currentUsage = usage[feature];
+    const currentUsage = usage[feature] ?? 0;
     if (currentUsage >= featureLimit.limit) {
       return {
         allowed: false,
@@ -308,7 +314,7 @@ export function useWraythCheckout() {
     setError(null);
 
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('safesuite-portal');
+      const { data, error: fnError } = await supabase.functions.invoke('safesuite-customer-portal');
 
       if (fnError) throw fnError;
 

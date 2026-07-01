@@ -12,11 +12,11 @@ export interface FeatureLimit {
 }
 
 export interface TierFeatures {
-  safepass: FeatureLimit;
-  safescan: FeatureLimit;
-  safeweb: FeatureLimit;
-  safeassist: FeatureLimit;
-  safeassist_voice: FeatureLimit;  // Voice minutes per month
+  vault: FeatureLimit;
+  scan: FeatureLimit;
+  watch: FeatureLimit;
+  ray: FeatureLimit;
+  ray_voice: FeatureLimit;  // Voice minutes per month
   whitelabeling: FeatureLimit;
   team: FeatureLimit;  // Team/User Management feature
 }
@@ -45,11 +45,11 @@ export const SAFESUITE_TIERS: Record<WraythTier, TierConfig> = {
     yearlyPrice: 0,
     badge: 'Free Forever',
     features: {
-      safepass: { enabled: true, limit: 25 },      // 25 passwords
-      safescan: { enabled: true, limit: 5 },       // 5 scans/month
-      safeweb: { enabled: false, limit: 0 },
-      safeassist: { enabled: true, limit: 25 },    // 25 AI messages/month
-      safeassist_voice: { enabled: false, limit: 0 }, // No voice for free tier
+      vault: { enabled: true, limit: 25 },      // 25 passwords
+      scan: { enabled: true, limit: 5 },       // 5 scans/month
+      watch: { enabled: false, limit: 0 },
+      ray: { enabled: true, limit: 25 },    // 25 AI messages/month
+      ray_voice: { enabled: false, limit: 0 }, // No voice for free tier
       whitelabeling: { enabled: false, limit: 0 }, // Not available on free
       team: { enabled: false, limit: 0 }           // Team management not available
     }
@@ -65,11 +65,11 @@ export const SAFESUITE_TIERS: Record<WraythTier, TierConfig> = {
     badge: 'Most Popular',
     popular: true,
     features: {
-      safepass: { enabled: true, limit: 100 },     // 100 passwords
-      safescan: { enabled: true, limit: 100 },     // 100 scans/month
-      safeweb: { enabled: true, limit: 5 },        // 5 monitored assets
-      safeassist: { enabled: true, limit: 100 },   // 100 AI messages/month
-      safeassist_voice: { enabled: true, limit: 2 }, // 2 voice minutes/month
+      vault: { enabled: true, limit: 100 },     // 100 passwords
+      scan: { enabled: true, limit: 100 },     // 100 scans/month
+      watch: { enabled: true, limit: 5 },        // 5 monitored assets
+      ray: { enabled: true, limit: 100 },   // 100 AI messages/month
+      ray_voice: { enabled: true, limit: 2 }, // 2 voice minutes/month
       whitelabeling: { enabled: false, limit: 0 }, // Not available on pro
       team: { enabled: false, limit: 0 }           // Team management not available
     }
@@ -86,11 +86,11 @@ export const SAFESUITE_TIERS: Record<WraythTier, TierConfig> = {
     perUser: true,
     priceLabel: '/user/mo',
     features: {
-      safepass: { enabled: true, limit: 500, team: true },  // 500 passwords + Team sharing
-      safescan: { enabled: true, limit: 500 },              // 500 scans/month
-      safeweb: { enabled: true, limit: 50 },                // 50 monitored assets
-      safeassist: { enabled: true, limit: 250 },            // 250 AI messages/month
-      safeassist_voice: { enabled: true, limit: 5 },        // 5 voice minutes/month
+      vault: { enabled: true, limit: 500, team: true },  // 500 passwords + Team sharing
+      scan: { enabled: true, limit: 500 },              // 500 scans/month
+      watch: { enabled: true, limit: 50 },                // 50 monitored assets
+      ray: { enabled: true, limit: 250 },            // 250 AI messages/month
+      ray_voice: { enabled: true, limit: 5 },        // 5 voice minutes/month
       whitelabeling: { enabled: true, limit: 1 },           // 1 brand (Business)
       team: { enabled: true, limit: 20 }                    // Up to 20 team members
     }
@@ -107,11 +107,11 @@ export const SAFESUITE_TIERS: Record<WraythTier, TierConfig> = {
     perUser: true,
     priceLabel: '/user/mo',
     features: {
-      safepass: { enabled: true, limit: 1500, team: true }, // 1500 passwords + Team sharing
-      safescan: { enabled: true, limit: 1500 },             // 1500 scans/month
-      safeweb: { enabled: true, limit: 150 },               // 150 monitored assets
-      safeassist: { enabled: true, limit: 750 },            // 750 AI messages/month
-      safeassist_voice: { enabled: true, limit: 15 },       // 15 voice minutes/month
+      vault: { enabled: true, limit: 1500, team: true }, // 1500 passwords + Team sharing
+      scan: { enabled: true, limit: 1500 },             // 1500 scans/month
+      watch: { enabled: true, limit: 150 },               // 150 monitored assets
+      ray: { enabled: true, limit: 750 },            // 750 AI messages/month
+      ray_voice: { enabled: true, limit: 15 },       // 15 voice minutes/month
       whitelabeling: { enabled: true, limit: -1 },          // Unlimited brands
       team: { enabled: true, limit: 60 }                    // Up to 60 team members
     }
@@ -126,35 +126,35 @@ export const FEATURE_DESCRIPTIONS: Record<keyof TierFeatures, {
   limitUnit: string; // What the limit number represents
   limitUnitPlural: string;
 }> = {
-  safepass: {
+  vault: {
     name: 'Vault',
     description: 'Zero-knowledge password vault with enterprise-grade encryption',
     icon: 'KeyRound',
     limitUnit: 'password',
     limitUnitPlural: 'passwords'
   },
-  safescan: {
+  scan: {
     name: 'Scan',
     description: 'Unified email, URL, and document security scanner',
     icon: 'ScanSearch',
     limitUnit: 'scan/mo',
     limitUnitPlural: 'scans/mo'
   },
-  safeweb: {
+  watch: {
     name: 'Watch',
     description: 'Dark web monitoring with AI threat analysis',
     icon: 'Globe',
     limitUnit: 'monitored asset',
     limitUnitPlural: 'monitored assets'
   },
-  safeassist: {
+  ray: {
     name: 'Ray',
     description: 'Your AI security teammate — plain-language guidance and action',
     icon: 'Bot',
     limitUnit: 'message/mo',
     limitUnitPlural: 'messages/mo'
   },
-  safeassist_voice: {
+  ray_voice: {
     name: 'Ray Voice',
     description: 'Voice conversations with Ray',
     icon: 'Mic',

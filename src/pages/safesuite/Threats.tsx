@@ -10,7 +10,7 @@ import { RayPageHeader } from '@/components/ray/RayPageHeader';
 
 export default function WraythScan() {
   return (
-    <FeatureGate feature="safescan">
+    <FeatureGate feature="scan">
       <div className="space-y-6">
         <RayPageHeader
           title="Threats"

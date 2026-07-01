@@ -103,7 +103,7 @@ export default function WatchSettings() {
               </p>
             </div>
             <Switch
-              variant="safeweb"
+              variant="watch"
               checked={settings.uptimeMonitoring}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ ...prev, uptimeMonitoring: checked }))
@@ -133,7 +133,7 @@ export default function WatchSettings() {
               </p>
             </div>
             <Switch
-              variant="safeweb"
+              variant="watch"
               checked={settings.sslMonitoring}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ ...prev, sslMonitoring: checked }))
@@ -149,7 +149,7 @@ export default function WatchSettings() {
               </p>
             </div>
             <Switch
-              variant="safeweb"
+              variant="watch"
               checked={settings.domainExpiry}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ ...prev, domainExpiry: checked }))
@@ -168,7 +168,7 @@ export default function WatchSettings() {
               </p>
             </div>
             <Switch
-              variant="safeweb"
+              variant="watch"
               checked={settings.malwareScanning}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ ...prev, malwareScanning: checked }))
@@ -198,7 +198,7 @@ export default function WatchSettings() {
               </p>
             </div>
             <Switch
-              variant="safeweb"
+              variant="watch"
               checked={settings.notifications.siteDown}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ 
@@ -217,7 +217,7 @@ export default function WatchSettings() {
               </p>
             </div>
             <Switch
-              variant="safeweb"
+              variant="watch"
               checked={settings.notifications.sslExpiring}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ 
@@ -236,7 +236,7 @@ export default function WatchSettings() {
               </p>
             </div>
             <Switch
-              variant="safeweb"
+              variant="watch"
               checked={settings.notifications.securityIssue}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ 
@@ -255,7 +255,7 @@ export default function WatchSettings() {
               </p>
             </div>
             <Switch
-              variant="safeweb"
+              variant="watch"
               checked={settings.notifications.dailyReport}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ 

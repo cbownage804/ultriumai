@@ -6,7 +6,7 @@ import wraythWordmark from "@/assets/wrayth-wordmark-v3.png";
 export const safesuiteLogo = wraythWordmark;
 
 export const safeSuiteProducts = {
-  safepass: {
+  vault: {
     name: "Vault",
     logo: vaultLogo,
     description: "Zero-knowledge password vault with AES-256-GCM encryption and continuous breach monitoring.",
@@ -16,7 +16,7 @@ export const safeSuiteProducts = {
       "Password health dashboard",
     ],
   },
-  safescan: {
+  scan: {
     name: "Scan",
     logo: scanLogo,
     description: "Unified email, URL, and file scanner with AI threat detection powered by Ray.",
@@ -26,7 +26,7 @@ export const safeSuiteProducts = {
       "PDF/CSV exportable reports",
     ],
   },
-  safeweb: {
+  watch: {
     name: "Watch",
     logo: watchLogo,
     description: "Identity and dark-web monitoring with AI remediation guidance from Ray.",

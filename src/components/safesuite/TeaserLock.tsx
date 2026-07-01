@@ -20,18 +20,16 @@ import { cn } from '@/lib/utils';
 import { isWraythDomain } from '@/utils/subdomain';
 
 // Product logos
-import safepassLogo from '@/assets/safepass-logo.png';
-import safescanLogo from '@/assets/safescan-logo.png';
-import safewebLogo from '@/assets/safeweb-logo.png';
-import safetrackLogo from '@/assets/safetrack-logo.png';
-import safeassistLogo from '@/assets/safeassist-logo-horizontal.png';
+import vaultLogo from '@/assets/vault-logo.png';
+import scanLogo from '@/assets/scan-logo.png';
+import watchLogo from '@/assets/watch-logo.png';
+import rayLogo from '@/assets/wrayth-logo-v4.png';
 
 // Hero backgrounds
-import heroSafepass from '@/assets/hero-safepass-bg.jpg';
-import heroSafescan from '@/assets/hero-safescan-bg.jpg';
-import heroSafeweb from '@/assets/hero-safeweb-bg.jpg';
-import heroSafetrack from '@/assets/hero-safetrack-bg.jpg';
-import heroSafeassist from '@/assets/hero-safeassist-bg.jpg';
+import heroVault from '@/assets/hero-safepass-bg.jpg';
+import heroScan from '@/assets/hero-safescan-bg.jpg';
+import heroWatch from '@/assets/hero-safeweb-bg.jpg';
+import heroRay from '@/assets/hero-wrayth.jpg';
 
 // Map features to their branded assets
 const FEATURE_BRANDING: Record<string, { 
@@ -40,51 +38,45 @@ const FEATURE_BRANDING: Record<string, {
   gradient: string;
   glow: string;
 }> = {
-  safepass: {
-    logo: safepassLogo,
-    hero: heroSafepass,
+  vault: {
+    logo: vaultLogo,
+    hero: heroVault,
     gradient: 'from-amber-500/20 via-orange-500/10 to-transparent',
     glow: 'shadow-[0_0_60px_rgba(245,158,11,0.3)]'
   },
-  safescan: {
-    logo: safescanLogo,
-    hero: heroSafescan,
+  scan: {
+    logo: scanLogo,
+    hero: heroScan,
     gradient: 'from-red-500/20 via-rose-500/10 to-transparent',
     glow: 'shadow-[0_0_60px_rgba(239,68,68,0.3)]'
   },
-  safeweb: {
-    logo: safewebLogo,
-    hero: heroSafeweb,
+  watch: {
+    logo: watchLogo,
+    hero: heroWatch,
     gradient: 'from-violet-500/20 via-purple-500/10 to-transparent',
     glow: 'shadow-[0_0_60px_rgba(139,92,246,0.3)]'
   },
-  safetrack: {
-    logo: safetrackLogo,
-    hero: heroSafetrack,
-    gradient: 'from-emerald-500/20 via-green-500/10 to-transparent',
-    glow: 'shadow-[0_0_60px_rgba(16,185,129,0.3)]'
-  },
-  safeassist: {
-    logo: safeassistLogo,
-    hero: heroSafeassist,
+  ray: {
+    logo: rayLogo,
+    hero: heroRay,
     gradient: 'from-cyan-500/20 via-teal-500/10 to-transparent',
     glow: 'shadow-[0_0_60px_rgba(6,182,212,0.3)]'
   },
-  safeassist_voice: {
-    logo: safeassistLogo,
-    hero: heroSafeassist,
+  ray_voice: {
+    logo: rayLogo,
+    hero: heroRay,
     gradient: 'from-cyan-500/20 via-teal-500/10 to-transparent',
     glow: 'shadow-[0_0_60px_rgba(6,182,212,0.3)]'
   },
   team: {
-    logo: safepassLogo,
-    hero: heroSafepass,
+    logo: vaultLogo,
+    hero: heroVault,
     gradient: 'from-amber-500/20 via-orange-500/10 to-transparent',
     glow: 'shadow-[0_0_60px_rgba(245,158,11,0.3)]'
   },
   whitelabeling: {
-    logo: safepassLogo,
-    hero: heroSafepass,
+    logo: rayLogo,
+    hero: heroRay,
     gradient: 'from-amber-500/20 via-orange-500/10 to-transparent',
     glow: 'shadow-[0_0_60px_rgba(245,158,11,0.3)]'
   }
@@ -120,7 +112,7 @@ export function TeaserLock({
   const featureInfo = FEATURE_DESCRIPTIONS[feature];
   const requiredTier = getRequiredTier(feature);
   const requiredTierConfig = SAFESUITE_TIERS[requiredTier];
-  const branding = FEATURE_BRANDING[feature] || FEATURE_BRANDING.safepass;
+  const branding = FEATURE_BRANDING[feature] || FEATURE_BRANDING.vault;
   
   const billingPath = isWraythDomain() ? '/billing' : '/app/billing';
 

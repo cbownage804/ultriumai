@@ -7,7 +7,7 @@ import { BreachMonitor } from '@/components/safepass/BreachMonitor';
 
 export default function VaultBreach() {
   return (
-    <FeatureGate feature="safepass">
+    <FeatureGate feature="vault">
       <BreachMonitor />
     </FeatureGate>
   );

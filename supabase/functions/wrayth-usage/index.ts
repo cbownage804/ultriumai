@@ -8,7 +8,7 @@ const corsHeaders = {
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[SAFESUITE-USAGE] ${step}${detailsStr}`);
+  console.log(`[WRAYTH-USAGE] ${step}${detailsStr}`);
 };
 
 serve(async (req) => {
@@ -43,7 +43,15 @@ serve(async (req) => {
       // Empty body is fine for 'get all' action
     }
     
-    const { action = 'get', product } = body as { action?: string; product?: string };
+    const { action = 'get', product: rawProduct } = body as { action?: string; product?: string };
+    const productAliases: Record<string, string> = {
+      safepass: 'vault',
+      safescan: 'scan',
+      safeweb: 'watch',
+      safeassist: 'ray',
+      safeassist_voice: 'ray_voice',
+    };
+    const product = rawProduct ? (productAliases[rawProduct] ?? rawProduct) : undefined;
 
     // Calculate current billing period
     const now = new Date();
@@ -53,24 +61,27 @@ serve(async (req) => {
     if (action === 'get' && !product) {
       // Initialize usage object
       const usage = {
-        safepass: 0,
-        safescan: 0,
-        safeweb: 0,
-        safetrack: 0
+        vault: 0,
+        scan: 0,
+        watch: 0,
+        ray: 0,
+        ray_voice: 0,
+        whitelabeling: 0,
+        team: 0
       };
 
-      // SafePass: Count actual password entries (not incremental tracking)
-      const { count: safepassCount, error: safepassError } = await supabaseClient
+      // Vault: Count actual password entries (not incremental tracking)
+      const { count: vaultCount, error: vaultError } = await supabaseClient
         .from('safepass_entries')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id);
       
-      if (!safepassError && safepassCount !== null) {
-        usage.safepass = safepassCount;
+      if (!vaultError && vaultCount !== null) {
+        usage.vault = vaultCount;
       }
-      logStep("SafePass entries counted", { count: usage.safepass });
+      logStep("Vault entries counted", { count: usage.vault });
 
-      // SafeScan: Aggregate counts from multiple scan tables this billing period
+      // Scan: Aggregate counts from multiple scan tables this billing period
       let totalScans = 0;
       
       // Document scans
@@ -100,31 +111,20 @@ serve(async (req) => {
         .lt('created_at', periodEnd.toISOString());
       if (secScanCount) totalScans += secScanCount;
       
-      usage.safescan = totalScans;
-      logStep("SafeScan scans counted", { count: usage.safescan, docScanCount, emailScanCount, secScanCount });
+      usage.scan = totalScans;
+      logStep("Scan activity counted", { count: usage.scan, docScanCount, emailScanCount, secScanCount });
 
-      // SafeWeb: Count monitored assets (status = 'active')
-      const { count: safewebCount, error: safewebError } = await supabaseClient
+      // Watch: Count monitored identities/assets (status = 'active')
+      const { count: watchCount, error: watchError } = await supabaseClient
         .from('safeweb_assets')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
         .eq('status', 'active');
       
-      if (!safewebError && safewebCount !== null) {
-        usage.safeweb = safewebCount;
+      if (!watchError && watchCount !== null) {
+        usage.watch = watchCount;
       }
-      logStep("SafeWeb assets counted", { count: usage.safeweb });
-
-      // SafeTrack: Count tracked assets
-      const { count: safetrackCount, error: safetrackError } = await supabaseClient
-        .from('assets')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id);
-      
-      if (!safetrackError && safetrackCount !== null) {
-        usage.safetrack = safetrackCount;
-      }
-      logStep("SafeTrack assets counted", { count: usage.safetrack });
+      logStep("Watch identities counted", { count: usage.watch });
 
       logStep("All usage retrieved", usage);
 
@@ -135,7 +135,7 @@ serve(async (req) => {
     }
 
     // For specific product operations, validate product
-    if (product && !['safepass', 'safescan', 'safeweb', 'safetrack'].includes(product)) {
+    if (product && !['vault', 'scan', 'watch', 'ray', 'ray_voice'].includes(product)) {
       throw new Error("Invalid product specified");
     }
 

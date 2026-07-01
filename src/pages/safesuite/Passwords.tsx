@@ -82,7 +82,7 @@ export default function PasswordsPage() {
   };
 
   return (
-    <FeatureGate feature="safepass">
+    <FeatureGate feature="vault">
       <div className="space-y-6">
         <AnimatePresence>
           {showExtensionBanner && (

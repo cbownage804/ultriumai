@@ -179,7 +179,7 @@ export default function WraythBilling() {
               {tier !== 'business' && (
                 <div className="pt-4 border-t border-border/50">
                   <h4 className="text-sm font-medium mb-3">Your Usage</h4>
-                  <UsageSummary features={['safepass', 'safescan', 'safeweb']} />
+                  <UsageSummary features={['vault', 'scan', 'watch']} />
                 </div>
               )}
             </CardContent>

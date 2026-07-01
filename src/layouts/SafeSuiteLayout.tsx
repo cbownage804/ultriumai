@@ -72,7 +72,7 @@ type NavItem = {
   label: string;
   path: string;
   icon: React.ComponentType<{ className?: string }>;
-  feature?: 'safepass' | 'safescan' | 'safeweb' | null;
+  feature?: 'vault' | 'scan' | 'watch' | null;
   badge?: string;
   external?: boolean;
 };
@@ -86,9 +86,9 @@ type NavSection = {
 function getSections(opts?: { hasOrg?: boolean; isMSP?: boolean }): NavSection[] {
   const main: NavItem[] = [
     { label: 'Home',     path: getWraythPath('/dashboard'), icon: Home },
-    { label: 'Vault',    path: getWraythPath('/passwords'), icon: KeyRound, feature: 'safepass' },
-    { label: 'Scan',     path: getWraythPath('/threats'),   icon: ShieldAlert, feature: 'safescan' },
-    { label: 'Watch',    path: getWraythPath('/exposure'),  icon: Globe, feature: 'safeweb' },
+    { label: 'Vault',    path: getWraythPath('/passwords'), icon: KeyRound, feature: 'vault' },
+    { label: 'Scan',     path: getWraythPath('/threats'),   icon: ShieldAlert, feature: 'scan' },
+    { label: 'Watch',    path: getWraythPath('/exposure'),  icon: Globe, feature: 'watch' },
   ];
   if (opts?.hasOrg) {
     main.push({ label: 'Organization', path: getWraythPath('/org'), icon: Building2 });

@@ -42,7 +42,7 @@ export type WraythTier = 'pro' | 'business' | 'enterprise';
 export type BillingCycle = 'monthly' | 'yearly';
 
 interface CheckoutOptions {
-  product: 'safesuite' | 'ai_studio' | 'vanguard' | 'product';
+  product: 'safesuite' | 'ai_studio' | 'vanguard';
   tier?: string;
   billing?: BillingCycle;
   priceId?: string;
@@ -80,13 +80,6 @@ export const useStripeCheckout = () => {
         body = {
           tier: options.tier,
           billing: options.billing || 'monthly',
-        };
-      } else if (options.product === 'product' && options.priceId) {
-        functionName = 'product-checkout';
-        body = {
-          productId: options.tier,
-          quantity: options.quantity || 1,
-          billingInterval: options.billing || 'monthly',
         };
       } else {
         body = {
