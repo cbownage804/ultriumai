@@ -359,8 +359,33 @@ export const PasswordHealthDashboard = () => {
             <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Estimated risk</div>
             <div className={`text-2xl font-semibold tracking-tight ${riskColor}`}>{riskLevel}</div>
           </div>
-          <p className="text-xs text-muted-foreground italic">I'll keep watching.</p>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 text-xs text-violet-300 hover:text-violet-200 hover:bg-violet-500/10"
+              onClick={() => {
+                const summary = [
+                  `Wrayth — Ray's vault review`,
+                  ``,
+                  ...reviewLines.map((l) => `• ${l}`),
+                  ``,
+                  `Estimated risk: ${riskLevel}`,
+                  `— Ray`,
+                ].join('\n');
+                navigator.clipboard.writeText(summary).then(
+                  () => toast.success('Summary copied — ready to paste anywhere'),
+                  () => toast.error('Copy failed'),
+                );
+              }}
+            >
+              <CopyIcon className="h-3.5 w-3.5 mr-1.5" />
+              Copy summary
+            </Button>
+            <p className="text-xs text-muted-foreground italic">I'll keep watching.</p>
+          </div>
         </div>
+
       </motion.div>
 
 
