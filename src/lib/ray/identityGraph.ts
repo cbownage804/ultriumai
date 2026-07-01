@@ -102,7 +102,8 @@ export function buildIdentityGraph(
 
   // Start with what Ray is explicitly watching.
   for (const asset of assets) {
-    const kind = asset.asset_type === 'email' ? 'email' : asset.asset_type === 'domain' ? 'domain' : null;
+    const kind: 'email' | 'domain' | null =
+      asset.asset_type === 'email' ? 'email' : asset.asset_type === 'domain' ? 'domain' : null;
     if (!kind) continue;
     const value = norm(asset.asset_value);
     if (seen.has(`${kind}:${value}`)) continue;
