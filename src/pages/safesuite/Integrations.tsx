@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, RefreshCw, Plug, Check, AlertTriangle, ShieldCheck } from "lucide-react";
+import { PageMotion } from "@/components/ray/PageMotion";
+import { ExplainThis } from "@/components/ray/ExplainThis";
 
 type Integration = {
   id: string;
