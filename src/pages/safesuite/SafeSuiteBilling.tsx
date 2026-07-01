@@ -237,12 +237,13 @@ export default function WraythBilling() {
               )}
               {!isCurrentTier && tierConfig.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge variant="secondary" className="gap-1">
-                    <Sparkles className="h-3 w-3" />
-                    Most Popular
+                  <Badge variant="secondary" className="gap-1 border-violet-500/40 bg-violet-500/10 text-violet-200">
+                    <Eye className="h-3 w-3" />
+                    Ray recommends
                   </Badge>
                 </div>
               )}
+
               <CardHeader className="text-center pb-2">
                 <div className="flex items-center justify-center gap-2 mb-2">
                   {tierConfig.id === 'business' && <Crown className="h-5 w-5 text-yellow-500" />}
