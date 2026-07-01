@@ -11,7 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { SAFESUITE_TIERS, formatMonthlyPrice } from '@/config/safeSuiteTiers';
 import heroWrayth from '@/assets/hero-wrayth.jpg';
-import wraythLogo from '@/assets/wrayth-logo-v4.png';
+import wraythLogo from '@/assets/wrayth-brand-full.png.asset.json';
 import {
   ArrowRight,
   Check,
@@ -98,6 +98,12 @@ export default function WraythLanding() {
 
         <div className="container mx-auto px-4 relative z-10 py-24 md:py-36">
           <div className="max-w-3xl">
+            <img
+              src={wraythLogo.url}
+              alt="Wrayth"
+              className="h-16 md:h-20 w-auto mb-8 select-none"
+              draggable={false}
+            />
             <div className="flex items-center gap-2 mb-8 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
               <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
               Wrayth · AI security platform
@@ -352,10 +358,10 @@ export default function WraythLanding() {
       <footer className="py-10 border-t border-border bg-background">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <img src={wraythLogo} alt="" className="h-6 w-auto" />
-              <span className="font-semibold text-foreground">Wrayth</span>
-            </div>
+            <img src={wraythLogo.url} alt="Wrayth" className="h-8 w-auto" />
+            <p className="text-sm text-muted-foreground">
+              © {new Date().getFullYear()} Wrayth. Ray is always watching.
+            </p>
             <p className="text-sm text-muted-foreground">
               © {new Date().getFullYear()} Wrayth. Ray is always watching.
             </p>

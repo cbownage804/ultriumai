@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import wraythBrand from '@/assets/wrayth-brand-purple.png.asset.json';
+import wraythBrand from '@/assets/wrayth-brand-full.png.asset.json';
 
 export default function WraythNav() {
   const { user, signOut } = useAuth();
