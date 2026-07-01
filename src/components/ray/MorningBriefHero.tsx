@@ -85,7 +85,13 @@ function ScoreBadge({ score, delta }: { score: number | null; delta: number | nu
   const tone = score >= 80 ? "text-emerald-300" : score >= 60 ? "text-amber-300" : "text-red-300";
   return (
     <div className="flex items-center gap-3">
-      <div className={cn("text-3xl font-semibold tabular-nums", tone)}>{score}</div>
+      <motion.div
+        animate={{ opacity: [0.88, 1, 0.88], scale: [1, 1.015, 1] }}
+        transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
+        className={cn("text-3xl font-semibold tabular-nums", tone)}
+      >
+        {score}
+      </motion.div>
       <div className="flex flex-col">
         <div className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Ray score</div>
         {delta != null && delta !== 0 ? (
@@ -100,6 +106,7 @@ function ScoreBadge({ score, delta }: { score: number | null; delta: number | nu
     </div>
   );
 }
+
 
 function FeedbackBar({ brief, onSend }: { brief: RayBriefRow; onSend: (f: RayBriefFeedback) => void | Promise<void> }) {
   const current = (brief.feedback ?? null) as RayBriefFeedback | null;
