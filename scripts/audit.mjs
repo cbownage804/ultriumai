@@ -53,7 +53,14 @@ const legacyBrand = scan('SafePass|SafeScan|SafeWeb|SafeSuite|SafeAssist|SafeTra
     !/require\(['"][^'"]*(SafePass|SafeScan|SafeWeb|SafeSuite|SafeAssist|SafeTrack)/.test(h.text)
 );
 const todos = scan('\\b(TODO|FIXME|XXX|HACK)\\b');
-const consoles = scan("console\\.(log|debug|info|warn)\\(");
+// Edge functions log via console (that's Deno's standard logging surface); exclude them and the logger itself.
+const consoles = scan("console\\.(log|debug|info|warn)\\(").filter(
+  (h) =>
+    !h.file.startsWith('supabase/functions/') &&
+    !h.file.startsWith('extension/') &&
+    !h.file.startsWith('public/') &&
+    !/src\/(lib\/logger|integrations\/supabase\/client)\.ts$/.test(h.file)
+);
 const hardcodedHex = scan("#[0-9a-fA-F]{6}\\b").filter(
   (h) =>
     !/(index\.css|tailwind\.config|tokens)/.test(h.file) &&
