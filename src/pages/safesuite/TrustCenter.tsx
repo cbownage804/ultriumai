@@ -54,7 +54,14 @@ export default function TrustCenter() {
           </ul>
         </Section>
 
-        <Section icon={Lock} title="Encryption model">
+        <Section
+          icon={Lock}
+          title="Encryption model"
+          explain={{
+            title: 'Why PBKDF2 with 600,000 iterations?',
+            body: 'A slow key-derivation function makes brute-forcing your master password computationally expensive — the number Ray uses matches OWASP\'s current guidance.',
+          }}
+        >
           <p>
             Vault entries are encrypted in your browser using a key derived from your master password
             with PBKDF2 (600,000 iterations) before being uploaded. The server stores only ciphertext.
@@ -72,7 +79,18 @@ export default function TrustCenter() {
           </p>
         </Section>
 
-        <Section icon={Brain} title="How Ray uses AI">
+        <Section
+          icon={Brain}
+          title="How Ray uses AI"
+          explain={{
+            title: 'What Ray shares with the AI model',
+            bullets: [
+              'Password strength, age, and reuse counts — never the passwords themselves.',
+              'Breach exposure flags for accounts you asked Ray to watch.',
+              'MFA coverage and admin role summaries from connected tenants.',
+            ],
+          }}
+        >
           <p className="text-foreground">
             <strong>Ray never sends your passwords to an AI.</strong>
           </p>
