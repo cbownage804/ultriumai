@@ -292,7 +292,7 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
               navigate('/app/billing');
               return;
             }
-            voice.speak(buildSpokenBrief({ greeting, personality, brief, topRec: top[0] ?? null, memoryLine }));
+            voice.speak(buildSpokenBrief({ greeting, personality: reassurance, brief, topRec: top[0] ?? null, memoryLine }));
           }}
           disabled={voice.isLoading}
           className={cn(
