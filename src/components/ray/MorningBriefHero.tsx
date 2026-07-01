@@ -39,7 +39,7 @@ import { cn } from "@/lib/utils";
 import { ScoreCelebration } from "@/components/ray/ScoreCelebration";
 import { toast } from "sonner";
 
-/** Compose Ray's spoken brief: greeting → reassurance → top recommendation → close. */
+/** Compose Ray's spoken brief: greeting → reassurance → score → close. */
 function buildSpokenBrief(opts: {
   greeting: string;
   personality: string;
@@ -49,22 +49,20 @@ function buildSpokenBrief(opts: {
 }): string {
   const lines: string[] = [];
   lines.push(opts.greeting);
-  if (opts.brief?.summary) lines.push(opts.brief.summary);
-  lines.push(opts.personality);
-  if (opts.memoryLine) lines.push(opts.memoryLine);
+  lines.push("I checked everything while you were away.");
+  if (opts.topRec) {
+    lines.push(`The one thing worth your attention: ${opts.topRec.title}.`);
+  } else {
+    lines.push("Nothing needs your attention today.");
+  }
   if (opts.brief?.score != null) {
     const delta = opts.brief.score_delta ?? 0;
-    if (delta > 0) lines.push(`You're at ${opts.brief.score}, up ${delta} since we last spoke.`);
-    else if (delta < 0) lines.push(`You're at ${opts.brief.score}, down ${Math.abs(delta)} since we last spoke.`);
-    else lines.push(`Still holding at ${opts.brief.score}.`);
+    if (delta > 0) lines.push(`Your score is ${opts.brief.score}, up ${delta}.`);
+    else if (delta < 0) lines.push(`Your score is ${opts.brief.score}, down ${Math.abs(delta)}.`);
+    else lines.push(`Your score remains ${opts.brief.score}.`);
   }
-
-  if (opts.topRec) {
-    lines.push(`The one thing I'd focus on today: ${opts.topRec.title}.`);
-    if (opts.topRec.body) lines.push(opts.topRec.body);
-  }
-  if (opts.brief?.guidance) lines.push(opts.brief.guidance);
-  lines.push("Whenever you're ready, I'm here.");
+  lines.push("I'll continue monitoring your passwords, identities, and threats in the background.");
+  if (opts.memoryLine) lines.push(opts.memoryLine);
   return lines.join(" ");
 }
 
