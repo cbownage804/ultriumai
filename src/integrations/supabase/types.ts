@@ -37065,6 +37065,10 @@ export type Database = {
         Returns: string
       }
       user_owns_msp: { Args: { _msp_id: string }; Returns: boolean }
+      users_share_msp: {
+        Args: { _user_a: string; _user_b: string }
+        Returns: boolean
+      }
       validate_api_key: {
         Args: { key_hash: string }
         Returns: {
