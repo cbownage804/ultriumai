@@ -44,8 +44,8 @@ const defaultTranslations: Translations = {
     'products.safepass': 'Vault',
     'products.safescan': 'Scan',
     'products.safeweb': 'Watch',
-    'products.safetrack': 'SafeTrack',
-    'products.safeassist': 'SafeAssist',
+    'products.safeassist': 'Ray',
+
     
     // Demo
     'demo.tryNow': 'Try Now',
