@@ -363,6 +363,37 @@ export default function WraythWeb() {
     return doc.body.textContent || '';
   };
 
+  /** Derive 2-4 concrete next actions Ray suggests for a threat. */
+  const getRayActions = (threat: ThreatDetails): string[] => {
+    const t = `${threat.threat_type || ''} ${threat.title || ''} ${(threat.tags || []).join(' ')}`.toLowerCase();
+    const actions: string[] = [];
+    const has = (...keys: string[]) => keys.some((k) => t.includes(k));
+
+    if (has('password', 'credential', 'breach', 'leak')) {
+      actions.push('Change this password');
+      actions.push('Turn on MFA for this account');
+    }
+    if (has('phish', 'malicious', 'suspicious')) {
+      actions.push("Don't click links from this sender");
+      actions.push('Report the message to your provider');
+    }
+    if (has('malware', 'ransomware', 'infostealer')) {
+      actions.push('Run a full device scan');
+      actions.push('Rotate saved passwords on this device');
+    }
+    if (has('exposed', 'pii', 'ssn', 'identity')) {
+      actions.push('Consider a credit freeze');
+      actions.push('Monitor your identity in Watch');
+    }
+    if (actions.length === 0) {
+      actions.push('Review this account for unusual activity');
+      actions.push('Rotate the password if you reuse it elsewhere');
+    }
+    return actions.slice(0, 4);
+  };
+
+
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -595,6 +626,20 @@ export default function WraythWeb() {
                                       <Calendar className="h-3 w-3" />
                                       {new Date(threat.first_seen).toLocaleDateString()}
                                     </span>
+                                  </div>
+                                  {/* Ray recommends — actionable next steps derived from the threat */}
+                                  <div className="mt-3 rounded-md border border-violet-500/15 bg-violet-500/[0.04] px-3 py-2">
+                                    <div className="text-[10px] uppercase tracking-[0.22em] text-violet-300/80 mb-1.5">
+                                      Ray recommends
+                                    </div>
+                                    <ul className="space-y-1">
+                                      {getRayActions(threat).map((action, i) => (
+                                        <li key={i} className="flex items-center gap-2 text-xs text-gray-300">
+                                          <CheckCircle className="h-3 w-3 text-emerald-400 shrink-0" />
+                                          <span>{action}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
                                   </div>
                                 </div>
                                 <Button
