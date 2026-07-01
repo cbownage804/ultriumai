@@ -313,16 +313,16 @@ export const BreachMonitor = () => {
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600';
     if (score >= 60) return 'text-yellow-600';
-    if (score >= 40) return 'text-orange-600';
+    if (score >= 40) return 'text-yellow-600';
     return 'text-red-600';
   };
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
-      case 'high': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400';
+      case 'high': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
       case 'medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
-      default: return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+      default: return 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400';
     }
   };
 

@@ -158,9 +158,9 @@ export default function Identity() {
                         </div>
                       </div>
                       {(item.threats_found ?? 0) > 0 ? (
-                        <ShieldAlert className="h-4 w-4 text-amber-400" />
+                        <ShieldAlert className="h-4 w-4 text-yellow-400" />
                       ) : (
-                        <ShieldCheck className="h-4 w-4 text-emerald-400/80" />
+                        <ShieldCheck className="h-4 w-4 text-green-400/80" />
                       )}
                     </motion.li>
                   ))}
@@ -177,9 +177,9 @@ export default function Identity() {
 function Stat({ label, value, tone }: { label: string; value: number; tone: 'neutral' | 'success' | 'warning' }) {
   const toneClass =
     tone === 'warning'
-      ? 'text-amber-300'
+      ? 'text-yellow-300'
       : tone === 'success'
-      ? 'text-emerald-300'
+      ? 'text-green-300'
       : 'text-foreground';
   return (
     <div>

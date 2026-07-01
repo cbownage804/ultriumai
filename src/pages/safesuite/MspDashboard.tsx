@@ -28,10 +28,10 @@ interface ClientRow {
 }
 
 function tone(s: number) {
-  if (s >= 90) return 'text-emerald-400';
+  if (s >= 90) return 'text-green-400';
   if (s >= 75) return 'text-violet-300';
-  if (s >= 60) return 'text-amber-400';
-  return 'text-rose-400';
+  if (s >= 60) return 'text-yellow-400';
+  return 'text-red-400';
 }
 
 export default function MspDashboard() {
@@ -142,20 +142,20 @@ export default function MspDashboard() {
                     <div className={cn('text-2xl font-light tabular-nums', tone(score))}>{score}</div>
                     <div className="text-[10px]">
                       {delta === 0 ? <span className="text-muted-foreground inline-flex items-center gap-0.5"><Minus className="h-2.5 w-2.5" />0</span>
-                       : delta > 0 ? <span className="text-emerald-400 inline-flex items-center gap-0.5"><ArrowUp className="h-2.5 w-2.5" />+{delta}</span>
-                       : <span className="text-rose-400 inline-flex items-center gap-0.5"><ArrowDown className="h-2.5 w-2.5" />{delta}</span>}
+                       : delta > 0 ? <span className="text-green-400 inline-flex items-center gap-0.5"><ArrowUp className="h-2.5 w-2.5" />+{delta}</span>
+                       : <span className="text-red-400 inline-flex items-center gap-0.5"><ArrowDown className="h-2.5 w-2.5" />{delta}</span>}
                     </div>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-1 mb-3">
                   {(stats.mfa_missing ?? 0) > 0 && (
-                    <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-400">{stats.mfa_missing} no MFA</Badge>
+                    <Badge variant="outline" className="text-[10px] border-yellow-500/30 text-yellow-400">{stats.mfa_missing} no MFA</Badge>
                   )}
                   {(stats.breached_employees ?? 0) > 0 && (
-                    <Badge variant="outline" className="text-[10px] border-rose-500/30 text-rose-400">{stats.breached_employees} breached</Badge>
+                    <Badge variant="outline" className="text-[10px] border-red-500/30 text-red-400">{stats.breached_employees} breached</Badge>
                   )}
                   {(stats.mfa_missing ?? 0) === 0 && (stats.breached_employees ?? 0) === 0 && (
-                    <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-400">Healthy</Badge>
+                    <Badge variant="outline" className="text-[10px] border-green-500/30 text-green-400">Healthy</Badge>
                   )}
                 </div>
                 <Link to="/app/org" onClick={() => switchOrg(c.id)}>

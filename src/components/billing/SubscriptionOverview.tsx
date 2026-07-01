@@ -10,15 +10,15 @@ import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 const productIcons: Record<string, React.ReactNode> = {
-  safesuite: <Shield className="h-5 w-5 text-emerald-500" />,
+  safesuite: <Shield className="h-5 w-5 text-green-500" />,
   ai_studio: <Zap className="h-5 w-5 text-violet-500" />,
-  vanguard: <Crown className="h-5 w-5 text-amber-500" />,
+  vanguard: <Crown className="h-5 w-5 text-yellow-500" />,
 };
 
 const productColors: Record<string, string> = {
-  safesuite: 'border-emerald-500/30 bg-gradient-to-r from-emerald-500/5 to-teal-500/5',
+  safesuite: 'border-green-500/30 bg-gradient-to-r from-green-500/5 to-teal-500/5',
   ai_studio: 'border-violet-500/30 bg-gradient-to-r from-violet-500/5 to-purple-500/5',
-  vanguard: 'border-amber-500/30 bg-gradient-to-r from-amber-500/5 to-orange-500/5',
+  vanguard: 'border-yellow-500/30 bg-gradient-to-r from-yellow-500/5 to-yellow-500/5',
 };
 
 export const SubscriptionOverview = () => {

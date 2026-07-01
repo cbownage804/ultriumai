@@ -55,8 +55,8 @@ const SUGGESTED_QUESTIONS = [
 
 function priorityTone(p: number) {
   if (p >= 70) return 'border-red-500/30 bg-red-500/[0.04]';
-  if (p >= 40) return 'border-amber-500/25 bg-amber-500/[0.03]';
-  return 'border-emerald-500/20 bg-emerald-500/[0.03]';
+  if (p >= 40) return 'border-yellow-500/25 bg-yellow-500/[0.03]';
+  return 'border-green-500/20 bg-green-500/[0.03]';
 }
 
 function prettyMemoryKey(k: string): string {
@@ -218,7 +218,7 @@ export default function Ray() {
           Ray's current recommendations
         </div>
         {recs.length === 0 ? (
-          <div className="rounded-sm border border-emerald-500/30 bg-emerald-500/[0.04] px-4 py-3 text-sm text-emerald-200">
+          <div className="rounded-sm border border-green-500/30 bg-green-500/[0.04] px-4 py-3 text-sm text-green-200">
             Nothing needs your attention right now. I'll let you know the moment that changes.
           </div>
         ) : (
@@ -242,10 +242,10 @@ export default function Ray() {
                       {r.body && <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{r.body}</p>}
                       <div className="mt-2 flex flex-wrap items-center gap-1.5">
                         <FixWithRayButton recommendation={r} className="h-7 px-2 text-xs" />
-                        <Button size="sm" variant="ghost" disabled={isBusy} className="h-7 px-2 text-xs text-emerald-300 hover:text-emerald-200" onClick={() => withBusy(r.id, () => completeRecommendation(r.id))}>
+                        <Button size="sm" variant="ghost" disabled={isBusy} className="h-7 px-2 text-xs text-green-300 hover:text-green-200" onClick={() => withBusy(r.id, () => completeRecommendation(r.id))}>
                           <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Mark handled
                         </Button>
-                        <Button size="sm" variant="ghost" disabled={isBusy} className="h-7 px-2 text-xs text-amber-300 hover:text-amber-200" onClick={() => withBusy(r.id, () => snoozeRecommendation(r.id, 24))}>
+                        <Button size="sm" variant="ghost" disabled={isBusy} className="h-7 px-2 text-xs text-yellow-300 hover:text-yellow-200" onClick={() => withBusy(r.id, () => snoozeRecommendation(r.id, 24))}>
                           <Clock className="h-3.5 w-3.5 mr-1" /> Snooze 24h
                         </Button>
                         <Button size="sm" variant="ghost" disabled={isBusy} className="h-7 px-2 text-xs text-muted-foreground" onClick={() => withBusy(r.id, () => dismissRecommendation(r.id))}>
@@ -289,7 +289,7 @@ export default function Ray() {
           <ul className="rounded-sm border border-border bg-card/40 divide-y divide-border">
             {completedPlaybooks.map((p) => (
               <li key={p.id} className="flex items-center gap-3 px-4 py-3 text-sm">
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
                 <span className="flex-1 truncate">{p.title}</span>
                 <span className="text-xs text-violet-300 tabular-nums">+{p.score_delta_actual ?? p.reward_score}</span>
                 <span className="text-xs text-muted-foreground tabular-nums">
@@ -315,7 +315,7 @@ export default function Ray() {
             <ul className="rounded-sm border border-border bg-card/40 divide-y divide-border">
               {recent.map((e, i) => (
                 <li key={i} className="px-4 py-2.5 text-sm flex items-center gap-3">
-                  <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                  <Check className="h-3.5 w-3.5 text-green-500 shrink-0" />
                   <span className="flex-1 truncate text-foreground/90">{e.summary}</span>
                   <span className="text-xs text-muted-foreground tabular-nums">
                     {new Date(e.created_at).toLocaleDateString()}

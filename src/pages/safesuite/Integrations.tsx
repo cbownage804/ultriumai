@@ -30,9 +30,9 @@ type Signal = {
 };
 
 const statusTone: Record<string, string> = {
-  ok: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
-  warn: "bg-amber-500/15 text-amber-300 border-amber-500/30",
-  risk: "bg-rose-500/15 text-rose-300 border-rose-500/30",
+  ok: "bg-green-500/15 text-green-300 border-green-500/30",
+  warn: "bg-yellow-500/15 text-yellow-300 border-yellow-500/30",
+  risk: "bg-red-500/15 text-red-300 border-red-500/30",
   unknown: "bg-muted text-muted-foreground border-border",
 };
 
@@ -127,11 +127,11 @@ export default function Integrations() {
               </CardDescription>
             </div>
             {isConnected ? (
-              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-300 border-emerald-500/30">
+              <Badge variant="outline" className="bg-green-500/10 text-green-300 border-green-500/30">
                 <Check className="h-3 w-3 mr-1" /> Connected
               </Badge>
             ) : m365?.status === "error" ? (
-              <Badge variant="outline" className="bg-rose-500/10 text-rose-300 border-rose-500/30">
+              <Badge variant="outline" className="bg-red-500/10 text-red-300 border-red-500/30">
                 <AlertTriangle className="h-3 w-3 mr-1" /> Needs attention
               </Badge>
             ) : (
@@ -179,7 +179,7 @@ export default function Integrations() {
                 Connect Microsoft 365
               </Button>
               {m365?.last_error && (
-                <p className="text-xs text-rose-400">Last error: {m365.last_error}</p>
+                <p className="text-xs text-red-400">Last error: {m365.last_error}</p>
               )}
             </>
           )}

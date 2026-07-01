@@ -63,7 +63,7 @@ export const InvoiceHistory = () => {
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle className="flex items-center gap-2">
-            <Receipt className="h-5 w-5 text-blue-500" />
+            <Receipt className="h-5 w-5 text-violet-500" />
             Invoice History
           </CardTitle>
           <CardDescription>
