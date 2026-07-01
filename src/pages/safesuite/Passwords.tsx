@@ -18,7 +18,7 @@ import { CheckCircle2, X, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RayConversationCard } from '@/components/ray/RayConversationCard';
 import { RayPageHeader } from '@/components/ray/RayPageHeader';
-import { PasswordProtectionCard } from '@/components/ray/PasswordProtectionCard';
+import { PasswordProtectionCard, PasswordHealthyCard } from '@/components/ray/PasswordProtectionCard';
 import { usePasswordLifecycle } from '@/lib/ray/passwordLifecycle';
 
 function PasswordsHeaderAndOnboarding() {
@@ -33,19 +33,21 @@ function PasswordsHeaderAndOnboarding() {
           : "Everything looks healthy — anything you'd like me to check?";
   const description =
     stage === 'not_started'
-      ? 'Import them once and I become your zero-knowledge password manager, breach watcher, and security guide — all at once.'
+      ? undefined
       : stage === 'imported'
         ? "I'll surface anything that needs attention as soon as the analysis lands."
         : stage === 'analyzed'
           ? "Here's what to focus on today. I keep watch on everything else."
-          : 'I keep quiet watch and will speak up the moment anything changes.';
+          : undefined;
   return (
     <>
       <RayPageHeader title="Passwords" question={question} description={description} />
       {stage === 'not_started' && <PasswordProtectionCard />}
+      {stage === 'healthy' && <PasswordHealthyCard />}
     </>
   );
 }
+
 
 export default function PasswordsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
