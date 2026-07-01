@@ -233,8 +233,12 @@ export const EmergencyAccess = () => {
         {myContacts.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="py-8 text-center">
-              <Shield className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-              <p className="text-muted-foreground">No emergency contacts configured yet</p>
+              <Shield className="w-10 h-10 mx-auto text-violet-400/70 mb-3" />
+              <p className="text-foreground font-medium">Nominate someone you trust</p>
+              <p className="text-sm text-muted-foreground max-w-sm mx-auto mt-1">
+                If something ever happens to you, I can grant a trusted contact access to your vault after a waiting period you set.
+              </p>
+
             </CardContent>
           </Card>
         ) : (
