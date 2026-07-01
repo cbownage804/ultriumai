@@ -173,9 +173,9 @@ export function useWraythTeam() {
       toast.success('Team created successfully!');
       await loadTeam();
       return data as WraythTeam;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating team:', error);
-      toast.error(error.message || 'Failed to create team');
+      toast.error((error instanceof Error ? error.message : null) || 'Failed to create team');
       return null;
     }
   };
@@ -215,9 +215,9 @@ export function useWraythTeam() {
       toast.success(`Invitation sent to ${email}`);
       await loadTeam();
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error inviting member:', error);
-      toast.error(error.message || 'Failed to send invitation');
+      toast.error((error instanceof Error ? error.message : null) || 'Failed to send invitation');
       return false;
     }
   };
@@ -242,9 +242,9 @@ export function useWraythTeam() {
       toast.success('You have joined the team!');
       await loadTeam();
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error accepting invite:', error);
-      toast.error(error.message || 'Failed to accept invitation');
+      toast.error((error instanceof Error ? error.message : null) || 'Failed to accept invitation');
       return false;
     }
   };
@@ -265,9 +265,9 @@ export function useWraythTeam() {
       toast.success('Member removed from team');
       await loadTeam();
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error removing member:', error);
-      toast.error(error.message || 'Failed to remove member');
+      toast.error((error instanceof Error ? error.message : null) || 'Failed to remove member');
       return false;
     }
   };
@@ -288,9 +288,9 @@ export function useWraythTeam() {
       toast.success('Member role updated');
       await loadTeam();
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating role:', error);
-      toast.error(error.message || 'Failed to update role');
+      toast.error((error instanceof Error ? error.message : null) || 'Failed to update role');
       return false;
     }
   };
@@ -316,9 +316,9 @@ export function useWraythTeam() {
       toast.success('Vault created');
       await loadTeam();
       return data as SharedVault;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating vault:', error);
-      toast.error(error.message || 'Failed to create vault');
+      toast.error((error instanceof Error ? error.message : null) || 'Failed to create vault');
       return null;
     }
   };
@@ -402,9 +402,9 @@ export function useSharedVault(vaultId: string | null) {
       toast.success('Entry added to shared vault');
       await loadEntries();
       return data as SharedEntry;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error adding entry:', error);
-      toast.error(error.message || 'Failed to add entry');
+      toast.error((error instanceof Error ? error.message : null) || 'Failed to add entry');
       return null;
     }
   };
@@ -426,9 +426,9 @@ export function useSharedVault(vaultId: string | null) {
       toast.success('Entry updated');
       await loadEntries();
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating entry:', error);
-      toast.error(error.message || 'Failed to update entry');
+      toast.error((error instanceof Error ? error.message : null) || 'Failed to update entry');
       return false;
     }
   };
@@ -445,9 +445,9 @@ export function useSharedVault(vaultId: string | null) {
       toast.success('Entry deleted');
       await loadEntries();
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting entry:', error);
-      toast.error(error.message || 'Failed to delete entry');
+      toast.error((error instanceof Error ? error.message : null) || 'Failed to delete entry');
       return false;
     }
   };
