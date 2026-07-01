@@ -228,7 +228,6 @@ Return JSON ONLY in this exact shape:
     // recommendation is "Protect your passwords with Wrayth" (objective
     // = import_passwords). Anything the AI tries to add about password
     // monitoring/breach detection is redundant until credentials exist.
-    const vaultEmpty = passwordStats.total === 0;
     if (vaultEmpty) {
       const { data: existingImport } = await supabase
         .from("ray_recommendations")
