@@ -575,6 +575,6 @@ export default function WraythSettings() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageMotion>
   );
 }
