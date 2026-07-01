@@ -56,8 +56,8 @@ export function generateRecommendations(
 
   if (breached > 0) {
     recs.push({
-      title: `Rotate ${breached} breached password${breached === 1 ? '' : 's'} first`,
-      body: `${breached} of your credentials appear in known data breaches. These are the highest-risk items in your vault — replace them today.`,
+      title: `Let me help you rotate ${breached} breached password${breached === 1 ? '' : 's'}`,
+      body: `${breached} of your credentials appear in known data breaches — the highest-risk items in your vault. I'll walk you through replacing them one at a time.`,
       priority: 1,
       source_finding_ids: [],
       source_kinds: ['breached'],
@@ -67,8 +67,8 @@ export function generateRecommendations(
 
   if (intel.reusedCount > 0) {
     recs.push({
-      title: `Stop reusing ${intel.reusedCount} password${intel.reusedCount === 1 ? '' : 's'}`,
-      body: `Reusing passwords means one breach unlocks every account that shares it. I can generate unique replacements when you're ready.`,
+      title: `Let me replace ${intel.reusedCount} reused password${intel.reusedCount === 1 ? '' : 's'}`,
+      body: `Reusing passwords means one breach unlocks every account that shares it. I can generate unique, strong replacements whenever you're ready.`,
       priority: 10,
       source_finding_ids: [],
       source_kinds: ['reused'],
@@ -78,8 +78,8 @@ export function generateRecommendations(
 
   if (intel.weak > 0) {
     recs.push({
-      title: `Strengthen ${intel.weak} weak password${intel.weak === 1 ? '' : 's'}`,
-      body: `These passwords are short or use common patterns. A 16+ character mix of letters, numbers, and symbols is the baseline I'd recommend.`,
+      title: `Let me strengthen ${intel.weak} weak password${intel.weak === 1 ? '' : 's'}`,
+      body: `These are short or use common patterns. I'll suggest 16+ character replacements that are actually hard to guess.`,
       priority: 20,
       source_finding_ids: [],
       source_kinds: ['weak'],
@@ -89,8 +89,8 @@ export function generateRecommendations(
 
   if (intel.empty > 0) {
     recs.push({
-      title: `${intel.empty} entr${intel.empty === 1 ? 'y is' : 'ies are'} missing a password`,
-      body: `These vault entries don't have a password stored. Either fill them in or remove them so the vault stays clean.`,
+      title: `Let's clean up ${intel.empty} empty vault entr${intel.empty === 1 ? 'y' : 'ies'}`,
+      body: `These entries don't have a password stored. We can either fill them in together or remove them so your vault stays tidy.`,
       priority: 30,
       source_finding_ids: [],
       source_kinds: ['empty'],
@@ -100,7 +100,7 @@ export function generateRecommendations(
 
   if (intel.oldCount > 0) {
     recs.push({
-      title: `Refresh ${intel.oldCount} password${intel.oldCount === 1 ? '' : 's'} older than a year`,
+      title: `Let me refresh ${intel.oldCount} password${intel.oldCount === 1 ? '' : 's'} older than a year`,
       body: `These haven't been changed in over a year. Rotating them periodically limits the blast radius if one quietly leaks.`,
       priority: 40,
       source_finding_ids: [],
@@ -111,8 +111,8 @@ export function generateRecommendations(
 
   if (profile.providers?.microsoft) {
     recs.push({
-      title: 'Confirm MFA is enabled on your Microsoft account',
-      body: 'You told me Microsoft 365 is part of your environment. Verify MFA is active — it blocks more than 99% of automated takeover attempts.',
+      title: 'Let me confirm MFA on your Microsoft account',
+      body: 'You told me Microsoft 365 is part of your environment. MFA blocks more than 99% of automated takeover attempts — let\'s make sure it\'s on.',
       priority: 50,
       source_finding_ids: [],
       source_kinds: ['no_mfa'],
@@ -121,8 +121,8 @@ export function generateRecommendations(
   }
   if (profile.providers?.google) {
     recs.push({
-      title: 'Confirm 2-Step Verification on your Google account',
-      body: 'Since you live in Google Workspace, 2SV on the root account is non-negotiable. I\'ll watch for sign-in anomalies from there.',
+      title: 'Let me confirm 2-Step Verification on your Google account',
+      body: 'Since you live in Google Workspace, 2SV on the root account is non-negotiable. Once it\'s on, I\'ll watch for sign-in anomalies from there.',
       priority: 51,
       source_finding_ids: [],
       source_kinds: ['no_mfa'],
@@ -131,8 +131,8 @@ export function generateRecommendations(
   }
   if (profile.providers?.apple) {
     recs.push({
-      title: 'Confirm two-factor on your Apple ID',
-      body: 'Your Apple ID gates iCloud Keychain, Find My, and backups. Two-factor must be on.',
+      title: 'Let me confirm two-factor on your Apple ID',
+      body: 'Your Apple ID gates iCloud Keychain, Find My, and backups. Two-factor has to be on — I\'ll help you verify it in under a minute.',
       priority: 52,
       source_finding_ids: [],
       source_kinds: ['no_mfa'],
@@ -142,8 +142,8 @@ export function generateRecommendations(
 
   if (intel.missingUrl + intel.missingUsername > 0) {
     recs.push({
-      title: 'Fill in missing usernames and site URLs',
-      body: 'Autofill only works when each entry has the right URL and username. I\'ll handle the heavy lifting once they\'re in.',
+      title: 'Let me tidy up your vault metadata',
+      body: 'Autofill only works when each entry has the right URL and username. Fill those in and I\'ll handle the heavy lifting.',
       priority: 70,
       source_finding_ids: [],
       source_kinds: ['missing_url', 'missing_username'],
@@ -153,14 +153,15 @@ export function generateRecommendations(
 
   if (breachDegraded) {
     recs.push({
-      title: 'Breach check needs another pass',
-      body: 'I couldn\'t reach the breach intelligence service during onboarding. I\'ll retry automatically and let you know what I find.',
+      title: 'Let me retry the breach check',
+      body: 'I couldn\'t reach the breach intelligence service during onboarding. I\'ll retry automatically and let you know the moment I have answers.',
       priority: 90,
       source_finding_ids: [],
       source_kinds: ['breached'],
       objective: 'retry_breach_check',
     });
   }
+
 
   return recs.sort((a, b) => a.priority - b.priority);
 }
