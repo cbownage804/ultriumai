@@ -231,7 +231,7 @@ export default function VaultSecurityPage() {
       </section>
 
       {/* Trust Banner */}
-      <section className="py-8 px-4 border-y border-amber-500/10 bg-[#0d0d0d]">
+      <section className="py-8 px-4 border-y border-amber-500/10 bg-background">
         <div className="container mx-auto max-w-4xl">
           <div className="flex flex-col md:flex-row items-center justify-center gap-6 text-center">
             <div className="flex items-center gap-2">
@@ -296,7 +296,7 @@ export default function VaultSecurityPage() {
       </section>
 
       {/* How It Works */}
-      <section className="py-20 px-4 bg-[#0d0d0d]">
+      <section className="py-20 px-4 bg-background">
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-white mb-4">
@@ -519,7 +519,7 @@ export default function VaultSecurityPage() {
       </section>
 
       {/* Industry Comparison Table */}
-      <section className="py-20 px-4 bg-[#0d0d0d]">
+      <section className="py-20 px-4 bg-background">
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-white mb-4">
@@ -566,7 +566,7 @@ export default function VaultSecurityPage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-20 px-4 bg-[#0d0d0d]">
+      <section className="py-20 px-4 bg-background">
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-white mb-4">

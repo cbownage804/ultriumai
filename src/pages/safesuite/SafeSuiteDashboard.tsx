@@ -186,16 +186,16 @@ function QuickActionsCard() {
       transition={{ delay: 0.2 }}
       className="h-full"
     >
-      <div className="wrayth-chamfer border border-[#3A3A3A] bg-[#181818] p-5 sm:p-6 h-full">
+      <div className="wrayth-chamfer border border-border bg-secondary p-5 sm:p-6 h-full">
         <div className="flex items-center gap-2 mb-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
           <span className="h-1.5 w-1.5 rounded-full bg-primary" />
           Ray
         </div>
-        <h3 className="text-base sm:text-lg font-light text-[#F3F3F3] mb-4">What would you like to do?</h3>
+        <h3 className="text-base sm:text-lg font-light text-foreground mb-4">What would you like to do?</h3>
         <div className="space-y-1.5">
           {options.map((o) => (
             <Link key={o.label} to={o.to}>
-              <button className="w-full text-left text-sm text-[#F3F3F3] hover:text-primary transition-colors py-2 px-1 border-b border-[#2A2A2A] last:border-0 min-h-[40px]">
+              <button className="w-full text-left text-sm text-foreground hover:text-primary transition-colors py-2 px-1 border-b border-[#2A2A2A] last:border-0 min-h-[40px]">
                 <span className="text-muted-foreground mr-2">○</span>{o.label}
               </button>
             </Link>
@@ -598,7 +598,7 @@ export default function WraythDashboard() {
       </div>
 
       {/* Ray's security timeline (preview) */}
-      <div className="wrayth-chamfer border border-[#3A3A3A] bg-[#0f0f0f] p-5">
+      <div className="wrayth-chamfer border border-border bg-[#0f0f0f] p-5">
         <div className="mb-4 flex items-center justify-between">
           <div>
             <div className="text-[11px] uppercase tracking-[0.22em] text-violet-300/80">Ray's timeline</div>

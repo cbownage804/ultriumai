@@ -439,7 +439,7 @@ export function AIRecommendationsDisplay({
                   {parsed.immediateActions.actions.map((action, i) => (
                     <div 
                       key={i}
-                      className="flex items-start gap-3 p-3 rounded-lg bg-[#0d0d0d] border border-white/5"
+                      className="flex items-start gap-3 p-3 rounded-lg bg-background border border-white/5"
                     >
                       <div className="flex items-center justify-center w-5 h-5 rounded-full bg-red-500/20 text-red-400 text-xs font-bold shrink-0 mt-0.5">
                         {i + 1}
