@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-07-01T13:17:40.810Z",
+  "generatedAt": "2026-07-01T13:17:50.201Z",
   "totals": {
     "filesScanned": 870,
     "legacyBrand": 210,
     "todos": 11,
-    "consoles": 122,
+    "consoles": 108,
     "hardcodedHex": 470,
     "arbitraryColors": 0,
     "anyTypes": 235
@@ -1095,16 +1095,6 @@
       "text": ".then(data => console.log(data));`;"
     },
     {
-      "file": "src/components/help/BugReportModal.tsx",
-      "line": 75,
-      "text": "console.warn('Screenshot capture failed:', err);"
-    },
-    {
-      "file": "src/components/help/BugReportModal.tsx",
-      "line": 155,
-      "text": "console.warn('Bug report email notification failed:', emailErr);"
-    },
-    {
       "file": "src/components/knowledgebase/ContextualKnowledgeBase.tsx",
       "line": 400,
       "text": "console.log('Open article:', article.id);"
@@ -1170,16 +1160,6 @@
       "text": "return `import { useForm } from 'react-hook-form';\\n\\nexport function ${name}Form() {\\n  const { register, handleSubmit } = useForm();\\n  const onSubmit = (data"
     },
     {
-      "file": "src/hooks/useIndexedDBPersistence.ts",
-      "line": 106,
-      "text": "console.warn('IndexedDB save failed:', err);"
-    },
-    {
-      "file": "src/hooks/useIndexedDBPersistence.ts",
-      "line": 184,
-      "text": "console.warn('IndexedDB immediate save failed:', err);"
-    },
-    {
       "file": "src/hooks/useOrganization.ts",
       "line": 14,
       "text": "console.warn('Failed to send member notification:', err);"
@@ -1188,26 +1168,6 @@
       "file": "src/hooks/usePluginRegistry.ts",
       "line": 428,
       "text": "console.warn(`Plugin ${pluginId} hook ${hook} error:`, e);"
-    },
-    {
-      "file": "src/hooks/usePluginSDK.ts",
-      "line": 110,
-      "text": "console.log('Running pre-deploy checks...');"
-    },
-    {
-      "file": "src/hooks/usePluginSDK.ts",
-      "line": 116,
-      "text": "console.log('Deploy complete:', result.url);"
-    },
-    {
-      "file": "src/hooks/useProjectFileSystem.ts",
-      "line": 353,
-      "text": "console.log('%c[ENV] Variables loaded:', 'color:#6ee7b7', ${JSON.stringify(maskedObj)});"
-    },
-    {
-      "file": "src/hooks/useProjectFileSystem.ts",
-      "line": 527,
-      "text": "console.warn('[Preview] Relative fetch URL \"' + req + '\" — returning mock response. Connect a backend to enable API calls.');"
     },
     {
       "file": "src/hooks/useRayLiveSignals.ts",
@@ -1228,16 +1188,6 @@
       "file": "src/hooks/useVersionTimeline.ts",
       "line": 53,
       "text": "console.warn('[VersionTimeline] IDB save failed:', err);"
-    },
-    {
-      "file": "src/hooks/useVisualDiff.ts",
-      "line": 60,
-      "text": "console.warn('[VisualDiff] Before capture failed:', err);"
-    },
-    {
-      "file": "src/hooks/useVisualDiff.ts",
-      "line": 107,
-      "text": "console.warn('[VisualDiff] After capture failed:', err);"
     },
     {
       "file": "src/hooks/useWebVitals.ts",
@@ -1283,26 +1233,6 @@
       "file": "src/lib/logger.ts",
       "line": 23,
       "text": "if (isDev) console.debug(...args);"
-    },
-    {
-      "file": "src/lib/ray/insights.ts",
-      "line": 38,
-      "text": "console.warn('[ray.insights] list failed', error);"
-    },
-    {
-      "file": "src/lib/ray/insights.ts",
-      "line": 53,
-      "text": "console.warn('[ray.insights] record failed', error);"
-    },
-    {
-      "file": "src/lib/ray/morningBrief.ts",
-      "line": 49,
-      "text": "if (error) console.warn(\"[morningBrief] feedback failed\", error);"
-    },
-    {
-      "file": "src/lib/ray/morningBrief.ts",
-      "line": 86,
-      "text": "console.warn(\"[morningBrief] generation failed\", error);"
     },
     {
       "file": "src/lib/ray/notices.ts",
@@ -2453,12 +2383,12 @@
     },
     {
       "file": "src/hooks/useProjectFileSystem.ts",
-      "line": 353,
-      "text": "console.log('%c[ENV] Variables loaded:', 'color:#6ee7b7', ${JSON.stringify(maskedObj)});"
+      "line": 354,
+      "text": "devLog('%c[ENV] Variables loaded:', 'color:#6ee7b7', ${JSON.stringify(maskedObj)});"
     },
     {
       "file": "src/hooks/useProjectFileSystem.ts",
-      "line": 421,
+      "line": 422,
       "text": "const themeColor = linkedGPT.themeColor || '#6366f1';"
     },
     {
@@ -2563,12 +2493,12 @@
     },
     {
       "file": "src/hooks/useVisualDiff.ts",
-      "line": 44,
+      "line": 45,
       "text": "backgroundColor: '#ffffff',"
     },
     {
       "file": "src/hooks/useVisualDiff.ts",
-      "line": 91,
+      "line": 92,
       "text": "backgroundColor: '#ffffff',"
     },
     {

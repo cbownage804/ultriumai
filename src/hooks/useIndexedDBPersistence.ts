@@ -1,3 +1,4 @@
+import { devLog } from '@/lib/logger';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ProjectFile } from './useProjectFileSystem';
 
@@ -103,7 +104,7 @@ export function useIndexedDBPersistence() {
         lastSavedHash.current = hash;
         setSyncStatus('synced');
       } catch (err) {
-        console.warn('IndexedDB save failed:', err);
+        devLog('IndexedDB save failed:', err);
         setSyncStatus('offline');
       }
     }, SAVE_DEBOUNCE_MS);
@@ -181,7 +182,7 @@ export function useIndexedDBPersistence() {
         idbSet(META_STORE, SESSION_KEY, { projectId, name, savedAt: timestamp }),
       ]);
     } catch (err) {
-      console.warn('IndexedDB immediate save failed:', err);
+      devLog('IndexedDB immediate save failed:', err);
     }
   }, []);
 

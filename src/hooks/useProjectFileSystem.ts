@@ -1,3 +1,4 @@
+import { devLog } from '@/lib/logger';
 import { useState, useCallback, useEffect, useRef } from 'react';
 
 export interface ProjectFile {
@@ -350,7 +351,7 @@ export function useProjectFileSystem() {
       headInjects.push(`<script>
 window.ENV = ${JSON.stringify(envObj)};
 if (typeof console !== 'undefined') {
-  console.log('%c[ENV] Variables loaded:', 'color:#6ee7b7', ${JSON.stringify(maskedObj)});
+  devLog('%c[ENV] Variables loaded:', 'color:#6ee7b7', ${JSON.stringify(maskedObj)});
 }
 </script>`);
     }
@@ -524,7 +525,7 @@ if (typeof console !== 'undefined') {
 
     // Phase 91: Intercept relative fetch URLs
     if (typeof req === 'string' && req.startsWith('/') && !req.startsWith('//')) {
-      console.warn('[Preview] Relative fetch URL "' + req + '" — returning mock response. Connect a backend to enable API calls.');
+      devLog('[Preview] Relative fetch URL "' + req + '" — returning mock response. Connect a backend to enable API calls.');
       return Promise.resolve(new Response(JSON.stringify({ message: 'Mock response — connect a backend for real API calls', path: req }), {
         status: 200, headers: { 'Content-Type': 'application/json' }
       }));

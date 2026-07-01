@@ -1,3 +1,4 @@
+import { devLog } from '@/lib/logger';
 import { useState, useCallback, useRef } from 'react';
 
 /**
@@ -57,7 +58,7 @@ export function useVisualDiff() {
       setBeforeSnapshot({ dataUrl, timestamp: Date.now(), label: 'Before' });
       return true;
     } catch (err) {
-      console.warn('[VisualDiff] Before capture failed:', err);
+      devLog('[VisualDiff] Before capture failed:', err);
       return false;
     } finally {
       captureInProgress.current = false;
@@ -104,7 +105,7 @@ export function useVisualDiff() {
       setAfterSnapshot({ dataUrl, timestamp: Date.now(), label: 'After' });
       return true;
     } catch (err) {
-      console.warn('[VisualDiff] After capture failed:', err);
+      devLog('[VisualDiff] After capture failed:', err);
       return false;
     } finally {
       captureInProgress.current = false;

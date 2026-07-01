@@ -1,3 +1,4 @@
+import { devLog } from '@/lib/logger';
 /**
  * Ray Insights SDK — the unified data model every Ray surface reads from.
  *
@@ -35,7 +36,7 @@ export async function listInsights(
   if (opts.status) q = q.eq('status', opts.status);
   const { data, error } = await q;
   if (error) {
-    console.warn('[ray.insights] list failed', error);
+    devLog('[ray.insights] list failed', error);
     return [];
   }
   return (data as RayInsight[]) ?? [];
@@ -50,7 +51,7 @@ export async function recordInsight(
     .select()
     .single();
   if (error) {
-    console.warn('[ray.insights] record failed', error);
+    devLog('[ray.insights] record failed', error);
     return null;
   }
   return data as RayInsight;

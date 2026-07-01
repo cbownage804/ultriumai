@@ -1,3 +1,4 @@
+import { devLog } from '@/lib/logger';
 import { useState, useCallback } from 'react';
 
 export interface PluginDefinition {
@@ -107,13 +108,13 @@ export default definePlugin({
   
   deployHook: {
     beforeDeploy: async (files, config) => {
-      console.log('Running pre-deploy checks...');
+      devLog('Running pre-deploy checks...');
       // Validate, lint, etc.
       return { proceed: true };
     },
     
     afterDeploy: async (result) => {
-      console.log('Deploy complete:', result.url);
+      devLog('Deploy complete:', result.url);
       // Send notification, update status, etc.
     },
   },
