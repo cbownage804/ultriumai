@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useVault, PasswordEntry as VaultEntry } from '@/hooks/useSafePass';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
 import { encryptData } from '@/utils/crypto';
+import { computePasswordProfile } from '@/lib/ray/passwordProfile';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -274,16 +276,19 @@ export const PasswordVault = () => {
     decryptEntries();
   }, [safePassEntries, isUnlocked, selectedVault, getEntryUsername, getEntryPassword, getEntryWebsite, getEntryNotes]);
 
-  const calculatePasswordStrength = (password: string): number => {
-    let score = 0;
-    if (password.length >= 8) score += 25;
-    if (password.length >= 12) score += 25;
-    if (/[A-Z]/.test(password)) score += 15;
-    if (/[a-z]/.test(password)) score += 15;
-    if (/[0-9]/.test(password)) score += 10;
-    if (/[^A-Za-z0-9]/.test(password)) score += 10;
-    return Math.min(score, 100);
+  // Ray's multi-signal strength: entropy, dictionary, keyboard runs,
+  // personal-info hints, and (when known) breach + reuse. Persisted so
+  // Health/search stay consistent with the per-entry profile panel.
+  const calculatePasswordStrength = (password: string, ctx?: { title?: string; username?: string; website?: string }): number => {
+    if (!password) return 0;
+    return computePasswordProfile({
+      password,
+      title: ctx?.title ?? newEntry.title,
+      username: ctx?.username ?? newEntry.username,
+      website: ctx?.website ?? newEntry.website,
+    }).score;
   };
+
 
   // Use cryptographically secure password generation
   const generatePassword = () => {
