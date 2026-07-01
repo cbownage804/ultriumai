@@ -140,7 +140,7 @@ export default function WraythWeb() {
     setAiRecommendation(null);
     
     try {
-      const { data, error } = await supabase.functions.invoke('safeweb-ai-recommendations', {
+      const { data, error } = await supabase.functions.invoke('ray-watch-recommendations', {
         body: { threat }
       });
 

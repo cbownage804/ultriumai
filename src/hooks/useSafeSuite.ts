@@ -146,7 +146,7 @@ export function useWraythUsage() {
 
     try {
       // Fetch usage from edge function (no body needed for get all)
-      const { data, error } = await supabase.functions.invoke('safesuite-usage');
+      const { data, error } = await supabase.functions.invoke('wrayth-usage');
 
       if (error) throw error;
 
@@ -306,7 +306,7 @@ export function useWraythCheckout() {
     setError(null);
 
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('safesuite-portal');
+      const { data, error: fnError } = await supabase.functions.invoke('safesuite-customer-portal');
 
       if (fnError) throw fnError;
 
