@@ -1,4 +1,4 @@
-/**
+import wraythBrandSidebar from '@/assets/wrayth-brand-sidebar.png.asset.json';
  * Wrayth Layout — Ray-first navigation.
  *
  * Sidebar grammar: Home / Ray, then Protection (Passwords, Threats,
