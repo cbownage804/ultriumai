@@ -612,10 +612,22 @@ export default function WraythDashboard() {
     sinceLines.push({ tone: 'good', text: 'Everything looks healthy' });
   }
 
+  const cisoDirective = nextBestAction({
+    vaultCount: stats.passwordCount,
+    weakCount: stats.weakPasswordCount,
+    strongCount: stats.strongPasswordCount,
+    breachedEmailCount,
+    monitoredAssets: stats.monitoredAssets,
+    monitoredEmailsWithoutVaultLink: 0,
+  });
+
   return (
     <div className="min-h-screen bg-background -m-4 lg:-m-6 p-4 lg:p-6 space-y-4 sm:space-y-6">
       {/* 1. Morning Brief (lifecycle-aware) */}
       <LifecycleAwareTop firstName={firstName} />
+
+      {/* 1b. CISO synthesis — the one directive that matters right now */}
+      {stats.passwordCount > 0 && <CisoNextAction directive={cisoDirective} />}
 
       {/* 2. Ask Ray — reinforces AI-first experience */}
       <div data-tour="quick-actions">
