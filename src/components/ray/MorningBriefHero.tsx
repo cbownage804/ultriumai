@@ -221,7 +221,7 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
     },
   ];
 
-  const top = recommendations.slice(0, variant === "home" ? 3 : 6);
+
 
   async function withBusy(id: string, fn: () => Promise<unknown>) {
     setBusyId(id);
