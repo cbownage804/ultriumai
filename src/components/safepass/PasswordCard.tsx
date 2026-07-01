@@ -63,11 +63,29 @@ export const PasswordCard = ({
   entry,
   hasMfa = false,
   hasBreach = false,
+  reusedOn = [],
+  breachSources = [],
+  personalHints = [],
   onEdit,
   onDelete,
   onToggleFavorite,
 }: PasswordCardProps) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  const profile = useMemo(() => computePasswordProfile({
+    password: entry.password,
+    title: entry.title,
+    username: entry.username,
+    website: entry.website,
+    createdAt: entry.created_at,
+    hasMfa,
+    supportsMfa: false, // set below after catalog lookup
+    reusedOn,
+    breachSources: hasBreach && breachSources.length === 0 ? ['Known breach dataset'] : breachSources,
+    personalHints,
+  }), [entry, hasMfa, hasBreach, reusedOn, breachSources, personalHints]);
+
 
   const host = hostnameFor(entry.website, entry.title);
   const favicon = faviconFor(host);
