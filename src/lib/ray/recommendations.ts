@@ -19,6 +19,12 @@ export interface Recommendation {
   objective: string;
 }
 
+export interface RayProfileInput {
+  audience?: 'personal' | 'family' | 'business' | null;
+  providers?: Record<string, boolean>;
+  existing_manager?: string | null;
+}
+
 /**
  * The "start here" recommendation for a user whose vault is empty.
  * Kept as its own helper so onboarding, the morning brief, and the
