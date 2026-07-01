@@ -58,7 +58,7 @@ export function VaultLayout() {
           {/* Logo */}
           <Link to="/safepass" className="flex items-center space-x-2">
             <img 
-              src={safeSuiteProducts.safepass.logo} 
+              src={safeSuiteProducts.vault.logo} 
               alt="Vault" 
               className="h-8 w-8 rounded-lg object-contain"
             />

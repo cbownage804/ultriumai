@@ -257,7 +257,7 @@ interface UsageSummaryProps {
 
 export function UsageSummary({ 
   className,
-  features = ['safepass', 'safescan', 'safeweb'] 
+  features = ['vault', 'scan', 'watch'] 
 }: UsageSummaryProps) {
   const { tier } = useWraythSubscription();
   const tierConfig = SAFESUITE_TIERS[tier];

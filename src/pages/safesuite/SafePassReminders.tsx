@@ -7,7 +7,7 @@ import { ExpirationReminders } from '@/components/safepass/ExpirationReminders';
 
 export default function VaultReminders() {
   return (
-    <FeatureGate feature="safepass">
+    <FeatureGate feature="vault">
       <ExpirationReminders />
     </FeatureGate>
   );

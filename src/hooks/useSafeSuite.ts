@@ -22,10 +22,9 @@ export interface WraythSubscription {
 }
 
 export interface WraythUsage {
-  safepass: number;
-  safescan: number;
-  safeweb: number;
-  safetrack: number;
+  vault: number;
+  scan: number;
+  watch: number;
 }
 
 export function useWraythSubscription() {
@@ -133,10 +132,9 @@ export function useWraythSubscription() {
 export function useWraythUsage() {
   const { user } = useAuth();
   const [usage, setUsage] = useState<WraythUsage>({
-    safepass: 0,
-    safescan: 0,
-    safeweb: 0,
-    safetrack: 0
+    vault: 0,
+    scan: 0,
+    watch: 0,
   });
   const [loading, setLoading] = useState(true);
 

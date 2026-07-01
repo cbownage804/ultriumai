@@ -3,7 +3,7 @@ import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
 
 const VaultNotes = () => {
   return (
-    <FeatureGate feature="safepass">
+    <FeatureGate feature="vault">
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Secure Notes</h1>

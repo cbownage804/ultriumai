@@ -236,7 +236,7 @@ export default function WraythWeb() {
     if (!newAsset.trim()) return;
 
     // Check limit before attempting to add
-    const access = checkFeatureAccess('safeweb', 'use');
+    const access = checkFeatureAccess('watch', 'use');
     if (!access.allowed) {
       toast({
         title: "Limit Reached",
@@ -372,7 +372,7 @@ export default function WraythWeb() {
   }
 
   return (
-    <FeatureGate feature="safeweb">
+    <FeatureGate feature="watch">
       <div className="space-y-6">
         <RayPageHeader
           title="Exposure"

@@ -10,14 +10,10 @@ const switchVariants = cva(
     variants: {
       variant: {
         default: "data-[state=checked]:bg-primary",
-        safepass: "data-[state=checked]:bg-amber-500",
-        safescan: "data-[state=checked]:bg-red-500",
-        safeweb: "data-[state=checked]:bg-violet-500",
-        safetrack: "data-[state=checked]:bg-emerald-500",
-        safeassist: "data-[state=checked]:bg-cyan-500",
-        safeops: "data-[state=checked]:bg-emerald-400",
-        safedesk: "data-[state=checked]:bg-cyan-400",
-        safedoc: "data-[state=checked]:bg-blue-500",
+        vault: "data-[state=checked]:bg-amber-500",
+        scan: "data-[state=checked]:bg-red-500",
+        watch: "data-[state=checked]:bg-violet-500",
+        ray: "data-[state=checked]:bg-primary",
       },
     },
     defaultVariants: {

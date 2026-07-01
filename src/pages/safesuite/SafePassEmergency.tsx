@@ -7,7 +7,7 @@ import { EmergencyAccess } from '@/components/safepass/EmergencyAccess';
 
 export default function VaultEmergency() {
   return (
-    <FeatureGate feature="safepass">
+    <FeatureGate feature="vault">
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Emergency Access</h1>

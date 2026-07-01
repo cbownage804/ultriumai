@@ -51,7 +51,6 @@ interface DashboardStats {
   strongPasswordCount: number;
   scanCount: number;
   monitoredAssets: number;
-  trackedAssets: number;
 }
 
 interface ActivityItem {
@@ -80,7 +79,7 @@ function SecurityScoreCard({ stats }: { stats: DashboardStats }) {
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <GlowContainer theme="safeweb" className="col-span-full md:col-span-2 p-4 sm:p-6">
+      <GlowContainer theme="watch" className="col-span-full md:col-span-2 p-4 sm:p-6">
         <div className="flex items-center gap-2 mb-3 sm:mb-4">
           <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-violet-400" />
           <h3 className="font-semibold text-white text-sm sm:text-base">Security Score</h3>
@@ -224,7 +223,7 @@ function ProductCard({
   index: number;
 }) {
   const theme = product.id as keyof typeof SAFESUITE_THEMES;
-  const colors = SAFESUITE_THEMES[theme] || SAFESUITE_THEMES.safescan;
+  const colors = SAFESUITE_THEMES[theme] || SAFESUITE_THEMES.scan;
 
   return (
     <motion.div
@@ -311,7 +310,7 @@ function RecentActivityCard({ activities }: { activities: ActivityItem[] }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.6 }}
     >
-      <GlowContainer theme="safescan" className="p-6">
+      <GlowContainer theme="scan" className="p-6">
         <div className="flex items-center gap-2 mb-4">
           <Activity className="h-5 w-5 text-red-400" />
           <h3 className="font-semibold text-white">Recent Activity</h3>
@@ -362,27 +361,27 @@ function RecentActivityCard({ activities }: { activities: ActivityItem[] }) {
 
 const productCardsConfig = [
   {
-    id: 'safepass',
-    feature: 'safepass' as keyof TierFeatures,
-    productLogo: safeSuiteProducts.safepass.logo,
+    id: 'vault',
+    feature: 'vault' as keyof TierFeatures,
+    productLogo: safeSuiteProducts.vault.logo,
     title: 'Passwords',
     description: 'Ray keeps every credential strong and unique.',
     path: '/app/passwords',
     statLabel: 'Stored'
   },
   {
-    id: 'safescan',
-    feature: 'safescan' as keyof TierFeatures,
-    productLogo: safeSuiteProducts.safescan.logo,
+    id: 'scan',
+    feature: 'scan' as keyof TierFeatures,
+    productLogo: safeSuiteProducts.scan.logo,
     title: 'Threats',
     description: 'Ray analyzes anything suspicious you send over.',
     path: '/app/threats',
     statLabel: 'Analyzed this month'
   },
   {
-    id: 'safeweb',
-    feature: 'safeweb' as keyof TierFeatures,
-    productLogo: safeSuiteProducts.safeweb.logo,
+    id: 'watch',
+    feature: 'watch' as keyof TierFeatures,
+    productLogo: safeSuiteProducts.watch.logo,
     title: 'Exposure',
     description: 'Ray watches the dark web for your identity.',
     path: '/app/exposure',
@@ -421,8 +420,7 @@ export default function WraythDashboard() {
     weakPasswordCount: 0,
     strongPasswordCount: 0,
     scanCount: 0,
-    monitoredAssets: 0,
-    trackedAssets: 0
+    monitoredAssets: 0
   });
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -446,11 +444,6 @@ export default function WraythDashboard() {
           .eq('user_id', user.id)
           .eq('status', 'active');
         
-        const assetsResult = await supabase
-          .from('assets')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', user.id);
-        
         const auditLogsResult = await supabase
           .from('audit_logs')
           .select('id, action, details, created_at, resource_type')
@@ -466,8 +459,7 @@ export default function WraythDashboard() {
           weakPasswordCount: weakCount,
           strongPasswordCount: strongCount,
           scanCount: scansResult.count || 0,
-          monitoredAssets: monitorsResult.count || 0,
-          trackedAssets: assetsResult.count || 0
+          monitoredAssets: monitorsResult.count || 0
         });
 
         const mappedActivities: ActivityItem[] = (auditLogsResult.data || []).map(log => {
@@ -492,7 +484,7 @@ export default function WraythDashboard() {
           } else if (resourceLower === 'breach_check') {
             type = 'breach';
             text = 'Ray ran an exposure check';
-          } else if (actionLower.includes('safeassist') || actionLower.includes('ray') || actionLower.includes('assist')) {
+          } else if (actionLower.includes('ray') || actionLower.includes('assist')) {
             type = 'password';
             text = 'Ray conversation';
           } else {
@@ -520,11 +512,11 @@ export default function WraythDashboard() {
 
   const getStatForProduct = (productId: string): { label: string; value: number } => {
     switch (productId) {
-      case 'safepass':
+      case 'vault':
         return { label: 'Passwords', value: stats.passwordCount };
-      case 'safescan':
+      case 'scan':
         return { label: 'Scans this month', value: stats.scanCount };
-      case 'safeweb':
+      case 'watch':
         return { label: 'Assets monitored', value: stats.monitoredAssets };
 
 
@@ -574,8 +566,8 @@ export default function WraythDashboard() {
 
       {/* Usage limit banners */}
       <div className="space-y-2">
-        <UsageLimitBanner feature="safescan" />
-        <UsageLimitBanner feature="safepass" />
+        <UsageLimitBanner feature="scan" />
+        <UsageLimitBanner feature="vault" />
       </div>
 
       {/* Ray's conversational quick actions */}

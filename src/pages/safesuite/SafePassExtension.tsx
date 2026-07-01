@@ -81,7 +81,7 @@ const VaultExtension = () => {
   ];
 
   return (
-    <FeatureGate feature="safepass">
+    <FeatureGate feature="vault">
     <div className="space-y-6">
       <div>
         <div className="flex items-center gap-3">
