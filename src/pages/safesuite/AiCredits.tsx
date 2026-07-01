@@ -95,7 +95,7 @@ export default function AiCredits() {
           icon={Coins}
           title="AI Credits"
           question="How much of Ray's brain have you used this cycle?"
-          explain="Credits power Ray's AI actions — briefings, analyses, conversations. Ray tracks daily and monthly usage separately so a busy Tuesday doesn't burn your month."
+          explain={{ title: 'How Ray tracks credits', body: "Credits power Ray's AI actions — briefings, analyses, conversations. Ray tracks daily and monthly usage separately so a busy Tuesday doesn't burn your month." }}
         />
 
         {loading ? (
