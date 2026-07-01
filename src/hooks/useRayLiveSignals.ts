@@ -1,3 +1,4 @@
+import { devLog } from '@/lib/logger';
 /**
  * useRayLiveSignals — Track 1: Real Data Hardening.
  *
@@ -32,7 +33,7 @@ export function useRayLiveSignals(options?: { auto?: boolean }) {
     try {
       const { data, error } = await supabase.functions.invoke("ray-sync-signals", { body: {} });
       if (error) {
-        console.warn("[useRayLiveSignals] sync failed", error);
+        devLog.warn("[useRayLiveSignals] sync failed", error);
         return null;
       }
       lastRunRef.current = Date.now();
