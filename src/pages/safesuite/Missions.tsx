@@ -10,6 +10,8 @@ import { listMissions, toggleStep, dismissMission, type RayMission } from '@/lib
 import { cn } from '@/lib/utils';
 import { Check, Clock, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PageMotion } from '@/components/ray/PageMotion';
+
 
 function MissionCard({
   mission,
