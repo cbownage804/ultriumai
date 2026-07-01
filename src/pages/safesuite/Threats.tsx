@@ -9,6 +9,7 @@ import { RayConversationCard } from '@/components/ray/RayConversationCard';
 import { RayPageHeader } from '@/components/ray/RayPageHeader';
 import { RayActivityTicker } from '@/components/ray/RayActivityTicker';
 import { RayContextBridge } from '@/components/ray/RayContextBridge';
+import { ThreatScanInput } from '@/components/ray/ThreatScanInput';
 
 export default function WraythScan() {
   return (
@@ -45,6 +46,8 @@ export default function WraythScan() {
           ]}
           confidence={72}
         />
+
+        <ThreatScanInput />
 
         <RayConversationCard context="threats" />
 
