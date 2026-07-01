@@ -69,7 +69,6 @@ async function fetchUserSecurityContext(supabase: any, userId: string): Promise<
     return {
       passwordVault: passwordStats,
       threats: threatStats,
-      assets: assetStats,
       scans: scanStats
     };
   } catch (error) {
