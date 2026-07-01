@@ -48,15 +48,24 @@ export function RayWatchingCard({ passwordCount, identityCount, threatCount }: P
     return () => clearInterval(id);
   }, []);
 
-  // Rotating real statuses — derived from the actual counts we were given.
+  // Rotating real statuses — a mix of what Ray is monitoring right now.
+  // Every line has to be either literally true or a background job Ray
+  // actually runs, so this never feels like fake activity.
   const statuses = useMemo(() => {
     const lines: string[] = [];
-    if (passwordCount > 0) lines.push(`Watching your vault — ${passwordCount} credentials`);
-    else lines.push('Ready when you are — your vault is empty');
-    if (identityCount > 0) lines.push(`Monitoring ${identityCount} ${identityCount === 1 ? 'identity' : 'identities'}`);
-    lines.push('Watching breach feeds');
-    if (threatCount > 0) lines.push(`Reviewed ${threatCount} threat ${threatCount === 1 ? 'signal' : 'signals'} today`);
-    lines.push("Checking today's changes");
+    lines.push('Watching breach feeds…');
+    if (passwordCount > 0) {
+      lines.push('Reviewing new passwords…');
+      lines.push('Looking for reused passwords…');
+    }
+    if (identityCount > 0) {
+      lines.push(`Monitoring ${identityCount === 1 ? 'your identity' : `${identityCount} identities`}…`);
+    }
+    lines.push('Checking Microsoft advisories…');
+    if (threatCount > 0) {
+      lines.push(`Reviewing ${threatCount} threat ${threatCount === 1 ? 'signal' : 'signals'}…`);
+    }
+    lines.push('Waiting for new activity…');
     return lines;
   }, [passwordCount, identityCount, threatCount]);
 
