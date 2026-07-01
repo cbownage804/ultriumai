@@ -50,15 +50,15 @@ function buildSpokenBrief(opts: {
   const lines: string[] = [];
   lines.push(opts.greeting);
   if (opts.brief?.summary) lines.push(opts.brief.summary);
-  else lines.push("I checked everything overnight. Here's what matters today.");
   lines.push(opts.personality);
   if (opts.memoryLine) lines.push(opts.memoryLine);
   if (opts.brief?.score != null) {
     const delta = opts.brief.score_delta ?? 0;
-    if (delta > 0) lines.push(`Your security score is ${opts.brief.score}, up ${delta} since the last brief.`);
-    else if (delta < 0) lines.push(`Your security score is ${opts.brief.score}, down ${Math.abs(delta)} since the last brief.`);
-    else lines.push(`Your security score remains at ${opts.brief.score}.`);
+    if (delta > 0) lines.push(`You're at ${opts.brief.score}, up ${delta} since we last spoke.`);
+    else if (delta < 0) lines.push(`You're at ${opts.brief.score}, down ${Math.abs(delta)} since we last spoke.`);
+    else lines.push(`Still holding at ${opts.brief.score}.`);
   }
+
   if (opts.topRec) {
     lines.push(`The one thing I'd focus on today: ${opts.topRec.title}.`);
     if (opts.topRec.body) lines.push(opts.topRec.body);
