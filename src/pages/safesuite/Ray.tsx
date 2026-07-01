@@ -5,7 +5,7 @@
  * recommendations (with lifecycle controls), recently completed work,
  * what Ray remembers about the user, and suggested questions.
  */
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useRayBrain } from '@/lib/ray/brain';
