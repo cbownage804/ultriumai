@@ -172,6 +172,7 @@ export default function MspDashboard() {
           })}
         </div>
       </section>
-    </div>
+    </PageMotion>
+
   );
 }
