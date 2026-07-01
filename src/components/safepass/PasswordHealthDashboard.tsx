@@ -321,6 +321,49 @@ export const PasswordHealthDashboard = () => {
         </Button>
       </div>
 
+      {/* Ray's narrated review — the "screenshot moment" */}
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="wrayth-chamfer border border-violet-500/20 bg-gradient-to-br from-violet-500/[0.06] via-card to-card p-5 sm:p-6"
+      >
+        <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-violet-300/80">
+          <motion.span
+            aria-hidden
+            className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400"
+            animate={{ opacity: [0.35, 1, 0.35], scale: [1, 1.15, 1] }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          Review complete
+        </div>
+        <p className="mt-2 text-sm text-foreground/90">
+          Here's what I found in your vault.
+        </p>
+        <ul className="mt-4 space-y-1.5">
+          {reviewLines.map((line, i) => (
+            <motion.li
+              key={i}
+              initial={{ opacity: 0, x: -4 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3, delay: 0.06 * i }}
+              className="flex items-start gap-2 text-sm text-foreground/85"
+            >
+              <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-400 shrink-0" />
+              <span>{line}</span>
+            </motion.li>
+          ))}
+        </ul>
+        <div className="mt-5 flex items-center justify-between border-t border-white/5 pt-4">
+          <div>
+            <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Estimated risk</div>
+            <div className={`text-2xl font-semibold tracking-tight ${riskColor}`}>{riskLevel}</div>
+          </div>
+          <p className="text-xs text-muted-foreground italic">I'll keep watching.</p>
+        </div>
+      </motion.div>
+
+
       {/* Health Score */}
       <Card className="overflow-hidden">
         <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-6">
