@@ -160,9 +160,6 @@ verify_jwt = false
 [functions.pentest-ai-analysis]
 verify_jwt = true
 
-[functions.safepass-breach-check]
-verify_jwt = false
-
 [functions.product-checkout]
 verify_jwt = false
 

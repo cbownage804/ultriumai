@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-07-01T13:17:50.201Z",
+  "generatedAt": "2026-07-01T13:19:25.240Z",
   "totals": {
-    "filesScanned": 870,
-    "legacyBrand": 210,
-    "todos": 11,
-    "consoles": 108,
+    "filesScanned": 867,
+    "legacyBrand": 196,
+    "todos": 10,
+    "consoles": 100,
     "hardcodedHex": 470,
     "arbitraryColors": 0,
-    "anyTypes": 235
+    "anyTypes": 233
   },
   "legacyBrand": [
     {
@@ -476,71 +476,6 @@
       "text": "console.log('SafeAssist AI function called');"
     },
     {
-      "file": "supabase/functions/safepass-breach-check/index.ts",
-      "line": 49,
-      "text": "console.error('[SafePass Breach Check] Invalid JWT:', claimsError);"
-    },
-    {
-      "file": "supabase/functions/safepass-breach-check/index.ts",
-      "line": 57,
-      "text": "console.log(`[SafePass Breach Check] Authenticated user: ${userId}`);"
-    },
-    {
-      "file": "supabase/functions/safepass-breach-check/index.ts",
-      "line": 63,
-      "text": "console.log(`[SafePass Breach Check] action: ${action}, user_id: ${userId}`);"
-    },
-    {
-      "file": "supabase/functions/safepass-breach-check/index.ts",
-      "line": 69,
-      "text": "console.log(`[SafePass Breach Check] Checking ${password_hashes.length} password hashes`);"
-    },
-    {
-      "file": "supabase/functions/safepass-breach-check/index.ts",
-      "line": 74,
-      "text": "console.log('[SafePass Breach Check] No Dehashed API key configured');"
-    },
-    {
-      "file": "supabase/functions/safepass-breach-check/index.ts",
-      "line": 137,
-      "text": "console.error(`[SafePass Breach Check] Error checking hash`);"
-    },
-    {
-      "file": "supabase/functions/safepass-breach-check/index.ts",
-      "line": 153,
-      "text": "console.log(`[SafePass Breach Check] Running daily scan for user: ${userId}`);"
-    },
-    {
-      "file": "supabase/functions/safepass-breach-check/index.ts",
-      "line": 162,
-      "text": "console.error('[SafePass Breach Check] Error fetching entries:', fetchError);"
-    },
-    {
-      "file": "supabase/functions/safepass-breach-check/index.ts",
-      "line": 176,
-      "text": "console.log(`[SafePass Breach Check] Found ${entries.length} entries to check`);"
-    },
-    {
-      "file": "supabase/functions/safepass-breach-check/index.ts",
-      "line": 240,
-      "text": "console.error(`[SafePass Breach Check] Error checking entry`);"
-    },
-    {
-      "file": "supabase/functions/safepass-breach-check/index.ts",
-      "line": 272,
-      "text": "console.log(`[SafePass Breach Check] Scan complete. Found ${breachResults.length} breached entries.`);"
-    },
-    {
-      "file": "supabase/functions/safepass-breach-check/index.ts",
-      "line": 311,
-      "text": "console.error('[SafePass Breach Check] Error:', error);"
-    },
-    {
-      "file": "supabase/functions/safepass-rate-limiter/index.ts",
-      "line": 2,
-      "text": "* SafePass Rate Limiter Edge Function"
-    },
-    {
       "file": "supabase/functions/safepass-reset-master-password/index.ts",
       "line": 198,
       "text": "from: \"SafePass Security <security@send.ultriumai.com>\","
@@ -689,11 +624,6 @@
       "file": "supabase/functions/safesuite-usage/index.ts",
       "line": 127,
       "text": "logStep(\"SafeTrack assets counted\", { count: usage.safetrack });"
-    },
-    {
-      "file": "supabase/functions/safesuite-webhook/index.ts",
-      "line": 10,
-      "text": "// SafeSuite price ID to tier mapping (live Stripe IDs)"
     },
     {
       "file": "supabase/functions/safeweb-ai-recommendations/index.ts",
@@ -1009,6 +939,56 @@
       "file": "public/safepass-extension/content.js",
       "line": 586,
       "text": "showNotification('Please unlock SafePass first', 'warning');"
+    },
+    {
+      "file": "public/safepass-extension/content.js",
+      "line": 596,
+      "text": "console.error('[SafePass] Error checking passwords:', error);"
+    },
+    {
+      "file": "public/safepass-extension/content.js",
+      "line": 621,
+      "text": "<span class=\"safepass-save-prompt-title\">Save to SafePass?</span>"
+    },
+    {
+      "file": "public/safepass-extension/content.js",
+      "line": 646,
+      "text": "showNotification('🔐 Password saved to SafePass!');"
+    },
+    {
+      "file": "public/safepass-extension/content.js",
+      "line": 648,
+      "text": "showNotification('Unlock SafePass to save passwords', 'warning');"
+    },
+    {
+      "file": "public/safepass-extension/content.js",
+      "line": 653,
+      "text": "console.error('[SafePass] Save error:', error);"
+    },
+    {
+      "file": "public/safepass-extension/content.js",
+      "line": 865,
+      "text": "console.log('[SafePass] Content script v2.1 loaded');"
+    },
+    {
+      "file": "public/safepass-extension/popup.js",
+      "line": 1,
+      "text": "// SafePass Extension Popup Script v2.1"
+    },
+    {
+      "file": "public/safepass-extension/popup.js",
+      "line": 74,
+      "text": "console.log('[SafePass] Sync complete notification received');"
+    },
+    {
+      "file": "public/safepass-extension/popup.js",
+      "line": 565,
+      "text": "console.error('[SafePass] Failed to load generator settings:', e);"
+    },
+    {
+      "file": "public/safepass-extension/popup.js",
+      "line": 583,
+      "text": "console.error('[SafePass] Failed to save generator settings:', e);"
     }
   ],
   "todos": [
@@ -1061,11 +1041,6 @@
       "file": "supabase/functions/ray-org-sync/index.ts",
       "line": 198,
       "text": "const domainScore = 95;     // TODO wire to safeweb_threats"
-    },
-    {
-      "file": "supabase/functions/safepass-rate-limiter/index.ts",
-      "line": 200,
-      "text": "// TODO: Replace with actual CAPTCHA verification"
     }
   ],
   "consoles": [
@@ -1325,41 +1300,6 @@
       "text": "console.warn(\"[ray-sync-signals] upsert failed\", upErr);"
     },
     {
-      "file": "supabase/functions/safepass-breach-check/index.ts",
-      "line": 57,
-      "text": "console.log(`[SafePass Breach Check] Authenticated user: ${userId}`);"
-    },
-    {
-      "file": "supabase/functions/safepass-breach-check/index.ts",
-      "line": 63,
-      "text": "console.log(`[SafePass Breach Check] action: ${action}, user_id: ${userId}`);"
-    },
-    {
-      "file": "supabase/functions/safepass-breach-check/index.ts",
-      "line": 69,
-      "text": "console.log(`[SafePass Breach Check] Checking ${password_hashes.length} password hashes`);"
-    },
-    {
-      "file": "supabase/functions/safepass-breach-check/index.ts",
-      "line": 74,
-      "text": "console.log('[SafePass Breach Check] No Dehashed API key configured');"
-    },
-    {
-      "file": "supabase/functions/safepass-breach-check/index.ts",
-      "line": 153,
-      "text": "console.log(`[SafePass Breach Check] Running daily scan for user: ${userId}`);"
-    },
-    {
-      "file": "supabase/functions/safepass-breach-check/index.ts",
-      "line": 176,
-      "text": "console.log(`[SafePass Breach Check] Found ${entries.length} entries to check`);"
-    },
-    {
-      "file": "supabase/functions/safepass-breach-check/index.ts",
-      "line": 272,
-      "text": "console.log(`[SafePass Breach Check] Scan complete. Found ${breachResults.length} breached entries.`);"
-    },
-    {
       "file": "supabase/functions/safepass-scanner/index.ts",
       "line": 22,
       "text": "console.log('SafePass Scanner - Action:', action, 'Payload:', JSON.stringify(payload).substring(0, 100))"
@@ -1423,11 +1363,6 @@
       "file": "supabase/functions/safesuite-user-management/index.ts",
       "line": 20,
       "text": "console.log(`[SAFESUITE-USER-MGMT] ${step}${detailsStr}`);"
-    },
-    {
-      "file": "supabase/functions/safesuite-webhook/index.ts",
-      "line": 21,
-      "text": "console.log(`[SAFESUITE-WEBHOOK] ${step}${detailsStr}`);"
     },
     {
       "file": "supabase/functions/safeweb-ai-recommendations/index.ts",
@@ -2384,7 +2319,7 @@
     {
       "file": "src/hooks/useProjectFileSystem.ts",
       "line": 354,
-      "text": "devLog('%c[ENV] Variables loaded:', 'color:#6ee7b7', ${JSON.stringify(maskedObj)});"
+      "text": "devLog.log('%c[ENV] Variables loaded:', 'color:#6ee7b7', ${JSON.stringify(maskedObj)});"
     },
     {
       "file": "src/hooks/useProjectFileSystem.ts",
