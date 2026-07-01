@@ -1,0 +1,110 @@
+{
+  "generatedAt": "2026-07-01T15:00:59.222Z",
+  "findings": [
+    {
+      "severity": "P1",
+      "area": "edge",
+      "file": "supabase/functions/ms-graph-oauth-callback/index.ts",
+      "line": 1,
+      "message": "Function \"ms-graph-oauth-callback\" has no CORS headers — browser calls will fail."
+    },
+    {
+      "severity": "P1",
+      "area": "edge",
+      "file": "supabase/functions/ms-graph-oauth-callback/index.ts",
+      "line": 1,
+      "message": "Function \"ms-graph-oauth-callback\" catches errors but doesn't return JSON — clients see raw text."
+    },
+    {
+      "severity": "P1",
+      "area": "edge",
+      "file": "supabase/functions/ray-org-sync/index.ts",
+      "line": 1,
+      "message": "Function \"ray-org-sync\" never verifies caller identity (no getClaims/getUser/Authorization check)."
+    },
+    {
+      "severity": "P1",
+      "area": "edge",
+      "file": "supabase/functions/ray-tts/index.ts",
+      "line": 1,
+      "message": "Function \"ray-tts\" never verifies caller identity (no getClaims/getUser/Authorization check)."
+    },
+    {
+      "severity": "P2",
+      "area": "edge",
+      "file": "supabase/functions/safepass-breach-recommendations/index.ts",
+      "line": 1,
+      "message": "Function \"safepass-breach-recommendations\" still carries a legacy product prefix — rename post-beta or alias."
+    },
+    {
+      "severity": "P2",
+      "area": "edge",
+      "file": "supabase/functions/safesuite-check-subscription/index.ts",
+      "line": 1,
+      "message": "Function \"safesuite-check-subscription\" still carries a legacy product prefix — rename post-beta or alias."
+    },
+    {
+      "severity": "P2",
+      "area": "edge",
+      "file": "supabase/functions/safesuite-checkout/index.ts",
+      "line": 1,
+      "message": "Function \"safesuite-checkout\" still carries a legacy product prefix — rename post-beta or alias."
+    },
+    {
+      "severity": "P2",
+      "area": "edge",
+      "file": "supabase/functions/safesuite-customer-portal/index.ts",
+      "line": 1,
+      "message": "Function \"safesuite-customer-portal\" still carries a legacy product prefix — rename post-beta or alias."
+    },
+    {
+      "severity": "P2",
+      "area": "edge",
+      "file": "supabase/functions/safesuite-data-export/index.ts",
+      "line": 1,
+      "message": "Function \"safesuite-data-export\" still carries a legacy product prefix — rename post-beta or alias."
+    },
+    {
+      "severity": "P2",
+      "area": "edge",
+      "file": "supabase/functions/safesuite-mfa-recovery/index.ts",
+      "line": 1,
+      "message": "Function \"safesuite-mfa-recovery\" still carries a legacy product prefix — rename post-beta or alias."
+    },
+    {
+      "severity": "P2",
+      "area": "edge",
+      "file": "supabase/functions/safesuite-team-checkout/index.ts",
+      "line": 1,
+      "message": "Function \"safesuite-team-checkout\" still carries a legacy product prefix — rename post-beta or alias."
+    },
+    {
+      "severity": "P2",
+      "area": "edge",
+      "file": "supabase/functions/safesuite-user-management/index.ts",
+      "line": 1,
+      "message": "Function \"safesuite-user-management\" still carries a legacy product prefix — rename post-beta or alias."
+    },
+    {
+      "severity": "P2",
+      "area": "edge",
+      "file": "supabase/functions/safeweb-scanner/index.ts",
+      "line": 1,
+      "message": "Function \"safeweb-scanner\" still carries a legacy product prefix — rename post-beta or alias."
+    },
+    {
+      "severity": "P1",
+      "area": "edge",
+      "file": "supabase/functions/serve-preview/index.ts",
+      "line": 1,
+      "message": "Function \"serve-preview\" has no CORS headers — browser calls will fail."
+    },
+    {
+      "severity": "P1",
+      "area": "edge",
+      "file": "supabase/functions/serve-preview/index.ts",
+      "line": 1,
+      "message": "Function \"serve-preview\" catches errors but doesn't return JSON — clients see raw text."
+    }
+  ]
+}
