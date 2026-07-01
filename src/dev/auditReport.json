@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-07-01T14:12:00.308Z",
+  "generatedAt": "2026-07-01T14:21:42.931Z",
   "totals": {
-    "filesScanned": 367,
-    "legacyBrand": 142,
+    "filesScanned": 362,
+    "legacyBrand": 140,
     "todos": 3,
-    "consoles": 74,
-    "hardcodedHex": 279,
+    "consoles": 57,
+    "hardcodedHex": 278,
     "arbitraryColors": 0,
-    "anyTypes": 105
+    "anyTypes": 97
   },
   "legacyBrand": [
     {
@@ -389,16 +389,6 @@
       "file": "supabase/functions/ray-chat/index.ts",
       "line": 125,
       "text": "- Refer to the product as Wrayth. Never reference \"SafeSuite,\" \"SafeAssist,\" \"SafePass,\" \"SafeScan,\" \"SafeWeb,\" \"SafeTrack,\" \"Vanguard,\" \"AI Studio,\" or \"Ultriu"
-    },
-    {
-      "file": "supabase/functions/safepass-scanner/index.ts",
-      "line": 22,
-      "text": "console.log('SafePass Scanner - Action:', action, 'Payload:', JSON.stringify(payload).substring(0, 100))"
-    },
-    {
-      "file": "supabase/functions/safepass-scanner/index.ts",
-      "line": 44,
-      "text": "console.error('SafePass Scanner Error:', error)"
     },
     {
       "file": "supabase/functions/safesuite-check-subscription/index.ts",
@@ -815,11 +805,6 @@
       "text": "console.log(`[CHECK-SUBSCRIPTION] ${step}${detailsStr}`);"
     },
     {
-      "file": "supabase/functions/create-checkout/index.ts",
-      "line": 12,
-      "text": "console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);"
-    },
-    {
       "file": "supabase/functions/disable-two-factor/index.ts",
       "line": 11,
       "text": "console.log(`[DISABLE-TWO-FACTOR] ${step}${detailsStr}`);"
@@ -870,31 +855,6 @@
       "text": "console.log(`[RAY-WATCH] ${step}${detailsStr}`);"
     },
     {
-      "file": "supabase/functions/safepass-scanner/index.ts",
-      "line": 22,
-      "text": "console.log('SafePass Scanner - Action:', action, 'Payload:', JSON.stringify(payload).substring(0, 100))"
-    },
-    {
-      "file": "supabase/functions/safepass-scanner/index.ts",
-      "line": 144,
-      "text": "console.warn('DEHASHED_API_KEY not configured, using heuristics only')"
-    },
-    {
-      "file": "supabase/functions/safepass-scanner/index.ts",
-      "line": 169,
-      "text": "console.warn(`DeHashed API returned ${response.status}`)"
-    },
-    {
-      "file": "supabase/functions/safepass-security-scanner/index.ts",
-      "line": 48,
-      "text": "console.log('Starting security scan for user:', user_id);"
-    },
-    {
-      "file": "supabase/functions/safepass-security-scanner/index.ts",
-      "line": 214,
-      "text": "console.log('Security scan completed:', scanResult);"
-    },
-    {
       "file": "supabase/functions/safesuite-check-subscription/index.ts",
       "line": 21,
       "text": "console.log(`[SAFESUITE-CHECK-SUB] ${step}${detailsStr}`);"
@@ -928,61 +888,6 @@
       "file": "supabase/functions/safesuite-user-management/index.ts",
       "line": 20,
       "text": "console.log(`[SAFESUITE-USER-MGMT] ${step}${detailsStr}`);"
-    },
-    {
-      "file": "supabase/functions/safeweb-assets/index.ts",
-      "line": 85,
-      "text": "console.log('DELETE via POST request received for asset:', assetId);"
-    },
-    {
-      "file": "supabase/functions/safeweb-assets/index.ts",
-      "line": 86,
-      "text": "console.log('User ID:', user.id);"
-    },
-    {
-      "file": "supabase/functions/safeweb-assets/index.ts",
-      "line": 89,
-      "text": "console.log('No asset ID provided');"
-    },
-    {
-      "file": "supabase/functions/safeweb-assets/index.ts",
-      "line": 96,
-      "text": "console.log('Attempting to delete asset:', assetId, 'for user:', user.id);"
-    },
-    {
-      "file": "supabase/functions/safeweb-assets/index.ts",
-      "line": 111,
-      "text": "console.log('Asset deleted successfully via POST');"
-    },
-    {
-      "file": "supabase/functions/safeweb-assets/index.ts",
-      "line": 286,
-      "text": "console.log('DELETE request received');"
-    },
-    {
-      "file": "supabase/functions/safeweb-assets/index.ts",
-      "line": 306,
-      "text": "console.log('Asset ID from request:', assetId);"
-    },
-    {
-      "file": "supabase/functions/safeweb-assets/index.ts",
-      "line": 307,
-      "text": "console.log('User ID:', user.id);"
-    },
-    {
-      "file": "supabase/functions/safeweb-assets/index.ts",
-      "line": 310,
-      "text": "console.log('No asset ID provided');"
-    },
-    {
-      "file": "supabase/functions/safeweb-assets/index.ts",
-      "line": 317,
-      "text": "console.log('Attempting to delete asset:', assetId, 'for user:', user.id);"
-    },
-    {
-      "file": "supabase/functions/safeweb-assets/index.ts",
-      "line": 332,
-      "text": "console.log('Asset deleted successfully');"
     },
     {
       "file": "supabase/functions/safeweb-scanner/index.ts",
@@ -1267,11 +1172,6 @@
       "text": "<style>body{background:#0b0b10;color:#e8e8ef;font-family:ui-sans-serif,system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}.c"
     },
     {
-      "file": "supabase/functions/safeweb-msp-clients/index.ts",
-      "line": 131,
-      "text": "primary_color: '#3b82f6',"
-    },
-    {
       "file": "supabase/functions/send-auth-email/index.ts",
       "line": 28,
       "text": "body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: #0a0a0a; }"
@@ -1334,32 +1234,32 @@
     {
       "file": "supabase/functions/send-auth-email/index.ts",
       "line": 192,
-      "text": "<span style=\"background: #3b82f620; color: #60a5fa; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 500;\">AI Studio</span>"
+      "text": "<span style=\"background: #8b5cf620; color: #a78bfa; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 500;\">Vault</span>"
     },
     {
       "file": "supabase/functions/send-auth-email/index.ts",
       "line": 193,
-      "text": "<span style=\"color: #a1a1aa; font-size: 14px; margin-left: 8px;\">Build custom GPTs and AI agents</span>"
+      "text": "<span style=\"color: #a1a1aa; font-size: 14px; margin-left: 8px;\">Password vault with breach monitoring</span>"
     },
     {
       "file": "supabase/functions/send-auth-email/index.ts",
       "line": 196,
-      "text": "<span style=\"background: #8b5cf620; color: #a78bfa; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 500;\">Wrayth</span>"
+      "text": "<span style=\"background: #3b82f620; color: #60a5fa; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 500;\">Scan</span>"
     },
     {
       "file": "supabase/functions/send-auth-email/index.ts",
       "line": 197,
-      "text": "<span style=\"color: #a1a1aa; font-size: 14px; margin-left: 8px;\">Enterprise security tools & password vault</span>"
+      "text": "<span style=\"color: #a1a1aa; font-size: 14px; margin-left: 8px;\">Email &amp; file threat analysis</span>"
     },
     {
       "file": "supabase/functions/send-auth-email/index.ts",
       "line": 200,
-      "text": "<span style=\"background: #10b98120; color: #34d399; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 500;\">Vanguard</span>"
+      "text": "<span style=\"background: #10b98120; color: #34d399; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 500;\">Watch</span>"
     },
     {
       "file": "supabase/functions/send-auth-email/index.ts",
       "line": 201,
-      "text": "<span style=\"color: #a1a1aa; font-size: 14px; margin-left: 8px;\">Endpoint security & compliance monitoring</span>"
+      "text": "<span style=\"color: #a1a1aa; font-size: 14px; margin-left: 8px;\">Identity exposure &amp; dark web monitoring</span>"
     },
     {
       "file": "supabase/functions/serve-preview/index.ts",
@@ -2110,6 +2010,11 @@
       "file": "public/safepass-extension/popup.css",
       "line": 585,
       "text": "color: #94a3b8;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 592,
+      "text": "background: #334155;"
     }
   ],
   "arbitraryColors": []
