@@ -20,6 +20,8 @@ import {
   fetchMspBriefing, fetchLatestHealth, triggerOrgSync, triggerMspBrief,
   type RayOrgBriefing, type RayOrgHealth,
 } from '@/lib/ray/org';
+import { PageMotion } from '@/components/ray/PageMotion';
+
 
 interface ClientRow {
   id: string;
@@ -84,7 +86,8 @@ export default function MspDashboard() {
   const attention = clients.filter(c => (c.health?.overall_score ?? 100) < 80);
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+    <PageMotion className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+
       <Card className="p-6 md:p-8 bg-card border-border">
         <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-violet-300/80 mb-3">
           <Sparkles className="h-3 w-3" /> Ray's MSP brief
@@ -169,6 +172,7 @@ export default function MspDashboard() {
           })}
         </div>
       </section>
-    </div>
+    </PageMotion>
+
   );
 }

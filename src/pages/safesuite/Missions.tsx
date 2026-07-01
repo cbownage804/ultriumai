@@ -10,6 +10,8 @@ import { listMissions, toggleStep, dismissMission, type RayMission } from '@/lib
 import { cn } from '@/lib/utils';
 import { Check, Clock, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PageMotion } from '@/components/ray/PageMotion';
+
 
 function MissionCard({
   mission,
@@ -152,8 +154,9 @@ export default function Missions() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <PageMotion className="flex flex-col gap-6">
       <RayPageHeader
+
         title="Missions"
         subtitle="One mission at a time, guided by Ray"
         description="Ray picks the most valuable next thing to secure and walks you through it. Finish a mission, earn score, move on."
@@ -219,6 +222,7 @@ export default function Missions() {
           </div>
         </section>
       )}
-    </div>
+    </PageMotion>
   );
+
 }
