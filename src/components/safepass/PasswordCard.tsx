@@ -1,16 +1,20 @@
 /**
  * PasswordCard — Apple-Passwords-inspired row. Conversational status,
  * favicon-first identity, Ray annotations on rows that need attention.
+ * Expands to show Ray's deep profile (entropy, reuse chain, breach
+ * hits, MFA, age, verdict).
  */
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Eye, EyeOff, Copy, Star, Globe, Edit, Trash2, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, Copy, Star, Globe, Edit, Trash2, ShieldCheck, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { lookupCatalog } from '@/lib/ray/mfaCatalog';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { computePasswordProfile } from '@/lib/ray/passwordProfile';
+import { PasswordProfilePanel } from './PasswordProfilePanel';
 
 interface PasswordCardProps {
   entry: {
@@ -30,10 +34,17 @@ interface PasswordCardProps {
   hasMfa?: boolean;
   /** True if this service appears in a known breach dataset. */
   hasBreach?: boolean;
+  /** Other entry titles sharing this same password (from vault analyzer). */
+  reusedOn?: string[];
+  /** Named breach datasets this password showed up in. */
+  breachSources?: string[];
+  /** Optional personal words (name, spouse, year) Ray uses to sniff for personal info. */
+  personalHints?: string[];
   onEdit: () => void;
   onDelete: () => void;
   onToggleFavorite: () => void;
 }
+
 
 function hostnameFor(website: string, title: string): string {
   try {
@@ -52,11 +63,29 @@ export const PasswordCard = ({
   entry,
   hasMfa = false,
   hasBreach = false,
+  reusedOn = [],
+  breachSources = [],
+  personalHints = [],
   onEdit,
   onDelete,
   onToggleFavorite,
 }: PasswordCardProps) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  const profile = useMemo(() => computePasswordProfile({
+    password: entry.password,
+    title: entry.title,
+    username: entry.username,
+    website: entry.website,
+    createdAt: entry.created_at,
+    hasMfa,
+    supportsMfa: false, // set below after catalog lookup
+    reusedOn,
+    breachSources: hasBreach && breachSources.length === 0 ? ['Known breach dataset'] : breachSources,
+    personalHints,
+  }), [entry, hasMfa, hasBreach, reusedOn, breachSources, personalHints]);
+
 
   const host = hostnameFor(entry.website, entry.title);
   const favicon = faviconFor(host);
@@ -186,7 +215,35 @@ export const PasswordCard = ({
             <Trash2 className="w-3.5 h-3.5" />
           </Button>
         </div>
+
+        {/* Ray details toggle */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 shrink-0"
+                onClick={() => setExpanded((v) => !v)}
+                aria-label={expanded ? 'Hide Ray details' : 'Show Ray details'}
+                aria-expanded={expanded}
+              >
+                <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', expanded && 'rotate-180')} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{expanded ? 'Hide Ray details' : "Ask Ray about this"}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <PasswordProfilePanel
+            profile={profile}
+            onAction={profile.rayAction ? onEdit : undefined}
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
+
   );
 };

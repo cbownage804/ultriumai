@@ -484,6 +484,25 @@ export const PasswordVault = () => {
     ? 100
     : Math.round(entries.reduce((sum, e) => sum + (e.password_strength || 0), 0) / entries.length);
 
+  // Reuse map: password → list of entry titles sharing it. Feeds Ray's
+  // per-entry profile so it can say "also used on Spotify, Steam".
+  const reuseByEntry = useMemo(() => {
+    const byPw = new Map<string, string[]>();
+    for (const e of entries) {
+      if (!e.password) continue;
+      const arr = byPw.get(e.password) ?? [];
+      arr.push(e.title || e.username || 'another account');
+      byPw.set(e.password, arr);
+    }
+    const map = new Map<string, string[]>();
+    for (const e of entries) {
+      const siblings = (byPw.get(e.password) ?? []).filter((t) => t !== (e.title || e.username || 'another account'));
+      map.set(e.id, siblings);
+    }
+    return map;
+  }, [entries]);
+
+
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="space-y-4 sm:space-y-6">
@@ -738,6 +757,8 @@ export const PasswordVault = () => {
               <PasswordCard
                 key={entry.id}
                 entry={entry}
+                reusedOn={reuseByEntry.get(entry.id) ?? []}
+
                 onEdit={() => {
                   setEditingEntry(entry);
                   setNewEntry({
