@@ -73,8 +73,6 @@ verify_jwt = false
 [functions.safepass-scanner]
 verify_jwt = true
 
-[functions.safescan-api]
-verify_jwt = true
 
 [functions.security-data-pipeline]
 verify_jwt = true
@@ -176,13 +174,6 @@ verify_jwt = false
 [functions.ray-chat]
 verify_jwt = true
 
-# Wrayth browser extension — domain trust engine (public; no PII)
-[functions.wrayth-domain-intel]
-verify_jwt = false
-
-# Wrayth 4.1 — Explain This Page (public; no PII, page snapshot only)
-[functions.wrayth-explain-page]
-verify_jwt = false
 
 
 
@@ -355,8 +346,6 @@ verify_jwt = false
 [functions.github-push]
 verify_jwt = false
 
-[functions.github-pull]
-verify_jwt = false
 
 [functions.vercel-deploy]
 verify_jwt = false
