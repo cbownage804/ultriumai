@@ -45,7 +45,10 @@ function scan(pattern, { skipSelf = true } = {}) {
   return hits;
 }
 
-const legacyBrand = scan('SafePass|SafeScan|SafeWeb|SafeSuite|SafeAssist|SafeTrack');
+// Exclude import/require lines: legacy names in internal file paths are not user-facing.
+const legacyBrand = scan('SafePass|SafeScan|SafeWeb|SafeSuite|SafeAssist|SafeTrack').filter(
+  (h) => !/^\s*(import|export)\s.+from\s+['"]/.test(h.text) && !/require\(['"][^'"]*(SafePass|SafeScan|SafeWeb|SafeSuite|SafeAssist|SafeTrack)/.test(h.text)
+);
 const todos = scan('\\b(TODO|FIXME|XXX|HACK)\\b');
 const consoles = scan("console\\.(log|debug|info|warn)\\(");
 const hardcodedHex = scan("#[0-9a-fA-F]{6}\\b").filter((h) => !/(index\\.css|tailwind\\.config|tokens)/.test(h.file));
