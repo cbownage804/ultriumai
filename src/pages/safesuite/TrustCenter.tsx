@@ -65,16 +65,19 @@ export default function TrustCenter() {
         </Section>
 
         <Section icon={Brain} title="How Ray uses AI">
-          <p>
-            Ray uses large language models to summarize your security state and generate conversational
-            guidance. Prompts include only the structured metrics needed to answer the question — not
-            the contents of your Vault entries, files, or messages.
+          <p className="text-foreground">
+            <strong>Ray never sends your passwords to an AI.</strong>
           </p>
           <p>
-            Model outputs are reviewed against your own data before being shown to you. Ray will tell
-            you when it does not have enough information to answer rather than guess.
+            Ray only sends security metadata — password age, reuse, breach status, strength scores,
+            MFA coverage. Your actual passwords never leave your encrypted Vault.
+          </p>
+          <p>
+            When Ray needs to explain something, it uses a large language model on that metadata only,
+            and will tell you when it doesn't have enough information to answer rather than guess.
           </p>
         </Section>
+
 
         <Section icon={Clock} title="Data retention">
           <p>
