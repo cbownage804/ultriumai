@@ -18,11 +18,11 @@ import { CheckCircle2, X, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RayConversationCard } from '@/components/ray/RayConversationCard';
 import { RayPageHeader } from '@/components/ray/RayPageHeader';
-import { PasswordProtectionCard, PasswordHealthyCard } from '@/components/ray/PasswordProtectionCard';
+import { PasswordProtectionCard, PasswordHealthyCard, PasswordAnalyzingCard } from '@/components/ray/PasswordProtectionCard';
 import { usePasswordLifecycle } from '@/lib/ray/passwordLifecycle';
 
 function PasswordsHeaderAndOnboarding() {
-  const { stage } = usePasswordLifecycle();
+  const { stage, passwordCount } = usePasswordLifecycle();
   const question =
     stage === 'not_started'
       ? "Ready to hand your passwords over to me?"
@@ -43,6 +43,7 @@ function PasswordsHeaderAndOnboarding() {
     <>
       <RayPageHeader title="Passwords" question={question} description={description} />
       {stage === 'not_started' && <PasswordProtectionCard />}
+      {stage === 'imported' && <PasswordAnalyzingCard count={passwordCount} />}
       {stage === 'healthy' && <PasswordHealthyCard />}
     </>
   );
