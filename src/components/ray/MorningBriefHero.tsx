@@ -39,6 +39,7 @@ import { cn } from "@/lib/utils";
 import { ScoreCelebration } from "@/components/ray/ScoreCelebration";
 import { toast } from "sonner";
 import { ExplainThis } from "@/components/ray/ExplainThis";
+import { explainRecommendation } from "@/lib/ray/explanations";
 
 /** Compose Ray's spoken brief: greeting → reassurance → score → close. */
 function buildSpokenBrief(opts: {
@@ -379,6 +380,7 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
                         <Play className="h-2.5 w-2.5" /> In progress
                       </span>
                     )}
+                    <ExplainThis {...explainRecommendation(rec)} className="ml-auto" />
                   </div>
                   {rec.body && <p className="mt-1 text-xs text-slate-400 leading-relaxed">{rec.body}</p>}
                   <div className="mt-2 flex items-center flex-wrap gap-1.5">
