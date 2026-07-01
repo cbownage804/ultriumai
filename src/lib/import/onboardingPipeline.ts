@@ -19,8 +19,69 @@ import {
 } from '@/lib/ray/passwordIntelligence';
 import { checkBreaches } from '@/lib/ray/breachIntelligence';
 import { calculateScore, type ScoreResult } from '@/lib/ray/scoring';
-import { generateRecommendations, type RayProfileInput } from '@/lib/ray/recommendations';
+import { generateRecommendations, type RayProfileInput, type Recommendation } from '@/lib/ray/recommendations';
 import { rememberFact, recordTimelineEvent } from '@/lib/ray/brain';
+
+/**
+ * Ray never surfaces two active recommendations for the same objective.
+ * We enforce that at the database level with a partial unique index and
+ * mirror it here by upserting on `(user_id, objective)` restricted to
+ * still-open rows. Recommendations without an objective fall back to a
+ * plain insert.
+ */
+async function upsertRecommendationsByObjective(
+  userId: string,
+  recs: Recommendation[],
+) {
+  if (!recs.length) return;
+  for (const r of recs) {
+    const row = {
+      user_id: userId,
+      title: r.title,
+      body: r.body,
+      priority: r.priority,
+      source_finding_ids: [] as any,
+      status: 'open' as const,
+      objective: r.objective ?? null,
+    };
+    if (!r.objective) {
+      await supabase.from('ray_recommendations').insert(row);
+      continue;
+    }
+    // Update an existing open row for this objective if present; otherwise insert.
+    const { data: existing } = await supabase
+      .from('ray_recommendations')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('objective', r.objective)
+      .is('completed_at', null)
+      .is('dismissed_at', null)
+      .maybeSingle();
+    if (existing?.id) {
+      await supabase
+        .from('ray_recommendations')
+        .update({
+          title: row.title,
+          body: row.body,
+          priority: row.priority,
+        })
+        .eq('id', existing.id);
+    } else {
+      await supabase.from('ray_recommendations').insert(row);
+    }
+  }
+}
+
+/** Mark every open recommendation for the given objective as completed. */
+async function completeObjective(userId: string, objective: string) {
+  await supabase
+    .from('ray_recommendations')
+    .update({ status: 'completed', completed_at: new Date().toISOString() })
+    .eq('user_id', userId)
+    .eq('objective', objective)
+    .is('completed_at', null)
+    .is('dismissed_at', null);
+}
 
 /**
  * Persist the onboarding summary as Ray memory + a timeline event so the
@@ -286,20 +347,12 @@ export async function runRayOnboardingPipeline(
     factors: { factors: score.factors, total: intel.total } as any,
   });
 
-  // 8. Recommendations
+  // 8. Recommendations — upsert by objective so Ray never surfaces two
+  // active copies of the same goal. Any previously-open "import_passwords"
+  // recommendation is completed the moment we finish importing.
+  await completeObjective(userId, 'import_passwords');
   const recs = generateRecommendations(intel, profile, breach.degraded);
-  if (recs.length > 0) {
-    await supabase.from('ray_recommendations').insert(
-      recs.map((r) => ({
-        user_id: userId,
-        title: r.title,
-        body: r.body,
-        priority: r.priority,
-        source_finding_ids: [] as any,
-        status: 'open',
-      })),
-    );
-  }
+  await upsertRecommendationsByObjective(userId, recs);
 
   // 9. Mark profile onboarded
   await supabase
@@ -380,18 +433,7 @@ export async function runRayBaseline(
     factors: { factors: score.factors, total: intel.total } as any,
   });
   const recs = generateRecommendations(intel, profile, breach.degraded);
-  if (recs.length > 0) {
-    await supabase.from('ray_recommendations').insert(
-      recs.map((r) => ({
-        user_id: userId,
-        title: r.title,
-        body: r.body,
-        priority: r.priority,
-        source_finding_ids: [] as any,
-        status: 'open',
-      })),
-    );
-  }
+  await upsertRecommendationsByObjective(userId, recs);
   await supabase
     .from('ray_profiles')
     .update({ onboarded_at: new Date().toISOString(), import_source: 'baseline' })

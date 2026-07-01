@@ -128,9 +128,15 @@ serve(async (req) => {
       });
     }
 
+    const vaultEmpty = passwordStats.total === 0;
+
     const firstRunInstruction = isFirstRun
       ? `\nFIRST-RUN HANDOFF: This is the user's very first briefing — they just finished onboarding with you minutes ago. Acknowledge it warmly in the greeting (e.g. "Welcome in, ${firstName}. Here's where we stand."). In the bullets, reference what you found DURING SETUP using onboarding_summary (e.g. "I went through your ${onboardingMemory?.total ?? 0} credentials. ${onboardingMemory?.breached ?? 0} were in known breaches."). Prefer surfacing the recommendations already in existing_open_recommendations rather than inventing new ones — those were generated from the user's real data during setup. Do not say "good morning" or pretend time has passed.`
       : `\nReturning user — keep continuity with recent_timeline and prior memory. Reference the most recent meaningful event if it adds value.`;
+
+    const lifecycleInstruction = vaultEmpty
+      ? `\nLIFECYCLE: The user has NOT yet imported or saved any passwords. Wrayth's very first job is to become their password manager. Your ONE recommendation is already provided ("Protect your passwords with Wrayth"). DO NOT invent recommendations about password monitoring, breach detection, MFA, or dark-web exposure — those follow naturally once passwords are in the vault. Bullets should invite them to bring their passwords in, not report on things that don't exist yet. Return an EMPTY recommendations array — Ray will attach the correct one.`
+      : "";
 
     const userPrompt = `Generate a short, conversational ${isFirstRun ? "first-run welcome" : "morning"} briefing for ${firstName}.
 Greeting must be 1 short sentence.
@@ -138,7 +144,7 @@ Bullets: 2-4 plain, calm observations grounded in the context.
 Recommendations: 0-3 items. TITLES MUST BE OUTCOME-FOCUSED and written as something you (Ray) will do FOR the user.
 GOOD titles: "Start protecting your passwords", "Let me monitor your dark-web exposure", "Turn on MFA for your Google account".
 BAD titles: "Establish password monitoring", "Configure breach detection", "Setup 2FA".
-The body explains what it actually does in 1 sentence.${firstRunInstruction}
+The body explains what it actually does in 1 sentence.${firstRunInstruction}${lifecycleInstruction}
 
 Context JSON:
 ${JSON.stringify(contextPayload).slice(0, 8000)}
@@ -218,7 +224,41 @@ Return JSON ONLY in this exact shape:
       ? (openRecs.data ?? []).slice(0, 5).map((r: any) => r.id)
       : [];
 
-    if (Array.isArray(parsed.recommendations)) {
+    // Lifecycle-aware: if the user's vault is empty, Ray's single, top
+    // recommendation is "Protect your passwords with Wrayth" (objective
+    // = import_passwords). Anything the AI tries to add about password
+    // monitoring/breach detection is redundant until credentials exist.
+    if (vaultEmpty) {
+      const { data: existingImport } = await supabase
+        .from("ray_recommendations")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("objective", "import_passwords")
+        .is("completed_at", null)
+        .is("dismissed_at", null)
+        .maybeSingle();
+      let importRecId = existingImport?.id as string | undefined;
+      if (!importRecId) {
+        const { data: created } = await supabase
+          .from("ray_recommendations")
+          .insert({
+            user_id: user.id,
+            title: "Protect your passwords with Wrayth",
+            body: "Import from your browser or password manager, or save your first password. Once your vault is set up, monitoring, breach detection, and Ray's guidance follow automatically.",
+            priority: 1,
+            status: "open",
+            estimated_fix_seconds: 180,
+            page_context: "passwords",
+            objective: "import_passwords",
+          })
+          .select("id")
+          .single();
+        importRecId = created?.id;
+      }
+      if (importRecId && !recIds.includes(importRecId)) recIds.unshift(importRecId);
+    }
+
+    if (Array.isArray(parsed.recommendations) && !vaultEmpty) {
       for (const rec of parsed.recommendations.slice(0, 5)) {
         const title = String(rec.title ?? "").slice(0, 200);
         if (!title) continue;

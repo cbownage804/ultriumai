@@ -18,6 +18,26 @@ import { CheckCircle2, X, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RayConversationCard } from '@/components/ray/RayConversationCard';
 import { RayPageHeader } from '@/components/ray/RayPageHeader';
+import { PasswordProtectionCard } from '@/components/ray/PasswordProtectionCard';
+import { usePasswordLifecycle } from '@/lib/ray/passwordLifecycle';
+
+function PasswordsHeaderAndOnboarding() {
+  const { stage } = usePasswordLifecycle();
+  const description =
+    stage === 'not_started'
+      ? 'Bring your passwords in and Ray becomes your zero-knowledge password manager, breach watcher, and security guide — all at once.'
+      : stage === 'imported'
+        ? "Ray is analyzing your vault. I'll surface anything that needs attention as soon as it lands."
+        : stage === 'analyzed'
+          ? "Here's what to focus on today. Ray keeps watch on everything else."
+          : 'Your vault is healthy. Ray keeps quiet watch and will speak up if anything changes.';
+  return (
+    <>
+      <RayPageHeader title="Passwords" description={description} />
+      {stage === 'not_started' && <PasswordProtectionCard />}
+    </>
+  );
+}
 
 export default function PasswordsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -147,10 +167,7 @@ export default function PasswordsPage() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              <RayPageHeader
-                title="Passwords"
-                description="Securely stores your credentials and continuously monitors password health."
-              />
+              <PasswordsHeaderAndOnboarding />
 
               <RayConversationCard context="passwords" />
 

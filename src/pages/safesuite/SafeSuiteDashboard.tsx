@@ -45,6 +45,8 @@ import { AccountHealthPanel } from '@/components/ray/AccountHealthPanel';
 import { useRayLiveSignals } from '@/hooks/useRayLiveSignals';
 import { RayNoticesPanel } from '@/components/ray/RayNoticesPanel';
 import { RayTimeline } from '@/components/ray/RayTimeline';
+import { PasswordProtectionCard } from '@/components/ray/PasswordProtectionCard';
+import { usePasswordLifecycle } from '@/lib/ray/passwordLifecycle';
 
 interface DashboardStats {
   passwordCount: number;
@@ -390,6 +392,29 @@ const productCardsConfig = [
   },
 ];
 
+/**
+ * Renders either the "Protect your passwords" onboarding card (when the
+ * vault is empty) or the full Morning Brief. This guarantees the Home
+ * dashboard, Passwords page, and Recommendations engine all reflect the
+ * same lifecycle stage instead of showing conflicting CTAs.
+ */
+function LifecycleAwareTop({ firstName }: { firstName: string }) {
+  const { stage } = usePasswordLifecycle();
+  if (stage === 'not_started') {
+    return (
+      <div data-tour="security-score" className="space-y-4 sm:space-y-6">
+        <PasswordProtectionCard />
+        <MorningBriefHero firstName={firstName} showFullBriefLink={false} />
+      </div>
+    );
+  }
+  return (
+    <div data-tour="security-score">
+      <MorningBriefHero firstName={firstName} />
+    </div>
+  );
+}
+
 export default function WraythDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -550,10 +575,9 @@ export default function WraythDashboard() {
 
   return (
     <div className="min-h-screen bg-background -m-4 lg:-m-6 p-4 lg:p-6 space-y-4 sm:space-y-6">
-      {/* Ray's morning brief — same brief as /app/brief, lives on Home */}
-      <div data-tour="security-score">
-        <MorningBriefHero firstName={firstName} />
-      </div>
+      {/* Lifecycle-aware onboarding: while the vault is empty, Ray's clearest
+          message is "Protect your passwords with Wrayth." */}
+      <LifecycleAwareTop firstName={firstName} />
       <RayNoticesPanel variant="hero" />
       <AccountHealthPanel />
       {/* Upgrade prompts stay contextual (password/seat limits) — Home is focused on security. */}

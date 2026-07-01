@@ -18229,6 +18229,7 @@ export type Database = {
           dismissed_at: string | null
           estimated_fix_seconds: number | null
           id: string
+          objective: string | null
           page_context: string | null
           playbook_run_id: string | null
           priority: number
@@ -18246,6 +18247,7 @@ export type Database = {
           dismissed_at?: string | null
           estimated_fix_seconds?: number | null
           id?: string
+          objective?: string | null
           page_context?: string | null
           playbook_run_id?: string | null
           priority?: number
@@ -18263,6 +18265,7 @@ export type Database = {
           dismissed_at?: string | null
           estimated_fix_seconds?: number | null
           id?: string
+          objective?: string | null
           page_context?: string | null
           playbook_run_id?: string | null
           priority?: number
