@@ -15,8 +15,8 @@ import { cn } from '@/lib/utils';
 import { ArrowRight, Loader2, Sparkles } from 'lucide-react';
 
 const TONE_DOT: Record<AnswerTone, string> = {
-  ok: 'bg-emerald-400',
-  warn: 'bg-amber-400',
+  ok: 'bg-green-400',
+  warn: 'bg-yellow-400',
   bad: 'bg-red-400',
   info: 'bg-violet-300/70',
 };

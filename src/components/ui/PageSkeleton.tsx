@@ -209,7 +209,7 @@ export function LoadingSpinner({ className }: { className?: string }) {
   return (
     <div className={cn('flex items-center justify-center p-8', className)}>
       <div className="relative">
-        <div className="h-12 w-12 rounded-full border-2 border-cyan-500/20" />
+        <div className="h-12 w-12 rounded-full border-2 border-violet-500/20" />
         <div className="absolute inset-0 h-12 w-12 rounded-full border-2 border-transparent border-t-cyan-500 animate-spin" />
       </div>
     </div>

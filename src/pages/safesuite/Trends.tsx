@@ -34,7 +34,7 @@ function StatCard({
   label, current, delta, history,
 }: { label: string; current: number | string; delta: number | null; history: number[] }) {
   const arrow = delta == null ? <Minus className="h-3 w-3" /> : delta > 0 ? <TrendingUp className="h-3 w-3" /> : delta < 0 ? <TrendingDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />;
-  const tone = delta == null ? 'text-muted-foreground' : delta > 0 ? 'text-emerald-500' : delta < 0 ? 'text-red-500' : 'text-muted-foreground';
+  const tone = delta == null ? 'text-muted-foreground' : delta > 0 ? 'text-green-500' : delta < 0 ? 'text-red-500' : 'text-muted-foreground';
   return (
     <div className="rounded-md border border-border bg-card/40 p-4">
       <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">{label}</div>

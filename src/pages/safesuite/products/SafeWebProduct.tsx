@@ -170,7 +170,7 @@ export default function WatchProduct() {
       {/* CTA Section */}
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-3xl text-center">
-          <div className="inline-block bg-black px-8 py-4 rounded-lg mb-6 border border-emerald-500/20">
+          <div className="inline-block bg-black px-8 py-4 rounded-lg mb-6 border border-green-500/20">
             <img src={safesuiteLogo} alt="Wrayth" className="h-16 w-auto" />
           </div>
           <h2 className="text-3xl font-bold text-white mb-4">
@@ -180,7 +180,7 @@ export default function WatchProduct() {
             Get Watch plus Vault, and Scan — all in one unified security suite.
           </p>
           <Link to="/auth?tab=signup">
-            <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 text-black gap-2">
+            <Button size="lg" className="bg-green-500 hover:bg-green-600 text-black gap-2">
               Get Started with Wrayth
               <ArrowRight className="h-4 w-4" />
             </Button>

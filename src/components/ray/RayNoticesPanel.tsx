@@ -23,13 +23,13 @@ type Variant = 'hero' | 'compact';
 
 const KIND_TONE: Record<string, string> = {
   score_drop: 'border-red-500/30 bg-red-500/[0.05]',
-  score_rise: 'border-emerald-500/25 bg-emerald-500/[0.04]',
-  stale_recommendation: 'border-amber-500/25 bg-amber-500/[0.04]',
+  score_rise: 'border-green-500/25 bg-green-500/[0.04]',
+  stale_recommendation: 'border-yellow-500/25 bg-yellow-500/[0.04]',
   repeated_question: 'border-violet-400/30 bg-violet-500/[0.05]',
   new_exposure: 'border-red-500/30 bg-red-500/[0.05]',
   critical_threat: 'border-red-500/30 bg-red-500/[0.05]',
-  mfa_gap: 'border-amber-500/25 bg-amber-500/[0.04]',
-  streak: 'border-emerald-500/25 bg-emerald-500/[0.04]',
+  mfa_gap: 'border-yellow-500/25 bg-yellow-500/[0.04]',
+  streak: 'border-green-500/25 bg-green-500/[0.04]',
 };
 
 export function RayNoticesPanel({
@@ -176,13 +176,13 @@ function NoticeRow({
       <div className="mt-2 flex items-center gap-1 flex-wrap">
         <button
           onClick={onResolve}
-          className="inline-flex items-center gap-1 text-[11px] text-emerald-300/90 hover:text-emerald-200 px-2 py-1 rounded"
+          className="inline-flex items-center gap-1 text-[11px] text-green-300/90 hover:text-green-200 px-2 py-1 rounded"
         >
           <CheckCircle2 className="h-3 w-3" /> Mark resolved
         </button>
         <button
           onClick={onSnooze}
-          className="inline-flex items-center gap-1 text-[11px] text-amber-300/90 hover:text-amber-200 px-2 py-1 rounded"
+          className="inline-flex items-center gap-1 text-[11px] text-yellow-300/90 hover:text-yellow-200 px-2 py-1 rounded"
         >
           <Clock className="h-3 w-3" /> Snooze 24h
         </button>

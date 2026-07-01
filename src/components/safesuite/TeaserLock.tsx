@@ -41,13 +41,13 @@ const FEATURE_BRANDING: Record<string, {
   vault: {
     logo: vaultLogo,
     hero: heroVault,
-    gradient: 'from-amber-500/20 via-orange-500/10 to-transparent',
+    gradient: 'from-yellow-500/20 via-yellow-500/10 to-transparent',
     glow: 'shadow-[0_0_60px_rgba(245,158,11,0.3)]'
   },
   scan: {
     logo: scanLogo,
     hero: heroScan,
-    gradient: 'from-red-500/20 via-rose-500/10 to-transparent',
+    gradient: 'from-red-500/20 via-red-500/10 to-transparent',
     glow: 'shadow-[0_0_60px_rgba(239,68,68,0.3)]'
   },
   watch: {
@@ -59,25 +59,25 @@ const FEATURE_BRANDING: Record<string, {
   ray: {
     logo: rayLogo,
     hero: heroRay,
-    gradient: 'from-cyan-500/20 via-teal-500/10 to-transparent',
+    gradient: 'from-violet-500/20 via-green-500/10 to-transparent',
     glow: 'shadow-[0_0_60px_rgba(6,182,212,0.3)]'
   },
   ray_voice: {
     logo: rayLogo,
     hero: heroRay,
-    gradient: 'from-cyan-500/20 via-teal-500/10 to-transparent',
+    gradient: 'from-violet-500/20 via-green-500/10 to-transparent',
     glow: 'shadow-[0_0_60px_rgba(6,182,212,0.3)]'
   },
   team: {
     logo: vaultLogo,
     hero: heroVault,
-    gradient: 'from-amber-500/20 via-orange-500/10 to-transparent',
+    gradient: 'from-yellow-500/20 via-yellow-500/10 to-transparent',
     glow: 'shadow-[0_0_60px_rgba(245,158,11,0.3)]'
   },
   whitelabeling: {
     logo: rayLogo,
     hero: heroRay,
-    gradient: 'from-amber-500/20 via-orange-500/10 to-transparent',
+    gradient: 'from-yellow-500/20 via-yellow-500/10 to-transparent',
     glow: 'shadow-[0_0_60px_rgba(245,158,11,0.3)]'
   }
 };
@@ -137,7 +137,7 @@ export function TeaserLock({
             variant="outline" 
             className={cn(
               'cursor-pointer hover:opacity-80 transition-opacity',
-              isBusiness && 'border-amber-500/50 text-amber-400',
+              isBusiness && 'border-yellow-500/50 text-yellow-400',
               isPro && 'border-violet-500/50 text-violet-400'
             )}
           >
@@ -176,7 +176,7 @@ export function TeaserLock({
                   variant="link" 
                   className={cn(
                     'h-auto p-0 gap-1',
-                    isBusiness && 'text-amber-400',
+                    isBusiness && 'text-yellow-400',
                     isPro && 'text-violet-400'
                   )}
                 >
@@ -243,7 +243,7 @@ export function TeaserLock({
               variant="outline" 
               className={cn(
                 'text-sm px-4 py-1.5 font-medium',
-                isBusiness && 'border-amber-500/50 text-amber-400 bg-amber-500/10',
+                isBusiness && 'border-yellow-500/50 text-yellow-400 bg-yellow-500/10',
                 isPro && 'border-violet-500/50 text-violet-400 bg-violet-500/10'
               )}
             >
@@ -260,7 +260,7 @@ export function TeaserLock({
           >
             <span className={cn(
               'text-4xl font-bold',
-              isBusiness && 'text-amber-400',
+              isBusiness && 'text-yellow-400',
               isPro && 'text-violet-400'
             )}>
               {formatMonthlyPrice(requiredTierConfig)}
@@ -278,7 +278,7 @@ export function TeaserLock({
                 size="lg"
                 className={cn(
                   'gap-2 w-full text-lg py-6',
-                  isBusiness && 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black font-semibold',
+                  isBusiness && 'bg-gradient-to-r from-yellow-500 to-yellow-500 hover:from-yellow-600 hover:to-yellow-600 text-black font-semibold',
                   isPro && 'bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 font-semibold'
                 )}
               >

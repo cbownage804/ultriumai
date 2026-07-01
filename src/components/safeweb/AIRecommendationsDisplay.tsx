@@ -217,10 +217,10 @@ export function AIRecommendationsDisplay({
         };
       case 'high':
         return {
-          bg: 'bg-orange-500/10',
-          border: 'border-orange-500/30',
-          text: 'text-orange-400',
-          badge: 'bg-orange-500/20 text-orange-300 border-orange-500/30'
+          bg: 'bg-yellow-500/10',
+          border: 'border-yellow-500/30',
+          text: 'text-yellow-400',
+          badge: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'
         };
       case 'low':
         return {
@@ -460,19 +460,19 @@ export function AIRecommendationsDisplay({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="rounded-xl overflow-hidden border bg-emerald-500/10 border-emerald-500/20"
+          className="rounded-xl overflow-hidden border bg-green-500/10 border-green-500/20"
         >
           <button
             onClick={() => toggleSection('longterm')}
             className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-colors"
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-emerald-500/20">
-                <Shield className="h-4 w-4 text-emerald-400" />
+              <div className="p-2 rounded-lg bg-green-500/20">
+                <Shield className="h-4 w-4 text-green-400" />
               </div>
               <div className="text-left">
                 <h4 className="text-sm font-semibold text-white">Long-term Protection</h4>
-                <span className="text-xs text-emerald-400/80">Ongoing security strategies</span>
+                <span className="text-xs text-green-400/80">Ongoing security strategies</span>
               </div>
             </div>
             {expandedSections.has('longterm') ? (
@@ -497,7 +497,7 @@ export function AIRecommendationsDisplay({
                       key={i}
                       className="flex items-start gap-2 text-sm text-gray-300"
                     >
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-green-400 mt-0.5 shrink-0" />
                       <span>{item}</span>
                     </div>
                   ))}

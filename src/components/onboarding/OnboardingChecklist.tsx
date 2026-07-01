@@ -292,7 +292,7 @@ export const OnboardingChecklist = ({
           const row = (
             <div className="flex items-center gap-2.5 py-1.5 text-sm">
               {item.isComplete ? (
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                <CheckCircle2 className="h-3.5 w-3.5 text-green-400 shrink-0" />
               ) : (
                 <Circle className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
               )}

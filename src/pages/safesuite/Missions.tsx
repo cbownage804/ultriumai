@@ -30,7 +30,7 @@ function MissionCard({
       className={cn(
         'rounded-md border bg-card/40 p-5 transition-all',
         active && 'border-primary/40 shadow-[0_0_0_1px_hsl(var(--primary)/0.25)]',
-        completed && 'border-emerald-500/30 bg-emerald-500/[0.03]',
+        completed && 'border-green-500/30 bg-green-500/[0.03]',
         !active && !completed && 'border-border hover:border-foreground/30 cursor-pointer',
       )}
       onClick={!active && !completed ? onSelect : undefined}
@@ -38,7 +38,7 @@ function MissionCard({
       <header className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-            {completed ? <Check className="h-3 w-3 text-emerald-500" /> : <Sparkles className="h-3 w-3 text-primary" />}
+            {completed ? <Check className="h-3 w-3 text-green-500" /> : <Sparkles className="h-3 w-3 text-primary" />}
             {completed ? 'Completed' : mission.status === 'in_progress' ? 'In progress' : 'Mission'}
           </div>
           <h2 className="mt-1 text-lg font-light tracking-tight">{mission.title}</h2>
@@ -66,7 +66,7 @@ function MissionCard({
         <div
           className={cn(
             'h-full transition-all duration-700',
-            completed ? 'bg-emerald-500' : 'bg-primary',
+            completed ? 'bg-green-500' : 'bg-primary',
           )}
           style={{ width: `${mission.progress}%` }}
         />
@@ -81,14 +81,14 @@ function MissionCard({
                 className={cn(
                   'w-full flex items-center gap-3 rounded-sm border px-3 py-2 text-left text-sm transition-colors',
                   step.done
-                    ? 'border-emerald-500/30 bg-emerald-500/[0.05] text-foreground'
+                    ? 'border-green-500/30 bg-green-500/[0.05] text-foreground'
                     : 'border-border hover:border-foreground/30 text-foreground',
                 )}
               >
                 <span
                   className={cn(
                     'inline-flex h-4 w-4 items-center justify-center rounded-sm border',
-                    step.done ? 'border-emerald-500 bg-emerald-500 text-background' : 'border-muted-foreground/40',
+                    step.done ? 'border-green-500 bg-green-500 text-background' : 'border-muted-foreground/40',
                   )}
                 >
                   {step.done && <Check className="h-3 w-3" />}
@@ -101,7 +101,7 @@ function MissionCard({
       )}
 
       {completed && (
-        <div className="mt-4 text-sm text-emerald-500 animate-fade-in">
+        <div className="mt-4 text-sm text-green-500 animate-fade-in">
           Nicely done. Ray banked +{mission.reward_points} to your security score.
         </div>
       )}
@@ -203,7 +203,7 @@ export default function Missions() {
             {done.map((m) => (
               <li key={m.id} className="flex items-center justify-between px-4 py-3 text-sm">
                 <span className="inline-flex items-center gap-2">
-                  <Check className="h-3.5 w-3.5 text-emerald-500" /> {m.title}
+                  <Check className="h-3.5 w-3.5 text-green-500" /> {m.title}
                 </span>
                 <span className="text-xs text-muted-foreground tabular-nums">
                   +{m.reward_points} {m.completed_at ? '· ' + new Date(m.completed_at).toLocaleDateString() : ''}

@@ -80,7 +80,7 @@ function pageHrefFor(area?: string | null): string {
 
 function ScoreBadge({ score, delta }: { score: number | null; delta: number | null }) {
   if (score == null) return null;
-  const tone = score >= 80 ? "text-emerald-300" : score >= 60 ? "text-amber-300" : "text-red-300";
+  const tone = score >= 80 ? "text-green-300" : score >= 60 ? "text-yellow-300" : "text-red-300";
   return (
     <div className="flex items-center gap-3">
       <motion.div
@@ -93,12 +93,12 @@ function ScoreBadge({ score, delta }: { score: number | null; delta: number | nu
       <div className="flex flex-col">
         <div className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Ray score</div>
         {delta != null && delta !== 0 ? (
-          <div className={cn("text-xs flex items-center gap-1", delta > 0 ? "text-emerald-300" : "text-red-300")}>
+          <div className={cn("text-xs flex items-center gap-1", delta > 0 ? "text-green-300" : "text-red-300")}>
             {delta > 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
             {Math.abs(delta)} vs last brief
           </div>
         ) : (
-          <div className="text-xs text-emerald-300/80">Stable</div>
+          <div className="text-xs text-green-300/80">Stable</div>
         )}
       </div>
     </div>
@@ -136,7 +136,7 @@ function FeedbackBar({ brief, onSend }: { brief: RayBriefRow; onSend: (f: RayBri
           </button>
         );
       })}
-      {current && <span className="text-[11px] text-emerald-300/80">Thanks — Ray will learn from this.</span>}
+      {current && <span className="text-[11px] text-green-300/80">Thanks — Ray will learn from this.</span>}
     </div>
   );
 }
@@ -259,7 +259,7 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
       </h1>
       <div className="relative mt-2 space-y-1 text-[15px] leading-relaxed text-slate-300">
         <p>{reassurance}</p>
-        <p className={hasAttention ? "text-amber-200/90" : "text-slate-300"}>{verdict}</p>
+        <p className={hasAttention ? "text-yellow-200/90" : "text-slate-300"}>{verdict}</p>
         {scoreLine && <p className="text-slate-400">{scoreLine}</p>}
         <p className="text-slate-500 text-sm">{closingLine}</p>
       </div>
@@ -314,7 +314,7 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
           )}
         </button>
         {voice.error && (
-          <span className="ml-3 text-[11px] text-amber-300/80">{voice.error}</span>
+          <span className="ml-3 text-[11px] text-yellow-300/80">{voice.error}</span>
         )}
       </div>
 
@@ -329,15 +329,15 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
             className={cn(
               "rounded-xl border px-3 py-2.5",
               c.ok
-                ? "border-emerald-500/20 bg-emerald-500/[0.04]"
-                : "border-amber-500/30 bg-amber-500/[0.05]",
+                ? "border-green-500/20 bg-green-500/[0.04]"
+                : "border-yellow-500/30 bg-yellow-500/[0.05]",
             )}
           >
             <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-slate-400">
-              <span className={cn("inline-block h-1.5 w-1.5 rounded-full", c.ok ? "bg-emerald-400" : "bg-amber-400")} />
+              <span className={cn("inline-block h-1.5 w-1.5 rounded-full", c.ok ? "bg-green-400" : "bg-yellow-400")} />
               {c.label}
             </div>
-            <div className={cn("mt-1 text-sm font-medium", c.ok ? "text-slate-100" : "text-amber-100")}>
+            <div className={cn("mt-1 text-sm font-medium", c.ok ? "text-slate-100" : "text-yellow-100")}>
               {c.value}
             </div>
           </div>
@@ -357,8 +357,8 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
             const tone = rec.priority >= 70
               ? "border-red-500/30 bg-red-500/[0.04]"
               : rec.priority >= 40
-                ? "border-amber-500/25 bg-amber-500/[0.03]"
-                : "border-emerald-500/20 bg-emerald-500/[0.03]";
+                ? "border-yellow-500/25 bg-yellow-500/[0.03]"
+                : "border-green-500/20 bg-green-500/[0.03]";
             const isBusy = busyId === rec.id;
             const inProgress = rec.status === "in_progress";
             return (
@@ -400,13 +400,13 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
                     <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-slate-300 hover:text-white" onClick={() => navigate(pageHrefFor(rec.page_context))}>
                       Open <ArrowRight className="h-3 w-3 ml-1" />
                     </Button>
-                    <Button size="sm" variant="ghost" disabled={isBusy} className="h-7 px-2 text-xs text-emerald-300 hover:text-emerald-200" onClick={() => withBusy(rec.id, async () => {
+                    <Button size="sm" variant="ghost" disabled={isBusy} className="h-7 px-2 text-xs text-green-300 hover:text-green-200" onClick={() => withBusy(rec.id, async () => {
                       await completeRecommendation(rec.id);
                       toast.success("Nice work — handled.", { description: `${rec.title}. I'll remember.` });
                     })}>
                       <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Mark handled
                     </Button>
-                    <Button size="sm" variant="ghost" disabled={isBusy} className="h-7 px-2 text-xs text-amber-300 hover:text-amber-200" onClick={() => withBusy(rec.id, () => snoozeRecommendation(rec.id, 24))}>
+                    <Button size="sm" variant="ghost" disabled={isBusy} className="h-7 px-2 text-xs text-yellow-300 hover:text-yellow-200" onClick={() => withBusy(rec.id, () => snoozeRecommendation(rec.id, 24))}>
                       <Clock className="h-3.5 w-3.5 mr-1" /> Snooze 24h
                     </Button>
                     <Button size="sm" variant="ghost" disabled={isBusy} className="h-7 px-2 text-xs text-muted-foreground" onClick={() => withBusy(rec.id, () => dismissRecommendation(rec.id))}>

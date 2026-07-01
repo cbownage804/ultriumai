@@ -123,7 +123,7 @@ export function TierLimitInfo({ feature, className }: TierLimitInfoProps) {
     <Card className={cn(
       'border bg-card/50 backdrop-blur-sm',
       isAtLimit && 'border-destructive/50 bg-destructive/5',
-      isNearLimit && !isAtLimit && 'border-amber-500/50 bg-amber-500/5',
+      isNearLimit && !isAtLimit && 'border-yellow-500/50 bg-yellow-500/5',
       !isNearLimit && 'border-border/50',
       className
     )}>
@@ -131,13 +131,13 @@ export function TierLimitInfo({ feature, className }: TierLimitInfoProps) {
         <div className={cn(
           'h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0',
           isAtLimit && 'bg-destructive/20',
-          isNearLimit && !isAtLimit && 'bg-amber-500/20',
+          isNearLimit && !isAtLimit && 'bg-yellow-500/20',
           !isNearLimit && 'bg-primary/10'
         )}>
           {isAtLimit ? (
             <AlertCircle className="h-5 w-5 text-destructive" />
           ) : isNearLimit ? (
-            <AlertCircle className="h-5 w-5 text-amber-500" />
+            <AlertCircle className="h-5 w-5 text-yellow-500" />
           ) : (
             <Sparkles className="h-5 w-5 text-primary" />
           )}
@@ -151,7 +151,7 @@ export function TierLimitInfo({ feature, className }: TierLimitInfoProps) {
             <span className={cn(
               'text-sm font-semibold whitespace-nowrap',
               isAtLimit && 'text-destructive',
-              isNearLimit && !isAtLimit && 'text-amber-500'
+              isNearLimit && !isAtLimit && 'text-yellow-500'
             )}>
               {access.used || 0} / {access.limit} {featureInfo.limitUnitPlural}
             </span>
@@ -161,7 +161,7 @@ export function TierLimitInfo({ feature, className }: TierLimitInfoProps) {
             className={cn(
               'h-2',
               isAtLimit && '[&>div]:bg-destructive',
-              isNearLimit && !isAtLimit && '[&>div]:bg-amber-500'
+              isNearLimit && !isAtLimit && '[&>div]:bg-yellow-500'
             )}
           />
         </div>
@@ -294,7 +294,7 @@ export function TierComparison({ highlightTier, className }: TierComparisonProps
           )}
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              {tier.id === 'business' && <Crown className="h-5 w-5 text-amber-500" />}
+              {tier.id === 'business' && <Crown className="h-5 w-5 text-yellow-500" />}
               {tier.name}
             </CardTitle>
             <CardDescription>{tier.description}</CardDescription>

@@ -75,8 +75,8 @@ export default function VaultSettings() {
     <div className="space-y-8 max-w-3xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
-          <KeyRound className="h-6 w-6 text-amber-500" />
-          <span className="text-amber-500">Vault</span> Settings
+          <KeyRound className="h-6 w-6 text-yellow-500" />
+          <span className="text-yellow-500">Vault</span> Settings
         </h1>
         <p className="text-muted-foreground">
           Configure your password vault preferences
@@ -142,7 +142,7 @@ export default function VaultSettings() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-amber-500" />
+            <Sparkles className="h-5 w-5 text-yellow-500" />
             VaultAI
           </CardTitle>
           <CardDescription>
@@ -201,7 +201,7 @@ export default function VaultSettings() {
                 size="sm"
                 onClick={handleClearPatterns}
                 disabled={clearingPatterns || !aiEnabled}
-                className="border-amber-500/30 text-amber-500 hover:bg-amber-500/10"
+                className="border-yellow-500/30 text-yellow-500 hover:bg-yellow-500/10"
               >
                 {clearingPatterns ? (
                   <>
@@ -378,7 +378,7 @@ export default function VaultSettings() {
         <Button 
           onClick={handleSaveSettings} 
           disabled={loading}
-          className="bg-amber-500 hover:bg-amber-600 text-black"
+          className="bg-yellow-500 hover:bg-yellow-600 text-black"
         >
           {loading ? (
             <>

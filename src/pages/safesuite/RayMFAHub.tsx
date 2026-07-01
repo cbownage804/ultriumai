@@ -175,8 +175,8 @@ function EmptyIntro({
 /* -------------------------------------------------------------------------- */
 function HealthCard({ mfa, onScan }: { mfa: ReturnType<typeof useRayMFA>; onScan: () => void }) {
   const toneClass =
-    mfa.verdict.tone === 'good' ? 'text-emerald-500'
-    : mfa.verdict.tone === 'warn' ? 'text-amber-500'
+    mfa.verdict.tone === 'good' ? 'text-green-500'
+    : mfa.verdict.tone === 'warn' ? 'text-yellow-500'
     : 'text-destructive';
   return (
     <Card className="p-6">
@@ -196,8 +196,8 @@ function HealthCard({ mfa, onScan }: { mfa: ReturnType<typeof useRayMFA>; onScan
       <div className="mt-4 space-y-2">
         <Progress value={mfa.health.score} />
         <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1"><ShieldCheck className="h-3 w-3 text-emerald-500" />{mfa.health.protectedCount} protected</span>
-          <span className="flex items-center gap-1"><ShieldOff className="h-3 w-3 text-amber-500" />{mfa.health.unprotectedCount} unprotected</span>
+          <span className="flex items-center gap-1"><ShieldCheck className="h-3 w-3 text-green-500" />{mfa.health.protectedCount} protected</span>
+          <span className="flex items-center gap-1"><ShieldOff className="h-3 w-3 text-yellow-500" />{mfa.health.unprotectedCount} unprotected</span>
           {mfa.health.criticalUnprotected > 0 && (
             <span className="flex items-center gap-1 text-destructive"><AlertTriangle className="h-3 w-3" />{mfa.health.criticalUnprotected} critical at risk</span>
           )}
@@ -249,7 +249,7 @@ function RecommendationsList({
 function priorityToneClasses(p: MFAPriority): string {
   switch (p) {
     case 'critical': return 'border-destructive/40 text-destructive';
-    case 'high': return 'border-amber-500/40 text-amber-500';
+    case 'high': return 'border-yellow-500/40 text-yellow-500';
     case 'medium': return 'border-primary/40 text-primary';
     case 'low': return 'border-muted-foreground/30 text-muted-foreground';
   }
@@ -339,7 +339,7 @@ function TOTPLiveCard({
           )}
         </div>
         {secret.verified_at ? (
-          <Badge variant="outline" className="border-emerald-500/40 text-emerald-500">
+          <Badge variant="outline" className="border-green-500/40 text-green-500">
             <Check className="mr-1 h-3 w-3" /> Verified
           </Badge>
         ) : (

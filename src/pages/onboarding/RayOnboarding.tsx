@@ -641,7 +641,7 @@ export default function RayOnboarding() {
               )}
 
               {mfaPhase === 'done' && (
-                <div className="flex items-center gap-3 text-emerald-400">
+                <div className="flex items-center gap-3 text-green-400">
                   <ShieldCheck className="h-5 w-5" />
                   <span className="text-sm">2FA is on. Taking you to the next step…</span>
                 </div>
@@ -725,14 +725,14 @@ export default function RayOnboarding() {
                     className={cn(
                       'flex items-start gap-3 rounded-sm border px-4 py-3 animate-fade-in',
                       f.tone === 'warn'
-                        ? 'border-amber-500/30 bg-amber-500/[0.04]'
-                        : 'border-emerald-500/30 bg-emerald-500/[0.04]',
+                        ? 'border-yellow-500/30 bg-yellow-500/[0.04]'
+                        : 'border-green-500/30 bg-green-500/[0.04]',
                     )}
                     style={{ animationDelay: `${i * 80}ms` }}
                   >
                     {f.tone === 'warn'
-                      ? <AlertTriangle className="h-4 w-4 mt-0.5 text-amber-500 shrink-0" />
-                      : <ShieldCheck className="h-4 w-4 mt-0.5 text-emerald-500 shrink-0" />}
+                      ? <AlertTriangle className="h-4 w-4 mt-0.5 text-yellow-500 shrink-0" />
+                      : <ShieldCheck className="h-4 w-4 mt-0.5 text-green-500 shrink-0" />}
                     <div className="text-sm text-foreground">{f.text}</div>
                   </div>
                 ))}

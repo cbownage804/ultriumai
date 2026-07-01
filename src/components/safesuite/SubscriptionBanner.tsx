@@ -54,7 +54,7 @@ export function SubscriptionBanner({ className, variant = 'full' }: Subscription
           variant={isBusiness ? 'default' : isPro ? 'secondary' : 'outline'}
           className={cn(
             'gap-1',
-            isBusiness && 'bg-gradient-to-r from-amber-500 to-orange-500',
+            isBusiness && 'bg-gradient-to-r from-yellow-500 to-yellow-500',
             isPro && 'bg-gradient-to-r from-violet-500 to-purple-500'
           )}
         >
@@ -81,10 +81,10 @@ export function SubscriptionBanner({ className, variant = 'full' }: Subscription
         animate={{ opacity: 1, y: 0 }}
         className={className}
       >
-        <Card className="overflow-hidden border border-amber-500/30 bg-gradient-to-r from-amber-500/5 to-orange-500/5">
+        <Card className="overflow-hidden border border-yellow-500/30 bg-gradient-to-r from-yellow-500/5 to-yellow-500/5">
           <CardContent className="p-4 flex items-center justify-between gap-4">
             <div>
-              <Badge className="gap-1 bg-gradient-to-r from-amber-500 to-orange-500 border-0">
+              <Badge className="gap-1 bg-gradient-to-r from-yellow-500 to-yellow-500 border-0">
                 <Crown className="h-3 w-3" />
                 {currentTier.name} Plan
               </Badge>
@@ -92,7 +92,7 @@ export function SubscriptionBanner({ className, variant = 'full' }: Subscription
             </div>
             <div className="flex flex-wrap gap-2 justify-end">
               {['Unlimited everything', 'Team management', 'Priority support'].map((b) => (
-                <span key={b} className="inline-flex items-center gap-1 text-xs text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded">
+                <span key={b} className="inline-flex items-center gap-1 text-xs text-green-400 bg-green-500/10 px-2 py-1 rounded">
                   <CheckCircle className="h-3 w-3" />
                   {b}
                 </span>
@@ -144,7 +144,7 @@ export function SubscriptionBanner({ className, variant = 'full' }: Subscription
           <ul className="mt-3 space-y-1.5">
             {reasons.slice(0, 4).map((r) => (
               <li key={r} className="flex items-start gap-2 text-sm text-muted-foreground">
-                <CheckCircle className="h-4 w-4 mt-0.5 text-emerald-400 shrink-0" />
+                <CheckCircle className="h-4 w-4 mt-0.5 text-green-400 shrink-0" />
                 <span>{r}</span>
               </li>
             ))}
@@ -193,11 +193,11 @@ export function TierRestrictionsList({ currentTier }: { currentTier: 'free' | 'p
             key={key}
             className={cn(
               'flex items-center gap-3 p-2 rounded-lg',
-              config.enabled ? 'bg-emerald-500/10' : 'bg-muted/50 opacity-60'
+              config.enabled ? 'bg-green-500/10' : 'bg-muted/50 opacity-60'
             )}
           >
             {config.enabled ? (
-              <CheckCircle className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+              <CheckCircle className="h-4 w-4 text-green-400 flex-shrink-0" />
             ) : (
               <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             )}
@@ -209,7 +209,7 @@ export function TierRestrictionsList({ currentTier }: { currentTier: 'free' | 'p
                 </span>
               )}
               {config.enabled && config.limit === -1 && (
-                <span className="text-xs text-emerald-400 ml-2">Unlimited</span>
+                <span className="text-xs text-green-400 ml-2">Unlimited</span>
               )}
             </div>
           </div>

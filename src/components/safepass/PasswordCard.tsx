@@ -132,11 +132,11 @@ export const PasswordCard = ({
             <span className={cn(
               'truncate',
               status.tone === 'bad' && 'text-red-400',
-              status.tone === 'good' && 'text-emerald-400/90',
+              status.tone === 'good' && 'text-green-400/90',
             )}>
               {status.text}
             </span>
-            {hasMfa && <ShieldCheck className="w-3 h-3 text-emerald-400/80 shrink-0" />}
+            {hasMfa && <ShieldCheck className="w-3 h-3 text-green-400/80 shrink-0" />}
           </div>
           {rayNote && (
             <div className="text-xs italic text-violet-300/70 mt-1 truncate">{rayNote}</div>

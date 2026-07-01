@@ -170,7 +170,7 @@ export default function Devices() {
                       {device.current ? 'Active now' : formatDistanceToNow(device.lastSeen, { addSuffix: true })}
                     </div>
                     {!device.current && (
-                      <div className="mt-1 inline-flex items-center gap-1 text-[11px] text-emerald-300/80">
+                      <div className="mt-1 inline-flex items-center gap-1 text-[11px] text-green-300/80">
                         <ShieldCheck className="h-3 w-3" /> Verified
                       </div>
                     )}

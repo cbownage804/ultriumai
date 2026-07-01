@@ -92,7 +92,7 @@ export function RayWatchingCard({ passwordCount, identityCount, threatCount }: P
         <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-violet-300/80">
           <motion.span
             aria-hidden
-            className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400"
+            className="inline-block h-1.5 w-1.5 rounded-full bg-green-400"
             animate={{ opacity: [0.35, 1, 0.35], scale: [1, 1.15, 1] }}
             transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
           />

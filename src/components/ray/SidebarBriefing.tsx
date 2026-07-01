@@ -57,7 +57,7 @@ export function SidebarBriefing() {
 
   const score = ctx?.latestScore?.score ?? null;
   const scoreTone =
-    score == null ? 'text-foreground' : score >= 80 ? 'text-emerald-300' : score >= 60 ? 'text-amber-300' : 'text-red-300';
+    score == null ? 'text-foreground' : score >= 80 ? 'text-green-300' : score >= 60 ? 'text-yellow-300' : 'text-red-300';
 
   const isPerfect = score === 100;
 
@@ -66,10 +66,10 @@ export function SidebarBriefing() {
       <div className="flex items-center justify-between">
         <span className="text-xs text-muted-foreground">{greet()}, {firstName}</span>
         <div className="group relative">
-          <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-emerald-300/80 cursor-default">
+          <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-green-300/80 cursor-default">
             <motion.span
               aria-hidden
-              className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400"
+              className="inline-block h-1.5 w-1.5 rounded-full bg-green-400"
               animate={{ opacity: [0.35, 1, 0.35], scale: [1, 1.15, 1] }}
               transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
             />
@@ -78,10 +78,10 @@ export function SidebarBriefing() {
           <div className="pointer-events-none absolute right-0 top-full mt-2 z-50 w-56 rounded-md border border-border bg-popover px-3 py-2.5 text-[11px] text-foreground/90 shadow-lg opacity-0 -translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200">
             <div className="text-[9px] uppercase tracking-[0.22em] text-muted-foreground mb-1.5">Ray is monitoring</div>
             <ul className="space-y-1">
-              <li className="flex items-center gap-1.5"><span className="h-1 w-1 rounded-full bg-emerald-400" /> Microsoft advisories</li>
-              <li className="flex items-center gap-1.5"><span className="h-1 w-1 rounded-full bg-emerald-400" /> Breach databases</li>
-              <li className="flex items-center gap-1.5"><span className="h-1 w-1 rounded-full bg-emerald-400" /> Saved passwords</li>
-              <li className="flex items-center gap-1.5"><span className="h-1 w-1 rounded-full bg-emerald-400" /> Identity changes</li>
+              <li className="flex items-center gap-1.5"><span className="h-1 w-1 rounded-full bg-green-400" /> Microsoft advisories</li>
+              <li className="flex items-center gap-1.5"><span className="h-1 w-1 rounded-full bg-green-400" /> Breach databases</li>
+              <li className="flex items-center gap-1.5"><span className="h-1 w-1 rounded-full bg-green-400" /> Saved passwords</li>
+              <li className="flex items-center gap-1.5"><span className="h-1 w-1 rounded-full bg-green-400" /> Identity changes</li>
             </ul>
           </div>
         </div>
@@ -93,7 +93,7 @@ export function SidebarBriefing() {
           {isPerfect && (
             <motion.span
               aria-hidden
-              className="inline-block h-1 w-1 rounded-full bg-emerald-400"
+              className="inline-block h-1 w-1 rounded-full bg-green-400"
               // Every 20s: quiet fade-in, hold, fade-out. Very subtle.
               animate={{ opacity: [0, 0, 0.9, 0, 0] }}
               transition={{ duration: 20, repeat: Infinity, times: [0, 0.35, 0.5, 0.65, 1], ease: 'easeInOut' }}

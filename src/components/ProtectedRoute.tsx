@@ -154,8 +154,8 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md border-border">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-amber-500/10 flex items-center justify-center">
-              <Mail className="h-8 w-8 text-amber-500" />
+            <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-yellow-500/10 flex items-center justify-center">
+              <Mail className="h-8 w-8 text-yellow-500" />
             </div>
             <CardTitle className="text-xl">Verify Your Email</CardTitle>
             <CardDescription>

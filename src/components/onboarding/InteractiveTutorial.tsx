@@ -380,11 +380,11 @@ export const InteractiveTutorial = ({
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20"
+                    className="mb-4 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20"
                   >
                     <div className="flex items-start gap-2">
-                      <Sparkles className="h-4 w-4 text-amber-500 mt-0.5" />
-                      <p className="text-xs text-amber-700 dark:text-amber-300">{step.hint}</p>
+                      <Sparkles className="h-4 w-4 text-yellow-500 mt-0.5" />
+                      <p className="text-xs text-yellow-700 dark:text-yellow-300">{step.hint}</p>
                     </div>
                   </motion.div>
                 ) : (
@@ -429,10 +429,10 @@ export const InteractiveTutorial = ({
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-4 p-3 rounded-lg bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-500/20"
+                className="mt-4 p-3 rounded-lg bg-gradient-to-r from-yellow-500/10 to-yellow-500/10 border border-yellow-500/20"
               >
                 <div className="flex items-center gap-2">
-                  <Award className="h-5 w-5 text-amber-500" />
+                  <Award className="h-5 w-5 text-yellow-500" />
                   <div>
                     <p className="text-xs font-medium">Almost there!</p>
                     <p className="text-[10px] text-muted-foreground">Complete the last step to earn your badge</p>

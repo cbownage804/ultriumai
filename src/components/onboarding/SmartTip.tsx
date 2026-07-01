@@ -126,7 +126,7 @@ export const SmartTip = ({ featureId, onAction, delay = 1500, className }: Smart
           />
 
           {/* Top accent */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500" />
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-red-500" />
 
           {/* Content */}
           <div className="relative p-5">

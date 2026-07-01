@@ -62,14 +62,14 @@ export function UsageMeter({
     if (variant === 'inline') {
       return (
         <div className={cn('flex items-center gap-2', className)}>
-          <Infinity className="h-4 w-4 text-emerald-400" />
-          <span className="text-sm text-emerald-400">Unlimited {label || featureInfo.name}</span>
+          <Infinity className="h-4 w-4 text-green-400" />
+          <span className="text-sm text-green-400">Unlimited {label || featureInfo.name}</span>
         </div>
       );
     }
 
     return (
-      <Badge variant="secondary" className={cn('gap-1 bg-emerald-500/20 text-emerald-400', className)}>
+      <Badge variant="secondary" className={cn('gap-1 bg-green-500/20 text-green-400', className)}>
         <Infinity className="h-3 w-3" />
         Unlimited
       </Badge>
@@ -89,14 +89,14 @@ export function UsageMeter({
   // Determine status color
   const getStatusColor = () => {
     if (isAtLimit) return 'text-destructive';
-    if (isNearLimit) return 'text-amber-400';
-    return 'text-emerald-400';
+    if (isNearLimit) return 'text-yellow-400';
+    return 'text-green-400';
   };
 
   const getProgressColor = () => {
     if (isAtLimit) return 'bg-destructive';
-    if (isNearLimit) return 'bg-amber-500';
-    return 'bg-emerald-500';
+    if (isNearLimit) return 'bg-yellow-500';
+    return 'bg-green-500';
   };
 
   if (variant === 'inline') {
@@ -108,9 +108,9 @@ export function UsageMeter({
               {isAtLimit ? (
                 <AlertTriangle className="h-4 w-4 text-destructive" />
               ) : isNearLimit ? (
-                <TrendingUp className="h-4 w-4 text-amber-400" />
+                <TrendingUp className="h-4 w-4 text-yellow-400" />
               ) : (
-                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                <CheckCircle2 className="h-4 w-4 text-green-400" />
               )}
               <span className={cn('text-sm font-medium', getStatusColor())}>
                 {used}/{limit}
@@ -152,7 +152,7 @@ export function UsageMeter({
     <Card className={cn(
       'overflow-hidden transition-colors',
       isAtLimit && 'border-destructive/50 bg-destructive/5',
-      isNearLimit && !isAtLimit && 'border-amber-500/50 bg-amber-500/5',
+      isNearLimit && !isAtLimit && 'border-yellow-500/50 bg-yellow-500/5',
       className
     )}>
       <CardContent className="p-4">
@@ -164,9 +164,9 @@ export function UsageMeter({
                 {isAtLimit ? (
                   <AlertTriangle className="h-5 w-5 text-destructive" />
                 ) : isNearLimit ? (
-                  <TrendingUp className="h-5 w-5 text-amber-400" />
+                  <TrendingUp className="h-5 w-5 text-yellow-400" />
                 ) : (
-                  <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                  <CheckCircle2 className="h-5 w-5 text-green-400" />
                 )}
                 <span className="font-medium">{label || featureInfo.name}</span>
               </div>
@@ -202,7 +202,7 @@ export function UsageMeter({
                   initial={{ opacity: 0, y: -5 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  className="text-sm text-amber-400"
+                  className="text-sm text-yellow-400"
                 >
                   {remaining} {featureInfo.limitUnitPlural} remaining this month.
                 </motion.p>
@@ -229,7 +229,7 @@ export function UsageMeter({
                 className={cn(
                   'gap-1 shrink-0',
                   isAtLimit && tier === 'free' && 'bg-gradient-to-r from-violet-500 to-purple-500',
-                  isAtLimit && tier === 'pro' && 'bg-gradient-to-r from-amber-500 to-orange-500 text-black'
+                  isAtLimit && tier === 'pro' && 'bg-gradient-to-r from-yellow-500 to-yellow-500 text-black'
                 )}
               >
                 {tier === 'pro' ? (
