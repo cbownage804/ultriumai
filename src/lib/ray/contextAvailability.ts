@@ -69,25 +69,30 @@ export function useRayContextAvailability(): RayContextAvailability {
     }
     (async () => {
       // Identity coverage = any monitored asset.
-      const { count: identityCount } = await supabase
+      const identityRes: any = await (supabase as any)
         .from('safeweb_assets')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', user.id);
+      const identityCount: number = identityRes?.count ?? 0;
 
-      // Integrations we know about today.
-      const { data: integrations } = await supabase
-        .from('integrations')
+      // Integrations Ray knows about today.
+      const integrationsRes: any = await (supabase as any)
+        .from('ray_integrations')
         .select('provider, status')
         .eq('user_id', user.id);
+      const integrations: Array<{ provider: string; status: string }> =
+        integrationsRes?.data ?? [];
 
       const hasProvider = (name: string) =>
-        !!integrations?.some((i) => i.provider === name && i.status === 'connected');
+        integrations.some(
+          (i) => i.provider === name && (i.status === 'connected' || i.status === 'active'),
+        );
 
       if (cancelled) return;
       setState({
         vault: isUnlocked,
-        identity: (identityCount ?? 0) > 0,
-        microsoft365: hasProvider('microsoft365') || hasProvider('m365'),
+        identity: identityCount > 0,
+        microsoft365: hasProvider('microsoft_365') || hasProvider('microsoft365'),
         browser: hasProvider('browser_extension'),
         devices: hasProvider('meshcentral') || hasProvider('agent'),
         azure: hasProvider('azure'),
