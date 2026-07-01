@@ -63,7 +63,11 @@ serve(async (req) => {
       const usage = {
         vault: 0,
         scan: 0,
-        watch: 0
+        watch: 0,
+        ray: 0,
+        ray_voice: 0,
+        whitelabeling: 0,
+        team: 0
       };
 
       // Vault: Count actual password entries (not incremental tracking)

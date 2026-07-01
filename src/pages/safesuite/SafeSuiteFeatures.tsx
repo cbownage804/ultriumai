@@ -12,25 +12,24 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import {
   Shield, Key, Mail, FileText, Link as LinkIcon, Globe, 
-  Package, QrCode, Calendar, DollarSign, ArrowRight, Check,
-  Brain, Eye, Fingerprint, AlertTriangle, Laptop, History,
+  ArrowRight, Check,
+  Brain, Eye, Fingerprint, AlertTriangle, History,
   Lock, Scan, Users, Search, Clock, BarChart3
 } from "lucide-react";
 import heroSafesuite from "@/assets/hero-safesuite.jpg";
 import safesuiteLogo from "@/assets/safesuite-logo.png";
-import safepassLogo from "@/assets/safepass-logo.png";
-import safescanLogo from "@/assets/safescan-logo.png";
-import safewebLogo from "@/assets/safeweb-logo.png";
-import safetrackLogo from "@/assets/safetrack-logo.png";
+import vaultLogo from "@/assets/vault-logo.png";
+import scanLogo from "@/assets/scan-logo.png";
+import watchLogo from "@/assets/watch-logo.png";
 
 const tools = [
   {
-    id: "safepass",
+    id: "vault",
     name: "Vault",
     tagline: "Enterprise Password Management",
     description: "Military-grade encryption for all your credentials with zero-knowledge architecture.",
     icon: Key,
-    logo: safepassLogo,
+    logo: vaultLogo,
     color: "text-amber-500",
     bgColor: "bg-amber-500/10",
     borderColor: "border-amber-500/30",
@@ -45,12 +44,12 @@ const tools = [
     ],
   },
   {
-    id: "safescan",
+    id: "scan",
     name: "Scan",
     tagline: "AI-Powered Threat Scanner",
     description: "Unified scanning for emails, documents, and URLs with real-time AI threat detection.",
     icon: Scan,
-    logo: safescanLogo,
+    logo: scanLogo,
     color: "text-red-500",
     bgColor: "bg-red-500/10",
     borderColor: "border-red-500/30",
@@ -65,12 +64,12 @@ const tools = [
     ],
   },
   {
-    id: "safeweb",
+    id: "watch",
     name: "Watch",
     tagline: "Dark Web Intelligence",
     description: "Continuous monitoring of the dark web for your exposed credentials and data leaks.",
     icon: Globe,
-    logo: safewebLogo,
+    logo: watchLogo,
     color: "text-purple-500",
     bgColor: "bg-purple-500/10",
     borderColor: "border-purple-500/30",
@@ -109,7 +108,7 @@ export default function WraythFeatures() {
             />
           </div>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-8">
-            Complete security suite with password management, threat scanning, dark web monitoring, and asset tracking
+            Meet Ray, your AI cybersecurity teammate across Vault, Scan, and Watch.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Link to="/app/auth">
@@ -130,8 +129,8 @@ export default function WraythFeatures() {
       {/* Tools Tabs Section */}
       <section className="py-20 px-4">
         <div className="max-w-6xl mx-auto">
-          <Tabs defaultValue="safepass" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto gap-4 bg-transparent p-0 mb-12">
+          <Tabs defaultValue="vault" className="w-full">
+            <TabsList className="grid w-full grid-cols-1 md:grid-cols-3 h-auto gap-4 bg-transparent p-0 mb-12">
               {tools.map((tool) => (
                 <TabsTrigger
                   key={tool.id}
@@ -229,7 +228,7 @@ export default function WraythFeatures() {
           </div>
 
           <p className="text-sm text-muted-foreground">
-            Enterprise or MSP? <Link to="/vanguard" className="text-primary hover:underline">Check out Vanguard Suite</Link> for multi-tenant management.
+            Enterprise or MSP? <Link to="/contact" className="text-primary hover:underline">Talk to us</Link> about reseller and multi-tenant management.
           </p>
         </div>
       </section>

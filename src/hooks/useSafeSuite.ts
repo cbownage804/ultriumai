@@ -25,6 +25,10 @@ export interface WraythUsage {
   vault: number;
   scan: number;
   watch: number;
+  ray: number;
+  ray_voice: number;
+  whitelabeling: number;
+  team: number;
 }
 
 export function useWraythSubscription() {
@@ -135,6 +139,10 @@ export function useWraythUsage() {
     vault: 0,
     scan: 0,
     watch: 0,
+    ray: 0,
+    ray_voice: 0,
+    whitelabeling: 0,
+    team: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -151,7 +159,7 @@ export function useWraythUsage() {
       if (error) throw error;
 
       if (data?.usage) {
-        setUsage(data.usage);
+        setUsage((current) => ({ ...current, ...data.usage }));
       }
     } catch (err) {
       console.error('Error fetching Wrayth usage:', err);
@@ -196,7 +204,7 @@ export function useFeatureAccess() {
     }
 
     // Check usage against limit
-    const currentUsage = usage[feature];
+    const currentUsage = usage[feature] ?? 0;
     if (currentUsage >= featureLimit.limit) {
       return {
         allowed: false,
