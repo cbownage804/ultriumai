@@ -170,14 +170,15 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
 
   // Ray's one-line personality flourish — rotates daily so he feels alive.
   const personalityLines = [
-    "Nothing unusual happened overnight.",
-    "Everything looks healthy this morning.",
-    "I've already reviewed your latest activity.",
-    "You're in good shape today.",
-    "Quiet night. I kept watch.",
-    "Caught up on everything while you slept.",
+    "I reviewed everything overnight. Nothing needs your attention today.",
+    "Everything still looks healthy. I'll keep watching in the background.",
+    "Quiet so far. I'll speak up the moment anything changes.",
+    "All quiet. I've already caught up on your latest activity.",
+    "Nothing unusual to report. I'm right here if you need me.",
+    "Kept an eye on things while you were away. All good.",
   ];
   const personality = personalityLines[new Date().getDate() % personalityLines.length];
+
 
   // "Ray remembers" — a continuity nudge built from the most recent meaningful event.
   const lastCompleted = timeline.find((e) => e.event_type === "recommendation_completed");
