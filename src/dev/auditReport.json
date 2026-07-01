@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-07-01T14:06:25.664Z",
+  "generatedAt": "2026-07-01T14:08:09.246Z",
   "totals": {
-    "filesScanned": 438,
-    "legacyBrand": 156,
-    "todos": 10,
-    "consoles": 92,
-    "hardcodedHex": 330,
+    "filesScanned": 379,
+    "legacyBrand": 151,
+    "todos": 3,
+    "consoles": 77,
+    "hardcodedHex": 279,
     "arbitraryColors": 0,
-    "anyTypes": 131
+    "anyTypes": 113
   },
   "legacyBrand": [
     {
@@ -136,21 +136,6 @@
       "text": "export { default } from '@/components/safesuite/SafeSuiteNav';"
     },
     {
-      "file": "src/components/SafeWebAssetManager.tsx",
-      "line": 8,
-      "text": "import { useWatchData, WatchAsset } from \"@/hooks/useSafeWebData\";"
-    },
-    {
-      "file": "src/components/SafeWebAssetManager.tsx",
-      "line": 9,
-      "text": "import { useWraythUsage } from \"@/hooks/useSafeSuite\";"
-    },
-    {
-      "file": "src/components/ThreatAnalytics.tsx",
-      "line": 10,
-      "text": "import { useWatchData } from '@/hooks/useSafeWebData';"
-    },
-    {
       "file": "src/components/auth/AuthBrandHeader.tsx",
       "line": 2,
       "text": "import { safesuiteLogo } from \"@/components/safesuite/SafeSuiteProductIcons\";"
@@ -166,11 +151,6 @@
       "text": "import { useVault } from '@/hooks/useSafePass';"
     },
     {
-      "file": "src/components/safepass/MSPConsole.tsx",
-      "line": 13,
-      "text": "import { useVaultMSP } from '@/hooks/useSafePassMSP';"
-    },
-    {
       "file": "src/components/safepass/PasswordHealthDashboard.tsx",
       "line": 4,
       "text": "import { useVault } from '@/hooks/useSafePass';"
@@ -179,11 +159,6 @@
       "file": "src/components/safepass/PasswordVault.tsx",
       "line": 4,
       "text": "import { useVault, PasswordEntry as VaultEntry } from '@/hooks/useSafePass';"
-    },
-    {
-      "file": "src/components/safepass/SecurityDashboard.tsx",
-      "line": 12,
-      "text": "import { useVaultSecurity } from '@/hooks/useSafePassSecurity';"
     },
     {
       "file": "src/components/safepass/TeamManagement.tsx",
@@ -793,41 +768,6 @@
   ],
   "todos": [
     {
-      "file": "src/hooks/useAICodeReview.ts",
-      "line": 56,
-      "text": "{ id: 'bp-todo', category: 'best-practice', severity: 'info', title: 'TODO comment found', pattern: /\\/\\/\\s*TODO|\\/\\*\\s*TODO/gi, description: 'Unresolved TODO i"
-    },
-    {
-      "file": "src/hooks/useAIConfidence.ts",
-      "line": 154,
-      "text": "if (f.content.includes('// TODO') || f.content.includes('/* TODO')) qualityDeductions += 5;"
-    },
-    {
-      "file": "src/hooks/useCustomBuildScripts.ts",
-      "line": 17,
-      "text": "{ name: 'Lint Check', hook: 'pre-build', type: 'lint', enabled: false, script: 'check for console.log, debugger, and TODO comments' },"
-    },
-    {
-      "file": "src/hooks/useCustomBuildScripts.ts",
-      "line": 53,
-      "text": "const todos = f.content.match(/\\/\\/\\s*TODO/gi);"
-    },
-    {
-      "file": "src/hooks/useCustomBuildScripts.ts",
-      "line": 54,
-      "text": "if (todos) issues.push(`${f.path}: ${todos.length} TODO(s)`);"
-    },
-    {
-      "file": "src/hooks/useGraphQLBuilder.ts",
-      "line": 86,
-      "text": "type, args: [], returnType: 'String', resolver: '// TODO: implement resolver',"
-    },
-    {
-      "file": "src/hooks/useSmartScaffolding.ts",
-      "line": 20,
-      "text": "files: [{ path: 'hooks/use{{Name}}.ts', content: `import { useState, useCallback } from 'react';\\n\\nexport function use{{Name}}() {\\n  const [data, setData] = u"
-    },
-    {
       "file": "supabase/functions/ray-org-sync/index.ts",
       "line": 196,
       "text": "const trainingScore = 80;   // TODO wire to training records when available"
@@ -845,29 +785,9 @@
   ],
   "consoles": [
     {
-      "file": "src/components/VoiceControls.tsx",
-      "line": 195,
-      "text": "console.warn('No text returned from transcription');"
-    },
-    {
       "file": "src/components/client-portal/ClientPortal.tsx",
       "line": 577,
       "text": "console.log('Viewing article:', article.id);"
-    },
-    {
-      "file": "src/components/demos/TemplateInteractiveDemo.tsx",
-      "line": 157,
-      "text": "console.log(response.message);"
-    },
-    {
-      "file": "src/components/knowledgebase/ContextualKnowledgeBase.tsx",
-      "line": 400,
-      "text": "console.log('Open article:', article.id);"
-    },
-    {
-      "file": "src/components/reports/ReportGenerator.tsx",
-      "line": 100,
-      "text": "console.log('Generating report:', {"
     },
     {
       "file": "src/config/vanguardMeshCentral.ts",
@@ -875,24 +795,9 @@
       "text": "console.warn(\"Failed to look up MSP:\", err);"
     },
     {
-      "file": "src/hooks/useAIPerformanceOptimizer.ts",
-      "line": 91,
-      "text": "console.log(\\`[Perf] \\${entry.name}: \\${entry.duration.toFixed(2)}ms\\`);"
-    },
-    {
-      "file": "src/hooks/useAffiliateTracking.ts",
-      "line": 83,
-      "text": "console.log('[Affiliate] Tracking referral:', ref);"
-    },
-    {
       "file": "src/hooks/useAgentBuildVerifier.ts",
       "line": 40,
       "text": "console.warn('[build-verifier] esbuild init failed:', err);"
-    },
-    {
-      "file": "src/hooks/useAgentMode.ts",
-      "line": 302,
-      "text": "console.warn('[Agent] Wall-clock timeout reached, aborting');"
     },
     {
       "file": "src/hooks/useAgentWebResearch.ts",
@@ -900,49 +805,9 @@
       "text": "console.warn('[research] Skipping non-URL query (Firecrawl cannot scrape search engines):', query);"
     },
     {
-      "file": "src/hooks/useCodePlayground.ts",
-      "line": 20,
-      "text": "fetchAPI: { name: 'Fetch API', language: 'typescript', code: `const res = await fetch('https://jsonplaceholder.typicode.com/posts/1');\\nconst data = await res.j"
-    },
-    {
-      "file": "src/hooks/useCommandMenuBuilder.ts",
-      "line": 81,
-      "text": "const itemsCode = m.items.map(i => `  { label: ${JSON.stringify(i.label)}, shortcut: ${JSON.stringify(i.shortcut)}, icon: ${JSON.stringify(i.icon)}, group: ${JS"
-    },
-    {
-      "file": "src/hooks/useFormBuilder.ts",
-      "line": 113,
-      "text": "return `import { useForm } from 'react-hook-form';\\n\\nexport function ${name}Form() {\\n  const { register, handleSubmit } = useForm();\\n  const onSubmit = (data"
-    },
-    {
-      "file": "src/hooks/useOrganization.ts",
-      "line": 14,
-      "text": "console.warn('Failed to send member notification:', err);"
-    },
-    {
       "file": "src/hooks/useRayLiveSignals.ts",
       "line": 35,
       "text": "console.warn(\"[useRayLiveSignals] sync failed\", error);"
-    },
-    {
-      "file": "src/hooks/useSchemaIntrospection.ts",
-      "line": 79,
-      "text": "console.warn('[SchemaIntrospection] Error:', msg);"
-    },
-    {
-      "file": "src/hooks/useToastDesigner.ts",
-      "line": 59,
-      "text": "if (p.hasAction) args.push(`action: { label: '${p.actionLabel}', onClick: () => console.log('action clicked') }`);"
-    },
-    {
-      "file": "src/hooks/useVersionTimeline.ts",
-      "line": 53,
-      "text": "console.warn('[VersionTimeline] IDB save failed:', err);"
-    },
-    {
-      "file": "src/hooks/useWebVitals.ts",
-      "line": 172,
-      "text": "*   onReport: (metric) => console.log(metric),"
     },
     {
       "file": "src/integrations/supabase/client.ts",
@@ -1307,209 +1172,9 @@
   ],
   "hardcodedHex": [
     {
-      "file": "src/components/analytics/OperationalMetrics.tsx",
-      "line": 159,
-      "text": "stroke=\"#3b82f6\""
-    },
-    {
-      "file": "src/components/analytics/OperationalMetrics.tsx",
-      "line": 166,
-      "text": "stroke=\"#10b981\""
-    },
-    {
-      "file": "src/components/billing/UsageTracking.tsx",
-      "line": 214,
-      "text": "<Line type=\"monotone\" dataKey=\"apiCalls\" stroke=\"#3b82f6\" strokeWidth={2} />"
-    },
-    {
-      "file": "src/components/billing/UsageTracking.tsx",
-      "line": 215,
-      "text": "<Line type=\"monotone\" dataKey=\"storage\" stroke=\"#10b981\" strokeWidth={2} />"
-    },
-    {
-      "file": "src/components/billing/UsageTracking.tsx",
-      "line": 216,
-      "text": "<Line type=\"monotone\" dataKey=\"supportHours\" stroke=\"#f59e0b\" strokeWidth={2} />"
-    },
-    {
-      "file": "src/components/billing/UsageTracking.tsx",
-      "line": 217,
-      "text": "<Line type=\"monotone\" dataKey=\"devices\" stroke=\"#8b5cf6\" strokeWidth={2} />"
-    },
-    {
       "file": "src/components/client-portal/ClientPortal.tsx",
       "line": 574,
       "text": "primaryColor: '#0d9488'"
-    },
-    {
-      "file": "src/components/demos/GPTBuilderWizardDemo.tsx",
-      "line": 49,
-      "text": "themeColor: '#2563eb',"
-    },
-    {
-      "file": "src/components/embed/SafePassEmbed.tsx",
-      "line": 39,
-      "text": "primaryColor = '#3b82f6',"
-    },
-    {
-      "file": "src/components/safesuite/MFAOnboardingGate.tsx",
-      "line": 123,
-      "text": "dark: '#000000',"
-    },
-    {
-      "file": "src/components/safesuite/MFAOnboardingGate.tsx",
-      "line": 124,
-      "text": "light: '#ffffff'"
-    },
-    {
-      "file": "src/components/settings/GlobalSettingsHub.tsx",
-      "line": 70,
-      "text": "primaryColor: '#0891b2',"
-    },
-    {
-      "file": "src/components/settings/GlobalSettingsHub.tsx",
-      "line": 71,
-      "text": "secondaryColor: '#7c3aed',"
-    },
-    {
-      "file": "src/components/settings/GlobalSettingsHub.tsx",
-      "line": 72,
-      "text": "accentColor: '#10b981',"
-    },
-    {
-      "file": "src/hooks/useAppStoreAssets.ts",
-      "line": 65,
-      "text": "backgroundColor: '#ffffff',"
-    },
-    {
-      "file": "src/hooks/useAppStoreAssets.ts",
-      "line": 113,
-      "text": "body { font-family: -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; background: #f5f5f7; }"
-    },
-    {
-      "file": "src/hooks/useAppStoreAssets.ts",
-      "line": 119,
-      "text": ".keywords { display: flex; flex-wrap: wrap; gap: 0.5rem; } .keyword { background: #e0e0e0; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; }"
-    },
-    {
-      "file": "src/hooks/useCapacitorExport.ts",
-      "line": 25,
-      "text": "splashColor: '#ffffff',"
-    },
-    {
-      "file": "src/hooks/useChartDashboardBuilder.ts",
-      "line": 63,
-      "text": "color: '#3b82f6',"
-    },
-    {
-      "file": "src/hooks/useChatWidgetBuilder.ts",
-      "line": 19,
-      "text": "primaryColor: '#6366f1',"
-    },
-    {
-      "file": "src/hooks/useChatWidgetBuilder.ts",
-      "line": 102,
-      "text": "<span style={{ display: 'inline-block', padding: '8px 12px', borderRadius: 12, background: m.role === 'user' ? '${config.primaryColor}' : '#f3f4f6', color: m.ro"
-    },
-    {
-      "file": "src/hooks/useChatWidgetBuilder.ts",
-      "line": 109,
-      "text": "<div style={{ padding: 12, borderTop: '1px solid #e5e7eb', display: 'flex', gap: 8 }}>"
-    },
-    {
-      "file": "src/hooks/useChatWidgetBuilder.ts",
-      "line": 110,
-      "text": "<input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMessage()} placeholder=\"${config.placeholder}\" style={{ f"
-    },
-    {
-      "file": "src/hooks/useCollaborationEngine.ts",
-      "line": 61,
-      "text": "'#06b6d4', '#8b5cf6', '#f43f5e', '#22c55e',"
-    },
-    {
-      "file": "src/hooks/useCollaborationEngine.ts",
-      "line": 62,
-      "text": "'#f59e0b', '#3b82f6', '#ec4899', '#14b8a6',"
-    },
-    {
-      "file": "src/hooks/useCollaborationEngine.ts",
-      "line": 63,
-      "text": "'#a855f7', '#ef4444', '#10b981', '#6366f1',"
-    },
-    {
-      "file": "src/hooks/useCollaborativeWhiteboard.ts",
-      "line": 35,
-      "text": "const [strokeColor, setStrokeColor] = useState('#06b6d4');"
-    },
-    {
-      "file": "src/hooks/useColorContrastChecker.ts",
-      "line": 46,
-      "text": "const [fg, setFg] = useState('#ffffff');"
-    },
-    {
-      "file": "src/hooks/useColorContrastChecker.ts",
-      "line": 47,
-      "text": "const [bg, setBg] = useState('#1a1a2e');"
-    },
-    {
-      "file": "src/hooks/useCommentSystem.ts",
-      "line": 49,
-      "text": "authorColor: '#06b6d4',"
-    },
-    {
-      "file": "src/hooks/useEmailTemplateBuilder.ts",
-      "line": 23,
-      "text": "<h1 style=\"color:#6366f1;\">Welcome, {{userName}}! 🎉</h1>"
-    },
-    {
-      "file": "src/hooks/useEmailTemplateBuilder.ts",
-      "line": 25,
-      "text": "<a href=\"{{loginUrl}}\" style=\"display:inline-block;padding:12px 24px;background:#6366f1;color:white;text-decoration:none;border-radius:8px;margin-top:1rem;\">Get"
-    },
-    {
-      "file": "src/hooks/useEmailTemplateBuilder.ts",
-      "line": 35,
-      "text": "<a href=\"{{resetUrl}}\" style=\"display:inline-block;padding:12px 24px;background:#ef4444;color:white;text-decoration:none;border-radius:8px;\">Reset Password</a>"
-    },
-    {
-      "file": "src/hooks/useEmailTemplateBuilder.ts",
-      "line": 45,
-      "text": "<a href=\"{{paymentUrl}}\" style=\"display:inline-block;padding:12px 24px;background:#10b981;color:white;text-decoration:none;border-radius:8px;\">Pay Now</a>"
-    },
-    {
-      "file": "src/hooks/useKPIDashboardBuilder.ts",
-      "line": 26,
-      "text": "color: '#22c55e',"
-    },
-    {
-      "file": "src/hooks/useMSP.ts",
-      "line": 422,
-      "text": "brand_color: mspData.brand_color || '#3b82f6'"
-    },
-    {
-      "file": "src/hooks/useMSP.ts",
-      "line": 557,
-      "text": "primaryColor: msp?.brand_color || '#3b82f6',"
-    },
-    {
-      "file": "src/hooks/useNLToRegex.ts",
-      "line": 35,
-      "text": "const [testInput, setTestInput] = useState('Hello world test@email.com 192.168.1.1 https://example.com #ff0000');"
-    },
-    {
-      "file": "src/hooks/usePaymentIntegration.ts",
-      "line": 107,
-      "text": "${activeProducts.map(p => `      <div style={{ border: '1px solid #e5e7eb', borderRadius: '12px', padding: '2rem', textAlign: 'center' }}>"
-    },
-    {
-      "file": "src/hooks/usePaymentIntegration.ts",
-      "line": 110,
-      "text": "<p style={{ color: '#6b7280' }}>${p.description || 'Get started today'}</p>"
-    },
-    {
-      "file": "src/hooks/usePaymentIntegration.ts",
-      "line": 111,
-      "text": "<button style={{ marginTop: '1.5rem', padding: '0.75rem 2rem', background: '#6366f1', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fo"
     },
     {
       "file": "src/hooks/useProjectFileSystem.ts",
@@ -1520,61 +1185,6 @@
       "file": "src/hooks/useProjectFileSystem.ts",
       "line": 422,
       "text": "const themeColor = linkedGPT.themeColor || '#6366f1';"
-    },
-    {
-      "file": "src/hooks/useProjectRBAC.ts",
-      "line": 79,
-      "text": "avatarColor: ['#06b6d4', '#8b5cf6', '#f43f5e', '#22c55e', '#f59e0b'][members.length % 5],"
-    },
-    {
-      "file": "src/hooks/useRealTimeCoEditing.ts",
-      "line": 34,
-      "text": "participants: [{ userId, email, color: '#06b6d4', cursorPos: 0 }],"
-    },
-    {
-      "file": "src/hooks/useRealTimeCoEditing.ts",
-      "line": 46,
-      "text": "const colors = ['#8b5cf6', '#f59e0b', '#10b981', '#f43f5e', '#3b82f6'];"
-    },
-    {
-      "file": "src/hooks/useRevenueDashboard.ts",
-      "line": 128,
-      "text": "<Bar dataKey=\"amount\" fill=\"#3b82f6\" radius={[4, 4, 0, 0]} />"
-    },
-    {
-      "file": "src/hooks/useScreenShare.ts",
-      "line": 32,
-      "text": "const [annotationColor, setAnnotationColor] = useState('#f43f5e');"
-    },
-    {
-      "file": "src/hooks/useTagCategorySystem.ts",
-      "line": 38,
-      "text": "${config.tagColors ? \"color TEXT DEFAULT '#6366f1',\\n  \" : ''}created_at TIMESTAMPTZ NOT NULL DEFAULT now()"
-    },
-    {
-      "file": "src/hooks/useThemeVariants.ts",
-      "line": 179,
-      "text": "bg: '#ffffff',"
-    },
-    {
-      "file": "src/hooks/useThemeVariants.ts",
-      "line": 180,
-      "text": "fg: '#000000',"
-    },
-    {
-      "file": "src/hooks/useUsageMetering.ts",
-      "line": 118,
-      "text": "<div className=\"h-full rounded-full transition-all\" style={{ width: pct + '%', backgroundColor: pct > 90 ? '#ef4444' : pct > 70 ? '#f59e0b' : '#22c55e' }} />"
-    },
-    {
-      "file": "src/hooks/useVisualDiff.ts",
-      "line": 45,
-      "text": "backgroundColor: '#ffffff',"
-    },
-    {
-      "file": "src/hooks/useVisualDiff.ts",
-      "line": 92,
-      "text": "backgroundColor: '#ffffff',"
     },
     {
       "file": "src/index.css",
@@ -2305,6 +1915,261 @@
       "file": "public/safepass-extension/popup.css",
       "line": 205,
       "text": "background: #1e293b;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 206,
+      "text": "border-bottom: 1px solid #334155;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 217,
+      "text": "color: #64748b;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 226,
+      "text": "background: #334155;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 227,
+      "text": "color: #e2e8f0;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 232,
+      "text": "color: #22d3ee;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 248,
+      "text": "background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 273,
+      "text": "background: #1e293b;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 274,
+      "text": "border: 1px solid #334155;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 276,
+      "text": "color: #e2e8f0;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 283,
+      "text": "background: #334155;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 284,
+      "text": "border-color: #475569;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 290,
+      "text": "color: #f87171;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 302,
+      "text": "color: #22d3ee;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 309,
+      "text": "color: #67e8f9;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 314,
+      "text": "background: #1e293b;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 315,
+      "text": "border-bottom: 1px solid #334155;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 320,
+      "text": "background: #0f172a;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 334,
+      "text": "color: #64748b;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 342,
+      "text": "background: #1e293b;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 351,
+      "text": "background: #334155;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 352,
+      "text": "border-color: #0891b2;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 357,
+      "text": "border-color: #ef4444;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 362,
+      "text": "border-color: #f59e0b;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 369,
+      "text": "background: linear-gradient(135deg, #334155 0%, #1e293b 100%);"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 410,
+      "text": "color: #f87171;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 415,
+      "text": "color: #fbbf24;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 420,
+      "text": "color: #94a3b8;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 441,
+      "text": "color: #22d3ee;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 457,
+      "text": "border-top: 1px solid #334155;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 458,
+      "text": "background: #0f172a;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 482,
+      "text": "background: #1e293b;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 489,
+      "text": "background: #334155;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 500,
+      "text": ".strength-fill.very-weak { width: 20%; background: #ef4444; }"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 501,
+      "text": ".strength-fill.weak { width: 40%; background: #f59e0b; }"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 502,
+      "text": ".strength-fill.fair { width: 60%; background: #eab308; }"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 503,
+      "text": ".strength-fill.strong { width: 80%; background: #22c55e; }"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 504,
+      "text": ".strength-fill.very-strong { width: 100%; background: linear-gradient(90deg, #22c55e, #10b981); }"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 513,
+      "text": ".strength-label.very-weak { color: #ef4444; }"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 514,
+      "text": ".strength-label.weak { color: #f59e0b; }"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 515,
+      "text": ".strength-label.fair { color: #eab308; }"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 516,
+      "text": ".strength-label.strong { color: #22c55e; }"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 517,
+      "text": ".strength-label.very-strong { color: #10b981; }"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 525,
+      "text": "background: #1e293b;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 535,
+      "text": "color: #cbd5e1;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 540,
+      "text": "border-bottom: 1px solid #334155;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 547,
+      "text": "accent-color: #0891b2;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 554,
+      "text": "accent-color: #0891b2;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 560,
+      "text": "color: #64748b;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 582,
+      "text": "background: #1e293b;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 583,
+      "text": "border: 1px solid #334155;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 585,
+      "text": "color: #94a3b8;"
     }
   ],
   "arbitraryColors": []
