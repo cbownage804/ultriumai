@@ -387,15 +387,18 @@ export const SecureNotes = () => {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : filteredNotes.length === 0 ? (
-        <Card className="p-8 text-center">
-          <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-semibold mb-2">No Secure Notes</h3>
-          <p className="text-muted-foreground mb-4">Create your first encrypted note</p>
+        <Card className="p-10 text-center">
+          <FileText className="h-12 w-12 mx-auto mb-4 text-violet-400/70" />
+          <h3 className="text-lg font-semibold mb-2">Keep your private notes with me</h3>
+          <p className="text-muted-foreground mb-5 max-w-sm mx-auto">
+            Wi-Fi passwords, recovery phrases, license keys — anything you'd rather not leave in a plain notes app. I'll encrypt every character before it leaves your device.
+          </p>
           <Button className="bg-primary hover:bg-primary text-black" onClick={() => setIsAddDialogOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
-            Add Note
+            Add your first note
           </Button>
         </Card>
+
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <AnimatePresence>
