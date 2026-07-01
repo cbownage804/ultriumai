@@ -811,7 +811,7 @@ export default function WraythWeb() {
                       <h4 className="text-sm font-medium text-gray-400 mb-2">Exposed Data Types</h4>
                       <div className="flex flex-wrap gap-2">
                         {selectedThreat.threat_indicators.data_classes.map((dataClass: string, i: number) => (
-                          <Badge key={i} variant="outline" className="border-orange-500/30 text-orange-400">
+                          <Badge key={i} variant="outline" className="border-yellow-500/30 text-yellow-400">
                             {dataClass}
                           </Badge>
                         ))}
