@@ -457,15 +457,18 @@ export const CreditCards = () => {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : filteredCards.length === 0 ? (
-        <Card className="p-8 text-center">
-          <CreditCardIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-semibold mb-2">No Cards Saved</h3>
-          <p className="text-muted-foreground mb-4">Add your first payment card</p>
+        <Card className="p-10 text-center">
+          <CreditCardIcon className="h-12 w-12 mx-auto mb-4 text-violet-400/70" />
+          <h3 className="text-lg font-semibold mb-2">Let me autofill your cards at checkout</h3>
+          <p className="text-muted-foreground mb-5 max-w-sm mx-auto">
+            Save a card once and I'll fill it in wherever you shop — no more digging through your wallet. Numbers are encrypted the moment you hit save.
+          </p>
           <Button className="bg-primary hover:bg-primary text-black" onClick={() => setIsAddDialogOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
-            Add Card
+            Add your first card
           </Button>
         </Card>
+
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <AnimatePresence>
