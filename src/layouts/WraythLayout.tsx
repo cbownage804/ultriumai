@@ -7,7 +7,7 @@
  * route paths.
  */
 
-import wraythBrandSidebar from '@/assets/wrayth-brand-sidebar.png.asset.json';
+import wraythBrandSidebar from '@/assets/wrayth-brand-sidebar-white.png.asset.json';
 
 import { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
@@ -174,12 +174,12 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
   return (
     <aside className="flex flex-col h-full bg-card border-r border-border">
       {/* Brand mark */}
-      <div className="h-16 px-5 flex items-center border-b border-border">
+      <div className="h-16 px-5 flex items-center justify-center border-b border-border">
         <Link to={landingPath} className="flex items-center" aria-label="Wrayth">
           <img
             src={wraythBrandSidebar.url}
             alt="Wrayth"
-            className="h-8 w-auto object-contain"
+            className="h-10 w-auto object-contain"
           />
         </Link>
       </div>
