@@ -169,45 +169,47 @@ function SecurityScoreCard({ stats }: { stats: DashboardStats }) {
 }
 
 function QuickActionsCard() {
-  const options = [
-    { to: '/app/passwords', label: 'Save a password' },
-    { to: '/app/threats', label: 'Check an email or file' },
-    { to: '/app/threats', label: 'Scan a website' },
-    { to: '/app/exposure', label: 'Review my exposure' },
-  ];
-
-  const openAskRay = () => {
+  const [value, setValue] = useState('');
+  const submit = () => {
     if (typeof window === 'undefined') return;
+    if (value.trim()) {
+      window.dispatchEvent(new CustomEvent('ray:ask', { detail: value.trim() }));
+    }
+    // Open the Ask Ray palette
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }));
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2 }}
-      className="h-full"
+      transition={{ delay: 0.15 }}
     >
-      <div className="wrayth-chamfer border border-border bg-secondary p-5 sm:p-6 h-full">
-        <div className="flex items-center gap-2 mb-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-          <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-          Ray
+      <div className="wrayth-chamfer border border-border bg-card/40 p-4 sm:p-5">
+        <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+          <motion.span
+            className="h-1.5 w-1.5 rounded-full bg-violet-400"
+            animate={{ opacity: [0.4, 1, 0.4] }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          Ask Ray
         </div>
-        <h3 className="text-base sm:text-lg font-light text-foreground mb-4">What would you like to do?</h3>
-        <div className="space-y-1.5">
-          {options.map((o) => (
-            <Link key={o.label} to={o.to}>
-              <button className="w-full text-left text-sm text-foreground hover:text-primary transition-colors py-2 px-1 border-b border-border last:border-0 min-h-[40px]">
-                <span className="text-muted-foreground mr-2">○</span>{o.label}
-              </button>
-            </Link>
-          ))}
+        <div className="mt-3 flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-violet-300/70 shrink-0" />
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
+            placeholder="Ask Ray anything…"
+            className="flex-1 bg-transparent border-0 outline-none text-sm sm:text-base text-foreground placeholder:text-muted-foreground min-h-[36px]"
+          />
           <button
-            onClick={openAskRay}
-            className="w-full text-left text-sm text-primary hover:text-primary/80 transition-colors py-2 px-1 min-h-[40px]"
+            onClick={submit}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
-            <span className="mr-2">○</span>Ask Ray something…
+            ⌘K
           </button>
         </div>
       </div>
