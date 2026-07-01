@@ -45,7 +45,7 @@ import { AccountHealthPanel } from '@/components/ray/AccountHealthPanel';
 import { useRayLiveSignals } from '@/hooks/useRayLiveSignals';
 import { RayNoticesPanel } from '@/components/ray/RayNoticesPanel';
 import { RayTimeline } from '@/components/ray/RayTimeline';
-import { PasswordProtectionCard } from '@/components/ray/PasswordProtectionCard';
+import { PasswordProtectionCard, PasswordAnalyzingCard } from '@/components/ray/PasswordProtectionCard';
 import { RayWatchingCard } from '@/components/ray/RayWatchingCard';
 import { usePasswordLifecycle } from '@/lib/ray/passwordLifecycle';
 
@@ -400,7 +400,7 @@ const productCardsConfig = [
  * same lifecycle stage instead of showing conflicting CTAs.
  */
 function LifecycleAwareTop({ firstName }: { firstName: string }) {
-  const { stage } = usePasswordLifecycle();
+  const { stage, passwordCount } = usePasswordLifecycle();
   if (stage === 'not_started') {
     // Ray owns ONE recommendation at this stage — the protection card.
     // MorningBrief still greets, but suppresses its recommendations list
@@ -408,6 +408,14 @@ function LifecycleAwareTop({ firstName }: { firstName: string }) {
     return (
       <div data-tour="security-score" className="space-y-4 sm:space-y-6">
         <PasswordProtectionCard />
+        <MorningBriefHero firstName={firstName} showFullBriefLink={false} hideRecommendations />
+      </div>
+    );
+  }
+  if (stage === 'imported') {
+    return (
+      <div data-tour="security-score" className="space-y-4 sm:space-y-6">
+        <PasswordAnalyzingCard count={passwordCount} />
         <MorningBriefHero firstName={firstName} showFullBriefLink={false} hideRecommendations />
       </div>
     );
