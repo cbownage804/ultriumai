@@ -1,0 +1,37 @@
+{
+  "generatedAt": "2026-07-01T15:00:49.247Z",
+  "findings": [
+    {
+      "severity": "P2",
+      "area": "route",
+      "file": "src/pages/onboarding/RayOnboarding.tsx",
+      "line": 1,
+      "message": "List-shaped page has no visible empty-state copy.",
+      "path": "/onboarding/ray"
+    },
+    {
+      "severity": "P1",
+      "area": "route",
+      "file": "src/pages/safesuite/Trends.tsx",
+      "line": 62,
+      "message": "Page calls supabase without try/catch or .catch — errors will surface as unhandled promise rejections.",
+      "path": "/app/trends"
+    },
+    {
+      "severity": "P1",
+      "area": "route",
+      "file": "src/pages/safesuite/Trends.tsx",
+      "line": 1,
+      "message": "Page fetches data but renders no loading state (no isLoading/Skeleton/Spinner).",
+      "path": "/app/trends"
+    },
+    {
+      "severity": "P1",
+      "area": "route",
+      "file": "src/pages/safesuite/SafePassExtension.tsx",
+      "line": 1,
+      "message": "Page fetches data but renders no loading state (no isLoading/Skeleton/Spinner).",
+      "path": "/app/passwords/extension"
+    }
+  ]
+}
