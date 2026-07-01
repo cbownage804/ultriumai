@@ -184,14 +184,19 @@ export function useWraythUsage() {
 }
 
 export function useFeatureAccess() {
-  const { tier } = useWraythSubscription();
+  const { tier, isAdmin } = useWraythSubscription();
   const { usage } = useWraythUsage();
 
   const checkFeatureAccess = useCallback((
     feature: keyof TierFeatures,
     action: 'view' | 'use' = 'use'
   ): { allowed: boolean; reason?: string; limit?: number; used?: number } => {
+    // Admin override: unlimited access to every feature
+    if (isAdmin) {
+      return { allowed: true, limit: -1 };
+    }
     const featureLimit = getFeatureLimit(tier, feature);
+
 
     // Feature not enabled for tier
     if (!featureLimit.enabled) {
