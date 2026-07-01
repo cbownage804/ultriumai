@@ -18,6 +18,8 @@ import { Separator } from '@/components/ui/separator';
 import { Sparkles } from 'lucide-react';
 import { AIRecommendationsDisplay } from '@/components/safeweb/AIRecommendationsDisplay';
 import { RayConversationCard } from '@/components/ray/RayConversationCard';
+import { ExposureVaultImpact } from '@/components/ray/ExposureVaultImpact';
+
 import { RayPageHeader } from '@/components/ray/RayPageHeader';
 import {
   Globe,
