@@ -409,6 +409,14 @@ export default function WraythWeb() {
           title="Exposure"
           question="Which of your identities should I keep watch over?"
           description="I monitor the open and dark web for leaked emails, credentials, and personal data — and let you know the moment something surfaces."
+          explain={{
+            title: 'Where Ray looks for exposure',
+            bullets: [
+              'Public breach corpora (HIBP and equivalents) for email and password appearances.',
+              'Dark-web paste and forum feeds for credential dumps tied to your identities.',
+              'Historical breach records so you can see when and where an identity was first exposed.',
+            ],
+          }}
           right={
             <Button variant="outline" onClick={() => loadData()} className="border-primary/30 text-primary hover:bg-primary/10">
               <RefreshCw className="h-4 w-4 mr-2" />
