@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-07-01T13:37:42.891Z",
+  "generatedAt": "2026-07-01T13:39:26.767Z",
   "totals": {
-    "filesScanned": 479,
+    "filesScanned": 460,
     "legacyBrand": 196,
     "todos": 10,
     "consoles": 95,
     "hardcodedHex": 450,
     "arbitraryColors": 0,
-    "anyTypes": 153
+    "anyTypes": 150
   },
   "legacyBrand": [
     {
