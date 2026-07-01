@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-07-01T14:10:02.809Z",
+  "generatedAt": "2026-07-01T14:12:00.308Z",
   "totals": {
     "filesScanned": 367,
-    "legacyBrand": 150,
+    "legacyBrand": 142,
     "todos": 3,
     "consoles": 74,
     "hardcodedHex": 279,
@@ -386,21 +386,6 @@
       "text": "\"prod_TsPhrnVrS2CTEI\": \"safesuite_enterprise\", // SafeSuite Enterprise"
     },
     {
-      "file": "supabase/functions/get-billing-data/index.ts",
-      "line": 17,
-      "text": "'prod_TnSxL9TgGCz1jI': { name: 'SafeSuite Pro', product: 'safesuite' },"
-    },
-    {
-      "file": "supabase/functions/get-billing-data/index.ts",
-      "line": 18,
-      "text": "'prod_TnSxu5PsRCLf38': { name: 'SafeSuite Business', product: 'safesuite' },"
-    },
-    {
-      "file": "supabase/functions/get-billing-data/index.ts",
-      "line": 19,
-      "text": "'prod_TsQkzLTz3wBSa2': { name: 'SafeSuite Enterprise', product: 'safesuite' },"
-    },
-    {
       "file": "supabase/functions/ray-chat/index.ts",
       "line": 125,
       "text": "- Refer to the product as Wrayth. Never reference \"SafeSuite,\" \"SafeAssist,\" \"SafePass,\" \"SafeScan,\" \"SafeWeb,\" \"SafeTrack,\" \"Vanguard,\" \"AI Studio,\" or \"Ultriu"
@@ -462,11 +447,6 @@
     },
     {
       "file": "supabase/functions/safesuite-checkout/index.ts",
-      "line": 148,
-      "text": "message: `Successfully upgraded to SafeSuite ${tier.charAt(0).toUpperCase() + tier.slice(1)}`,"
-    },
-    {
-      "file": "supabase/functions/safesuite-checkout/index.ts",
       "line": 158,
       "text": "// No existing SafeSuite subscription - create new checkout session"
     },
@@ -499,26 +479,6 @@
       "file": "supabase/functions/stripe-webhook/index.ts",
       "line": 15,
       "text": "// Map SafeSuite tier to user_product_access level"
-    },
-    {
-      "file": "public/manifest.json",
-      "line": 86,
-      "text": "\"name\": \"SafePass\","
-    },
-    {
-      "file": "public/manifest.json",
-      "line": 87,
-      "text": "\"short_name\": \"SafePass\","
-    },
-    {
-      "file": "public/manifest.json",
-      "line": 93,
-      "text": "\"name\": \"SafeScan\","
-    },
-    {
-      "file": "public/manifest.json",
-      "line": 94,
-      "text": "\"short_name\": \"SafeScan\","
     },
     {
       "file": "public/safepass-extension/background.js",

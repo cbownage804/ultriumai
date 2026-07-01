@@ -14,10 +14,10 @@ const logStep = (step: string, details?: any) => {
 
 // Product ID to name mapping
 const PRODUCT_NAMES: Record<string, { name: string; product: string }> = {
-  'prod_TnSxL9TgGCz1jI': { name: 'SafeSuite Pro', product: 'safesuite' },
-  'prod_TnSxu5PsRCLf38': { name: 'SafeSuite Business', product: 'safesuite' },
-  'prod_TsQkzLTz3wBSa2': { name: 'SafeSuite Enterprise', product: 'safesuite' },
-  'prod_TsQme3v03oM1uh': { name: 'AI Studio Enterprise', product: 'ai_studio' },
+  'prod_TnSxL9TgGCz1jI': { name: 'Wrayth Pro', product: 'wrayth' },
+  'prod_TnSxu5PsRCLf38': { name: 'Wrayth Business', product: 'wrayth' },
+  'prod_TsQkzLTz3wBSa2': { name: 'Wrayth Enterprise', product: 'wrayth' },
+  'prod_TsQme3v03oM1uh': { name: 'Wrayth Enterprise', product: 'wrayth' },
 };
 
 const handler = async (req: Request): Promise<Response> => {

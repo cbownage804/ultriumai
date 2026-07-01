@@ -1,7 +1,7 @@
 {
-  "name": "UltriumAI - Built for Business. Secure by Design",
-  "short_name": "UltriumAI",
-  "description": "AI-powered knowledge management and cybersecurity solutions for businesses, MSPs, and MSSPs. Build custom AI agents, automate operations, and protect your organization.",
+  "name": "Wrayth — Your AI cybersecurity teammate",
+  "short_name": "Wrayth",
+  "description": "Wrayth is an AI cybersecurity teammate powered by Ray. Protect passwords with Vault, analyze threats with Scan, and monitor identity exposure with Watch.",
   "start_url": "/",
   "id": "/",
   "display": "standalone",
@@ -57,43 +57,43 @@
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "UltriumAI Dashboard"
+      "label": "Wrayth Dashboard"
     },
     {
       "src": "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png",
       "sizes": "750x1334",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "UltriumAI Mobile"
+      "label": "Wrayth Mobile"
     }
   ],
   "shortcuts": [
     {
       "name": "Dashboard",
       "short_name": "Dashboard",
-      "description": "Access your UltriumAI dashboard",
-      "url": "/hub",
+      "description": "Ray's daily briefing",
+      "url": "/app/dashboard",
       "icons": [{ "src": "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png", "sizes": "192x192" }]
     },
     {
-      "name": "AI Studio",
-      "short_name": "AI Studio",
-      "description": "Build custom AI agents",
-      "url": "/ai-studio",
+      "name": "Vault",
+      "short_name": "Vault",
+      "description": "Password vault",
+      "url": "/app/vault",
       "icons": [{ "src": "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png", "sizes": "192x192" }]
     },
     {
-      "name": "SafePass",
-      "short_name": "SafePass",
-      "description": "Password management",
-      "url": "/safepass",
+      "name": "Scan",
+      "short_name": "Scan",
+      "description": "Email & file analysis",
+      "url": "/app/scan",
       "icons": [{ "src": "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png", "sizes": "192x192" }]
     },
     {
-      "name": "SafeScan",
-      "short_name": "SafeScan",
-      "description": "Threat scanning",
-      "url": "/safescan",
+      "name": "Watch",
+      "short_name": "Watch",
+      "description": "Identity protection",
+      "url": "/app/watch",
       "icons": [{ "src": "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png", "sizes": "192x192" }]
     }
   ],
