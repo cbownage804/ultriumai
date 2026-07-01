@@ -49,7 +49,7 @@ export function deriveStage(
  */
 export function usePasswordLifecycle(): PasswordLifecycle {
   const { user } = useAuth();
-  const { entries, loading: vaultLoading } = useVault();
+  const { entries, isLoading: vaultLoading } = useVault();
   const [signals, setSignals] = useState<AnalysisSignals>({
     hasScore: false,
     activeFindings: 0,
