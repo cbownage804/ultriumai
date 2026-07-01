@@ -103,6 +103,6 @@ export default function TrustCenter() {
           </p>
         </Section>
       </div>
-    </div>
+    </PageMotion>
   );
 }
