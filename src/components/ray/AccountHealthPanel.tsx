@@ -27,10 +27,11 @@ import {
 type HealthRow = { provider: string; score: number; last_completed_at: string | null };
 
 function scoreTone(score: number) {
-  if (score >= 85) return 'bg-emerald-400';
-  if (score >= 60) return 'bg-amber-400';
-  return 'bg-rose-400';
+  if (score >= 85) return 'bg-green-500';
+  if (score >= 60) return 'bg-yellow-500';
+  return 'bg-red-500';
 }
+
 
 function ProviderRow({ provider, score, lastDone }: { provider: SecureProvider; score: number; lastDone: string | null }) {
   const isLow = score < 60;
