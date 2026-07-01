@@ -56,7 +56,7 @@ import {
   Scale,
 } from 'lucide-react';
 import { AppSwitcher } from '@/components/AppSwitcher';
-import { HelpCenter } from '@/components/onboarding/HelpCenter';
+
 import { cn } from '@/lib/utils';
 import { AskRayPalette } from '@/components/ray/AskRayPalette';
 import { RayContextProvider } from '@/components/ray/RayContext';
