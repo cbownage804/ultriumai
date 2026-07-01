@@ -8,7 +8,7 @@
  */
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Chrome, FileText, KeyRound, ShieldCheck, Wallet } from 'lucide-react';
+import { ArrowRight, Chrome, FileText, KeyRound, Loader2, ShieldCheck, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface Props {
