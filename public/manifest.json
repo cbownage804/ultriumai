@@ -1,7 +1,7 @@
 {
-  "name": "UltriumAI - Built for Business. Secure by Design",
-  "short_name": "UltriumAI",
-  "description": "AI-powered knowledge management and cybersecurity solutions for businesses, MSPs, and MSSPs. Build custom AI agents, automate operations, and protect your organization.",
+  "name": "Wrayth — Your AI cybersecurity teammate",
+  "short_name": "Wrayth",
+  "description": "Wrayth is an AI cybersecurity teammate powered by Ray. Protect passwords with Vault, analyze threats with Scan, and monitor identity exposure with Watch.",
   "start_url": "/",
   "id": "/",
   "display": "standalone",
