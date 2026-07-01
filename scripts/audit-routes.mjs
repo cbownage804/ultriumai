@@ -45,7 +45,7 @@ for (const route of routes) {
   // supabase.<something>(...) without a surrounding try / catch or .catch()
   const supaCalls = [...src.matchAll(/supabase\.\w[\w.]*\s*\(/g)];
   if (supaCalls.length > 0) {
-    const hasErrorHandling = /\.catch\s*\(|try\s*\{[\s\S]*?catch\s*\(/.test(src);
+    const hasErrorHandling = /\.catch\s*\(|try\s*\{[\s\S]*?\}\s*catch\s*[\(\{]/.test(src);
     if (!hasErrorHandling) {
       findings.push({
         severity: 'P1',
