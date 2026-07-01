@@ -220,6 +220,6 @@ export default function Integrations() {
           <CardDescription>2-Step coverage, admin count, sharing posture. Tell Ray you want it and we'll line it up.</CardDescription>
         </CardHeader>
       </Card>
-    </div>
+    </PageMotion>
   );
 }
