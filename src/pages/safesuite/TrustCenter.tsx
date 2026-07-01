@@ -8,12 +8,18 @@ import { ExplainThis } from '@/components/ray/ExplainThis';
 import { Eye, EyeOff, Lock, KeyRound, Clock, Brain, ShieldCheck } from 'lucide-react';
 
 function Section({
-  icon: Icon, title, children,
-}: { icon: React.ComponentType<{ className?: string }>; title: string; children: React.ReactNode }) {
+  icon: Icon, title, explain, children,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  explain?: { title: string; body?: string; bullets?: string[] };
+  children: React.ReactNode;
+}) {
   return (
     <section className="rounded-md border border-border bg-card/40 p-5">
       <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-        <Icon className="h-3.5 w-3.5" /> {title}
+        <Icon className="h-3.5 w-3.5" /> <span className="flex-1">{title}</span>
+        {explain && <ExplainThis {...explain} />}
       </div>
       <div className="mt-3 text-sm text-foreground/90 leading-relaxed space-y-2">{children}</div>
     </section>
@@ -22,7 +28,7 @@ function Section({
 
 export default function TrustCenter() {
   return (
-    <div className="flex flex-col gap-6">
+    <PageMotion className="flex flex-col gap-6">
       <RayPageHeader
         title="Why you can trust Ray"
         subtitle="How Ray protects your data"
