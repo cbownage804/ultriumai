@@ -65,7 +65,7 @@ serve(async (req) => {
       supabase.from("password_entries").select("id,password_strength").eq("user_id", user.id),
       supabase.from("safeweb_assets").select("id,asset_type,status").eq("user_id", user.id).eq("status", "active"),
       supabase.from("ray_insights").select("kind,area,severity,title,observed_at,status").eq("user_id", user.id).eq("status", "open").order("observed_at", { ascending: false }).limit(50),
-      supabase.from("ray_recommendations").select("id,title,body,priority,page_context").eq("user_id", user.id).eq("status", "open").order("priority", { ascending: false }).limit(8),
+      supabase.from("ray_recommendations").select("id,title,body,priority,page_context,objective").eq("user_id", user.id).eq("status", "open").order("priority", { ascending: false }).limit(8),
       supabase.from("ray_briefings").select("id").eq("user_id", user.id).order("generated_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
 
