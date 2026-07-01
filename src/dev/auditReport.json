@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-07-01T14:04:15.434Z",
+  "generatedAt": "2026-07-01T14:06:25.664Z",
   "totals": {
-    "filesScanned": 452,
+    "filesScanned": 438,
     "legacyBrand": 156,
     "todos": 10,
     "consoles": 92,
-    "hardcodedHex": 446,
+    "hardcodedHex": 330,
     "arbitraryColors": 0,
-    "anyTypes": 135
+    "anyTypes": 131
   },
   "legacyBrand": [
     {
@@ -1307,221 +1307,6 @@
   ],
   "hardcodedHex": [
     {
-      "file": "src/components/TeamAnalytics.tsx",
-      "line": 41,
-      "text": "const COLORS = ['#3b82f6', '#8b5cf6', '#ef4444', '#f97316', '#eab308', '#22c55e'];"
-    },
-    {
-      "file": "src/components/TeamAnalytics.tsx",
-      "line": 289,
-      "text": "stroke=\"#3b82f6\""
-    },
-    {
-      "file": "src/components/TeamAnalytics.tsx",
-      "line": 296,
-      "text": "stroke=\"#8b5cf6\""
-    },
-    {
-      "file": "src/components/TeamAnalytics.tsx",
-      "line": 317,
-      "text": "<Bar dataKey=\"conversations\" fill=\"#3b82f6\" name=\"Conversations\" />"
-    },
-    {
-      "file": "src/components/VisualReportDisplay.tsx",
-      "line": 56,
-      "text": "primary: '#3b82f6',"
-    },
-    {
-      "file": "src/components/VisualReportDisplay.tsx",
-      "line": 57,
-      "text": "secondary: '#1e40af',"
-    },
-    {
-      "file": "src/components/VisualReportDisplay.tsx",
-      "line": 58,
-      "text": "success: '#10b981',"
-    },
-    {
-      "file": "src/components/VisualReportDisplay.tsx",
-      "line": 59,
-      "text": "warning: '#f59e0b',"
-    },
-    {
-      "file": "src/components/VisualReportDisplay.tsx",
-      "line": 60,
-      "text": "danger: '#ef4444',"
-    },
-    {
-      "file": "src/components/VisualReportDisplay.tsx",
-      "line": 61,
-      "text": "dark: '#1f2937',"
-    },
-    {
-      "file": "src/components/VisualReportDisplay.tsx",
-      "line": 62,
-      "text": "background: '#0f172a'"
-    },
-    {
-      "file": "src/components/VisualReportDisplay.tsx",
-      "line": 101,
-      "text": "el.style.color = '#1f2937'; // Dark gray for readability"
-    },
-    {
-      "file": "src/components/VisualReportDisplay.tsx",
-      "line": 107,
-      "text": "backgroundColor: '#ffffff',"
-    },
-    {
-      "file": "src/components/VisualReportDisplay.tsx",
-      "line": 470,
-      "text": "fill=\"#8884d8\""
-    },
-    {
-      "file": "src/components/VisualReportDisplay.tsx",
-      "line": 493,
-      "text": "<CartesianGrid strokeDasharray=\"3 3\" stroke=\"#374151\" />"
-    },
-    {
-      "file": "src/components/VisualReportDisplay.tsx",
-      "line": 494,
-      "text": "<XAxis dataKey=\"category\" stroke=\"#9ca3af\" />"
-    },
-    {
-      "file": "src/components/VisualReportDisplay.tsx",
-      "line": 495,
-      "text": "<YAxis stroke=\"#9ca3af\" />"
-    },
-    {
-      "file": "src/components/WhiteLabelCustomizer.tsx",
-      "line": 52,
-      "text": "primary: \"#3b82f6\","
-    },
-    {
-      "file": "src/components/WhiteLabelCustomizer.tsx",
-      "line": 53,
-      "text": "secondary: \"#64748b\","
-    },
-    {
-      "file": "src/components/WhiteLabelCustomizer.tsx",
-      "line": 54,
-      "text": "accent: \"#10b981\","
-    },
-    {
-      "file": "src/components/WhiteLabelCustomizer.tsx",
-      "line": 55,
-      "text": "background: \"#ffffff\","
-    },
-    {
-      "file": "src/components/WhiteLabelCustomizer.tsx",
-      "line": 56,
-      "text": "foreground: \"#0f172a\""
-    },
-    {
-      "file": "src/components/analytics/ExecutiveDashboard.tsx",
-      "line": 32,
-      "text": "{ name: 'MSP Clients', value: 45, color: '#8884d8' },"
-    },
-    {
-      "file": "src/components/analytics/ExecutiveDashboard.tsx",
-      "line": 33,
-      "text": "{ name: 'Direct SMBs', value: 30, color: '#82ca9d' },"
-    },
-    {
-      "file": "src/components/analytics/ExecutiveDashboard.tsx",
-      "line": 34,
-      "text": "{ name: 'Enterprise', value: 20, color: '#ffc658' },"
-    },
-    {
-      "file": "src/components/analytics/ExecutiveDashboard.tsx",
-      "line": 35,
-      "text": "{ name: 'Internal Depts', value: 5, color: '#ff7300' }"
-    },
-    {
-      "file": "src/components/analytics/ExecutiveDashboard.tsx",
-      "line": 159,
-      "text": "stroke=\"#3b82f6\""
-    },
-    {
-      "file": "src/components/analytics/ExecutiveDashboard.tsx",
-      "line": 161,
-      "text": "dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}"
-    },
-    {
-      "file": "src/components/analytics/ExecutiveDashboard.tsx",
-      "line": 166,
-      "text": "stroke=\"#94a3b8\""
-    },
-    {
-      "file": "src/components/analytics/ExecutiveDashboard.tsx",
-      "line": 169,
-      "text": "dot={{ fill: '#94a3b8', strokeWidth: 2, r: 3 }}"
-    },
-    {
-      "file": "src/components/analytics/ExecutiveDashboard.tsx",
-      "line": 195,
-      "text": "fill=\"#8884d8\""
-    },
-    {
-      "file": "src/components/analytics/FinancialAnalytics.tsx",
-      "line": 40,
-      "text": "{ name: 'Personnel', value: 320000, color: '#8884d8' },"
-    },
-    {
-      "file": "src/components/analytics/FinancialAnalytics.tsx",
-      "line": 41,
-      "text": "{ name: 'Software & Tools', value: 85000, color: '#82ca9d' },"
-    },
-    {
-      "file": "src/components/analytics/FinancialAnalytics.tsx",
-      "line": 42,
-      "text": "{ name: 'Infrastructure', value: 45000, color: '#ffc658' },"
-    },
-    {
-      "file": "src/components/analytics/FinancialAnalytics.tsx",
-      "line": 43,
-      "text": "{ name: 'Marketing', value: 25000, color: '#ff7300' },"
-    },
-    {
-      "file": "src/components/analytics/FinancialAnalytics.tsx",
-      "line": 44,
-      "text": "{ name: 'Other', value: 15000, color: '#8dd1e1' }"
-    },
-    {
-      "file": "src/components/analytics/FinancialAnalytics.tsx",
-      "line": 141,
-      "text": "<Bar dataKey=\"revenue\" fill=\"#3b82f6\" name=\"revenue\" />"
-    },
-    {
-      "file": "src/components/analytics/FinancialAnalytics.tsx",
-      "line": 142,
-      "text": "<Bar dataKey=\"expenses\" fill=\"#ef4444\" name=\"expenses\" />"
-    },
-    {
-      "file": "src/components/analytics/FinancialAnalytics.tsx",
-      "line": 143,
-      "text": "<Bar dataKey=\"profit\" fill=\"#10b981\" name=\"profit\" />"
-    },
-    {
-      "file": "src/components/analytics/FinancialAnalytics.tsx",
-      "line": 168,
-      "text": "fill=\"#8884d8\""
-    },
-    {
-      "file": "src/components/analytics/FinancialAnalytics.tsx",
-      "line": 208,
-      "text": "<Bar dataKey=\"inflow\" fill=\"#10b981\" />"
-    },
-    {
-      "file": "src/components/analytics/FinancialAnalytics.tsx",
-      "line": 209,
-      "text": "<Bar dataKey=\"outflow\" fill=\"#ef4444\" />"
-    },
-    {
-      "file": "src/components/analytics/FinancialAnalytics.tsx",
-      "line": 210,
-      "text": "<Line dataKey=\"net\" stroke=\"#3b82f6\" strokeWidth={2} />"
-    },
-    {
       "file": "src/components/analytics/OperationalMetrics.tsx",
       "line": 159,
       "text": "stroke=\"#3b82f6\""
@@ -1530,36 +1315,6 @@
       "file": "src/components/analytics/OperationalMetrics.tsx",
       "line": 166,
       "text": "stroke=\"#10b981\""
-    },
-    {
-      "file": "src/components/analytics/PredictiveAnalytics.tsx",
-      "line": 169,
-      "text": "stroke=\"#3b82f6\""
-    },
-    {
-      "file": "src/components/analytics/PredictiveAnalytics.tsx",
-      "line": 177,
-      "text": "stroke=\"#10b981\""
-    },
-    {
-      "file": "src/components/analytics/PredictiveAnalytics.tsx",
-      "line": 212,
-      "text": "stroke=\"#10b981\""
-    },
-    {
-      "file": "src/components/analytics/PredictiveAnalytics.tsx",
-      "line": 213,
-      "text": "fill=\"#10b981\""
-    },
-    {
-      "file": "src/components/analytics/PredictiveAnalytics.tsx",
-      "line": 220,
-      "text": "stroke=\"#3b82f6\""
-    },
-    {
-      "file": "src/components/analytics/PredictiveAnalytics.tsx",
-      "line": 221,
-      "text": "fill=\"#3b82f6\""
     },
     {
       "file": "src/components/billing/UsageTracking.tsx",
@@ -1585,76 +1340,6 @@
       "file": "src/components/client-portal/ClientPortal.tsx",
       "line": 574,
       "text": "primaryColor: '#0d9488'"
-    },
-    {
-      "file": "src/components/demos/AIStudioProductDemo.tsx",
-      "line": 179,
-      "text": "themeColor: '#2563eb',"
-    },
-    {
-      "file": "src/components/demos/AIStudioProductDemo.tsx",
-      "line": 210,
-      "text": "const [selectedColor, setSelectedColor] = useState('#2563eb');"
-    },
-    {
-      "file": "src/components/demos/AIStudioProductDemo.tsx",
-      "line": 299,
-      "text": "{ value: '#2563eb', name: 'Blue' },"
-    },
-    {
-      "file": "src/components/demos/AIStudioProductDemo.tsx",
-      "line": 300,
-      "text": "{ value: '#10b981', name: 'Emerald' },"
-    },
-    {
-      "file": "src/components/demos/AIStudioProductDemo.tsx",
-      "line": 301,
-      "text": "{ value: '#8b5cf6', name: 'Violet' },"
-    },
-    {
-      "file": "src/components/demos/AIStudioProductDemo.tsx",
-      "line": 302,
-      "text": "{ value: '#f59e0b', name: 'Amber' },"
-    },
-    {
-      "file": "src/components/demos/CustomGPTBuilderDemo.tsx",
-      "line": 54,
-      "text": "const [brandColor, setBrandColor] = useState('#2563eb');"
-    },
-    {
-      "file": "src/components/demos/CustomGPTBuilderDemo.tsx",
-      "line": 86,
-      "text": "themeColor: '#2563eb',"
-    },
-    {
-      "file": "src/components/demos/CustomGPTBuilderDemo.tsx",
-      "line": 104,
-      "text": "themeColor: '#16a34a',"
-    },
-    {
-      "file": "src/components/demos/CustomGPTBuilderDemo.tsx",
-      "line": 122,
-      "text": "themeColor: '#9333ea',"
-    },
-    {
-      "file": "src/components/demos/CustomGPTBuilderDemo.tsx",
-      "line": 140,
-      "text": "themeColor: '#ea580c',"
-    },
-    {
-      "file": "src/components/demos/CustomGPTBuilderDemo.tsx",
-      "line": 158,
-      "text": "themeColor: '#0891b2',"
-    },
-    {
-      "file": "src/components/demos/CustomGPTBuilderDemo.tsx",
-      "line": 176,
-      "text": "themeColor: '#d97706',"
-    },
-    {
-      "file": "src/components/demos/CustomGPTBuilderDemo.tsx",
-      "line": 354,
-      "text": "placeholder=\"#2563eb\""
     },
     {
       "file": "src/components/demos/GPTBuilderWizardDemo.tsx",
@@ -1797,101 +1482,6 @@
       "text": "color: '#22c55e',"
     },
     {
-      "file": "src/hooks/useLayoutGridEditor.ts",
-      "line": 34,
-      "text": "{ name: 'header', gridColumn: '1 / -1', gridRow: '1', backgroundColor: '#e2e8f0' },"
-    },
-    {
-      "file": "src/hooks/useLayoutGridEditor.ts",
-      "line": 35,
-      "text": "{ name: 'sidebar', gridColumn: '1', gridRow: '2', backgroundColor: '#f1f5f9' },"
-    },
-    {
-      "file": "src/hooks/useLayoutGridEditor.ts",
-      "line": 36,
-      "text": "{ name: 'main', gridColumn: '2 / 4', gridRow: '2', backgroundColor: '#ffffff' },"
-    },
-    {
-      "file": "src/hooks/useLayoutGridEditor.ts",
-      "line": 37,
-      "text": "{ name: 'footer', gridColumn: '1 / -1', gridRow: '3', backgroundColor: '#e2e8f0' },"
-    },
-    {
-      "file": "src/hooks/useLayoutGridEditor.ts",
-      "line": 46,
-      "text": "{ name: 'left', gridColumn: '1', gridRow: '1', backgroundColor: '#f1f5f9' },"
-    },
-    {
-      "file": "src/hooks/useLayoutGridEditor.ts",
-      "line": 47,
-      "text": "{ name: 'right', gridColumn: '2', gridRow: '1', backgroundColor: '#ffffff' },"
-    },
-    {
-      "file": "src/hooks/useLayoutGridEditor.ts",
-      "line": 56,
-      "text": "{ name: 'header', gridColumn: '1 / -1', gridRow: '1', backgroundColor: '#1e293b', content: 'Header' },"
-    },
-    {
-      "file": "src/hooks/useLayoutGridEditor.ts",
-      "line": 57,
-      "text": "{ name: 'sidebar', gridColumn: '1', gridRow: '2 / 4', backgroundColor: '#f1f5f9', content: 'Sidebar' },"
-    },
-    {
-      "file": "src/hooks/useLayoutGridEditor.ts",
-      "line": 58,
-      "text": "{ name: 'widget1', gridColumn: '2', gridRow: '2', backgroundColor: '#dbeafe', content: 'Widget 1' },"
-    },
-    {
-      "file": "src/hooks/useLayoutGridEditor.ts",
-      "line": 59,
-      "text": "{ name: 'widget2', gridColumn: '3', gridRow: '2', backgroundColor: '#dcfce7', content: 'Widget 2' },"
-    },
-    {
-      "file": "src/hooks/useLayoutGridEditor.ts",
-      "line": 60,
-      "text": "{ name: 'widget3', gridColumn: '4', gridRow: '2', backgroundColor: '#fef3c7', content: 'Widget 3' },"
-    },
-    {
-      "file": "src/hooks/useLayoutGridEditor.ts",
-      "line": 61,
-      "text": "{ name: 'main', gridColumn: '2 / -1', gridRow: '3', backgroundColor: '#ffffff', content: 'Main Content' },"
-    },
-    {
-      "file": "src/hooks/useLayoutGridEditor.ts",
-      "line": 70,
-      "text": "{ name: 'a', gridColumn: '1', gridRow: '1 / 3', backgroundColor: '#dbeafe' },"
-    },
-    {
-      "file": "src/hooks/useLayoutGridEditor.ts",
-      "line": 71,
-      "text": "{ name: 'b', gridColumn: '2', gridRow: '1', backgroundColor: '#dcfce7' },"
-    },
-    {
-      "file": "src/hooks/useLayoutGridEditor.ts",
-      "line": 72,
-      "text": "{ name: 'c', gridColumn: '3', gridRow: '1 / 3', backgroundColor: '#fef3c7' },"
-    },
-    {
-      "file": "src/hooks/useLayoutGridEditor.ts",
-      "line": 73,
-      "text": "{ name: 'd', gridColumn: '2', gridRow: '2 / 4', backgroundColor: '#fce7f3' },"
-    },
-    {
-      "file": "src/hooks/useLayoutGridEditor.ts",
-      "line": 74,
-      "text": "{ name: 'e', gridColumn: '1', gridRow: '3 / 5', backgroundColor: '#e0e7ff' },"
-    },
-    {
-      "file": "src/hooks/useLayoutGridEditor.ts",
-      "line": 75,
-      "text": "{ name: 'f', gridColumn: '3', gridRow: '3', backgroundColor: '#f3e8ff' },"
-    },
-    {
-      "file": "src/hooks/useLayoutGridEditor.ts",
-      "line": 107,
-      "text": "const area: GridArea = { id: crypto.randomUUID(), name: 'area', gridColumn: '1', gridRow: '1', backgroundColor: '#f1f5f9' };"
-    },
-    {
       "file": "src/hooks/useMSP.ts",
       "line": 422,
       "text": "brand_color: mspData.brand_color || '#3b82f6'"
@@ -1902,64 +1492,9 @@
       "text": "primaryColor: msp?.brand_color || '#3b82f6',"
     },
     {
-      "file": "src/hooks/useMarkdownPreview.ts",
-      "line": 97,
-      "text": "body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; color: #1a1a2e; }"
-    },
-    {
-      "file": "src/hooks/useMarkdownPreview.ts",
-      "line": 99,
-      "text": "code { background: #f4f4f5; padding: 0.2em 0.4em; border-radius: 3px; font-size: 0.9em; }"
-    },
-    {
-      "file": "src/hooks/useMarkdownPreview.ts",
-      "line": 100,
-      "text": "pre code { display: block; padding: 1em; overflow-x: auto; background: #1a1a2e; color: #e0e0e0; border-radius: 6px; }"
-    },
-    {
-      "file": "src/hooks/useMarkdownPreview.ts",
-      "line": 101,
-      "text": "blockquote { border-left: 4px solid #0ea5e9; margin: 0; padding: 0.5em 1em; color: #555; }"
-    },
-    {
-      "file": "src/hooks/useMarkdownPreview.ts",
-      "line": 104,
-      "text": "th { background: #f4f4f5; }"
-    },
-    {
       "file": "src/hooks/useNLToRegex.ts",
       "line": 35,
       "text": "const [testInput, setTestInput] = useState('Hello world test@email.com 192.168.1.1 https://example.com #ff0000');"
-    },
-    {
-      "file": "src/hooks/useNotificationCenterGenerator.ts",
-      "line": 21,
-      "text": "{ id: '1', name: 'info', icon: 'Info', color: '#3b82f6', enabled: true },"
-    },
-    {
-      "file": "src/hooks/useNotificationCenterGenerator.ts",
-      "line": 22,
-      "text": "{ id: '2', name: 'success', icon: 'CheckCircle', color: '#22c55e', enabled: true },"
-    },
-    {
-      "file": "src/hooks/useNotificationCenterGenerator.ts",
-      "line": 23,
-      "text": "{ id: '3', name: 'warning', icon: 'AlertTriangle', color: '#f59e0b', enabled: true },"
-    },
-    {
-      "file": "src/hooks/useNotificationCenterGenerator.ts",
-      "line": 24,
-      "text": "{ id: '4', name: 'error', icon: 'XCircle', color: '#ef4444', enabled: true },"
-    },
-    {
-      "file": "src/hooks/useNotificationCenterGenerator.ts",
-      "line": 25,
-      "text": "{ id: '5', name: 'mention', icon: 'AtSign', color: '#8b5cf6', enabled: true },"
-    },
-    {
-      "file": "src/hooks/useNotificationCenterGenerator.ts",
-      "line": 50,
-      "text": "types: [...prev.types, { id: crypto.randomUUID(), name, icon: 'Bell', color: '#6b7280', enabled: true }],"
     },
     {
       "file": "src/hooks/usePaymentIntegration.ts",
@@ -2002,36 +1537,6 @@
       "text": "const colors = ['#8b5cf6', '#f59e0b', '#10b981', '#f43f5e', '#3b82f6'];"
     },
     {
-      "file": "src/hooks/useResponsiveBreakpointEditor.ts",
-      "line": 21,
-      "text": "{ id: 'xs', name: 'Mobile S', minWidth: 320, maxWidth: 374, icon: '📱', color: '#f43f5e' },"
-    },
-    {
-      "file": "src/hooks/useResponsiveBreakpointEditor.ts",
-      "line": 22,
-      "text": "{ id: 'sm', name: 'Mobile', minWidth: 375, maxWidth: 639, icon: '📱', color: '#f97316' },"
-    },
-    {
-      "file": "src/hooks/useResponsiveBreakpointEditor.ts",
-      "line": 23,
-      "text": "{ id: 'md', name: 'Tablet', minWidth: 640, maxWidth: 767, icon: '📋', color: '#eab308' },"
-    },
-    {
-      "file": "src/hooks/useResponsiveBreakpointEditor.ts",
-      "line": 24,
-      "text": "{ id: 'lg', name: 'Laptop', minWidth: 768, maxWidth: 1023, icon: '💻', color: '#22c55e' },"
-    },
-    {
-      "file": "src/hooks/useResponsiveBreakpointEditor.ts",
-      "line": 25,
-      "text": "{ id: 'xl', name: 'Desktop', minWidth: 1024, maxWidth: 1279, icon: '🖥️', color: '#06b6d4' },"
-    },
-    {
-      "file": "src/hooks/useResponsiveBreakpointEditor.ts",
-      "line": 26,
-      "text": "{ id: '2xl', name: 'Wide', minWidth: 1280, maxWidth: 1920, icon: '🖥️', color: '#8b5cf6' },"
-    },
-    {
       "file": "src/hooks/useRevenueDashboard.ts",
       "line": 128,
       "text": "<Bar dataKey=\"amount\" fill=\"#3b82f6\" radius={[4, 4, 0, 0]} />"
@@ -2045,31 +1550,6 @@
       "file": "src/hooks/useTagCategorySystem.ts",
       "line": 38,
       "text": "${config.tagColors ? \"color TEXT DEFAULT '#6366f1',\\n  \" : ''}created_at TIMESTAMPTZ NOT NULL DEFAULT now()"
-    },
-    {
-      "file": "src/hooks/useTeamActivityFeed.ts",
-      "line": 35,
-      "text": "userId: 'self', userName, userColor: '#06b6d4',"
-    },
-    {
-      "file": "src/hooks/useTeamActivityFeed.ts",
-      "line": 44,
-      "text": "userId: 'self', userName, userColor: '#06b6d4',"
-    },
-    {
-      "file": "src/hooks/useTeamActivityFeed.ts",
-      "line": 51,
-      "text": "userId: 'self', userName, userColor: '#06b6d4',"
-    },
-    {
-      "file": "src/hooks/useTeamActivityFeed.ts",
-      "line": 58,
-      "text": "userId: 'self', userName, userColor: '#06b6d4',"
-    },
-    {
-      "file": "src/hooks/useTeamActivityFeed.ts",
-      "line": 65,
-      "text": "userId: 'self', userName, userColor: '#06b6d4',"
     },
     {
       "file": "src/hooks/useThemeVariants.ts",
@@ -2232,66 +1712,6 @@
       "text": "width: 200, margin: 2, color: { dark: '#000000', light: '#ffffff' },"
     },
     {
-      "file": "src/utils/pdfExport.ts",
-      "line": 34,
-      "text": "primary: '#7c3aed', // violet-600"
-    },
-    {
-      "file": "src/utils/pdfExport.ts",
-      "line": 35,
-      "text": "danger: '#ef4444',"
-    },
-    {
-      "file": "src/utils/pdfExport.ts",
-      "line": 36,
-      "text": "warning: '#f59e0b',"
-    },
-    {
-      "file": "src/utils/pdfExport.ts",
-      "line": 37,
-      "text": "success: '#22c55e',"
-    },
-    {
-      "file": "src/utils/pdfExport.ts",
-      "line": 38,
-      "text": "muted: '#6b7280',"
-    },
-    {
-      "file": "src/utils/pdfExport.ts",
-      "line": 39,
-      "text": "background: '#f9fafb'"
-    },
-    {
-      "file": "src/utils/pdfExport.ts",
-      "line": 132,
-      "text": "critical: '#ef4444',"
-    },
-    {
-      "file": "src/utils/pdfExport.ts",
-      "line": 133,
-      "text": "high: '#f59e0b',"
-    },
-    {
-      "file": "src/utils/pdfExport.ts",
-      "line": 134,
-      "text": "medium: '#eab308',"
-    },
-    {
-      "file": "src/utils/pdfExport.ts",
-      "line": 135,
-      "text": "low: '#22c55e'"
-    },
-    {
-      "file": "src/utils/pdfExport.ts",
-      "line": 138,
-      "text": "doc.setFillColor(severityColors[threat.severity] || '#6b7280');"
-    },
-    {
-      "file": "src/utils/pdfExport.ts",
-      "line": 195,
-      "text": "doc.setTextColor(asset.threatsFound > 0 ? '#ef4444' : '#22c55e');"
-    },
-    {
       "file": "supabase/functions/ms-graph-oauth-callback/index.ts",
       "line": 12,
       "text": "<style>body{background:#0b0b10;color:#e8e8ef;font-family:ui-sans-serif,system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}.c"
@@ -2305,6 +1725,586 @@
       "file": "supabase/functions/send-auth-email/index.ts",
       "line": 28,
       "text": "body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: #0a0a0a; }"
+    },
+    {
+      "file": "supabase/functions/send-auth-email/index.ts",
+      "line": 30,
+      "text": ".card { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; padding: 40px; border: 1px solid #2a2a4a; }"
+    },
+    {
+      "file": "supabase/functions/send-auth-email/index.ts",
+      "line": 33,
+      "text": ".brand-name { color: #ffffff; font-size: 20px; font-weight: 700; margin-top: 12px; }"
+    },
+    {
+      "file": "supabase/functions/send-auth-email/index.ts",
+      "line": 34,
+      "text": ".brand-tagline { color: #71717a; font-size: 12px; margin-top: 4px; }"
+    },
+    {
+      "file": "supabase/functions/send-auth-email/index.ts",
+      "line": 35,
+      "text": "h1 { color: #ffffff; font-size: 24px; margin: 0 0 16px 0; }"
+    },
+    {
+      "file": "supabase/functions/send-auth-email/index.ts",
+      "line": 36,
+      "text": "p { color: #a1a1aa; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; }"
+    },
+    {
+      "file": "supabase/functions/send-auth-email/index.ts",
+      "line": 37,
+      "text": ".button { display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #ffffff !important; text-decoration: none; padding: 14px 32px; bo"
+    },
+    {
+      "file": "supabase/functions/send-auth-email/index.ts",
+      "line": 39,
+      "text": ".footer { text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #2a2a4a; }"
+    },
+    {
+      "file": "supabase/functions/send-auth-email/index.ts",
+      "line": 40,
+      "text": ".footer p { color: #71717a; font-size: 12px; }"
+    },
+    {
+      "file": "supabase/functions/send-auth-email/index.ts",
+      "line": 41,
+      "text": ".highlight { color: #8b5cf6; }"
+    },
+    {
+      "file": "supabase/functions/send-auth-email/index.ts",
+      "line": 42,
+      "text": ".warning { background: #422006; border: 1px solid #854d0e; border-radius: 8px; padding: 16px; margin: 16px 0; }"
+    },
+    {
+      "file": "supabase/functions/send-auth-email/index.ts",
+      "line": 43,
+      "text": ".warning p { color: #fbbf24; margin: 0; font-size: 14px; }"
+    },
+    {
+      "file": "supabase/functions/send-auth-email/index.ts",
+      "line": 192,
+      "text": "<span style=\"background: #3b82f620; color: #60a5fa; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 500;\">AI Studio</span>"
+    },
+    {
+      "file": "supabase/functions/send-auth-email/index.ts",
+      "line": 193,
+      "text": "<span style=\"color: #a1a1aa; font-size: 14px; margin-left: 8px;\">Build custom GPTs and AI agents</span>"
+    },
+    {
+      "file": "supabase/functions/send-auth-email/index.ts",
+      "line": 196,
+      "text": "<span style=\"background: #8b5cf620; color: #a78bfa; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 500;\">Wrayth</span>"
+    },
+    {
+      "file": "supabase/functions/send-auth-email/index.ts",
+      "line": 197,
+      "text": "<span style=\"color: #a1a1aa; font-size: 14px; margin-left: 8px;\">Enterprise security tools & password vault</span>"
+    },
+    {
+      "file": "supabase/functions/send-auth-email/index.ts",
+      "line": 200,
+      "text": "<span style=\"background: #10b98120; color: #34d399; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 500;\">Vanguard</span>"
+    },
+    {
+      "file": "supabase/functions/send-auth-email/index.ts",
+      "line": 201,
+      "text": "<span style=\"color: #a1a1aa; font-size: 14px; margin-left: 8px;\">Endpoint security & compliance monitoring</span>"
+    },
+    {
+      "file": "supabase/functions/serve-preview/index.ts",
+      "line": 169,
+      "text": "body { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #0a0a14; color: #fff; font-family: system-ui, sans-serif; }"
+    },
+    {
+      "file": "supabase/functions/serve-preview/index.ts",
+      "line": 171,
+      "text": "h1 { font-size: 4rem; font-weight: 800; background: linear-gradient(135deg, #8b5cf6, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transpare"
+    },
+    {
+      "file": "supabase/functions/serve-preview/index.ts",
+      "line": 173,
+      "text": "a { color: #8b5cf6; text-decoration: none; }"
+    },
+    {
+      "file": "public/manifest.json",
+      "line": 9,
+      "text": "\"background_color\": \"#0a0a0a\","
+    },
+    {
+      "file": "public/manifest.json",
+      "line": 10,
+      "text": "\"theme_color\": \"#8b5cf6\","
+    },
+    {
+      "file": "public/preview-sw.js",
+      "line": 81,
+      "text": "font-family: system-ui; background: #0a0a12; color: #888; }"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 12,
+      "text": "color: #f4f4f5;"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 32,
+      "text": "background: #a1a1aa;"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 35,
+      "text": ".wrayth-cbar-dot[data-level=\"ok\"]     { background: #22c55e; }"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 36,
+      "text": ".wrayth-cbar-dot[data-level=\"info\"]   { background: #8b5cf6; animation: wrayth-pulse 2.2s ease-in-out infinite; }"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 37,
+      "text": ".wrayth-cbar-dot[data-level=\"warn\"]   { background: #eab308; }"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 38,
+      "text": ".wrayth-cbar-dot[data-level=\"danger\"] { background: #ef4444; animation: wrayth-pulse 1.4s ease-in-out infinite; }"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 49,
+      "text": "color: #a1a1aa;"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 54,
+      "text": ".wrayth-cbar-x:hover { color: #fafafa; background: rgba(255,255,255,.08); }"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 71,
+      "text": "color: #f4f4f5;"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 90,
+      "text": "background: radial-gradient(circle at 50% 50%, #a78bfa 0 30%, #1a1a20 35% 100%);"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 93,
+      "text": ".wrayth-panel-head[data-level=\"danger\"] .wrayth-panel-eye { background: radial-gradient(circle at 50% 50%, #ef4444 0 30%, #1a1a20 35% 100%); }"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 94,
+      "text": ".wrayth-panel-head[data-level=\"warn\"]   .wrayth-panel-eye { background: radial-gradient(circle at 50% 50%, #eab308 0 30%, #1a1a20 35% 100%); }"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 95,
+      "text": ".wrayth-panel-head[data-level=\"ok\"]     .wrayth-panel-eye { background: radial-gradient(circle at 50% 50%, #22c55e 0 30%, #1a1a20 35% 100%); }"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 96,
+      "text": ".wrayth-panel-host { font-weight: 600; font-size: 12.5px; color: #d4d4d8; }"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 97,
+      "text": ".wrayth-panel-headline { font-size: 13.5px; color: #fafafa; margin-top: 2px; }"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 102,
+      "text": "color: #a1a1aa; margin-bottom: 4px;"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 105,
+      "text": ".wrayth-panel-section li { margin: 3px 0; color: #e4e4e7; }"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 113,
+      "text": "color: #f4f4f5;"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 118,
+      "text": ".wrayth-panel-btn-primary { background: #7c3aed; }"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 119,
+      "text": ".wrayth-panel-btn-primary:hover { background: #8b5cf6; }"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 132,
+      "text": "color: #ede9fe;"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 149,
+      "text": "background: rgba(34,197,94,.15); color: #bbf7d0;"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 153,
+      "text": "background: rgba(234,179,8,.18); color: #fde68a; border-color: rgba(234,179,8,.4);"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 156,
+      "text": "background: rgba(239,68,68,.2); color: #fecaca; border-color: rgba(239,68,68,.45);"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 158,
+      "text": ".wrayth-review-risk { font-size: 11.5px; color: #a1a1aa; }"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 159,
+      "text": ".wrayth-review-risk strong { color: #fafafa; text-transform: capitalize; margin-left: 2px; }"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 160,
+      "text": ".wrayth-review-summary { margin: 0; color: #e4e4e7; }"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 167,
+      "text": "color: #c4b5fd;"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 170,
+      "text": ".wrayth-next-step p { margin: 4px 0 0; color: #fafafa; }"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 171,
+      "text": ".wrayth-teach { color: #a1a1aa; font-size: 11.5px; margin-top: 4px; }"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 175,
+      "text": "font-size: 11.5px; color: #d4d4d8; cursor: pointer;"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 178,
+      "text": ".wrayth-teach-toggle input { accent-color: #8b5cf6; }"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 205,
+      "text": "color: #f4f4f5;"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 216,
+      "text": ".wrayth-concept-tip-title { font-weight: 700; color: #ede9fe; margin-bottom: 4px; }"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 217,
+      "text": ".wrayth-concept-tip-body { color: #e4e4e7; }"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 218,
+      "text": ".wrayth-concept-tip-why { margin-top: 6px; color: #c4b5fd; font-size: 11.5px; }"
+    },
+    {
+      "file": "public/safepass-extension/content/ray-overlay.css",
+      "line": 224,
+      "text": "color: #71717a;"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 16,
+      "text": "background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 38,
+      "text": "background: #1e293b;"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 39,
+      "text": "border: 1px solid #334155;"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 68,
+      "text": "color: #e2e8f0;"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 69,
+      "text": "background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 83,
+      "text": "border-bottom: 1px solid #334155;"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 96,
+      "text": "border-left: 3px solid #3b82f6;"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 104,
+      "text": "background: linear-gradient(135deg, #334155 0%, #1e293b 100%);"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 128,
+      "text": "color: #e2e8f0;"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 140,
+      "text": "color: #94a3b8;"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 187,
+      "text": "color: #f87171;"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 192,
+      "text": "color: #fbbf24;"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 198,
+      "text": "background: #0f172a;"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 199,
+      "text": "border-top: 1px solid #334155;"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 208,
+      "text": "background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 228,
+      "text": "background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 257,
+      "text": "background: #1e293b;"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 262,
+      "text": "background: #475569;"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 267,
+      "text": "background: #64748b;"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 278,
+      "text": ".safepass-strength-dot.strong { background: #22c55e; }"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 279,
+      "text": ".safepass-strength-dot.medium { background: #f59e0b; }"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 280,
+      "text": ".safepass-strength-dot.weak { background: #ef4444; }"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 304,
+      "text": "background: #1e293b;"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 305,
+      "text": "border: 1px solid #334155;"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 317,
+      "text": "background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 357,
+      "text": "color: #e2e8f0;"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 366,
+      "text": "color: #94a3b8;"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 390,
+      "text": "background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 400,
+      "text": "background: #334155;"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 401,
+      "text": "color: #94a3b8;"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 405,
+      "text": "background: #475569;"
+    },
+    {
+      "file": "public/safepass-extension/content.css",
+      "line": 406,
+      "text": "color: #e2e8f0;"
+    },
+    {
+      "file": "public/safepass-extension/content.js",
+      "line": 516,
+      "text": "? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'"
+    },
+    {
+      "file": "public/safepass-extension/content.js",
+      "line": 518,
+      "text": "? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'"
+    },
+    {
+      "file": "public/safepass-extension/content.js",
+      "line": 519,
+      "text": ": 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)';"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 11,
+      "text": "background: #0f172a;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 12,
+      "text": "color: #e2e8f0;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 30,
+      "text": "background: linear-gradient(135deg, #0891b2 0%, #06b6d4 50%, #0e7490 100%);"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 74,
+      "text": "background: #334155;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 75,
+      "text": "color: #94a3b8;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 79,
+      "text": "background: #475569;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 80,
+      "text": "color: #e2e8f0;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 98,
+      "text": "border: 2px solid #0891b2;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 100,
+      "text": "color: #22d3ee;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 124,
+      "text": "color: #64748b;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 133,
+      "text": "background: #334155;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 142,
+      "text": "color: #94a3b8;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 150,
+      "text": "color: #64748b;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 155,
+      "text": "background: #1e293b;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 159,
+      "text": "border: 1px solid #334155;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 171,
+      "text": "background: #1e293b;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 172,
+      "text": "border: 1px solid #334155;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 174,
+      "text": "color: #e2e8f0;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 193,
+      "text": "border-color: #0891b2;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 199,
+      "text": "color: #64748b;"
+    },
+    {
+      "file": "public/safepass-extension/popup.css",
+      "line": 205,
+      "text": "background: #1e293b;"
     }
   ],
   "arbitraryColors": []
