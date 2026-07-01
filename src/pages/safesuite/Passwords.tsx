@@ -20,6 +20,8 @@ import { RayConversationCard } from '@/components/ray/RayConversationCard';
 import { RayPageHeader } from '@/components/ray/RayPageHeader';
 import { PasswordProtectionCard, PasswordHealthyCard, PasswordAnalyzingCard } from '@/components/ray/PasswordProtectionCard';
 import { usePasswordLifecycle } from '@/lib/ray/passwordLifecycle';
+import { VaultTabs } from '@/components/safepass/VaultTabs';
+
 
 function PasswordsHeaderAndOnboarding() {
   const { stage, passwordCount } = usePasswordLifecycle();
@@ -181,7 +183,9 @@ export default function PasswordsPage() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
+              <VaultTabs />
               <PasswordsHeaderAndOnboarding />
+
 
               <RayConversationCard context="passwords" />
 
