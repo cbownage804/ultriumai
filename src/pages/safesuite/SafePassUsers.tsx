@@ -250,7 +250,7 @@ const VaultUsers = () => {
 
       toast.success(`Password reset email sent to ${actionDialog.user.email}`);
       setActionDialog({ open: false, type: null, user: null, loading: false });
-    } catch (error: unknown) {
+    } catch (error: any) {
       console.error('Password reset error:', error);
       toast.error(error.message || "Failed to send password reset email");
     } finally {
@@ -277,7 +277,7 @@ const VaultUsers = () => {
       toast.success(`MFA has been reset for ${actionDialog.user.full_name}`);
       setActionDialog({ open: false, type: null, user: null, loading: false });
       loadUsers();
-    } catch (error: unknown) {
+    } catch (error: any) {
       console.error('MFA reset error:', error);
       toast.error(error.message || "Failed to reset MFA");
     } finally {
@@ -306,7 +306,7 @@ const VaultUsers = () => {
       toast.success(`User ${newStatus ? 'activated' : 'deactivated'} successfully`);
       setActionDialog({ open: false, type: null, user: null, loading: false });
       loadUsers();
-    } catch (error: unknown) {
+    } catch (error: any) {
       console.error('Status toggle error:', error);
       toast.error(error.message || "Failed to update user status");
     } finally {
@@ -332,7 +332,7 @@ const VaultUsers = () => {
 
       toast.success(`Invitation resent to ${actionDialog.user.email}`);
       setActionDialog({ open: false, type: null, user: null, loading: false });
-    } catch (error: unknown) {
+    } catch (error: any) {
       console.error('Invite error:', error);
       toast.error(error.message || "Failed to send invitation");
     } finally {
@@ -366,7 +366,7 @@ const VaultUsers = () => {
       setNewUserName("");
       setNewUserRole("user");
       loadUsers();
-    } catch (error: unknown) {
+    } catch (error: any) {
       console.error('Add user error:', error);
       toast.error(error.message || "Failed to invite user");
     } finally {
