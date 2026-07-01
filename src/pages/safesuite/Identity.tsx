@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { RayPageHeader } from '@/components/ray/RayPageHeader';
 import { RayConversationCard } from '@/components/ray/RayConversationCard';
+import { IdentityGraphPanel } from '@/components/ray/IdentityGraphPanel';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -83,6 +84,8 @@ export default function Identity() {
       />
 
       <RayConversationCard context="identity" />
+
+      <IdentityGraphPanel assets={assets} primaryEmail={user?.email ?? null} />
 
       {/* Primary identity */}
       <section className="rounded-2xl border border-border bg-card/40 p-5 sm:p-6">
