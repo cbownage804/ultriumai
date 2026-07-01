@@ -88,7 +88,7 @@ type NavSection = {
 function getSections(opts?: { hasOrg?: boolean; isMSP?: boolean }): NavSection[] {
   const main: NavItem[] = [
     { label: 'Home',     path: getWraythPath('/dashboard'), icon: Home },
-    { label: 'Passwords', path: getWraythPath('/passwords'), icon: KeyRound, feature: 'vault' },
+    { label: 'Vault',     path: getWraythPath('/passwords'), icon: KeyRound, feature: 'vault' },
     { label: 'Threats',   path: getWraythPath('/threats'),   icon: ShieldAlert, feature: 'scan' },
     { label: 'Exposure',  path: getWraythPath('/exposure'),  icon: Globe, feature: 'watch' },
   ];

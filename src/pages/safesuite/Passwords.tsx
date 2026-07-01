@@ -153,23 +153,26 @@ export default function PasswordsPage() {
               className="max-w-md mx-auto py-8"
             >
               <div className="rounded-2xl border border-border bg-card/60 backdrop-blur-sm p-6 sm:p-8">
-                <div className="mx-auto mb-6 h-12 w-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-                  <Lock className="h-5 w-5 text-primary" />
-                </div>
                 <MasterPasswordSetup
                   isCreating={isSettingUp}
                   onMasterPasswordSet={handleMasterPasswordSet}
                   onCancel={() => {
                     if (!isSettingUp) setShowMasterPasswordSetup(false);
                   }}
-                  title={isSettingUp ? 'Create your master password' : 'Welcome back'}
+                  title={isSettingUp ? 'Create your master password' : 'Welcome back.'}
                   description={
                     isSettingUp
-                      ? "Ray will use this to encrypt your passwords. It can't be recovered, so choose carefully."
-                      : 'Enter your master password and Ray will unlock your passwords.'
+                      ? "This is the one password only you know. Ray uses it to encrypt everything in your vault — and it can't be recovered."
+                      : 'Your vault is encrypted. Only your master password can unlock it.'
                   }
                 />
+                <p className="mt-6 text-center text-xs text-muted-foreground/80 leading-relaxed">
+                  Ray cannot see your master password.<br />
+                  Everything is encrypted on your device before it leaves.
+                </p>
               </div>
+
+
             </motion.div>
           ) : (
             <motion.div
