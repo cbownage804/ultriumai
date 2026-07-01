@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-07-01T13:22:05.482Z",
+  "generatedAt": "2026-07-01T13:22:29.091Z",
   "totals": {
-    "filesScanned": 867,
+    "filesScanned": 860,
     "legacyBrand": 196,
     "todos": 10,
-    "consoles": 100,
+    "consoles": 99,
     "hardcodedHex": 470,
     "arbitraryColors": 0,
-    "anyTypes": 233
+    "anyTypes": 205
   },
   "legacyBrand": [
     {
@@ -1138,11 +1138,6 @@
       "file": "src/hooks/useOrganization.ts",
       "line": 14,
       "text": "console.warn('Failed to send member notification:', err);"
-    },
-    {
-      "file": "src/hooks/usePluginRegistry.ts",
-      "line": 428,
-      "text": "console.warn(`Plugin ${pluginId} hook ${hook} error:`, e);"
     },
     {
       "file": "src/hooks/useRayLiveSignals.ts",
