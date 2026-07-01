@@ -107,27 +107,54 @@ export function PasswordHealthyCard() {
 }
 
 /**
- * PasswordAnalyzingCard — shown right after import while Ray is
- * scoring the vault. Keeps the user oriented instead of jumping
- * straight into recommendations.
+ * PasswordAnalyzingCard — a *transient* status shown for a few seconds
+ * after import, then it self-dismisses. We never leave a permanent
+ * "analyzing" banner sitting on Home — that starts to feel like fake
+ * activity. Sequence: analyzing (3.5s) → finished (2.5s) → hidden.
  */
 export function PasswordAnalyzingCard({ count }: { count: number }) {
+  const [phase, setPhase] = useState<'analyzing' | 'finished' | 'gone'>('analyzing');
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setPhase('finished'), 3500);
+    const t2 = setTimeout(() => setPhase('gone'), 6000);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+
+  if (phase === 'gone') return null;
+
+  const isDone = phase === 'finished';
   return (
     <motion.section
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -4 }}
       transition={{ duration: 0.4 }}
-      className="relative overflow-hidden rounded-2xl border border-violet-400/15 bg-violet-500/[0.04] p-5 sm:p-6"
+      className={
+        'relative overflow-hidden rounded-2xl border p-5 sm:p-6 ' +
+        (isDone
+          ? 'border-emerald-400/15 bg-emerald-500/[0.03]'
+          : 'border-violet-400/15 bg-violet-500/[0.04]')
+      }
     >
-      <div className="flex items-center gap-2 text-violet-300/90 text-[11px] uppercase tracking-[0.18em]">
-        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        Analyzing
+      <div
+        className={
+          'flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] ' +
+          (isDone ? 'text-emerald-300/90' : 'text-violet-300/90')
+        }
+      >
+        {isDone ? <ShieldCheck className="h-3.5 w-3.5" /> : <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+        {isDone ? 'Review complete' : 'Analyzing'}
       </div>
       <p className="mt-2 text-base sm:text-lg font-light text-foreground">
-        Reviewing {count.toLocaleString()} {count === 1 ? 'password' : 'passwords'}.
+        {isDone
+          ? 'Ray finished reviewing your passwords.'
+          : `Reviewing ${count.toLocaleString()} ${count === 1 ? 'password' : 'passwords'}.`}
       </p>
       <p className="mt-1 text-sm text-muted-foreground">
-        I'm checking for breaches, weak passwords, and reuse. This usually takes a moment.
+        {isDone
+          ? 'Everything looks healthy.'
+          : "I'm checking for breaches, weak passwords, and reuse."}
       </p>
     </motion.section>
   );
