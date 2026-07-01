@@ -53,7 +53,7 @@ const RayMFAHub = lazy(() => import('@/pages/safesuite/RayMFAHub'));
 const VaultHealth = lazy(() => import('@/pages/safesuite/SafePassHealth'));
 const VaultUsers = lazy(() => import('@/pages/safesuite/SafePassUsers'));
 const WraythPricing = lazy(() => import('@/pages/pricing/SafeSuitePricing'));
-const WraythAssist = lazy(() => import('@/pages/safesuite/SafeSuiteAssist'));
+
 const Ray = lazy(() => import('@/pages/safesuite/Ray'));
 const Identity = lazy(() => import('@/pages/safesuite/Identity'));
 const Devices = lazy(() => import('@/pages/safesuite/Devices'));
