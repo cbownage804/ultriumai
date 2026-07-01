@@ -264,6 +264,41 @@ export const PasswordHealthDashboard = () => {
     );
   }
 
+  if (stats.total === 0) {
+    return (
+      <Card className="p-10 text-center">
+        <Shield className="h-12 w-12 mx-auto mb-4 text-muted-foreground/70" />
+        <h3 className="text-lg font-semibold mb-2">Nothing to review yet</h3>
+        <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+          Once you save your first password, I'll analyze it here and let you know if anything needs your attention.
+        </p>
+      </Card>
+    );
+  }
+
+  // Ray's narrated review — the "screenshot moment" summary.
+  const riskLevel: 'LOW' | 'MODERATE' | 'HIGH' =
+    healthScore >= 80 ? 'LOW' : healthScore >= 50 ? 'MODERATE' : 'HIGH';
+  const riskColor =
+    riskLevel === 'LOW'
+      ? 'text-emerald-400'
+      : riskLevel === 'MODERATE'
+      ? 'text-amber-400'
+      : 'text-red-400';
+  const reviewLines = [
+    `${stats.total} password${stats.total === 1 ? '' : 's'} reviewed`,
+    stats.weak === 0
+      ? 'No weak passwords'
+      : `${stats.weak} weak password${stats.weak === 1 ? '' : 's'} found`,
+    stats.reused === 0
+      ? 'No reused passwords'
+      : `${stats.reused} reused password${stats.reused === 1 ? '' : 's'} found`,
+    stats.old === 0
+      ? 'Nothing overdue for rotation'
+      : `${stats.old} password${stats.old === 1 ? '' : 's'} over 6 months old`,
+    issues.length === 0 ? 'No immediate action needed' : `${issues.length} item${issues.length === 1 ? '' : 's'} worth your attention`,
+  ];
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -285,6 +320,49 @@ export const PasswordHealthDashboard = () => {
           {scanning ? 'Scanning...' : 'Rescan'}
         </Button>
       </div>
+
+      {/* Ray's narrated review — the "screenshot moment" */}
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="wrayth-chamfer border border-violet-500/20 bg-gradient-to-br from-violet-500/[0.06] via-card to-card p-5 sm:p-6"
+      >
+        <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-violet-300/80">
+          <motion.span
+            aria-hidden
+            className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400"
+            animate={{ opacity: [0.35, 1, 0.35], scale: [1, 1.15, 1] }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          Review complete
+        </div>
+        <p className="mt-2 text-sm text-foreground/90">
+          Here's what I found in your vault.
+        </p>
+        <ul className="mt-4 space-y-1.5">
+          {reviewLines.map((line, i) => (
+            <motion.li
+              key={i}
+              initial={{ opacity: 0, x: -4 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3, delay: 0.06 * i }}
+              className="flex items-start gap-2 text-sm text-foreground/85"
+            >
+              <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-400 shrink-0" />
+              <span>{line}</span>
+            </motion.li>
+          ))}
+        </ul>
+        <div className="mt-5 flex items-center justify-between border-t border-white/5 pt-4">
+          <div>
+            <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Estimated risk</div>
+            <div className={`text-2xl font-semibold tracking-tight ${riskColor}`}>{riskLevel}</div>
+          </div>
+          <p className="text-xs text-muted-foreground italic">I'll keep watching.</p>
+        </div>
+      </motion.div>
+
 
       {/* Health Score */}
       <Card className="overflow-hidden">
