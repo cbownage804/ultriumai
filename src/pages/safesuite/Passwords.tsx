@@ -153,33 +153,25 @@ export default function PasswordsPage() {
               className="max-w-md mx-auto py-8"
             >
               <div className="rounded-2xl border border-border bg-card/60 backdrop-blur-sm p-6 sm:p-8">
-                <div className="mx-auto mb-6 h-14 w-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-                  <Lock className="h-6 w-6 text-primary" />
-                </div>
-                <div className="text-center mb-6 space-y-2">
-                  <h2 className="text-2xl font-light tracking-tight">
-                    {isSettingUp ? 'Create your master password' : 'Welcome back.'}
-                  </h2>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {isSettingUp
-                      ? "This is the one password only you know. Ray uses it to encrypt everything in your vault — and it can't be recovered."
-                      : 'Your vault is encrypted. Only your master password can unlock it.'}
-                  </p>
-                </div>
                 <MasterPasswordSetup
                   isCreating={isSettingUp}
                   onMasterPasswordSet={handleMasterPasswordSet}
                   onCancel={() => {
                     if (!isSettingUp) setShowMasterPasswordSetup(false);
                   }}
-                  title=""
-                  description=""
+                  title={isSettingUp ? 'Create your master password' : 'Welcome back.'}
+                  description={
+                    isSettingUp
+                      ? "This is the one password only you know. Ray uses it to encrypt everything in your vault — and it can't be recovered."
+                      : 'Your vault is encrypted. Only your master password can unlock it.'
+                  }
                 />
                 <p className="mt-6 text-center text-xs text-muted-foreground/80 leading-relaxed">
                   Ray cannot see your master password.<br />
                   Everything is encrypted on your device before it leaves.
                 </p>
               </div>
+
 
             </motion.div>
           ) : (
