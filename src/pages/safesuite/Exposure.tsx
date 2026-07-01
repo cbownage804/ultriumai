@@ -352,7 +352,7 @@ export default function WraythWeb() {
     switch (severity?.toLowerCase()) {
       case 'critical': return 'bg-red-600 text-white';
       case 'high': return 'bg-red-500 text-white';
-      case 'medium': return 'bg-orange-500 text-white';
+      case 'medium': return 'bg-yellow-500 text-black';
       case 'low': return 'bg-yellow-500 text-black';
       default: return 'bg-gray-500 text-white';
     }
@@ -811,7 +811,7 @@ export default function WraythWeb() {
                       <h4 className="text-sm font-medium text-gray-400 mb-2">Exposed Data Types</h4>
                       <div className="flex flex-wrap gap-2">
                         {selectedThreat.threat_indicators.data_classes.map((dataClass: string, i: number) => (
-                          <Badge key={i} variant="outline" className="border-orange-500/30 text-orange-400">
+                          <Badge key={i} variant="outline" className="border-yellow-500/30 text-yellow-400">
                             {dataClass}
                           </Badge>
                         ))}

@@ -77,11 +77,16 @@ export function RayConversationCard({ context, healthyLine, className }: Props) 
           {top && (
             <div className="mt-4 space-y-3">
               <div>
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/25 bg-violet-500/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-violet-200 mb-1.5">
+                  <Eye className="h-2.5 w-2.5" />
+                  Ray recommends
+                </div>
                 <div className="text-sm font-medium text-slate-100">{top.title}</div>
                 {top.body && (
                   <div className="text-sm text-slate-400 mt-0.5 leading-relaxed">{top.body}</div>
                 )}
               </div>
+
 
               <div className="flex flex-wrap items-center gap-3">
                 <Button

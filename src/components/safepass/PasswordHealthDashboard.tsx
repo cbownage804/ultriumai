@@ -227,7 +227,7 @@ export const PasswordHealthDashboard = () => {
       case 'warning':
         return <AlertTriangle className="h-4 w-4 text-primary" />;
       default:
-        return <Clock className="h-4 w-4 text-blue-500" />;
+        return <Clock className="h-4 w-4 text-violet-400" />;
     }
   };
 

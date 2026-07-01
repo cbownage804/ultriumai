@@ -23,11 +23,12 @@ const TONE_DOT: Record<AnswerTone, string> = {
 
 const KIND_TONE: Record<RaySearchResult['kind'], string> = {
   password: 'text-violet-300 border-violet-400/30',
-  identity: 'text-sky-300 border-sky-400/30',
+  identity: 'text-slate-300 border-slate-500/30',
   threat: 'text-red-300 border-red-400/30',
-  recommendation: 'text-amber-300 border-amber-400/30',
+  recommendation: 'text-yellow-300 border-yellow-400/30',
   event: 'text-slate-300 border-slate-500/30',
 };
+
 
 function isQuestionish(q: string): boolean {
   const t = q.trim();
