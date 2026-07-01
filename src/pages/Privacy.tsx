@@ -58,7 +58,7 @@ const Privacy = () => {
                 </div>
                 <div className="bg-muted/50 p-3 rounded-lg">
                   <h4 className="font-medium text-sm mb-1">Wrayth</h4>
-                  <p className="text-xs text-muted-foreground">Vault, Scan, Watch, SafeTrack, SafeAssist</p>
+                  <p className="text-xs text-muted-foreground">Vault, Scan, and Watch, SafeAssist</p>
                 </div>
                 <div className="bg-muted/50 p-3 rounded-lg">
                   <h4 className="font-medium text-sm mb-1">Business Tools</h4>

@@ -164,7 +164,7 @@ export default function ScanProduct() {
             Scan is Included with Wrayth
           </h2>
           <p className="text-gray-400 mb-6 sm:mb-8 text-sm sm:text-base px-4">
-            Get Scan plus Vault, Watch, and SafeTrack — all in one unified security suite.
+            Get Scan plus Vault, and Watch — all in one unified security suite.
           </p>
           <Link to="/auth?tab=signup">
             <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 text-black gap-2 touch-target">
