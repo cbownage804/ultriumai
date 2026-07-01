@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-07-01T14:53:29.230Z",
+  "generatedAt": "2026-07-01T14:53:38.168Z",
   "totals": {
     "filesScanned": 324,
     "legacyBrand": 1,
     "todos": 3,
     "consoles": 0,
-    "hardcodedHex": 3,
+    "hardcodedHex": 0,
     "arbitraryColors": 0,
     "anyTypes": 88
   },
@@ -34,22 +34,6 @@
     }
   ],
   "consoles": [],
-  "hardcodedHex": [
-    {
-      "file": "public/manifest.json",
-      "line": 9,
-      "text": "\"background_color\": \"#0a0a0a\","
-    },
-    {
-      "file": "public/manifest.json",
-      "line": 10,
-      "text": "\"theme_color\": \"#8b5cf6\","
-    },
-    {
-      "file": "public/preview-sw.js",
-      "line": 81,
-      "text": "font-family: system-ui; background: #0a0a12; color: #888; }"
-    }
-  ],
+  "hardcodedHex": [],
   "arbitraryColors": []
 }
