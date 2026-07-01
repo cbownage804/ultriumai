@@ -7,7 +7,7 @@
  *  1. Listens — voice via the Web Speech API (hold-to-speak mic button).
  *  2. Acts — natural-language "open passwords" routes through `ray-action`
  *     and navigates instantly, no extra confirmation.
- *  3. Answers — anything else is sent to `safeassist-ai` for a conversational
+ *  3. Answers — anything else is sent to `ray-chat` for a conversational
  *     reply right inside the palette.
  */
 
