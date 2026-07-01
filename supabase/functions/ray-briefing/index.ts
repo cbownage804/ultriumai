@@ -258,24 +258,57 @@ Return JSON ONLY in this exact shape:
       if (importRecId && !recIds.includes(importRecId)) recIds.unshift(importRecId);
     }
 
+    // Stateful dedup: every AI-generated rec is mapped to a stable objective
+    // key (or falls back to a hash of its title). Ray never emits two active
+    // recommendations with the same objective — enforced both here and by the
+    // partial unique index on ray_recommendations(user_id, objective).
+    const inferObjective = (title: string, body: string): string => {
+      const t = `${title} ${body}`.toLowerCase();
+      if (/\bbreach|pwned|compromised\b/.test(t)) return "rotate_breached";
+      if (/\breus(e|ed|ing)|duplicate password/.test(t)) return "stop_password_reuse";
+      if (/\bweak password|strengthen password/.test(t)) return "strengthen_weak_passwords";
+      if (/\bmfa|2fa|two[- ]?factor|authenticator\b/.test(t)) return "enable_mfa";
+      if (/\bdark[- ]?web|monitor.*(email|identity|exposure)/.test(t)) return "monitor_exposure";
+      if (/\bimport.*password|save.*first password|password manager/.test(t)) return "import_passwords";
+      if (/\bextension|autofill|browser/.test(t)) return "install_extension";
+      if (/\bpasskey/.test(t)) return "adopt_passkeys";
+      // Deterministic fallback so repeated identical titles collapse.
+      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 60);
+      return slug ? `ai_${slug}` : `ai_${Date.now()}`;
+    };
+
+    const seenObjectives = new Set<string>(
+      (openRecs.data ?? []).map((r: any) => String(r.objective ?? "")).filter(Boolean),
+    );
+
     if (Array.isArray(parsed.recommendations) && !vaultEmpty) {
       for (const rec of parsed.recommendations.slice(0, 5)) {
         const title = String(rec.title ?? "").slice(0, 200);
         if (!title) continue;
         if (existingTitles.has(title.toLowerCase().trim())) continue;
-        const { data: inserted } = await supabase
+        const body = String(rec.body ?? "").slice(0, 1000);
+        const objective = inferObjective(title, body);
+        if (seenObjectives.has(objective)) continue;
+        seenObjectives.add(objective);
+        const { data: inserted, error: insertErr } = await supabase
           .from("ray_recommendations")
           .insert({
             user_id: user.id,
             title,
-            body: String(rec.body ?? "").slice(0, 1000),
+            body,
             priority: Math.max(0, Math.min(100, Number(rec.priority ?? 50))),
             status: "open",
             estimated_fix_seconds: Math.max(15, Math.min(3600, Number(rec.estimated_fix_seconds ?? 60))),
             page_context: typeof rec.page_context === "string" ? rec.page_context : "home",
+            objective,
           })
           .select("id")
           .single();
+        // Unique-index violations mean an open rec already exists for this
+        // objective — that's the desired outcome, so we swallow it silently.
+        if (insertErr && !String(insertErr.message ?? "").includes("duplicate")) {
+          console.warn("[ray-briefing] rec insert failed", insertErr.message);
+        }
         if (inserted?.id) recIds.push(inserted.id);
       }
     }
