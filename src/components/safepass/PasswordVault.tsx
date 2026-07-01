@@ -757,6 +757,8 @@ export const PasswordVault = () => {
               <PasswordCard
                 key={entry.id}
                 entry={entry}
+                reusedOn={reuseByEntry.get(entry.id) ?? []}
+
                 onEdit={() => {
                   setEditingEntry(entry);
                   setNewEntry({
