@@ -68,14 +68,14 @@ export default function WraythLanding() {
       <Navigation />
 
       {/* HERO — Meet Ray */}
-      <section className="relative overflow-hidden border-b border-[#3A3A3A]">
+      <section className="relative overflow-hidden border-b border-border">
         <div className="absolute inset-0">
           <img
             src={heroWrayth}
             alt=""
             className="w-full h-full object-cover opacity-50"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#090909]/90 via-[#090909]/85 to-[#090909]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/85 to-background" />
 
           {/* Ray "thinking" — intentional violet pulse + drifting particles */}
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -103,7 +103,7 @@ export default function WraythLanding() {
               Wrayth · AI security platform
             </div>
 
-            <h1 className="text-5xl md:text-7xl font-semibold tracking-tight text-[#F3F3F3] mb-8 leading-[1.05]">
+            <h1 className="text-5xl md:text-7xl font-semibold tracking-tight text-foreground mb-8 leading-[1.05]">
               Meet <span className="text-primary">Ray</span>.
               <br />
               Your AI cybersecurity teammate.
@@ -128,7 +128,7 @@ export default function WraythLanding() {
                 onClick={() => {
                   document.getElementById('platform')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }}
-                className="wrayth-chamfer-sm w-full sm:w-auto border-[#3A3A3A] text-[#F3F3F3] hover:bg-[#181818]"
+                className="wrayth-chamfer-sm w-full sm:w-auto border-border text-foreground hover:bg-secondary"
               >
                 See what Ray can do
               </Button>
@@ -141,9 +141,9 @@ export default function WraythLanding() {
 
 
       {/* PHILOSOPHY STRIP */}
-      <section className="border-b border-[#3A3A3A] bg-[#0d0d0d]">
+      <section className="border-b border-border bg-background">
         <div className="container mx-auto px-4 py-12 md:py-16">
-          <p className="max-w-3xl text-xl md:text-2xl text-[#F3F3F3] font-light leading-snug">
+          <p className="max-w-3xl text-xl md:text-2xl text-foreground font-light leading-snug">
             You don't need to become a cybersecurity expert.
             <span className="text-muted-foreground"> Ray already is.</span>
           </p>
@@ -157,22 +157,22 @@ export default function WraythLanding() {
             <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
               What Ray can do
             </div>
-            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-[#F3F3F3]">
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
               One teammate. Every layer of your security.
             </h2>
           </div>
 
-          <div className="grid gap-px bg-[#3A3A3A] border border-[#3A3A3A] wrayth-chamfer overflow-hidden">
+          <div className="grid gap-px bg-border border border-border wrayth-chamfer overflow-hidden">
             {capabilities.map((cap) => (
               <div
                 key={cap.title}
-                className="bg-[#0d0d0d] p-8 md:p-10 grid md:grid-cols-[1fr_1.5fr] gap-6 md:gap-12"
+                className="bg-background p-8 md:p-10 grid md:grid-cols-[1fr_1.5fr] gap-6 md:gap-12"
               >
                 <div>
-                  <div className="inline-flex items-center justify-center h-11 w-11 border border-[#3A3A3A] wrayth-chamfer-sm mb-6">
-                    <cap.icon className="h-5 w-5 text-[#F3F3F3]" />
+                  <div className="inline-flex items-center justify-center h-11 w-11 border border-border wrayth-chamfer-sm mb-6">
+                    <cap.icon className="h-5 w-5 text-foreground" />
                   </div>
-                  <h3 className="text-xl md:text-2xl font-semibold text-[#F3F3F3] leading-snug">
+                  <h3 className="text-xl md:text-2xl font-semibold text-foreground leading-snug">
                     {cap.title}
                   </h3>
                 </div>
@@ -180,7 +180,7 @@ export default function WraythLanding() {
                   <p className="text-muted-foreground leading-relaxed">{cap.blurb}</p>
                   <ul className="grid sm:grid-cols-2 gap-y-2 gap-x-6">
                     {cap.bullets.map((b) => (
-                      <li key={b} className="flex items-start gap-2 text-sm text-[#F3F3F3]">
+                      <li key={b} className="flex items-start gap-2 text-sm text-foreground">
                         <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                         <span>{b}</span>
                       </li>
@@ -198,7 +198,7 @@ export default function WraythLanding() {
       </section>
 
       {/* PLAYBOOKS — what Ray actually does, in your hands */}
-      <section className="py-24 border-t border-[#3A3A3A]">
+      <section className="py-24 border-t border-border">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mb-12">
             <div className="text-[11px] uppercase tracking-[0.22em] text-violet-300/80 mb-3">
@@ -235,23 +235,23 @@ export default function WraythLanding() {
       </section>
 
       {/* PRICING */}
-      <section id="pricing" className="py-24 border-t border-[#3A3A3A] bg-[#0d0d0d]">
+      <section id="pricing" className="py-24 border-t border-border bg-background">
 
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mb-14">
             <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
               Pricing
             </div>
-            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-[#F3F3F3]">
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
               Hire Ray. Upgrade anytime.
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-px bg-[#3A3A3A] border border-[#3A3A3A] wrayth-chamfer overflow-hidden">
+          <div className="grid md:grid-cols-3 gap-px bg-border border border-border wrayth-chamfer overflow-hidden">
             {Object.values(SAFESUITE_TIERS).map((tier) => (
               <div
                 key={tier.id}
-                className={`relative bg-[#181818] p-8 flex flex-col ${tier.popular ? 'ring-1 ring-primary/50' : ''}`}
+                className={`relative bg-secondary p-8 flex flex-col ${tier.popular ? 'ring-1 ring-primary/50' : ''}`}
               >
                 {tier.popular && (
                   <div className="absolute -top-px left-0 right-0 flex justify-center">
@@ -267,7 +267,7 @@ export default function WraythLanding() {
                 </div>
                 <p className="text-sm text-muted-foreground mb-6">{tier.description}</p>
                 <div className="mb-8">
-                  <span className="text-5xl font-semibold text-[#F3F3F3] tabular-nums">
+                  <span className="text-5xl font-semibold text-foreground tabular-nums">
                     {tier.price === 0 ? 'Free' : `$${(tier.price / 100).toFixed(0)}`}
                   </span>
                   {tier.price > 0 && (
@@ -276,34 +276,34 @@ export default function WraythLanding() {
                 </div>
 
                 <ul className="space-y-3 mb-8 flex-1">
-                  <li className="flex items-start gap-2 text-sm text-[#F3F3F3]">
+                  <li className="flex items-start gap-2 text-sm text-foreground">
                     <Check className="h-4 w-4 text-primary mt-0.5" />
                     <span>Secure every password</span>
                   </li>
-                  <li className="flex items-start gap-2 text-sm text-[#F3F3F3]">
+                  <li className="flex items-start gap-2 text-sm text-foreground">
                     <Check className="h-4 w-4 text-primary mt-0.5" />
                     <span>Analyze suspicious emails &amp; files</span>
                   </li>
-                  <li className="flex items-start gap-2 text-sm text-[#F3F3F3]">
+                  <li className="flex items-start gap-2 text-sm text-foreground">
                     <Check className="h-4 w-4 text-primary mt-0.5" />
                     <span>Monitor for exposed credentials</span>
                   </li>
-                  <li className="flex items-start gap-2 text-sm text-[#F3F3F3]">
+                  <li className="flex items-start gap-2 text-sm text-foreground">
                     <Check className="h-4 w-4 text-primary mt-0.5" />
                     <span>AI guidance from Ray</span>
                   </li>
-                  <li className="flex items-start gap-2 text-sm text-[#F3F3F3]">
+                  <li className="flex items-start gap-2 text-sm text-foreground">
                     <Check className="h-4 w-4 text-primary mt-0.5" />
                     <span>Security score &amp; recommendations</span>
                   </li>
                   {tier.features.team?.enabled && (
-                    <li className="flex items-start gap-2 text-sm text-[#F3F3F3]">
+                    <li className="flex items-start gap-2 text-sm text-foreground">
                       <Check className="h-4 w-4 text-primary mt-0.5" />
                       <span>Team collaboration</span>
                     </li>
                   )}
                   {tier.features.whitelabeling?.enabled && (
-                    <li className="flex items-start gap-2 text-sm text-[#F3F3F3]">
+                    <li className="flex items-start gap-2 text-sm text-foreground">
                       <Check className="h-4 w-4 text-primary mt-0.5" />
                       <span>White-labeling</span>
                     </li>
@@ -316,7 +316,7 @@ export default function WraythLanding() {
                     className={`w-full wrayth-chamfer-sm ${
                       tier.popular
                         ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                        : 'border-[#3A3A3A] text-[#F3F3F3] hover:bg-[#242424]'
+                        : 'border-border text-foreground hover:bg-card'
                     }`}
                   >
                     {tier.price === 0 ? 'Start free' : `Start ${tier.name}`}
@@ -331,7 +331,7 @@ export default function WraythLanding() {
       {/* FINAL CTA */}
       <section className="py-28">
         <div className="container mx-auto px-4 max-w-3xl">
-          <h2 className="text-3xl md:text-5xl font-semibold tracking-tight text-[#F3F3F3] mb-6 leading-tight">
+          <h2 className="text-3xl md:text-5xl font-semibold tracking-tight text-foreground mb-6 leading-tight">
             Stop managing security tools.
             <br />
             <span className="text-muted-foreground">Start working with Ray.</span>
@@ -349,12 +349,12 @@ export default function WraythLanding() {
       </section>
 
       {/* Footer */}
-      <footer className="py-10 border-t border-[#3A3A3A] bg-[#0d0d0d]">
+      <footer className="py-10 border-t border-border bg-background">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <img src={wraythLogo} alt="" className="h-6 w-auto" />
-              <span className="font-semibold text-[#F3F3F3]">Wrayth</span>
+              <span className="font-semibold text-foreground">Wrayth</span>
             </div>
             <p className="text-sm text-muted-foreground">
               © {new Date().getFullYear()} Wrayth. Ray is always watching.
