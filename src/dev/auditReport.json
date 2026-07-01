@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-07-01T14:53:38.168Z",
+  "generatedAt": "2026-07-01T14:54:46.686Z",
   "totals": {
     "filesScanned": 324,
     "legacyBrand": 1,
-    "todos": 3,
+    "todos": 0,
     "consoles": 0,
     "hardcodedHex": 0,
     "arbitraryColors": 0,
@@ -16,23 +16,7 @@
       "text": "- Refer to the product as Wrayth. Never reference \"SafeSuite,\" \"SafeAssist,\" \"SafePass,\" \"SafeScan,\" \"SafeWeb,\" \"SafeTrack,\" \"Vanguard,\" \"AI Studio,\" or \"Ultriu"
     }
   ],
-  "todos": [
-    {
-      "file": "supabase/functions/ray-org-sync/index.ts",
-      "line": 196,
-      "text": "const trainingScore = 80;   // TODO wire to training records when available"
-    },
-    {
-      "file": "supabase/functions/ray-org-sync/index.ts",
-      "line": 197,
-      "text": "const softwareScore = 90;   // TODO wire to ms_graph_sync software inventory"
-    },
-    {
-      "file": "supabase/functions/ray-org-sync/index.ts",
-      "line": 198,
-      "text": "const domainScore = 95;     // TODO wire to safeweb_threats"
-    }
-  ],
+  "todos": [],
   "consoles": [],
   "hardcodedHex": [],
   "arbitraryColors": []
