@@ -18,6 +18,8 @@ import { CheckCircle2, X, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RayConversationCard } from '@/components/ray/RayConversationCard';
 import { RayPageHeader } from '@/components/ray/RayPageHeader';
+import { PasswordProtectionCard } from '@/components/ray/PasswordProtectionCard';
+import { usePasswordLifecycle } from '@/lib/ray/passwordLifecycle';
 
 export default function PasswordsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -147,10 +149,7 @@ export default function PasswordsPage() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              <RayPageHeader
-                title="Passwords"
-                description="Securely stores your credentials and continuously monitors password health."
-              />
+              <PasswordsHeaderAndOnboarding />
 
               <RayConversationCard context="passwords" />
 
