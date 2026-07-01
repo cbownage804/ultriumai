@@ -267,12 +267,13 @@ export const PasswordHealthDashboard = () => {
   if (stats.total === 0) {
     return (
       <Card className="p-10 text-center">
-        <Shield className="h-12 w-12 mx-auto mb-4 text-muted-foreground/70" />
-        <h3 className="text-lg font-semibold mb-2">Nothing to review yet</h3>
+        <Shield className="h-12 w-12 mx-auto mb-4 text-violet-400/70" />
+        <h3 className="text-lg font-semibold mb-2">I'll grade every password you save</h3>
         <p className="text-muted-foreground text-sm max-w-sm mx-auto">
-          Once you save your first password, I'll analyze it here and let you know if anything needs your attention.
+          Once your first password lands in the vault, I'll score its strength, check for reuse, and flag anything overdue for rotation — right here.
         </p>
       </Card>
+
     );
   }
 
