@@ -264,6 +264,41 @@ export const PasswordHealthDashboard = () => {
     );
   }
 
+  if (stats.total === 0) {
+    return (
+      <Card className="p-10 text-center">
+        <Shield className="h-12 w-12 mx-auto mb-4 text-muted-foreground/70" />
+        <h3 className="text-lg font-semibold mb-2">Nothing to review yet</h3>
+        <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+          Once you save your first password, I'll analyze it here and let you know if anything needs your attention.
+        </p>
+      </Card>
+    );
+  }
+
+  // Ray's narrated review — the "screenshot moment" summary.
+  const riskLevel: 'LOW' | 'MODERATE' | 'HIGH' =
+    healthScore >= 80 ? 'LOW' : healthScore >= 50 ? 'MODERATE' : 'HIGH';
+  const riskColor =
+    riskLevel === 'LOW'
+      ? 'text-emerald-400'
+      : riskLevel === 'MODERATE'
+      ? 'text-amber-400'
+      : 'text-red-400';
+  const reviewLines = [
+    `${stats.total} password${stats.total === 1 ? '' : 's'} reviewed`,
+    stats.weak === 0
+      ? 'No weak passwords'
+      : `${stats.weak} weak password${stats.weak === 1 ? '' : 's'} found`,
+    stats.reused === 0
+      ? 'No reused passwords'
+      : `${stats.reused} reused password${stats.reused === 1 ? '' : 's'} found`,
+    stats.old === 0
+      ? 'Nothing overdue for rotation'
+      : `${stats.old} password${stats.old === 1 ? '' : 's'} over 6 months old`,
+    issues.length === 0 ? 'No immediate action needed' : `${issues.length} item${issues.length === 1 ? '' : 's'} worth your attention`,
+  ];
+
   return (
     <div className="space-y-6">
       {/* Header */}
