@@ -73,8 +73,6 @@ verify_jwt = false
 [functions.safepass-scanner]
 verify_jwt = true
 
-[functions.safescan-api]
-verify_jwt = true
 
 [functions.security-data-pipeline]
 verify_jwt = true
