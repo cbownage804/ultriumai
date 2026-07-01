@@ -1,99 +1,97 @@
-# Wrayth 4.2 — Ray Protects Your Organization
+# Wrayth 5.0 — Polish & Production Readiness
 
-Ray graduates from understanding one person to understanding an entire company — and, for MSPs, every client organization in one view. This plan ships in four waves so each piece is usable on its own.
+No new features. Every change must answer: *does this make Wrayth more polished, trustworthy, or enjoyable?* If not, it goes to backlog.
 
-## What Ray will be able to say
+## The spine: internal Launch Checklist
 
-> "Good morning, Brandon. I checked all 42 employees overnight. No critical threats. Two haven't enabled MFA. One credential appeared in a new breach. Average score went 91 → 93. I'd fix John's password first."
+Before touching anything else, build a dev-only page at `/app/_launch` (hidden from nav, gated by `import.meta.env.DEV || ?debug=1`). It's the measurable definition of "ready" and the dashboard we work against for the rest of the sprint.
 
-And for Ultrium:
+Categories, each with checks that resolve to pass / warn / fail:
+- Branding & Legacy — automated grep for `SafePass|SafeScan|SafeWeb|SafeSuite|SafeAssist|SafeTrack`, old routes, old asset paths
+- UI Consistency — token audit (hardcoded colors, arbitrary radii, non-token spacing)
+- Copy & Ray Voice — sampled phrases + a Ray glossary check
+- Extension QA — manual checklist with per-item status persisted to `localStorage`
+- Mobile Responsive — viewport screenshots at 375 / 768 / 1440
+- Performance — Lighthouse-lite metrics + bundle size budget
+- Accessibility — axe-core in dev
+- Error Handling — coverage matrix per surface
+- Security — headers, RLS coverage, session expiration
+- Analytics & Monitoring — event coverage
+- Empty / Loading / Error states — per-route matrix
+- Beta blockers — free-form list
 
-> "Good morning, Brandon. I checked 27 client organizations overnight. Three need attention today."
+Each item links to the file or route it references so we can fix in place.
 
-## Wave 1 — Org Brain Foundation (data + scoring)
+## Phase order & scope
 
-Build the schema and synthesis engine Ray will read from. No new UI yet beyond a basic page.
+Executed in this order, one phase per iteration, each ending with the Launch Checklist recomputed:
 
-New tables (all RLS-scoped to org membership):
-- `ray_org_profiles` — per-employee Ray profile: score, MFA status, breach count, last_active, top risks JSON.
-- `ray_org_health` — daily snapshot per org: overall score, identity/device/threat/exposure/compliance/training/software/domain sub-scores, deltas vs yesterday.
-- `ray_org_missions` — company-wide missions (e.g. "Enable MFA company-wide"): target, progress, est_minutes, owner.
-- `ray_org_timeline` — org-level events ("John enabled MFA", "Heather added Dropbox").
-- `ray_org_briefings` — daily executive brief text + structured stats, one per org per day.
-- `ray_org_department_scores` — department roll-ups for the heat map.
+```text
+1  Legacy Purge          → grep-driven deletion + rename sweep
+2  Design System Audit   → tokens, radii, spacing, shadow, typography scale
+3  Interaction Audit     → focus, hover, disabled, transitions
+4  Ray Voice Pass        → single source of Ray phrases + tone rules
+5  Copy Review           → plain-English rewrite across UI
+6  Performance           → lazy routes, query dedup, memoization
+7  Accessibility         → keyboard, ARIA, contrast, reduced motion
+8  Error Handling        → global boundary + typed edge-function errors
+9  Empty States          → per-page intentional zero-data screens
+10 Visual Polish         → motion review, skeletons, gradients, glow discipline
+11 Extension QA          → popup / side panel / context bar walkthrough
+12 End-to-End QA         → 7 documented user journeys
+13 Production Readiness  → headers, secrets, indexes, rate limits, backups
+```
 
-Edge functions:
-- `ray-org-sync` — pulls signals from `vault_*`, `ray_findings`, `safepass_breach_*`, `vanguard_*`, `ms_graph_*`, dark web monitors. Rolls them into `ray_org_profiles` + sub-scores.
-- `ray-org-brief` — Gemini-powered executive summary using yesterday vs today deltas + top recommendation. Writes to `ray_org_briefings` and `ray_org_timeline`.
-- `pg_cron` schedule for both nightly per org.
+## Phase 1 — Legacy Purge (concrete)
 
-SDK: `src/lib/ray/org/` (`profiles.ts`, `health.ts`, `missions.ts`, `timeline.ts`, `briefings.ts`).
+Run a single sweep that deletes / renames:
+- All `Safe*` string references in `src/`, `supabase/functions/`, `public/`, `extension/`
+- Routes: any surviving `/safesuite/*`, `/safepass/*`, `/safescan/*`, `/safeweb/*` → 301 to `/app/*` equivalents, then remove after one release
+- Components: `grep`-find unused exports and delete
+- Icons: remove unused Lucide imports (biome or a small script)
+- Demo data files, `TODO` / `FIXME` comments, stray `console.log`, dev-only UI
+- DB: audit `Safe*` tables that are no longer read from any code path; produce a *drop candidates* list in the Launch Checklist rather than dropping immediately (destructive → user confirms per table)
 
-## Wave 2 — Organization Dashboard
+## Phase 2–5 — Design & Language
 
-New route `/app/org` (auto-shown when the user belongs to an org; personal dashboard stays at `/app/dashboard`).
+- Introduce `src/design/tokens.ts` as the single source of truth for spacing / radius / shadow scales and lint arbitrary Tailwind values via a small codemod report in the Launch Checklist
+- Consolidate Ray's phrases into `src/lib/ray/voice.ts` with a `say()` helper and tone rules (calm, plain, never dramatic). All Ray UI reads from here.
+- Copy pass on every page's headings, empty states, error toasts, button labels — reviewed against a short style guide added to `docs/voice.md`
 
-Components in `src/components/ray/org/`:
-- `OrgMorningBriefHero` — Ray-voiced exec summary, score with delta arrow, "since yesterday" bullets, primary CTA.
-- `OrgHealthGrid` — 8 intelligence surfaces (Identities, Devices, Threats, Exposure, Compliance, Training, Software, Domains) as cards with sub-score + one-line Ray comment.
-- `EmployeeIntelligenceList` — replaces user table. Each row is a Ray profile card (score, Ray's one-liner, top fix). Sort defaults to "Ray's priority".
-- `OrgTimelineFeed` — yesterday / today sections from `ray_org_timeline`.
-- `OrgMissionsPanel` — progress bars per mission with "Continue mission" → playbook launcher.
-- `RiskHeatMap` — department bars from `ray_org_department_scores`, hover shows Ray's reasoning.
-- `AIPrioritizationList` — "Today I'd spend my time on…" top-3 with impact deltas, each launches an existing playbook.
+## Phase 6–10 — Quality gates
 
-Reuses MorningBriefHero patterns and existing playbook runner — no duplication.
+- Performance: React Query cache tuning, `React.lazy` per route, drop duplicate `supabase.from()` calls, defer non-critical animations
+- Accessibility: axe-core dev overlay, focus ring audit, `prefers-reduced-motion` respected in all custom keyframes, 44px min touch targets
+- Error handling: one `<RayErrorBoundary>`, a typed `edgeInvoke()` wrapper that maps failures to human copy ("Ray couldn't reach that just now. Try again in a moment.")
+- Empty states: one `<EmptyState>` primitive with icon / title / body / CTA; every list route uses it
+- Visual polish: motion budget — no animation > 300ms, no decorative-only motion; skeleton library standardized
 
-## Wave 3 — Ask Ray (org questions) + memory
+## Phase 11–13 — Ship-ready
 
-Extend the existing Ask Ray palette and `ray-action` edge function with an org intent router so these natural questions all work:
-- "Who worries you most?"
-- "Which department is improving?"
-- "Did anything important happen overnight?"
-- "Are we safer than last week?"
-- "Who still needs MFA?"
-- "Show me every device that hasn't checked in."
-- "Are we ready for cyber insurance?"
+- Extension: manual QA script in `extension/QA.md`, side panel + context bar smoke tests
+- E2E: 7 documented journeys in `docs/journeys.md`, each walked and screenshotted into the Launch Checklist
+- Production readiness: security headers on published site, rate limits on public edge functions, session expiration UX, DB index review, secrets audit, backup posture note
 
-Implementation: new skills in `src/lib/ray/org/skills/` that query the org tables and return structured answers Ray narrates. Reuses `ray_memory` keyed by `org_id` so Ray remembers things like "I recommended MFA to John 5 days ago — escalating priority."
+## Ground rules for the sprint
 
-## Wave 4 — MSP Multi-Tenant View (Ultrium killer feature)
-
-New route `/app/msp` gated on `useAccountType().isMSPOrMSSP`.
-
-- `MspMorningBrief` — "I checked 27 client organizations overnight. Three need attention today."
-- `ClientOrgGrid` — one card per `msp_clients` row showing org score, delta, # employees, top issue, "Open" → switches active org context.
-- `CrossClientPrioritization` — Ray ranks work across all clients ("Acme: enable MFA for 3 users — biggest score lift today").
-- Extends `ray-org-sync` + `ray-org-brief` to iterate every client an MSP owns; writes one briefing per client and one MSP-level rollup to `ray_org_briefings` with `scope = 'msp'`.
-
-## Cross-cutting
-
-- All new tables follow the GRANT → RLS → POLICY order; policies use a `has_org_access(auth.uid(), org_id)` security-definer function so MSP staff inherit access to their clients without recursion.
-- Every new edge function entry added to `supabase/config.toml`.
-- `MorningBriefHero` (personal) gets a small "View organization brief" link when the user belongs to an org.
-- Voice (Ray TTS) reused as-is for org briefings — Pro gating unchanged.
-- No changes to the browser extension in this release.
+- **No new features.** New ideas → append to `docs/backlog.md`, do not build.
+- **No new pages** except `/app/_launch` (dev-only).
+- **Every PR-sized change** ends with the Launch Checklist recomputed so we can see progress.
+- **Destructive DB drops** are proposed, not executed, until you approve per table.
 
 ## Technical details
 
-- Scoring formula lives in `src/lib/ray/org/scoring.ts`: org_score = weighted avg of sub-scores (identity 25, devices 20, threats 20, exposure 15, compliance 10, training 5, software 3, domains 2). Per-employee score reuses existing personal scoring + MFA/breach signals.
-- Org context resolution: new `useActiveOrg()` hook picks org from `org_teams` membership (or `msp_clients` when MSP switches context). Defaults to user's primary org.
-- `ray_org_*` writes go through edge functions with service role; reads from the client use RLS.
-- Heat map departments come from `comanaged_departments` / `org_team_members.department` when present, else "Unassigned".
-- Backwards compatible: solo users without an org keep seeing the existing personal dashboard.
+- Launch Checklist lives at `src/pages/dev/LaunchChecklist.tsx`, route registered only when `import.meta.env.DEV` or `?debug=1`; not linked from nav
+- Automated checks run client-side against a static manifest (`src/dev/launchManifest.ts`) plus a Node script `scripts/audit.mjs` for grep-based checks written into `src/dev/auditReport.json` at build time
+- Ray voice module: `src/lib/ray/voice.ts` exports `RAY_PHRASES` and `say(key, vars)`; existing components migrate incrementally, tracked by the checklist
+- Error wrapper: `src/lib/edge.ts` exports `edgeInvoke<T>()` that normalizes `FunctionsHttpError`, offline, and timeout into a `{ ok, data, message }` shape
+- Empty state: `src/components/ui/empty-state.tsx`
+- Backlog file: `docs/backlog.md`
 
-## Success criteria
+## What I'll do first if you approve
 
-A CEO logs in, spends 60 seconds on `/app/org`, and knows:
-- current company risk,
-- what changed overnight,
-- what matters most,
-- exactly what to do next — without opening a report.
+1. Build the dev-only Launch Checklist page + the audit script so we have a scoreboard
+2. Run Phase 1 legacy purge and commit the diff
+3. Report Launch Checklist scores and pause for you to pick the next phase to drive
 
-An MSP owner logs in, spends 60 seconds on `/app/msp`, and knows which of their clients need attention today.
-
-## Out of scope for 4.2 (saved for later)
-
-- Cyber insurance readiness report PDF (Ray will answer the question; formal report ships in 4.3).
-- Org-wide auto-remediation (Ray still proposes; humans execute via playbooks).
-- Slack/Teams delivery of the exec briefing.
+Confirm and I'll start with the Launch Checklist + Phase 1.
