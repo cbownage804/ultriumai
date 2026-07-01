@@ -28,11 +28,14 @@ function headline(ctx: RayContext | null): string {
   return 'We have work to do.';
 }
 
+const STATUS_WORDS = ['Watching', 'Scanning', 'Reviewing', 'Listening', 'Monitoring'];
+
 export function SidebarBriefing() {
   const { user } = useAuth();
   const [ctx, setCtx] = useState<RayContext | null>(null);
   const [lastSync] = useState(() => new Date());
   const [, force] = useState(0);
+  const [statusIdx, setStatusIdx] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -46,6 +49,13 @@ export function SidebarBriefing() {
     const id = setInterval(() => force((n) => n + 1), 60_000);
     return () => clearInterval(id);
   }, []);
+
+  // Rotate the "alive" word every 20s so Ray feels present.
+  useEffect(() => {
+    const id = setInterval(() => setStatusIdx((i) => (i + 1) % STATUS_WORDS.length), 20_000);
+    return () => clearInterval(id);
+  }, []);
+
 
   const firstName = useMemo(() => {
     const meta = (user?.user_metadata ?? {}) as Record<string, unknown>;
