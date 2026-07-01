@@ -40,7 +40,7 @@ import {
   X,
 } from 'lucide-react';
 
-const WraythAssist = lazy(() => import('@/pages/safesuite/SafeSuiteAssist'));
+
 
 type RecentAction = { event_type: string; summary: string; created_at: string };
 
