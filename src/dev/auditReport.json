@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-07-01T14:33:21.522Z",
+  "generatedAt": "2026-07-01T14:36:01.630Z",
   "totals": {
     "filesScanned": 357,
-    "legacyBrand": 116,
+    "legacyBrand": 1,
     "todos": 3,
     "consoles": 54,
     "hardcodedHex": 276,
@@ -11,584 +11,9 @@
   },
   "legacyBrand": [
     {
-      "file": "src/App.tsx",
-      "line": 25,
-      "text": "const WraythLanding = lazy(() => import('@/pages/safesuite/SafeSuiteLanding'));"
-    },
-    {
-      "file": "src/App.tsx",
-      "line": 26,
-      "text": "const WraythAuth = lazy(() => import('@/pages/safesuite/SafeSuiteAuth'));"
-    },
-    {
-      "file": "src/App.tsx",
-      "line": 27,
-      "text": "const WraythDashboard = lazy(() => import('@/pages/safesuite/SafeSuiteDashboard'));"
-    },
-    {
-      "file": "src/App.tsx",
-      "line": 28,
-      "text": "const WraythBilling = lazy(() => import('@/pages/safesuite/SafeSuiteBilling'));"
-    },
-    {
-      "file": "src/App.tsx",
-      "line": 29,
-      "text": "const WraythSettings = lazy(() => import('@/pages/safesuite/SafeSuiteSettings'));"
-    },
-    {
-      "file": "src/App.tsx",
-      "line": 34,
-      "text": "const VaultSettings = lazy(() => import('@/pages/safesuite/SafePassSettings'));"
-    },
-    {
-      "file": "src/App.tsx",
-      "line": 35,
-      "text": "const VaultReminders = lazy(() => import('@/pages/safesuite/SafePassReminders'));"
-    },
-    {
-      "file": "src/App.tsx",
-      "line": 36,
-      "text": "const VaultBreach = lazy(() => import('@/pages/safesuite/SafePassBreach'));"
-    },
-    {
-      "file": "src/App.tsx",
-      "line": 37,
-      "text": "const VaultShared = lazy(() => import('@/pages/safesuite/SafePassShared'));"
-    },
-    {
-      "file": "src/App.tsx",
-      "line": 38,
-      "text": "const VaultEmergency = lazy(() => import('@/pages/safesuite/SafePassEmergency'));"
-    },
-    {
-      "file": "src/App.tsx",
-      "line": 39,
-      "text": "const VaultExtension = lazy(() => import('@/pages/safesuite/SafePassExtension'));"
-    },
-    {
-      "file": "src/App.tsx",
-      "line": 40,
-      "text": "const ScanSettings = lazy(() => import('@/pages/safesuite/SafeScanSettings'));"
-    },
-    {
-      "file": "src/App.tsx",
-      "line": 41,
-      "text": "const WatchSettings = lazy(() => import('@/pages/safesuite/SafeWebSettings'));"
-    },
-    {
-      "file": "src/App.tsx",
-      "line": 45,
-      "text": "const VaultProduct = lazy(() => import('@/pages/safesuite/products/SafePassProduct'));"
-    },
-    {
-      "file": "src/App.tsx",
-      "line": 46,
-      "text": "const ScanProduct = lazy(() => import('@/pages/safesuite/products/SafeScanProduct'));"
-    },
-    {
-      "file": "src/App.tsx",
-      "line": 47,
-      "text": "const WatchProduct = lazy(() => import('@/pages/safesuite/products/SafeWebProduct'));"
-    },
-    {
-      "file": "src/App.tsx",
-      "line": 48,
-      "text": "const WraythFeatures = lazy(() => import('@/pages/safesuite/SafeSuiteFeatures'));"
-    },
-    {
-      "file": "src/App.tsx",
-      "line": 49,
-      "text": "const VaultNotes = lazy(() => import('@/pages/safesuite/SafePassNotes'));"
-    },
-    {
-      "file": "src/App.tsx",
-      "line": 50,
-      "text": "const VaultCards = lazy(() => import('@/pages/safesuite/SafePassCards'));"
-    },
-    {
-      "file": "src/App.tsx",
-      "line": 51,
-      "text": "const VaultIdentity = lazy(() => import('@/pages/safesuite/SafePassIdentity'));"
-    },
-    {
-      "file": "src/App.tsx",
-      "line": 53,
-      "text": "const VaultHealth = lazy(() => import('@/pages/safesuite/SafePassHealth'));"
-    },
-    {
-      "file": "src/App.tsx",
-      "line": 54,
-      "text": "const VaultUsers = lazy(() => import('@/pages/safesuite/SafePassUsers'));"
-    },
-    {
-      "file": "src/components/Navigation.tsx",
-      "line": 1,
-      "text": "export { default } from '@/components/safesuite/SafeSuiteNav';"
-    },
-    {
-      "file": "src/components/auth/AuthBrandHeader.tsx",
-      "line": 2,
-      "text": "import { safesuiteLogo } from \"@/components/safesuite/SafeSuiteProductIcons\";"
-    },
-    {
-      "file": "src/components/safepass/BreachMonitor.tsx",
-      "line": 3,
-      "text": "import { useVault } from '@/hooks/useSafePass';"
-    },
-    {
-      "file": "src/components/safepass/ExpirationReminders.tsx",
-      "line": 3,
-      "text": "import { useVault } from '@/hooks/useSafePass';"
-    },
-    {
-      "file": "src/components/safepass/PasswordHealthDashboard.tsx",
-      "line": 4,
-      "text": "import { useVault } from '@/hooks/useSafePass';"
-    },
-    {
-      "file": "src/components/safepass/PasswordVault.tsx",
-      "line": 4,
-      "text": "import { useVault, PasswordEntry as VaultEntry } from '@/hooks/useSafePass';"
-    },
-    {
-      "file": "src/components/safepass/TeamManagement.tsx",
-      "line": 13,
-      "text": "import { useVaultTeams } from '@/hooks/useSafePassTeams';"
-    },
-    {
-      "file": "src/components/safepass/TeamManagement.tsx",
-      "line": 14,
-      "text": "import { useVault } from '@/hooks/useSafePass';"
-    },
-    {
-      "file": "src/components/safesuite/SafeSuitePaywall.tsx",
-      "line": 7,
-      "text": "import { useFeatureAccess, useWraythSubscription } from '@/hooks/useSafeSuite';"
-    },
-    {
-      "file": "src/components/safesuite/SubscriptionBanner.tsx",
-      "line": 7,
-      "text": "import { useWraythSubscription } from '@/hooks/useSafeSuite';"
-    },
-    {
-      "file": "src/components/safesuite/TeaserLock.tsx",
-      "line": 8,
-      "text": "import { useFeatureAccess, useWraythSubscription } from '@/hooks/useSafeSuite';"
-    },
-    {
-      "file": "src/components/safesuite/UsageMeter.tsx",
-      "line": 7,
-      "text": "import { useFeatureAccess, useWraythSubscription, useWraythUsage } from '@/hooks/useSafeSuite';"
-    },
-    {
-      "file": "src/layouts/WraythLayout.tsx",
-      "line": 13,
-      "text": "import { useWraythSubscription } from '@/hooks/useSafeSuite';"
-    },
-    {
-      "file": "src/pages/WraythResources.tsx",
-      "line": 8,
-      "text": "import Navigation from \"@/components/safesuite/SafeSuiteNav\";"
-    },
-    {
-      "file": "src/pages/pricing/WraythPricing.tsx",
-      "line": 7,
-      "text": "import WraythNav from '@/components/safesuite/SafeSuiteNav';"
-    },
-    {
-      "file": "src/pages/safesuite/Exposure.tsx",
-      "line": 6,
-      "text": "import { FeatureGate, UsageLimitBanner } from '@/components/safesuite/SafeSuitePaywall';"
-    },
-    {
-      "file": "src/pages/safesuite/Exposure.tsx",
-      "line": 8,
-      "text": "import { useFeatureAccess, useWraythUsage } from '@/hooks/useSafeSuite';"
-    },
-    {
-      "file": "src/pages/safesuite/Passwords.tsx",
-      "line": 11,
-      "text": "import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';"
-    },
-    {
-      "file": "src/pages/safesuite/SafePassBreach.tsx",
-      "line": 5,
-      "text": "import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';"
-    },
-    {
-      "file": "src/pages/safesuite/SafePassCards.tsx",
-      "line": 2,
-      "text": "import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';"
-    },
-    {
-      "file": "src/pages/safesuite/SafePassEmergency.tsx",
-      "line": 5,
-      "text": "import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';"
-    },
-    {
-      "file": "src/pages/safesuite/SafePassExtension.tsx",
-      "line": 2,
-      "text": "import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';"
-    },
-    {
-      "file": "src/pages/safesuite/SafePassHealth.tsx",
-      "line": 2,
-      "text": "import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';"
-    },
-    {
-      "file": "src/pages/safesuite/SafePassIdentity.tsx",
-      "line": 2,
-      "text": "import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';"
-    },
-    {
-      "file": "src/pages/safesuite/SafePassNotes.tsx",
-      "line": 2,
-      "text": "import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';"
-    },
-    {
-      "file": "src/pages/safesuite/SafePassReminders.tsx",
-      "line": 5,
-      "text": "import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';"
-    },
-    {
-      "file": "src/pages/safesuite/SafePassShared.tsx",
-      "line": 5,
-      "text": "import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';"
-    },
-    {
-      "file": "src/pages/safesuite/SafePassShared.tsx",
-      "line": 7,
-      "text": "import { useWraythSubscription } from '@/hooks/useSafeSuite';"
-    },
-    {
-      "file": "src/pages/safesuite/SafePassTeam.tsx",
-      "line": 7,
-      "text": "import { useWraythTeam, useSharedVault } from '@/hooks/useSafeSuiteTeam';"
-    },
-    {
-      "file": "src/pages/safesuite/SafePassTeam.tsx",
-      "line": 8,
-      "text": "import { useWraythSubscription } from '@/hooks/useSafeSuite';"
-    },
-    {
-      "file": "src/pages/safesuite/SafePassUsers.tsx",
-      "line": 41,
-      "text": "import { useWraythSubscription } from \"@/hooks/useSafeSuite\";"
-    },
-    {
-      "file": "src/pages/safesuite/SafeSuiteBilling.tsx",
-      "line": 7,
-      "text": "import { useWraythSubscription, useWraythCheckout } from '@/hooks/useSafeSuite';"
-    },
-    {
-      "file": "src/pages/safesuite/SafeSuiteDashboard.tsx",
-      "line": 9,
-      "text": "import { useWraythSubscription, useFeatureAccess } from '@/hooks/useSafeSuite';"
-    },
-    {
-      "file": "src/pages/safesuite/SafeSuiteDashboard.tsx",
-      "line": 10,
-      "text": "import { useVault } from '@/hooks/useSafePass';"
-    },
-    {
-      "file": "src/pages/safesuite/SafeSuiteDashboard.tsx",
-      "line": 13,
-      "text": "import { safeSuiteProducts } from '@/components/safesuite/SafeSuiteProductIcons';"
-    },
-    {
-      "file": "src/pages/safesuite/SafeSuiteDashboard.tsx",
-      "line": 17,
-      "text": "import { UsageLimitBanner } from '@/components/safesuite/SafeSuitePaywall';"
-    },
-    {
-      "file": "src/pages/safesuite/SafeSuiteDashboard.tsx",
-      "line": 22,
-      "text": "import { GlowContainer, AnimatedStatsCard, StaggerContainer, StaggerItem, SAFESUITE_THEMES } from '@/components/safesuite/SafeSuiteEffects';"
-    },
-    {
-      "file": "src/pages/safesuite/SafeSuiteLanding.tsx",
-      "line": 8,
-      "text": "import Navigation from '@/components/safesuite/SafeSuiteNav';"
-    },
-    {
-      "file": "src/pages/safesuite/SafeSuiteSettings.tsx",
-      "line": 7,
-      "text": "import { useWraythSubscription } from '@/hooks/useSafeSuite';"
-    },
-    {
-      "file": "src/pages/safesuite/SafeSuiteSettings.tsx",
-      "line": 9,
-      "text": "import { useWraythSettings } from '@/hooks/useSafeSuiteSettings';"
-    },
-    {
-      "file": "src/pages/safesuite/Threats.tsx",
-      "line": 5,
-      "text": "import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';"
-    },
-    {
-      "file": "src/pages/safesuite/Threats.tsx",
-      "line": 6,
-      "text": "import { ScanApp } from '@/components/apps/SafeScanApp';"
-    },
-    {
-      "file": "src/pages/safesuite/products/SafePassProduct.tsx",
-      "line": 23,
-      "text": "import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';"
-    },
-    {
-      "file": "src/pages/safesuite/products/SafeScanProduct.tsx",
-      "line": 23,
-      "text": "import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';"
-    },
-    {
-      "file": "src/pages/safesuite/products/SafeWebProduct.tsx",
-      "line": 23,
-      "text": "import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';"
-    },
-    {
       "file": "supabase/functions/ray-chat/index.ts",
       "line": 125,
       "text": "- Refer to the product as Wrayth. Never reference \"SafeSuite,\" \"SafeAssist,\" \"SafePass,\" \"SafeScan,\" \"SafeWeb,\" \"SafeTrack,\" \"Vanguard,\" \"AI Studio,\" or \"Ultriu"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 1,
-      "text": "// SafePass Background Service Worker v2.2"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 34,
-      "text": "console.log('[SafePass] Auto-locking vault due to inactivity');"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 54,
-      "text": "console.log('[SafePass] Auto-sync triggered');"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 74,
-      "text": "title: 'Autofill with SafePass',"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 92,
-      "text": "title: 'Save to SafePass',"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 97,
-      "text": "console.log('[SafePass] Extension installed');"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 139,
-      "text": "title: 'SafePass',"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 174,
-      "text": "console.error('[SafePass] Autofill error:', error);"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 195,
-      "text": "console.error('[SafePass] Generate and fill error:', error);"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 391,
-      "text": "console.log(`[SafePass] Synced ${cachedEntries.length} personal + ${cachedSharedEntries.length} shared entries`);"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 395,
-      "text": "console.error('[SafePass] Sync error:', error);"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 490,
-      "text": "console.log(`[SafePass] Fetched ${cachedSharedEntries.length} shared team entries`);"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 492,
-      "text": "console.error('[SafePass] Failed to fetch shared entries:', error);"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 515,
-      "text": "console.error('[SafePass] TOTP fetch error:', error);"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 538,
-      "text": "console.error('[SafePass] Notes fetch error:', error);"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 561,
-      "text": "console.error('[SafePass] Cards fetch error:', error);"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 583,
-      "text": "console.error('[SafePass] Identities fetch error:', error);"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 648,
-      "text": "console.error('[SafePass] Save identity error:', error);"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 717,
-      "text": "console.error('[SafePass] Error processing entry:', error);"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 755,
-      "text": "console.error('[SafePass] Error processing shared entry:', error);"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 768,
-      "text": "console.error('[SafePass] getPasswordsForSite error:', error);"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 992,
-      "text": "console.log('[SafePass] Entry already exists for this site/username');"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 1038,
-      "text": "console.error('[SafePass] Save password error:', error);"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 1058,
-      "text": "console.error('[SafePass] Ignore credential error:', error);"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 1093,
-      "text": "console.error('[SafePass] Save note error:', error);"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 1136,
-      "text": "console.error('[SafePass] Save card error:', error);"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 1164,
-      "text": "console.error('[SafePass] Breach check error:', error);"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 1177,
-      "text": "console.log('[SafePass] Periodic sync alarm triggered');"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 1183,
-      "text": "console.log('[SafePass] Running daily breach check');"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 1210,
-      "text": "console.error('[SafePass] Daily breach check failed:', e);"
-    },
-    {
-      "file": "public/safepass-extension/background.js",
-      "line": 1354,
-      "text": "console.log('[SafePass] Background service worker v2.2 initialized');"
-    },
-    {
-      "file": "public/safepass-extension/content.css",
-      "line": 1,
-      "text": "/* SafePass Content Script Styles v2.0 */"
-    },
-    {
-      "file": "public/safepass-extension/content.js",
-      "line": 1,
-      "text": "// SafePass Content Script v2.1"
-    },
-    {
-      "file": "public/safepass-extension/content.js",
-      "line": 328,
-      "text": "<span>🔐 SafePass</span>"
-    },
-    {
-      "file": "public/safepass-extension/content.js",
-      "line": 493,
-      "text": "console.error('[SafePass] Fill error:', error);"
-    },
-    {
-      "file": "public/safepass-extension/content.js",
-      "line": 537,
-      "text": "addSafePassIcon(field);"
-    },
-    {
-      "file": "public/safepass-extension/content.js",
-      "line": 546,
-      "text": "function addSafePassIcon(field) {"
-    },
-    {
-      "file": "public/safepass-extension/content.js",
-      "line": 586,
-      "text": "showNotification('Please unlock SafePass first', 'warning');"
-    },
-    {
-      "file": "public/safepass-extension/content.js",
-      "line": 596,
-      "text": "console.error('[SafePass] Error checking passwords:', error);"
-    },
-    {
-      "file": "public/safepass-extension/content.js",
-      "line": 621,
-      "text": "<span class=\"safepass-save-prompt-title\">Save to SafePass?</span>"
-    },
-    {
-      "file": "public/safepass-extension/content.js",
-      "line": 646,
-      "text": "showNotification('🔐 Password saved to SafePass!');"
-    },
-    {
-      "file": "public/safepass-extension/content.js",
-      "line": 648,
-      "text": "showNotification('Unlock SafePass to save passwords', 'warning');"
-    },
-    {
-      "file": "public/safepass-extension/content.js",
-      "line": 653,
-      "text": "console.error('[SafePass] Save error:', error);"
-    },
-    {
-      "file": "public/safepass-extension/content.js",
-      "line": 865,
-      "text": "console.log('[SafePass] Content script v2.1 loaded');"
-    },
-    {
-      "file": "public/safepass-extension/popup.js",
-      "line": 1,
-      "text": "// SafePass Extension Popup Script v2.1"
-    },
-    {
-      "file": "public/safepass-extension/popup.js",
-      "line": 74,
-      "text": "console.log('[SafePass] Sync complete notification received');"
-    },
-    {
-      "file": "public/safepass-extension/popup.js",
-      "line": 565,
-      "text": "console.error('[SafePass] Failed to load generator settings:', e);"
-    },
-    {
-      "file": "public/safepass-extension/popup.js",
-      "line": 583,
-      "text": "console.error('[SafePass] Failed to save generator settings:', e);"
     }
   ],
   "todos": [
@@ -810,72 +235,72 @@
       "text": "console.log(`[WRAYTH-USAGE] ${step}${detailsStr}`);"
     },
     {
-      "file": "public/safepass-extension/background.js",
+      "file": "public/wrayth-vault-extension/background.js",
       "line": 34,
-      "text": "console.log('[SafePass] Auto-locking vault due to inactivity');"
+      "text": "console.log('[Wrayth Vault] Auto-locking vault due to inactivity');"
     },
     {
-      "file": "public/safepass-extension/background.js",
+      "file": "public/wrayth-vault-extension/background.js",
       "line": 54,
-      "text": "console.log('[SafePass] Auto-sync triggered');"
+      "text": "console.log('[Wrayth Vault] Auto-sync triggered');"
     },
     {
-      "file": "public/safepass-extension/background.js",
+      "file": "public/wrayth-vault-extension/background.js",
       "line": 97,
-      "text": "console.log('[SafePass] Extension installed');"
+      "text": "console.log('[Wrayth Vault] Extension installed');"
     },
     {
-      "file": "public/safepass-extension/background.js",
+      "file": "public/wrayth-vault-extension/background.js",
       "line": 391,
-      "text": "console.log(`[SafePass] Synced ${cachedEntries.length} personal + ${cachedSharedEntries.length} shared entries`);"
+      "text": "console.log(`[Wrayth Vault] Synced ${cachedEntries.length} personal + ${cachedSharedEntries.length} shared entries`);"
     },
     {
-      "file": "public/safepass-extension/background.js",
+      "file": "public/wrayth-vault-extension/background.js",
       "line": 490,
-      "text": "console.log(`[SafePass] Fetched ${cachedSharedEntries.length} shared team entries`);"
+      "text": "console.log(`[Wrayth Vault] Fetched ${cachedSharedEntries.length} shared team entries`);"
     },
     {
-      "file": "public/safepass-extension/background.js",
+      "file": "public/wrayth-vault-extension/background.js",
       "line": 992,
-      "text": "console.log('[SafePass] Entry already exists for this site/username');"
+      "text": "console.log('[Wrayth Vault] Entry already exists for this site/username');"
     },
     {
-      "file": "public/safepass-extension/background.js",
+      "file": "public/wrayth-vault-extension/background.js",
       "line": 1177,
-      "text": "console.log('[SafePass] Periodic sync alarm triggered');"
+      "text": "console.log('[Wrayth Vault] Periodic sync alarm triggered');"
     },
     {
-      "file": "public/safepass-extension/background.js",
+      "file": "public/wrayth-vault-extension/background.js",
       "line": 1183,
-      "text": "console.log('[SafePass] Running daily breach check');"
+      "text": "console.log('[Wrayth Vault] Running daily breach check');"
     },
     {
-      "file": "public/safepass-extension/background.js",
+      "file": "public/wrayth-vault-extension/background.js",
       "line": 1255,
       "text": "} catch (e) { console.warn('[Wrayth] open-ray failed', e); }"
     },
     {
-      "file": "public/safepass-extension/background.js",
+      "file": "public/wrayth-vault-extension/background.js",
       "line": 1354,
-      "text": "console.log('[SafePass] Background service worker v2.2 initialized');"
+      "text": "console.log('[Wrayth Vault] Background service worker v2.2 initialized');"
     },
     {
-      "file": "public/safepass-extension/background.js",
+      "file": "public/wrayth-vault-extension/background.js",
       "line": 1410,
       "text": "} catch (e) { console.warn('[Wrayth] analyze tab failed', e); }"
     },
     {
-      "file": "public/safepass-extension/content.js",
+      "file": "public/wrayth-vault-extension/content.js",
       "line": 865,
-      "text": "console.log('[SafePass] Content script v2.1 loaded');"
+      "text": "console.log('[Wrayth Vault] Content script v2.1 loaded');"
     },
     {
-      "file": "public/safepass-extension/popup.js",
+      "file": "public/wrayth-vault-extension/popup.js",
       "line": 74,
-      "text": "console.log('[SafePass] Sync complete notification received');"
+      "text": "console.log('[Wrayth Vault] Sync complete notification received');"
     },
     {
-      "file": "public/safepass-extension/sidepanel.js",
+      "file": "public/wrayth-vault-extension/sidepanel.js",
       "line": 128,
       "text": "console.warn('Wrayth sidepanel refresh', e);"
     }
@@ -1147,737 +572,737 @@
       "text": "font-family: system-ui; background: #0a0a12; color: #888; }"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 12,
       "text": "color: #f4f4f5;"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 32,
       "text": "background: #a1a1aa;"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 35,
       "text": ".wrayth-cbar-dot[data-level=\"ok\"]     { background: #22c55e; }"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 36,
       "text": ".wrayth-cbar-dot[data-level=\"info\"]   { background: #8b5cf6; animation: wrayth-pulse 2.2s ease-in-out infinite; }"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 37,
       "text": ".wrayth-cbar-dot[data-level=\"warn\"]   { background: #eab308; }"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 38,
       "text": ".wrayth-cbar-dot[data-level=\"danger\"] { background: #ef4444; animation: wrayth-pulse 1.4s ease-in-out infinite; }"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 49,
       "text": "color: #a1a1aa;"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 54,
       "text": ".wrayth-cbar-x:hover { color: #fafafa; background: rgba(255,255,255,.08); }"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 71,
       "text": "color: #f4f4f5;"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 90,
       "text": "background: radial-gradient(circle at 50% 50%, #a78bfa 0 30%, #1a1a20 35% 100%);"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 93,
       "text": ".wrayth-panel-head[data-level=\"danger\"] .wrayth-panel-eye { background: radial-gradient(circle at 50% 50%, #ef4444 0 30%, #1a1a20 35% 100%); }"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 94,
       "text": ".wrayth-panel-head[data-level=\"warn\"]   .wrayth-panel-eye { background: radial-gradient(circle at 50% 50%, #eab308 0 30%, #1a1a20 35% 100%); }"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 95,
       "text": ".wrayth-panel-head[data-level=\"ok\"]     .wrayth-panel-eye { background: radial-gradient(circle at 50% 50%, #22c55e 0 30%, #1a1a20 35% 100%); }"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 96,
       "text": ".wrayth-panel-host { font-weight: 600; font-size: 12.5px; color: #d4d4d8; }"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 97,
       "text": ".wrayth-panel-headline { font-size: 13.5px; color: #fafafa; margin-top: 2px; }"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 102,
       "text": "color: #a1a1aa; margin-bottom: 4px;"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 105,
       "text": ".wrayth-panel-section li { margin: 3px 0; color: #e4e4e7; }"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 113,
       "text": "color: #f4f4f5;"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 118,
       "text": ".wrayth-panel-btn-primary { background: #7c3aed; }"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 119,
       "text": ".wrayth-panel-btn-primary:hover { background: #8b5cf6; }"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 132,
       "text": "color: #ede9fe;"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 149,
       "text": "background: rgba(34,197,94,.15); color: #bbf7d0;"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 153,
       "text": "background: rgba(234,179,8,.18); color: #fde68a; border-color: rgba(234,179,8,.4);"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 156,
       "text": "background: rgba(239,68,68,.2); color: #fecaca; border-color: rgba(239,68,68,.45);"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 158,
       "text": ".wrayth-review-risk { font-size: 11.5px; color: #a1a1aa; }"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 159,
       "text": ".wrayth-review-risk strong { color: #fafafa; text-transform: capitalize; margin-left: 2px; }"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 160,
       "text": ".wrayth-review-summary { margin: 0; color: #e4e4e7; }"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 167,
       "text": "color: #c4b5fd;"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 170,
       "text": ".wrayth-next-step p { margin: 4px 0 0; color: #fafafa; }"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 171,
       "text": ".wrayth-teach { color: #a1a1aa; font-size: 11.5px; margin-top: 4px; }"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 175,
       "text": "font-size: 11.5px; color: #d4d4d8; cursor: pointer;"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 178,
       "text": ".wrayth-teach-toggle input { accent-color: #8b5cf6; }"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 205,
       "text": "color: #f4f4f5;"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 216,
       "text": ".wrayth-concept-tip-title { font-weight: 700; color: #ede9fe; margin-bottom: 4px; }"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 217,
       "text": ".wrayth-concept-tip-body { color: #e4e4e7; }"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 218,
       "text": ".wrayth-concept-tip-why { margin-top: 6px; color: #c4b5fd; font-size: 11.5px; }"
     },
     {
-      "file": "public/safepass-extension/content/ray-overlay.css",
+      "file": "public/wrayth-vault-extension/content/ray-overlay.css",
       "line": 224,
       "text": "color: #71717a;"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 16,
       "text": "background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 38,
       "text": "background: #1e293b;"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 39,
       "text": "border: 1px solid #334155;"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 68,
       "text": "color: #e2e8f0;"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 69,
       "text": "background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 83,
       "text": "border-bottom: 1px solid #334155;"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 96,
       "text": "border-left: 3px solid #3b82f6;"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 104,
       "text": "background: linear-gradient(135deg, #334155 0%, #1e293b 100%);"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 128,
       "text": "color: #e2e8f0;"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 140,
       "text": "color: #94a3b8;"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 187,
       "text": "color: #f87171;"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 192,
       "text": "color: #fbbf24;"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 198,
       "text": "background: #0f172a;"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 199,
       "text": "border-top: 1px solid #334155;"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 208,
       "text": "background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 228,
       "text": "background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 257,
       "text": "background: #1e293b;"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 262,
       "text": "background: #475569;"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 267,
       "text": "background: #64748b;"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 278,
-      "text": ".safepass-strength-dot.strong { background: #22c55e; }"
+      "text": ".wrayth-vault-strength-dot.strong { background: #22c55e; }"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 279,
-      "text": ".safepass-strength-dot.medium { background: #f59e0b; }"
+      "text": ".wrayth-vault-strength-dot.medium { background: #f59e0b; }"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 280,
-      "text": ".safepass-strength-dot.weak { background: #ef4444; }"
+      "text": ".wrayth-vault-strength-dot.weak { background: #ef4444; }"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 304,
       "text": "background: #1e293b;"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 305,
       "text": "border: 1px solid #334155;"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 317,
       "text": "background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 357,
       "text": "color: #e2e8f0;"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 366,
       "text": "color: #94a3b8;"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 390,
       "text": "background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 400,
       "text": "background: #334155;"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 401,
       "text": "color: #94a3b8;"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 405,
       "text": "background: #475569;"
     },
     {
-      "file": "public/safepass-extension/content.css",
+      "file": "public/wrayth-vault-extension/content.css",
       "line": 406,
       "text": "color: #e2e8f0;"
     },
     {
-      "file": "public/safepass-extension/content.js",
+      "file": "public/wrayth-vault-extension/content.js",
       "line": 516,
       "text": "? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'"
     },
     {
-      "file": "public/safepass-extension/content.js",
+      "file": "public/wrayth-vault-extension/content.js",
       "line": 518,
       "text": "? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'"
     },
     {
-      "file": "public/safepass-extension/content.js",
+      "file": "public/wrayth-vault-extension/content.js",
       "line": 519,
       "text": ": 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)';"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 11,
       "text": "background: #0f172a;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 12,
       "text": "color: #e2e8f0;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 30,
       "text": "background: linear-gradient(135deg, #0891b2 0%, #06b6d4 50%, #0e7490 100%);"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 74,
       "text": "background: #334155;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 75,
       "text": "color: #94a3b8;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 79,
       "text": "background: #475569;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 80,
       "text": "color: #e2e8f0;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 98,
       "text": "border: 2px solid #0891b2;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 100,
       "text": "color: #22d3ee;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 124,
       "text": "color: #64748b;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 133,
       "text": "background: #334155;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 142,
       "text": "color: #94a3b8;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 150,
       "text": "color: #64748b;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 155,
       "text": "background: #1e293b;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 159,
       "text": "border: 1px solid #334155;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 171,
       "text": "background: #1e293b;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 172,
       "text": "border: 1px solid #334155;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 174,
       "text": "color: #e2e8f0;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 193,
       "text": "border-color: #0891b2;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 199,
       "text": "color: #64748b;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 205,
       "text": "background: #1e293b;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 206,
       "text": "border-bottom: 1px solid #334155;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 217,
       "text": "color: #64748b;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 226,
       "text": "background: #334155;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 227,
       "text": "color: #e2e8f0;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 232,
       "text": "color: #22d3ee;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 248,
       "text": "background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 273,
       "text": "background: #1e293b;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 274,
       "text": "border: 1px solid #334155;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 276,
       "text": "color: #e2e8f0;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 283,
       "text": "background: #334155;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 284,
       "text": "border-color: #475569;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 290,
       "text": "color: #f87171;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 302,
       "text": "color: #22d3ee;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 309,
       "text": "color: #67e8f9;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 314,
       "text": "background: #1e293b;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 315,
       "text": "border-bottom: 1px solid #334155;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 320,
       "text": "background: #0f172a;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 334,
       "text": "color: #64748b;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 342,
       "text": "background: #1e293b;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 351,
       "text": "background: #334155;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 352,
       "text": "border-color: #0891b2;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 357,
       "text": "border-color: #ef4444;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 362,
       "text": "border-color: #f59e0b;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 369,
       "text": "background: linear-gradient(135deg, #334155 0%, #1e293b 100%);"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 410,
       "text": "color: #f87171;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 415,
       "text": "color: #fbbf24;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 420,
       "text": "color: #94a3b8;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 441,
       "text": "color: #22d3ee;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 457,
       "text": "border-top: 1px solid #334155;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 458,
       "text": "background: #0f172a;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 482,
       "text": "background: #1e293b;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 489,
       "text": "background: #334155;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 500,
       "text": ".strength-fill.very-weak { width: 20%; background: #ef4444; }"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 501,
       "text": ".strength-fill.weak { width: 40%; background: #f59e0b; }"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 502,
       "text": ".strength-fill.fair { width: 60%; background: #eab308; }"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 503,
       "text": ".strength-fill.strong { width: 80%; background: #22c55e; }"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 504,
       "text": ".strength-fill.very-strong { width: 100%; background: linear-gradient(90deg, #22c55e, #10b981); }"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 513,
       "text": ".strength-label.very-weak { color: #ef4444; }"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 514,
       "text": ".strength-label.weak { color: #f59e0b; }"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 515,
       "text": ".strength-label.fair { color: #eab308; }"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 516,
       "text": ".strength-label.strong { color: #22c55e; }"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 517,
       "text": ".strength-label.very-strong { color: #10b981; }"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 525,
       "text": "background: #1e293b;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 535,
       "text": "color: #cbd5e1;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 540,
       "text": "border-bottom: 1px solid #334155;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 547,
       "text": "accent-color: #0891b2;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 554,
       "text": "accent-color: #0891b2;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 560,
       "text": "color: #64748b;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 582,
       "text": "background: #1e293b;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 583,
       "text": "border: 1px solid #334155;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 585,
       "text": "color: #94a3b8;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 592,
       "text": "background: #334155;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 593,
       "text": "color: #e2e8f0;"
     },
     {
-      "file": "public/safepass-extension/popup.css",
+      "file": "public/wrayth-vault-extension/popup.css",
       "line": 598,
       "text": "border-color: #0891b2;"
     }

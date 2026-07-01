@@ -1,4 +1,4 @@
-// SafePass Content Script v2.1
+// Wrayth Vault Content Script v2.1
 // Enhanced with keyboard shortcuts, card autofill, identity autofill, and improved detection
 
 let dropdownVisible = false;
@@ -54,7 +54,7 @@ document.addEventListener('keydown', (e) => {
   
   // Enter to select
   if (dropdownVisible && e.key === 'Enter') {
-    const selected = currentDropdown?.querySelector('.safepass-dropdown-item.selected');
+    const selected = currentDropdown?.querySelector('.wrayth-vault-dropdown-item.selected');
     if (selected) {
       e.preventDefault();
       selected.click();
@@ -65,7 +65,7 @@ document.addEventListener('keydown', (e) => {
 function navigateDropdown(direction) {
   if (!currentDropdown) return;
   
-  const items = currentDropdown.querySelectorAll('.safepass-dropdown-item');
+  const items = currentDropdown.querySelectorAll('.wrayth-vault-dropdown-item');
   let currentIndex = -1;
   
   items.forEach((item, index) => {
@@ -318,14 +318,14 @@ function showInlineDropdown(entries, targetField) {
   matchingPasswords = entries;
   
   const dropdown = document.createElement('div');
-  dropdown.className = 'safepass-dropdown';
-  dropdown.id = 'safepass-autofill-dropdown';
+  dropdown.className = 'wrayth-vault-dropdown';
+  dropdown.id = 'wrayth-vault-autofill-dropdown';
   
   // Header with count
   const header = document.createElement('div');
-  header.className = 'safepass-dropdown-header';
+  header.className = 'wrayth-vault-dropdown-header';
   header.innerHTML = `
-    <span>🔐 SafePass</span>
+    <span>🔐 Wrayth Vault</span>
     <span style="float:right;font-size:10px;opacity:0.7">${entries.length} saved</span>
   `;
   dropdown.appendChild(header);
@@ -333,7 +333,7 @@ function showInlineDropdown(entries, targetField) {
   // Password items
   entries.forEach((entry, index) => {
     const item = document.createElement('div');
-    item.className = 'safepass-dropdown-item' + (index === 0 ? ' selected' : '');
+    item.className = 'wrayth-vault-dropdown-item' + (index === 0 ? ' selected' : '');
     item.dataset.index = index;
     item.dataset.id = entry.id;
     
@@ -342,24 +342,24 @@ function showInlineDropdown(entries, targetField) {
     const faviconUrl = hostname ? `https://www.google.com/s2/favicons?domain=${hostname}&sz=32` : null;
     
     let badges = '';
-    if (entry.isBreached) badges += '<span class="safepass-badge breach">⚠️</span>';
-    if (entry.isWeak) badges += '<span class="safepass-badge weak">⚠️</span>';
+    if (entry.isBreached) badges += '<span class="wrayth-vault-badge breach">⚠️</span>';
+    if (entry.isWeak) badges += '<span class="wrayth-vault-badge weak">⚠️</span>';
     
     item.innerHTML = `
-      <div class="safepass-dropdown-favicon">
+      <div class="wrayth-vault-dropdown-favicon">
         ${faviconUrl ? `<img src="${faviconUrl}" onerror="this.style.display='none';this.parentElement.textContent='🔐'" />` : '🔐'}
       </div>
-      <div class="safepass-dropdown-details">
-        <div class="safepass-dropdown-site">${escapeHtml(entry.title)}${badges}</div>
-        <div class="safepass-dropdown-username">${escapeHtml(entry.username || 'No username')}</div>
+      <div class="wrayth-vault-dropdown-details">
+        <div class="wrayth-vault-dropdown-site">${escapeHtml(entry.title)}${badges}</div>
+        <div class="wrayth-vault-dropdown-username">${escapeHtml(entry.username || 'No username')}</div>
       </div>
-      <div class="safepass-dropdown-actions">
-        <button class="safepass-action-btn" data-action="copy" title="Copy password">📋</button>
+      <div class="wrayth-vault-dropdown-actions">
+        <button class="wrayth-vault-action-btn" data-action="copy" title="Copy password">📋</button>
       </div>
     `;
     
     item.addEventListener('click', async (e) => {
-      if (e.target.closest('.safepass-action-btn')) {
+      if (e.target.closest('.wrayth-vault-action-btn')) {
         e.preventDefault();
         e.stopPropagation();
         await copyPasswordFromEntry(entry);
@@ -375,11 +375,11 @@ function showInlineDropdown(entries, targetField) {
   
   // Footer with generate button
   const footer = document.createElement('div');
-  footer.className = 'safepass-dropdown-footer';
+  footer.className = 'wrayth-vault-dropdown-footer';
   footer.innerHTML = `
-    <button class="safepass-generate-btn">⚡ Generate New</button>
+    <button class="wrayth-vault-generate-btn">⚡ Generate New</button>
   `;
-  footer.querySelector('.safepass-generate-btn').addEventListener('click', async (e) => {
+  footer.querySelector('.wrayth-vault-generate-btn').addEventListener('click', async (e) => {
     e.preventDefault();
     e.stopPropagation();
     await generateAndFillNew();
@@ -490,7 +490,7 @@ async function fillFromEntry(entry) {
     
     fillCredentials(entry.username, response.password);
   } catch (error) {
-    console.error('[SafePass] Fill error:', error);
+    console.error('[Wrayth Vault] Fill error:', error);
     const usernameFields = findUsernameFields();
     if (usernameFields.length > 0 && entry.username) {
       fillField(usernameFields[0], entry.username);
@@ -508,10 +508,10 @@ function escapeHtml(text) {
 
 // ===== NOTIFICATIONS =====
 function showNotification(message, type = 'success') {
-  document.querySelectorAll('.safepass-notification').forEach(n => n.remove());
+  document.querySelectorAll('.wrayth-vault-notification').forEach(n => n.remove());
   
   const notification = document.createElement('div');
-  notification.className = 'safepass-notification';
+  notification.className = 'wrayth-vault-notification';
   notification.style.background = type === 'error' 
     ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
     : type === 'warning'
@@ -530,11 +530,11 @@ function initializeFields() {
   const passwordFields = findPasswordFields();
   
   [...usernameFields, ...passwordFields].forEach(field => {
-    if (field.dataset.safepassInitialized) return;
+    if (field.dataset.wrayth-vaultInitialized) return;
     
-    field.dataset.safepassInitialized = 'true';
+    field.dataset.wrayth-vaultInitialized = 'true';
     
-    addSafePassIcon(field);
+    addWrayth VaultIcon(field);
     
     field.addEventListener('focus', async () => {
       currentField = field;
@@ -543,15 +543,15 @@ function initializeFields() {
   });
 }
 
-function addSafePassIcon(field) {
-  if (field.dataset.safepassIcon) return;
+function addWrayth VaultIcon(field) {
+  if (field.dataset.wrayth-vaultIcon) return;
   
-  field.dataset.safepassIcon = 'true';
+  field.dataset.wrayth-vaultIcon = 'true';
   
   const iconWrapper = document.createElement('div');
-  iconWrapper.className = 'safepass-icon-wrapper';
+  iconWrapper.className = 'wrayth-vault-icon-wrapper';
   iconWrapper.innerHTML = `
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="safepass-icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="wrayth-vault-icon">
       <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
       <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
     </svg>
@@ -583,7 +583,7 @@ async function checkForMatchingPasswords(showAll = false) {
     });
     
     if (response.needsAuth) {
-      showNotification('Please unlock SafePass first', 'warning');
+      showNotification('Please unlock Wrayth Vault first', 'warning');
       return;
     }
     
@@ -593,7 +593,7 @@ async function checkForMatchingPasswords(showAll = false) {
       showNotification('No passwords saved yet', 'info');
     }
   } catch (error) {
-    console.error('[SafePass] Error checking passwords:', error);
+    console.error('[Wrayth Vault] Error checking passwords:', error);
   }
 }
 
@@ -610,24 +610,24 @@ function showSavePrompt(data) {
   savePromptVisible = true;
   
   // Remove any existing prompts
-  document.querySelectorAll('.safepass-save-prompt').forEach(p => p.remove());
+  document.querySelectorAll('.wrayth-vault-save-prompt').forEach(p => p.remove());
   
   const prompt = document.createElement('div');
-  prompt.className = 'safepass-save-prompt';
+  prompt.className = 'wrayth-vault-save-prompt';
   prompt.innerHTML = `
-    <div class="safepass-save-prompt-content">
-      <div class="safepass-save-prompt-header">
-        <span class="safepass-save-prompt-icon">🔐</span>
-        <span class="safepass-save-prompt-title">Save to SafePass?</span>
-        <button class="safepass-save-prompt-close" id="safepass-prompt-close">×</button>
+    <div class="wrayth-vault-save-prompt-content">
+      <div class="wrayth-vault-save-prompt-header">
+        <span class="wrayth-vault-save-prompt-icon">🔐</span>
+        <span class="wrayth-vault-save-prompt-title">Save to Wrayth Vault?</span>
+        <button class="wrayth-vault-save-prompt-close" id="wrayth-vault-prompt-close">×</button>
       </div>
-      <div class="safepass-save-prompt-body">
-        <div class="safepass-save-prompt-site">${escapeHtml(data.title || data.website)}</div>
-        <div class="safepass-save-prompt-username">${escapeHtml(data.username)}</div>
+      <div class="wrayth-vault-save-prompt-body">
+        <div class="wrayth-vault-save-prompt-site">${escapeHtml(data.title || data.website)}</div>
+        <div class="wrayth-vault-save-prompt-username">${escapeHtml(data.username)}</div>
       </div>
-      <div class="safepass-save-prompt-actions">
-        <button class="safepass-save-prompt-btn safepass-save-prompt-btn-secondary" id="safepass-prompt-never">Never</button>
-        <button class="safepass-save-prompt-btn safepass-save-prompt-btn-primary" id="safepass-prompt-save">Save Password</button>
+      <div class="wrayth-vault-save-prompt-actions">
+        <button class="wrayth-vault-save-prompt-btn wrayth-vault-save-prompt-btn-secondary" id="wrayth-vault-prompt-never">Never</button>
+        <button class="wrayth-vault-save-prompt-btn wrayth-vault-save-prompt-btn-primary" id="wrayth-vault-prompt-save">Save Password</button>
       </div>
     </div>
   `;
@@ -635,7 +635,7 @@ function showSavePrompt(data) {
   document.body.appendChild(prompt);
   
   // Add event listeners
-  document.getElementById('safepass-prompt-save')?.addEventListener('click', async () => {
+  document.getElementById('wrayth-vault-prompt-save')?.addEventListener('click', async () => {
     try {
       const response = await chrome.runtime.sendMessage({
         action: 'savePassword',
@@ -643,20 +643,20 @@ function showSavePrompt(data) {
       });
       
       if (response.success) {
-        showNotification('🔐 Password saved to SafePass!');
+        showNotification('🔐 Password saved to Wrayth Vault!');
       } else if (response.error === 'Not authenticated') {
-        showNotification('Unlock SafePass to save passwords', 'warning');
+        showNotification('Unlock Wrayth Vault to save passwords', 'warning');
       } else {
         showNotification('Failed to save password', 'error');
       }
     } catch (error) {
-      console.error('[SafePass] Save error:', error);
+      console.error('[Wrayth Vault] Save error:', error);
       showNotification('Failed to save password', 'error');
     }
     hideSavePrompt();
   });
   
-  document.getElementById('safepass-prompt-never')?.addEventListener('click', () => {
+  document.getElementById('wrayth-vault-prompt-never')?.addEventListener('click', () => {
     // Store in ignored list
     chrome.runtime.sendMessage({
       action: 'ignoreCredential',
@@ -665,7 +665,7 @@ function showSavePrompt(data) {
     hideSavePrompt();
   });
   
-  document.getElementById('safepass-prompt-close')?.addEventListener('click', hideSavePrompt);
+  document.getElementById('wrayth-vault-prompt-close')?.addEventListener('click', hideSavePrompt);
   
   // Auto-hide after 30 seconds
   setTimeout(() => {
@@ -674,7 +674,7 @@ function showSavePrompt(data) {
 }
 
 function hideSavePrompt() {
-  document.querySelectorAll('.safepass-save-prompt').forEach(p => p.remove());
+  document.querySelectorAll('.wrayth-vault-save-prompt').forEach(p => p.remove());
   savePromptVisible = false;
   pendingSave = null;
 }
@@ -715,8 +715,8 @@ function detectNewPasswordForm() {
   const forms = document.querySelectorAll('form');
   
   forms.forEach(form => {
-    if (form.dataset.safepassWatched) return;
-    form.dataset.safepassWatched = 'true';
+    if (form.dataset.wrayth-vaultWatched) return;
+    form.dataset.wrayth-vaultWatched = 'true';
     
     // Listen for form submit
     form.addEventListener('submit', (e) => {
@@ -729,8 +729,8 @@ function detectNewPasswordForm() {
     // Also watch for button clicks inside the form (for JS-based submissions)
     const buttons = form.querySelectorAll('button[type="submit"], button:not([type]), input[type="submit"]');
     buttons.forEach(button => {
-      if (button.dataset.safepassWatched) return;
-      button.dataset.safepassWatched = 'true';
+      if (button.dataset.wrayth-vaultWatched) return;
+      button.dataset.wrayth-vaultWatched = 'true';
       
       button.addEventListener('click', () => {
         // Delay to allow form validation
@@ -747,8 +747,8 @@ function detectNewPasswordForm() {
   // Watch password fields for SPA support (blur + enter key)
   const passwordFields = document.querySelectorAll('input[type="password"]');
   passwordFields.forEach(field => {
-    if (field.dataset.safepassAutoSave) return;
-    field.dataset.safepassAutoSave = 'true';
+    if (field.dataset.wrayth-vaultAutoSave) return;
+    field.dataset.wrayth-vaultAutoSave = 'true';
     
     // Detect Enter key press in password field
     field.addEventListener('keydown', (e) => {
@@ -772,8 +772,8 @@ function detectNewPasswordForm() {
   loginButtons.forEach(button => {
     const text = (button.textContent || '').toLowerCase();
     if ((text.includes('log in') || text.includes('login') || text.includes('sign in') || text.includes('signin')) &&
-        !button.dataset.safepassLoginWatch) {
-      button.dataset.safepassLoginWatch = 'true';
+        !button.dataset.wrayth-vaultLoginWatch) {
+      button.dataset.wrayth-vaultLoginWatch = 'true';
       
       button.addEventListener('click', () => {
         setTimeout(() => {
@@ -862,4 +862,4 @@ function init() {
 
 init();
 
-console.log('[SafePass] Content script v2.1 loaded');
+console.log('[Wrayth Vault] Content script v2.1 loaded');

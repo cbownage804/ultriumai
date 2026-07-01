@@ -42,7 +42,7 @@ const VaultExtension = () => {
 
       for (const file of files) {
         try {
-          const response = await fetch(`/safepass-extension/${file}`);
+          const response = await fetch(`/wrayth-vault-extension/${file}`);
           if (response.ok) {
             const content = await response.blob();
             zip.file(file, content);
@@ -56,7 +56,7 @@ const VaultExtension = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "safepass-extension.zip";
+      a.download = "wrayth-vault-extension.zip";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
