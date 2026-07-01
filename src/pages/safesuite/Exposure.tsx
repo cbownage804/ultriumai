@@ -596,8 +596,47 @@ export default function WraythWeb() {
                         </div>
                       ) : threats[asset.id]?.length > 0 ? (
                         <div className="space-y-3">
+                          {/* Ray's narrative summary for this specific identity */}
+                          {(() => {
+                            const list = threats[asset.id];
+                            const count = list.length;
+                            const critical = list.filter(t => ['critical','high'].includes((t.severity||'').toLowerCase())).length;
+                            const sorted = [...list].sort((a,b) => new Date(a.first_seen).getTime() - new Date(b.first_seen).getTime());
+                            const oldest = sorted[0];
+                            const newest = sorted[sorted.length - 1];
+                            const dataClasses = new Set<string>();
+                            list.forEach(t => (t.threat_indicators?.data_classes || []).forEach((d: string) => dataClasses.add(d)));
+                            const topClasses = Array.from(dataClasses).slice(0, 3);
+                            const yearOldest = oldest?.first_seen ? new Date(oldest.first_seen).getFullYear() : null;
+                            const yearNewest = newest?.first_seen ? new Date(newest.first_seen).getFullYear() : null;
+                            const label = asset.asset_value;
+
+                            const opener = count === 1
+                              ? `I found ${label} in 1 breach`
+                              : `I found ${label} in ${count} breaches`;
+                            const range = yearOldest && yearNewest
+                              ? (yearOldest === yearNewest ? ` from ${yearOldest}` : ` between ${yearOldest} and ${yearNewest}`)
+                              : '';
+                            const exposed = topClasses.length
+                              ? ` The exposed data includes ${topClasses.join(', ').toLowerCase()}.`
+                              : '';
+                            const priority = critical > 0
+                              ? ` ${critical} of these are high-priority — I'd rotate any reused passwords first.`
+                              : ` None are critical right now, but I'd still refresh the password if you reuse it.`;
+
+                            return (
+                              <div className="rounded-xl border border-violet-500/20 bg-violet-500/[0.05] p-4">
+                                <div className="text-[10px] uppercase tracking-[0.22em] text-violet-300/80 mb-1.5">
+                                  Ray's summary
+                                </div>
+                                <p className="text-sm text-gray-200 leading-relaxed">
+                                  {opener}{range}.{exposed}{priority}
+                                </p>
+                              </div>
+                            );
+                          })()}
                           <p className="text-sm font-medium text-gray-400 mb-3">
-                            Found {threats[asset.id].length} threat(s) for this asset:
+                            Individual breaches:
                           </p>
                           {threats[asset.id].map((threat) => (
                             <div
