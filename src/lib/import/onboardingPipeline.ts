@@ -1,3 +1,4 @@
+import { devLog } from '@/lib/logger';
 /**
  * Onboarding pipeline — orchestrates real import, analysis, scoring, and
  * persistence in a single flow. Returns live progress callbacks so the
@@ -79,7 +80,7 @@ async function prewarmFirstBriefing() {
   try {
     await supabase.functions.invoke('ray-briefing', { body: { first_run: true } });
   } catch (e) {
-    console.warn('[onboarding] pre-warm briefing failed', e);
+    devLog.warn('[onboarding] pre-warm briefing failed', e);
   }
 }
 

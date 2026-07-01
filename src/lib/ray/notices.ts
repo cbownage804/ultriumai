@@ -1,3 +1,4 @@
+import { devLog } from '@/lib/logger';
 /**
  * Ray Notices — Wrayth 2.7 predictive layer.
  *
@@ -429,7 +430,7 @@ export function useRayNotices(limit = 3) {
       try {
         await synthesizeNotices(user.id);
       } catch (e) {
-        console.warn('[ray.notices] synthesize failed', e);
+        devLog.warn('[ray.notices] synthesize failed', e);
       }
       if (!cancelled) await refresh();
     })();

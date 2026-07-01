@@ -1,3 +1,4 @@
+import { devLog } from '@/lib/logger';
 import { useState } from "react";
 import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,7 +49,7 @@ const VaultExtension = () => {
             zip.file(file, content);
           }
         } catch (e) {
-          console.warn(`Could not fetch ${file}`, e);
+          devLog.warn(`Could not fetch ${file}`, e);
         }
       }
 
