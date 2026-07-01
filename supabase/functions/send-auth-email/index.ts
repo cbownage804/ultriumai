@@ -181,31 +181,31 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
           <div class="container">
             <div class="card">
               <div class="logo">
-                <img src="${logoUrl}" alt="UltriumAI" />
-                <div class="brand-name">UltriumAI</div>
-                <div class="brand-tagline">Wrayth — AI cybersecurity teammate</div>
+                <img src="${logoUrl}" alt="Wrayth" />
+                <div class="brand-name">Wrayth</div>
+                <div class="brand-tagline">Your AI cybersecurity teammate</div>
               </div>
               <h1>Welcome${data.name ? `, ${data.name}` : ''}!</h1>
-              <p>Your UltriumAI account is now active. You have access to our complete product suite:</p>
+              <p>Your Wrayth account is active. Ray is standing by to help you across the platform:</p>
               <div style="margin: 20px 0;">
                 <div style="margin-bottom: 12px;">
-                  <span style="background: #3b82f620; color: #60a5fa; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 500;">AI Studio</span>
-                  <span style="color: #a1a1aa; font-size: 14px; margin-left: 8px;">Build custom GPTs and AI agents</span>
+                  <span style="background: #8b5cf620; color: #a78bfa; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 500;">Vault</span>
+                  <span style="color: #a1a1aa; font-size: 14px; margin-left: 8px;">Password vault with breach monitoring</span>
                 </div>
                 <div style="margin-bottom: 12px;">
-                  <span style="background: #8b5cf620; color: #a78bfa; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 500;">Wrayth</span>
-                  <span style="color: #a1a1aa; font-size: 14px; margin-left: 8px;">Enterprise security tools & password vault</span>
+                  <span style="background: #3b82f620; color: #60a5fa; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 500;">Scan</span>
+                  <span style="color: #a1a1aa; font-size: 14px; margin-left: 8px;">Email &amp; file threat analysis</span>
                 </div>
                 <div style="margin-bottom: 12px;">
-                  <span style="background: #10b98120; color: #34d399; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 500;">Vanguard</span>
-                  <span style="color: #a1a1aa; font-size: 14px; margin-left: 8px;">Endpoint security & compliance monitoring</span>
+                  <span style="background: #10b98120; color: #34d399; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 500;">Watch</span>
+                  <span style="color: #a1a1aa; font-size: 14px; margin-left: 8px;">Identity exposure &amp; dark web monitoring</span>
                 </div>
               </div>
               <div style="text-align: center;">
-                <a href="${data.actionUrl}" class="button">Go to Dashboard</a>
+                <a href="${data.actionUrl}" class="button">Go to Ray's briefing</a>
               </div>
               <div class="footer">
-                <p>© ${year} UltriumAI. All rights reserved.</p>
+                <p>© ${year} Wrayth. All rights reserved.</p>
                 <p>Questions? Reply to this email or visit our help center.</p>
               </div>
             </div>
