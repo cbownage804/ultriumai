@@ -120,7 +120,7 @@ export function SecurityArchitectureBadge({ className = '', variant = 'badge' }:
         </button>
       </DialogTrigger>
       
-      <DialogContent className="sm:max-w-lg bg-[#0a0a0a] border-primary/30 max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg bg-background border-primary/30 max-h-[85vh] overflow-y-auto">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 pointer-events-none" />
         
         <DialogHeader className="relative">

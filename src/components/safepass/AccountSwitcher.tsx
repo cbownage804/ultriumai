@@ -136,7 +136,7 @@ export function AccountSwitcher({ className }: AccountSwitcherProps) {
         
         <DropdownMenuContent 
           align="end" 
-          className="w-64 bg-[#1a1a1a] border-primary/20"
+          className="w-64 bg-muted border-primary/20"
         >
           <DropdownMenuLabel className="text-gray-400 text-xs">
             Switch Account

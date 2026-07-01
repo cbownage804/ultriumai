@@ -105,7 +105,7 @@ export function AutofillSuggestions({
                 {/* Icon */}
                 <div className={cn(
                   "h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0",
-                  index === 0 ? "bg-primary/20" : "bg-[#252525]"
+                  index === 0 ? "bg-primary/20" : "bg-muted"
                 )}>
                   {index === 0 ? (
                     <Zap className="h-4 w-4 text-primary" />

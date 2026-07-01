@@ -146,7 +146,7 @@ export function VaultAISearch({
             onChange={(e) => handleInputChange(e.target.value)}
             onKeyDown={handleKeyDown}
             onFocus={() => entries.length > 0 && setIsOpen(true)}
-            className="pl-10 pr-10 bg-[#1a1a1a] border-primary/20 focus:border-primary text-white placeholder:text-gray-500"
+            className="pl-10 pr-10 bg-muted border-primary/20 focus:border-primary text-white placeholder:text-gray-500"
           />
           {isEnabled && (
             <Sparkles className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/60" />
@@ -168,7 +168,7 @@ export function VaultAISearch({
       </PopoverTrigger>
       
       <PopoverContent 
-        className="w-[var(--radix-popover-trigger-width)] p-0 bg-[#1a1a1a] border-primary/20"
+        className="w-[var(--radix-popover-trigger-width)] p-0 bg-muted border-primary/20"
         align="start"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
@@ -193,7 +193,7 @@ export function VaultAISearch({
                       : "hover:bg-primary/10"
                   )}
                 >
-                  <div className="h-8 w-8 rounded-lg bg-[#252525] flex items-center justify-center flex-shrink-0">
+                  <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
                     <Globe className="h-4 w-4 text-gray-400" />
                   </div>
                   

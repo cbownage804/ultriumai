@@ -139,7 +139,7 @@ export function DarkWebCheck({ defaultEmail = '', onClose, compact = false, user
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter email to check..."
-            className="flex-1 bg-[#0f0f0f] border-white/10 text-white"
+            className="flex-1 bg-card border-white/10 text-white"
             onKeyDown={(e) => e.key === 'Enter' && checkEmail()}
           />
           <Button 
@@ -179,7 +179,7 @@ export function DarkWebCheck({ defaultEmail = '', onClose, compact = false, user
   }
 
   return (
-    <Card className="bg-[#0f0f0f] border-purple-500/20">
+    <Card className="bg-card border-purple-500/20">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -205,7 +205,7 @@ export function DarkWebCheck({ defaultEmail = '', onClose, compact = false, user
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter email to check..."
-            className="flex-1 bg-[#141414] border-purple-500/20 text-white"
+            className="flex-1 bg-card border-purple-500/20 text-white"
             onKeyDown={(e) => e.key === 'Enter' && checkEmail()}
           />
           <Button 
@@ -267,7 +267,7 @@ export function DarkWebCheck({ defaultEmail = '', onClose, compact = false, user
                   <ScrollArea className="h-[150px]">
                     <div className="space-y-2">
                       {result.breaches.map((breach, i) => (
-                        <div key={i} className="p-3 rounded-lg bg-[#141414] border border-orange-500/20">
+                        <div key={i} className="p-3 rounded-lg bg-card border border-orange-500/20">
                           <div className="flex items-center justify-between">
                             <span className="font-medium text-white">{breach.name}</span>
                             <span className="text-xs text-gray-500">{breach.breach_date}</span>
@@ -306,7 +306,7 @@ export function DarkWebCheck({ defaultEmail = '', onClose, compact = false, user
                   <ScrollArea className="h-[150px]">
                     <div className="space-y-2">
                       {result.leakedData.map((leak, i) => (
-                        <div key={i} className="p-3 rounded-lg bg-[#141414] border border-red-500/20">
+                        <div key={i} className="p-3 rounded-lg bg-card border border-red-500/20">
                           <div className="text-xs text-gray-500 mb-1">{leak.database_name}</div>
                           <div className="space-y-1">
                             {leak.email && (

@@ -488,7 +488,7 @@ export const PasswordVault = () => {
     <div className="space-y-4 sm:space-y-6">
       {/* Tabs Navigation */}
       <Tabs defaultValue="passwords" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid mb-4 sm:mb-6 bg-[#1a1a1a] border border-primary/10 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid mb-4 sm:mb-6 bg-muted border border-primary/10 h-auto p-1">
           <TabsTrigger value="passwords" className="flex items-center justify-center gap-1 sm:gap-2 text-gray-400 data-[state=active]:bg-primary/20 data-[state=active]:text-primary touch-target py-2.5 sm:py-2">
             <Key className="h-4 w-4" />
             <span className="hidden sm:inline text-sm">Passwords</span>

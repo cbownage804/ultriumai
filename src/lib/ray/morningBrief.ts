@@ -1,3 +1,4 @@
+import { devLog } from '@/lib/logger';
 /**
  * Morning Brief client SDK.
  *
@@ -46,7 +47,7 @@ export async function submitBriefFeedback(briefId: string, feedback: RayBriefFee
     .from("ray_briefs" as never)
     .update({ feedback, feedback_note: note ?? null, feedback_at: new Date().toISOString() } as never)
     .eq("id", briefId);
-  if (error) console.warn("[morningBrief] feedback failed", error);
+  if (error) devLog.log("[morningBrief] feedback failed", error);
 }
 
 function localDate(tz: string): string {
@@ -83,7 +84,7 @@ export async function generateBrief(opts?: { force?: boolean }): Promise<RayBrie
     body: { source: "lazy", force: !!opts?.force },
   });
   if (error) {
-    console.warn("[morningBrief] generation failed", error);
+    devLog.log("[morningBrief] generation failed", error);
     return null;
   }
   return ((data as { brief?: RayBriefRow })?.brief as RayBriefRow) ?? null;

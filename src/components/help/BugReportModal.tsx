@@ -1,3 +1,4 @@
+import { devLog } from '@/lib/logger';
 import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -72,7 +73,7 @@ export function BugReportModal({ open, onOpenChange }: BugReportModalProps) {
         });
         screenshot = canvas.toDataURL('image/webp', 0.7);
       } catch (err) {
-        console.warn('Screenshot capture failed:', err);
+        devLog.log('Screenshot capture failed:', err);
       }
 
       // Collect console errors (from window.onerror buffer if available)
@@ -152,7 +153,7 @@ export function BugReportModal({ open, onOpenChange }: BugReportModalProps) {
           },
         });
       } catch (emailErr) {
-        console.warn('Bug report email notification failed:', emailErr);
+        devLog.log('Bug report email notification failed:', emailErr);
         // Don't block submission if email fails
       }
 

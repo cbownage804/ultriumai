@@ -288,7 +288,7 @@ export function AppAIChat({
   };
 
   return (
-    <Card className={`bg-[#0f0f0f] border-white/10 flex flex-col ${isExpanded ? 'fixed inset-4 z-50' : 'h-[500px]'}`}>
+    <Card className={`bg-card border-white/10 flex flex-col ${isExpanded ? 'fixed inset-4 z-50' : 'h-[500px]'}`}>
       {/* Header */}
       <CardHeader className="py-3 px-4 border-b border-white/10 shrink-0">
         <div className="flex items-center justify-between">
@@ -346,7 +346,7 @@ export function AppAIChat({
                 <div className={`max-w-[85%] rounded-xl px-4 py-3 ${
                   message.role === 'user' 
                     ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white' 
-                    : 'bg-[#1a1a1a] border border-white/10 text-gray-200'
+                    : 'bg-muted border border-white/10 text-gray-200'
                 }`}>
                   <div className="text-sm whitespace-pre-wrap prose prose-invert prose-sm max-w-none">
                     {message.content}
@@ -362,7 +362,7 @@ export function AppAIChat({
               animate={{ opacity: 1 }}
               className="flex justify-start"
             >
-              <div className="bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-3">
+              <div className="bg-muted border border-white/10 rounded-xl px-4 py-3">
                 <div className="flex items-center gap-2 text-gray-400">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   <span className="text-sm">Thinking...</span>
@@ -400,7 +400,7 @@ export function AppAIChat({
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask me anything about security..."
-            className="flex-1 bg-[#1a1a1a] border-white/10 text-white placeholder:text-gray-500"
+            className="flex-1 bg-muted border-white/10 text-white placeholder:text-gray-500"
             disabled={isLoading}
           />
           <Button 
