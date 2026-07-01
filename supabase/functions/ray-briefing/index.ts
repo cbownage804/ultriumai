@@ -128,9 +128,15 @@ serve(async (req) => {
       });
     }
 
+    const vaultEmpty = passwordStats.total === 0;
+
     const firstRunInstruction = isFirstRun
       ? `\nFIRST-RUN HANDOFF: This is the user's very first briefing — they just finished onboarding with you minutes ago. Acknowledge it warmly in the greeting (e.g. "Welcome in, ${firstName}. Here's where we stand."). In the bullets, reference what you found DURING SETUP using onboarding_summary (e.g. "I went through your ${onboardingMemory?.total ?? 0} credentials. ${onboardingMemory?.breached ?? 0} were in known breaches."). Prefer surfacing the recommendations already in existing_open_recommendations rather than inventing new ones — those were generated from the user's real data during setup. Do not say "good morning" or pretend time has passed.`
       : `\nReturning user — keep continuity with recent_timeline and prior memory. Reference the most recent meaningful event if it adds value.`;
+
+    const lifecycleInstruction = vaultEmpty
+      ? `\nLIFECYCLE: The user has NOT yet imported or saved any passwords. Wrayth's very first job is to become their password manager. Your ONE recommendation is already provided ("Protect your passwords with Wrayth"). DO NOT invent recommendations about password monitoring, breach detection, MFA, or dark-web exposure — those follow naturally once passwords are in the vault. Bullets should invite them to bring their passwords in, not report on things that don't exist yet. Return an EMPTY recommendations array — Ray will attach the correct one.`
+      : "";
 
     const userPrompt = `Generate a short, conversational ${isFirstRun ? "first-run welcome" : "morning"} briefing for ${firstName}.
 Greeting must be 1 short sentence.
@@ -138,7 +144,7 @@ Bullets: 2-4 plain, calm observations grounded in the context.
 Recommendations: 0-3 items. TITLES MUST BE OUTCOME-FOCUSED and written as something you (Ray) will do FOR the user.
 GOOD titles: "Start protecting your passwords", "Let me monitor your dark-web exposure", "Turn on MFA for your Google account".
 BAD titles: "Establish password monitoring", "Configure breach detection", "Setup 2FA".
-The body explains what it actually does in 1 sentence.${firstRunInstruction}
+The body explains what it actually does in 1 sentence.${firstRunInstruction}${lifecycleInstruction}
 
 Context JSON:
 ${JSON.stringify(contextPayload).slice(0, 8000)}
