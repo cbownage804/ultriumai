@@ -38,7 +38,7 @@ async function fetchUserSecurityContext(supabase: any, userId: string): Promise<
       compromised: 0
     };
 
-    // Fetch SafeWeb monitoring stats
+    // Fetch Watch monitoring stats
     const { data: monitoredAssets } = await supabase
       .from('monitored_assets')
       .select('id, threats_found, last_scan_at')
@@ -50,7 +50,7 @@ async function fetchUserSecurityContext(supabase: any, userId: string): Promise<
       lastScan: monitoredAssets?.[0]?.last_scan_at || null
     };
 
-    // Fetch SafeTrack asset stats
+    // Fetch asset stats
     const { data: assets } = await supabase
       .from('assets')
       .select('id, warranty_expiry')
@@ -66,7 +66,7 @@ async function fetchUserSecurityContext(supabase: any, userId: string): Promise<
       ).length || 0
     };
 
-    // Fetch SafeScan stats
+    // Fetch Scan stats
     const { data: scanLogs } = await supabase
       .from('audit_logs')
       .select('details')
@@ -161,7 +161,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log('SafeAssist AI function called');
+    console.log('ray-chat function called');
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
