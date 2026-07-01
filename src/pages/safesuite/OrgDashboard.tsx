@@ -152,7 +152,7 @@ export default function OrgDashboard() {
             )}
           </div>
           <div className="shrink-0 text-right">
-            <div className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Org Score</div>
+            <div className="text-xs uppercase tracking-widest text-muted-foreground mb-1">How you're doing</div>
             <div className={cn('text-5xl font-extralight leading-none', scoreTone(overall))}>{overall}</div>
             <div className="mt-2"><DeltaPill delta={delta} /></div>
           </div>
@@ -176,7 +176,7 @@ export default function OrgDashboard() {
 
       {/* Organization Health grid */}
       <section>
-        <h2 className="text-xs uppercase tracking-[0.3em] text-muted-foreground mb-3">Organization Health</h2>
+        <h2 className="text-xs uppercase tracking-[0.3em] text-muted-foreground mb-3">How you're doing</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {HEALTH_AREAS.map(({ key, label, icon: Icon }) => {
             const v = (health?.[key] as number) ?? 0;
@@ -197,7 +197,7 @@ export default function OrgDashboard() {
       {/* Employee intelligence */}
       <section>
         <div className="flex items-baseline justify-between mb-3">
-          <h2 className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Employee intelligence</h2>
+          <h2 className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Your people</h2>
           <span className="text-xs text-muted-foreground">{profiles.length} employees · ordered by Ray's priority</span>
         </div>
         <div className="space-y-2">
@@ -230,7 +230,7 @@ export default function OrgDashboard() {
       {/* Missions + Timeline two-col */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <section>
-          <h2 className="text-xs uppercase tracking-[0.3em] text-muted-foreground mb-3">Company missions</h2>
+          <h2 className="text-xs uppercase tracking-[0.3em] text-muted-foreground mb-3">What we're working on</h2>
           <div className="space-y-2">
             {missions.length === 0 && (
               <Card className="p-4 bg-card border-border text-sm text-muted-foreground">
@@ -255,7 +255,7 @@ export default function OrgDashboard() {
         </section>
 
         <section>
-          <h2 className="text-xs uppercase tracking-[0.3em] text-muted-foreground mb-3">Company timeline</h2>
+          <h2 className="text-xs uppercase tracking-[0.3em] text-muted-foreground mb-3">What just happened</h2>
           <Card className="p-4 bg-card border-border">
             {timeline.length === 0 ? (
               <div className="text-sm text-muted-foreground">No events yet today.</div>
@@ -277,7 +277,7 @@ export default function OrgDashboard() {
 
       {/* Risk heat map */}
       <section>
-        <h2 className="text-xs uppercase tracking-[0.3em] text-muted-foreground mb-3">Risk heat map</h2>
+        <h2 className="text-xs uppercase tracking-[0.3em] text-muted-foreground mb-3">Where risk is hiding</h2>
         <Card className="p-5 bg-card border-border">
           {departments.length === 0 ? (
             <div className="text-sm text-muted-foreground">Add departments to employees to unlock the heat map.</div>
