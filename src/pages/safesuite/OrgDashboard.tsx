@@ -317,6 +317,7 @@ export default function OrgDashboard() {
           </div>
         </Card>
       )}
-    </div>
+    </PageMotion>
+
   );
 }
