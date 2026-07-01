@@ -329,7 +329,6 @@ function WraythLayoutInner() {
       </div>
 
       <AskRayPalette />
-      <FloatingSafeAssist />
     </div>
   );
 }
@@ -338,10 +337,8 @@ export default function WraythLayout() {
   // MFA is optional and lives inside Ray onboarding + /app/mfa. We no longer
   // force a 2FA wall in front of the app.
   return (
-    <FloatingSafeAssistProvider>
-      <RayContextProvider>
-        <WraythLayoutInner />
-      </RayContextProvider>
-    </FloatingSafeAssistProvider>
+    <RayContextProvider>
+      <WraythLayoutInner />
+    </RayContextProvider>
   );
 }
