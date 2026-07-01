@@ -6,8 +6,6 @@ project_id = "nsyobmjpdpvesjwdphlh"
 [functions.check-subscription]
 verify_jwt = true
 
-[functions.create-checkout]
-verify_jwt = true
 
 [functions.disable-two-factor]
 verify_jwt = true
@@ -63,11 +61,6 @@ verify_jwt = true
 [functions.safepass-breach-recommendations]
 verify_jwt = true
 
-[functions.safepass-scanner]
-verify_jwt = true
-
-[functions.safepass-security-scanner]
-verify_jwt = true
 
 [functions.safesuite-check-subscription]
 verify_jwt = true
@@ -90,11 +83,6 @@ verify_jwt = false
 [functions.safesuite-user-management]
 verify_jwt = true
 
-[functions.safeweb-assets]
-verify_jwt = true
-
-[functions.safeweb-msp-clients]
-verify_jwt = true
 
 [functions.safeweb-scanner]
 verify_jwt = true
