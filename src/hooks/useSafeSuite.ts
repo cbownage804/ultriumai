@@ -232,7 +232,7 @@ export function useFeatureAccess() {
       limit: featureLimit.limit,
       used: currentUsage
     };
-  }, [tier, usage]);
+  }, [tier, usage, isAdmin]);
 
   const canUseFeature = useCallback((feature: keyof TierFeatures): boolean => {
     return checkFeatureAccess(feature).allowed;
