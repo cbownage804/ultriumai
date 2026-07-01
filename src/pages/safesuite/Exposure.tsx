@@ -363,6 +363,37 @@ export default function WraythWeb() {
     return doc.body.textContent || '';
   };
 
+  /** Derive 2-4 concrete next actions Ray suggests for a threat. */
+  const getRayActions = (threat: ThreatDetails): string[] => {
+    const t = `${threat.threat_type || ''} ${threat.title || ''} ${(threat.tags || []).join(' ')}`.toLowerCase();
+    const actions: string[] = [];
+    const has = (...keys: string[]) => keys.some((k) => t.includes(k));
+
+    if (has('password', 'credential', 'breach', 'leak')) {
+      actions.push('Change this password');
+      actions.push('Turn on MFA for this account');
+    }
+    if (has('phish', 'malicious', 'suspicious')) {
+      actions.push("Don't click links from this sender");
+      actions.push('Report the message to your provider');
+    }
+    if (has('malware', 'ransomware', 'infostealer')) {
+      actions.push('Run a full device scan');
+      actions.push('Rotate saved passwords on this device');
+    }
+    if (has('exposed', 'pii', 'ssn', 'identity')) {
+      actions.push('Consider a credit freeze');
+      actions.push('Monitor your identity in Watch');
+    }
+    if (actions.length === 0) {
+      actions.push('Review this account for unusual activity');
+      actions.push('Rotate the password if you reuse it elsewhere');
+    }
+    return actions.slice(0, 4);
+  };
+
+
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
