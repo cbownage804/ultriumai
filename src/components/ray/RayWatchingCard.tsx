@@ -2,11 +2,11 @@
  * RayWatchingCard — the "Ray is alive" reassurance surface.
  *
  * Shows a live count of what Ray is currently guarding (passwords,
- * identities, threats seen) plus a last-checked timestamp with a
- * gently pulsing status dot. No new features — just visible
- * heartbeat so Home doesn't feel dead.
+ * identities, threats seen), a rotating real-status line, and a
+ * last-checked timestamp with a gently pulsing status dot. Every
+ * status message is derived from real counts — no fake activity.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import { Eye } from 'lucide-react';
@@ -17,15 +17,54 @@ interface Props {
   threatCount: number;
 }
 
+/** A gentle number counter — animates from 0 → value on mount. */
+function CountUp({ value }: { value: number }) {
+  const [display, setDisplay] = useState(0);
+  useEffect(() => {
+    if (value === 0) { setDisplay(0); return; }
+    const start = performance.now();
+    const duration = 700;
+    let raf = 0;
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - start) / duration);
+      // easeOutCubic
+      const eased = 1 - Math.pow(1 - p, 3);
+      setDisplay(Math.round(value * eased));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value]);
+  return <>{display}</>;
+}
+
 export function RayWatchingCard({ passwordCount, identityCount, threatCount }: Props) {
   const [lastChecked] = useState(() => new Date());
   const [, force] = useState(0);
+  const [statusIdx, setStatusIdx] = useState(0);
 
-  // Refresh the "x seconds ago" label without changing the timestamp.
   useEffect(() => {
     const id = setInterval(() => force((n) => n + 1), 30_000);
     return () => clearInterval(id);
   }, []);
+
+  // Rotating real statuses — derived from the actual counts we were given.
+  const statuses = useMemo(() => {
+    const lines: string[] = [];
+    if (passwordCount > 0) lines.push(`Watching your vault — ${passwordCount} credentials`);
+    else lines.push('Ready when you are — your vault is empty');
+    if (identityCount > 0) lines.push(`Monitoring ${identityCount} ${identityCount === 1 ? 'identity' : 'identities'}`);
+    lines.push('Watching breach feeds');
+    if (threatCount > 0) lines.push(`Reviewed ${threatCount} threat ${threatCount === 1 ? 'signal' : 'signals'} today`);
+    lines.push("Checking today's changes");
+    return lines;
+  }, [passwordCount, identityCount, threatCount]);
+
+  useEffect(() => {
+    if (statuses.length <= 1) return;
+    const id = setInterval(() => setStatusIdx((i) => (i + 1) % statuses.length), 5000);
+    return () => clearInterval(id);
+  }, [statuses.length]);
 
   const stats = [
     { label: 'Identities', value: identityCount },
@@ -59,21 +98,32 @@ export function RayWatchingCard({ passwordCount, identityCount, threatCount }: P
         </motion.div>
       </div>
 
+      <motion.p
+        key={statusIdx}
+        initial={{ opacity: 0, y: 3 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="mt-3 text-sm text-foreground/90"
+      >
+        {statuses[statusIdx]}
+      </motion.p>
+
       <div className="mt-4 grid grid-cols-3 gap-3">
-        {stats.map((s) => (
-          <div key={s.label} className="rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2.5">
-            <motion.div
-              key={s.value}
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-2xl font-semibold tabular-nums text-foreground"
-            >
-              {s.value}
-            </motion.div>
+        {stats.map((s, i) => (
+          <motion.div
+            key={s.label}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.05 * i }}
+            className="rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2.5"
+          >
+            <div className="text-2xl font-semibold tabular-nums text-foreground">
+              <CountUp value={s.value} />
+            </div>
             <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-0.5">
               {s.label}
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
 
