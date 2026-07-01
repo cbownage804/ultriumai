@@ -135,6 +135,7 @@ export default function WraythBilling() {
                 {tier === 'pro' && <Zap className="h-5 w-5 text-violet-500" />}
                 {tier === 'free' && <Shield className="h-5 w-5" />}
                 Current Plan
+                <span className="ml-2 text-[10px] uppercase tracking-[0.2em] text-violet-300/80 font-normal">Managed by Ray</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -154,6 +155,7 @@ export default function WraythBilling() {
                       {tierConfig.badge}
                     </Badge>
                   </div>
+
                   {subscription.currentPeriodEnd && tier !== 'free' && (
                     <p className="text-sm text-muted-foreground flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
