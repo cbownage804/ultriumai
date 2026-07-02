@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Brain, Plus, Trash2, ShieldCheck, Sparkles } from "lucide-react";
+import { Brain, Plus, Trash2, ShieldCheck, Sparkles, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type MemoryRow = {
