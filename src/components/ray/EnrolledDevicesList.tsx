@@ -224,13 +224,19 @@ export function EnrolledDevicesList() {
     }
     const { data: posture } = await supabase
       .from('wrayth_device_posture')
-      .select('device_id, findings');
-    const byDevice = new Map<string, Finding[]>();
+      .select('device_id, findings, payload');
+    const findingsByDevice = new Map<string, Finding[]>();
+    const postureByDevice = new Map<string, Posture>();
     for (const p of posture ?? []) {
-      byDevice.set(p.device_id, (p.findings as unknown as Finding[]) ?? []);
+      findingsByDevice.set(p.device_id, (p.findings as unknown as Finding[]) ?? []);
+      postureByDevice.set(p.device_id, (p.payload as unknown as Posture) ?? {});
     }
     setDevices(
-      (rows ?? []).map((r) => ({ ...r, findings: byDevice.get(r.id) ?? [] })),
+      (rows ?? []).map((r) => ({
+        ...r,
+        findings: findingsByDevice.get(r.id) ?? [],
+        posture: postureByDevice.get(r.id) ?? null,
+      })),
     );
   };
 
