@@ -31,6 +31,8 @@ export interface AccountSignalRow {
 interface Props {
   rows: AccountSignalRow[];
   className?: string;
+  /** Called when the user clicks "Rotate" on a row. Parent opens the dialog. */
+  onRotate?: (rowId: string) => void;
 }
 
 function ageDays(iso?: string): number | null {
