@@ -525,6 +525,16 @@ export default function WraythWeb() {
                 onChange={(e) => setNewAsset(e.target.value)}
                 className="w-full bg-background border-border text-foreground"
               />
+              {assetType === 'email' && (
+                <p className="text-xs text-muted-foreground">
+                  We'll check public breach corpora (Have I Been Pwned and dark-web feeds) for any exposure of this address.
+                </p>
+              )}
+              {assetType === 'domain' && (
+                <p className="text-xs text-muted-foreground">
+                  Ray checks domain reputation, phishing patterns, and known malicious infrastructure tied to this domain.
+                </p>
+              )}
               {assetType === 'phone' && (
                 <p className="text-xs text-muted-foreground">
                   E.164 format (+15551234567) is recommended for the most accurate breach matches. Dashes and spaces are fine — Ray will normalize them.
