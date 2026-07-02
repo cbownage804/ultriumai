@@ -77,6 +77,7 @@ var
   DefaultCode: String;
   DefaultApi:  String;
   WraythRestartRequired: Boolean;
+  HasExistingEnrollment: Boolean;
 
 function GetCmdLineParam(const Name, Default: String): String;
 var
@@ -97,10 +98,26 @@ begin
   end;
 end;
 
+function DetectExistingEnrollment(): Boolean;
+var
+  ConfigPath, Contents: String;
+begin
+  Result := False;
+  ConfigPath := ExpandConstant('{commonappdata}\Wrayth\wrayth-config.json');
+  if not FileExists(ConfigPath) then
+    Exit;
+  if not LoadStringFromFile(ConfigPath, Contents) then
+    Exit;
+  // Presence of a device_token means this machine is already enrolled.
+  // Reusing the token keeps the same device row on the server (no duplicate).
+  Result := Pos('"device_token"', Contents) > 0;
+end;
+
 procedure InitializeWizard();
 begin
   DefaultCode := GetCmdLineParam('CODE', '');
   DefaultApi  := GetCmdLineParam('API',  '{#MyDefaultApiBase}');
+  HasExistingEnrollment := DetectExistingEnrollment();
 
   CodePage := CreateInputQueryPage(
     wpWelcome,
@@ -113,6 +130,14 @@ begin
   CodePage.Add('Wrayth API base URL:', False);
   CodePage.Values[0] := DefaultCode;
   CodePage.Values[1] := DefaultApi;
+end;
+
+function ShouldSkipPage(PageID: Integer): Boolean;
+begin
+  Result := False;
+  // On upgrade re-install, the machine is already enrolled — no new code needed.
+  if (PageID = CodePage.ID) and HasExistingEnrollment and (Trim(DefaultCode) = '') then
+    Result := True;
 end;
 
 function GetEnrollmentCode(Param: String): String;
@@ -138,6 +163,12 @@ procedure WriteWraythConfig();
 var
   ConfigJson, ConfigPath: String;
 begin
+  // On upgrade: the existing config already carries the device_token that ties
+  // this machine to its server-side row. Overwriting it would drop the token
+  // and force a fresh enrollment, which would create a duplicate device.
+  if HasExistingEnrollment and (Trim(GetEnrollmentCode('')) = '') then
+    Exit;
+
   ConfigPath := ExpandConstant('{commonappdata}\Wrayth\wrayth-config.json');
   ConfigJson :=
     '{' + #13#10 +
@@ -197,7 +228,8 @@ begin
   Result := True;
   if CurPageID = CodePage.ID then
   begin
-    if Trim(CodePage.Values[0]) = '' then
+    // Existing enrollment? The code field is optional — we'll keep the current token.
+    if (Trim(CodePage.Values[0]) = '') and (not HasExistingEnrollment) then
     begin
       MsgBox('Please paste the enrollment code from the Wrayth app before continuing.',
              mbError, MB_OK);
