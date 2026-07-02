@@ -324,6 +324,30 @@ export async function skillIdentity(_message: string, ctx: SkillContext): Promis
   };
 }
 
+// ---------- Org Memory ----------
+export async function fetchOrgMemory(
+  supabase: any,
+  orgId: string | null,
+  limit = 20,
+): Promise<Array<{ key: string; value: string; category: string }>> {
+  if (!orgId) return [];
+  const { data } = await supabase
+    .from("ray_org_memory")
+    .select("key, value, category")
+    .eq("org_id", orgId)
+    .order("confidence", { ascending: false })
+    .limit(limit);
+  return (data ?? []) as Array<{ key: string; value: string; category: string }>;
+}
+
+function formatOrgMemory(mem: Array<{ key: string; value: string; category: string }>): string {
+  if (!mem.length) return "";
+  return (
+    "\n\nOrganization facts (authoritative, trust these over guesses):\n" +
+    mem.map((m) => `- ${m.key}: ${m.value}`).join("\n")
+  );
+}
+
 // ---------- Skill: Knowledge ----------
 export async function skillKnowledge(message: string, ctx: SkillContext): Promise<RayResponse> {
   const supabase = ctx.serviceClient;
