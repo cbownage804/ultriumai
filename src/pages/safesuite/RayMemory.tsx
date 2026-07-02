@@ -156,10 +156,22 @@ export default function RayMemory() {
     );
   }
 
-  const grouped = rows.reduce<Record<string, MemoryRow[]>>((acc, r) => {
-    (acc[r.category] ??= []).push(r);
-    return acc;
-  }, {});
+  const q = search.trim().toLowerCase();
+  const filtered = rows.filter((r) => {
+    if (categoryFilter !== "all" && r.category !== categoryFilter) return false;
+    if (!q) return true;
+    return (
+      r.key.toLowerCase().includes(q) ||
+      r.value.toLowerCase().includes(q) ||
+      (r.notes ?? "").toLowerCase().includes(q) ||
+      r.source.toLowerCase().includes(q)
+    );
+  });
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageStart = (currentPage - 1) * PAGE_SIZE;
+  const pageRows = filtered.slice(pageStart, pageStart + PAGE_SIZE);
+
 
   return (
     <div className="p-6 max-w-5xl space-y-6">
