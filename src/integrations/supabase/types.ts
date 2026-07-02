@@ -17959,6 +17959,62 @@ export type Database = {
         }
         Relationships: []
       }
+      ray_org_memory: {
+        Row: {
+          category: string
+          confidence: number
+          created_at: string
+          created_by: string | null
+          id: string
+          key: string
+          notes: string | null
+          org_id: string
+          source: string
+          updated_at: string
+          value: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          category?: string
+          confidence?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          key: string
+          notes?: string | null
+          org_id: string
+          source?: string
+          updated_at?: string
+          value: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          category?: string
+          confidence?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          key?: string
+          notes?: string | null
+          org_id?: string
+          source?: string
+          updated_at?: string
+          value?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ray_org_memory_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ray_org_missions: {
         Row: {
           category: string
