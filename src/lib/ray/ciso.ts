@@ -31,6 +31,13 @@ export interface CisoInput {
   monitoredAssets: number;
   mfaMissingCount?: number;
   reusedPasswordCount?: number;
+  /**
+   * Optional: the single most urgent account, if the caller already ranked
+   * one. When present, Ray names it in the directive so the advice is
+   * concrete ("start with Dropbox") instead of generic ("rotate weak ones").
+   */
+  topAccountTitle?: string;
+  topAccountReason?: 'breach' | 'weak' | 'reuse' | 'mfa';
 }
 
 /**
@@ -49,7 +56,11 @@ export function nextBestAction(input: CisoInput): CisoDirective {
     monitoredAssets,
     mfaMissingCount = 0,
     reusedPasswordCount = 0,
+    topAccountTitle,
+    topAccountReason,
   } = input;
+
+  const named = topAccountTitle?.trim();
 
   if (vaultCount === 0) {
     return {
@@ -63,11 +74,13 @@ export function nextBestAction(input: CisoInput): CisoDirective {
   }
 
   if (breachedEmailCount > 0) {
+    const leadsWithName = named && topAccountReason === 'breach';
     return {
       id: 'rotate_breached',
       tone: 'critical',
-      headline:
-        breachedEmailCount === 1
+      headline: leadsWithName
+        ? `Rotate ${named} first — it's tied to a known breach.`
+        : breachedEmailCount === 1
           ? 'Rotate the one password tied to a known breach — today.'
           : `Rotate the ${breachedEmailCount} passwords tied to known breaches — today.`,
       rationale:
@@ -77,21 +90,28 @@ export function nextBestAction(input: CisoInput): CisoDirective {
   }
 
   if (weakCount >= Math.max(3, Math.ceil(vaultCount * 0.25))) {
+    const leadsWithName = named && topAccountReason === 'weak';
     return {
       id: 'strengthen_batch',
       tone: 'warn',
-      headline: `Let me help you rewrite ${weakCount} weak passwords this week.`,
-      rationale:
-        "A quarter of your vault is below the strength I'd sign off on. We'll do them in one sitting — I generate, you approve, we move on.",
+      headline: leadsWithName
+        ? `Start with ${named} — it's the weakest one I see.`
+        : `Let me help you rewrite ${weakCount} weak passwords this week.`,
+      rationale: leadsWithName
+        ? `A quarter of your vault is below the strength I'd sign off on, and ${named} is at the bottom. We'll do them in one sitting — I generate, you approve, we move on.`
+        : "A quarter of your vault is below the strength I'd sign off on. We'll do them in one sitting — I generate, you approve, we move on.",
       cta: { label: 'Review Health', to: '/app/passwords' },
     };
   }
 
   if (reusedPasswordCount >= 2) {
+    const leadsWithName = named && topAccountReason === 'reuse';
     return {
       id: 'break_reuse',
       tone: 'warn',
-      headline: `Break the ${reusedPasswordCount} reused passwords before one leak becomes many.`,
+      headline: leadsWithName
+        ? `Break the chain at ${named} first.`
+        : `Break the ${reusedPasswordCount} reused passwords before one leak becomes many.`,
       rationale:
         "Reuse turns a single breach into a domino. Give me a few minutes and I'll give each account its own strong credential.",
       cta: { label: 'Review Health', to: '/app/passwords' },
