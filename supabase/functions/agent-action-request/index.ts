@@ -91,6 +91,7 @@ Deno.serve(async (req) => {
       headers: { ...cors, 'Content-Type': 'application/json' },
     });
   } catch (err: any) {
+    console.error('[agent-action-request] error', err?.message, err?.stack);
     return new Response(JSON.stringify({ error: err?.message ?? 'server_error' }), {
       status: 500, headers: { ...cors, 'Content-Type': 'application/json' },
     });
