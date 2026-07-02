@@ -397,6 +397,15 @@ export function EnrolledDevicesList() {
                 </Button>
               </div>
 
+              {d.posture && (
+                <RayFixPanel
+                  deviceId={d.id}
+                  score={d.posture._ray?.score}
+                  plan={d.posture._ray?.fix_plan ?? []}
+                  disabled={!online}
+                />
+              )}
+
               {d.posture && (() => {
                 const chips = buildPostureChips(d.posture);
                 if (!chips.length) return null;
@@ -408,6 +417,7 @@ export function EnrolledDevicesList() {
                   </div>
                 );
               })()}
+
 
 
               {d.findings.length > 0 && (
