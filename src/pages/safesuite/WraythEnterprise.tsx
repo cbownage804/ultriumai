@@ -532,6 +532,44 @@ export default function WraythEnterprise() {
         </div>
       </section>
 
+      {/* Platform architecture diagram */}
+      <section id="platform-architecture" className="border-b border-border py-24 px-4">
+        <div className="mx-auto max-w-4xl">
+          <SectionHeading
+            eyebrow="Platform Architecture"
+            title="How the pieces fit together"
+            description="From the device in your user's hand to the audit stream in your SIEM — every layer of Wrayth, and where Ray sits inside it."
+            tone="blue"
+          />
+          <div className="rounded-2xl border border-blue-500/20 bg-card/40 p-6 md:p-10">
+            <div className="space-y-3">
+              {platformArchitecture.map((layer, i) => {
+                const isRay = layer.label === "Ray AI";
+                return (
+                  <div key={layer.label}>
+                    <div className={`flex items-start gap-4 rounded-lg border p-4 ${isRay ? "border-violet-500/40 bg-violet-500/[0.06]" : "border-border bg-background/60"}`}>
+                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${isRay ? "bg-violet-500/30 text-violet-100" : "bg-blue-500/20 text-blue-200"}`}>
+                        {isRay ? <Sparkles className="h-4 w-4" /> : i + 1}
+                      </div>
+                      <div className="flex-1">
+                        <div className={`font-semibold ${isRay ? "text-violet-100" : ""}`}>{layer.label}</div>
+                        <div className="text-sm text-muted-foreground">{layer.detail}</div>
+                      </div>
+                    </div>
+                    {i < platformArchitecture.length - 1 && (
+                      <div className="flex justify-center py-1">
+                        <div className={`h-4 w-px ${isRay ? "bg-violet-500/50" : "bg-blue-500/40"}`} />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+
+
       {/* API & Automation */}
       <section id="api" className="border-b border-border py-24 px-4">
         <div className="mx-auto max-w-6xl">
