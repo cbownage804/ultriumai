@@ -107,3 +107,15 @@ verify_jwt = true
 
 [functions.wrayth-usage]
 verify_jwt = true
+
+[functions.agent-enroll]
+verify_jwt = true
+
+[functions.agent-enroll-redeem]
+verify_jwt = false
+
+[functions.agent-ingest]
+verify_jwt = false
+
+[functions.agent-revoke]
+verify_jwt = true
