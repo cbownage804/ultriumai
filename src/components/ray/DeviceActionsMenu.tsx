@@ -57,15 +57,35 @@ interface ActionRow {
   error: string | null;
 }
 
+function versionAtLeast(version: string | null | undefined, minimum: string): boolean {
+  const parse = (value: string | null | undefined) =>
+    String(value ?? '0')
+      .replace(/^v/i, '')
+      .split('.')
+      .map((part) => Number.parseInt(part, 10) || 0);
+  const current = parse(version);
+  const required = parse(minimum);
+  for (let i = 0; i < Math.max(current.length, required.length); i += 1) {
+    const a = current[i] ?? 0;
+    const b = required[i] ?? 0;
+    if (a > b) return true;
+    if (a < b) return false;
+  }
+  return true;
+}
+
 export function DeviceActionsMenu({
   deviceId,
+  agentVersion,
   disabled,
 }: {
   deviceId: string;
+  agentVersion?: string | null;
   disabled?: boolean;
 }) {
   const [pending, setPending] = useState<ActionType | null>(null);
   const [recent, setRecent] = useState<ActionRow[]>([]);
+  const sessionLockSupported = versionAtLeast(agentVersion, '0.1.1');
 
   const load = async () => {
     const { data } = await supabase
@@ -99,6 +119,12 @@ export function DeviceActionsMenu({
   }, [deviceId]);
 
   const run = async (action_type: ActionType) => {
+    if (action_type === 'lock_screen' && !sessionLockSupported) {
+      toast.error('Update the Wrayth agent first', {
+        description: 'Screen lock needs agent v0.1.1+ so the command runs in the signed-in Windows session.',
+      });
+      return;
+    }
     setPending(action_type);
     try {
       const { error } = await supabase.functions.invoke('agent-action-request', {
