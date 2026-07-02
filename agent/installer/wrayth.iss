@@ -53,6 +53,13 @@ Name: "{commonappdata}\Wrayth";      Permissions: users-modify
 Name: "{commonappdata}\Wrayth\logs"; Permissions: users-modify
 
 [Run]
+; If an older/broken installer registered WraythAgent.exe directly, replace
+; that legacy service with the WinSW wrapper. We intentionally do this before
+; registering WinSW, and only when Windows has not already queued deletion.
+Filename: "powershell.exe"; \
+  Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$svc = Get-CimInstance Win32_Service -Filter 'Name = ''{#MyServiceName}''' -ErrorAction SilentlyContinue; if ($svc -and ($svc.PathName -match 'WraythAgent\.exe') -and ($svc.PathName -notmatch 'WraythService\.exe')) {{ Stop-Service -Name '{#MyServiceName}' -Force -ErrorAction SilentlyContinue; sc.exe delete '{#MyServiceName}' | Out-Null; for ($i = 0; $i -lt 20; $i++) {{ Start-Sleep -Milliseconds 500; if (-not (Get-Service -Name '{#MyServiceName}' -ErrorAction SilentlyContinue)) {{ break }} }} }}"""; \
+  Flags: runhidden waituntilterminated; StatusMsg: "Preparing Wrayth service..."
+
 ; Write the config file (enrollment_code + api_base) collected in the wizard.
 Filename: "powershell.exe"; \
   Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$c = @{{ enrollment_code = '{code:GetEnrollmentCode}'; api_base = '{code:GetApiBase}' }} | ConvertTo-Json; Set-Content -Path 'C:\ProgramData\Wrayth\wrayth-config.json' -Value $c -Encoding UTF8"""; \
@@ -64,13 +71,12 @@ Filename: "powershell.exe"; \
 ; If the service already exists, we just stop it and refresh its config
 ; instead of deleting and reinstalling.
 Filename: "powershell.exe"; \
-  Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$svc = Get-Service -Name '{#MyServiceName}' -ErrorAction SilentlyContinue; if ($svc) {{ try {{ Stop-Service -Name '{#MyServiceName}' -Force -ErrorAction SilentlyContinue }} catch {{}}; & '{app}\WraythService.exe' refresh | Out-Null }} else {{ & '{app}\WraythService.exe' install | Out-Null }}; Start-Sleep -Seconds 2; & '{app}\WraythService.exe' start | Out-Null"""; \
+  Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$svc = Get-Service -Name '{#MyServiceName}' -ErrorAction SilentlyContinue; if ($svc) {{ try {{ Stop-Service -Name '{#MyServiceName}' -Force -ErrorAction SilentlyContinue }} catch {{}}; & '{app}\WraythService.exe' refresh | Out-Null }} else {{ & '{app}\WraythService.exe' install | Out-Null }}; sc.exe config '{#MyServiceName}' start= auto | Out-Null; Start-Sleep -Seconds 2; & '{app}\WraythService.exe' start | Out-Null"""; \
   Flags: runhidden waituntilterminated; StatusMsg: "Registering Wrayth service..."
 
 [UninstallRun]
 Filename: "{app}\WraythService.exe"; Parameters: "stop";      Flags: runhidden waituntilterminated; RunOnceId: "StopWraythSvc"
 Filename: "{app}\WraythService.exe"; Parameters: "uninstall"; Flags: runhidden waituntilterminated; RunOnceId: "UninstWraythSvc"
-Filename: "sc.exe"; Parameters: "delete {#MyServiceName}";    Flags: runhidden waituntilterminated; RunOnceId: "DelWraythSvc"
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{commonappdata}\Wrayth"
@@ -141,5 +147,30 @@ begin
              mbError, MB_OK);
       Result := False;
     end;
+  end;
+end;
+
+function IsWraythServiceMarkedForDeletion(): Boolean;
+var
+  DeleteFlag: Cardinal;
+begin
+  Result := RegQueryDWordValue(
+    HKLM,
+    'SYSTEM\CurrentControlSet\Services\{#MyServiceName}',
+    'DeleteFlag',
+    DeleteFlag) and (DeleteFlag <> 0);
+end;
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+begin
+  Result := '';
+
+  if IsWraythServiceMarkedForDeletion() then
+  begin
+    Result :=
+      'Windows has already marked the Wrayth service for deletion, usually ' +
+      'because Services.msc or Task Manager was open during a previous repair. ' +
+      'Close Services.msc, reboot Windows, then run WraythSetup.exe again with ' +
+      'a fresh enrollment code.';
   end;
 end;
