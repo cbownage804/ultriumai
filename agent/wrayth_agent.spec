@@ -2,21 +2,16 @@
 # PyInstaller spec for the Wrayth device agent.
 # Produces a single onefile Windows executable: WraythAgent.exe
 
-block_cipher = None
-
 a = Analysis(
     ['wrayth_agent.py'],
     pathex=[],
     binaries=[],
     datas=[],
-    hiddenimports=[],
+    hiddenimports=['wrayth_actions'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
-    cipher=block_cipher,
     noarchive=False,
 )
 pyz = PYZ(a.pure)
