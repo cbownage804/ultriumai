@@ -71,8 +71,9 @@ Filename: "{app}\WraythService.exe";     Parameters: "install";                 
 Filename: "{app}\WraythService.exe";     Parameters: "start";                       Flags: runhidden waituntilterminated; StatusMsg: "Starting Wrayth Agent..."
 
 [UninstallRun]
-Filename: "sc.exe"; Parameters: "stop {#MyServiceName}";   Flags: runhidden waituntilterminated; RunOnceId: "StopWraythSvc"
-Filename: "sc.exe"; Parameters: "delete {#MyServiceName}"; Flags: runhidden waituntilterminated; RunOnceId: "DelWraythSvc"
+Filename: "{app}\WraythService.exe"; Parameters: "stop";      Flags: runhidden waituntilterminated; RunOnceId: "StopWraythSvc"
+Filename: "{app}\WraythService.exe"; Parameters: "uninstall"; Flags: runhidden waituntilterminated; RunOnceId: "UninstWraythSvc"
+Filename: "sc.exe"; Parameters: "delete {#MyServiceName}";    Flags: runhidden waituntilterminated; RunOnceId: "DelWraythSvc"
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{commonappdata}\Wrayth"
