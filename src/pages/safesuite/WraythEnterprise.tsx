@@ -81,6 +81,13 @@ const mspCapabilities = [
   { icon: BarChart3, title: "Multi-tenant Dashboards", description: "See every client's posture side-by-side." },
 ];
 
+const rayEnterpriseCapabilities = [
+  { icon: Radar, title: "Ray investigates every alert", description: "Triage, correlate, and prioritize across every tenant — no ticket left cold." },
+  { icon: Brain, title: "Ray explains every breach", description: "Plain-English root cause and blast radius, mapped to the users and secrets involved." },
+  { icon: Sparkles, title: "Ray recommends remediation", description: "Ranked next actions with one-click execution — rotate, revoke, notify, isolate." },
+  { icon: Eye, title: "Ray watches every tenant", description: "Continuous posture monitoring across every org, department, and managed client." },
+];
+
 const complianceFrameworks = [
   { code: "SOC 2", status: "In progress" },
   { code: "HIPAA", status: "Aligned" },
@@ -96,6 +103,17 @@ const deploymentModes = [
   { icon: Cloud, title: "Cloud", description: "Managed, multi-region, zero-touch. Available today." },
   { icon: Server, title: "Hybrid", description: "Your identity, our cloud vault sync. Available today." },
   { icon: HardDrive, title: "Self-hosted", description: "Deploy inside your own perimeter. On the roadmap." },
+  { icon: ShieldOff, title: "Air-gapped", description: "Fully isolated deployment for classified and regulated environments. Planned." },
+];
+
+const platformArchitecture = [
+  { label: "Users & Devices", detail: "Employees, admins, clients — every identity anchored." },
+  { label: "Browser Extension & Apps", detail: "Native clients on every OS, plus MV3 browser extension." },
+  { label: "Encrypted Vault", detail: "Zero-knowledge storage — Wrayth never sees plaintext." },
+  { label: "Ray AI", detail: "Cross-module intelligence layer — Vault, Scan, Watch, Identity." },
+  { label: "Threat Intelligence", detail: "HIBP, dark web, malware IOC, and domain reputation feeds." },
+  { label: "Audit & SIEM Stream", detail: "Immutable event log, streamed to your SIEM in real time." },
+  { label: "Admin Console", detail: "Multi-tenant governance, RBAC, and compliance reporting." },
 ];
 
 const platforms = [
