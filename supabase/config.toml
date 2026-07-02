@@ -138,4 +138,9 @@ verify_jwt = true
 [functions.ray-router]
 verify_jwt = true
 
+[functions.workplace-message]
+verify_jwt = false
+
+
+
 
