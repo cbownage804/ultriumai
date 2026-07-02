@@ -2,14 +2,15 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
 import { useVault } from '@/hooks/useSafePass';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Shield, 
-  AlertTriangle, 
-  CheckCircle2, 
+import {
+  Shield,
+  AlertTriangle,
+  CheckCircle2,
   XCircle,
   RefreshCw,
   Lock,
@@ -21,6 +22,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
+import { UnifiedAccountsPanel, type AccountSignalRow } from './UnifiedAccountsPanel';
 
 interface PasswordIssue {
   id: string;
@@ -48,6 +50,7 @@ export const PasswordHealthDashboard = () => {
     old: 0
   });
   const [issues, setIssues] = useState<PasswordIssue[]>([]);
+  const [unifiedRows, setUnifiedRows] = useState<AccountSignalRow[]>([]);
 
   const calculatePasswordStrength = (password: string): number => {
     let score = 0;
@@ -68,7 +71,36 @@ export const PasswordHealthDashboard = () => {
     }
 
     setScanning(true);
+
+    // Signal lookups: which entries have TOTP, which usernames/domains are breached.
+    let mfaEntryIds = new Set<string>();
+    let breachedIdentifiers = new Set<string>();
+    try {
+      const ids = entries.map((e) => e.id).filter(Boolean);
+      if (ids.length && user?.id) {
+        const client = supabase as any;
+        const { data: totps } = await client
+          .from('totp_entries')
+          .select('entry_id')
+          .in('entry_id', ids);
+        mfaEntryIds = new Set((totps ?? []).map((t: any) => t.entry_id));
+
+        const { data: assets } = await client
+          .from('safeweb_assets')
+          .select('asset_value,breach_count')
+          .eq('user_id', user.id);
+        breachedIdentifiers = new Set(
+          (assets ?? [])
+            .filter((a: any) => (a.breach_count ?? 0) > 0)
+            .map((a: any) => String(a.asset_value || '').toLowerCase()),
+        );
+      }
+    } catch {
+      /* non-fatal — signals just degrade */
+    }
+
     const passwordMap = new Map<string, string[]>();
+    const perEntry: Array<{ entry: any; password: string; strength: number }> = [];
     const issuesList: PasswordIssue[] = [];
     let strongCount = 0;
     let mediumCount = 0;
@@ -85,7 +117,8 @@ export const PasswordHealthDashboard = () => {
         if (!password) continue;
 
         const strength = calculatePasswordStrength(password);
-        
+        perEntry.push({ entry, password, strength });
+
         // Track password reuse
         const existing = passwordMap.get(password);
         if (existing) {
@@ -142,9 +175,35 @@ export const PasswordHealthDashboard = () => {
       }
     });
 
+    // Build unified per-account signal rows.
+    const rows: AccountSignalRow[] = perEntry.map(({ entry, password, strength }) => {
+      const siblings = (passwordMap.get(password) ?? []).filter((t) => t !== entry.title);
+      const usernameKey = String(entry.username || '').toLowerCase();
+      let host = '';
+      try {
+        const url = entry.website
+          ? (entry.website.startsWith('http') ? entry.website : `https://${entry.website}`)
+          : '';
+        if (url) host = new URL(url).hostname.replace(/^www\./, '');
+      } catch { /* noop */ }
+      const hasBreach =
+        (usernameKey && breachedIdentifiers.has(usernameKey)) ||
+        (!!host && breachedIdentifiers.has(host));
+      return {
+        id: entry.id,
+        title: entry.title,
+        host: host || undefined,
+        score: strength,
+        hasBreach,
+        hasMfa: mfaEntryIds.has(entry.id),
+        reusedWith: siblings,
+        createdAt: entry.created_at,
+      };
+    });
+
     // Calculate health score
     const total = entries.length;
-    const score = total > 0 
+    const score = total > 0
       ? Math.round(
           ((strongCount * 100) + (mediumCount * 60) + (weakCount * 20)) / total
           - (reusedCount * 5)
@@ -161,10 +220,12 @@ export const PasswordHealthDashboard = () => {
       old: oldCount
     });
     setIssues(issuesList.slice(0, 10));
+    setUnifiedRows(rows);
     setHealthScore(Math.max(0, Math.min(100, score)));
     setLoading(false);
     setScanning(false);
   };
+
 
   // Load all entries on mount and when vault is unlocked
   useEffect(() => {
@@ -389,6 +450,9 @@ export const PasswordHealthDashboard = () => {
 
       </motion.div>
 
+
+      {/* Unified relationships view — one account, every signal */}
+      <UnifiedAccountsPanel rows={unifiedRows} />
 
       {/* Health Score */}
       <Card className="overflow-hidden">
