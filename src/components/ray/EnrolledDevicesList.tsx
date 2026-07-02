@@ -10,7 +10,10 @@ import { Badge } from '@/components/ui/badge';
 import {
   AlertTriangle,
   Cpu,
+  HardDrive,
+  Lock,
   Loader2,
+  ShieldAlert,
   ShieldCheck,
   Trash2,
   Wifi,
@@ -26,6 +29,21 @@ interface Finding {
   detail: string;
 }
 
+interface Posture {
+  disk_encryption?: { enabled?: boolean; percent_encrypted?: number; method?: string };
+  firewall?: { enabled?: boolean; all_profiles_enabled?: boolean; profiles?: Record<string, boolean> };
+  antivirus?: { enabled?: boolean; realtime_protection?: boolean; definitions_age_days?: number };
+  tpm?: { present?: boolean; ready?: boolean };
+  secure_boot?: { enabled?: boolean; supported?: boolean };
+  uac?: { enabled?: boolean };
+  remote_desktop?: { enabled?: boolean };
+  local_admins?: { count?: number };
+  disk?: { free_gb?: number; total_gb?: number };
+  memory?: { free_gb?: number; total_gb?: number };
+  pending_updates?: number;
+  last_patch_at?: string;
+}
+
 interface Device {
   id: string;
   hostname: string;
@@ -35,6 +53,7 @@ interface Device {
   last_seen_at: string | null;
   revoked_at: string | null;
   findings: Finding[];
+  posture: Posture | null;
 }
 
 function relative(iso: string | null): string {
@@ -44,6 +63,149 @@ function relative(iso: string | null): string {
   if (diff < 3600_000) return `${Math.round(diff / 60_000)} min ago`;
   if (diff < 86_400_000) return `${Math.round(diff / 3600_000)} h ago`;
   return `${Math.round(diff / 86_400_000)} d ago`;
+}
+
+type PostureTone = 'good' | 'warn' | 'bad' | 'unknown';
+
+function PostureChip({
+  icon: Icon,
+  label,
+  value,
+  tone,
+}: {
+  icon: typeof ShieldCheck;
+  label: string;
+  value: string;
+  tone: PostureTone;
+}) {
+  const toneClass =
+    tone === 'good'
+      ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
+      : tone === 'warn'
+      ? 'border-yellow-500/30 bg-yellow-500/10 text-yellow-100'
+      : tone === 'bad'
+      ? 'border-red-500/30 bg-red-500/10 text-red-100'
+      : 'border-border/60 bg-background/40 text-muted-foreground';
+  return (
+    <div className={`flex items-center gap-2 rounded-md border px-2 py-1.5 text-xs ${toneClass}`}>
+      <Icon className="h-3.5 w-3.5 shrink-0" />
+      <div className="min-w-0">
+        <div className="text-[10px] uppercase tracking-wide opacity-70">{label}</div>
+        <div className="truncate font-medium">{value}</div>
+      </div>
+    </div>
+  );
+}
+
+function buildPostureChips(p: Posture): Array<{
+  icon: typeof ShieldCheck;
+  label: string;
+  value: string;
+  tone: PostureTone;
+}> {
+  const chips: Array<{ icon: typeof ShieldCheck; label: string; value: string; tone: PostureTone }> = [];
+
+  if (p.disk_encryption) {
+    const pct = p.disk_encryption.percent_encrypted;
+    chips.push({
+      icon: Lock,
+      label: 'BitLocker',
+      value: p.disk_encryption.enabled
+        ? `On${typeof pct === 'number' && pct < 100 ? ` (${pct}%)` : ''}`
+        : 'Off',
+      tone: p.disk_encryption.enabled ? 'good' : 'bad',
+    });
+  }
+  if (p.firewall) {
+    const off = p.firewall.profiles
+      ? Object.entries(p.firewall.profiles).filter(([, v]) => !v).map(([k]) => k)
+      : [];
+    chips.push({
+      icon: ShieldCheck,
+      label: 'Firewall',
+      value: !p.firewall.enabled
+        ? 'Off'
+        : off.length
+        ? `${off.join(', ')} off`
+        : 'All profiles on',
+      tone: !p.firewall.enabled ? 'bad' : off.length ? 'warn' : 'good',
+    });
+  }
+  if (p.antivirus) {
+    chips.push({
+      icon: ShieldAlert,
+      label: 'Antivirus',
+      value: !p.antivirus.enabled
+        ? 'Off'
+        : p.antivirus.realtime_protection === false
+        ? 'Real-time off'
+        : (p.antivirus.definitions_age_days ?? 0) > 7
+        ? `${p.antivirus.definitions_age_days}d old defs`
+        : 'Defender active',
+      tone: !p.antivirus.enabled || p.antivirus.realtime_protection === false
+        ? 'bad'
+        : (p.antivirus.definitions_age_days ?? 0) > 7
+        ? 'warn'
+        : 'good',
+    });
+  }
+  if (p.tpm) {
+    chips.push({
+      icon: Cpu,
+      label: 'TPM',
+      value: p.tpm.ready ? 'Ready' : p.tpm.present ? 'Present' : 'Missing',
+      tone: p.tpm.ready ? 'good' : p.tpm.present ? 'warn' : 'bad',
+    });
+  }
+  if (p.secure_boot && p.secure_boot.supported) {
+    chips.push({
+      icon: ShieldCheck,
+      label: 'Secure Boot',
+      value: p.secure_boot.enabled ? 'On' : 'Off',
+      tone: p.secure_boot.enabled ? 'good' : 'warn',
+    });
+  }
+  if (p.uac) {
+    chips.push({
+      icon: ShieldCheck,
+      label: 'UAC',
+      value: p.uac.enabled ? 'On' : 'Off',
+      tone: p.uac.enabled ? 'good' : 'bad',
+    });
+  }
+  if (p.remote_desktop) {
+    chips.push({
+      icon: ShieldAlert,
+      label: 'RDP',
+      value: p.remote_desktop.enabled ? 'Enabled' : 'Disabled',
+      tone: p.remote_desktop.enabled ? 'warn' : 'good',
+    });
+  }
+  if (typeof p.pending_updates === 'number') {
+    chips.push({
+      icon: ShieldAlert,
+      label: 'Updates',
+      value: p.pending_updates === 0 ? 'Up to date' : `${p.pending_updates} pending`,
+      tone: p.pending_updates === 0 ? 'good' : p.pending_updates > 5 ? 'warn' : 'unknown',
+    });
+  }
+  if (p.disk && typeof p.disk.free_gb === 'number' && typeof p.disk.total_gb === 'number') {
+    chips.push({
+      icon: HardDrive,
+      label: 'Disk C:',
+      value: `${p.disk.free_gb} / ${p.disk.total_gb} GB free`,
+      tone: p.disk.free_gb < 10 ? 'warn' : 'good',
+    });
+  }
+  if (p.local_admins && typeof p.local_admins.count === 'number') {
+    chips.push({
+      icon: Cpu,
+      label: 'Local admins',
+      value: `${p.local_admins.count}`,
+      tone: p.local_admins.count > 2 ? 'warn' : 'good',
+    });
+  }
+  return chips;
 }
 
 export function EnrolledDevicesList() {
