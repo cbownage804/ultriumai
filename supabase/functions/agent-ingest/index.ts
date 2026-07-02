@@ -515,6 +515,11 @@ Deno.serve(async (req) => {
     }
     findings.push(...drift);
 
+    const fixPlan = buildFixPlan(payload);
+    const securityScore = computeSecurityScore(payload, findings);
+    // Attach Ray's derived context to the stored payload so the UI has one source of truth
+    const enrichedPayload = { ...payload, _ray: { score: securityScore, fix_plan: fixPlan } };
+
     const now = new Date().toISOString();
 
     // Update last_seen and rolling metadata on the device
@@ -534,7 +539,7 @@ Deno.serve(async (req) => {
         device_id: device.id,
         user_id: device.user_id,
         captured_at: now,
-        payload,
+        payload: enrichedPayload,
         findings,
       },
       { onConflict: 'device_id' },
@@ -545,7 +550,7 @@ Deno.serve(async (req) => {
       device_id: device.id,
       user_id: device.user_id,
       captured_at: now,
-      payload,
+      payload: enrichedPayload,
       findings,
     });
 
