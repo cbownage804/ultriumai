@@ -13,8 +13,8 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-function weekBounds(now = new Date()) {
-  // Digest covers the most recently completed 7 days (Mon-Sun).
+export function weekBounds(now = new Date()) {
+  // Digest covers the most recently completed 7 days (Mon-Sun) in UTC.
   const end = new Date(now);
   end.setUTCHours(0, 0, 0, 0);
   const day = end.getUTCDay(); // 0 Sun..6 Sat
@@ -25,6 +25,7 @@ function weekBounds(now = new Date()) {
   sunday.setUTCDate(monday.getUTCDate() + 6);
   return { week_start: monday.toISOString().slice(0, 10), week_end: sunday.toISOString().slice(0, 10) };
 }
+
 
 async function buildForScope(
   admin: ReturnType<typeof createClient>,
