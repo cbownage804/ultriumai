@@ -33,7 +33,7 @@ try:
 except Exception:  # noqa: BLE001
     run_action_loop = None  # type: ignore
 
-AGENT_VERSION = "0.1.2"
+AGENT_VERSION = "0.1.3"
 
 # ---------------------------------------------------------------------------
 # Config on disk
@@ -308,6 +308,159 @@ def collect_windows() -> dict[str, Any]:
             ver = _ps(f"(Get-Item '{path}').VersionInfo.ProductVersion")
             browsers.append({"name": name, "version": ver or "unknown"})
     posture["browsers"] = browsers
+
+    # Installed software (name + version + publisher) from both 32/64-bit uninstall keys
+    sw_raw = _ps(
+        "$paths = 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*',"
+        "'HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*'; "
+        "Get-ItemProperty $paths -ErrorAction SilentlyContinue | "
+        "Where-Object { $_.DisplayName } | "
+        "ForEach-Object { \"$($_.DisplayName)|$($_.DisplayVersion)|$($_.Publisher)\" }"
+    )
+    software: list[dict[str, str]] = []
+    for line in (sw_raw or "").splitlines():
+        parts = line.split("|", 2)
+        while len(parts) < 3:
+            parts.append("")
+        name = parts[0].strip()
+        if not name:
+            continue
+        software.append({
+            "name": name,
+            "version": parts[1].strip(),
+            "publisher": parts[2].strip(),
+        })
+    # De-dupe by (name, version)
+    seen = set()
+    deduped = []
+    for s in software:
+        key = (s["name"].lower(), s["version"])
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(s)
+    posture["installed_software"] = deduped[:400]
+
+    # Autoruns — HKLM + HKCU Run keys
+    autoruns_raw = _ps(
+        "$paths = 'HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run',"
+        "'HKLM:\\Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Run',"
+        "'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run'; "
+        "foreach ($p in $paths) { "
+        "  try { $k = Get-ItemProperty $p -ErrorAction Stop; "
+        "    $k.PSObject.Properties | Where-Object { $_.Name -notlike 'PS*' } | "
+        "    ForEach-Object { \"$p||$($_.Name)||$($_.Value)\" } } catch {} }"
+    )
+    autoruns: list[dict[str, str]] = []
+    for line in (autoruns_raw or "").splitlines():
+        parts = line.split("||", 2)
+        if len(parts) == 3 and parts[1].strip():
+            autoruns.append({
+                "location": parts[0].strip(),
+                "name": parts[1].strip(),
+                "command": parts[2].strip(),
+            })
+    posture["autoruns"] = autoruns[:100]
+
+    # Non-Microsoft running services
+    svc_raw = _ps(
+        "Get-CimInstance Win32_Service | Where-Object { $_.State -eq 'Running' } | "
+        "ForEach-Object { \"$($_.Name)|$($_.DisplayName)|$($_.StartName)|$($_.PathName)\" }"
+    )
+    services: list[dict[str, str]] = []
+    for line in (svc_raw or "").splitlines():
+        parts = line.split("|", 3)
+        while len(parts) < 4:
+            parts.append("")
+        name = parts[0].strip()
+        path = parts[3].strip().strip('"')
+        # Skip clearly-Microsoft signed system services to reduce noise
+        low = path.lower()
+        if "\\windows\\system32\\" in low or "\\windows\\syswow64\\" in low:
+            continue
+        if not name:
+            continue
+        services.append({
+            "name": name,
+            "display_name": parts[1].strip(),
+            "start_name": parts[2].strip(),
+            "path": path,
+        })
+    posture["non_ms_services"] = services[:80]
+
+    # Listening TCP ports bound to non-loopback
+    ports_raw = _ps(
+        "Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | "
+        "Where-Object { $_.LocalAddress -notin '127.0.0.1','::1' } | "
+        "ForEach-Object { $p = (Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue).ProcessName; "
+        "  \"$($_.LocalAddress)|$($_.LocalPort)|$p\" }"
+    )
+    listening: list[dict[str, Any]] = []
+    seen_ports = set()
+    for line in (ports_raw or "").splitlines():
+        parts = line.split("|", 2)
+        while len(parts) < 3:
+            parts.append("")
+        try:
+            port = int(parts[1])
+        except ValueError:
+            continue
+        key = (parts[0].strip(), port)
+        if key in seen_ports:
+            continue
+        seen_ports.add(key)
+        listening.append({
+            "address": parts[0].strip(),
+            "port": port,
+            "process": parts[2].strip(),
+        })
+    posture["listening_ports"] = listening[:60]
+
+    # Browser extensions (Chrome + Edge)
+    ext_raw = _ps(
+        r"""
+$out = @()
+$profiles = @(
+  @{Browser='Chrome'; Path="$env:LOCALAPPDATA\Google\Chrome\User Data"},
+  @{Browser='Edge';   Path="$env:LOCALAPPDATA\Microsoft\Edge\User Data"}
+)
+foreach ($b in $profiles) {
+  if (-not (Test-Path $b.Path)) { continue }
+  Get-ChildItem $b.Path -Directory -ErrorAction SilentlyContinue | Where-Object {
+    $_.Name -eq 'Default' -or $_.Name -like 'Profile*'
+  } | ForEach-Object {
+    $extDir = Join-Path $_.FullName 'Extensions'
+    if (-not (Test-Path $extDir)) { return }
+    Get-ChildItem $extDir -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+      $id = $_.Name
+      $ver = Get-ChildItem $_.FullName -Directory -ErrorAction SilentlyContinue | Select-Object -First 1
+      if (-not $ver) { return }
+      $manifest = Join-Path $ver.FullName 'manifest.json'
+      if (-not (Test-Path $manifest)) { return }
+      try {
+        $m = Get-Content $manifest -Raw | ConvertFrom-Json
+        $out += "$($b.Browser)|$id|$($m.name)|$($m.version)"
+      } catch {}
+    }
+  }
+}
+$out -join "`n"
+"""
+    )
+    extensions: list[dict[str, str]] = []
+    for line in (ext_raw or "").splitlines():
+        parts = line.split("|", 3)
+        while len(parts) < 4:
+            parts.append("")
+        if not parts[1].strip():
+            continue
+        extensions.append({
+            "browser": parts[0].strip(),
+            "id": parts[1].strip(),
+            "name": parts[2].strip(),
+            "version": parts[3].strip(),
+        })
+    posture["browser_extensions"] = extensions[:120]
 
     posture["logged_in_user"] = os.environ.get("USERNAME", "")
     return posture

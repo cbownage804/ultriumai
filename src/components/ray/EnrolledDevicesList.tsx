@@ -22,6 +22,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { DeviceActionsMenu } from './DeviceActionsMenu';
+import { DeviceIntelPanel } from './DeviceIntelPanel';
 
 interface Finding {
   severity: 'info' | 'warn' | 'critical';
@@ -392,6 +393,8 @@ export function EnrolledDevicesList() {
                   <DeviceActionsMenu deviceId={d.id} agentVersion={d.agent_version} disabled={!online} />
                 </div>
               )}
+              <DeviceIntelPanel deviceId={d.id} posture={d.posture as never} />
+
             </div>
           );
         })}
