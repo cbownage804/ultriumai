@@ -138,14 +138,37 @@ function SectionHeading({
   );
 }
 
+type Tone = "blue" | "violet" | "emerald" | "amber" | "rose";
+const TONE_CARD: Record<Tone, string> = {
+  blue: "hover:border-blue-500/40",
+  violet: "hover:border-violet-500/40",
+  emerald: "hover:border-emerald-500/40",
+  amber: "hover:border-amber-500/40",
+  rose: "hover:border-rose-500/40",
+};
+const TONE_ICON_BG: Record<Tone, string> = {
+  blue: "bg-blue-500/10",
+  violet: "bg-violet-500/10",
+  emerald: "bg-emerald-500/10",
+  amber: "bg-amber-500/10",
+  rose: "bg-rose-500/10",
+};
+const TONE_ICON_FG: Record<Tone, string> = {
+  blue: "text-blue-400",
+  violet: "text-violet-300",
+  emerald: "text-emerald-400",
+  amber: "text-amber-400",
+  rose: "text-rose-400",
+};
+
 function FeatureCard({
   icon: Icon, title, description, tone = "blue",
-}: { icon: any; title: string; description: string; tone?: string }) {
+}: { icon: any; title: string; description: string; tone?: Tone }) {
   return (
-    <Card className={`border-border/50 bg-card/40 transition-colors hover:border-${tone}-500/40`}>
+    <Card className={`border-border/50 bg-card/40 transition-colors ${TONE_CARD[tone]}`}>
       <CardHeader>
-        <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-${tone}-500/10`}>
-          <Icon className={`h-5 w-5 text-${tone}-400`} />
+        <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-lg ${TONE_ICON_BG[tone]}`}>
+          <Icon className={`h-5 w-5 ${TONE_ICON_FG[tone]}`} />
         </div>
         <CardTitle className="text-base">{title}</CardTitle>
       </CardHeader>
