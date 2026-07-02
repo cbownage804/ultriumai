@@ -470,10 +470,10 @@ export default function WraythEnterprise() {
           <SectionHeading
             eyebrow="Deployment"
             title="Deploy the way your environment demands"
-            description="Cloud today. Hybrid today. Self-hosted on the roadmap. Wrayth runs everywhere your people work."
+            description="Cloud today. Hybrid today. Self-hosted and air-gapped on the roadmap. Wrayth runs everywhere your people work — and everywhere they can't."
             tone="blue"
           />
-          <div className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {deploymentModes.map((d) => (
               <FeatureCard key={d.title} {...d} tone="blue" />
             ))}
