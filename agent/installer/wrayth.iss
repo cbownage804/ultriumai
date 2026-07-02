@@ -34,6 +34,7 @@ OutputDir=..\dist
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
+SetupIconFile=favicon.ico
 UninstallDisplayName={#MyAppName}
 UninstallDisplayIcon={app}\{#MyAppExeName}
 CloseApplications=no
