@@ -52,7 +52,7 @@ function priorityFor(row: AccountSignalRow): number {
   return p;
 }
 
-export function UnifiedAccountsPanel({ rows, className }: Props) {
+export function UnifiedAccountsPanel({ rows, className, onRotate }: Props) {
   const ranked = useMemo(
     () => [...rows].sort((a, b) => priorityFor(b) - priorityFor(a)).slice(0, 8),
     [rows],
