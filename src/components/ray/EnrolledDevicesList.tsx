@@ -208,7 +208,7 @@ export function EnrolledDevicesList() {
               )}
               {!d.revoked_at && (
                 <div className="pt-1">
-                  <DeviceActionsMenu deviceId={d.id} disabled={!online} />
+                  <DeviceActionsMenu deviceId={d.id} agentVersion={d.agent_version} disabled={!online} />
                 </div>
               )}
             </div>
