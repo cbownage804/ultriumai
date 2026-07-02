@@ -649,6 +649,12 @@ export default function WraythDashboard() {
         stats.passwordCount > 0 && <CisoNextAction directive={cisoDirective} />
       )}
 
+      {/* 1c. Cross-domain context bridge — Ray names what he's missing. */}
+      <HomeContextBridge
+        vaultLockedCardVisible={vaultLocked}
+        vaultCount={stats.passwordCount}
+      />
+
       {/* 2. Ask Ray — reinforces AI-first experience */}
       <div data-tour="quick-actions">
         <QuickActionsCard />
