@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  WinSW service definition for Wrayth Device Agent.
+  This XML lives next to WraythService.exe (a renamed WinSW binary).
+  WinSW handles the Windows Service Control Manager handshake and
+  supervises WraythAgent.exe as a long-running child process.
+-->
+<service>
+  <id>WraythAgent</id>
+  <name>Wrayth Device Agent</name>
+  <description>Reports device security posture to Wrayth and executes approved actions.</description>
+
+  <!-- The Python-built agent binary, installed alongside WraythService.exe. -->
+  <executable>%BASE%\WraythAgent.exe</executable>
+
+  <!-- Auto-start, restart on failure with backoff. -->
+  <startmode>Automatic</startmode>
+  <onfailure action="restart" delay="30 sec"/>
+  <onfailure action="restart" delay="60 sec"/>
+  <onfailure action="restart" delay="120 sec"/>
+  <resetfailure>1 hour</resetfailure>
+
+  <!-- Rolling logs under ProgramData so they persist across upgrades. -->
+  <logpath>C:\ProgramData\Wrayth\logs</logpath>
+  <log mode="roll-by-size">
+    <sizeThreshold>2048</sizeThreshold>
+    <keepFiles>4</keepFiles>
+  </log>
+
+  <!-- Give the child a graceful shutdown window before WinSW kills it. -->
+  <stoptimeout>15 sec</stoptimeout>
+</service>
