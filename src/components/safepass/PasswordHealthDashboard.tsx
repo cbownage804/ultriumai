@@ -52,6 +52,8 @@ export const PasswordHealthDashboard = () => {
   });
   const [issues, setIssues] = useState<PasswordIssue[]>([]);
   const [unifiedRows, setUnifiedRows] = useState<AccountSignalRow[]>([]);
+  const [rotateEntryId, setRotateEntryId] = useState<string | null>(null);
+  const rotateEntry = rotateEntryId ? allEntries.find((e) => e.id === rotateEntryId) ?? null : null;
 
   const calculatePasswordStrength = (password: string): number => {
     let score = 0;
