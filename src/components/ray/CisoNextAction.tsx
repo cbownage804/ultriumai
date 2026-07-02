@@ -42,42 +42,49 @@ export function CisoNextAction({ directive }: Props) {
   const t = TONE[directive.tone];
   return (
     <motion.section
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35 }}
-      className={cn('wrayth-chamfer border p-5 sm:p-6', t.ring)}
+      transition={{ duration: 0.45 }}
+      className={cn('wrayth-chamfer border p-6 sm:p-8 relative overflow-hidden', t.ring)}
     >
-      <div className="flex items-start gap-3">
-        <div className={cn('mt-0.5 flex h-8 w-8 items-center justify-center rounded-full', t.chip)}>
+      {/* Ambient pulse to reinforce Ray as a living presence. */}
+      <motion.div
+        aria-hidden
+        className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-violet-500/10 blur-3xl"
+        animate={{ opacity: [0.35, 0.6, 0.35] }}
+        transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      <div className="relative flex items-start gap-4">
+        <div className={cn('mt-1 flex h-10 w-10 items-center justify-center rounded-full', t.chip)}>
           {t.icon}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-violet-300/80">
+          <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.28em] text-violet-300/90">
             <Sparkles className="h-3 w-3" />
-            If I were your CISO
+            If I were your CISO, here's what I'd do next
           </div>
-          <h2 className="mt-1 text-lg sm:text-xl font-light text-foreground leading-snug">
+          <h1 className="mt-2 text-2xl sm:text-3xl font-light text-foreground leading-tight tracking-tight">
             {directive.headline}
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+          </h1>
+          <p className="mt-3 text-sm sm:text-base text-muted-foreground leading-relaxed max-w-2xl">
             {directive.rationale}
           </p>
           {directive.cta && (
-            <div className="mt-4">
+            <div className="mt-5">
               <Link
                 to={directive.cta.to}
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors',
+                  'inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors',
                   t.chip,
                   'hover:bg-white/5',
                 )}
               >
-                {directive.cta.label} <ArrowRight className="h-3 w-3" />
+                {directive.cta.label} <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
           )}
         </div>
-        <span className={cn('hidden sm:inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] tracking-wider', t.chip)}>
+        <span className={cn('hidden sm:inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] tracking-wider whitespace-nowrap', t.chip)}>
           {t.label}
         </span>
       </div>
