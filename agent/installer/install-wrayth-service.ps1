@@ -7,6 +7,18 @@ param(
 
 $ErrorActionPreference = "Continue"
 
+# Force UTF-8 everywhere so the install.log is readable in Notepad/VS Code
+# and native tools (sc.exe, WinSW) don't leave OEM/UTF-16 bytes behind.
+try {
+  [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+  [Console]::InputEncoding  = [System.Text.Encoding]::UTF8
+  $OutputEncoding = [System.Text.Encoding]::UTF8
+  $PSDefaultParameterValues['Out-File:Encoding']    = 'utf8'
+  $PSDefaultParameterValues['Add-Content:Encoding'] = 'utf8'
+  $PSDefaultParameterValues['Set-Content:Encoding'] = 'utf8'
+  chcp 65001 > $null 2>&1
+} catch {}
+
 $DataDir = "C:\ProgramData\Wrayth"
 $LogDir = Join-Path $DataDir "logs"
 $LogPath = Join-Path $LogDir "install.log"
@@ -16,8 +28,23 @@ $ConfigPath = Join-Path $AppDir "WraythService.xml"
 
 New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
 
+# Ensure the log file starts as UTF-8 with BOM so editors auto-detect it.
+if (-not (Test-Path $LogPath) -or (Get-Item $LogPath).Length -eq 0) {
+  Set-Content -Path $LogPath -Value "" -Encoding utf8
+}
+
 function Write-InstallLog([string] $Message) {
-  Add-Content -Path $LogPath -Value ("{0} {1}" -f (Get-Date -Format o), $Message)
+  $line = "{0} {1}" -f (Get-Date -Format o), $Message
+  Add-Content -Path $LogPath -Value $line -Encoding utf8
+}
+
+function Write-NativeOutput([string] $Label, $Output) {
+  if ($null -eq $Output) { return }
+  $text = ($Output | Out-String).TrimEnd()
+  if ([string]::IsNullOrWhiteSpace($text)) { return }
+  foreach ($line in $text -split "`r?`n") {
+    Add-Content -Path $LogPath -Value ("  [{0}] {1}" -f $Label, $line) -Encoding utf8
+  }
 }
 
 function Test-ServicePendingDelete([string] $Name) {
@@ -43,12 +70,17 @@ function Wait-ForServiceDeletion([string] $Name, [int] $Seconds = 30) {
   return -not (Get-WraythService $Name)
 }
 
-function Invoke-WinSW([string[]] $Args) {
-  Write-InstallLog ("WinSW: {0}" -f ($Args -join " "))
-  & $WrapperPath @Args *>> $LogPath
+function Invoke-Native([string] $Label, [string] $File, [string[]] $Args) {
+  Write-InstallLog ("{0}: {1} {2}" -f $Label, $File, ($Args -join " "))
+  $output = & $File @Args 2>&1
   $exit = $LASTEXITCODE
-  Write-InstallLog ("WinSW exit: $exit")
+  Write-NativeOutput $Label $output
+  Write-InstallLog ("{0} exit: {1}" -f $Label, $exit)
   return $exit
+}
+
+function Invoke-WinSW([string[]] $Args) {
+  return (Invoke-Native "WinSW" $WrapperPath $Args)
 }
 
 Write-InstallLog "--- Wrayth service registration start ---"
