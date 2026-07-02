@@ -138,8 +138,7 @@ if (-not (Get-WraythService $ServiceName)) {
 if (-not (Get-WraythService $ServiceName)) {
   Write-InstallLog "New-Service did not create the service; falling back to sc.exe create"
   $quotedWrapper = '"{0}"' -f $WrapperPath
-  & sc.exe create $ServiceName binPath= $quotedWrapper start= auto DisplayName= $DisplayName *>> $LogPath
-  Write-InstallLog ("sc create exit: $LASTEXITCODE")
+  [void](Invoke-Native "sc.create" "sc.exe" @("create", $ServiceName, "binPath=", $quotedWrapper, "start=", "auto", "DisplayName=", $DisplayName))
 }
 
 $registered = Get-WraythService $ServiceName
@@ -148,10 +147,9 @@ if (-not $registered) {
   exit 1603
 }
 
-& sc.exe config $ServiceName start= auto *>> $LogPath
-Write-InstallLog ("sc config exit: $LASTEXITCODE")
-& sc.exe description $ServiceName $Description *>> $LogPath
-& sc.exe failure $ServiceName reset= 86400 actions= restart/60000/restart/60000/restart/60000 *>> $LogPath
+[void](Invoke-Native "sc.config"      "sc.exe" @("config",      $ServiceName, "start=", "auto"))
+[void](Invoke-Native "sc.description" "sc.exe" @("description", $ServiceName, $Description))
+[void](Invoke-Native "sc.failure"     "sc.exe" @("failure",     $ServiceName, "reset=", "86400", "actions=", "restart/60000/restart/60000/restart/60000"))
 
 try {
   Start-Service -Name $ServiceName -ErrorAction Stop
