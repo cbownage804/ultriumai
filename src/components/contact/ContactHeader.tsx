@@ -14,12 +14,12 @@ export const ContactHeader = ({ isVisible, animationClasses }: ContactHeaderProp
           <MessageSquare className="h-4 w-4 mr-2" />
           Get In Touch
         </Badge>
-        <h2 className="text-4xl font-bold mb-6 text-foreground">
-          Ready to Transform Your Business with AI?
-        </h2>
+        <h1 className="text-4xl font-bold mb-6 text-foreground">
+          Get in Touch with the Wrayth Team
+        </h1>
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-          Let's discuss how custom AI agents can streamline your operations while keeping security at the forefront.
-          Book a free discovery call or reach out directly.
+          Have questions about Wrayth, Vault, Scan, Watch, Ray, pricing, or enterprise deployment?
+          We'd love to help.
         </p>
       </div>
     </div>
