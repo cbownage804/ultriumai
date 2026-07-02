@@ -10,15 +10,16 @@ import { RayPageHeader } from '@/components/ray/RayPageHeader';
 import { RayActivityTicker } from '@/components/ray/RayActivityTicker';
 import { RayContextBridge } from '@/components/ray/RayContextBridge';
 import { ThreatScanInput } from '@/components/ray/ThreatScanInput';
+import { ThreatAllClearCard } from '@/components/ray/ThreatAllClearCard';
 
 export default function WraythScan() {
   return (
     <FeatureGate feature="scan">
       <div className="space-y-6">
         <RayPageHeader
-          title="Threats"
+          title="Threat Center"
           question="Got something suspicious? Send it to me and I'll take a look."
-          description="I analyze files, emails, URLs, and unusual activity — then tell you plainly whether it's safe."
+          description="Paste a URL, drop a file, forward an email — I'll tell you plainly whether it's safe, and whether it touches anything you actually use."
           explain={{
             title: 'How Ray decides what is a threat',
             bullets: [
@@ -34,8 +35,8 @@ export default function WraythScan() {
         </div>
 
         <RayContextBridge
-          headline="I can tell you what a threat is — I can only tell you if it affects you with your vault open."
-          knows="When you send me a URL, file, or email, I score it against reputation feeds and heuristics on my own. To connect that verdict to your actual accounts — 'this phishing page targets your Microsoft 365' or 'this stealer would have taken your Gmail and GitHub' — I need to read the vault."
+          headline="I identify suspicious files, links, and emails instantly."
+          knows="Open your vault and I'll also tell you whether they threaten any of your actual accounts, passwords, or devices — so a phishing verdict turns into 'this targets your Microsoft 365, rotate that password first.'"
           needs={['vault']}
           reason="A threat verdict is only useful if I can tell you whether it touches an account you actually use. Unlock so I can cross-reference."
           capabilities={[
@@ -46,6 +47,8 @@ export default function WraythScan() {
           ]}
           confidence={72}
         />
+
+        <ThreatAllClearCard />
 
         <ThreatScanInput />
 
