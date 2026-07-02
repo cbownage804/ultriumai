@@ -58,13 +58,13 @@ export default function RayRecommendations() {
     const { data } = await supabase
       .from("ray_recommendations")
       .select(
-        "id, category, severity, title, body, status, suggested_actions, first_seen_at, last_seen_at, rule_slug",
+        "id, category, severity, title, body, status, suggested_actions, first_seen_at, last_seen_at, rule_slug, priority",
       )
       .in("status", statuses)
-      .order("severity", { ascending: true })
+      .order("priority", { ascending: true })
       .order("last_seen_at", { ascending: false })
       .limit(200);
-    setRecs((data as Recommendation[]) ?? []);
+    setRecs(((data as unknown) as Recommendation[]) ?? []);
     setLoading(false);
   }, [tab]);
 
@@ -73,10 +73,13 @@ export default function RayRecommendations() {
     try {
       const { data, error } = await supabase.functions.invoke("ray-scan");
       if (error) throw error;
-      toast({
-        title: "Scan complete",
-        description: `${(data as any)?.created ?? 0} new, ${(data as any)?.updated ?? 0} updated`,
-      });
+      const d = data as any;
+      const parts = [
+        `${d?.created ?? 0} new`,
+        `${d?.updated ?? 0} updated`,
+      ];
+      if (d?.auto_resolved) parts.push(`${d.auto_resolved} auto-resolved`);
+      toast({ title: "Scan complete", description: parts.join(" · ") });
       await load();
     } catch (e: any) {
       toast({ title: "Scan failed", description: e.message, variant: "destructive" });
@@ -84,6 +87,7 @@ export default function RayRecommendations() {
       setScanning(false);
     }
   }, [load, toast]);
+
 
   const setStatus = async (id: string, status: string) => {
     const patch: Record<string, unknown> = { status };

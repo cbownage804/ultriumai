@@ -31,7 +31,7 @@ type Rec = {
   }>;
 };
 
-async function sha1(input: string): Promise<string> {
+export async function sha1(input: string): Promise<string> {
   const buf = new TextEncoder().encode(input);
   const hash = await crypto.subtle.digest("SHA-1", buf);
   return Array.from(new Uint8Array(hash))
@@ -39,13 +39,14 @@ async function sha1(input: string): Promise<string> {
     .join("");
 }
 
-function fingerprintOf(userId: string, orgId: string | null, r: Rec) {
+export function fingerprintOf(userId: string, orgId: string | null, r: Rec) {
   return sha1(
     [userId, orgId ?? "-", r.category, r.rule_slug, r.subject_id ?? "-"].join(
       "|",
     ),
   );
 }
+
 
 async function scanDevices(
   admin: ReturnType<typeof createClient>,
@@ -301,6 +302,7 @@ serve(async (req) => {
 
   let created = 0;
   let updated = 0;
+  let auto_resolved = 0;
   let status: "ok" | "error" | "partial" = "ok";
   let errorMsg: string | null = null;
 
@@ -315,6 +317,7 @@ serve(async (req) => {
     const withFp = await Promise.all(
       allRecs.map(async (r) => ({ r, fp: await fingerprintOf(userId, orgId, r) })),
     );
+    const detectedFps = new Set(withFp.map((x) => x.fp));
 
     for (const { r, fp } of withFp) {
       const row = {
@@ -336,14 +339,14 @@ serve(async (req) => {
         last_seen_at: new Date().toISOString(),
       };
 
-      // Try update first (by fingerprint), then insert if none
       const { data: existing } = await admin
         .from("ray_recommendations")
-        .select("id, status")
+        .select("id, status, dismissed_at, completed_at")
         .eq("fingerprint", fp)
         .maybeSingle();
 
       if (existing) {
+        const ex = existing as any;
         const patch: Record<string, unknown> = {
           severity: row.severity,
           title: row.title,
@@ -352,24 +355,53 @@ serve(async (req) => {
           suggested_actions: row.suggested_actions,
           last_seen_at: row.last_seen_at,
         };
-        // If it was dismissed/resolved and still detected, reopen as reviewed→new only if still danger
-        if ((existing as any).status === "resolved" && r.severity === "danger") {
+        // Reopen resolved-critical findings only. Dismissed stays dismissed
+        // (user explicitly told Ray to ignore). Resolved warn/info also stays.
+        if (ex.status === "resolved" && r.severity === "danger") {
           patch.status = "new";
+          patch.completed_at = null;
+          patch.dismissed_at = null;
         }
         const { error } = await admin
           .from("ray_recommendations")
           .update(patch)
-          .eq("id", (existing as any).id);
+          .eq("id", ex.id);
         if (!error) updated++;
       } else {
         const { error } = await admin.from("ray_recommendations").insert(row);
         if (!error) created++;
       }
     }
+
+    // Auto-resolve open recommendations that were previously created by this
+    // scanner (have a fingerprint) but are no longer being detected. This is
+    // what "recommendations expire appropriately" means for the QA pass.
+    const { data: openWithFp = [] } = await admin
+      .from("ray_recommendations")
+      .select("id, fingerprint")
+      .eq("user_id", userId)
+      .eq("status", "new")
+      .not("fingerprint", "is", null);
+
+    const staleIds = (openWithFp ?? [])
+      .filter((r: any) => r.fingerprint && !detectedFps.has(r.fingerprint))
+      .map((r: any) => r.id);
+
+    if (staleIds.length > 0) {
+      const { error } = await admin
+        .from("ray_recommendations")
+        .update({
+          status: "resolved",
+          completed_at: new Date().toISOString(),
+        })
+        .in("id", staleIds);
+      if (!error) auto_resolved = staleIds.length;
+    }
   } catch (e) {
     status = "error";
     errorMsg = (e as Error).message?.slice(0, 500) ?? "unknown";
   }
+
 
   await admin.from("ray_scan_runs").insert({
     user_id: userId,
@@ -386,10 +418,12 @@ serve(async (req) => {
       ok: status === "ok",
       created,
       updated,
+      auto_resolved,
       status,
       error: errorMsg,
       duration_ms: Date.now() - started,
     }),
     { headers: { ...corsHeaders, "Content-Type": "application/json" } },
   );
+
 });
