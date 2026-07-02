@@ -188,6 +188,7 @@ function AppRouter() {
           <Route path="/app/ray" element={<SuspenseWrapper><Ray /></SuspenseWrapper>} />
           <Route path="/app/ray/skills" element={<SuspenseWrapper><RaySkills /></SuspenseWrapper>} />
           <Route path="/app/ray/recommendations" element={<SuspenseWrapper><RayRecommendations /></SuspenseWrapper>} />
+          <Route path="/app/ray/memory" element={<SuspenseWrapper><RayMemory /></SuspenseWrapper>} />
           <Route path="/app/ray/playbook/:runId" element={<SuspenseWrapper><PlaybookRunnerPage /></SuspenseWrapper>} />
           <Route path="/app/ray/secure/:provider" element={<SuspenseWrapper><SecureProviderLauncher /></SuspenseWrapper>} />
           <Route path="/app/timeline" element={<SuspenseWrapper><RayTimelinePage /></SuspenseWrapper>} />
