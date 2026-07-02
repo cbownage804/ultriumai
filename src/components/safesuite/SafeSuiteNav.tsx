@@ -14,9 +14,9 @@ export default function WraythNav() {
         </Link>
         <nav className="hidden md:flex items-center gap-8 text-sm">
           <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">Platform</Link>
-          <Link to="/features#enterprise" className="text-muted-foreground hover:text-foreground transition-colors">Enterprise</Link>
+          <Link to="/enterprise" className="text-muted-foreground hover:text-foreground transition-colors">Enterprise</Link>
           <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
-          <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">Resources</Link>
+          <Link to="/resources" className="text-muted-foreground hover:text-foreground transition-colors">Resources</Link>
         </nav>
         <div className="flex items-center gap-2">
           {user ? (
