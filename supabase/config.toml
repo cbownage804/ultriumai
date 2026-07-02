@@ -128,3 +128,10 @@ verify_jwt = false
 
 [functions.agent-action-result]
 verify_jwt = false
+
+[functions.workplace-integration]
+verify_jwt = true
+
+[functions.workplace-teams-manifest]
+verify_jwt = true
+
