@@ -55,6 +55,12 @@ Deno.serve(async (req) => {
       result: body?.result ?? null,
       error: body?.error ?? null,
     };
+    // Rollback / before-after audit fields — agent captures these per action.
+    if (body?.previous_value !== undefined) patch.previous_value = body.previous_value;
+    if (body?.new_value !== undefined) patch.new_value = body.new_value;
+    if (body?.rollback_possible !== undefined) patch.rollback_possible = !!body.rollback_possible;
+    if (body?.rollback_action !== undefined) patch.rollback_action = body.rollback_action;
+    if (body?.requires_reboot !== undefined) patch.requires_reboot = !!body.requires_reboot;
     if (status === 'succeeded' || status === 'failed') {
       patch.completed_at = new Date().toISOString();
     }

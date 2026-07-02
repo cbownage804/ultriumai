@@ -47,6 +47,14 @@ def _ps(script: str, timeout: int = 600) -> tuple[int, str, str]:
         return 1, "", str(e)
 
 
+def _try_json(s: str) -> Any:
+    """Best-effort JSON decode for audit before/after snapshots."""
+    try:
+        return json.loads(s) if s else None
+    except Exception:
+        return (s or "").strip() or None
+
+
 # ---------------------------------------------------------------------------
 # Action handlers — each returns (ok: bool, result: dict, error: str|None)
 # ---------------------------------------------------------------------------
@@ -101,8 +109,20 @@ try {
 
 
 def _enable_firewall(_params: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    before_rc, before, _ = _ps(
+        "(Get-NetFirewallProfile | Select-Object Name,Enabled) | ConvertTo-Json -Compress"
+    )
     rc, out, err = _ps("Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True; 'ok'")
-    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+    after_rc, after, _ = _ps(
+        "(Get-NetFirewallProfile | Select-Object Name,Enabled) | ConvertTo-Json -Compress"
+    )
+    return rc == 0, {
+        "stdout": out,
+        "previous_value": _try_json(before),
+        "new_value": _try_json(after),
+        "rollback_possible": True,
+        "rollback_action": "disable_firewall",
+    }, err or None if rc != 0 else None
 
 
 def _enable_defender(_params: dict[str, Any]) -> tuple[bool, dict, str | None]:
@@ -313,12 +333,21 @@ def _sign_out(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
 # ---------- v0.2.0 additions ---------------------------------------------
 
 def _disable_rdp(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    before_rc, before, _ = _ps(
+        "(Get-ItemProperty 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server' -Name fDenyTSConnections).fDenyTSConnections"
+    )
     rc, out, err = _ps(
         "Set-ItemProperty 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server' "
         "-Name fDenyTSConnections -Value 1; "
         "Disable-NetFirewallRule -DisplayGroup 'Remote Desktop' -ErrorAction SilentlyContinue; 'ok'"
     )
-    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+    return rc == 0, {
+        "stdout": out,
+        "previous_value": {"fDenyTSConnections": (before or "").strip() or "unknown"},
+        "new_value": {"fDenyTSConnections": "1"},
+        "rollback_possible": True,
+        "rollback_action": "enable_rdp",
+    }, err or None if rc != 0 else None
 
 
 def _enable_rdp_nla(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
@@ -326,7 +355,12 @@ def _enable_rdp_nla(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
         "Set-ItemProperty 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server\\WinStations\\RDP-Tcp' "
         "-Name UserAuthentication -Value 1; 'ok'"
     )
-    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+    return rc == 0, {
+        "stdout": out,
+        "new_value": {"UserAuthentication": "1"},
+        "rollback_possible": True,
+        "rollback_action": "disable_rdp_nla",
+    }, err or None if rc != 0 else None
 
 
 def _disable_remote_assistance(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
@@ -334,7 +368,12 @@ def _disable_remote_assistance(_p: dict[str, Any]) -> tuple[bool, dict, str | No
         "Set-ItemProperty 'HKLM:\\System\\CurrentControlSet\\Control\\Remote Assistance' "
         "-Name fAllowToGetHelp -Value 0; 'ok'"
     )
-    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+    return rc == 0, {
+        "stdout": out,
+        "new_value": {"fAllowToGetHelp": "0"},
+        "rollback_possible": True,
+        "rollback_action": "enable_remote_assistance",
+    }, err or None if rc != 0 else None
 
 
 def _disable_browser_password_manager(p: dict[str, Any]) -> tuple[bool, dict, str | None]:
@@ -461,16 +500,21 @@ def report_result(
     result: dict,
     error: str | None,
 ) -> None:
-    _post_json(
-        f"{api_base}/functions/v1/agent-action-result",
-        {
-            "action_id": action_id,
-            "status": "succeeded" if ok else "failed",
-            "result": result,
-            "error": error,
-        },
-        token,
-    )
+    # Pull audit-trail fields out of the handler result so the server can
+    # store them as first-class columns for rollback + timeline rendering.
+    audit_keys = ("previous_value", "new_value", "rollback_possible",
+                  "rollback_action", "requires_reboot")
+    body: dict[str, Any] = {
+        "action_id": action_id,
+        "status": "succeeded" if ok else "failed",
+        "result": {k: v for k, v in (result or {}).items() if k not in audit_keys},
+        "error": error,
+    }
+    for k in audit_keys:
+        if result and k in result:
+            body[k] = result[k]
+    _post_json(f"{api_base}/functions/v1/agent-action-result", body, token)
+
 
 
 # ---------------------------------------------------------------------------
