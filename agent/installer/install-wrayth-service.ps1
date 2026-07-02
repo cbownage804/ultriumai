@@ -128,7 +128,7 @@ if (-not (Get-WraythService $ServiceName)) {
   Write-InstallLog "WinSW did not create the service; falling back to New-Service"
   try {
     $binary = '"{0}"' -f $WrapperPath
-    New-Service -Name $ServiceName -BinaryPathName $binary -DisplayName $DisplayName -Description $Description -StartupType Automatic -ErrorAction Stop *>> $LogPath
+    New-Service -Name $ServiceName -BinaryPathName $binary -DisplayName $DisplayName -Description $Description -StartupType Automatic -ErrorAction Stop | Out-Null
     Write-InstallLog "New-Service succeeded"
   } catch {
     Write-InstallLog ("New-Service failed: " + $_.Exception.Message)
