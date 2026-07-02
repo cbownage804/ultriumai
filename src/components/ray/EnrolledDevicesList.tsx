@@ -30,6 +30,7 @@ interface Finding {
   detail: string;
 }
 
+interface FixStep { action_type: string; label: string; params?: Record<string, unknown>; severity: 'critical' | 'warn' }
 interface Posture {
   disk_encryption?: { enabled?: boolean; percent_encrypted?: number; method?: string };
   firewall?: { enabled?: boolean; all_profiles_enabled?: boolean; profiles?: Record<string, boolean> };
@@ -39,10 +40,19 @@ interface Posture {
   uac?: { enabled?: boolean };
   remote_desktop?: { enabled?: boolean };
   local_admins?: { count?: number };
+  local_admins_detail?: Array<{ name: string; enabled?: boolean; is_builtin?: boolean }>;
   disk?: { free_gb?: number; total_gb?: number };
   memory?: { free_gb?: number; total_gb?: number };
   pending_updates?: number;
   last_patch_at?: string;
+  rdp_security?: { rdp_enabled?: boolean; nla_enabled?: boolean; remote_assistance_enabled?: boolean };
+  browser_passwords?: {
+    chrome?: { manager_disabled_by_policy?: boolean; stored_count?: number };
+    edge?: { manager_disabled_by_policy?: boolean; stored_count?: number };
+  };
+  defender_detail?: { cloud_protection?: boolean; pua_protection?: boolean; last_quick_scan?: string; last_full_scan?: string };
+  update_categories?: { security?: number; drivers?: number; feature?: number; office?: number; other?: number };
+  _ray?: { score?: number; fix_plan?: FixStep[] };
 }
 
 interface Device {
