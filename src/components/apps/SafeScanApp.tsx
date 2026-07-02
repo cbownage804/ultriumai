@@ -37,9 +37,9 @@ export function ScanApp({ brandName = 'Wrayth' }: ScanAppProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground leading-relaxed max-w-xl">
-          Soon I'll be able to watch every device you own — patch levels,
-          vulnerable services, misconfigurations — and quietly fix what I
-          can. The agent is small, silent, and installs in a single click.
+          Ray will soon watch every device you own — patch levels, vulnerable
+          services, misconfigurations — and quietly fix what he can. The agent
+          is small, silent, and installs in a single click.
         </p>
         <p className="text-xs text-muted-foreground/80 max-w-xl">
           In the meantime, paste a suspicious file, URL, or email above and

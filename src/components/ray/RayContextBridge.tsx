@@ -86,8 +86,8 @@ export function RayContextBridge({
               <Sparkles className="h-3 w-3" />
               Ray needs context
               {typeof confidence === 'number' && (
-                <span className="ml-2 rounded-full border border-violet-400/30 bg-violet-500/10 px-2 py-0.5 text-[10px] tracking-[0.14em] text-violet-200">
-                  {confidence}% confidence
+                <span className="ml-2 rounded-full border border-violet-400/30 bg-violet-500/10 px-2 py-0.5 text-[10px] tracking-[0.14em] text-violet-200 normal-case">
+                  Personalization available
                 </span>
               )}
             </div>

@@ -3,7 +3,7 @@
  * Shows the sources Ray is actively checking so the empty state feels
  * like real work happened, not a placeholder.
  */
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Check } from 'lucide-react';
 
 const SOURCES = [
   'Microsoft',
@@ -32,8 +32,9 @@ export function ThreatAllClearCard() {
             {SOURCES.map((s) => (
               <li
                 key={s}
-                className="rounded-full border border-emerald-500/25 bg-emerald-500/[0.06] px-2.5 py-0.5 text-xs text-emerald-200/90"
+                className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/[0.06] px-2.5 py-0.5 text-xs text-emerald-200/90"
               >
+                <Check className="h-3 w-3" aria-hidden />
                 {s}
               </li>
             ))}

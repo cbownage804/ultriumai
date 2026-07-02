@@ -14,14 +14,16 @@ interface Props {
 
 const LINES: Record<NonNullable<Props['context']>, string[]> = {
   threats: [
-    'Checking browser extensions…',
-    'Looking for leaked credentials…',
-    'Watching for new breaches…',
-    'Checking Microsoft account health…',
+    'Watching breach feeds…',
+    'Checking Microsoft identity…',
     'Reviewing browser security…',
-    'Looking for exposed passwords…',
-    'Monitoring new breach intelligence…',
-    'Watching device posture…',
+    'Scanning Chrome extensions…',
+    'Watching dark web sources…',
+    'Looking for credential leaks…',
+    'Reviewing device posture…',
+    'Checking cloud accounts…',
+    'Analyzing browser passwords…',
+    'Reviewing account activity…',
     'Everything looks healthy.',
   ],
   exposure: [
@@ -49,7 +51,7 @@ export function RayActivityTicker({ context = 'home', className = '' }: Props) {
   const [i, setI] = useState(0);
 
   useEffect(() => {
-    const id = setInterval(() => setI((n) => (n + 1) % lines.length), 6000);
+    const id = setInterval(() => setI((n) => (n + 1) % lines.length), 4500);
     return () => clearInterval(id);
   }, [lines.length]);
 
