@@ -47,6 +47,7 @@ const VaultProduct = lazy(() => import('@/pages/safesuite/products/SafePassProdu
 const ScanProduct = lazy(() => import('@/pages/safesuite/products/SafeScanProduct'));
 const WatchProduct = lazy(() => import('@/pages/safesuite/products/SafeWebProduct'));
 const WraythFeatures = lazy(() => import('@/pages/safesuite/SafeSuiteFeatures'));
+const WraythEnterprise = lazy(() => import('@/pages/safesuite/WraythEnterprise'));
 const VaultNotes = lazy(() => import('@/pages/safesuite/SafePassNotes'));
 const VaultCards = lazy(() => import('@/pages/safesuite/SafePassCards'));
 const VaultIdentity = lazy(() => import('@/pages/safesuite/SafePassIdentity'));
@@ -131,6 +132,7 @@ function AppRouter() {
         <Route path="/" element={<SuspenseWrapper><WraythLanding /></SuspenseWrapper>} />
         <Route path="/pricing" element={<SuspenseWrapper variant="cards"><WraythPricing /></SuspenseWrapper>} />
         <Route path="/features" element={<SuspenseWrapper><WraythFeatures /></SuspenseWrapper>} />
+        <Route path="/enterprise" element={<SuspenseWrapper><WraythEnterprise /></SuspenseWrapper>} />
         <Route path="/resources" element={<SuspenseWrapper><WraythResources /></SuspenseWrapper>} />
         <Route path="/products/safepass" element={<SuspenseWrapper><VaultProduct /></SuspenseWrapper>} />
         <Route path="/products/safescan" element={<SuspenseWrapper><ScanProduct /></SuspenseWrapper>} />

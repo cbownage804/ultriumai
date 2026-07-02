@@ -74,14 +74,6 @@ const rayExamples = [
   },
 ];
 
-const enterpriseFeatures = [
-  { icon: Building2, title: "Organizations", description: "Multi-tenant workspaces for teams and MSPs." },
-  { icon: ShieldCheck, title: "Role-Based Access", description: "Granular roles, least-privilege by default." },
-  { icon: Users, title: "Teams & Shared Vaults", description: "Group credentials by team, project, or client." },
-  { icon: FileKey, title: "Audit Logs", description: "Every unlock, share, and rotation, forever queryable." },
-  { icon: ServerCog, title: "SSO & SCIM", description: "Okta, Azure AD, Google Workspace, JumpCloud." },
-  { icon: Network, title: "MSP Ready", description: "Manage clients, seats, and billing from one pane." },
-];
 
 const integrations = {
   browser: [
@@ -349,37 +341,31 @@ export default function WraythFeatures() {
         </div>
       </section>
 
-      {/* Enterprise */}
+      {/* Enterprise teaser — full details live on /enterprise */}
       <section id="enterprise" className="border-b border-border py-24 px-4">
-        <div className="mx-auto max-w-6xl">
-          <div className="mb-12 max-w-2xl">
-            <Badge className="mb-4 bg-blue-500/10 text-blue-400 border-0">Enterprise</Badge>
-            <h2 className="mb-3 text-4xl font-bold">Built for Teams and MSPs</h2>
-            <p className="text-lg text-muted-foreground">
-              Roll Wrayth out to an org, a client, or a fleet — with the controls you need to sleep at night.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {enterpriseFeatures.map((f) => (
-              <Card key={f.title} className="border-border/50 bg-card/40 transition-colors hover:border-blue-500/40">
-                <CardHeader>
-                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
-                    <f.icon className="h-5 w-5 text-blue-400" />
-                  </div>
-                  <CardTitle className="text-base">{f.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm text-muted-foreground">{f.description}</CardContent>
-              </Card>
-            ))}
-          </div>
-
-          <div className="mt-8 flex flex-wrap gap-2">
-            {["Azure AD", "Google Workspace", "Okta", "M365", "Slack", "JumpCloud"].map((tag) => (
-              <span key={tag} className="rounded-md border border-border bg-card/40 px-3 py-1.5 text-xs text-muted-foreground">
-                {tag}
-              </span>
-            ))}
+        <div className="mx-auto max-w-5xl">
+          <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.03] p-8 md:p-12">
+            <div className="grid gap-6 md:grid-cols-[2fr_1fr] md:items-center">
+              <div>
+                <Badge className="mb-4 bg-blue-500/10 text-blue-400 border-0">For teams & MSPs</Badge>
+                <h2 className="mb-3 text-3xl font-bold">Deploying Wrayth across an organization?</h2>
+                <p className="text-muted-foreground">
+                  SSO, SCIM, delegated administration, multi-tenant MSP consoles, audit logs,
+                  and compliance reporting. See the full enterprise story.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3 md:justify-end">
+                <Link to="/enterprise">
+                  <Button className="bg-blue-500 text-white hover:bg-blue-600">
+                    Explore Enterprise
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link to="/contact?intent=sales">
+                  <Button variant="outline">Talk to Sales</Button>
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>
