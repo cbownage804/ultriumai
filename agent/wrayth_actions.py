@@ -1,0 +1,223 @@
+"""
+Wrayth agent — action executor.
+
+Runs alongside the posture loop. Every ~30 seconds it polls
+agent-action-poll for approved actions, runs the corresponding
+PowerShell command as SYSTEM (the service context), and reports
+the result via agent-action-result.
+
+Only a fixed whitelist of actions is supported. Nothing arbitrary
+ever comes back from the server — we ignore action_types we don't
+recognize.
+"""
+from __future__ import annotations
+
+import json
+import platform
+import subprocess
+import time
+from typing import Any
+from urllib import request as urlreq
+from urllib.error import HTTPError, URLError
+
+
+POLL_INTERVAL_SECONDS = 30
+
+
+def _ps(script: str, timeout: int = 600) -> tuple[int, str, str]:
+    """Run a PowerShell block. Returns (returncode, stdout, stderr)."""
+    try:
+        proc = subprocess.run(
+            [
+                "powershell.exe",
+                "-NoProfile",
+                "-ExecutionPolicy", "Bypass",
+                "-Command", script,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            creationflags=0x08000000,  # CREATE_NO_WINDOW
+        )
+        return proc.returncode, (proc.stdout or "").strip(), (proc.stderr or "").strip()
+    except subprocess.TimeoutExpired:
+        return 124, "", "timed out"
+    except Exception as e:  # noqa: BLE001
+        return 1, "", str(e)
+
+
+# ---------------------------------------------------------------------------
+# Action handlers — each returns (ok: bool, result: dict, error: str|None)
+# ---------------------------------------------------------------------------
+
+def _enable_bitlocker(_params: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    # TPM + recovery password. Non-destructive if already enabled.
+    script = (
+        "$v = Get-BitLockerVolume -MountPoint 'C:'; "
+        "if ($v.ProtectionStatus -eq 'On') { 'already_on'; exit 0 } "
+        "Enable-BitLocker -MountPoint 'C:' -EncryptionMethod XtsAes256 "
+        "-UsedSpaceOnly -TpmProtector -SkipHardwareTest | Out-Null; "
+        "Add-BitLockerKeyProtector -MountPoint 'C:' -RecoveryPasswordProtector | Out-Null; "
+        "'enabling'"
+    )
+    rc, out, err = _ps(script)
+    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+
+
+def _enable_firewall(_params: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    rc, out, err = _ps("Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True; 'ok'")
+    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+
+
+def _enable_defender(_params: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    rc, out, err = _ps(
+        "Set-MpPreference -DisableRealtimeMonitoring $false; "
+        "Update-MpSignature -ErrorAction SilentlyContinue; 'ok'"
+    )
+    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+
+
+def _defender_quick(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    rc, out, err = _ps("Start-MpScan -ScanType QuickScan; 'ok'", timeout=1800)
+    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+
+
+def _defender_full(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    rc, out, err = _ps("Start-MpScan -ScanType FullScan; 'ok'", timeout=5400)
+    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+
+
+def _install_updates(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    # Uses built-in COM: no extra module install required.
+    script = r"""
+$Session = New-Object -ComObject Microsoft.Update.Session
+$Searcher = $Session.CreateUpdateSearcher()
+$Result = $Searcher.Search("IsInstalled=0 and Type='Software'")
+if ($Result.Updates.Count -eq 0) { 'no_updates'; exit 0 }
+$ToInstall = New-Object -ComObject Microsoft.Update.UpdateColl
+foreach ($u in $Result.Updates) {
+  if (-not $u.EulaAccepted) { $u.AcceptEula() }
+  $ToInstall.Add($u) | Out-Null
+}
+$Downloader = $Session.CreateUpdateDownloader()
+$Downloader.Updates = $ToInstall
+$Downloader.Download() | Out-Null
+$Installer = $Session.CreateUpdateInstaller()
+$Installer.Updates = $ToInstall
+$Ir = $Installer.Install()
+"installed:$($ToInstall.Count) rebootRequired:$($Ir.RebootRequired)"
+"""
+    rc, out, err = _ps(script, timeout=5400)
+    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+
+
+def _lock_screen(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    rc, out, err = _ps(
+        "rundll32.exe user32.dll,LockWorkStation; 'ok'"
+    )
+    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+
+
+def _sign_out(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    # Force logoff of the active console session.
+    rc, out, err = _ps("shutdown.exe /l /f; 'ok'")
+    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+
+
+HANDLERS = {
+    "enable_bitlocker": _enable_bitlocker,
+    "enable_firewall": _enable_firewall,
+    "enable_defender": _enable_defender,
+    "run_defender_quick_scan": _defender_quick,
+    "run_defender_full_scan": _defender_full,
+    "install_windows_updates": _install_updates,
+    "lock_screen": _lock_screen,
+    "sign_out_user": _sign_out,
+}
+
+
+# ---------------------------------------------------------------------------
+# Network
+# ---------------------------------------------------------------------------
+
+def _post_json(url: str, body: dict, token: str) -> dict:
+    data = json.dumps(body).encode("utf-8")
+    req = urlreq.Request(
+        url,
+        data=data,
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {token}",
+        },
+        method="POST",
+    )
+    with urlreq.urlopen(req, timeout=30) as resp:
+        return json.loads(resp.read().decode("utf-8") or "{}")
+
+
+def poll_actions(api_base: str, token: str) -> list[dict]:
+    resp = _post_json(f"{api_base}/functions/v1/agent-action-poll", {}, token)
+    return list(resp.get("actions") or [])
+
+
+def report_result(
+    api_base: str,
+    token: str,
+    action_id: str,
+    ok: bool,
+    result: dict,
+    error: str | None,
+) -> None:
+    _post_json(
+        f"{api_base}/functions/v1/agent-action-result",
+        {
+            "action_id": action_id,
+            "status": "succeeded" if ok else "failed",
+            "result": result,
+            "error": error,
+        },
+        token,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Executor loop (called from wrayth_agent.main via a background thread)
+# ---------------------------------------------------------------------------
+
+def run_action_loop(cfg_getter, log) -> None:
+    """cfg_getter() must return the current live config dict."""
+    while True:
+        cfg = cfg_getter() or {}
+        api = (cfg.get("api_base") or "").rstrip("/")
+        token = cfg.get("device_token")
+        if not api or not token:
+            time.sleep(POLL_INTERVAL_SECONDS)
+            continue
+        try:
+            actions = poll_actions(api, token)
+            for a in actions:
+                atype = a.get("action_type")
+                aid = a.get("id")
+                handler = HANDLERS.get(atype)
+                if not handler or platform.system() != "Windows":
+                    report_result(api, token, aid, False, {}, f"unsupported:{atype}")
+                    log(f"action {atype} rejected (unsupported on this OS)")
+                    continue
+                log(f"executing action {atype} ({aid})")
+                try:
+                    ok, result, err = handler(a.get("params") or {})
+                    report_result(api, token, aid, ok, result, err)
+                    log(f"action {atype} {'ok' if ok else 'failed'}: {err or ''}")
+                except Exception as e:  # noqa: BLE001
+                    report_result(api, token, aid, False, {}, str(e))
+                    log(f"action {atype} crashed: {e}")
+        except HTTPError as e:
+            if e.code == 401:
+                log("action poll: device revoked")
+                return
+            log(f"action poll http error {e.code}")
+        except URLError as e:
+            log(f"action poll network error: {e}")
+        except Exception as e:  # noqa: BLE001
+            log(f"action loop unexpected: {e}")
+        time.sleep(POLL_INTERVAL_SECONDS)
