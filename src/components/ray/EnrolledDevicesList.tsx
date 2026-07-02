@@ -206,6 +206,11 @@ export function EnrolledDevicesList() {
                   )}
                 </div>
               )}
+              {!d.revoked_at && (
+                <div className="pt-1">
+                  <DeviceActionsMenu deviceId={d.id} disabled={!online} />
+                </div>
+              )}
             </div>
           );
         })}
