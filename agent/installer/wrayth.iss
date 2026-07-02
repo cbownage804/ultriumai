@@ -58,17 +58,14 @@ Filename: "powershell.exe"; \
   Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$c = @{{ enrollment_code = '{code:GetEnrollmentCode}'; api_base = '{code:GetApiBase}' }} | ConvertTo-Json; Set-Content -Path 'C:\ProgramData\Wrayth\wrayth-config.json' -Value $c -Encoding UTF8"""; \
   Flags: runhidden; StatusMsg: "Writing enrollment config..."
 
-; Remove any prior instance of the service (ignore failures). We stop with
-; sc.exe (fast) and then let WinSW uninstall cleanly if it was previously
-; registered; fall back to sc.exe delete for legacy direct registrations.
-Filename: "sc.exe";                      Parameters: "stop {#MyServiceName}";       Flags: runhidden waituntilterminated; StatusMsg: "Stopping existing service..."
-Filename: "{app}\WraythService.exe";     Parameters: "uninstall";                   Flags: runhidden waituntilterminated skipifdoesntexist
-Filename: "sc.exe";                      Parameters: "delete {#MyServiceName}";     Flags: runhidden waituntilterminated
-
-; Install as a real Windows service via WinSW. WinSW implements the SCM
-; handshake, so Windows no longer times out with Error 1053.
-Filename: "{app}\WraythService.exe";     Parameters: "install";                     Flags: runhidden waituntilterminated; StatusMsg: "Registering Wrayth service..."
-Filename: "{app}\WraythService.exe";     Parameters: "start";                       Flags: runhidden waituntilterminated; StatusMsg: "Starting Wrayth Agent..."
+; Register (or refresh) the WinSW-managed service in a single PowerShell
+; step. This avoids the classic "service marked for deletion" trap that
+; happens when sc.exe delete is called while Services.msc holds a handle.
+; If the service already exists, we just stop it and refresh its config
+; instead of deleting and reinstalling.
+Filename: "powershell.exe"; \
+  Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$svc = Get-Service -Name '{#MyServiceName}' -ErrorAction SilentlyContinue; if ($svc) {{ try {{ Stop-Service -Name '{#MyServiceName}' -Force -ErrorAction SilentlyContinue }} catch {{}}; & '{app}\WraythService.exe' refresh | Out-Null }} else {{ & '{app}\WraythService.exe' install | Out-Null }}; Start-Sleep -Seconds 2; & '{app}\WraythService.exe' start | Out-Null"""; \
+  Flags: runhidden waituntilterminated; StatusMsg: "Registering Wrayth service..."
 
 [UninstallRun]
 Filename: "{app}\WraythService.exe"; Parameters: "stop";      Flags: runhidden waituntilterminated; RunOnceId: "StopWraythSvc"
