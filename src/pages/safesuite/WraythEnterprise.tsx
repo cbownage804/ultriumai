@@ -14,9 +14,9 @@ import {
   Building2, Users, ShieldCheck, Network, ServerCog,
   KeyRound, FileKey, BarChart3, FileText, Terminal,
   Cloud, HardDrive, Server, Monitor, Apple, Smartphone, Chrome,
-  ArrowRight, Check, Lock, Fingerprint, Share2,
-  History, ScrollText, GaugeCircle, Rocket, Briefcase,
-  UserCheck, Layers, Webhook, Code2, Sparkles,
+  ArrowRight, Check, Lock, Fingerprint, Share2, Brain,
+  History, ScrollText, GaugeCircle, Rocket, Briefcase, ShieldOff,
+  UserCheck, Layers, Webhook, Code2, Sparkles, Search, Radar, Eye, Puzzle,
 } from "lucide-react";
 
 // ─── Content data ───────────────────────────────────────────────────────────
@@ -29,7 +29,18 @@ const trustBadges = [
   { label: "SCIM", note: "Provisioning" },
   { label: "Multi-tenant", note: "Native" },
   { label: "GDPR", note: "Ready" },
-  { label: "HIPAA", note: "Roadmap" },
+  { label: "HIPAA", note: "Aligned" },
+];
+
+const designPartnerSegments = [
+  "MSPs", "CPA & Accounting Firms", "Healthcare Practices", "Legal & Title", "K-12 & Higher Ed", "Financial Services",
+];
+
+const platformModules = [
+  { icon: KeyRound, label: "Vault", description: "Zero-knowledge credentials & secrets" },
+  { icon: Search, label: "Scan", description: "URL, file & attachment analysis" },
+  { icon: Radar, label: "Watch", description: "Dark web & domain monitoring" },
+  { icon: Fingerprint, label: "Identity", description: "SSO, SCIM & identity graph" },
 ];
 
 const orgCapabilities = [
@@ -70,6 +81,13 @@ const mspCapabilities = [
   { icon: BarChart3, title: "Multi-tenant Dashboards", description: "See every client's posture side-by-side." },
 ];
 
+const rayEnterpriseCapabilities = [
+  { icon: Radar, title: "Ray investigates every alert", description: "Triage, correlate, and prioritize across every tenant — no ticket left cold." },
+  { icon: Brain, title: "Ray explains every breach", description: "Plain-English root cause and blast radius, mapped to the users and secrets involved." },
+  { icon: Sparkles, title: "Ray recommends remediation", description: "Ranked next actions with one-click execution — rotate, revoke, notify, isolate." },
+  { icon: Eye, title: "Ray watches every tenant", description: "Continuous posture monitoring across every org, department, and managed client." },
+];
+
 const complianceFrameworks = [
   { code: "SOC 2", status: "In progress" },
   { code: "HIPAA", status: "Aligned" },
@@ -85,6 +103,17 @@ const deploymentModes = [
   { icon: Cloud, title: "Cloud", description: "Managed, multi-region, zero-touch. Available today." },
   { icon: Server, title: "Hybrid", description: "Your identity, our cloud vault sync. Available today." },
   { icon: HardDrive, title: "Self-hosted", description: "Deploy inside your own perimeter. On the roadmap." },
+  { icon: ShieldOff, title: "Air-gapped", description: "Fully isolated deployment for classified and regulated environments. Planned." },
+];
+
+const platformArchitecture = [
+  { label: "Users & Devices", detail: "Employees, admins, clients — every identity anchored." },
+  { label: "Browser Extension & Apps", detail: "Native clients on every OS, plus MV3 browser extension." },
+  { label: "Encrypted Vault", detail: "Zero-knowledge storage — Wrayth never sees plaintext." },
+  { label: "Ray AI", detail: "Cross-module intelligence layer — Vault, Scan, Watch, Identity." },
+  { label: "Threat Intelligence", detail: "HIBP, dark web, malware IOC, and domain reputation feeds." },
+  { label: "Audit & SIEM Stream", detail: "Immutable event log, streamed to your SIEM in real time." },
+  { label: "Admin Console", detail: "Multi-tenant governance, RBAC, and compliance reporting." },
 ];
 
 const platforms = [
@@ -227,6 +256,67 @@ export default function WraythEnterprise() {
           </div>
         </div>
       </section>
+
+      {/* Design partners */}
+      <section className="border-b border-border py-10 px-4">
+        <div className="mx-auto max-w-6xl text-center">
+          <p className="mb-4 text-xs uppercase tracking-widest text-muted-foreground">
+            Designed with feedback from
+          </p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {designPartnerSegments.map((s) => (
+              <span key={s} className="rounded-full border border-border bg-card/40 px-3 py-1 text-xs text-muted-foreground">
+                {s}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Product hierarchy — One platform, one AI */}
+      <section className="border-b border-border py-24 px-4">
+        <div className="mx-auto max-w-6xl">
+          <SectionHeading
+            eyebrow="One Platform"
+            title="Not a pile of tools. One platform, unified by Ray."
+            description="Most security stacks are a graveyard of disconnected products. Wrayth is one platform with modular capabilities — and Ray provides a consistent intelligence layer across every one of them."
+            tone="violet"
+          />
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            {platformModules.map((m) => (
+              <div key={m.label} className="rounded-xl border border-border bg-card/40 p-5 text-center">
+                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-violet-500/10">
+                  <m.icon className="h-5 w-5 text-violet-300" />
+                </div>
+                <div className="font-semibold">{m.label}</div>
+                <div className="mt-1 text-xs text-muted-foreground">{m.description}</div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 flex items-center justify-center gap-2 rounded-xl border border-violet-500/30 bg-violet-500/[0.05] p-4 text-sm text-violet-100">
+            <Sparkles className="h-4 w-4 text-violet-300" />
+            <span><strong>Ray</strong> works across all of them — one AI teammate, everywhere your team operates.</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Ray for Enterprise */}
+      <section id="ray" className="border-b border-border bg-violet-500/[0.03] py-24 px-4">
+        <div className="mx-auto max-w-6xl">
+          <SectionHeading
+            eyebrow="Ray for Enterprise"
+            title="An AI security teammate for every tenant"
+            description="Ray isn't a chatbot bolted onto a dashboard. Ray is the intelligence layer that investigates, explains, and remediates across Vault, Scan, Watch, and Identity — for every org and every managed client."
+            tone="violet"
+          />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {rayEnterpriseCapabilities.map((f) => (
+              <FeatureCard key={f.title} {...f} tone="violet" />
+            ))}
+          </div>
+        </div>
+      </section>
+
 
       {/* Organizations */}
       <section id="organizations" className="border-b border-border py-24 px-4">
@@ -380,10 +470,10 @@ export default function WraythEnterprise() {
           <SectionHeading
             eyebrow="Deployment"
             title="Deploy the way your environment demands"
-            description="Cloud today. Hybrid today. Self-hosted on the roadmap. Wrayth runs everywhere your people work."
+            description="Cloud today. Hybrid today. Self-hosted and air-gapped on the roadmap. Wrayth runs everywhere your people work — and everywhere they can't."
             tone="blue"
           />
-          <div className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {deploymentModes.map((d) => (
               <FeatureCard key={d.title} {...d} tone="blue" />
             ))}
@@ -441,6 +531,44 @@ export default function WraythEnterprise() {
           </div>
         </div>
       </section>
+
+      {/* Platform architecture diagram */}
+      <section id="platform-architecture" className="border-b border-border py-24 px-4">
+        <div className="mx-auto max-w-4xl">
+          <SectionHeading
+            eyebrow="Platform Architecture"
+            title="How the pieces fit together"
+            description="From the device in your user's hand to the audit stream in your SIEM — every layer of Wrayth, and where Ray sits inside it."
+            tone="blue"
+          />
+          <div className="rounded-2xl border border-blue-500/20 bg-card/40 p-6 md:p-10">
+            <div className="space-y-3">
+              {platformArchitecture.map((layer, i) => {
+                const isRay = layer.label === "Ray AI";
+                return (
+                  <div key={layer.label}>
+                    <div className={`flex items-start gap-4 rounded-lg border p-4 ${isRay ? "border-violet-500/40 bg-violet-500/[0.06]" : "border-border bg-background/60"}`}>
+                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${isRay ? "bg-violet-500/30 text-violet-100" : "bg-blue-500/20 text-blue-200"}`}>
+                        {isRay ? <Sparkles className="h-4 w-4" /> : i + 1}
+                      </div>
+                      <div className="flex-1">
+                        <div className={`font-semibold ${isRay ? "text-violet-100" : ""}`}>{layer.label}</div>
+                        <div className="text-sm text-muted-foreground">{layer.detail}</div>
+                      </div>
+                    </div>
+                    {i < platformArchitecture.length - 1 && (
+                      <div className="flex justify-center py-1">
+                        <div className={`h-4 w-px ${isRay ? "bg-violet-500/50" : "bg-blue-500/40"}`} />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+
 
       {/* API & Automation */}
       <section id="api" className="border-b border-border py-24 px-4">
