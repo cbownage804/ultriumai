@@ -91,10 +91,29 @@ jobs:
             agent/dist/WraythSetup.exe
           if-no-files-found: error
 
-      - name: Attach to Release
+      - name: Attach to existing Release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
+          files: |
+            agent/dist/WraythAgent.exe
+            agent/dist/WraythSetup.exe
+          fail_on_unmatched_files: true
+
+      # Publish/refresh a rolling "latest" release on every main build so that
+      # https://github.com/<owner>/<repo>/releases/latest/download/WraythSetup.exe
+      # always resolves (the in-app installer dialog links there).
+      - name: Publish rolling "latest" Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Wrayth Agent (latest)
+          body: |
+            Auto-built from commit ${{ github.sha }} on ${{ github.ref_name }}.
+            Download **WraythSetup.exe** and paste your enrollment code.
+          prerelease: false
+          make_latest: "true"
           files: |
             agent/dist/WraythAgent.exe
             agent/dist/WraythSetup.exe
