@@ -51,7 +51,7 @@ export function RayActivityTicker({ context = 'home', className = '' }: Props) {
   const [i, setI] = useState(0);
 
   useEffect(() => {
-    const id = setInterval(() => setI((n) => (n + 1) % lines.length), 6000);
+    const id = setInterval(() => setI((n) => (n + 1) % lines.length), 4500);
     return () => clearInterval(id);
   }, [lines.length]);
 
