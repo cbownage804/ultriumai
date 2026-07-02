@@ -87,6 +87,11 @@ export default function WraythWeb() {
   const [scanningAssetId, setScanningAssetId] = useState<string | null>(null);
   const [newAsset, setNewAsset] = useState('');
   const [assetType, setAssetType] = useState<'email' | 'domain' | 'phone'>('email');
+
+  // Clear input when type changes so placeholder and value stay in sync
+  useEffect(() => {
+    setNewAsset('');
+  }, [assetType]);
   const [selectedThreat, setSelectedThreat] = useState<ThreatDetails | null>(null);
   const [aiRecommendation, setAiRecommendation] = useState<string | null>(null);
   const [loadingRecommendation, setLoadingRecommendation] = useState(false);
@@ -520,6 +525,16 @@ export default function WraythWeb() {
                 onChange={(e) => setNewAsset(e.target.value)}
                 className="w-full bg-background border-border text-foreground"
               />
+              {assetType === 'email' && (
+                <p className="text-xs text-muted-foreground">
+                  We'll check public breach corpora (Have I Been Pwned and dark-web feeds) for any exposure of this address.
+                </p>
+              )}
+              {assetType === 'domain' && (
+                <p className="text-xs text-muted-foreground">
+                  Ray checks domain reputation, phishing patterns, and known malicious infrastructure tied to this domain.
+                </p>
+              )}
               {assetType === 'phone' && (
                 <p className="text-xs text-muted-foreground">
                   E.164 format (+15551234567) is recommended for the most accurate breach matches. Dashes and spaces are fine — Ray will normalize them.
