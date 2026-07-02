@@ -87,6 +87,11 @@ export default function WraythWeb() {
   const [scanningAssetId, setScanningAssetId] = useState<string | null>(null);
   const [newAsset, setNewAsset] = useState('');
   const [assetType, setAssetType] = useState<'email' | 'domain' | 'phone'>('email');
+
+  // Clear input when type changes so placeholder and value stay in sync
+  useEffect(() => {
+    setNewAsset('');
+  }, [assetType]);
   const [selectedThreat, setSelectedThreat] = useState<ThreatDetails | null>(null);
   const [aiRecommendation, setAiRecommendation] = useState<string | null>(null);
   const [loadingRecommendation, setLoadingRecommendation] = useState(false);
