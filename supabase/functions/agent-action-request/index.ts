@@ -20,6 +20,16 @@ const ALLOWED = new Set([
   'install_windows_updates',
   'lock_screen',
   'sign_out_user',
+  'disable_rdp',
+  'enable_rdp_nla',
+  'disable_remote_assistance',
+  'disable_browser_password_manager',
+  'remove_local_admin',
+  'disable_builtin_administrator',
+  'enable_defender_pua',
+  'enable_defender_cloud',
+  'update_defender_signatures',
+  'disable_startup_item',
 ]);
 
 Deno.serve(async (req) => {
