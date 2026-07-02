@@ -165,12 +165,23 @@ export function UnifiedAccountsPanel({ rows, className, onRotate }: Props) {
                           ? "Ray: I'll generate a stronger one whenever you're ready."
                           : 'Ray: turn on 2FA to close the last gap.'}
                 </p>
-                <Link
-                  to="/app/vault"
-                  className="text-[11px] text-violet-300 hover:text-violet-200 self-start sm:self-auto min-h-[44px] sm:min-h-0 inline-flex items-center"
-                >
-                  Open in vault →
-                </Link>
+                <div className="flex items-center gap-2 self-start sm:self-auto">
+                  {onRotate && (
+                    <Button
+                      size="sm"
+                      onClick={() => onRotate(row.id)}
+                      className="h-8 gap-1.5 bg-violet-500 text-white hover:bg-violet-500/90 text-[11px]"
+                    >
+                      <RefreshCw className="h-3 w-3" /> Rotate now
+                    </Button>
+                  )}
+                  <Link
+                    to="/app/passwords/list"
+                    className="text-[11px] text-violet-300 hover:text-violet-200 min-h-[44px] sm:min-h-0 inline-flex items-center"
+                  >
+                    Open in vault →
+                  </Link>
+                </div>
               </div>
             </motion.div>
           );
