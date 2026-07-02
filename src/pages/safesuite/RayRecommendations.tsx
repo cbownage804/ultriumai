@@ -10,7 +10,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { AlertTriangle, CheckCircle2, Info, ShieldAlert, RefreshCw, Sparkles } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Info, ShieldAlert, RefreshCw, Sparkles, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type Recommendation = {
@@ -174,6 +174,28 @@ export default function RayRecommendations() {
                           <Link to={action.target}>{action.label}</Link>
                         </Button>
                       )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="min-h-[44px]"
+                        onClick={() =>
+                          window.dispatchEvent(
+                            new CustomEvent('ray:panel-open', {
+                              detail: {
+                                message: `What should I do about "${r.title}"?`,
+                                context: {
+                                  kind: 'recommendation',
+                                  id: r.id,
+                                  title: r.title,
+                                  body: r.body ?? undefined,
+                                },
+                              },
+                            }),
+                          )
+                        }
+                      >
+                        <MessageSquare className="h-4 w-4 mr-2" /> Ask Ray
+                      </Button>
                       {tab === "open" && (
                         <>
                           <Button

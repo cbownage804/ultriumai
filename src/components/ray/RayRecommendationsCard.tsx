@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, CheckCircle2, Info, ShieldAlert, Sparkles, RefreshCw } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Info, ShieldAlert, Sparkles, RefreshCw, MessageSquare } from "lucide-react";
 
 type Recommendation = {
   id: string;
@@ -131,16 +131,40 @@ export function RayRecommendationsCard({
                         </p>
                       )}
                     </div>
-                    {action?.intent === "navigate" && (
+                    <div className="flex flex-col gap-1 shrink-0">
+                      {action?.intent === "navigate" && (
+                        <Button
+                          asChild
+                          size="sm"
+                          variant="secondary"
+                          className="min-h-[36px]"
+                        >
+                          <Link to={action.target}>{action.label}</Link>
+                        </Button>
+                      )}
                       <Button
-                        asChild
                         size="sm"
-                        variant="secondary"
-                        className="min-h-[44px]"
+                        variant="ghost"
+                        className="min-h-[36px] text-xs text-violet-300 hover:text-violet-200"
+                        onClick={() =>
+                          window.dispatchEvent(
+                            new CustomEvent('ray:panel-open', {
+                              detail: {
+                                message: `What should I do about "${r.title}"?`,
+                                context: {
+                                  kind: 'recommendation',
+                                  id: r.id,
+                                  title: r.title,
+                                  body: r.body ?? undefined,
+                                },
+                              },
+                            }),
+                          )
+                        }
                       >
-                        <Link to={action.target}>{action.label}</Link>
+                        <MessageSquare className="h-3.5 w-3.5 mr-1" /> Ask Ray
                       </Button>
-                    )}
+                    </div>
                   </li>
                 );
               })}

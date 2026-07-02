@@ -61,6 +61,7 @@ import { AppSwitcher } from '@/components/AppSwitcher';
 
 import { cn } from '@/lib/utils';
 import { AskRayPalette } from '@/components/ray/AskRayPalette';
+import { FloatingRayChat } from '@/components/ray/FloatingRayChat';
 import { RayPresence } from '@/components/ray/RayPresence';
 import { RayContextProvider } from '@/components/ray/RayContext';
 import { SidebarBriefing } from '@/components/ray/SidebarBriefing';
@@ -332,6 +333,7 @@ function WraythLayoutInner() {
       </div>
 
       <AskRayPalette />
+      <FloatingRayChat />
     </div>
   );
 }

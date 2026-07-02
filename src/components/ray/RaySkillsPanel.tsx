@@ -58,10 +58,19 @@ const STARTERS = [
   'How do I connect the VPN?',
 ];
 
+type PanelContext = {
+  kind: string;
+  id?: string;
+  title?: string;
+  body?: string;
+  evidence?: Record<string, unknown>;
+};
+
 export default function RaySkillsPanel() {
   const [input, setInput] = useState('');
   const [turns, setTurns] = useState<Turn[]>([]);
   const [loading, setLoading] = useState(false);
+  const [context, setContext] = useState<PanelContext | null>(null);
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -73,15 +82,16 @@ export default function RaySkillsPanel() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [turns, loading]);
 
-  const send = async (message: string) => {
+  const send = async (message: string, ctxOverride?: PanelContext | null) => {
     const text = message.trim();
     if (!text || loading) return;
     setInput('');
     setTurns((t) => [...t, { role: 'user', text }]);
     setLoading(true);
+    const ctx = ctxOverride !== undefined ? ctxOverride : context;
     try {
       const { data, error } = await supabase.functions.invoke('ray-router', {
-        body: { message: text, source: 'in_app' },
+        body: { message: text, source: 'in_app', context: ctx ?? undefined },
       });
       if (error) throw error;
       const resp = data as RayResponse;
@@ -97,6 +107,20 @@ export default function RaySkillsPanel() {
       inputRef.current?.focus();
     }
   };
+
+  // Allow other surfaces to seed a question + recommendation context.
+  useEffect(() => {
+    function onSend(e: Event) {
+      const detail = (e as CustomEvent).detail ?? {};
+      if (detail.context) setContext(detail.context as PanelContext);
+      if (typeof detail.message === 'string' && detail.message.trim()) {
+        void send(detail.message, detail.context as PanelContext | undefined);
+      }
+    }
+    window.addEventListener('ray:panel-send', onSend);
+    return () => window.removeEventListener('ray:panel-send', onSend);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const runAction = async (action: RayAction) => {
     if (action.intent === 'navigate') {
@@ -162,6 +186,22 @@ export default function RaySkillsPanel() {
             </div>
           )}
         </div>
+        {context && (
+          <div className="flex items-center gap-2 rounded-md border border-violet-400/30 bg-violet-500/[0.05] px-2 py-1 text-xs">
+            <Sparkles className="h-3 w-3 text-violet-300 shrink-0" />
+            <span className="flex-1 truncate text-foreground/80">
+              About: {context.title ?? context.kind}
+            </span>
+            <button
+              type="button"
+              onClick={() => setContext(null)}
+              className="text-muted-foreground hover:text-foreground"
+              aria-label="Clear context"
+            >
+              ×
+            </button>
+          </div>
+        )}
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -173,7 +213,7 @@ export default function RaySkillsPanel() {
             ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask Ray anything about your security posture…"
+            placeholder={context ? `Ask Ray about "${context.title ?? context.kind}"…` : 'Ask Ray anything about your security posture…'}
             disabled={loading}
           />
           <Button type="submit" size="icon" disabled={loading || !input.trim()}>
