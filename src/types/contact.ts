@@ -22,10 +22,15 @@ export interface Product {
 }
 
 export const PRODUCTS: Product[] = [
-  { id: 'vanguard', name: 'Vanguard', description: 'RMM, helpdesk, pentesting & IT operations' },
-  { id: 'safesuite', name: 'Wrayth', description: 'Password manager, email security & digital protection' },
-  { id: 'ai-studio', name: 'AI Studio', description: 'Build custom AI assistants & GPTs' },
-  { id: 'custom-apps', name: 'Custom App Development', description: 'Bespoke AI-powered applications' },
+  { id: 'wrayth-personal', name: 'Wrayth Personal', description: 'For individuals protecting their identity' },
+  { id: 'wrayth-teams', name: 'Wrayth Teams', description: 'For small teams and families' },
+  { id: 'wrayth-enterprise', name: 'Wrayth Enterprise', description: 'For organizations with advanced needs' },
+  { id: 'vault', name: 'Vault', description: 'Zero-knowledge encrypted password vault' },
+  { id: 'scan', name: 'Scan', description: 'Phishing, malware and URL analysis' },
+  { id: 'watch', name: 'Watch', description: 'Continuous breach and identity monitoring' },
+  { id: 'ray', name: 'Ray AI', description: 'Your AI security teammate' },
+  { id: 'api-integrations', name: 'API / Integrations', description: 'Programmatic access and integrations' },
+  { id: 'partnership', name: 'Partnership Inquiry', description: 'Reseller, referral or strategic partnership' },
 ];
 
 export const INITIAL_FORM_DATA: ContactFormData = {
