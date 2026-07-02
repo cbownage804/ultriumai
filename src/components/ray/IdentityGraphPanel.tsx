@@ -99,6 +99,8 @@ export function IdentityGraphPanel({ assets, primaryEmail }: Props) {
             />
           </div>
 
+          <GraphVisualization graph={graph} />
+
           <ul className="space-y-2">
             {graph.identifiers.slice(0, 8).map((node) => (
               <IdentifierRow key={`${node.kind}:${node.value}`} node={node} />
@@ -107,6 +109,100 @@ export function IdentityGraphPanel({ assets, primaryEmail }: Props) {
         </div>
       </div>
     </motion.section>
+  );
+}
+
+/**
+ * Bipartite visualization: identifiers on the left, connected vault accounts
+ * on the right. Line color mirrors the identifier's severity so the eye
+ * immediately lands on the risky clusters.
+ */
+function GraphVisualization({ graph }: { graph: ReturnType<typeof buildIdentityGraph> }) {
+  const identifiers = graph.identifiers.slice(0, 6);
+  if (identifiers.length === 0) return null;
+
+  // Collect unique accounts (dedup by id) preserving stable ordering.
+  const accountMap = new Map<string, { id: string; title: string }>();
+  identifiers.forEach((n) => n.accounts.forEach((a) => { if (!accountMap.has(a.id)) accountMap.set(a.id, a); }));
+  const accounts = Array.from(accountMap.values()).slice(0, 8);
+  if (accounts.length === 0) return null;
+
+  const W = 640;
+  const rowH = 44;
+  const H = Math.max(identifiers.length, accounts.length) * rowH + 24;
+  const leftX = 140;
+  const rightX = W - 140;
+
+  const idY = (i: number) => 24 + i * rowH + rowH / 2;
+  const accIdxById = new Map(accounts.map((a, i) => [a.id, i] as const));
+  const accY = (i: number) => 24 + i * rowH + rowH / 2;
+
+  const strokeFor = (sev: IdentifierNode['severity']) =>
+    sev === 'critical' ? 'stroke-red-400/70' : sev === 'warning' ? 'stroke-yellow-400/60' : 'stroke-violet-400/50';
+
+  return (
+    <div className="rounded-xl border border-border/60 bg-background/40 p-3 sm:p-4 overflow-x-auto">
+      <div className="flex items-center justify-between mb-2 text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+        <span>Identifiers</span>
+        <span>Accounts they protect</span>
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ minWidth: 480 }} role="img" aria-label="Identity relationship graph">
+        {/* Connection lines first, so nodes overlay them. */}
+        {identifiers.flatMap((node, i) =>
+          node.accounts.filter((a) => accIdxById.has(a.id)).map((a) => {
+            const y1 = idY(i);
+            const y2 = accY(accIdxById.get(a.id)!);
+            const midX = (leftX + rightX) / 2;
+            const d = `M ${leftX} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${rightX} ${y2}`;
+            return (
+              <motion.path
+                key={`${node.value}-${a.id}`}
+                d={d}
+                fill="none"
+                className={strokeFor(node.severity)}
+                strokeWidth={1.5}
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.05 * i }}
+              />
+            );
+          })
+        )}
+        {/* Identifier nodes (left). */}
+        {identifiers.map((node, i) => {
+          const y = idY(i);
+          const color = node.severity === 'critical' ? '#f87171' : node.severity === 'warning' ? '#fbbf24' : '#a78bfa';
+          return (
+            <g key={`n-${node.value}`}>
+              <circle cx={leftX} cy={y} r={5} fill={color} />
+              <text x={leftX - 12} y={y + 4} textAnchor="end" className="fill-foreground" style={{ fontSize: 11 }}>
+                {node.value.length > 22 ? node.value.slice(0, 21) + '…' : node.value}
+              </text>
+              {node.exposures > 0 && (
+                <text x={leftX - 12} y={y + 16} textAnchor="end" className="fill-red-300/80" style={{ fontSize: 9 }}>
+                  {node.exposures} exposure{node.exposures === 1 ? '' : 's'}
+                </text>
+              )}
+            </g>
+          );
+        })}
+        {/* Account nodes (right). */}
+        {accounts.map((a, i) => {
+          const y = accY(i);
+          return (
+            <g key={`a-${a.id}`}>
+              <circle cx={rightX} cy={y} r={4} className="fill-foreground/70" />
+              <text x={rightX + 12} y={y + 4} textAnchor="start" className="fill-foreground" style={{ fontSize: 11 }}>
+                {a.title.length > 22 ? a.title.slice(0, 21) + '…' : a.title}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+      <p className="mt-2 text-[11px] italic text-muted-foreground">
+        Red lines mean a shared exposure. Yellow means concentration risk. Violet means healthy — Ray is watching.
+      </p>
+    </div>
   );
 }
 
