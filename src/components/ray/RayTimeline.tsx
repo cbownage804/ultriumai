@@ -213,3 +213,51 @@ export function RayTimeline({ limit = 50, className, embedded = false }: Props) 
     </div>
   );
 }
+
+/**
+ * Distill the last 7 days of Ray's timeline into a single conversational
+ * paragraph. Deterministic, no invented data — if nothing meaningful
+ * happened, returns null so the callsite can hide the block.
+ */
+function buildWeekNarrative(all: RayTimelineEvent[]): string | null {
+  const now = Date.now();
+  const weekAgo = now - 7 * 86_400_000;
+  const week = all.filter((e) => {
+    if (!e.occurred_at) return true;
+    return new Date(e.occurred_at).getTime() >= weekAgo;
+  });
+  if (week.length === 0) return null;
+
+  let watched = 0, rotated = 0, flagged = 0, scanned = 0, breaches = 0, actions = 0;
+  for (const ev of week) {
+    const t = ev.event_type;
+    if (t.includes('rotate') || t.includes('password_rotated')) rotated++;
+    else if (t.includes('breach') || t.includes('leak')) breaches++;
+    else if (t.includes('exposure') || t.includes('asset') || t.includes('watch')) watched++;
+    else if (t.includes('scan') || t.includes('threat') || t.includes('malware')) scanned++;
+    else if (t.includes('alert') || t.includes('warn') || ev.severity === 'high' || ev.severity === 'critical') flagged++;
+    else actions++;
+  }
+
+  const parts: string[] = [];
+  if (rotated) parts.push(`helped you rotate ${rotated} password${rotated === 1 ? '' : 's'}`);
+  if (breaches) parts.push(`spotted ${breaches} breach signal${breaches === 1 ? '' : 's'}`);
+  if (flagged) parts.push(`flagged ${flagged} thing${flagged === 1 ? '' : 's'} that needed your eyes`);
+  if (scanned) parts.push(`analyzed ${scanned} threat${scanned === 1 ? '' : 's'}`);
+  if (watched) parts.push(`kept watch on ${watched} identity update${watched === 1 ? '' : 's'}`);
+  if (actions && parts.length === 0) parts.push(`ran ${actions} background check${actions === 1 ? '' : 's'}`);
+  if (parts.length === 0) return null;
+
+  const joined =
+    parts.length === 1
+      ? parts[0]
+      : parts.slice(0, -1).join(', ') + ', and ' + parts[parts.length - 1];
+
+  const closer =
+    breaches > 0 || flagged > 0
+      ? "Nothing that couldn't wait, but a couple things I want you to see."
+      : "Quiet week — that's the good kind.";
+
+  return `Here's what I did while you were away: ${joined}. ${closer}`;
+}
+
