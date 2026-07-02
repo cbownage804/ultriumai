@@ -10,7 +10,7 @@
  * narrate victories that aren't happening yet.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldAlert, ArrowRight, KeyRound } from 'lucide-react';
