@@ -228,7 +228,8 @@ begin
   Result := True;
   if CurPageID = CodePage.ID then
   begin
-    if Trim(CodePage.Values[0]) = '' then
+    // Existing enrollment? The code field is optional — we'll keep the current token.
+    if (Trim(CodePage.Values[0]) = '') and (not HasExistingEnrollment) then
     begin
       MsgBox('Please paste the enrollment code from the Wrayth app before continuing.',
              mbError, MB_OK);
