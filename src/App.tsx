@@ -67,6 +67,7 @@ const RayOnboarding = lazy(() => import('@/pages/onboarding/RayOnboarding'));
 const RayTimelinePage = lazy(() => import('@/pages/safesuite/RayTimelinePage'));
 const PlaybookRunnerPage = lazy(() => import('@/pages/safesuite/PlaybookRunnerPage'));
 const Integrations = lazy(() => import('@/pages/safesuite/Integrations'));
+const WorkplaceEmbeds = lazy(() => import('@/pages/safesuite/WorkplaceEmbeds'));
 const SecureProviderLauncher = lazy(() => import('@/pages/safesuite/SecureProviderLauncher'));
 const OrgDashboard = lazy(() => import('@/pages/safesuite/OrgDashboard'));
 const MspDashboard = lazy(() => import('@/pages/safesuite/MspDashboard'));
@@ -192,6 +193,7 @@ function AppRouter() {
           <Route path="/app/devices" element={<SuspenseWrapper><Devices /></SuspenseWrapper>} />
           <Route path="/app/reports" element={<SuspenseWrapper><Reports /></SuspenseWrapper>} />
           <Route path="/app/integrations" element={<SuspenseWrapper><Integrations /></SuspenseWrapper>} />
+          <Route path="/app/workplace-embeds" element={<SuspenseWrapper><WorkplaceEmbeds /></SuspenseWrapper>} />
           <Route path="/app/org" element={<SuspenseWrapper><OrgDashboard /></SuspenseWrapper>} />
           <Route path="/app/msp" element={<SuspenseWrapper><MspDashboard /></SuspenseWrapper>} />
 
