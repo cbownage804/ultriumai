@@ -94,7 +94,7 @@ export function ThreatScanInput() {
         <Textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Paste anything suspicious — URL, email, headers, domain, IP, hash, or an error message. Or drop a file, screenshot, or .eml here."
+          placeholder={PLACEHOLDERS[placeholderIdx]}
           rows={3}
           className="mt-2 resize-none bg-background/40 text-sm"
           onKeyDown={(e) => {
