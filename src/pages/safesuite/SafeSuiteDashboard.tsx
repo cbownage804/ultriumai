@@ -51,6 +51,7 @@ import { usePasswordLifecycle } from '@/lib/ray/passwordLifecycle';
 import { CisoNextAction } from '@/components/ray/CisoNextAction';
 import { nextBestAction } from '@/lib/ray/ciso';
 import { VaultLockedCard } from '@/components/ray/VaultLockedCard';
+import { HomeContextBridge } from '@/components/ray/HomeContextBridge';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
 
 interface DashboardStats {
@@ -648,6 +649,12 @@ export default function WraythDashboard() {
       ) : (
         stats.passwordCount > 0 && <CisoNextAction directive={cisoDirective} />
       )}
+
+      {/* 1c. Cross-domain context bridge — Ray names what he's missing. */}
+      <HomeContextBridge
+        vaultLockedCardVisible={vaultLocked}
+        vaultCount={stats.passwordCount}
+      />
 
       {/* 2. Ask Ray — reinforces AI-first experience */}
       <div data-tour="quick-actions">
