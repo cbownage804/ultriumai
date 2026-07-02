@@ -461,16 +461,21 @@ def report_result(
     result: dict,
     error: str | None,
 ) -> None:
-    _post_json(
-        f"{api_base}/functions/v1/agent-action-result",
-        {
-            "action_id": action_id,
-            "status": "succeeded" if ok else "failed",
-            "result": result,
-            "error": error,
-        },
-        token,
-    )
+    # Pull audit-trail fields out of the handler result so the server can
+    # store them as first-class columns for rollback + timeline rendering.
+    audit_keys = ("previous_value", "new_value", "rollback_possible",
+                  "rollback_action", "requires_reboot")
+    body: dict[str, Any] = {
+        "action_id": action_id,
+        "status": "succeeded" if ok else "failed",
+        "result": {k: v for k, v in (result or {}).items() if k not in audit_keys},
+        "error": error,
+    }
+    for k in audit_keys:
+        if result and k in result:
+            body[k] = result[k]
+    _post_json(f"{api_base}/functions/v1/agent-action-result", body, token)
+
 
 
 # ---------------------------------------------------------------------------
