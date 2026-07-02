@@ -86,7 +86,7 @@ export default function WraythWeb() {
   const [loadingThreats, setLoadingThreats] = useState<Set<string>>(new Set());
   const [scanningAssetId, setScanningAssetId] = useState<string | null>(null);
   const [newAsset, setNewAsset] = useState('');
-  const [assetType, setAssetType] = useState<'email' | 'domain' | 'brand'>('email');
+  const [assetType, setAssetType] = useState<'email' | 'domain' | 'phone'>('email');
   const [selectedThreat, setSelectedThreat] = useState<ThreatDetails | null>(null);
   const [aiRecommendation, setAiRecommendation] = useState<string | null>(null);
   const [loadingRecommendation, setLoadingRecommendation] = useState(false);
