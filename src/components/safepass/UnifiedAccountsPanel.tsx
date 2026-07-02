@@ -72,7 +72,7 @@ export function UnifiedAccountsPanel({ rows, className }: Props) {
   }
 
   return (
-    <Card className={cn('p-5', className)}>
+    <Card className={cn('p-4 sm:p-5', className)}>
       <div className="flex items-center justify-between mb-4">
         <div>
           <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-violet-300/80">
