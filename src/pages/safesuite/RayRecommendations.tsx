@@ -10,7 +10,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { AlertTriangle, CheckCircle2, Info, ShieldAlert, RefreshCw, Sparkles } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Info, ShieldAlert, RefreshCw, Sparkles, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type Recommendation = {
