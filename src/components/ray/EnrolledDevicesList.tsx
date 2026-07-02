@@ -185,19 +185,57 @@ function buildPostureChips(p: Posture): Array<{
     });
   }
   if (p.remote_desktop) {
+    const nla = p.rdp_security?.nla_enabled;
     chips.push({
       icon: ShieldAlert,
       label: 'RDP',
-      value: p.remote_desktop.enabled ? 'Enabled' : 'Disabled',
-      tone: p.remote_desktop.enabled ? 'warn' : 'good',
+      value: !p.remote_desktop.enabled
+        ? 'Disabled'
+        : nla === false
+        ? 'On (no NLA)'
+        : 'On + NLA',
+      tone: !p.remote_desktop.enabled ? 'good' : nla === false ? 'bad' : 'warn',
     });
   }
+  if (p.rdp_security?.remote_assistance_enabled) {
+    chips.push({ icon: ShieldAlert, label: 'Remote Assist', value: 'Enabled', tone: 'warn' });
+  }
+  if (p.defender_detail) {
+    chips.push({
+      icon: ShieldCheck,
+      label: 'Defender cloud',
+      value: p.defender_detail.cloud_protection ? 'On' : 'Off',
+      tone: p.defender_detail.cloud_protection ? 'good' : 'warn',
+    });
+    chips.push({
+      icon: ShieldCheck,
+      label: 'PUA protection',
+      value: p.defender_detail.pua_protection ? 'On' : 'Off',
+      tone: p.defender_detail.pua_protection ? 'good' : 'warn',
+    });
+  }
+  if (p.browser_passwords) {
+    const c = p.browser_passwords.chrome?.stored_count ?? 0;
+    const e = p.browser_passwords.edge?.stored_count ?? 0;
+    if (c > 0 || e > 0) {
+      chips.push({
+        icon: ShieldAlert,
+        label: 'Browser pw',
+        value: `${c + e} stored`,
+        tone: c + e > 0 ? 'warn' : 'good',
+      });
+    }
+  }
   if (typeof p.pending_updates === 'number') {
+    const uc = p.update_categories;
+    const label = uc && (uc.security || uc.drivers || uc.feature || uc.office)
+      ? `${uc.security || 0} sec · ${uc.drivers || 0} drv`
+      : p.pending_updates === 0 ? 'Up to date' : `${p.pending_updates} pending`;
     chips.push({
       icon: ShieldAlert,
       label: 'Updates',
-      value: p.pending_updates === 0 ? 'Up to date' : `${p.pending_updates} pending`,
-      tone: p.pending_updates === 0 ? 'good' : p.pending_updates > 5 ? 'warn' : 'unknown',
+      value: label,
+      tone: (uc?.security ?? 0) > 0 ? 'bad' : p.pending_updates === 0 ? 'good' : p.pending_updates > 5 ? 'warn' : 'unknown',
     });
   }
   if (p.disk && typeof p.disk.free_gb === 'number' && typeof p.disk.total_gb === 'number') {
@@ -209,11 +247,12 @@ function buildPostureChips(p: Posture): Array<{
     });
   }
   if (p.local_admins && typeof p.local_admins.count === 'number') {
+    const builtinOn = (p.local_admins_detail ?? []).some((a) => a.is_builtin && a.enabled);
     chips.push({
       icon: Cpu,
       label: 'Local admins',
-      value: `${p.local_admins.count}`,
-      tone: p.local_admins.count > 2 ? 'warn' : 'good',
+      value: `${p.local_admins.count}${builtinOn ? ' (built-in on)' : ''}`,
+      tone: builtinOn ? 'warn' : p.local_admins.count > 2 ? 'warn' : 'good',
     });
   }
   return chips;
