@@ -35722,6 +35722,150 @@ export type Database = {
         }
         Relationships: []
       }
+      wrayth_device_enrollments: {
+        Row: {
+          code_hash: string
+          created_at: string
+          device_id: string | null
+          expires_at: string
+          id: string
+          redeemed_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          device_id?: string | null
+          expires_at: string
+          id?: string
+          redeemed_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          device_id?: string | null
+          expires_at?: string
+          id?: string
+          redeemed_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wrayth_device_enrollments_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "wrayth_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wrayth_device_posture: {
+        Row: {
+          captured_at: string
+          device_id: string
+          findings: Json
+          payload: Json
+          user_id: string
+        }
+        Insert: {
+          captured_at?: string
+          device_id: string
+          findings?: Json
+          payload: Json
+          user_id: string
+        }
+        Update: {
+          captured_at?: string
+          device_id?: string
+          findings?: Json
+          payload?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wrayth_device_posture_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: true
+            referencedRelation: "wrayth_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wrayth_device_posture_history: {
+        Row: {
+          captured_at: string
+          device_id: string
+          findings: Json
+          id: string
+          payload: Json
+          user_id: string
+        }
+        Insert: {
+          captured_at?: string
+          device_id: string
+          findings?: Json
+          id?: string
+          payload: Json
+          user_id: string
+        }
+        Update: {
+          captured_at?: string
+          device_id?: string
+          findings?: Json
+          id?: string
+          payload?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wrayth_device_posture_history_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "wrayth_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wrayth_devices: {
+        Row: {
+          agent_version: string
+          device_token_hash: string
+          enrolled_at: string
+          hostname: string
+          id: string
+          last_seen_at: string | null
+          os: string
+          os_version: string | null
+          revoked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_version: string
+          device_token_hash: string
+          enrolled_at?: string
+          hostname: string
+          id?: string
+          last_seen_at?: string | null
+          os: string
+          os_version?: string | null
+          revoked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_version?: string
+          device_token_hash?: string
+          enrolled_at?: string
+          hostname?: string
+          id?: string
+          last_seen_at?: string | null
+          os?: string
+          os_version?: string | null
+          revoked_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       xdr_attack_chains: {
         Row: {
           chain_id: string
