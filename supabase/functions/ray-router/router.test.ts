@@ -208,7 +208,7 @@ Deno.test("knowledge: prefers org KB and returns citations from retrieved snippe
       { id: "kba1", title: "VPN general", content: "generic", is_public: true, status: "published" },
     ],
   });
-  const r = await skillKnowledge("how do i install the VPN", { userId: "u1", orgId: "org1", serviceClient: fake });
+  const r = await skillKnowledge("vpn setup steps", { userId: "u1", orgId: "org1", serviceClient: fake });
   assertEquals((r.meta as any).source, "kb_org");
   assertEquals(r.sources?.length, 1);
   assertEquals(r.sources?.[0].kind, "kb_org");
