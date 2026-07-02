@@ -6,12 +6,25 @@
  * when the vault is open. The surface accepts drag-and-drop and pasted
  * text so it reads as "drop anything suspicious here," not "URL checker."
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { ThreatVerdictCard } from '@/components/ray/ThreatVerdictCard';
 import { analyzeThreat, type ThreatVerdict } from '@/lib/ray/threatVerdict';
 import { cn } from '@/lib/utils';
+
+const PLACEHOLDERS = [
+  'Paste a phishing email…',
+  'Paste an invoice PDF filename…',
+  'Paste a suspicious URL…',
+  'Paste a browser error…',
+  'Drop a screenshot…',
+  'Paste email headers…',
+  'Paste an IP address…',
+  'Paste a file hash…',
+  'Drop a ZIP file…',
+  'Paste PowerShell…',
+];
 
 const ACCEPTED = [
   'URL',
