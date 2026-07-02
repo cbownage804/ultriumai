@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { DeviceActionsMenu } from './DeviceActionsMenu';
 
 interface Finding {
   severity: 'info' | 'warn' | 'critical';
@@ -203,6 +204,11 @@ export function EnrolledDevicesList() {
                       </div>
                     ))
                   )}
+                </div>
+              )}
+              {!d.revoked_at && (
+                <div className="pt-1">
+                  <DeviceActionsMenu deviceId={d.id} disabled={!online} />
                 </div>
               )}
             </div>

@@ -35722,6 +35722,68 @@ export type Database = {
         }
         Relationships: []
       }
+      wrayth_device_actions: {
+        Row: {
+          action_type: Database["public"]["Enums"]["wrayth_action_type"]
+          approved_at: string | null
+          completed_at: string | null
+          created_at: string
+          device_id: string
+          dispatched_at: string | null
+          error: string | null
+          id: string
+          params: Json
+          requested_at: string
+          requested_by: string | null
+          result: Json | null
+          status: Database["public"]["Enums"]["wrayth_action_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_type: Database["public"]["Enums"]["wrayth_action_type"]
+          approved_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          device_id: string
+          dispatched_at?: string | null
+          error?: string | null
+          id?: string
+          params?: Json
+          requested_at?: string
+          requested_by?: string | null
+          result?: Json | null
+          status?: Database["public"]["Enums"]["wrayth_action_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_type?: Database["public"]["Enums"]["wrayth_action_type"]
+          approved_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          device_id?: string
+          dispatched_at?: string | null
+          error?: string | null
+          id?: string
+          params?: Json
+          requested_at?: string
+          requested_by?: string | null
+          result?: Json | null
+          status?: Database["public"]["Enums"]["wrayth_action_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wrayth_device_actions_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "wrayth_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wrayth_device_enrollments: {
         Row: {
           code_hash: string
@@ -37272,6 +37334,23 @@ export type Database = {
       portal_user_role: "admin" | "manager" | "user" | "readonly"
       safedoc_role: "admin" | "editor" | "viewer" | "none"
       tech_visibility_mode: "shadow" | "branded" | "hybrid"
+      wrayth_action_status:
+        | "pending"
+        | "approved"
+        | "dispatched"
+        | "running"
+        | "succeeded"
+        | "failed"
+        | "cancelled"
+      wrayth_action_type:
+        | "enable_bitlocker"
+        | "enable_firewall"
+        | "enable_defender"
+        | "run_defender_quick_scan"
+        | "run_defender_full_scan"
+        | "install_windows_updates"
+        | "lock_screen"
+        | "sign_out_user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -37415,6 +37494,25 @@ export const Constants = {
       portal_user_role: ["admin", "manager", "user", "readonly"],
       safedoc_role: ["admin", "editor", "viewer", "none"],
       tech_visibility_mode: ["shadow", "branded", "hybrid"],
+      wrayth_action_status: [
+        "pending",
+        "approved",
+        "dispatched",
+        "running",
+        "succeeded",
+        "failed",
+        "cancelled",
+      ],
+      wrayth_action_type: [
+        "enable_bitlocker",
+        "enable_firewall",
+        "enable_defender",
+        "run_defender_quick_scan",
+        "run_defender_full_scan",
+        "install_windows_updates",
+        "lock_screen",
+        "sign_out_user",
+      ],
     },
   },
 } as const

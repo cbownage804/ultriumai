@@ -119,3 +119,12 @@ verify_jwt = false
 
 [functions.agent-revoke]
 verify_jwt = true
+
+[functions.agent-action-request]
+verify_jwt = true
+
+[functions.agent-action-poll]
+verify_jwt = false
+
+[functions.agent-action-result]
+verify_jwt = false

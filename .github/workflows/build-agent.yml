@@ -51,16 +51,31 @@ jobs:
           }
         shell: pwsh
 
-      - name: Upload build artifact
+      - name: Bundle installer ZIP
+        working-directory: agent
+        shell: pwsh
+        run: |
+          $bundle = "dist\WraythAgent-Installer"
+          New-Item -ItemType Directory -Force -Path $bundle | Out-Null
+          Copy-Item dist\WraythAgent.exe $bundle
+          Copy-Item install-service.ps1 $bundle
+          Copy-Item uninstall-service.ps1 $bundle
+          Compress-Archive -Path "$bundle\*" -DestinationPath dist\WraythAgent-Installer.zip -Force
+
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: WraythAgent-windows
-          path: agent/dist/WraythAgent.exe
+          path: |
+            agent/dist/WraythAgent.exe
+            agent/dist/WraythAgent-Installer.zip
           if-no-files-found: error
 
       - name: Attach to Release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: agent/dist/WraythAgent.exe
+          files: |
+            agent/dist/WraythAgent.exe
+            agent/dist/WraythAgent-Installer.zip
           fail_on_unmatched_files: true
