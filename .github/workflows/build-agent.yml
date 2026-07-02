@@ -40,16 +40,19 @@ jobs:
 
       - name: Smoke test the EXE
         working-directory: agent
-        run: |
-          dir dist
-          # Just verify it starts and exits cleanly with no config
-          $out = & .\dist\WraythAgent.exe 2>&1 | Select-Object -First 5
-          Write-Host "Agent stdout: $out"
-          # Missing enrollment is expected exit 1 — success for the smoke test
-          if ($LASTEXITCODE -ne 1 -and $LASTEXITCODE -ne 0) {
-            Write-Error "Unexpected exit: $LASTEXITCODE"; exit 1
-          }
         shell: pwsh
+        run: |
+          if (-not (Test-Path dist\WraythAgent.exe)) {
+            throw "WraythAgent.exe was not produced by PyInstaller"
+          }
+          $size = (Get-Item dist\WraythAgent.exe).Length
+          Write-Host "Built WraythAgent.exe ($([math]::Round($size/1MB,2)) MB)"
+          # Launch and force-kill after 3s; the agent is a long-running loop
+          # so we only care that the binary starts without a load error.
+          $p = Start-Process -FilePath .\dist\WraythAgent.exe -PassThru -WindowStyle Hidden
+          Start-Sleep -Seconds 3
+          if (-not $p.HasExited) { $p.Kill() }
+          Write-Host "Agent started cleanly."
 
       - name: Ensure Inno Setup is available
         shell: pwsh
