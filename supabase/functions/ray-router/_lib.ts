@@ -400,8 +400,14 @@ export async function skillKnowledge(message: string, ctx: SkillContext): Promis
       const context = chosen
         .map((h, i) => `[[${i + 1}]] ${h.title}\n${(h.content ?? "").slice(0, 1200)}`)
         .join("\n\n");
+      const mem = await fetchOrgMemory(supabase, ctx.orgId);
       const system =
-        "You are Ray. Answer ONLY from the provided knowledge snippets. Cite them inline as [1], [2]. If the snippets do not answer the question, say so plainly. Never invent facts.";
+        "You are Ray. Answer ONLY from the provided knowledge snippets. Cite them inline as [1], [2]. If the snippets do not answer the question, say so plainly. Never invent facts." +
+        formatOrgMemory(mem);
+      const user = `Question: ${message}\n\nSnippets:\n${context}`;
+      const reply = await ctx.llmChat(system, user);
+      if (reply && reply.trim()) answer = reply;
+    } catch (_e) { /* keep default */ }
       const user = `Question: ${message}\n\nSnippets:\n${context}`;
       const reply = await ctx.llmChat(system, user);
       if (reply && reply.trim()) answer = reply;
