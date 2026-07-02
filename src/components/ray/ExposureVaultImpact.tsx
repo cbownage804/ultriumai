@@ -49,6 +49,19 @@ export function ExposureVaultImpact({ assets }: Props) {
     [assets],
   );
 
+  // Keep latest fn refs without retriggering the effect — useVault returns
+  // new function identities on every render, which was causing an infinite
+  // setState loop through this effect.
+  const loadAllEntriesRef = useRef(loadAllEntries);
+  const getEntryUsernameRef = useRef(getEntryUsername);
+  useEffect(() => {
+    loadAllEntriesRef.current = loadAllEntries;
+    getEntryUsernameRef.current = getEntryUsername;
+  });
+
+  // Stable key so the effect only reruns when the actual watched emails change.
+  const breachedKey = breachedEmails.map((b) => `${b.email}:${b.count}`).join('|');
+
   useEffect(() => {
     let cancelled = false;
     async function run() {
@@ -57,10 +70,10 @@ export function ExposureVaultImpact({ assets }: Props) {
         setReady(true);
         return;
       }
-      const entries = await loadAllEntries();
+      const entries = await loadAllEntriesRef.current();
       const byEmail = new Map<string, { id: string; title: string }[]>();
       for (const entry of entries) {
-        const username = (await getEntryUsername(entry)).toLowerCase().trim();
+        const username = (await getEntryUsernameRef.current(entry)).toLowerCase().trim();
         if (!username || !username.includes('@')) continue;
         const arr = byEmail.get(username) ?? [];
         arr.push({ id: entry.id, title: entry.title });
@@ -82,7 +95,8 @@ export function ExposureVaultImpact({ assets }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [breachedEmails, isUnlocked, loadAllEntries, getEntryUsername]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [breachedKey, isUnlocked]);
 
   if (!ready || matches.length === 0) return null;
 
