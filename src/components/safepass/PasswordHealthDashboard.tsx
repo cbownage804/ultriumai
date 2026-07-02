@@ -461,7 +461,7 @@ export const PasswordHealthDashboard = () => {
         entry={rotateEntry}
         open={!!rotateEntryId}
         onOpenChange={(o) => { if (!o) setRotateEntryId(null); }}
-        onRotated={() => { setRotateEntryId(null); scanPasswords(); }}
+        onRotated={() => { setRotateEntryId(null); handleRescan(); }}
       />
 
 
