@@ -26,9 +26,34 @@ interface Posture {
   agent_version?: string;
   uptime_seconds?: number;
   last_boot?: string;
-  disk_encryption?: { enabled: boolean; method?: string };
-  firewall?: { enabled: boolean };
-  antivirus?: { name?: string; enabled: boolean; definitions_age_days?: number };
+  disk_encryption?: {
+    enabled: boolean;
+    method?: string;
+    protection_status?: string;
+    volume_status?: string;
+    percent_encrypted?: number;
+    key_protectors?: string[];
+  };
+  firewall?: {
+    enabled: boolean;
+    profiles?: Record<string, boolean>;
+    all_profiles_enabled?: boolean;
+  };
+  antivirus?: {
+    name?: string;
+    enabled: boolean;
+    definitions_age_days?: number;
+    realtime_protection?: boolean;
+    tamper_protection?: boolean;
+    signature_version?: string;
+  };
+  tpm?: { present?: boolean; ready?: boolean; version?: string };
+  secure_boot?: { enabled?: boolean; supported?: boolean };
+  uac?: { enabled?: boolean };
+  remote_desktop?: { enabled?: boolean };
+  local_admins?: { count?: number; members?: string[] };
+  disk?: { used_gb?: number; free_gb?: number; total_gb?: number };
+  memory?: { total_gb?: number; free_gb?: number };
   screen_lock_seconds?: number;
   pending_updates?: number;
   last_patch_at?: string;
@@ -51,12 +76,25 @@ function computeFindings(p: Posture): Array<{
         'If this machine is lost or stolen, anyone can read your files. Turn on BitLocker to fix it.',
     });
   }
-  if (p.firewall && !p.firewall.enabled) {
-    findings.push({
-      severity: 'warn',
-      title: 'Your firewall is off.',
-      detail: 'Windows Firewall is disabled. Turn it back on unless a specific tool requires it off.',
-    });
+  if (p.firewall) {
+    if (!p.firewall.enabled) {
+      findings.push({
+        severity: 'warn',
+        title: 'Your firewall is off.',
+        detail: 'Windows Firewall is disabled. Turn it back on unless a specific tool requires it off.',
+      });
+    } else if (p.firewall.all_profiles_enabled === false && p.firewall.profiles) {
+      const off = Object.entries(p.firewall.profiles)
+        .filter(([, v]) => !v)
+        .map(([k]) => k);
+      if (off.length) {
+        findings.push({
+          severity: 'warn',
+          title: `Firewall is off for the ${off.join(', ')} profile${off.length === 1 ? '' : 's'}.`,
+          detail: 'Enable Windows Firewall for every network profile so you\'re covered everywhere.',
+        });
+      }
+    }
   }
   if (p.antivirus) {
     if (!p.antivirus.enabled) {
@@ -65,13 +103,71 @@ function computeFindings(p: Posture): Array<{
         title: 'No antivirus is protecting this machine.',
         detail: 'Microsoft Defender appears to be disabled with no replacement running.',
       });
-    } else if ((p.antivirus.definitions_age_days ?? 0) > 7) {
-      findings.push({
-        severity: 'warn',
-        title: 'Antivirus definitions are stale.',
-        detail: `Last update was ${p.antivirus.definitions_age_days} days ago. I'd expect daily.`,
-      });
+    } else {
+      if (p.antivirus.realtime_protection === false) {
+        findings.push({
+          severity: 'critical',
+          title: 'Real-time antivirus protection is off.',
+          detail: 'Defender is installed but not actively scanning. Turn real-time protection back on.',
+        });
+      }
+      if (p.antivirus.tamper_protection === false) {
+        findings.push({
+          severity: 'warn',
+          title: 'Defender tamper protection is off.',
+          detail: 'Without it, malware can silently disable your antivirus.',
+        });
+      }
+      if ((p.antivirus.definitions_age_days ?? 0) > 7) {
+        findings.push({
+          severity: 'warn',
+          title: 'Antivirus definitions are stale.',
+          detail: `Last update was ${p.antivirus.definitions_age_days} days ago. I'd expect daily.`,
+        });
+      }
     }
+  }
+  if (p.tpm && p.tpm.present === false) {
+    findings.push({
+      severity: 'warn',
+      title: "This machine has no usable TPM.",
+      detail: 'BitLocker and Windows Hello lean on the TPM for hardware-backed keys.',
+    });
+  }
+  if (p.secure_boot && p.secure_boot.supported && p.secure_boot.enabled === false) {
+    findings.push({
+      severity: 'warn',
+      title: 'Secure Boot is disabled.',
+      detail: 'Secure Boot blocks bootkits from loading before Windows starts. Turn it on in UEFI.',
+    });
+  }
+  if (p.uac && p.uac.enabled === false) {
+    findings.push({
+      severity: 'critical',
+      title: 'User Account Control is disabled.',
+      detail: 'Every program you run gets full admin rights silently. Re-enable UAC.',
+    });
+  }
+  if (p.remote_desktop && p.remote_desktop.enabled) {
+    findings.push({
+      severity: 'warn',
+      title: 'Remote Desktop is enabled.',
+      detail: "If you don't use RDP, turn it off — it's a favorite target for password spraying.",
+    });
+  }
+  if ((p.local_admins?.count ?? 0) > 2) {
+    findings.push({
+      severity: 'info',
+      title: `${p.local_admins?.count} local administrators on this machine.`,
+      detail: 'Fewer admins = smaller blast radius if one account gets compromised.',
+    });
+  }
+  if ((p.disk?.free_gb ?? Infinity) < 10) {
+    findings.push({
+      severity: 'warn',
+      title: 'Low disk space.',
+      detail: `Only ${p.disk?.free_gb} GB free on C:. Windows updates and backups may fail.`,
+    });
   }
   if ((p.pending_updates ?? 0) > 0) {
     findings.push({
