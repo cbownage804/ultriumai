@@ -384,6 +384,85 @@ async function scanWithDehashed(email: string, apiKey: string): Promise<ScanResu
   }
 }
 
+// Generic Dehashed lookup for non-email identifiers (phone, domain, username, ip).
+async function scanDehashedByField(
+  field: 'phone' | 'domain' | 'username' | 'ip_address',
+  value: string,
+  apiKey: string,
+): Promise<ScanResult[]> {
+  try {
+    logStep(`Scanning Dehashed by ${field}`, { value });
+    const response = await fetch('https://api.dehashed.com/v2/search', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'Dehashed-Api-Key': apiKey,
+      },
+      body: JSON.stringify({
+        query: `${field}:"${value}"`,
+        size: 100,
+        page: 1,
+        de_dupe: true,
+        wildcard: false,
+        regex: false,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      logStep(`Dehashed ${field} error`, { status: response.status, error: errorText.substring(0, 200) });
+      return [];
+    }
+
+    const data = await response.json();
+    const entries = data.entries || [];
+    if (entries.length === 0) return [];
+
+    const groups = entries.reduce((acc: any, entry: any) => {
+      const db = pickDehashedValue(entry, 'database_name') || 'Unknown Database';
+      (acc[db] ||= []).push(entry);
+      return acc;
+    }, {});
+
+    return Object.entries(groups).map(([database, list]: [string, any]) => {
+      const items = list as any[];
+      const hasPassword = items.some((e) => pickDehashedValue(e, 'password'));
+      const hasHashedPassword = items.some((e) => pickDehashedValue(e, 'hashed_password'));
+      const fields = new Set<string>();
+      items.forEach((entry) => {
+        Object.keys(entry).forEach((key) => {
+          const v = pickDehashedValue(entry, key);
+          if (v && key !== 'id' && key !== 'database_name') fields.add(key);
+        });
+      });
+      const severity: 'critical' | 'high' | 'medium' =
+        hasPassword ? 'critical' : hasHashedPassword ? 'high' : 'medium';
+      return {
+        threat_type: 'data_breach',
+        title: `${field === 'phone' ? 'Phone number' : field} exposed in ${database}`,
+        description: `${value} appears in ${database} with ${items.length} record(s). Exposed data: ${Array.from(fields).join(', ')}.${hasPassword ? ' CRITICAL: plaintext passwords exposed.' : ''}`,
+        severity,
+        confidence_score: 96,
+        source_name: 'Dehashed',
+        source_url: 'https://dehashed.com/',
+        raw_data: { database, total_records: items.length, sample_record: items[0], exposed_fields: Array.from(fields) },
+        threat_indicators: {
+          database_name: database,
+          records_count: items.length,
+          has_password: hasPassword,
+          has_hashed_password: hasHashedPassword,
+          exposed_data_types: Array.from(fields),
+          lookup_field: field,
+        },
+      };
+    });
+  } catch (error) {
+    logStep(`Dehashed ${field} scan error`, (error as Error).message);
+    return [];
+  }
+}
+
 async function scanDomainReputation(domain: string): Promise<ScanResult[]> {
   try {
     logStep('Scanning domain reputation', { domain });
