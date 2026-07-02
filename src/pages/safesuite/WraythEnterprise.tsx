@@ -14,9 +14,9 @@ import {
   Building2, Users, ShieldCheck, Network, ServerCog,
   KeyRound, FileKey, BarChart3, FileText, Terminal,
   Cloud, HardDrive, Server, Monitor, Apple, Smartphone, Chrome,
-  ArrowRight, Check, Lock, Fingerprint, Share2,
-  History, ScrollText, GaugeCircle, Rocket, Briefcase,
-  UserCheck, Layers, Webhook, Code2, Sparkles,
+  ArrowRight, Check, Lock, Fingerprint, Share2, Brain,
+  History, ScrollText, GaugeCircle, Rocket, Briefcase, ShieldOff,
+  UserCheck, Layers, Webhook, Code2, Sparkles, Search, Radar, Eye, Puzzle,
 } from "lucide-react";
 
 // ─── Content data ───────────────────────────────────────────────────────────
@@ -29,7 +29,18 @@ const trustBadges = [
   { label: "SCIM", note: "Provisioning" },
   { label: "Multi-tenant", note: "Native" },
   { label: "GDPR", note: "Ready" },
-  { label: "HIPAA", note: "Roadmap" },
+  { label: "HIPAA", note: "Aligned" },
+];
+
+const designPartnerSegments = [
+  "MSPs", "CPA & Accounting Firms", "Healthcare Practices", "Legal & Title", "K-12 & Higher Ed", "Financial Services",
+];
+
+const platformModules = [
+  { icon: KeyRound, label: "Vault", description: "Zero-knowledge credentials & secrets" },
+  { icon: Search, label: "Scan", description: "URL, file & attachment analysis" },
+  { icon: Radar, label: "Watch", description: "Dark web & domain monitoring" },
+  { icon: Fingerprint, label: "Identity", description: "SSO, SCIM & identity graph" },
 ];
 
 const orgCapabilities = [
