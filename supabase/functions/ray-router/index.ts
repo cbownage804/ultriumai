@@ -78,11 +78,26 @@ serve(async (req) => {
     message = (body?.message ?? "").toString().trim();
     source = body?.source ?? "in_app";
     const forcedSkill: string | undefined = body?.skill;
+    const context = body?.context as
+      | { kind?: string; title?: string; body?: string; evidence?: unknown }
+      | undefined;
     if (!message) {
       return new Response(JSON.stringify({ error: "empty message" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Recommendation-aware follow-ups: prepend a short context header so both
+    // the classifier and the invoked skill can see what the user is looking at.
+    let messageForSkill = message;
+    if (context && (context.title || context.body)) {
+      const parts = [
+        `[Context: ${context.kind ?? "item"}]`,
+        context.title ? `Title: ${context.title}` : "",
+        context.body ? `Details: ${context.body}` : "",
+      ].filter(Boolean).join("\n");
+      messageForSkill = `${parts}\n\nUser question: ${message}`;
     }
 
     const { data: membership } = await admin
