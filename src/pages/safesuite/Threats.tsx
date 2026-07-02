@@ -10,6 +10,7 @@ import { RayPageHeader } from '@/components/ray/RayPageHeader';
 import { RayActivityTicker } from '@/components/ray/RayActivityTicker';
 import { RayContextBridge } from '@/components/ray/RayContextBridge';
 import { ThreatScanInput } from '@/components/ray/ThreatScanInput';
+import { ThreatAllClearCard } from '@/components/ray/ThreatAllClearCard';
 
 export default function WraythScan() {
   return (
