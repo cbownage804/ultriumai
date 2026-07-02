@@ -417,10 +417,12 @@ serve(async (req) => {
       ok: status === "ok",
       created,
       updated,
+      auto_resolved,
       status,
       error: errorMsg,
       duration_ms: Date.now() - started,
     }),
     { headers: { ...corsHeaders, "Content-Type": "application/json" } },
   );
+
 });
