@@ -132,6 +132,7 @@ function AppRouter() {
         <Route path="/" element={<SuspenseWrapper><WraythLanding /></SuspenseWrapper>} />
         <Route path="/pricing" element={<SuspenseWrapper variant="cards"><WraythPricing /></SuspenseWrapper>} />
         <Route path="/features" element={<SuspenseWrapper><WraythFeatures /></SuspenseWrapper>} />
+        <Route path="/enterprise" element={<SuspenseWrapper><WraythEnterprise /></SuspenseWrapper>} />
         <Route path="/resources" element={<SuspenseWrapper><WraythResources /></SuspenseWrapper>} />
         <Route path="/products/safepass" element={<SuspenseWrapper><VaultProduct /></SuspenseWrapper>} />
         <Route path="/products/safescan" element={<SuspenseWrapper><ScanProduct /></SuspenseWrapper>} />
