@@ -35979,25 +35979,40 @@ export type Database = {
       }
       wrayth_agent_release: {
         Row: {
+          channel: string
+          created_at: string
+          download_url: string | null
           id: string
           installer_build: string | null
           is_latest: boolean
+          is_rollout_paused: boolean
+          min_supported_version: string | null
           notes: string | null
           released_at: string
           version: string
         }
         Insert: {
+          channel?: string
+          created_at?: string
+          download_url?: string | null
           id?: string
           installer_build?: string | null
           is_latest?: boolean
+          is_rollout_paused?: boolean
+          min_supported_version?: string | null
           notes?: string | null
           released_at?: string
           version: string
         }
         Update: {
+          channel?: string
+          created_at?: string
+          download_url?: string | null
           id?: string
           installer_build?: string | null
           is_latest?: boolean
+          is_rollout_paused?: boolean
+          min_supported_version?: string | null
           notes?: string | null
           released_at?: string
           version?: string
@@ -36203,8 +36218,10 @@ export type Database = {
           hostname: string
           id: string
           last_seen_at: string | null
+          last_update_check_at: string | null
           os: string
           os_version: string | null
+          release_channel: string
           revoked_at: string | null
           user_id: string
         }
@@ -36215,8 +36232,10 @@ export type Database = {
           hostname: string
           id?: string
           last_seen_at?: string | null
+          last_update_check_at?: string | null
           os: string
           os_version?: string | null
+          release_channel?: string
           revoked_at?: string | null
           user_id: string
         }
@@ -36227,8 +36246,10 @@ export type Database = {
           hostname?: string
           id?: string
           last_seen_at?: string | null
+          last_update_check_at?: string | null
           os?: string
           os_version?: string | null
+          release_channel?: string
           revoked_at?: string | null
           user_id?: string
         }
@@ -37515,6 +37536,17 @@ export type Database = {
       get_helpdesk_role: {
         Args: { _context_id?: string; _user_id: string }
         Returns: Database["public"]["Enums"]["helpdesk_role"]
+      }
+      get_latest_agent_release: {
+        Args: { _channel: string }
+        Returns: {
+          download_url: string
+          installer_build: string
+          is_rollout_paused: boolean
+          notes: string
+          released_at: string
+          version: string
+        }[]
       }
       get_monthly_credits_for_tier: {
         Args: { is_subscribed: boolean; tier: string }
