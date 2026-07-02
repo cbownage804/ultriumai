@@ -101,8 +101,20 @@ try {
 
 
 def _enable_firewall(_params: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    before_rc, before, _ = _ps(
+        "(Get-NetFirewallProfile | Select-Object Name,Enabled) | ConvertTo-Json -Compress"
+    )
     rc, out, err = _ps("Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True; 'ok'")
-    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+    after_rc, after, _ = _ps(
+        "(Get-NetFirewallProfile | Select-Object Name,Enabled) | ConvertTo-Json -Compress"
+    )
+    return rc == 0, {
+        "stdout": out,
+        "previous_value": _try_json(before),
+        "new_value": _try_json(after),
+        "rollback_possible": True,
+        "rollback_action": "disable_firewall",
+    }, err or None if rc != 0 else None
 
 
 def _enable_defender(_params: dict[str, Any]) -> tuple[bool, dict, str | None]:
