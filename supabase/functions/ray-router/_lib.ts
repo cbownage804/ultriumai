@@ -239,7 +239,7 @@ export async function skillDevice(message: string, ctx: SkillContext): Promise<R
 
   return {
     skill: "device",
-    message,
+    message: responseMessage,
     cards: [{
       title: heading,
       fields: rows,
