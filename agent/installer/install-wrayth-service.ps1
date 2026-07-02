@@ -112,8 +112,7 @@ if ($existing) {
     [void](Invoke-WinSW @("refresh"))
   } else {
     Write-InstallLog "Legacy direct-agent service detected; deleting before wrapper install"
-    & sc.exe delete $ServiceName *>> $LogPath
-    Write-InstallLog ("sc delete exit: $LASTEXITCODE")
+    [void](Invoke-Native "sc.delete" "sc.exe" @("delete", $ServiceName))
     if (-not (Wait-ForServiceDeletion $ServiceName 30)) {
       Write-InstallLog "FATAL: legacy service deletion is pending; reboot required"
       exit 3010
