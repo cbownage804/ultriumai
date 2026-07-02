@@ -22,6 +22,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { DeviceActionsMenu } from './DeviceActionsMenu';
+import { DeviceIntelPanel } from './DeviceIntelPanel';
 
 interface Finding {
   severity: 'info' | 'warn' | 'critical';
