@@ -90,12 +90,17 @@ async function buildForScope(
     recommendations_resolved: (recs ?? []).filter((r: any) => r.status === "resolved").length,
   };
 
-  const { data: existing } = await admin
+  // Scope both org_id and user_id so we never collide with a different scope
+  // sharing the same week (e.g. an org row vs a solo-user row).
+  let existingQ = admin
     .from("ray_digests")
     .select("id")
-    .eq("week_start", weekStart)
-    .eq(scope.org_id ? "org_id" : "user_id", (scope.org_id ?? scope.user_id) as any)
-    .maybeSingle();
+    .eq("week_start", weekStart);
+  existingQ = scope.org_id
+    ? existingQ.eq("org_id", scope.org_id).is("user_id", null)
+    : existingQ.eq("user_id", scope.user_id as string).is("org_id", null);
+  const { data: existing } = await existingQ.maybeSingle();
+
 
   const payload = {
     org_id: scope.org_id,
