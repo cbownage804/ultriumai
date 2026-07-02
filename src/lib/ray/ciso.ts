@@ -31,6 +31,13 @@ export interface CisoInput {
   monitoredAssets: number;
   mfaMissingCount?: number;
   reusedPasswordCount?: number;
+  /**
+   * Optional: the single most urgent account, if the caller already ranked
+   * one. When present, Ray names it in the directive so the advice is
+   * concrete ("start with Dropbox") instead of generic ("rotate weak ones").
+   */
+  topAccountTitle?: string;
+  topAccountReason?: 'breach' | 'weak' | 'reuse' | 'mfa';
 }
 
 /**
