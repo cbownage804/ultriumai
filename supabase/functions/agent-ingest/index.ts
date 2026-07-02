@@ -19,6 +19,12 @@ async function sha256Hex(s: string): Promise<string> {
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+interface SoftwareEntry { name: string; version?: string; publisher?: string }
+interface AutorunEntry { location: string; name: string; command: string }
+interface ServiceEntry { name: string; display_name?: string; start_name?: string; path?: string }
+interface ListeningPort { address: string; port: number; process?: string }
+interface BrowserExtension { browser: string; id: string; name?: string; version?: string }
+
 interface Posture {
   hostname?: string;
   os?: string;
@@ -58,8 +64,120 @@ interface Posture {
   pending_updates?: number;
   last_patch_at?: string;
   browsers?: Array<{ name: string; version?: string }>;
+  installed_software?: SoftwareEntry[];
+  autoruns?: AutorunEntry[];
+  non_ms_services?: ServiceEntry[];
+  listening_ports?: ListeningPort[];
+  browser_extensions?: BrowserExtension[];
   logged_in_user?: string;
 }
+
+// --- Basic CVE hint table ---------------------------------------------------
+// First-pass, no NVD feed. Publisher-agnostic name matches (case-insensitive
+// startsWith) with a minimum-safe-version. If a match is below the floor, we
+// surface a finding. Real NVD sync is a follow-up.
+const CVE_FLOORS: Array<{ match: string; min: string; note: string }> = [
+  { match: 'google chrome',           min: '128.0.0.0', note: 'Chrome had multiple critical V8 RCEs earlier in 2024.' },
+  { match: 'mozilla firefox',         min: '128.0',     note: 'Firefox <128 has known exploited memory-safety bugs.' },
+  { match: 'zoom',                    min: '5.17.0',    note: 'Older Zoom clients have known privilege-escalation CVEs.' },
+  { match: '7-zip',                   min: '24.07',     note: '7-Zip <24.07 mishandles archive parsing (CVE-2024-11477).' },
+  { match: 'notepad++',               min: '8.6.5',     note: 'Notepad++ <8.6.5 has an unquoted-path privilege bug.' },
+  { match: 'vlc media player',        min: '3.0.20',    note: 'VLC <3.0.20 has multiple demuxer RCEs.' },
+  { match: 'putty',                   min: '0.81',      note: 'PuTTY <0.81 leaks NIST P-521 private keys (CVE-2024-31497).' },
+  { match: 'openvpn',                 min: '2.6.10',    note: 'OpenVPN <2.6.10 has a Windows service-impersonation bug.' },
+  { match: 'wireshark',               min: '4.2.5',     note: 'Wireshark <4.2.5 has protocol-parser DoS bugs.' },
+  { match: 'adobe acrobat reader',    min: '24.002',    note: 'Adobe Reader <24.002 has patched RCE chains.' },
+];
+
+function versionCompare(a: string, b: string): number {
+  const pa = a.replace(/[^\d.]/g, '').split('.').map((n) => parseInt(n, 10) || 0);
+  const pb = b.replace(/[^\d.]/g, '').split('.').map((n) => parseInt(n, 10) || 0);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const x = pa[i] ?? 0, y = pb[i] ?? 0;
+    if (x !== y) return x - y;
+  }
+  return 0;
+}
+
+function findCveHits(software: SoftwareEntry[]): Array<{ name: string; version: string; note: string }> {
+  const hits: Array<{ name: string; version: string; note: string }> = [];
+  for (const s of software) {
+    const low = (s.name || '').toLowerCase();
+    const ver = s.version || '';
+    if (!ver) continue;
+    for (const rule of CVE_FLOORS) {
+      if (low.startsWith(rule.match) && versionCompare(ver, rule.min) < 0) {
+        hits.push({ name: s.name, version: ver, note: rule.note });
+        break;
+      }
+    }
+  }
+  return hits;
+}
+
+function diffByKey<T>(prev: T[] | undefined, curr: T[] | undefined, key: (t: T) => string): { added: T[]; removed: T[] } {
+  const prevMap = new Map((prev ?? []).map((x) => [key(x), x]));
+  const currMap = new Map((curr ?? []).map((x) => [key(x), x]));
+  const added: T[] = [];
+  const removed: T[] = [];
+  for (const [k, v] of currMap) if (!prevMap.has(k)) added.push(v);
+  for (const [k, v] of prevMap) if (!currMap.has(k)) removed.push(v);
+  return { added, removed };
+}
+
+function computeDriftFindings(prev: Posture | null, curr: Posture): Array<{
+  severity: 'info' | 'warn' | 'critical'; title: string; detail: string;
+}> {
+  if (!prev) return [];
+  const out: Array<{ severity: 'info' | 'warn' | 'critical'; title: string; detail: string }> = [];
+
+  const admins = diffByKey(prev.local_admins?.members ?? [], curr.local_admins?.members ?? [], (m) => m);
+  if (admins.added.length) {
+    out.push({
+      severity: 'critical',
+      title: `New local administrator added: ${admins.added.join(', ')}`,
+      detail: 'A new admin appeared on this machine since the last check-in. Verify you added them.',
+    });
+  }
+
+  const autoruns = diffByKey(prev.autoruns ?? [], curr.autoruns ?? [], (a) => `${a.location}::${a.name}`);
+  if (autoruns.added.length) {
+    out.push({
+      severity: 'warn',
+      title: `${autoruns.added.length} new startup ${autoruns.added.length === 1 ? 'item' : 'items'}.`,
+      detail: `New: ${autoruns.added.slice(0, 3).map((a) => a.name).join(', ')}${autoruns.added.length > 3 ? '…' : ''}`,
+    });
+  }
+
+  const svc = diffByKey(prev.non_ms_services ?? [], curr.non_ms_services ?? [], (s) => s.name);
+  if (svc.added.length) {
+    out.push({
+      severity: 'warn',
+      title: `${svc.added.length} new non-Microsoft ${svc.added.length === 1 ? 'service is' : 'services are'} running.`,
+      detail: `New: ${svc.added.slice(0, 3).map((s) => s.display_name || s.name).join(', ')}${svc.added.length > 3 ? '…' : ''}`,
+    });
+  }
+
+  const sw = diffByKey(prev.installed_software ?? [], curr.installed_software ?? [], (s) => s.name);
+  if (sw.added.length > 0 && sw.added.length <= 5) {
+    out.push({
+      severity: 'info',
+      title: `New software installed: ${sw.added.map((s) => s.name).slice(0, 3).join(', ')}${sw.added.length > 3 ? '…' : ''}`,
+      detail: "Just so you know — Ray watches for anything new that appears.",
+    });
+  }
+
+  const ports = diffByKey(prev.listening_ports ?? [], curr.listening_ports ?? [], (p) => `${p.address}:${p.port}`);
+  if (ports.added.length) {
+    out.push({
+      severity: 'warn',
+      title: `${ports.added.length} new listening ${ports.added.length === 1 ? 'port' : 'ports'} exposed.`,
+      detail: `Now listening: ${ports.added.slice(0, 3).map((p) => `${p.port} (${p.process || 'unknown'})`).join(', ')}`,
+    });
+  }
+  return out;
+}
+
 
 function computeFindings(p: Posture): Array<{
   severity: 'info' | 'warn' | 'critical';
