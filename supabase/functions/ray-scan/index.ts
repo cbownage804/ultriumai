@@ -31,7 +31,7 @@ type Rec = {
   }>;
 };
 
-async function sha1(input: string): Promise<string> {
+export async function sha1(input: string): Promise<string> {
   const buf = new TextEncoder().encode(input);
   const hash = await crypto.subtle.digest("SHA-1", buf);
   return Array.from(new Uint8Array(hash))
@@ -39,13 +39,14 @@ async function sha1(input: string): Promise<string> {
     .join("");
 }
 
-function fingerprintOf(userId: string, orgId: string | null, r: Rec) {
+export function fingerprintOf(userId: string, orgId: string | null, r: Rec) {
   return sha1(
     [userId, orgId ?? "-", r.category, r.rule_slug, r.subject_id ?? "-"].join(
       "|",
     ),
   );
 }
+
 
 async function scanDevices(
   admin: ReturnType<typeof createClient>,
