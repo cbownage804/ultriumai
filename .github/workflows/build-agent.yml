@@ -54,6 +54,18 @@ jobs:
           if (-not $p.HasExited) { $p.Kill() }
           Write-Host "Agent started cleanly."
 
+      - name: Download WinSW (service wrapper)
+        working-directory: agent
+        shell: pwsh
+        run: |
+          # WinSW wraps our long-running python EXE so Windows SCM sees a
+          # proper service and doesn't time out with Error 1053.
+          $url = "https://github.com/winsw/winsw/releases/download/v2.12.0/WinSW-x64.exe"
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Invoke-WebRequest -Uri $url -OutFile dist\WraythService.exe
+          $size = (Get-Item dist\WraythService.exe).Length
+          Write-Host "Fetched WinSW ($([math]::Round($size/1KB,1)) KB)"
+
       - name: Ensure Inno Setup is available
         shell: pwsh
         run: |
