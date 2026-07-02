@@ -47,6 +47,14 @@ def _ps(script: str, timeout: int = 600) -> tuple[int, str, str]:
         return 1, "", str(e)
 
 
+def _try_json(s: str) -> Any:
+    """Best-effort JSON decode for audit before/after snapshots."""
+    try:
+        return json.loads(s) if s else None
+    except Exception:
+        return (s or "").strip() or None
+
+
 # ---------------------------------------------------------------------------
 # Action handlers — each returns (ok: bool, result: dict, error: str|None)
 # ---------------------------------------------------------------------------
