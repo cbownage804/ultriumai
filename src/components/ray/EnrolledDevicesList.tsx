@@ -64,7 +64,7 @@ export function EnrolledDevicesList() {
       .select('device_id, findings');
     const byDevice = new Map<string, Finding[]>();
     for (const p of posture ?? []) {
-      byDevice.set(p.device_id, (p.findings as Finding[]) ?? []);
+      byDevice.set(p.device_id, (p.findings as unknown as Finding[]) ?? []);
     }
     setDevices(
       (rows ?? []).map((r) => ({ ...r, findings: byDevice.get(r.id) ?? [] })),
