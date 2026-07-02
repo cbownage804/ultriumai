@@ -11387,6 +11387,47 @@ export type Database = {
         }
         Relationships: []
       }
+      integration_events: {
+        Row: {
+          actor: string | null
+          created_at: string
+          detail: Json
+          event_type: string
+          id: string
+          integration_id: string | null
+          provider: string
+          user_id: string
+        }
+        Insert: {
+          actor?: string | null
+          created_at?: string
+          detail?: Json
+          event_type: string
+          id?: string
+          integration_id?: string | null
+          provider: string
+          user_id: string
+        }
+        Update: {
+          actor?: string | null
+          created_at?: string
+          detail?: Json
+          event_type?: string
+          id?: string
+          integration_id?: string | null
+          provider?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_events_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "workplace_integrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_line_items: {
         Row: {
           billing_period_end: string | null
@@ -35721,6 +35762,127 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      workplace_integrations: {
+        Row: {
+          bot_user_id: string | null
+          created_at: string
+          encrypted_tokens: Json | null
+          id: string
+          installed_by: string | null
+          last_error: string | null
+          last_event_at: string | null
+          metadata: Json
+          org_id: string | null
+          provider: string
+          scopes: string[] | null
+          status: string
+          tenant_id: string | null
+          updated_at: string
+          user_id: string
+          workspace_id: string | null
+          workspace_name: string | null
+        }
+        Insert: {
+          bot_user_id?: string | null
+          created_at?: string
+          encrypted_tokens?: Json | null
+          id?: string
+          installed_by?: string | null
+          last_error?: string | null
+          last_event_at?: string | null
+          metadata?: Json
+          org_id?: string | null
+          provider: string
+          scopes?: string[] | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          user_id: string
+          workspace_id?: string | null
+          workspace_name?: string | null
+        }
+        Update: {
+          bot_user_id?: string | null
+          created_at?: string
+          encrypted_tokens?: Json | null
+          id?: string
+          installed_by?: string | null
+          last_error?: string | null
+          last_event_at?: string | null
+          metadata?: Json
+          org_id?: string | null
+          provider?: string
+          scopes?: string[] | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          user_id?: string
+          workspace_id?: string | null
+          workspace_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workplace_integrations_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workplace_messages: {
+        Row: {
+          channel_id: string | null
+          content: string | null
+          created_at: string
+          direction: string
+          external_user_id: string | null
+          external_user_name: string | null
+          id: string
+          integration_id: string
+          kb_sources: Json
+          metadata: Json
+          provider: string
+          user_id: string
+        }
+        Insert: {
+          channel_id?: string | null
+          content?: string | null
+          created_at?: string
+          direction: string
+          external_user_id?: string | null
+          external_user_name?: string | null
+          id?: string
+          integration_id: string
+          kb_sources?: Json
+          metadata?: Json
+          provider: string
+          user_id: string
+        }
+        Update: {
+          channel_id?: string | null
+          content?: string | null
+          created_at?: string
+          direction?: string
+          external_user_id?: string | null
+          external_user_name?: string | null
+          id?: string
+          integration_id?: string
+          kb_sources?: Json
+          metadata?: Json
+          provider?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workplace_messages_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "workplace_integrations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wrayth_device_actions: {
         Row: {
