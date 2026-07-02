@@ -12,9 +12,10 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, Link2, ShieldCheck, ShieldOff, Clock, Flame } from 'lucide-react';
+import { AlertTriangle, Link2, ShieldCheck, ShieldOff, Clock, Flame, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNowStrict } from 'date-fns';
+import { Button } from '@/components/ui/button';
 
 export interface AccountSignalRow {
   id: string;
