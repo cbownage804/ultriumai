@@ -186,6 +186,22 @@ export default function RaySkillsPanel() {
             </div>
           )}
         </div>
+        {context && (
+          <div className="flex items-center gap-2 rounded-md border border-violet-400/30 bg-violet-500/[0.05] px-2 py-1 text-xs">
+            <Sparkles className="h-3 w-3 text-violet-300 shrink-0" />
+            <span className="flex-1 truncate text-foreground/80">
+              About: {context.title ?? context.kind}
+            </span>
+            <button
+              type="button"
+              onClick={() => setContext(null)}
+              className="text-muted-foreground hover:text-foreground"
+              aria-label="Clear context"
+            >
+              ×
+            </button>
+          </div>
+        )}
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -197,7 +213,7 @@ export default function RaySkillsPanel() {
             ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask Ray anything about your security posture…"
+            placeholder={context ? `Ask Ray about "${context.title ?? context.kind}"…` : 'Ask Ray anything about your security posture…'}
             disabled={loading}
           />
           <Button type="submit" size="icon" disabled={loading || !input.trim()}>
