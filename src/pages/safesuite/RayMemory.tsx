@@ -239,22 +239,49 @@ export default function RayMemory() {
         </CardContent>
       </Card>
 
-      {loading ? (
-        <div className="text-muted-foreground">Loading memory…</div>
-      ) : rows.length === 0 ? (
-        <Card>
-          <CardContent className="py-10 text-center text-muted-foreground">
-            No facts yet. Add the first thing Ray should know about {activeOrg?.name}.
-          </CardContent>
-        </Card>
-      ) : (
-        Object.entries(grouped).map(([cat, items]) => (
-          <Card key={cat}>
-            <CardHeader>
-              <CardTitle className="text-base capitalize">{cat}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {items.map((r) => (
+      <Card>
+        <CardHeader className="gap-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <CardTitle className="text-base">Stored facts</CardTitle>
+            <div className="text-xs text-muted-foreground">
+              {filtered.length} of {rows.length}
+            </div>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search key, value, notes…"
+                className="pl-8"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              />
+            </div>
+            <Select value={categoryFilter} onValueChange={(v) => { setCategoryFilter(v); setPage(1); }}>
+              <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All categories</SelectItem>
+                {CATEGORIES.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {loading ? (
+            <div className="text-muted-foreground py-6 text-center">Loading memory…</div>
+          ) : rows.length === 0 ? (
+            <div className="py-10 text-center text-muted-foreground">
+              No facts yet. Add the first thing Ray should know about {activeOrg?.name}.
+            </div>
+          ) : pageRows.length === 0 ? (
+            <div className="py-10 text-center text-muted-foreground">
+              No facts match your search.
+            </div>
+          ) : (
+            <>
+              {pageRows.map((r) => (
                 <div
                   key={r.id}
                   className="flex items-start justify-between gap-4 border rounded-md p-3"
@@ -262,6 +289,7 @@ export default function RayMemory() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-mono text-sm">{r.key}</span>
+                      <Badge variant="outline" className="text-xs capitalize">{r.category}</Badge>
                       <Badge variant="outline" className="text-xs">{r.source}</Badge>
                       {r.verified_at && (
                         <Badge className="text-xs bg-green-500/10 text-green-600 border-green-500/30">
@@ -291,10 +319,39 @@ export default function RayMemory() {
                   </div>
                 </div>
               ))}
-            </CardContent>
-          </Card>
-        ))
-      )}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-2">
+                  <div className="text-xs text-muted-foreground">
+                    Page {currentPage} of {totalPages}
+                  </div>
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={currentPage <= 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={currentPage >= totalPages}
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
     </div>
   );
 }
