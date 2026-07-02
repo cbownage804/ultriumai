@@ -82,10 +82,11 @@ Filename: "powershell.exe"; \
 ; Ask WinSW to remove its own registration first (cleanest path).
 Filename: "{app}\WraythService.exe"; Parameters: "uninstall"; Flags: runhidden waituntilterminated skipifdoesntexist; RunOnceId: "UninstWraythSvc"
 ; Belt-and-suspenders: if the service still exists (WinSW missing, disabled,
-; or a legacy raw-agent registration), delete it directly via sc.exe. This is
-; what prevents the "service remains after uninstall" bug.
+; or a legacy raw-agent registration), delete it directly via sc.exe. If
+; Windows keeps the service in the "marked for deletion" state, write a marker
+; so the uninstaller can clearly prompt for a reboot instead of looking done.
 Filename: "powershell.exe"; \
-  Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""if (Get-Service -Name '{#MyServiceName}' -ErrorAction SilentlyContinue) {{ & sc.exe delete '{#MyServiceName}' | Out-Null; for ($i = 0; $i -lt 20; $i++) {{ Start-Sleep -Milliseconds 500; if (-not (Get-Service -Name '{#MyServiceName}' -ErrorAction SilentlyContinue)) {{ break }} }} }}"""; \
+  Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$marker = '{tmp}\wrayth-agent-reboot-required.flag'; if (Get-Service -Name '{#MyServiceName}' -ErrorAction SilentlyContinue) {{ & sc.exe delete '{#MyServiceName}' | Out-Null; for ($i = 0; $i -lt 20; $i++) {{ Start-Sleep -Milliseconds 500; if (-not (Get-Service -Name '{#MyServiceName}' -ErrorAction SilentlyContinue)) {{ break }} }}; if (Get-Service -Name '{#MyServiceName}' -ErrorAction SilentlyContinue) {{ Set-Content -Path $marker -Value 'Service deletion is pending reboot.' -Encoding ASCII }} }}"""; \
   Flags: runhidden waituntilterminated; RunOnceId: "ScDeleteWraythSvc"
 
 [UninstallDelete]
@@ -96,6 +97,7 @@ var
   CodePage: TInputQueryWizardPage;
   DefaultCode: String;
   DefaultApi:  String;
+  WraythRestartRequired: Boolean;
 
 function GetCmdLineParam(const Name, Default: String): String;
 var
@@ -177,10 +179,38 @@ begin
 
   if IsWraythServiceMarkedForDeletion() then
   begin
+    NeedsRestart := True;
+    WraythRestartRequired := True;
     Result :=
       'Windows has already marked the Wrayth service for deletion, usually ' +
       'because Services.msc or Task Manager was open during a previous repair. ' +
       'Close Services.msc, reboot Windows, then run WraythSetup.exe again with ' +
       'a fresh enrollment code.';
   end;
+end;
+
+function WraythRebootMarkerExists(): Boolean;
+begin
+  Result := FileExists(ExpandConstant('{tmp}\wrayth-agent-reboot-required.flag'));
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+  if CurUninstallStep = usPostUninstall then
+  begin
+    if WraythRebootMarkerExists() or IsWraythServiceMarkedForDeletion() then
+    begin
+      WraythRestartRequired := True;
+      MsgBox(
+        'Windows has marked the Wrayth service for deletion, but it cannot be fully removed until you reboot. ' +
+        'This is normal when Services.msc, Task Manager, or Event Viewer held the service open. Reboot Windows before reinstalling WraythSetup.exe.',
+        mbInformation,
+        MB_OK);
+    end;
+  end;
+end;
+
+function NeedRestart(): Boolean;
+begin
+  Result := WraythRestartRequired or WraythRebootMarkerExists() or IsWraythServiceMarkedForDeletion();
 end;
