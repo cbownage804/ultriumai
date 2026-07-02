@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   CheckCircle2,
+  Copy,
   Download,
   Loader2,
   MonitorDown,
@@ -29,7 +30,9 @@ import {
 import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-const AGENT_DOWNLOAD_URL =
+const SETUP_DOWNLOAD_URL =
+  'https://github.com/cbownage804/ultriumai/releases/latest/download/WraythSetup.exe';
+const RAW_EXE_DOWNLOAD_URL =
   'https://github.com/cbownage804/ultriumai/releases/latest/download/WraythAgent.exe';
 
 interface EnrollState {
