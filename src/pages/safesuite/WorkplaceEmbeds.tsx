@@ -42,7 +42,7 @@ const providerMeta = {
 } as const;
 
 export default function WorkplaceEmbeds() {
-  const { subscription } = useUserSubscription();
+  const subscription = useUserSubscription();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<Record<string, Integration | null>>({ microsoft_teams: null, slack: null });
   const [busy, setBusy] = useState<string | null>(null);
