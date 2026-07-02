@@ -42,10 +42,15 @@ CloseApplications=no
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "..\dist\WraythAgent.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\dist\WraythAgent.exe";       DestDir: "{app}"; Flags: ignoreversion
+; WinSW wrapper + its XML config. WinSW is what Windows registers as the
+; service; it starts/stops WraythAgent.exe as a supervised child process.
+Source: "..\dist\WraythService.exe";     DestDir: "{app}"; Flags: ignoreversion
+Source: "WraythService.xml";             DestDir: "{app}"; Flags: ignoreversion
 
 [Dirs]
-Name: "{commonappdata}\Wrayth"; Permissions: users-modify
+Name: "{commonappdata}\Wrayth";      Permissions: users-modify
+Name: "{commonappdata}\Wrayth\logs"; Permissions: users-modify
 
 [Run]
 ; Write the config file (enrollment_code + api_base) collected in the wizard.
@@ -53,21 +58,17 @@ Filename: "powershell.exe"; \
   Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$c = @{{ enrollment_code = '{code:GetEnrollmentCode}'; api_base = '{code:GetApiBase}' }} | ConvertTo-Json; Set-Content -Path 'C:\ProgramData\Wrayth\wrayth-config.json' -Value $c -Encoding UTF8"""; \
   Flags: runhidden; StatusMsg: "Writing enrollment config..."
 
-; Remove any prior instance of the service (ignore failures).
-Filename: "sc.exe"; Parameters: "stop {#MyServiceName}";   Flags: runhidden waituntilterminated; StatusMsg: "Stopping existing service..."
-Filename: "sc.exe"; Parameters: "delete {#MyServiceName}"; Flags: runhidden waituntilterminated; StatusMsg: "Removing existing service..."
+; Remove any prior instance of the service (ignore failures). We stop with
+; sc.exe (fast) and then let WinSW uninstall cleanly if it was previously
+; registered; fall back to sc.exe delete for legacy direct registrations.
+Filename: "sc.exe";                      Parameters: "stop {#MyServiceName}";       Flags: runhidden waituntilterminated; StatusMsg: "Stopping existing service..."
+Filename: "{app}\WraythService.exe";     Parameters: "uninstall";                   Flags: runhidden waituntilterminated skipifdoesntexist
+Filename: "sc.exe";                      Parameters: "delete {#MyServiceName}";     Flags: runhidden waituntilterminated
 
-; Create the service as LocalSystem, auto-start, with restart-on-failure.
-Filename: "sc.exe"; \
-  Parameters: "create {#MyServiceName} binPath= ""\""{app}\{#MyAppExeName}\"""" start= auto DisplayName= ""{#MyServiceDisplay}"" obj= LocalSystem"; \
-  Flags: runhidden waituntilterminated; StatusMsg: "Registering Wrayth service..."
-Filename: "sc.exe"; \
-  Parameters: "description {#MyServiceName} ""Reports device security posture to Wrayth and executes approved actions."""; \
-  Flags: runhidden waituntilterminated
-Filename: "sc.exe"; \
-  Parameters: "failure {#MyServiceName} reset= 86400 actions= restart/60000/restart/60000/restart/60000"; \
-  Flags: runhidden waituntilterminated
-Filename: "sc.exe"; Parameters: "start {#MyServiceName}"; Flags: runhidden waituntilterminated; StatusMsg: "Starting Wrayth Agent..."
+; Install as a real Windows service via WinSW. WinSW implements the SCM
+; handshake, so Windows no longer times out with Error 1053.
+Filename: "{app}\WraythService.exe";     Parameters: "install";                     Flags: runhidden waituntilterminated; StatusMsg: "Registering Wrayth service..."
+Filename: "{app}\WraythService.exe";     Parameters: "start";                       Flags: runhidden waituntilterminated; StatusMsg: "Starting Wrayth Agent..."
 
 [UninstallRun]
 Filename: "sc.exe"; Parameters: "stop {#MyServiceName}";   Flags: runhidden waituntilterminated; RunOnceId: "StopWraythSvc"
