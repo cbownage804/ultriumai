@@ -47,33 +47,11 @@ Source: "..\dist\WraythAgent.exe";       DestDir: "{app}"; Flags: ignoreversion
 ; service; it starts/stops WraythAgent.exe as a supervised child process.
 Source: "..\dist\WraythService.exe";     DestDir: "{app}"; Flags: ignoreversion
 Source: "WraythService.xml";             DestDir: "{app}"; Flags: ignoreversion
+Source: "install-wrayth-service.ps1";     DestDir: "{app}"; Flags: ignoreversion
 
 [Dirs]
 Name: "{commonappdata}\Wrayth";      Permissions: users-modify
 Name: "{commonappdata}\Wrayth\logs"; Permissions: users-modify
-
-[Run]
-; If an older/broken installer registered WraythAgent.exe directly, replace
-; that legacy service with the WinSW wrapper. We intentionally do this before
-; registering WinSW, and only when Windows has not already queued deletion.
-Filename: "powershell.exe"; \
-  Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$svc = Get-CimInstance Win32_Service -Filter 'Name = ''{#MyServiceName}''' -ErrorAction SilentlyContinue; if ($svc -and ($svc.PathName -match 'WraythAgent\.exe') -and ($svc.PathName -notmatch 'WraythService\.exe')) {{ Stop-Service -Name '{#MyServiceName}' -Force -ErrorAction SilentlyContinue; sc.exe delete '{#MyServiceName}' | Out-Null; for ($i = 0; $i -lt 20; $i++) {{ Start-Sleep -Milliseconds 500; if (-not (Get-Service -Name '{#MyServiceName}' -ErrorAction SilentlyContinue)) {{ break }} }} }}"""; \
-  Flags: runhidden waituntilterminated; StatusMsg: "Preparing Wrayth service..."
-
-; Write the config file (enrollment_code + api_base) collected in the wizard.
-Filename: "powershell.exe"; \
-  Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$c = @{{ enrollment_code = '{code:GetEnrollmentCode}'; api_base = '{code:GetApiBase}' }} | ConvertTo-Json; Set-Content -Path 'C:\ProgramData\Wrayth\wrayth-config.json' -Value $c -Encoding UTF8"""; \
-  Flags: runhidden; StatusMsg: "Writing enrollment config..."
-
-; Register (or refresh) the WinSW-managed service. Everything is logged to
-; C:\ProgramData\Wrayth\logs\install.log so failures (WinSW missing runtime,
-; permissions, etc.) leave a diagnosable trail instead of silently vanishing.
-; If WinSW fails to register, we fall back to a direct sc.exe create so the
-; service always ends up in services.msc. Finally we verify the service
-; exists; if not, we raise a non-zero exit code so Inno surfaces an error.
-Filename: "powershell.exe"; \
-  Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$ErrorActionPreference='Continue'; $log='C:\ProgramData\Wrayth\logs\install.log'; New-Item -ItemType Directory -Force -Path 'C:\ProgramData\Wrayth\logs' | Out-Null; function L($m){{ Add-Content -Path $log -Value ((Get-Date -Format o) + ' ' + $m) }}; L '--- register start ---'; $svc = Get-Service -Name '{#MyServiceName}' -ErrorAction SilentlyContinue; try {{ if ($svc) {{ L 'service exists, refreshing'; Stop-Service -Name '{#MyServiceName}' -Force -ErrorAction SilentlyContinue; & '{app}\WraythService.exe' refresh *>> $log }} else {{ L 'installing via WinSW'; & '{app}\WraythService.exe' install *>> $log }} }} catch {{ L ('winsw error: ' + $_.Exception.Message) }}; if (-not (Get-Service -Name '{#MyServiceName}' -ErrorAction SilentlyContinue)) {{ L 'WinSW did not register service, falling back to sc.exe'; & sc.exe create '{#MyServiceName}' binPath= ('\""' + '{app}\WraythService.exe' + '\""') start= auto DisplayName= '{#MyServiceDisplay}' *>> $log }}; & sc.exe config '{#MyServiceName}' start= auto *>> $log; Start-Sleep -Seconds 1; try {{ Start-Service -Name '{#MyServiceName}' -ErrorAction Stop; L 'service started' }} catch {{ L ('start failed: ' + $_.Exception.Message) }}; $final = Get-Service -Name '{#MyServiceName}' -ErrorAction SilentlyContinue; if (-not $final) {{ L 'FATAL: service still not registered'; exit 1618 }} else {{ L ('final state: ' + $final.Status); exit 0 }}"""; \
-  Flags: runhidden waituntilterminated; StatusMsg: "Registering Wrayth service..."
 
 [UninstallRun]
 ; Force-stop the WinSW-managed service (ignore errors if already stopped/disabled).
@@ -147,6 +125,71 @@ begin
   Result := Trim(CodePage.Values[1]);
   if Result = '' then
     Result := '{#MyDefaultApiBase}';
+end;
+
+function JsonEscape(Value: String): String;
+begin
+  Result := Value;
+  StringChangeEx(Result, '\', '\\', True);
+  StringChangeEx(Result, '"', '\"', True);
+end;
+
+procedure WriteWraythConfig();
+var
+  ConfigJson, ConfigPath: String;
+begin
+  ConfigPath := ExpandConstant('{commonappdata}\Wrayth\wrayth-config.json');
+  ConfigJson :=
+    '{' + #13#10 +
+    '  "enrollment_code": "' + JsonEscape(GetEnrollmentCode('')) + '",' + #13#10 +
+    '  "api_base": "' + JsonEscape(GetApiBase('')) + '"' + #13#10 +
+    '}';
+
+  if not SaveStringToFile(ConfigPath, ConfigJson, False) then
+  begin
+    RaiseException('Wrayth setup could not write the enrollment config to ' + ConfigPath + '. Run the installer as administrator and try again.');
+  end;
+end;
+
+procedure RegisterWraythService();
+var
+  ResultCode: Integer;
+  Params, LogPath: String;
+begin
+  LogPath := ExpandConstant('{commonappdata}\Wrayth\logs\install.log');
+  WizardForm.StatusLabel.Caption := 'Registering Wrayth service...';
+  WriteWraythConfig();
+
+  Params :=
+    '-NoProfile -ExecutionPolicy Bypass -File "' + ExpandConstant('{app}\install-wrayth-service.ps1') + '"' +
+    ' -ServiceName "{#MyServiceName}"' +
+    ' -DisplayName "{#MyServiceDisplay}"' +
+    ' -Description "Reports device security posture to Wrayth and executes approved actions."' +
+    ' -AppDir "' + ExpandConstant('{app}') + '"';
+
+  if not Exec('powershell.exe', Params, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+  begin
+    RaiseException('Wrayth setup could not launch PowerShell to register the Windows service.');
+  end;
+
+  if ResultCode = 3010 then
+  begin
+    WraythRestartRequired := True;
+    RaiseException('Windows has the Wrayth service pending deletion. Reboot Windows, then run WraythSetup.exe again with a fresh enrollment code. Details: ' + LogPath);
+  end;
+
+  if ResultCode <> 0 then
+  begin
+    RaiseException('Wrayth setup could not register the Windows service. Details were written to ' + LogPath + '. Exit code: ' + IntToStr(ResultCode));
+  end;
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssPostInstall then
+  begin
+    RegisterWraythService();
+  end;
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
