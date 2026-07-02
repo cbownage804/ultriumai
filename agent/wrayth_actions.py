@@ -52,17 +52,52 @@ def _ps(script: str, timeout: int = 600) -> tuple[int, str, str]:
 # ---------------------------------------------------------------------------
 
 def _enable_bitlocker(_params: dict[str, Any]) -> tuple[bool, dict, str | None]:
-    # TPM + recovery password. Non-destructive if already enabled.
-    script = (
-        "$v = Get-BitLockerVolume -MountPoint 'C:'; "
-        "if ($v.ProtectionStatus -eq 'On') { 'already_on'; exit 0 } "
-        "Enable-BitLocker -MountPoint 'C:' -EncryptionMethod XtsAes256 "
-        "-UsedSpaceOnly -TpmProtector -SkipHardwareTest | Out-Null; "
-        "Add-BitLockerKeyProtector -MountPoint 'C:' -RecoveryPasswordProtector | Out-Null; "
-        "'enabling'"
-    )
+    # Turn on BitLocker (TPM + recovery password) if needed, then export the
+    # recovery password so Wrayth can escrow it. Non-destructive if already on.
+    script = r"""
+$ErrorActionPreference = 'Stop'
+$state = 'unknown'
+try {
+  $v = Get-BitLockerVolume -MountPoint 'C:'
+  if ($v.ProtectionStatus -ne 'On') {
+    Enable-BitLocker -MountPoint 'C:' -EncryptionMethod XtsAes256 `
+      -UsedSpaceOnly -TpmProtector -SkipHardwareTest -ErrorAction SilentlyContinue | Out-Null
+    $state = 'enabling'
+  } else {
+    $state = 'already_on'
+  }
+  $v = Get-BitLockerVolume -MountPoint 'C:'
+  $hasRecovery = $v.KeyProtector | Where-Object { $_.KeyProtectorType -eq 'RecoveryPassword' }
+  if (-not $hasRecovery) {
+    Add-BitLockerKeyProtector -MountPoint 'C:' -RecoveryPasswordProtector | Out-Null
+    $v = Get-BitLockerVolume -MountPoint 'C:'
+  }
+  $rp = ($v.KeyProtector | Where-Object { $_.KeyProtectorType -eq 'RecoveryPassword' } | Select-Object -First 1)
+  $obj = [pscustomobject]@{
+    state = $state
+    protection_status = "$($v.ProtectionStatus)"
+    volume_status = "$($v.VolumeStatus)"
+    percent = [int]$v.EncryptionPercentage
+    method = "$($v.EncryptionMethod)"
+    recovery_key_id = "$($rp.KeyProtectorId)"
+    recovery_password = "$($rp.RecoveryPassword)"
+  }
+  $obj | ConvertTo-Json -Compress
+} catch {
+  @{ state = 'error'; error = $_.Exception.Message } | ConvertTo-Json -Compress
+  exit 1
+}
+"""
     rc, out, err = _ps(script)
-    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+    result: dict[str, Any] = {"stdout_raw": out[:2000]}
+    try:
+        parsed = json.loads(out) if out else {}
+        if isinstance(parsed, dict):
+            result.update(parsed)
+    except Exception:
+        pass
+    return rc == 0, result, (err or None) if rc != 0 else None
+
 
 
 def _enable_firewall(_params: dict[str, Any]) -> tuple[bool, dict, str | None]:
