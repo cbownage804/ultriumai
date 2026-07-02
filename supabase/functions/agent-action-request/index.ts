@@ -26,19 +26,20 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
   try {
     const auth = req.headers.get('Authorization') ?? '';
+    const token = auth.replace(/^Bearer\s+/i, '').trim();
     const anon = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_ANON_KEY')!,
       { global: { headers: { Authorization: auth } } },
     );
-    const token = auth.replace(/^Bearer\s+/i, '').trim();
-    const { data: claims, error: cErr } = await anon.auth.getClaims(token);
-    if (cErr || !claims?.claims?.sub) {
+    const { data: userData, error: uErr } = await anon.auth.getUser(token);
+    if (uErr || !userData?.user?.id) {
+      console.error('[agent-action-request] auth failed', uErr?.message);
       return new Response(JSON.stringify({ error: 'unauthorized' }), {
         status: 401, headers: { ...cors, 'Content-Type': 'application/json' },
       });
     }
-    const userId = claims.claims.sub;
+    const userId = userData.user.id;
 
     const body = await req.json();
     const device_id = String(body?.device_id ?? '');
@@ -90,6 +91,7 @@ Deno.serve(async (req) => {
       headers: { ...cors, 'Content-Type': 'application/json' },
     });
   } catch (err: any) {
+    console.error('[agent-action-request] error', err?.message, err?.stack);
     return new Response(JSON.stringify({ error: err?.message ?? 'server_error' }), {
       status: 500, headers: { ...cors, 'Content-Type': 'application/json' },
     });
