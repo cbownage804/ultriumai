@@ -3,7 +3,7 @@
  * Shows the sources Ray is actively checking so the empty state feels
  * like real work happened, not a placeholder.
  */
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Check } from 'lucide-react';
 
 const SOURCES = [
   'Microsoft',
