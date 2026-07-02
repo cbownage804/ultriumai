@@ -408,10 +408,6 @@ export async function skillKnowledge(message: string, ctx: SkillContext): Promis
       const reply = await ctx.llmChat(system, user);
       if (reply && reply.trim()) answer = reply;
     } catch (_e) { /* keep default */ }
-      const user = `Question: ${message}\n\nSnippets:\n${context}`;
-      const reply = await ctx.llmChat(system, user);
-      if (reply && reply.trim()) answer = reply;
-    } catch (_e) { /* keep default */ }
   } else if (chosen.length) {
     // No LLM available — surface the top snippet directly so we're still grounded.
     const top = chosen[0];
