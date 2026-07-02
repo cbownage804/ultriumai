@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { DeviceActionsMenu } from './DeviceActionsMenu';
 
 interface Finding {
   severity: 'info' | 'warn' | 'critical';
