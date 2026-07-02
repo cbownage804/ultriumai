@@ -620,6 +620,67 @@ export const useVault = () => {
   const isEntryShared = (entry: PasswordEntry) => false;
   const getVaultName = (vault: PasswordVault) => vault.vault_name;
 
+  /**
+   * Rotate an entry's password: decrypt current blob, swap password, re-encrypt
+   * with the same AAD binding, and persist. Returns true on success.
+   */
+  const rotateEntryPassword = async (entry: PasswordEntry, newPassword: string): Promise<boolean> => {
+    if (!user || !masterPassword.isUnlocked || !masterPassword.masterPassword) return false;
+    try {
+      let username = '', website = '', notes = '';
+      if (typeof entry.encrypted_data === 'object' && 'ciphertext' in entry.encrypted_data) {
+        const decrypted = await decryptData(entry.encrypted_data as EncryptedData, masterPassword.masterPassword);
+        const parsed = JSON.parse(decrypted);
+        username = parsed.username || '';
+        website = parsed.website || entry.url || '';
+        notes = parsed.notes || entry.notes || '';
+      }
+      const aadContext: AADContext = { userId: user.id, vaultId: entry.vault_id };
+      const reencrypted = await encryptData(
+        JSON.stringify({ username, password: newPassword, website, notes }),
+        masterPassword.masterPassword,
+        undefined,
+        aadContext,
+      );
+      const strength = calculatePasswordStrength(newPassword);
+      const { data, error } = await supabase
+        .from('safepass_entries')
+        .update({
+          encrypted_data: reencrypted as any,
+          password_strength_score: strength,
+          is_compromised: false,
+          password_last_changed_at: new Date().toISOString(),
+        })
+        .eq('id', entry.id)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+      if (error) throw error;
+      const updated = entries.map((e) => (e.id === entry.id ? data : e));
+      setEntries(updated);
+      if (selectedVault) cache.entries.set(selectedVault, updated);
+      await logAction('rotated', entry.id, { title: entry.title });
+      // Log to Ray's timeline so rotations narrate in "This week".
+      try {
+        await supabase.from('ray_timeline').insert({
+          user_id: user.id,
+          event_type: 'password_rotated',
+          severity: 'low',
+          summary: `Rotated the password for ${entry.title}.`,
+          source: 'vault',
+        } as any);
+      } catch {
+        /* timeline is best-effort */
+      }
+      toast({ title: 'Rotated', description: `${entry.title} now uses a fresh, strong password.` });
+      return true;
+    } catch (err) {
+      console.error('rotateEntryPassword failed', err);
+      toast({ title: 'Rotation failed', description: 'Ray could not rotate this password. Try again.', variant: 'destructive' });
+      return false;
+    }
+  };
+
   // Load ALL entries across ALL vaults for analysis pages
   const loadAllEntries = useCallback(async (): Promise<PasswordEntry[]> => {
     if (!user) return [];
@@ -664,6 +725,7 @@ export const useVault = () => {
     getEntryNotes,
     getEntryStrengthScore,
     isEntryShared,
-    getVaultName
+    getVaultName,
+    rotateEntryPassword,
   };
 };

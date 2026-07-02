@@ -640,21 +640,21 @@ export default function WraythDashboard() {
 
   return (
     <div className="min-h-screen bg-background -m-4 lg:-m-6 p-4 lg:p-6 space-y-4 sm:space-y-6">
-      {/* 1. Morning Brief (lifecycle-aware) */}
+      {/* 1. CISO hero — the single answer to "what would you tell me to do next?" */}
+      {!vaultLocked && stats.passwordCount > 0 && <CisoNextAction directive={cisoDirective} />}
+
+      {/* 2. Morning Brief (lifecycle-aware) — narrative context under the directive. */}
       <LifecycleAwareTop firstName={firstName} />
 
-      {/* 1b. Vault: encrypted black box until unlocked. */}
-      {vaultLocked ? (
-        <VaultLockedCard />
-      ) : (
-        stats.passwordCount > 0 && <CisoNextAction directive={cisoDirective} />
-      )}
+      {/* 2b. Vault: encrypted black box until unlocked. */}
+      {vaultLocked && <VaultLockedCard />}
 
-      {/* 1c. Cross-domain context bridge — Ray names what he's missing. */}
+      {/* 2c. Cross-domain context bridge — Ray names what he's missing. */}
       <HomeContextBridge
         vaultLockedCardVisible={vaultLocked}
         vaultCount={stats.passwordCount}
       />
+
 
       {/* 2. Ask Ray — reinforces AI-first experience */}
       <div data-tour="quick-actions">

@@ -23,6 +23,7 @@ import {
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { UnifiedAccountsPanel, type AccountSignalRow } from './UnifiedAccountsPanel';
+import { RotatePasswordDialog } from '@/components/ray/RotatePasswordDialog';
 
 interface PasswordIssue {
   id: string;
@@ -51,6 +52,8 @@ export const PasswordHealthDashboard = () => {
   });
   const [issues, setIssues] = useState<PasswordIssue[]>([]);
   const [unifiedRows, setUnifiedRows] = useState<AccountSignalRow[]>([]);
+  const [rotateEntryId, setRotateEntryId] = useState<string | null>(null);
+  const rotateEntry = rotateEntryId ? allEntries.find((e) => e.id === rotateEntryId) ?? null : null;
 
   const calculatePasswordStrength = (password: string): number => {
     let score = 0;
@@ -452,7 +455,15 @@ export const PasswordHealthDashboard = () => {
 
 
       {/* Unified relationships view — one account, every signal */}
-      <UnifiedAccountsPanel rows={unifiedRows} />
+      <UnifiedAccountsPanel rows={unifiedRows} onRotate={(id) => setRotateEntryId(id)} />
+
+      <RotatePasswordDialog
+        entry={rotateEntry}
+        open={!!rotateEntryId}
+        onOpenChange={(o) => { if (!o) setRotateEntryId(null); }}
+        onRotated={() => { setRotateEntryId(null); handleRescan(); }}
+      />
+
 
       {/* Health Score */}
       <Card className="overflow-hidden">
