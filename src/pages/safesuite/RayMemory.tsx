@@ -48,6 +48,11 @@ export default function RayMemory() {
     notes: "",
   });
 
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [page, setPage] = useState(1);
+
+
   const load = useCallback(async () => {
     if (!activeOrg?.id) {
       setRows([]);
