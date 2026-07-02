@@ -19,6 +19,7 @@ import random
 import socket
 import subprocess
 import sys
+import threading
 import time
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
@@ -26,6 +27,11 @@ from pathlib import Path
 from typing import Any
 from urllib import request as urlreq
 from urllib.error import HTTPError, URLError
+
+try:
+    from wrayth_actions import run_action_loop  # type: ignore
+except Exception:  # noqa: BLE001
+    run_action_loop = None  # type: ignore
 
 AGENT_VERSION = "0.1.0"
 
