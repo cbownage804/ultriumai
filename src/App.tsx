@@ -58,6 +58,7 @@ const WraythPricing = lazy(() => import('@/pages/pricing/WraythPricing'));
 
 const Ray = lazy(() => import('@/pages/safesuite/Ray'));
 const RaySkills = lazy(() => import('@/pages/safesuite/RaySkills'));
+const RayRecommendations = lazy(() => import('@/pages/safesuite/RayRecommendations'));
 const Identity = lazy(() => import('@/pages/safesuite/Identity'));
 const Devices = lazy(() => import('@/pages/safesuite/Devices'));
 const Reports = lazy(() => import('@/pages/safesuite/Reports'));
