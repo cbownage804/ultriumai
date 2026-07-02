@@ -565,12 +565,21 @@ async function performRealScan(asset: Asset): Promise<ScanResult[]> {
         }
         break;
         
+      case 'phone': {
+        const dehashedKey = Deno.env.get('DEHASHED_API_KEY');
+        if (dehashedKey) {
+          // Normalize: strip everything except digits and leading +
+          const normalized = asset.asset_value.replace(/[^\d+]/g, '');
+          const phoneThreats = await scanDehashedByField('phone', normalized, dehashedKey);
+          threats.push(...phoneThreats);
+        } else {
+          logStep('Dehashed API key not configured for phone lookup');
+        }
+        break;
+      }
+
       case 'brand':
         logStep('Brand monitoring requires specialized brand monitoring APIs - contact sales for enterprise integration');
-        // In production, integrate with:
-        // - BrandShield API
-        // - MarkMonitor API  
-        // - CSC Digital Brand Services
         break;
         
       case 'executive':
