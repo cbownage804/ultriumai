@@ -1,0 +1,2 @@
+# Wrayth agent runtime. Stdlib-only on purpose so PyInstaller output stays small.
+# Build-only deps live in agent/build-requirements.txt.
