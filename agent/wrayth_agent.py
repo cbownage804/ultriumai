@@ -308,6 +308,18 @@ def main() -> int:
         _log(str(e))
         return 1
 
+    # Start the action executor in the background so approved actions
+    # from the Wrayth UI get picked up between hourly posture reports.
+    if run_action_loop is not None and platform.system() == "Windows":
+        t = threading.Thread(
+            target=run_action_loop,
+            args=(lambda: cfg, _log),
+            name="wrayth-actions",
+            daemon=True,
+        )
+        t.start()
+        _log("action executor started")
+
     while True:
         try:
             posture = collect_posture()
