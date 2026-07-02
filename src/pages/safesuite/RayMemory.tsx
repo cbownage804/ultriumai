@@ -31,6 +31,8 @@ type MemoryRow = {
 };
 
 const CATEGORIES = ["general", "identity", "endpoint", "network", "vendor", "policy", "contact"];
+const PAGE_SIZE = 20;
+
 
 export default function RayMemory() {
   const { activeOrg, loading: orgLoading, hasOrg } = useActiveOrg();
