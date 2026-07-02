@@ -78,13 +78,14 @@ export const PasswordHealthDashboard = () => {
     try {
       const ids = entries.map((e) => e.id).filter(Boolean);
       if (ids.length && user?.id) {
-        const { data: totps } = await supabase
+        const client = supabase as any;
+        const { data: totps } = await client
           .from('totp_entries')
           .select('entry_id')
           .in('entry_id', ids);
         mfaEntryIds = new Set((totps ?? []).map((t: any) => t.entry_id));
 
-        const { data: assets } = await supabase
+        const { data: assets } = await client
           .from('safeweb_assets')
           .select('asset_value,breach_count')
           .eq('user_id', user.id);
