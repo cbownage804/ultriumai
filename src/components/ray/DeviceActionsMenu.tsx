@@ -134,7 +134,7 @@ export function DeviceActionsMenu({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deviceId]);
 
-  const run = async (action_type: ActionType) => {
+  const run = async (action_type: ActionType, params?: Record<string, unknown>) => {
     if (action_type === 'lock_screen' && !sessionLockSupported) {
       toast.error('Update the Wrayth agent first', {
         description: 'Screen lock needs agent v0.1.1+ so the command runs in the signed-in Windows session.',
@@ -144,7 +144,7 @@ export function DeviceActionsMenu({
     setPending(action_type);
     try {
       const { error } = await supabase.functions.invoke('agent-action-request', {
-        body: { device_id: deviceId, action_type },
+        body: { device_id: deviceId, action_type, params: params ?? {} },
       });
       if (error) throw error;
       toast.success('Approved — I sent it to the agent.', {
