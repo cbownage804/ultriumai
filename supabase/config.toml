@@ -144,6 +144,14 @@ verify_jwt = false
 [functions.ray-scan]
 verify_jwt = true
 
+[functions.ray-digest-build]
+verify_jwt = false
+
+[functions.ray-digest-send]
+verify_jwt = false
+
+
+
 
 
 
