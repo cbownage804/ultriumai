@@ -35884,20 +35884,55 @@ export type Database = {
           },
         ]
       }
+      wrayth_agent_release: {
+        Row: {
+          id: string
+          installer_build: string | null
+          is_latest: boolean
+          notes: string | null
+          released_at: string
+          version: string
+        }
+        Insert: {
+          id?: string
+          installer_build?: string | null
+          is_latest?: boolean
+          notes?: string | null
+          released_at?: string
+          version: string
+        }
+        Update: {
+          id?: string
+          installer_build?: string | null
+          is_latest?: boolean
+          notes?: string | null
+          released_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
       wrayth_device_actions: {
         Row: {
           action_type: Database["public"]["Enums"]["wrayth_action_type"]
           approved_at: string | null
           completed_at: string | null
+          confirmed_by_user: boolean
           created_at: string
           device_id: string
           dispatched_at: string | null
           error: string | null
           id: string
+          new_value: Json | null
           params: Json
+          preflight: Json
+          previous_value: Json | null
           requested_at: string
           requested_by: string | null
+          requires_reboot: boolean
           result: Json | null
+          risk_level: string
+          rollback_action: string | null
+          rollback_possible: boolean
           status: Database["public"]["Enums"]["wrayth_action_status"]
           updated_at: string
           user_id: string
@@ -35906,15 +35941,23 @@ export type Database = {
           action_type: Database["public"]["Enums"]["wrayth_action_type"]
           approved_at?: string | null
           completed_at?: string | null
+          confirmed_by_user?: boolean
           created_at?: string
           device_id: string
           dispatched_at?: string | null
           error?: string | null
           id?: string
+          new_value?: Json | null
           params?: Json
+          preflight?: Json
+          previous_value?: Json | null
           requested_at?: string
           requested_by?: string | null
+          requires_reboot?: boolean
           result?: Json | null
+          risk_level?: string
+          rollback_action?: string | null
+          rollback_possible?: boolean
           status?: Database["public"]["Enums"]["wrayth_action_status"]
           updated_at?: string
           user_id: string
@@ -35923,15 +35966,23 @@ export type Database = {
           action_type?: Database["public"]["Enums"]["wrayth_action_type"]
           approved_at?: string | null
           completed_at?: string | null
+          confirmed_by_user?: boolean
           created_at?: string
           device_id?: string
           dispatched_at?: string | null
           error?: string | null
           id?: string
+          new_value?: Json | null
           params?: Json
+          preflight?: Json
+          previous_value?: Json | null
           requested_at?: string
           requested_by?: string | null
+          requires_reboot?: boolean
           result?: Json | null
+          risk_level?: string
+          rollback_action?: string | null
+          rollback_possible?: boolean
           status?: Database["public"]["Enums"]["wrayth_action_status"]
           updated_at?: string
           user_id?: string
