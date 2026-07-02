@@ -150,7 +150,7 @@ export function UnifiedAccountsPanel({ rows, className }: Props) {
                   <div className="text-[9px] uppercase tracking-widest text-muted-foreground">score</div>
                 </div>
               </div>
-              <div className="mt-2 flex items-center justify-between">
+              <div className="mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5">
                 <p className="text-[11px] italic text-violet-300/70">
                   {row.hasBreach
                     ? 'Ray: rotate this first — it appeared in a breach.'
@@ -164,7 +164,7 @@ export function UnifiedAccountsPanel({ rows, className }: Props) {
                 </p>
                 <Link
                   to="/app/vault"
-                  className="text-[11px] text-violet-300 hover:text-violet-200"
+                  className="text-[11px] text-violet-300 hover:text-violet-200 self-start sm:self-auto min-h-[44px] sm:min-h-0 inline-flex items-center"
                 >
                   Open in vault →
                 </Link>
