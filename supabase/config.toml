@@ -141,6 +141,11 @@ verify_jwt = true
 [functions.workplace-message]
 verify_jwt = false
 
+[functions.ray-scan]
+verify_jwt = true
+
+
+
 
 
 
