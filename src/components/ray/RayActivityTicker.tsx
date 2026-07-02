@@ -14,11 +14,14 @@ interface Props {
 
 const LINES: Record<NonNullable<Props['context']>, string[]> = {
   threats: [
-    'Watching Microsoft advisories…',
-    'Checking Chrome vulnerabilities…',
-    'Reviewing breach feeds…',
-    'Scanning saved identities…',
-    'Monitoring inbound signals…',
+    'Checking browser extensions…',
+    'Looking for leaked credentials…',
+    'Watching for new breaches…',
+    'Checking Microsoft account health…',
+    'Reviewing browser security…',
+    'Looking for exposed passwords…',
+    'Monitoring new breach intelligence…',
+    'Watching device posture…',
     'Everything looks healthy.',
   ],
   exposure: [
