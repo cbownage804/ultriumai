@@ -51,16 +51,33 @@ jobs:
           }
         shell: pwsh
 
-      - name: Bundle installer ZIP
-        working-directory: agent
+      - name: Ensure Inno Setup is available
         shell: pwsh
         run: |
-          $bundle = "dist\WraythAgent-Installer"
-          New-Item -ItemType Directory -Force -Path $bundle | Out-Null
-          Copy-Item dist\WraythAgent.exe $bundle
-          Copy-Item install-service.ps1 $bundle
-          Copy-Item uninstall-service.ps1 $bundle
-          Compress-Archive -Path "$bundle\*" -DestinationPath dist\WraythAgent-Installer.zip -Force
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup --no-progress -y
+          }
+          if (-not (Test-Path $iscc)) {
+            throw "Inno Setup not available on runner"
+          }
+          Write-Host "ISCC: $iscc"
+
+      - name: Derive installer version
+        id: ver
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          if ($tag -match '^agent-v(.+)$') { $v = $Matches[1] } else { $v = "0.0.$($env:GITHUB_RUN_NUMBER)" }
+          Write-Host "Version: $v"
+          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Compile WraythSetup.exe (Inno Setup)
+        working-directory: agent/installer
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DMyAppVersion=${{ steps.ver.outputs.version }} wrayth.iss
+          dir ..\dist
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -68,7 +85,7 @@ jobs:
           name: WraythAgent-windows
           path: |
             agent/dist/WraythAgent.exe
-            agent/dist/WraythAgent-Installer.zip
+            agent/dist/WraythSetup.exe
           if-no-files-found: error
 
       - name: Attach to Release
@@ -77,5 +94,5 @@ jobs:
         with:
           files: |
             agent/dist/WraythAgent.exe
-            agent/dist/WraythAgent-Installer.zip
+            agent/dist/WraythSetup.exe
           fail_on_unmatched_files: true
