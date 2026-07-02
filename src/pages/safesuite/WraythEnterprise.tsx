@@ -257,6 +257,67 @@ export default function WraythEnterprise() {
         </div>
       </section>
 
+      {/* Design partners */}
+      <section className="border-b border-border py-10 px-4">
+        <div className="mx-auto max-w-6xl text-center">
+          <p className="mb-4 text-xs uppercase tracking-widest text-muted-foreground">
+            Designed with feedback from
+          </p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {designPartnerSegments.map((s) => (
+              <span key={s} className="rounded-full border border-border bg-card/40 px-3 py-1 text-xs text-muted-foreground">
+                {s}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Product hierarchy — One platform, one AI */}
+      <section className="border-b border-border py-24 px-4">
+        <div className="mx-auto max-w-6xl">
+          <SectionHeading
+            eyebrow="One Platform"
+            title="Not a pile of tools. One platform, unified by Ray."
+            description="Most security stacks are a graveyard of disconnected products. Wrayth is one platform with modular capabilities — and Ray provides a consistent intelligence layer across every one of them."
+            tone="violet"
+          />
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            {platformModules.map((m) => (
+              <div key={m.label} className="rounded-xl border border-border bg-card/40 p-5 text-center">
+                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-violet-500/10">
+                  <m.icon className="h-5 w-5 text-violet-300" />
+                </div>
+                <div className="font-semibold">{m.label}</div>
+                <div className="mt-1 text-xs text-muted-foreground">{m.description}</div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 flex items-center justify-center gap-2 rounded-xl border border-violet-500/30 bg-violet-500/[0.05] p-4 text-sm text-violet-100">
+            <Sparkles className="h-4 w-4 text-violet-300" />
+            <span><strong>Ray</strong> works across all of them — one AI teammate, everywhere your team operates.</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Ray for Enterprise */}
+      <section id="ray" className="border-b border-border bg-violet-500/[0.03] py-24 px-4">
+        <div className="mx-auto max-w-6xl">
+          <SectionHeading
+            eyebrow="Ray for Enterprise"
+            title="An AI security teammate for every tenant"
+            description="Ray isn't a chatbot bolted onto a dashboard. Ray is the intelligence layer that investigates, explains, and remediates across Vault, Scan, Watch, and Identity — for every org and every managed client."
+            tone="violet"
+          />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {rayEnterpriseCapabilities.map((f) => (
+              <FeatureCard key={f.title} {...f} tone="violet" />
+            ))}
+          </div>
+        </div>
+      </section>
+
+
       {/* Organizations */}
       <section id="organizations" className="border-b border-border py-24 px-4">
         <div className="mx-auto max-w-6xl">
