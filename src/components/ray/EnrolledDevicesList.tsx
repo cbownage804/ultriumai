@@ -393,7 +393,7 @@ export function EnrolledDevicesList() {
                   <DeviceActionsMenu deviceId={d.id} agentVersion={d.agent_version} disabled={!online} />
                 </div>
               )}
-              <DeviceIntelPanel deviceId={d.id} posture={d.posture} />
+              <DeviceIntelPanel deviceId={d.id} posture={d.posture as never} />
 
             </div>
           );
