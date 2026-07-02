@@ -18343,6 +18343,99 @@ export type Database = {
         }
         Relationships: []
       }
+      ray_skill_invocations: {
+        Row: {
+          classifier_confidence: number | null
+          created_at: string
+          error: string | null
+          id: string
+          input_message: string
+          latency_ms: number | null
+          metadata: Json
+          org_id: string | null
+          response_summary: string | null
+          skill_slug: string
+          source: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          classifier_confidence?: number | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          input_message: string
+          latency_ms?: number | null
+          metadata?: Json
+          org_id?: string | null
+          response_summary?: string | null
+          skill_slug: string
+          source?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          classifier_confidence?: number | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          input_message?: string
+          latency_ms?: number | null
+          metadata?: Json
+          org_id?: string | null
+          response_summary?: string | null
+          skill_slug?: string
+          source?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ray_skills: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          enabled: boolean
+          id: string
+          keywords: string[]
+          min_tier: string
+          name: string
+          requires_org: boolean
+          slug: string
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          enabled?: boolean
+          id?: string
+          keywords?: string[]
+          min_tier?: string
+          name: string
+          requires_org?: boolean
+          slug: string
+          updated_at?: string
+          version?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          enabled?: boolean
+          id?: string
+          keywords?: string[]
+          min_tier?: string
+          name?: string
+          requires_org?: boolean
+          slug?: string
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
       ray_timeline: {
         Row: {
           created_at: string
@@ -36138,6 +36231,54 @@ export type Database = {
           os_version?: string | null
           revoked_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      wrayth_kb: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          org_id: string
+          published: boolean
+          source_url: string | null
+          tags: string[]
+          title: string
+          updated_at: string
+          updated_by: string | null
+          view_count: number
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          org_id: string
+          published?: boolean
+          source_url?: string | null
+          tags?: string[]
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+          view_count?: number
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          org_id?: string
+          published?: boolean
+          source_url?: string | null
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          view_count?: number
         }
         Relationships: []
       }

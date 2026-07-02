@@ -135,3 +135,7 @@ verify_jwt = true
 [functions.workplace-teams-manifest]
 verify_jwt = true
 
+[functions.ray-router]
+verify_jwt = true
+
+
