@@ -13,6 +13,7 @@ recognize.
 from __future__ import annotations
 
 import json
+import os
 import platform
 import subprocess
 import time
@@ -112,10 +113,160 @@ $Ir = $Installer.Install()
 
 
 def _lock_screen(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
-    rc, out, err = _ps(
-        "rundll32.exe user32.dll,LockWorkStation; 'ok'"
-    )
-    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+    ok, details, err = _lock_active_user_session()
+    if ok:
+        return True, details, None
+
+    # If the agent was launched manually inside the signed-in user's session,
+    # the plain API call works. When running as the normal Windows service it
+    # lives in session 0, where rundll32 can return "ok" without locking the
+    # visible desktop, so only use this fallback for non-service sessions.
+    if details.get("current_session") == details.get("active_session") and details.get("current_session") not in (0, None):
+        rc, out, ps_err = _ps("rundll32.exe user32.dll,LockWorkStation; 'ok'")
+        return rc == 0, {**details, "method": "current_user_rundll32", "stdout": out}, ps_err or None if rc != 0 else None
+
+    return False, details, err or "Could not launch lock command in the active user session"
+
+
+def _format_win_error(code: int) -> str:
+    if code == 0:
+        return "unknown Windows error"
+    try:
+        import ctypes
+
+        return f"Windows error {code}: {ctypes.FormatError(code).strip()}"
+    except Exception:  # noqa: BLE001
+        return f"Windows error {code}"
+
+
+def _current_session_id() -> int | None:
+    if platform.system() != "Windows":
+        return None
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        session_id = wintypes.DWORD()
+        ok = ctypes.windll.kernel32.ProcessIdToSessionId(
+            os.getpid(),
+            ctypes.byref(session_id),
+        )
+        return int(session_id.value) if ok else None
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _lock_active_user_session() -> tuple[bool, dict[str, Any], str | None]:
+    """
+    LockWorkStation only affects the caller's interactive desktop. The Wrayth
+    agent normally runs as a Windows service in session 0, so calling rundll32
+    directly can report success while doing nothing visible. Instead, launch
+    rundll32 inside the active console user's session using the SYSTEM service's
+    WTS token.
+    """
+    if platform.system() != "Windows":
+        return False, {"method": "active_user_session", "os": platform.system()}, "lock_screen is Windows-only"
+
+    try:
+        import ctypes
+        from ctypes import wintypes
+    except Exception as e:  # noqa: BLE001
+        return False, {"method": "active_user_session"}, str(e)
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    advapi32 = ctypes.WinDLL("advapi32", use_last_error=True)
+    wtsapi32 = ctypes.WinDLL("wtsapi32", use_last_error=True)
+    userenv = ctypes.WinDLL("userenv", use_last_error=True)
+
+    active_session = int(kernel32.WTSGetActiveConsoleSessionId())
+    current_session = _current_session_id()
+    details: dict[str, Any] = {
+        "method": "active_user_session",
+        "active_session": active_session,
+        "current_session": current_session,
+    }
+    if active_session == 0xFFFFFFFF:
+        return False, details, "No active console session is available"
+
+    token = wintypes.HANDLE()
+    if not wtsapi32.WTSQueryUserToken(wintypes.ULONG(active_session), ctypes.byref(token)):
+        code = ctypes.get_last_error()
+        return False, {**details, "stage": "WTSQueryUserToken"}, _format_win_error(code)
+
+    env = ctypes.c_void_p()
+    env_created = False
+
+    class STARTUPINFO(ctypes.Structure):
+        _fields_ = [
+            ("cb", wintypes.DWORD),
+            ("lpReserved", wintypes.LPWSTR),
+            ("lpDesktop", wintypes.LPWSTR),
+            ("lpTitle", wintypes.LPWSTR),
+            ("dwX", wintypes.DWORD),
+            ("dwY", wintypes.DWORD),
+            ("dwXSize", wintypes.DWORD),
+            ("dwYSize", wintypes.DWORD),
+            ("dwXCountChars", wintypes.DWORD),
+            ("dwYCountChars", wintypes.DWORD),
+            ("dwFillAttribute", wintypes.DWORD),
+            ("dwFlags", wintypes.DWORD),
+            ("wShowWindow", wintypes.WORD),
+            ("cbReserved2", wintypes.WORD),
+            ("lpReserved2", ctypes.c_void_p),
+            ("hStdInput", wintypes.HANDLE),
+            ("hStdOutput", wintypes.HANDLE),
+            ("hStdError", wintypes.HANDLE),
+        ]
+
+    class PROCESS_INFORMATION(ctypes.Structure):
+        _fields_ = [
+            ("hProcess", wintypes.HANDLE),
+            ("hThread", wintypes.HANDLE),
+            ("dwProcessId", wintypes.DWORD),
+            ("dwThreadId", wintypes.DWORD),
+        ]
+
+    try:
+        # Best-effort environment block. CreateProcessAsUser still works with
+        # a null environment, but this keeps SystemRoot/PATH correct.
+        if userenv.CreateEnvironmentBlock(ctypes.byref(env), token, False):
+            env_created = True
+
+        si = STARTUPINFO()
+        si.cb = ctypes.sizeof(STARTUPINFO)
+        si.lpDesktop = "winsta0\\default"
+        pi = PROCESS_INFORMATION()
+
+        system_root = os.environ.get("SystemRoot", r"C:\Windows")
+        rundll32 = os.path.join(system_root, "System32", "rundll32.exe")
+        command = f'"{rundll32}" user32.dll,LockWorkStation'
+        CREATE_UNICODE_ENVIRONMENT = 0x00000400
+        CREATE_NO_WINDOW = 0x08000000
+
+        ok = advapi32.CreateProcessAsUserW(
+            token,
+            None,
+            ctypes.c_wchar_p(command),
+            None,
+            None,
+            False,
+            CREATE_UNICODE_ENVIRONMENT | CREATE_NO_WINDOW,
+            env if env_created else None,
+            None,
+            ctypes.byref(si),
+            ctypes.byref(pi),
+        )
+        if not ok:
+            code = ctypes.get_last_error()
+            return False, {**details, "stage": "CreateProcessAsUserW"}, _format_win_error(code)
+
+        kernel32.CloseHandle(pi.hThread)
+        kernel32.CloseHandle(pi.hProcess)
+        return True, {**details, "pid": int(pi.dwProcessId), "launched_in_user_session": True}, None
+    finally:
+        if env_created:
+            userenv.DestroyEnvironmentBlock(env)
+        kernel32.CloseHandle(token)
 
 
 def _sign_out(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
