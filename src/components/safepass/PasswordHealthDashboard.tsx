@@ -50,6 +50,7 @@ export const PasswordHealthDashboard = () => {
     old: 0
   });
   const [issues, setIssues] = useState<PasswordIssue[]>([]);
+  const [unifiedRows, setUnifiedRows] = useState<AccountSignalRow[]>([]);
 
   const calculatePasswordStrength = (password: string): number => {
     let score = 0;
