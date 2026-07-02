@@ -70,6 +70,27 @@ interface Posture {
   listening_ports?: ListeningPort[];
   browser_extensions?: BrowserExtension[];
   logged_in_user?: string;
+  // v0.2.0 additions
+  rdp_security?: { rdp_enabled?: boolean; nla_enabled?: boolean; remote_assistance_enabled?: boolean };
+  local_admins_detail?: Array<{ name: string; object_class?: string; enabled?: boolean; is_builtin?: boolean; sid?: string }>;
+  browser_passwords?: {
+    chrome?: { manager_disabled_by_policy?: boolean; stored_count?: number };
+    edge?: { manager_disabled_by_policy?: boolean; stored_count?: number };
+  };
+  defender_detail?: {
+    last_quick_scan?: string;
+    last_full_scan?: string;
+    cloud_protection?: boolean;
+    pua_protection?: boolean;
+    sample_submission?: string;
+  };
+  update_categories?: {
+    security?: number;
+    drivers?: number;
+    feature?: number;
+    office?: number;
+    other?: number;
+  };
 }
 
 // --- Basic CVE hint table ---------------------------------------------------
