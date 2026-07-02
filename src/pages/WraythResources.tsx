@@ -2,12 +2,13 @@
  * Wrayth Resources — Ray's action library.
  *
  * Not a knowledge base. A library of missions Ray runs with you.
- * Emergency playbooks up top, then categorized library, then a look at what's next.
+ * Emergency playbooks up top, then filterable/searchable library.
  */
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/safesuite/SafeSuiteNav";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { PLAYBOOK_TEMPLATES } from "@/lib/ray/playbooks";
 import {
   AlertTriangle,
@@ -16,10 +17,13 @@ import {
   Clock,
   Flame,
   Hand,
+  Search,
   Sparkles,
   Star,
   Trophy,
+  X,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const CATEGORY_LABEL: Record<string, string> = {
   account: "Accounts",
@@ -48,6 +52,12 @@ const POPULAR_SLUGS = [
   "protect-identity",
   "passkey-upgrade",
 ];
+const POPULAR_SET = new Set(POPULAR_SLUGS);
+
+// Everything currently in the library is personal-scope. As Business/Cloud
+// playbooks ship, tag them here.
+const BUSINESS_SLUGS = new Set<string>([]);
+const CLOUD_SLUGS = new Set<string>([]);
 
 const EMERGENCY = [
   { emoji: "🚨", title: "My account was hacked", desc: "Lock intruders out, rotate credentials, revoke sessions." },
@@ -70,15 +80,32 @@ const COMING_SOON: { group: string; items: string[] }[] = [
 
 type PB = (typeof PLAYBOOK_TEMPLATES)[number];
 
-function difficultyOf(t: PB): { label: string; tone: string } {
+type Difficulty = "easy" | "intermediate" | "advanced";
+type Scope = "personal" | "business" | "cloud";
+type Sort = "popular" | "recent" | "impact" | "quickest";
+type TimeCap = 0 | 5 | 10 | 15;
+
+function difficultyKey(t: PB): Difficulty {
   const m = t.estimated_minutes;
-  if (m <= 4) return { label: "Easy", tone: "text-emerald-400 border-emerald-400/30" };
-  if (m <= 8) return { label: "Intermediate", tone: "text-amber-300 border-amber-300/30" };
+  if (m <= 4) return "easy";
+  if (m <= 8) return "intermediate";
+  return "advanced";
+}
+
+function difficultyOf(t: PB): { label: string; tone: string } {
+  const d = difficultyKey(t);
+  if (d === "easy") return { label: "Easy", tone: "text-emerald-400 border-emerald-400/30" };
+  if (d === "intermediate") return { label: "Intermediate", tone: "text-amber-300 border-amber-300/30" };
   return { label: "Advanced", tone: "text-rose-300 border-rose-300/30" };
 }
 
+function scopeOf(t: PB): Scope {
+  if (CLOUD_SLUGS.has(t.slug)) return "cloud";
+  if (BUSINESS_SLUGS.has(t.slug)) return "business";
+  return "personal";
+}
+
 function starsOf(t: PB): number {
-  // Higher score/step ratio → more impactful → more stars.
   const impact = t.reward_score / Math.max(1, t.steps.length);
   if (impact >= 2.5) return 5;
   if (impact >= 2) return 4;
@@ -136,15 +163,95 @@ function PlaybookCard({ t, highlight }: { t: PB; highlight?: boolean }) {
   );
 }
 
+type ChipProps = {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+};
+
+function Chip({ active, onClick, children }: ChipProps) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "text-xs px-3 py-1.5 rounded-full border transition-colors",
+        active
+          ? "border-violet-400/60 text-violet-200 bg-violet-500/10"
+          : "border-border text-muted-foreground hover:text-foreground",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function WraythResources() {
-  const grouped = PLAYBOOK_TEMPLATES.reduce<Record<string, PB[]>>((acc, t) => {
-    (acc[t.category] ||= []).push(t);
-    return acc;
-  }, {});
+  const [query, setQuery] = useState("");
+  const [difficulty, setDifficulty] = useState<Difficulty | "all">("all");
+  const [scope, setScope] = useState<Scope | "all">("all");
+  const [automatedOnly, setAutomatedOnly] = useState(false);
+  const [timeCap, setTimeCap] = useState<TimeCap>(0);
+  const [sort, setSort] = useState<Sort>("popular");
+
+  const anyFilter =
+    query.trim() !== "" ||
+    difficulty !== "all" ||
+    scope !== "all" ||
+    automatedOnly ||
+    timeCap !== 0 ||
+    sort !== "popular";
+
+  const results = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    let list = PLAYBOOK_TEMPLATES.filter((t) => {
+      if (difficulty !== "all" && difficultyKey(t) !== difficulty) return false;
+      if (scope !== "all" && scopeOf(t) !== scope) return false;
+      if (automatedOnly && !AUTOMATED_SLUGS.has(t.slug)) return false;
+      if (timeCap !== 0 && t.estimated_minutes > timeCap) return false;
+      if (q) {
+        const hay = `${t.title} ${t.description} ${CATEGORY_LABEL[t.category] ?? t.category}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+
+    const originalIndex = new Map(PLAYBOOK_TEMPLATES.map((t, i) => [t.slug, i]));
+    list = [...list].sort((a, b) => {
+      if (sort === "popular") {
+        const ap = POPULAR_SET.has(a.slug) ? 0 : 1;
+        const bp = POPULAR_SET.has(b.slug) ? 0 : 1;
+        if (ap !== bp) return ap - bp;
+        return b.reward_score - a.reward_score;
+      }
+      if (sort === "recent") {
+        return (originalIndex.get(b.slug) ?? 0) - (originalIndex.get(a.slug) ?? 0);
+      }
+      if (sort === "impact") return b.reward_score - a.reward_score;
+      if (sort === "quickest") return a.estimated_minutes - b.estimated_minutes;
+      return 0;
+    });
+    return list;
+  }, [query, difficulty, scope, automatedOnly, timeCap, sort]);
+
+  const grouped = useMemo(() => {
+    return PLAYBOOK_TEMPLATES.reduce<Record<string, PB[]>>((acc, t) => {
+      (acc[t.category] ||= []).push(t);
+      return acc;
+    }, {});
+  }, []);
 
   const popular = POPULAR_SLUGS
     .map((s) => PLAYBOOK_TEMPLATES.find((t) => t.slug === s))
     .filter(Boolean) as PB[];
+
+  const clearFilters = () => {
+    setQuery("");
+    setDifficulty("all");
+    setScope("all");
+    setAutomatedOnly(false);
+    setTimeCap(0);
+    setSort("popular");
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -222,44 +329,161 @@ export default function WraythResources() {
           </ul>
         </section>
 
-        {/* Popular */}
+        {/* Search + Filters */}
         <section>
           <div className="mb-4">
             <div className="text-xs uppercase tracking-[0.22em] text-violet-300 inline-flex items-center gap-2">
-              <Star className="h-3.5 w-3.5" /> Most used
+              <Search className="h-3.5 w-3.5" /> Find the right playbook
             </div>
-            <h2 className="mt-2 text-2xl font-semibold">Where most people start.</h2>
-          </div>
-          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {popular.map((t) => (
-              <PlaybookCard key={t.slug} t={t} highlight />
-            ))}
-          </ul>
-        </section>
-
-        {/* Categorized library */}
-        <section className="space-y-12">
-          <div>
-            <div className="text-xs uppercase tracking-[0.22em] text-muted-foreground">The library</div>
-            <h2 className="mt-2 text-2xl font-semibold">Organized how you actually think.</h2>
+            <h2 className="mt-2 text-2xl font-semibold">Search the library.</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Not "Credential Lifecycle Management." Just — Accounts. Passwords. MFA. Devices.
+              Try <span className="text-foreground">"gmail hacked"</span>,{" "}
+              <span className="text-foreground">"password leaked"</span>, or{" "}
+              <span className="text-foreground">"passkeys"</span>. Ray will surface every playbook that helps.
             </p>
           </div>
 
-          {Object.entries(grouped).map(([cat, list]) => (
-            <div key={cat}>
-              <h3 className="text-xs uppercase tracking-[0.22em] text-muted-foreground mb-4">
-                {CATEGORY_LABEL[cat] ?? cat}
-              </h3>
-              <ul className="grid gap-3 sm:grid-cols-2">
-                {list.map((t) => (
-                  <PlaybookCard key={t.slug} t={t} />
+          <div className="relative mb-5">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search playbooks…"
+              className="pl-9 h-11 text-base"
+            />
+            {query && (
+              <button
+                onClick={() => setQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Clear search"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mr-1">Difficulty</span>
+              {(["all", "easy", "intermediate", "advanced"] as const).map((d) => (
+                <Chip key={d} active={difficulty === d} onClick={() => setDifficulty(d)}>
+                  {d === "all" ? "All" : d[0].toUpperCase() + d.slice(1)}
+                </Chip>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mr-1">Scope</span>
+              {(["all", "personal", "business", "cloud"] as const).map((s) => (
+                <Chip key={s} active={scope === s} onClick={() => setScope(s)}>
+                  {s === "all" ? "All" : s[0].toUpperCase() + s.slice(1)}
+                  {(s === "business" || s === "cloud") && (
+                    <span className="ml-1 text-[9px] uppercase tracking-wide text-muted-foreground/70">soon</span>
+                  )}
+                </Chip>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mr-1">Time</span>
+              {([0, 5, 10, 15] as const).map((m) => (
+                <Chip key={m} active={timeCap === m} onClick={() => setTimeCap(m)}>
+                  {m === 0 ? "Any" : `≤ ${m} min`}
+                </Chip>
+              ))}
+              <Chip active={automatedOnly} onClick={() => setAutomatedOnly(!automatedOnly)}>
+                <Bot className="h-3 w-3 inline mr-1" /> Ray-automated
+              </Chip>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mr-1">Sort</span>
+              {([
+                ["popular", "Most popular"],
+                ["recent", "Recently added"],
+                ["impact", "Highest impact"],
+                ["quickest", "Quickest"],
+              ] as const).map(([id, label]) => (
+                <Chip key={id} active={sort === id} onClick={() => setSort(id)}>
+                  {label}
+                </Chip>
+              ))}
+              {anyFilter && (
+                <button
+                  onClick={clearFilters}
+                  className="ml-auto text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+                >
+                  <X className="h-3 w-3" /> Clear all
+                </button>
+              )}
+            </div>
+          </div>
+
+          {anyFilter && (
+            <div className="mt-6">
+              <div className="text-xs text-muted-foreground mb-3">
+                {results.length} {results.length === 1 ? "playbook" : "playbooks"} match
+              </div>
+              {results.length > 0 ? (
+                <ul className="grid gap-3 sm:grid-cols-2">
+                  {results.map((t) => (
+                    <PlaybookCard key={t.slug} t={t} />
+                  ))}
+                </ul>
+              ) : (
+                <div className="rounded-lg border border-dashed border-border/60 p-8 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Nothing matches yet. Ray can still help — just{" "}
+                    <Link to="/auth" className="text-violet-300 hover:underline">tell Ray what happened</Link>.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+
+        {!anyFilter && (
+          <>
+            {/* Popular */}
+            <section>
+              <div className="mb-4">
+                <div className="text-xs uppercase tracking-[0.22em] text-violet-300 inline-flex items-center gap-2">
+                  <Star className="h-3.5 w-3.5" /> Most used
+                </div>
+                <h2 className="mt-2 text-2xl font-semibold">Where most people start.</h2>
+              </div>
+              <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {popular.map((t) => (
+                  <PlaybookCard key={t.slug} t={t} highlight />
                 ))}
               </ul>
-            </div>
-          ))}
-        </section>
+            </section>
+
+            {/* Categorized library */}
+            <section className="space-y-12">
+              <div>
+                <div className="text-xs uppercase tracking-[0.22em] text-muted-foreground">The library</div>
+                <h2 className="mt-2 text-2xl font-semibold">Organized how you actually think.</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Not "Credential Lifecycle Management." Just — Accounts. Passwords. MFA. Devices.
+                </p>
+              </div>
+
+              {Object.entries(grouped).map(([cat, list]) => (
+                <div key={cat}>
+                  <h3 className="text-xs uppercase tracking-[0.22em] text-muted-foreground mb-4">
+                    {CATEGORY_LABEL[cat] ?? cat}
+                  </h3>
+                  <ul className="grid gap-3 sm:grid-cols-2">
+                    {list.map((t) => (
+                      <PlaybookCard key={t.slug} t={t} />
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </section>
+          </>
+        )}
 
         {/* Coming soon */}
         <section className="rounded-xl border border-border/50 bg-card/30 p-8">
