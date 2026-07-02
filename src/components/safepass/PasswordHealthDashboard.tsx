@@ -2,14 +2,15 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
 import { useVault } from '@/hooks/useSafePass';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Shield, 
-  AlertTriangle, 
-  CheckCircle2, 
+import {
+  Shield,
+  AlertTriangle,
+  CheckCircle2,
   XCircle,
   RefreshCw,
   Lock,
@@ -21,6 +22,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
+import { UnifiedAccountsPanel, type AccountSignalRow } from './UnifiedAccountsPanel';
 
 interface PasswordIssue {
   id: string;
