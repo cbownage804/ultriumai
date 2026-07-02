@@ -35,7 +35,15 @@ type ActionType =
   | 'run_defender_full_scan'
   | 'install_windows_updates'
   | 'lock_screen'
-  | 'sign_out_user';
+  | 'sign_out_user'
+  | 'disable_rdp'
+  | 'enable_rdp_nla'
+  | 'disable_remote_assistance'
+  | 'disable_browser_password_manager'
+  | 'disable_builtin_administrator'
+  | 'enable_defender_pua'
+  | 'enable_defender_cloud'
+  | 'update_defender_signatures';
 
 const ACTION_LABELS: Record<ActionType, string> = {
   enable_bitlocker: 'Turn on BitLocker (encrypt C:)',
@@ -46,6 +54,14 @@ const ACTION_LABELS: Record<ActionType, string> = {
   install_windows_updates: 'Install pending Windows updates',
   lock_screen: 'Lock the screen',
   sign_out_user: 'Sign the user out',
+  disable_rdp: 'Disable Remote Desktop',
+  enable_rdp_nla: 'Require Network Level Auth for RDP',
+  disable_remote_assistance: 'Disable Remote Assistance',
+  disable_browser_password_manager: 'Disable browser password manager',
+  disable_builtin_administrator: 'Disable built-in Administrator',
+  enable_defender_pua: 'Enable Defender PUA protection',
+  enable_defender_cloud: 'Enable Defender cloud protection',
+  update_defender_signatures: 'Update Defender signatures',
 };
 
 interface ActionRow {
@@ -118,7 +134,7 @@ export function DeviceActionsMenu({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deviceId]);
 
-  const run = async (action_type: ActionType) => {
+  const run = async (action_type: ActionType, params?: Record<string, unknown>) => {
     if (action_type === 'lock_screen' && !sessionLockSupported) {
       toast.error('Update the Wrayth agent first', {
         description: 'Screen lock needs agent v0.1.1+ so the command runs in the signed-in Windows session.',
@@ -128,7 +144,7 @@ export function DeviceActionsMenu({
     setPending(action_type);
     try {
       const { error } = await supabase.functions.invoke('agent-action-request', {
-        body: { device_id: deviceId, action_type },
+        body: { device_id: deviceId, action_type, params: params ?? {} },
       });
       if (error) throw error;
       toast.success('Approved — I sent it to the agent.', {
@@ -189,6 +205,37 @@ export function DeviceActionsMenu({
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => run('run_defender_full_scan')}>
             <Sparkles className="mr-2 h-4 w-4" /> {ACTION_LABELS.run_defender_full_scan}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => run('enable_defender_pua')}>
+            <ShieldCheck className="mr-2 h-4 w-4" /> {ACTION_LABELS.enable_defender_pua}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => run('enable_defender_cloud')}>
+            <ShieldCheck className="mr-2 h-4 w-4" /> {ACTION_LABELS.enable_defender_cloud}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => run('update_defender_signatures')}>
+            <RefreshCw className="mr-2 h-4 w-4" /> {ACTION_LABELS.update_defender_signatures}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel className="text-xs text-muted-foreground">Remote access</DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => run('disable_rdp')}>
+            <ShieldCheck className="mr-2 h-4 w-4" /> {ACTION_LABELS.disable_rdp}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => run('enable_rdp_nla')}>
+            <ShieldCheck className="mr-2 h-4 w-4" /> {ACTION_LABELS.enable_rdp_nla}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => run('disable_remote_assistance')}>
+            <ShieldCheck className="mr-2 h-4 w-4" /> {ACTION_LABELS.disable_remote_assistance}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel className="text-xs text-muted-foreground">Passwords & accounts</DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => run('disable_browser_password_manager', { browser: 'chrome' })}>
+            <ShieldCheck className="mr-2 h-4 w-4" /> Disable Chrome password manager
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => run('disable_browser_password_manager', { browser: 'edge' })}>
+            <ShieldCheck className="mr-2 h-4 w-4" /> Disable Edge password manager
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => run('disable_builtin_administrator')}>
+            <ShieldCheck className="mr-2 h-4 w-4" /> {ACTION_LABELS.disable_builtin_administrator}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuLabel className="text-xs text-muted-foreground">Maintenance</DropdownMenuLabel>

@@ -1,0 +1,10 @@
+ALTER TYPE public.wrayth_action_type ADD VALUE IF NOT EXISTS 'disable_rdp';
+ALTER TYPE public.wrayth_action_type ADD VALUE IF NOT EXISTS 'enable_rdp_nla';
+ALTER TYPE public.wrayth_action_type ADD VALUE IF NOT EXISTS 'disable_remote_assistance';
+ALTER TYPE public.wrayth_action_type ADD VALUE IF NOT EXISTS 'disable_browser_password_manager';
+ALTER TYPE public.wrayth_action_type ADD VALUE IF NOT EXISTS 'remove_local_admin';
+ALTER TYPE public.wrayth_action_type ADD VALUE IF NOT EXISTS 'disable_builtin_administrator';
+ALTER TYPE public.wrayth_action_type ADD VALUE IF NOT EXISTS 'enable_defender_pua';
+ALTER TYPE public.wrayth_action_type ADD VALUE IF NOT EXISTS 'enable_defender_cloud';
+ALTER TYPE public.wrayth_action_type ADD VALUE IF NOT EXISTS 'update_defender_signatures';
+ALTER TYPE public.wrayth_action_type ADD VALUE IF NOT EXISTS 'disable_startup_item';

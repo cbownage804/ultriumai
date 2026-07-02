@@ -70,6 +70,27 @@ interface Posture {
   listening_ports?: ListeningPort[];
   browser_extensions?: BrowserExtension[];
   logged_in_user?: string;
+  // v0.2.0 additions
+  rdp_security?: { rdp_enabled?: boolean; nla_enabled?: boolean; remote_assistance_enabled?: boolean };
+  local_admins_detail?: Array<{ name: string; object_class?: string; enabled?: boolean; is_builtin?: boolean; sid?: string }>;
+  browser_passwords?: {
+    chrome?: { manager_disabled_by_policy?: boolean; stored_count?: number };
+    edge?: { manager_disabled_by_policy?: boolean; stored_count?: number };
+  };
+  defender_detail?: {
+    last_quick_scan?: string;
+    last_full_scan?: string;
+    cloud_protection?: boolean;
+    pua_protection?: boolean;
+    sample_submission?: string;
+  };
+  update_categories?: {
+    security?: number;
+    drivers?: number;
+    feature?: number;
+    office?: number;
+    other?: number;
+  };
 }
 
 // --- Basic CVE hint table ---------------------------------------------------
@@ -301,6 +322,72 @@ function computeFindings(p: Posture): Array<{
       detail: 'Pending security patches usually need a reboot to take effect.',
     });
   }
+  // v0.2.0 findings
+  if (p.rdp_security?.rdp_enabled) {
+    if (p.rdp_security.nla_enabled === false) {
+      findings.push({
+        severity: 'critical',
+        title: 'RDP is on without Network Level Authentication.',
+        detail: 'Attackers can hit the login screen directly. Turn NLA on — or turn RDP off.',
+      });
+    }
+    if (p.rdp_security.remote_assistance_enabled) {
+      findings.push({
+        severity: 'warn',
+        title: 'Remote Assistance is enabled.',
+        detail: 'If you never use it, disable it — it broadens your remote-access surface.',
+      });
+    }
+  }
+  const builtinAdmin = (p.local_admins_detail ?? []).find((a) => a.is_builtin);
+  if (builtinAdmin?.enabled) {
+    findings.push({
+      severity: 'warn',
+      title: 'The built-in Administrator account is enabled.',
+      detail: 'Best practice is to disable it and use a named admin instead.',
+    });
+  }
+  if (p.browser_passwords?.chrome && (p.browser_passwords.chrome.stored_count ?? 0) > 0 && !p.browser_passwords.chrome.manager_disabled_by_policy) {
+    findings.push({
+      severity: 'warn',
+      title: `Chrome is storing ${p.browser_passwords.chrome.stored_count} passwords locally.`,
+      detail: 'Move them into a real vault and disable Chrome\'s built-in manager.',
+    });
+  }
+  if (p.browser_passwords?.edge && (p.browser_passwords.edge.stored_count ?? 0) > 0 && !p.browser_passwords.edge.manager_disabled_by_policy) {
+    findings.push({
+      severity: 'warn',
+      title: `Edge is storing ${p.browser_passwords.edge.stored_count} passwords locally.`,
+      detail: 'Move them into a real vault and disable Edge\'s built-in manager.',
+    });
+  }
+  if (p.defender_detail) {
+    if (p.defender_detail.pua_protection === false) {
+      findings.push({
+        severity: 'warn',
+        title: 'Defender PUA protection is off.',
+        detail: 'Potentially Unwanted Apps (adware, bundleware) will slip through. Turn it on.',
+      });
+    }
+    if (p.defender_detail.cloud_protection === false) {
+      findings.push({
+        severity: 'warn',
+        title: 'Defender cloud protection is off.',
+        detail: 'Cloud-delivered protection catches brand-new threats faster.',
+      });
+    }
+  }
+  if (p.update_categories) {
+    const sec = p.update_categories.security ?? 0;
+    if (sec > 0) {
+      findings.push({
+        severity: sec > 3 ? 'critical' : 'warn',
+        title: `${sec} security update${sec === 1 ? ' is' : 's are'} pending.`,
+        detail: 'Security updates should go on as soon as possible.',
+      });
+    }
+  }
+
   if (findings.length === 0) {
     findings.push({
       severity: 'info',
@@ -309,6 +396,64 @@ function computeFindings(p: Posture): Array<{
     });
   }
   return findings;
+}
+
+// A "fix plan" is the list of one-tap actions Ray can queue to resolve current
+// findings. Kept server-side so the client just renders + posts by name.
+interface FixStep { action_type: string; label: string; params?: Record<string, unknown>; severity: 'critical' | 'warn' }
+
+function buildFixPlan(p: Posture): FixStep[] {
+  const plan: FixStep[] = [];
+  if (p.disk_encryption && !p.disk_encryption.enabled) {
+    plan.push({ action_type: 'enable_bitlocker', label: 'Turn on BitLocker and escrow the recovery key', severity: 'critical' });
+  }
+  if (p.firewall && !p.firewall.enabled) {
+    plan.push({ action_type: 'enable_firewall', label: 'Turn Windows Firewall back on', severity: 'critical' });
+  }
+  if (p.antivirus && (p.antivirus.enabled === false || p.antivirus.realtime_protection === false)) {
+    plan.push({ action_type: 'enable_defender', label: 'Re-enable Defender + update signatures', severity: 'critical' });
+  } else if ((p.antivirus?.definitions_age_days ?? 0) > 7) {
+    plan.push({ action_type: 'update_defender_signatures', label: 'Update Defender signatures', severity: 'warn' });
+  }
+  if (p.defender_detail?.pua_protection === false) {
+    plan.push({ action_type: 'enable_defender_pua', label: 'Enable Defender PUA protection', severity: 'warn' });
+  }
+  if (p.defender_detail?.cloud_protection === false) {
+    plan.push({ action_type: 'enable_defender_cloud', label: 'Enable Defender cloud protection', severity: 'warn' });
+  }
+  if (p.rdp_security?.rdp_enabled && p.rdp_security.nla_enabled === false) {
+    plan.push({ action_type: 'enable_rdp_nla', label: 'Require Network Level Auth for RDP', severity: 'critical' });
+  }
+  if (p.rdp_security?.remote_assistance_enabled) {
+    plan.push({ action_type: 'disable_remote_assistance', label: 'Disable Remote Assistance', severity: 'warn' });
+  }
+  const builtin = (p.local_admins_detail ?? []).find((a) => a.is_builtin);
+  if (builtin?.enabled) {
+    plan.push({ action_type: 'disable_builtin_administrator', label: 'Disable the built-in Administrator', severity: 'warn' });
+  }
+  if (p.browser_passwords?.chrome && (p.browser_passwords.chrome.stored_count ?? 0) > 0 && !p.browser_passwords.chrome.manager_disabled_by_policy) {
+    plan.push({ action_type: 'disable_browser_password_manager', label: 'Disable Chrome password manager', params: { browser: 'chrome' }, severity: 'warn' });
+  }
+  if (p.browser_passwords?.edge && (p.browser_passwords.edge.stored_count ?? 0) > 0 && !p.browser_passwords.edge.manager_disabled_by_policy) {
+    plan.push({ action_type: 'disable_browser_password_manager', label: 'Disable Edge password manager', params: { browser: 'edge' }, severity: 'warn' });
+  }
+  if ((p.update_categories?.security ?? 0) > 0 || (p.pending_updates ?? 0) > 0) {
+    plan.push({ action_type: 'install_windows_updates', label: 'Install pending Windows updates', severity: 'warn' });
+  }
+  return plan;
+}
+
+// 0–100 posture score. Simple, transparent, deterministic.
+function computeSecurityScore(p: Posture, findings: Array<{ severity: string }>): number {
+  let score = 100;
+  for (const f of findings) {
+    if (f.severity === 'critical') score -= 12;
+    else if (f.severity === 'warn') score -= 5;
+  }
+  // Extra pull for structural gaps
+  if (p.disk_encryption && !p.disk_encryption.enabled) score -= 5;
+  if (p.antivirus && !p.antivirus.enabled) score -= 5;
+  return Math.max(0, Math.min(100, score));
 }
 
 Deno.serve(async (req) => {
@@ -370,6 +515,11 @@ Deno.serve(async (req) => {
     }
     findings.push(...drift);
 
+    const fixPlan = buildFixPlan(payload);
+    const securityScore = computeSecurityScore(payload, findings);
+    // Attach Ray's derived context to the stored payload so the UI has one source of truth
+    const enrichedPayload = { ...payload, _ray: { score: securityScore, fix_plan: fixPlan } };
+
     const now = new Date().toISOString();
 
     // Update last_seen and rolling metadata on the device
@@ -389,7 +539,7 @@ Deno.serve(async (req) => {
         device_id: device.id,
         user_id: device.user_id,
         captured_at: now,
-        payload,
+        payload: enrichedPayload,
         findings,
       },
       { onConflict: 'device_id' },
@@ -400,7 +550,7 @@ Deno.serve(async (req) => {
       device_id: device.id,
       user_id: device.user_id,
       captured_at: now,
-      payload,
+      payload: enrichedPayload,
       findings,
     });
 

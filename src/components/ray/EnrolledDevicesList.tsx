@@ -23,6 +23,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { DeviceActionsMenu } from './DeviceActionsMenu';
 import { DeviceIntelPanel } from './DeviceIntelPanel';
+import { RayFixPanel } from './RayFixPanel';
 
 interface Finding {
   severity: 'info' | 'warn' | 'critical';
@@ -30,6 +31,7 @@ interface Finding {
   detail: string;
 }
 
+interface FixStep { action_type: string; label: string; params?: Record<string, unknown>; severity: 'critical' | 'warn' }
 interface Posture {
   disk_encryption?: { enabled?: boolean; percent_encrypted?: number; method?: string };
   firewall?: { enabled?: boolean; all_profiles_enabled?: boolean; profiles?: Record<string, boolean> };
@@ -39,10 +41,19 @@ interface Posture {
   uac?: { enabled?: boolean };
   remote_desktop?: { enabled?: boolean };
   local_admins?: { count?: number };
+  local_admins_detail?: Array<{ name: string; enabled?: boolean; is_builtin?: boolean }>;
   disk?: { free_gb?: number; total_gb?: number };
   memory?: { free_gb?: number; total_gb?: number };
   pending_updates?: number;
   last_patch_at?: string;
+  rdp_security?: { rdp_enabled?: boolean; nla_enabled?: boolean; remote_assistance_enabled?: boolean };
+  browser_passwords?: {
+    chrome?: { manager_disabled_by_policy?: boolean; stored_count?: number };
+    edge?: { manager_disabled_by_policy?: boolean; stored_count?: number };
+  };
+  defender_detail?: { cloud_protection?: boolean; pua_protection?: boolean; last_quick_scan?: string; last_full_scan?: string };
+  update_categories?: { security?: number; drivers?: number; feature?: number; office?: number; other?: number };
+  _ray?: { score?: number; fix_plan?: FixStep[] };
 }
 
 interface Device {
@@ -175,19 +186,57 @@ function buildPostureChips(p: Posture): Array<{
     });
   }
   if (p.remote_desktop) {
+    const nla = p.rdp_security?.nla_enabled;
     chips.push({
       icon: ShieldAlert,
       label: 'RDP',
-      value: p.remote_desktop.enabled ? 'Enabled' : 'Disabled',
-      tone: p.remote_desktop.enabled ? 'warn' : 'good',
+      value: !p.remote_desktop.enabled
+        ? 'Disabled'
+        : nla === false
+        ? 'On (no NLA)'
+        : 'On + NLA',
+      tone: !p.remote_desktop.enabled ? 'good' : nla === false ? 'bad' : 'warn',
     });
   }
+  if (p.rdp_security?.remote_assistance_enabled) {
+    chips.push({ icon: ShieldAlert, label: 'Remote Assist', value: 'Enabled', tone: 'warn' });
+  }
+  if (p.defender_detail) {
+    chips.push({
+      icon: ShieldCheck,
+      label: 'Defender cloud',
+      value: p.defender_detail.cloud_protection ? 'On' : 'Off',
+      tone: p.defender_detail.cloud_protection ? 'good' : 'warn',
+    });
+    chips.push({
+      icon: ShieldCheck,
+      label: 'PUA protection',
+      value: p.defender_detail.pua_protection ? 'On' : 'Off',
+      tone: p.defender_detail.pua_protection ? 'good' : 'warn',
+    });
+  }
+  if (p.browser_passwords) {
+    const c = p.browser_passwords.chrome?.stored_count ?? 0;
+    const e = p.browser_passwords.edge?.stored_count ?? 0;
+    if (c > 0 || e > 0) {
+      chips.push({
+        icon: ShieldAlert,
+        label: 'Browser pw',
+        value: `${c + e} stored`,
+        tone: c + e > 0 ? 'warn' : 'good',
+      });
+    }
+  }
   if (typeof p.pending_updates === 'number') {
+    const uc = p.update_categories;
+    const label = uc && (uc.security || uc.drivers || uc.feature || uc.office)
+      ? `${uc.security || 0} sec · ${uc.drivers || 0} drv`
+      : p.pending_updates === 0 ? 'Up to date' : `${p.pending_updates} pending`;
     chips.push({
       icon: ShieldAlert,
       label: 'Updates',
-      value: p.pending_updates === 0 ? 'Up to date' : `${p.pending_updates} pending`,
-      tone: p.pending_updates === 0 ? 'good' : p.pending_updates > 5 ? 'warn' : 'unknown',
+      value: label,
+      tone: (uc?.security ?? 0) > 0 ? 'bad' : p.pending_updates === 0 ? 'good' : p.pending_updates > 5 ? 'warn' : 'unknown',
     });
   }
   if (p.disk && typeof p.disk.free_gb === 'number' && typeof p.disk.total_gb === 'number') {
@@ -199,11 +248,12 @@ function buildPostureChips(p: Posture): Array<{
     });
   }
   if (p.local_admins && typeof p.local_admins.count === 'number') {
+    const builtinOn = (p.local_admins_detail ?? []).some((a) => a.is_builtin && a.enabled);
     chips.push({
       icon: Cpu,
       label: 'Local admins',
-      value: `${p.local_admins.count}`,
-      tone: p.local_admins.count > 2 ? 'warn' : 'good',
+      value: `${p.local_admins.count}${builtinOn ? ' (built-in on)' : ''}`,
+      tone: builtinOn ? 'warn' : p.local_admins.count > 2 ? 'warn' : 'good',
     });
   }
   return chips;
@@ -347,6 +397,15 @@ export function EnrolledDevicesList() {
                 </Button>
               </div>
 
+              {d.posture && (
+                <RayFixPanel
+                  deviceId={d.id}
+                  score={d.posture._ray?.score}
+                  plan={d.posture._ray?.fix_plan ?? []}
+                  disabled={!online}
+                />
+              )}
+
               {d.posture && (() => {
                 const chips = buildPostureChips(d.posture);
                 if (!chips.length) return null;
@@ -358,6 +417,7 @@ export function EnrolledDevicesList() {
                   </div>
                 );
               })()}
+
 
 
               {d.findings.length > 0 && (

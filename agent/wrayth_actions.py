@@ -310,6 +310,103 @@ def _sign_out(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
     return rc == 0, {"stdout": out}, err or None if rc != 0 else None
 
 
+# ---------- v0.2.0 additions ---------------------------------------------
+
+def _disable_rdp(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    rc, out, err = _ps(
+        "Set-ItemProperty 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server' "
+        "-Name fDenyTSConnections -Value 1; "
+        "Disable-NetFirewallRule -DisplayGroup 'Remote Desktop' -ErrorAction SilentlyContinue; 'ok'"
+    )
+    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+
+
+def _enable_rdp_nla(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    rc, out, err = _ps(
+        "Set-ItemProperty 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server\\WinStations\\RDP-Tcp' "
+        "-Name UserAuthentication -Value 1; 'ok'"
+    )
+    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+
+
+def _disable_remote_assistance(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    rc, out, err = _ps(
+        "Set-ItemProperty 'HKLM:\\System\\CurrentControlSet\\Control\\Remote Assistance' "
+        "-Name fAllowToGetHelp -Value 0; 'ok'"
+    )
+    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+
+
+def _disable_browser_password_manager(p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    browser = str(p.get("browser") or "all").lower()
+    scripts = []
+    if browser in ("all", "chrome"):
+        scripts.append(
+            "New-Item -Path 'HKLM:\\SOFTWARE\\Policies\\Google\\Chrome' -Force | Out-Null; "
+            "Set-ItemProperty 'HKLM:\\SOFTWARE\\Policies\\Google\\Chrome' -Name PasswordManagerEnabled -Value 0 -Type DWord;"
+        )
+    if browser in ("all", "edge"):
+        scripts.append(
+            "New-Item -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge' -Force | Out-Null; "
+            "Set-ItemProperty 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge' -Name PasswordManagerEnabled -Value 0 -Type DWord;"
+        )
+    rc, out, err = _ps(" ".join(scripts) + " 'ok'")
+    return rc == 0, {"stdout": out, "browser": browser}, err or None if rc != 0 else None
+
+
+def _remove_local_admin(p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    name = str(p.get("name") or "").strip()
+    if not name:
+        return False, {}, "missing name"
+    # Refuse to remove built-in Administrator (SID *-500)
+    if name.lower().endswith("\\administrator") or name.lower() == "administrator":
+        return False, {"reason": "builtin_administrator"}, "Use disable_builtin_administrator instead"
+    safe = name.replace("'", "''")
+    rc, out, err = _ps(
+        f"Remove-LocalGroupMember -Group 'Administrators' -Member '{safe}' -ErrorAction Stop; 'ok'"
+    )
+    return rc == 0, {"stdout": out, "name": name}, err or None if rc != 0 else None
+
+
+def _disable_builtin_administrator(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    rc, out, err = _ps(
+        "Get-LocalUser | Where-Object { $_.SID -like '*-500' } | Disable-LocalUser; 'ok'"
+    )
+    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+
+
+def _enable_defender_pua(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    rc, out, err = _ps("Set-MpPreference -PUAProtection Enabled; 'ok'")
+    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+
+
+def _enable_defender_cloud(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    rc, out, err = _ps(
+        "Set-MpPreference -MAPSReporting Advanced -SubmitSamplesConsent SendSafeSamples; 'ok'"
+    )
+    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+
+
+def _update_defender_signatures(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    rc, out, err = _ps("Update-MpSignature; 'ok'", timeout=600)
+    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+
+
+def _disable_startup_item(p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    location = str(p.get("location") or "").strip()
+    name = str(p.get("name") or "").strip()
+    if not location or not name:
+        return False, {}, "missing location/name"
+    if "Run" not in location:
+        return False, {}, "unsupported location"
+    safe_loc = location.replace("'", "''")
+    safe_name = name.replace("'", "''")
+    rc, out, err = _ps(
+        f"Remove-ItemProperty -Path '{safe_loc}' -Name '{safe_name}' -ErrorAction Stop; 'ok'"
+    )
+    return rc == 0, {"stdout": out, "removed": name}, err or None if rc != 0 else None
+
+
 HANDLERS = {
     "enable_bitlocker": _enable_bitlocker,
     "enable_firewall": _enable_firewall,
@@ -319,6 +416,16 @@ HANDLERS = {
     "install_windows_updates": _install_updates,
     "lock_screen": _lock_screen,
     "sign_out_user": _sign_out,
+    "disable_rdp": _disable_rdp,
+    "enable_rdp_nla": _enable_rdp_nla,
+    "disable_remote_assistance": _disable_remote_assistance,
+    "disable_browser_password_manager": _disable_browser_password_manager,
+    "remove_local_admin": _remove_local_admin,
+    "disable_builtin_administrator": _disable_builtin_administrator,
+    "enable_defender_pua": _enable_defender_pua,
+    "enable_defender_cloud": _enable_defender_cloud,
+    "update_defender_signatures": _update_defender_signatures,
+    "disable_startup_item": _disable_startup_item,
 }
 
 
