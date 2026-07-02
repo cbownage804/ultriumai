@@ -269,7 +269,7 @@ export function EnrolledDevicesList() {
   const load = async () => {
     const { data: rows, error } = await supabase
       .from('wrayth_devices')
-      .select('id, hostname, os, os_version, agent_version, last_seen_at, revoked_at')
+      .select('id, hostname, os, os_version, agent_version, last_seen_at, revoked_at, release_channel, last_update_check_at')
       .order('last_seen_at', { ascending: false, nullsFirst: false });
     if (error) {
       toast.error("I couldn't load your devices", { description: error.message });
