@@ -104,11 +104,11 @@ export function ThreatScanInput() {
             }
           }}
         />
-        <div className="mt-3 flex flex-wrap gap-1.5">
+        <div className="mt-3 flex flex-wrap gap-2">
           {ACCEPTED.map((a) => (
             <span
               key={a}
-              className="rounded-full border border-violet-500/20 bg-violet-500/[0.05] px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-violet-200/80"
+              className="rounded-full border border-violet-500/20 bg-violet-500/[0.05] px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-violet-200/80"
             >
               {a}
             </span>
@@ -120,14 +120,19 @@ export function ThreatScanInput() {
               ? 'Drop it — I\'ll take it from here.'
               : 'Ray runs a first-pass verdict instantly. Personalization needs your vault open.'}
           </span>
-          <Button
-            size="sm"
-            onClick={handleAnalyze}
-            disabled={!input.trim()}
-            className="bg-violet-500 text-white hover:bg-violet-500/90"
-          >
-            Analyze
-          </Button>
+          <div className="flex items-center gap-3">
+            <span className="hidden sm:inline text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
+              Drag &amp; drop supported
+            </span>
+            <Button
+              size="sm"
+              onClick={handleAnalyze}
+              disabled={!input.trim()}
+              className="bg-violet-500 text-white hover:bg-violet-500/90"
+            >
+              Analyze
+            </Button>
+          </div>
         </div>
       </div>
 
