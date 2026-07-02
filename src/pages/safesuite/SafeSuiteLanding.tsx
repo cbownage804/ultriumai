@@ -362,10 +362,8 @@ export default function WraythLanding() {
             <p className="text-sm text-muted-foreground">
               © {new Date().getFullYear()} Wrayth. Ray is always watching.
             </p>
-            <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Wrayth. Ray is always watching.
-            </p>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
+
               <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
               <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
               <Link to="/security" className="hover:text-foreground transition-colors">Security</Link>
