@@ -164,33 +164,61 @@ export function InstallAgentDialog({
           <div className="space-y-4">
             <ol className="space-y-3 text-sm">
               <li className="rounded-lg border border-border/60 p-3">
-                <div className="font-medium text-foreground mb-2">1. Download the agent</div>
-                <Button asChild variant="outline" size="sm">
-                  <a href={AGENT_DOWNLOAD_URL} target="_blank" rel="noreferrer">
-                    <Download className="mr-2 h-4 w-4" /> WraythAgent.exe
+                <div className="font-medium text-foreground mb-2">1. Download the installer</div>
+                <Button asChild size="sm" className="bg-violet-600 hover:bg-violet-500 text-white">
+                  <a href={SETUP_DOWNLOAD_URL} target="_blank" rel="noreferrer">
+                    <Download className="mr-2 h-4 w-4" /> WraythSetup.exe
                   </a>
                 </Button>
-              </li>
-              <li className="rounded-lg border border-border/60 p-3">
-                <div className="font-medium text-foreground mb-2">2. Download your config</div>
-                <p className="text-xs text-muted-foreground mb-2">
-                  Contains your one-time enrollment code. Save it in the same
-                  folder as the EXE.
+                <p className="mt-2 text-[11px] text-muted-foreground/80">
+                  One click. Signed Windows installer — no PowerShell, no ZIP.
                 </p>
-                <Button onClick={downloadConfig} variant="outline" size="sm">
-                  <Download className="mr-2 h-4 w-4" /> wrayth-config.json
-                </Button>
-                <div className="mt-2 text-[11px] text-muted-foreground/80">
-                  Code (also inside the file): <code className="rounded bg-muted px-1 py-0.5">{enroll.code}</code>
-                </div>
               </li>
               <li className="rounded-lg border border-border/60 p-3">
-                <div className="font-medium text-foreground mb-2">3. Double-click WraythAgent.exe</div>
+                <div className="font-medium text-foreground mb-2">2. Paste this code when it asks</div>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 rounded bg-muted px-2 py-1.5 text-sm font-mono tracking-wider">
+                    {enroll.code}
+                  </code>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(enroll.code);
+                      toast.success('Code copied');
+                    }}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+                <p className="mt-2 text-[11px] text-muted-foreground/80">
+                  Valid for 15 minutes. The installer registers the agent as a Windows service and starts it — no reboot required.
+                </p>
+              </li>
+              <li className="rounded-lg border border-border/60 p-3">
+                <div className="font-medium text-foreground mb-2">3. That's it</div>
                 <p className="text-xs text-muted-foreground">
-                  It'll enroll silently and start checking in every hour.
+                  Ray will show this machine here as soon as the service checks in (usually within a minute).
                 </p>
               </li>
             </ol>
+
+            <details className="text-xs text-muted-foreground">
+              <summary className="cursor-pointer hover:text-foreground">Advanced: raw EXE + config</summary>
+              <div className="mt-2 space-y-2 rounded-md border border-border/60 p-2">
+                <p>Prefer to script it? Grab the raw agent and a config file:</p>
+                <div className="flex gap-2">
+                  <Button asChild variant="outline" size="sm">
+                    <a href={RAW_EXE_DOWNLOAD_URL} target="_blank" rel="noreferrer">
+                      <Download className="mr-1.5 h-3.5 w-3.5" /> WraythAgent.exe
+                    </a>
+                  </Button>
+                  <Button onClick={downloadConfig} variant="outline" size="sm">
+                    <Download className="mr-1.5 h-3.5 w-3.5" /> wrayth-config.json
+                  </Button>
+                </div>
+              </div>
+            </details>
 
             {confirmed ? (
               <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-200">
