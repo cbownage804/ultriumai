@@ -455,7 +455,15 @@ export const PasswordHealthDashboard = () => {
 
 
       {/* Unified relationships view — one account, every signal */}
-      <UnifiedAccountsPanel rows={unifiedRows} />
+      <UnifiedAccountsPanel rows={unifiedRows} onRotate={(id) => setRotateEntryId(id)} />
+
+      <RotatePasswordDialog
+        entry={rotateEntry}
+        open={!!rotateEntryId}
+        onOpenChange={(o) => { if (!o) setRotateEntryId(null); }}
+        onRotated={() => { setRotateEntryId(null); scanPasswords(); }}
+      />
+
 
       {/* Health Score */}
       <Card className="overflow-hidden">
