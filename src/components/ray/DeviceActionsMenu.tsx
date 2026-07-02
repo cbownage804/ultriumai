@@ -206,6 +206,37 @@ export function DeviceActionsMenu({
           <DropdownMenuItem onClick={() => run('run_defender_full_scan')}>
             <Sparkles className="mr-2 h-4 w-4" /> {ACTION_LABELS.run_defender_full_scan}
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => run('enable_defender_pua')}>
+            <ShieldCheck className="mr-2 h-4 w-4" /> {ACTION_LABELS.enable_defender_pua}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => run('enable_defender_cloud')}>
+            <ShieldCheck className="mr-2 h-4 w-4" /> {ACTION_LABELS.enable_defender_cloud}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => run('update_defender_signatures')}>
+            <RefreshCw className="mr-2 h-4 w-4" /> {ACTION_LABELS.update_defender_signatures}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel className="text-xs text-muted-foreground">Remote access</DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => run('disable_rdp')}>
+            <ShieldCheck className="mr-2 h-4 w-4" /> {ACTION_LABELS.disable_rdp}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => run('enable_rdp_nla')}>
+            <ShieldCheck className="mr-2 h-4 w-4" /> {ACTION_LABELS.enable_rdp_nla}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => run('disable_remote_assistance')}>
+            <ShieldCheck className="mr-2 h-4 w-4" /> {ACTION_LABELS.disable_remote_assistance}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel className="text-xs text-muted-foreground">Passwords & accounts</DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => run('disable_browser_password_manager', { browser: 'chrome' })}>
+            <ShieldCheck className="mr-2 h-4 w-4" /> Disable Chrome password manager
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => run('disable_browser_password_manager', { browser: 'edge' })}>
+            <ShieldCheck className="mr-2 h-4 w-4" /> Disable Edge password manager
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => run('disable_builtin_administrator')}>
+            <ShieldCheck className="mr-2 h-4 w-4" /> {ACTION_LABELS.disable_builtin_administrator}
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuLabel className="text-xs text-muted-foreground">Maintenance</DropdownMenuLabel>
           <DropdownMenuItem onClick={() => run('install_windows_updates')}>
