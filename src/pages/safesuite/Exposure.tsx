@@ -322,6 +322,7 @@ export default function WraythWeb() {
     switch (type) {
       case 'email': return <Mail className="h-4 w-4" />;
       case 'domain': return <Globe className="h-4 w-4" />;
+      case 'phone': return <Hash className="h-4 w-4" />;
       case 'brand': return <Hash className="h-4 w-4" />;
       default: return <Hash className="h-4 w-4" />;
     }
