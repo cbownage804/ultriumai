@@ -349,7 +349,27 @@ Deno.serve(async (req) => {
     }
 
     const payload: Posture = await req.json();
+
+    // Pull previous snapshot for drift detection
+    const { data: prevRow } = await admin
+      .from('wrayth_device_posture')
+      .select('payload')
+      .eq('device_id', device.id)
+      .maybeSingle();
+    const prevPayload = (prevRow?.payload as Posture | undefined) ?? null;
+
     const findings = computeFindings(payload);
+    const drift = computeDriftFindings(prevPayload, payload);
+    const cveHits = findCveHits(payload.installed_software ?? []);
+    for (const c of cveHits.slice(0, 5)) {
+      findings.push({
+        severity: 'critical',
+        title: `${c.name} ${c.version} is out of date.`,
+        detail: c.note,
+      });
+    }
+    findings.push(...drift);
+
     const now = new Date().toISOString();
 
     // Update last_seen and rolling metadata on the device
@@ -383,6 +403,7 @@ Deno.serve(async (req) => {
       payload,
       findings,
     });
+
 
     return new Response(JSON.stringify({ ok: true, next_check_in_seconds: 3600 }), {
       headers: { ...cors, 'Content-Type': 'application/json' },
