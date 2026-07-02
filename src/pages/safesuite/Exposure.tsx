@@ -86,7 +86,7 @@ export default function WraythWeb() {
   const [loadingThreats, setLoadingThreats] = useState<Set<string>>(new Set());
   const [scanningAssetId, setScanningAssetId] = useState<string | null>(null);
   const [newAsset, setNewAsset] = useState('');
-  const [assetType, setAssetType] = useState<'email' | 'domain' | 'brand'>('email');
+  const [assetType, setAssetType] = useState<'email' | 'domain' | 'phone'>('email');
   const [selectedThreat, setSelectedThreat] = useState<ThreatDetails | null>(null);
   const [aiRecommendation, setAiRecommendation] = useState<string | null>(null);
   const [loadingRecommendation, setLoadingRecommendation] = useState(false);
@@ -322,6 +322,7 @@ export default function WraythWeb() {
     switch (type) {
       case 'email': return <Mail className="h-4 w-4" />;
       case 'domain': return <Globe className="h-4 w-4" />;
+      case 'phone': return <Hash className="h-4 w-4" />;
       case 'brand': return <Hash className="h-4 w-4" />;
       default: return <Hash className="h-4 w-4" />;
     }
@@ -504,7 +505,7 @@ export default function WraythWeb() {
             >
               <option value="email">Email</option>
               <option value="domain">Domain</option>
-              <option value="brand">Brand</option>
+              <option value="phone">Phone</option>
             </select>
             <Input
               placeholder={
@@ -512,7 +513,7 @@ export default function WraythWeb() {
                   ? 'Enter email address...'
                   : assetType === 'domain'
                   ? 'Enter domain...'
-                  : 'Enter brand name...'
+                  : 'Enter phone (e.g. +15551234567)...'
               }
               value={newAsset}
               onChange={(e) => setNewAsset(e.target.value)}
