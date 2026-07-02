@@ -18265,59 +18265,156 @@ export type Database = {
       ray_recommendations: {
         Row: {
           body: string
+          category: string | null
           completed_at: string | null
           created_at: string
           dismissed_at: string | null
           estimated_fix_seconds: number | null
+          evidence: Json
+          fingerprint: string | null
+          first_seen_at: string
           id: string
+          last_seen_at: string
           objective: string | null
+          org_id: string | null
           page_context: string | null
           playbook_run_id: string | null
           priority: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          rule_slug: string | null
+          severity: string
           snoozed_until: string | null
           source_finding_ids: Json
           status: string
+          subject_id: string | null
+          subject_type: string | null
+          suggested_actions: Json
           title: string
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           body: string
+          category?: string | null
           completed_at?: string | null
           created_at?: string
           dismissed_at?: string | null
           estimated_fix_seconds?: number | null
+          evidence?: Json
+          fingerprint?: string | null
+          first_seen_at?: string
           id?: string
+          last_seen_at?: string
           objective?: string | null
+          org_id?: string | null
           page_context?: string | null
           playbook_run_id?: string | null
           priority?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          rule_slug?: string | null
+          severity?: string
           snoozed_until?: string | null
           source_finding_ids?: Json
           status?: string
+          subject_id?: string | null
+          subject_type?: string | null
+          suggested_actions?: Json
           title: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           body?: string
+          category?: string | null
           completed_at?: string | null
           created_at?: string
           dismissed_at?: string | null
           estimated_fix_seconds?: number | null
+          evidence?: Json
+          fingerprint?: string | null
+          first_seen_at?: string
           id?: string
+          last_seen_at?: string
           objective?: string | null
+          org_id?: string | null
           page_context?: string | null
           playbook_run_id?: string | null
           priority?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          rule_slug?: string | null
+          severity?: string
           snoozed_until?: string | null
           source_finding_ids?: Json
           status?: string
+          subject_id?: string | null
+          subject_type?: string | null
+          suggested_actions?: Json
           title?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ray_recommendations_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ray_scan_runs: {
+        Row: {
+          created_at: string
+          duration_ms: number | null
+          error: string | null
+          id: string
+          metadata: Json
+          org_id: string | null
+          recs_created: number
+          recs_resolved: number
+          recs_updated: number
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          metadata?: Json
+          org_id?: string | null
+          recs_created?: number
+          recs_resolved?: number
+          recs_updated?: number
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          metadata?: Json
+          org_id?: string | null
+          recs_created?: number
+          recs_resolved?: number
+          recs_updated?: number
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ray_scan_runs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ray_security_scores: {
         Row: {
