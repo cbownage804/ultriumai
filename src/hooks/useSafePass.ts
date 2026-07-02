@@ -725,6 +725,7 @@ export const useVault = () => {
     getEntryNotes,
     getEntryStrengthScore,
     isEntryShared,
-    getVaultName
+    getVaultName,
+    rotateEntryPassword,
   };
 };
