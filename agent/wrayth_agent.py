@@ -124,56 +124,152 @@ def _ps(script: str) -> str:
 def collect_windows() -> dict[str, Any]:
     posture: dict[str, Any] = {}
 
-    # BitLocker on C:
+    # BitLocker on C: — capture status + method + percent encrypted
     bl = _ps(
-        "try { (Get-BitLockerVolume -MountPoint 'C:').ProtectionStatus } "
-        "catch { 'unknown' }"
+        "try { $v = Get-BitLockerVolume -MountPoint 'C:'; "
+        "\"$($v.ProtectionStatus)|$($v.VolumeStatus)|$($v.EncryptionPercentage)|"
+        "$($v.EncryptionMethod)|$(($v.KeyProtector | ForEach-Object { $_.KeyProtectorType }) -join ',')\" } "
+        "catch { 'unknown|unknown|0|unknown|' }"
     )
+    bl_parts = (bl or "").split("|")
+    while len(bl_parts) < 5:
+        bl_parts.append("")
+    ps_status, vol_status, pct, method, protectors = bl_parts[:5]
+    try:
+        pct_i = int(float(pct or 0))
+    except ValueError:
+        pct_i = 0
     posture["disk_encryption"] = {
-        "enabled": bl.strip() == "1" or bl.strip().lower() == "on",
-        "method": "BitLocker",
+        "enabled": ps_status.strip() in ("1", "On") or vol_status.strip() == "FullyEncrypted",
+        "method": (method.strip() or "BitLocker") if ps_status.strip() != "unknown" else "unknown",
+        "protection_status": ps_status.strip(),
+        "volume_status": vol_status.strip(),
+        "percent_encrypted": pct_i,
+        "key_protectors": [p for p in protectors.split(",") if p],
     }
 
-    # Firewall (any profile enabled)
-    fw = _ps(
-        "(Get-NetFirewallProfile | Where-Object { $_.Enabled -eq 'True' } | "
-        "Measure-Object).Count"
+    # Firewall — per-profile detail so Ray can name what's off
+    fw_raw = _ps(
+        "Get-NetFirewallProfile | ForEach-Object { \"$($_.Name)=$($_.Enabled)\" }"
     )
-    try:
-        posture["firewall"] = {"enabled": int(fw) > 0}
-    except ValueError:
-        posture["firewall"] = {"enabled": False}
+    profiles: dict[str, bool] = {}
+    for line in (fw_raw or "").splitlines():
+        if "=" in line:
+            name, val = line.split("=", 1)
+            profiles[name.strip().lower()] = val.strip().lower() == "true"
+    posture["firewall"] = {
+        "enabled": any(profiles.values()) if profiles else False,
+        "profiles": profiles,
+        "all_profiles_enabled": bool(profiles) and all(profiles.values()),
+    }
 
-    # Defender
+    # Defender — enabled + signature age + real-time protection + tamper protection
     defender = _ps(
         "$s = Get-MpComputerStatus; "
-        "$age = (New-TimeSpan -Start $s.AntivirusSignatureLastUpdated -End (Get-Date)).Days; "
-        "\"$($s.AntivirusEnabled)|$age\""
+        "$age = if ($s.AntivirusSignatureLastUpdated) { "
+        "[int](New-TimeSpan -Start $s.AntivirusSignatureLastUpdated -End (Get-Date)).TotalDays } else { -1 }; "
+        "\"$($s.AntivirusEnabled)|$age|$($s.RealTimeProtectionEnabled)|"
+        "$($s.IsTamperProtected)|$($s.AntivirusSignatureVersion)\""
     )
-    if "|" in defender:
-        enabled_s, age_s = defender.split("|", 1)
-        try:
-            age = int(age_s.strip())
-        except ValueError:
-            age = -1
-        posture["antivirus"] = {
-            "name": "Microsoft Defender",
-            "enabled": enabled_s.strip().lower() == "true",
-            "definitions_age_days": age,
-        }
-    else:
-        posture["antivirus"] = {"name": "Microsoft Defender", "enabled": False}
+    d_parts = (defender or "").split("|")
+    while len(d_parts) < 5:
+        d_parts.append("")
+    posture["antivirus"] = {
+        "name": "Microsoft Defender",
+        "enabled": d_parts[0].strip().lower() == "true",
+        "definitions_age_days": int(d_parts[1]) if d_parts[1].lstrip("-").isdigit() else -1,
+        "realtime_protection": d_parts[2].strip().lower() == "true",
+        "tamper_protection": d_parts[3].strip().lower() == "true",
+        "signature_version": d_parts[4].strip(),
+    }
 
-    # Uptime
-    uptime = _ps(
-        "[int]((Get-Date) - (Get-CimInstance Win32_OperatingSystem).LastBootUpTime).TotalSeconds"
+    # TPM
+    tpm = _ps(
+        "try { $t = Get-Tpm; \"$($t.TpmPresent)|$($t.TpmReady)|$($t.ManufacturerVersion)\" } "
+        "catch { 'False|False|' }"
     )
+    t_parts = (tpm or "").split("|")
+    while len(t_parts) < 3:
+        t_parts.append("")
+    posture["tpm"] = {
+        "present": t_parts[0].strip().lower() == "true",
+        "ready": t_parts[1].strip().lower() == "true",
+        "version": t_parts[2].strip(),
+    }
+
+    # Secure Boot
+    sb = _ps("try { Confirm-SecureBootUEFI } catch { 'unknown' }")
+    posture["secure_boot"] = {
+        "enabled": sb.strip().lower() == "true",
+        "supported": sb.strip().lower() != "unknown",
+    }
+
+    # UAC
+    uac = _ps(
+        "try { (Get-ItemProperty 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System' "
+        "-Name EnableLUA).EnableLUA } catch { 0 }"
+    )
+    posture["uac"] = {"enabled": uac.strip() == "1"}
+
+    # Remote Desktop
+    rdp = _ps(
+        "try { (Get-ItemProperty 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server' "
+        "-Name fDenyTSConnections).fDenyTSConnections } catch { 1 }"
+    )
+    posture["remote_desktop"] = {"enabled": rdp.strip() == "0"}
+
+    # Local admins (count + names, excluding built-in Administrator)
+    admins = _ps(
+        "try { (Get-LocalGroupMember -Group 'Administrators' | ForEach-Object { $_.Name }) -join '|' } "
+        "catch { '' }"
+    )
+    admin_list = [a for a in (admins or "").split("|") if a.strip()]
+    posture["local_admins"] = {"count": len(admin_list), "members": admin_list[:10]}
+
+    # Disk free space on C:
+    disk = _ps(
+        "$d = Get-PSDrive -Name C; \"$([int64]$d.Used)|$([int64]$d.Free)\""
+    )
+    used_s, _, free_s = (disk or "0|0").partition("|")
     try:
-        posture["uptime_seconds"] = int(uptime)
+        used_b = int(used_s or 0)
+        free_b = int(free_s or 0)
+        posture["disk"] = {
+            "used_gb": round(used_b / (1024 ** 3), 1),
+            "free_gb": round(free_b / (1024 ** 3), 1),
+            "total_gb": round((used_b + free_b) / (1024 ** 3), 1),
+        }
+    except ValueError:
+        posture["disk"] = {"used_gb": 0, "free_gb": 0, "total_gb": 0}
+
+    # Memory
+    mem = _ps(
+        "$m = Get-CimInstance Win32_OperatingSystem; "
+        "\"$([int64]$m.TotalVisibleMemorySize)|$([int64]$m.FreePhysicalMemory)\""
+    )
+    tm, _, fm = (mem or "0|0").partition("|")
+    try:
+        posture["memory"] = {
+            "total_gb": round(int(tm or 0) / (1024 ** 2), 1),
+            "free_gb": round(int(fm or 0) / (1024 ** 2), 1),
+        }
+    except ValueError:
+        posture["memory"] = {"total_gb": 0, "free_gb": 0}
+
+    # Uptime + last boot
+    uptime = _ps(
+        "$b = (Get-CimInstance Win32_OperatingSystem).LastBootUpTime; "
+        "\"$([int]((Get-Date) - $b).TotalSeconds)|$($b.ToString('o'))\""
+    )
+    up_s, _, lb = (uptime or "0|").partition("|")
+    try:
+        posture["uptime_seconds"] = int(up_s)
     except ValueError:
         posture["uptime_seconds"] = 0
+    if lb:
+        posture["last_boot"] = lb.strip()
 
-    # Pending updates (best-effort; skip if module unavailable)
+    # Pending updates (best-effort)
     pending = _ps(
         "try { (New-Object -ComObject Microsoft.Update.Session)."
         "CreateUpdateSearcher().Search('IsInstalled=0').Updates.Count } catch { 0 }"
@@ -183,7 +279,15 @@ def collect_windows() -> dict[str, Any]:
     except ValueError:
         posture["pending_updates"] = 0
 
-    # Screen lock timeout (seconds)
+    # Last successful patch
+    last_patch = _ps(
+        "try { (Get-HotFix | Sort-Object InstalledOn -Descending | "
+        "Select-Object -First 1).InstalledOn.ToString('o') } catch { '' }"
+    )
+    if last_patch:
+        posture["last_patch_at"] = last_patch.strip()
+
+    # Screen lock timeout
     lock = _ps(
         "try { (Get-ItemProperty 'HKCU:\\Control Panel\\Desktop' -Name ScreenSaveTimeOut)."
         "ScreenSaveTimeOut } catch { '0' }"
@@ -193,7 +297,7 @@ def collect_windows() -> dict[str, Any]:
     except ValueError:
         posture["screen_lock_seconds"] = 0
 
-    # Browsers (paths + versions)
+    # Browsers
     browsers: list[dict[str, str]] = []
     for name, path in {
         "Chrome": r"C:\Program Files\Google\Chrome\Application\chrome.exe",
@@ -201,9 +305,7 @@ def collect_windows() -> dict[str, Any]:
         "Firefox": r"C:\Program Files\Mozilla Firefox\firefox.exe",
     }.items():
         if Path(path).exists():
-            ver = _ps(
-                f"(Get-Item '{path}').VersionInfo.ProductVersion"
-            )
+            ver = _ps(f"(Get-Item '{path}').VersionInfo.ProductVersion")
             browsers.append({"name": name, "version": ver or "unknown"})
     posture["browsers"] = browsers
 
