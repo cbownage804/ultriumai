@@ -224,7 +224,7 @@ export async function skillDevice(message: string, ctx: SkillContext): Promise<R
   }
 
   const anyPostureAvailable = postureByDevice.size > 0;
-  const message = !filterApplied
+  const responseMessage = !filterApplied
     ? `You have ${enriched.length} enrolled device${enriched.length === 1 ? "" : "s"}. Ask me about BitLocker, RDP, local admins, or pending updates for a focused view.`
     : subset.length === 0
     ? filterApplied && !anyPostureAvailable
