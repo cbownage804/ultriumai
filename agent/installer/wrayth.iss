@@ -65,13 +65,14 @@ Filename: "powershell.exe"; \
   Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$c = @{{ enrollment_code = '{code:GetEnrollmentCode}'; api_base = '{code:GetApiBase}' }} | ConvertTo-Json; Set-Content -Path 'C:\ProgramData\Wrayth\wrayth-config.json' -Value $c -Encoding UTF8"""; \
   Flags: runhidden; StatusMsg: "Writing enrollment config..."
 
-; Register (or refresh) the WinSW-managed service in a single PowerShell
-; step. This avoids the classic "service marked for deletion" trap that
-; happens when sc.exe delete is called while Services.msc holds a handle.
-; If the service already exists, we just stop it and refresh its config
-; instead of deleting and reinstalling.
+; Register (or refresh) the WinSW-managed service. Everything is logged to
+; C:\ProgramData\Wrayth\logs\install.log so failures (WinSW missing runtime,
+; permissions, etc.) leave a diagnosable trail instead of silently vanishing.
+; If WinSW fails to register, we fall back to a direct sc.exe create so the
+; service always ends up in services.msc. Finally we verify the service
+; exists; if not, we raise a non-zero exit code so Inno surfaces an error.
 Filename: "powershell.exe"; \
-  Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$svc = Get-Service -Name '{#MyServiceName}' -ErrorAction SilentlyContinue; if ($svc) {{ try {{ Stop-Service -Name '{#MyServiceName}' -Force -ErrorAction SilentlyContinue }} catch {{}}; & '{app}\WraythService.exe' refresh | Out-Null }} else {{ & '{app}\WraythService.exe' install | Out-Null }}; sc.exe config '{#MyServiceName}' start= auto | Out-Null; Start-Sleep -Seconds 2; & '{app}\WraythService.exe' start | Out-Null"""; \
+  Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$ErrorActionPreference='Continue'; $log='C:\ProgramData\Wrayth\logs\install.log'; New-Item -ItemType Directory -Force -Path 'C:\ProgramData\Wrayth\logs' | Out-Null; function L($m){{ Add-Content -Path $log -Value ((Get-Date -Format o) + ' ' + $m) }}; L '--- register start ---'; $svc = Get-Service -Name '{#MyServiceName}' -ErrorAction SilentlyContinue; try {{ if ($svc) {{ L 'service exists, refreshing'; Stop-Service -Name '{#MyServiceName}' -Force -ErrorAction SilentlyContinue; & '{app}\WraythService.exe' refresh *>> $log }} else {{ L 'installing via WinSW'; & '{app}\WraythService.exe' install *>> $log }} }} catch {{ L ('winsw error: ' + $_.Exception.Message) }}; if (-not (Get-Service -Name '{#MyServiceName}' -ErrorAction SilentlyContinue)) {{ L 'WinSW did not register service, falling back to sc.exe'; & sc.exe create '{#MyServiceName}' binPath= ('\""' + '{app}\WraythService.exe' + '\""') start= auto DisplayName= '{#MyServiceDisplay}' *>> $log }}; & sc.exe config '{#MyServiceName}' start= auto *>> $log; Start-Sleep -Seconds 1; try {{ Start-Service -Name '{#MyServiceName}' -ErrorAction Stop; L 'service started' }} catch {{ L ('start failed: ' + $_.Exception.Message) }}; $final = Get-Service -Name '{#MyServiceName}' -ErrorAction SilentlyContinue; if (-not $final) {{ L 'FATAL: service still not registered'; exit 1618 }} else {{ L ('final state: ' + $final.Status); exit 0 }}"""; \
   Flags: runhidden waituntilterminated; StatusMsg: "Registering Wrayth service..."
 
 [UninstallRun]
