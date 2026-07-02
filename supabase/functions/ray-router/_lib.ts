@@ -324,6 +324,30 @@ export async function skillIdentity(_message: string, ctx: SkillContext): Promis
   };
 }
 
+// ---------- Org Memory ----------
+export async function fetchOrgMemory(
+  supabase: any,
+  orgId: string | null,
+  limit = 20,
+): Promise<Array<{ key: string; value: string; category: string }>> {
+  if (!orgId) return [];
+  const { data } = await supabase
+    .from("ray_org_memory")
+    .select("key, value, category")
+    .eq("org_id", orgId)
+    .order("confidence", { ascending: false })
+    .limit(limit);
+  return (data ?? []) as Array<{ key: string; value: string; category: string }>;
+}
+
+function formatOrgMemory(mem: Array<{ key: string; value: string; category: string }>): string {
+  if (!mem.length) return "";
+  return (
+    "\n\nOrganization facts (authoritative, trust these over guesses):\n" +
+    mem.map((m) => `- ${m.key}: ${m.value}`).join("\n")
+  );
+}
+
 // ---------- Skill: Knowledge ----------
 export async function skillKnowledge(message: string, ctx: SkillContext): Promise<RayResponse> {
   const supabase = ctx.serviceClient;
@@ -376,8 +400,10 @@ export async function skillKnowledge(message: string, ctx: SkillContext): Promis
       const context = chosen
         .map((h, i) => `[[${i + 1}]] ${h.title}\n${(h.content ?? "").slice(0, 1200)}`)
         .join("\n\n");
+      const mem = await fetchOrgMemory(supabase, ctx.orgId);
       const system =
-        "You are Ray. Answer ONLY from the provided knowledge snippets. Cite them inline as [1], [2]. If the snippets do not answer the question, say so plainly. Never invent facts.";
+        "You are Ray. Answer ONLY from the provided knowledge snippets. Cite them inline as [1], [2]. If the snippets do not answer the question, say so plainly. Never invent facts." +
+        formatOrgMemory(mem);
       const user = `Question: ${message}\n\nSnippets:\n${context}`;
       const reply = await ctx.llmChat(system, user);
       if (reply && reply.trim()) answer = reply;

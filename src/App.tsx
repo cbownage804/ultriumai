@@ -59,6 +59,7 @@ const WraythPricing = lazy(() => import('@/pages/pricing/WraythPricing'));
 const Ray = lazy(() => import('@/pages/safesuite/Ray'));
 const RaySkills = lazy(() => import('@/pages/safesuite/RaySkills'));
 const RayRecommendations = lazy(() => import('@/pages/safesuite/RayRecommendations'));
+const RayMemory = lazy(() => import('@/pages/safesuite/RayMemory'));
 const Identity = lazy(() => import('@/pages/safesuite/Identity'));
 const Devices = lazy(() => import('@/pages/safesuite/Devices'));
 const Reports = lazy(() => import('@/pages/safesuite/Reports'));
@@ -187,6 +188,7 @@ function AppRouter() {
           <Route path="/app/ray" element={<SuspenseWrapper><Ray /></SuspenseWrapper>} />
           <Route path="/app/ray/skills" element={<SuspenseWrapper><RaySkills /></SuspenseWrapper>} />
           <Route path="/app/ray/recommendations" element={<SuspenseWrapper><RayRecommendations /></SuspenseWrapper>} />
+          <Route path="/app/ray/memory" element={<SuspenseWrapper><RayMemory /></SuspenseWrapper>} />
           <Route path="/app/ray/playbook/:runId" element={<SuspenseWrapper><PlaybookRunnerPage /></SuspenseWrapper>} />
           <Route path="/app/ray/secure/:provider" element={<SuspenseWrapper><SecureProviderLauncher /></SuspenseWrapper>} />
           <Route path="/app/timeline" element={<SuspenseWrapper><RayTimelinePage /></SuspenseWrapper>} />

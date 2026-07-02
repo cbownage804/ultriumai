@@ -1,0 +1,1 @@
+ALTER TABLE public.ray_org_memory DROP CONSTRAINT IF EXISTS ray_org_memory_org_id_fkey;
