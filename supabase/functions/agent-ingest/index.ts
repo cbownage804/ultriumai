@@ -399,11 +399,56 @@ function computeFindings(p: Posture): Array<{
 }
 
 // A "fix plan" is the list of one-tap actions Ray can queue to resolve current
-// findings. Kept server-side so the client just renders + posts by name.
-interface FixStep { action_type: string; label: string; params?: Record<string, unknown>; severity: 'critical' | 'warn' }
+// findings. Each step now carries a risk level, an impact warning, and a
+// bucket ('safe' | 'review') so the UI can gate "Fix Everything" properly.
+interface FixStep {
+  action_type: string;
+  label: string;
+  params?: Record<string, unknown>;
+  severity: 'critical' | 'warn';
+  risk: 'low' | 'medium' | 'high';
+  bucket: 'safe' | 'review';
+  requires_reboot: boolean;
+  rollback_possible: boolean;
+  impact?: string;
+}
+
+// Central risk registry — mirrored on agent-action-request for enforcement.
+const RISK: Record<string, { risk: 'low'|'medium'|'high'; reboot?: boolean; rollback?: boolean; impact?: string }> = {
+  enable_bitlocker:                { risk: 'medium', rollback: true,  impact: 'Encrypts C:. Recovery key is escrowed to Wrayth.' },
+  enable_firewall:                 { risk: 'low',    rollback: true },
+  enable_defender:                 { risk: 'low',    rollback: true },
+  update_defender_signatures:      { risk: 'low' },
+  enable_defender_pua:             { risk: 'low',    rollback: true },
+  enable_defender_cloud:           { risk: 'low',    rollback: true },
+  run_defender_quick_scan:         { risk: 'low' },
+  run_defender_full_scan:          { risk: 'low' },
+  install_windows_updates:         { risk: 'high',   reboot: true, impact: 'May require a reboot to finish installing.' },
+  lock_screen:                     { risk: 'low' },
+  sign_out_user:                   { risk: 'medium', impact: 'Signs the current user out — unsaved work will be lost.' },
+  disable_rdp:                     { risk: 'high',   rollback: true, impact: 'This may interrupt remote access to this machine.' },
+  enable_rdp_nla:                  { risk: 'medium', rollback: true, impact: 'Older RDP clients may need to update to reconnect.' },
+  disable_remote_assistance:       { risk: 'medium', rollback: true },
+  disable_browser_password_manager:{ risk: 'medium', rollback: true, impact: 'Users will stop being offered to save new passwords in this browser.' },
+  remove_local_admin:              { risk: 'high',   impact: 'Removes a user from Administrators. Verify another admin exists.' },
+  disable_builtin_administrator:   { risk: 'high',   rollback: true, impact: 'Disables the built-in Administrator account.' },
+  disable_startup_item:            { risk: 'medium', rollback: true },
+};
+
+function decorate(step: Omit<FixStep,'risk'|'bucket'|'requires_reboot'|'rollback_possible'|'impact'>): FixStep {
+  const meta = RISK[step.action_type] ?? { risk: 'low' as const };
+  return {
+    ...step,
+    risk: meta.risk,
+    bucket: meta.risk === 'high' ? 'review' : 'safe',
+    requires_reboot: !!meta.reboot,
+    rollback_possible: !!meta.rollback,
+    impact: meta.impact,
+  };
+}
 
 function buildFixPlan(p: Posture): FixStep[] {
-  const plan: FixStep[] = [];
+  const plan: Array<Omit<FixStep,'risk'|'bucket'|'requires_reboot'|'rollback_possible'|'impact'>> = [];
   if (p.disk_encryption && !p.disk_encryption.enabled) {
     plan.push({ action_type: 'enable_bitlocker', label: 'Turn on BitLocker and escrow the recovery key', severity: 'critical' });
   }
@@ -440,8 +485,9 @@ function buildFixPlan(p: Posture): FixStep[] {
   if ((p.update_categories?.security ?? 0) > 0 || (p.pending_updates ?? 0) > 0) {
     plan.push({ action_type: 'install_windows_updates', label: 'Install pending Windows updates', severity: 'warn' });
   }
-  return plan;
+  return plan.map(decorate);
 }
+
 
 // 0–100 posture score. Simple, transparent, deterministic.
 function computeSecurityScore(p: Posture, findings: Array<{ severity: string }>): number {
