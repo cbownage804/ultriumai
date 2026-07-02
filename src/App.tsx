@@ -47,6 +47,7 @@ const VaultProduct = lazy(() => import('@/pages/safesuite/products/SafePassProdu
 const ScanProduct = lazy(() => import('@/pages/safesuite/products/SafeScanProduct'));
 const WatchProduct = lazy(() => import('@/pages/safesuite/products/SafeWebProduct'));
 const WraythFeatures = lazy(() => import('@/pages/safesuite/SafeSuiteFeatures'));
+const WraythEnterprise = lazy(() => import('@/pages/safesuite/WraythEnterprise'));
 const VaultNotes = lazy(() => import('@/pages/safesuite/SafePassNotes'));
 const VaultCards = lazy(() => import('@/pages/safesuite/SafePassCards'));
 const VaultIdentity = lazy(() => import('@/pages/safesuite/SafePassIdentity'));
