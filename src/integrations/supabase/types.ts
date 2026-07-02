@@ -17512,6 +17512,57 @@ export type Database = {
         }
         Relationships: []
       }
+      ray_digests: {
+        Row: {
+          counts: Json
+          created_at: string
+          delivery_status: Json
+          highlights: Json
+          id: string
+          org_id: string | null
+          recommendations_open: number
+          recommendations_resolved: number
+          score_after: number | null
+          score_before: number | null
+          sent_at: string | null
+          user_id: string | null
+          week_end: string
+          week_start: string
+        }
+        Insert: {
+          counts?: Json
+          created_at?: string
+          delivery_status?: Json
+          highlights?: Json
+          id?: string
+          org_id?: string | null
+          recommendations_open?: number
+          recommendations_resolved?: number
+          score_after?: number | null
+          score_before?: number | null
+          sent_at?: string | null
+          user_id?: string | null
+          week_end: string
+          week_start: string
+        }
+        Update: {
+          counts?: Json
+          created_at?: string
+          delivery_status?: Json
+          highlights?: Json
+          id?: string
+          org_id?: string | null
+          recommendations_open?: number
+          recommendations_resolved?: number
+          score_after?: number | null
+          score_before?: number | null
+          sent_at?: string | null
+          user_id?: string | null
+          week_end?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
       ray_findings: {
         Row: {
           created_at: string
