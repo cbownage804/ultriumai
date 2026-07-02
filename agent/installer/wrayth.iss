@@ -75,8 +75,18 @@ Filename: "powershell.exe"; \
   Flags: runhidden waituntilterminated; StatusMsg: "Registering Wrayth service..."
 
 [UninstallRun]
-Filename: "{app}\WraythService.exe"; Parameters: "stop";      Flags: runhidden waituntilterminated; RunOnceId: "StopWraythSvc"
-Filename: "{app}\WraythService.exe"; Parameters: "uninstall"; Flags: runhidden waituntilterminated; RunOnceId: "UninstWraythSvc"
+; Force-stop the WinSW-managed service (ignore errors if already stopped/disabled).
+Filename: "powershell.exe"; \
+  Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""try {{ Set-Service -Name '{#MyServiceName}' -StartupType Manual -ErrorAction SilentlyContinue }} catch {{}}; try {{ Stop-Service -Name '{#MyServiceName}' -Force -ErrorAction SilentlyContinue }} catch {{}}; Get-Process -Name 'WraythService','WraythAgent' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue"""; \
+  Flags: runhidden waituntilterminated; RunOnceId: "StopWraythSvc"
+; Ask WinSW to remove its own registration first (cleanest path).
+Filename: "{app}\WraythService.exe"; Parameters: "uninstall"; Flags: runhidden waituntilterminated skipifdoesntexist; RunOnceId: "UninstWraythSvc"
+; Belt-and-suspenders: if the service still exists (WinSW missing, disabled,
+; or a legacy raw-agent registration), delete it directly via sc.exe. This is
+; what prevents the "service remains after uninstall" bug.
+Filename: "powershell.exe"; \
+  Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""if (Get-Service -Name '{#MyServiceName}' -ErrorAction SilentlyContinue) {{ & sc.exe delete '{#MyServiceName}' | Out-Null; for ($i = 0; $i -lt 20; $i++) {{ Start-Sleep -Milliseconds 500; if (-not (Get-Service -Name '{#MyServiceName}' -ErrorAction SilentlyContinue)) {{ break }} }} }}"""; \
+  Flags: runhidden waituntilterminated; RunOnceId: "ScDeleteWraythSvc"
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{commonappdata}\Wrayth"
