@@ -120,7 +120,7 @@ serve(async (req) => {
     confidence = routed.confidence;
     reasoning = routed.reasoning;
 
-    const response = await runSkill(slug, message, {
+    const response = await runSkill(slug, messageForSkill, {
       userId: user.id,
       orgId,
       serviceClient: admin,
