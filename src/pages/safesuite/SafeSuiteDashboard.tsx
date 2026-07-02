@@ -51,6 +51,7 @@ import { usePasswordLifecycle } from '@/lib/ray/passwordLifecycle';
 import { CisoNextAction } from '@/components/ray/CisoNextAction';
 import { nextBestAction } from '@/lib/ray/ciso';
 import { VaultLockedCard } from '@/components/ray/VaultLockedCard';
+import { HomeContextBridge } from '@/components/ray/HomeContextBridge';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
 
 interface DashboardStats {
