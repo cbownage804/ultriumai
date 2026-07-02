@@ -24,6 +24,9 @@ import { toast } from 'sonner';
 import { DeviceActionsMenu } from './DeviceActionsMenu';
 import { DeviceIntelPanel } from './DeviceIntelPanel';
 import { RayFixPanel } from './RayFixPanel';
+import { DeviceTimeline } from './DeviceTimeline';
+import { AgentVersionBadge } from './AgentVersionBadge';
+import { AgentTrustCard } from './AgentTrustCard';
 
 interface Finding {
   severity: 'info' | 'warn' | 'critical';
@@ -378,8 +381,9 @@ export function EnrolledDevicesList() {
                       </Badge>
                     )}
                   </div>
-                  <div className="text-xs text-muted-foreground truncate">
-                    {d.os} · agent v{d.agent_version} · last seen {relative(d.last_seen_at)}
+                  <div className="text-xs text-muted-foreground truncate flex items-center gap-2 flex-wrap">
+                    <span>{d.os} · agent v{d.agent_version} · last seen {relative(d.last_seen_at)}</span>
+                    <AgentVersionBadge current={d.agent_version} />
                   </div>
                 </div>
                 <Button
@@ -454,11 +458,14 @@ export function EnrolledDevicesList() {
                 </div>
               )}
               <DeviceIntelPanel deviceId={d.id} posture={d.posture as never} />
+              <DeviceTimeline deviceId={d.id} lastSeenAt={d.last_seen_at} />
+
 
             </div>
           );
         })}
       </CardContent>
+      <div className="px-6 pb-6"><AgentTrustCard /></div>
     </Card>
   );
 }
