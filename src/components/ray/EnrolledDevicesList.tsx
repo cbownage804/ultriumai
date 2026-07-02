@@ -383,7 +383,12 @@ export function EnrolledDevicesList() {
                   </div>
                   <div className="text-xs text-muted-foreground truncate flex items-center gap-2 flex-wrap">
                     <span>{d.os} · agent v{d.agent_version} · last seen {relative(d.last_seen_at)}</span>
-                    <AgentVersionBadge current={d.agent_version} />
+                    <AgentVersionBadge
+                      current={d.agent_version}
+                      deviceId={d.id}
+                      channel={(d as any).release_channel ?? 'stable'}
+                      lastCheckedAt={(d as any).last_update_check_at ?? null}
+                    />
                   </div>
                 </div>
                 <Button
