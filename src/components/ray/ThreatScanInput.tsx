@@ -139,7 +139,7 @@ export function ThreatScanInput() {
       {verdicts.length > 0 && (
         <div className="space-y-3">
           <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-            Recent analyses
+            Recent investigations
           </div>
           {verdicts.map((v, i) => (
             <ThreatVerdictCard key={`${v.input}-${i}`} verdict={v} />
