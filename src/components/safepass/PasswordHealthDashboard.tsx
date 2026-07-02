@@ -23,6 +23,7 @@ import {
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { UnifiedAccountsPanel, type AccountSignalRow } from './UnifiedAccountsPanel';
+import { RotatePasswordDialog } from '@/components/ray/RotatePasswordDialog';
 
 interface PasswordIssue {
   id: string;
