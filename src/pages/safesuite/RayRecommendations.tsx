@@ -64,7 +64,7 @@ export default function RayRecommendations() {
       .order("priority", { ascending: true })
       .order("last_seen_at", { ascending: false })
       .limit(200);
-    setRecs((data as Recommendation[]) ?? []);
+    setRecs(((data as unknown) as Recommendation[]) ?? []);
     setLoading(false);
   }, [tab]);
 
