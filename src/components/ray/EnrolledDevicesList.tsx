@@ -346,6 +346,19 @@ export function EnrolledDevicesList() {
                 </Button>
               </div>
 
+              {d.posture && (() => {
+                const chips = buildPostureChips(d.posture);
+                if (!chips.length) return null;
+                return (
+                  <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                    {chips.map((c, i) => (
+                      <PostureChip key={i} {...c} />
+                    ))}
+                  </div>
+                );
+              })()}
+
+
               {d.findings.length > 0 && (
                 <div className="space-y-1.5">
                   {criticals.length + warns.length === 0 ? (
