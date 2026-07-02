@@ -616,6 +616,16 @@ export default function WraythDashboard() {
     sinceLines.push({ tone: 'good', text: 'Everything looks healthy' });
   }
 
+  // Pick the single most urgent account so Ray's CISO directive can name it.
+  const weakestEntry = !vaultLocked
+    ? [...entries]
+        .filter((e) => e.title && typeof e.password_strength_score === 'number')
+        .sort((a, b) => (a.password_strength_score ?? 100) - (b.password_strength_score ?? 100))[0]
+    : undefined;
+  const topAccountTitle = weakestEntry?.title;
+  const topAccountReason: 'weak' | undefined =
+    weakestEntry && (weakestEntry.password_strength_score ?? 100) < 60 ? 'weak' : undefined;
+
   const cisoDirective = nextBestAction({
     vaultCount: stats.passwordCount,
     weakCount: stats.weakPasswordCount,
@@ -623,6 +633,8 @@ export default function WraythDashboard() {
     breachedEmailCount,
     monitoredAssets: stats.monitoredAssets,
     monitoredEmailsWithoutVaultLink: 0,
+    topAccountTitle,
+    topAccountReason,
   });
 
   return (
