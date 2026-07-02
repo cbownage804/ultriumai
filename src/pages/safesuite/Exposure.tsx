@@ -507,18 +507,25 @@ export default function WraythWeb() {
               <option value="domain">Domain</option>
               <option value="phone">Phone</option>
             </select>
-            <Input
-              placeholder={
-                assetType === 'email'
-                  ? 'Enter email address...'
-                  : assetType === 'domain'
-                  ? 'Enter domain...'
-                  : 'Enter phone (e.g. +15551234567)...'
-              }
-              value={newAsset}
-              onChange={(e) => setNewAsset(e.target.value)}
-              className="flex-1 bg-background border-border text-foreground"
-            />
+            <div className="flex-1 flex flex-col gap-1">
+              <Input
+                placeholder={
+                  assetType === 'email'
+                    ? 'Enter email address...'
+                    : assetType === 'domain'
+                    ? 'Enter domain...'
+                    : 'Enter phone (e.g. +15551234567)...'
+                }
+                value={newAsset}
+                onChange={(e) => setNewAsset(e.target.value)}
+                className="w-full bg-background border-border text-foreground"
+              />
+              {assetType === 'phone' && (
+                <p className="text-xs text-muted-foreground">
+                  E.164 format (+15551234567) is recommended for the most accurate breach matches. Dashes and spaces are fine — Ray will normalize them.
+                </p>
+              )}
+            </div>
             <Button
               onClick={addAsset}
               disabled={!newAsset.trim()}
