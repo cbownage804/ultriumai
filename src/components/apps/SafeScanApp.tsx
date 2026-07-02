@@ -18,8 +18,8 @@ interface ScanAppProps {
 
 export function ScanApp({ brandName = 'Wrayth' }: ScanAppProps) {
   const handleNotify = () => {
-    toast.success("I'll let you know", {
-      description: `The ${brandName} device agent is in final testing. I'll email you the moment it's ready to install.`,
+    toast.success("You're on the early-access list", {
+      description: `The ${brandName} device agent is in final testing. I'll email you the moment your build is ready.`,
     });
   };
 
@@ -51,7 +51,7 @@ export function ScanApp({ brandName = 'Wrayth' }: ScanAppProps) {
           className="border-violet-500/30 text-violet-200 hover:bg-violet-500/10 hover:text-violet-100"
         >
           <Sparkles className="w-4 h-4 mr-2" />
-          Notify me when the agent ships
+          Join early access
         </Button>
       </CardContent>
     </Card>
