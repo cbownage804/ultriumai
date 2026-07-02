@@ -416,16 +416,16 @@ export const PasswordHealthDashboard = () => {
             </motion.li>
           ))}
         </ul>
-        <div className="mt-5 flex items-center justify-between border-t border-white/5 pt-4">
+        <div className="mt-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-white/5 pt-4">
           <div>
             <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Estimated risk</div>
             <div className={`text-2xl font-semibold tracking-tight ${riskColor}`}>{riskLevel}</div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:justify-end">
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 text-xs text-violet-300 hover:text-violet-200 hover:bg-violet-500/10"
+              className="min-h-[44px] sm:min-h-0 sm:h-8 text-xs text-violet-300 hover:text-violet-200 hover:bg-violet-500/10"
               onClick={() => {
                 const summary = [
                   `Wrayth — Ray's vault review`,
@@ -456,24 +456,24 @@ export const PasswordHealthDashboard = () => {
 
       {/* Health Score */}
       <Card className="overflow-hidden">
-        <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-6">
-          <div className="flex items-center justify-between">
-            <div>
+        <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-4 sm:p-6">
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0">
               <p className="text-sm text-muted-foreground mb-1">Overall Health Score</p>
               <div className="flex items-baseline gap-2">
-                <span className={`text-5xl font-bold ${getScoreColor(healthScore)}`}>
+                <span className={`text-4xl sm:text-5xl font-bold ${getScoreColor(healthScore)}`}>
                   {healthScore}
                 </span>
-                <span className="text-2xl text-muted-foreground">/100</span>
+                <span className="text-xl sm:text-2xl text-muted-foreground">/100</span>
               </div>
               <p className={`text-sm font-medium mt-1 ${getScoreColor(healthScore)}`}>
                 {getScoreLabel(healthScore)}
               </p>
             </div>
-            
+
             {/* Score Ring */}
-            <div className="relative h-24 w-24">
-              <svg className="transform -rotate-90 h-24 w-24">
+            <div className="relative h-20 w-20 sm:h-24 sm:w-24 shrink-0">
+              <svg className="transform -rotate-90 h-full w-full" viewBox="0 0 96 96">
                 <circle
                   cx="48"
                   cy="48"
@@ -497,7 +497,7 @@ export const PasswordHealthDashboard = () => {
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <Shield className={`h-8 w-8 ${getScoreColor(healthScore)}`} />
+                <Shield className={`h-7 w-7 sm:h-8 sm:w-8 ${getScoreColor(healthScore)}`} />
               </div>
             </div>
           </div>
