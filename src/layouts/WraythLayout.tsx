@@ -333,6 +333,7 @@ function WraythLayoutInner() {
       </div>
 
       <AskRayPalette />
+      <FloatingRayChat />
     </div>
   );
 }
