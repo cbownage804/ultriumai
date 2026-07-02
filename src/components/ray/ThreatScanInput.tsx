@@ -42,6 +42,15 @@ export function ThreatScanInput() {
   const [input, setInput] = useState('');
   const [verdicts, setVerdicts] = useState<ThreatVerdict[]>([]);
   const [dragActive, setDragActive] = useState(false);
+  const [placeholderIdx, setPlaceholderIdx] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(
+      () => setPlaceholderIdx((n) => (n + 1) % PLACEHOLDERS.length),
+      3500,
+    );
+    return () => clearInterval(id);
+  }, []);
 
   const runAnalysis = (raw: string) => {
     const trimmed = raw.trim();
