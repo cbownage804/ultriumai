@@ -74,14 +74,6 @@ const rayExamples = [
   },
 ];
 
-const enterpriseFeatures = [
-  { icon: Building2, title: "Organizations", description: "Multi-tenant workspaces for teams and MSPs." },
-  { icon: ShieldCheck, title: "Role-Based Access", description: "Granular roles, least-privilege by default." },
-  { icon: Users, title: "Teams & Shared Vaults", description: "Group credentials by team, project, or client." },
-  { icon: FileKey, title: "Audit Logs", description: "Every unlock, share, and rotation, forever queryable." },
-  { icon: ServerCog, title: "SSO & SCIM", description: "Okta, Azure AD, Google Workspace, JumpCloud." },
-  { icon: Network, title: "MSP Ready", description: "Manage clients, seats, and billing from one pane." },
-];
 
 const integrations = {
   browser: [
