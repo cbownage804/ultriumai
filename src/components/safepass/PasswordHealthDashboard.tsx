@@ -451,6 +451,9 @@ export const PasswordHealthDashboard = () => {
       </motion.div>
 
 
+      {/* Unified relationships view — one account, every signal */}
+      <UnifiedAccountsPanel rows={unifiedRows} />
+
       {/* Health Score */}
       <Card className="overflow-hidden">
         <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-6">
