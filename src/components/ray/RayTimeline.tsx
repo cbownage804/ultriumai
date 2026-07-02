@@ -84,6 +84,9 @@ export function RayTimeline({ limit = 50, className, embedded = false }: Props) 
     return Array.from(map.entries());
   }, [events]);
 
+  // Narrative summary — Ray reads the last 7 days and describes what he did.
+  const narrative = useMemo(() => buildWeekNarrative(timeline), [timeline]);
+
   return (
     <div className={cn('relative', className)}>
       {!embedded && (
@@ -97,6 +100,22 @@ export function RayTimeline({ limit = 50, className, embedded = false }: Props) 
           {isLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
         </div>
       )}
+
+      {/* Narrative summary — the week, as Ray would tell it. */}
+      {narrative && (
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="mb-4 rounded-xl border border-violet-500/25 bg-violet-500/[0.04] p-4 sm:p-5"
+        >
+          <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-violet-300/90">
+            <Sparkles className="h-3 w-3" /> This week, from Ray
+          </div>
+          <p className="mt-2 text-sm sm:text-base text-foreground leading-relaxed">{narrative}</p>
+        </motion.div>
+      )}
+
 
       {/* Filter strip */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
