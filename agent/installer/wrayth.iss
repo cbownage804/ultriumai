@@ -163,6 +163,12 @@ procedure WriteWraythConfig();
 var
   ConfigJson, ConfigPath: String;
 begin
+  // On upgrade: the existing config already carries the device_token that ties
+  // this machine to its server-side row. Overwriting it would drop the token
+  // and force a fresh enrollment, which would create a duplicate device.
+  if HasExistingEnrollment and (Trim(GetEnrollmentCode('')) = '') then
+    Exit;
+
   ConfigPath := ExpandConstant('{commonappdata}\Wrayth\wrayth-config.json');
   ConfigJson :=
     '{' + #13#10 +
