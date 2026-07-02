@@ -325,12 +325,21 @@ def _sign_out(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
 # ---------- v0.2.0 additions ---------------------------------------------
 
 def _disable_rdp(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    before_rc, before, _ = _ps(
+        "(Get-ItemProperty 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server' -Name fDenyTSConnections).fDenyTSConnections"
+    )
     rc, out, err = _ps(
         "Set-ItemProperty 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server' "
         "-Name fDenyTSConnections -Value 1; "
         "Disable-NetFirewallRule -DisplayGroup 'Remote Desktop' -ErrorAction SilentlyContinue; 'ok'"
     )
-    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+    return rc == 0, {
+        "stdout": out,
+        "previous_value": {"fDenyTSConnections": (before or "").strip() or "unknown"},
+        "new_value": {"fDenyTSConnections": "1"},
+        "rollback_possible": True,
+        "rollback_action": "enable_rdp",
+    }, err or None if rc != 0 else None
 
 
 def _enable_rdp_nla(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
@@ -338,7 +347,12 @@ def _enable_rdp_nla(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
         "Set-ItemProperty 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server\\WinStations\\RDP-Tcp' "
         "-Name UserAuthentication -Value 1; 'ok'"
     )
-    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+    return rc == 0, {
+        "stdout": out,
+        "new_value": {"UserAuthentication": "1"},
+        "rollback_possible": True,
+        "rollback_action": "disable_rdp_nla",
+    }, err or None if rc != 0 else None
 
 
 def _disable_remote_assistance(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
@@ -346,7 +360,12 @@ def _disable_remote_assistance(_p: dict[str, Any]) -> tuple[bool, dict, str | No
         "Set-ItemProperty 'HKLM:\\System\\CurrentControlSet\\Control\\Remote Assistance' "
         "-Name fAllowToGetHelp -Value 0; 'ok'"
     )
-    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+    return rc == 0, {
+        "stdout": out,
+        "new_value": {"fAllowToGetHelp": "0"},
+        "rollback_possible": True,
+        "rollback_action": "enable_remote_assistance",
+    }, err or None if rc != 0 else None
 
 
 def _disable_browser_password_manager(p: dict[str, Any]) -> tuple[bool, dict, str | None]:
