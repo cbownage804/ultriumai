@@ -35,7 +35,15 @@ type ActionType =
   | 'run_defender_full_scan'
   | 'install_windows_updates'
   | 'lock_screen'
-  | 'sign_out_user';
+  | 'sign_out_user'
+  | 'disable_rdp'
+  | 'enable_rdp_nla'
+  | 'disable_remote_assistance'
+  | 'disable_browser_password_manager'
+  | 'disable_builtin_administrator'
+  | 'enable_defender_pua'
+  | 'enable_defender_cloud'
+  | 'update_defender_signatures';
 
 const ACTION_LABELS: Record<ActionType, string> = {
   enable_bitlocker: 'Turn on BitLocker (encrypt C:)',
@@ -46,6 +54,14 @@ const ACTION_LABELS: Record<ActionType, string> = {
   install_windows_updates: 'Install pending Windows updates',
   lock_screen: 'Lock the screen',
   sign_out_user: 'Sign the user out',
+  disable_rdp: 'Disable Remote Desktop',
+  enable_rdp_nla: 'Require Network Level Auth for RDP',
+  disable_remote_assistance: 'Disable Remote Assistance',
+  disable_browser_password_manager: 'Disable browser password manager',
+  disable_builtin_administrator: 'Disable built-in Administrator',
+  enable_defender_pua: 'Enable Defender PUA protection',
+  enable_defender_cloud: 'Enable Defender cloud protection',
+  update_defender_signatures: 'Update Defender signatures',
 };
 
 interface ActionRow {
