@@ -505,7 +505,7 @@ export default function WraythWeb() {
             >
               <option value="email">Email</option>
               <option value="domain">Domain</option>
-              <option value="brand">Brand</option>
+              <option value="phone">Phone</option>
             </select>
             <Input
               placeholder={
@@ -513,7 +513,7 @@ export default function WraythWeb() {
                   ? 'Enter email address...'
                   : assetType === 'domain'
                   ? 'Enter domain...'
-                  : 'Enter brand name...'
+                  : 'Enter phone (e.g. +15551234567)...'
               }
               value={newAsset}
               onChange={(e) => setNewAsset(e.target.value)}
