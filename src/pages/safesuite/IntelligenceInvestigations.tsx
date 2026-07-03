@@ -137,6 +137,100 @@ const FOLLOWUP_META: Record<FollowupType, { icon: React.ComponentType<{ classNam
   },
 };
 
+// -----------------------------------------------------------------------------
+// One-click investigation templates.
+// Each template preselects an input type, seeds a helpful label, and (optionally)
+// auto-chains a follow-up report when the case comes back malicious/suspicious.
+// -----------------------------------------------------------------------------
+type Template = {
+  id: string;
+  label: string;
+  desc: string;
+  inputType: InputType;
+  labelSeed: string;
+  placeholder: string;
+  chainReport: FollowupType | null;
+  icon: React.ComponentType<{ className?: string }>;
+};
+
+const TEMPLATES: Template[] = [
+  {
+    id: 'phishing_url',
+    label: 'Phishing URL',
+    desc: 'Investigate a link + auto-generate an incident report if malicious.',
+    inputType: 'url',
+    labelSeed: 'Phishing URL triage',
+    placeholder: 'https://login-microsft365.support/verify',
+    chainReport: 'incident_report',
+    icon: ScanSearch,
+  },
+  {
+    id: 'suspicious_login',
+    label: 'Suspicious M365 login',
+    desc: 'Reason over an M365 sign-in alert and chain a management explainer.',
+    inputType: 'm365_alert',
+    labelSeed: 'M365 suspicious login',
+    placeholder: 'Paste the sign-in alert JSON or narrative…',
+    chainReport: 'management_explanation',
+    icon: AlertTriangle,
+  },
+  {
+    id: 'ransomware_hash',
+    label: 'Ransomware indicator',
+    desc: 'Analyse a hash and auto-generate an executive report on impact.',
+    inputType: 'file_hash',
+    labelSeed: 'Ransomware hash triage',
+    placeholder: 'SHA-256 of the suspicious binary',
+    chainReport: 'executive_report',
+    icon: ShieldAlert,
+  },
+  {
+    id: 'powershell',
+    label: 'Suspicious PowerShell',
+    desc: 'Break down intent + MITRE, then explain it in plain English.',
+    inputType: 'powershell',
+    labelSeed: 'PowerShell triage',
+    placeholder: 'powershell -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA…',
+    chainReport: 'management_explanation',
+    icon: FileWarning,
+  },
+  {
+    id: 'malicious_email',
+    label: 'Malicious email',
+    desc: 'Investigate the body + auto-chain an incident report if bad.',
+    inputType: 'email',
+    labelSeed: 'Reported phishing email',
+    placeholder: 'Paste the full email body users flagged…',
+    chainReport: 'incident_report',
+    icon: MessageCircleQuestion,
+  },
+  {
+    id: 'defender_alert',
+    label: 'Defender alert triage',
+    desc: 'Turn a Defender alert into a case + executive report.',
+    inputType: 'defender_alert',
+    labelSeed: 'Defender alert',
+    placeholder: 'Paste the Defender alert JSON or summary…',
+    chainReport: 'executive_report',
+    icon: Target,
+  },
+];
+
+/** Best-effort classification of a raw query string into an investigation input type. */
+function detectInputType(q: string): InputType {
+  const s = q.trim();
+  if (!s) return 'url';
+  if (/^[a-f0-9]{32}$|^[a-f0-9]{40}$|^[a-f0-9]{64}$/i.test(s)) return 'file_hash';
+  if (/^(https?:\/\/|www\.)/i.test(s)) return 'url';
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(s)) return 'ip';
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)) return 'email';
+  if (/^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(s) && !s.includes(' ')) return 'domain';
+  if (/get-\w+|invoke-\w+|-enc\s|powershell/i.test(s)) return 'powershell';
+  return 'url';
+}
+
+
+
 function verdictBadge(v: string | null) {
   const key = (v ?? '').toLowerCase();
   const style = VERDICT_STYLE[key] ?? VERDICT_STYLE.inconclusive;
