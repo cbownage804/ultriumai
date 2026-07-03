@@ -684,7 +684,12 @@ export default function WraythDashboard() {
       <LifecycleAwareTop firstName={firstName} />
 
       {/* 2b. Vault: encrypted black box until unlocked. */}
-      {vaultLocked && <VaultLockedCard />}
+      {vaultLocked && (
+        <VaultLockedCard
+          vaultCount={persistentVaultCount}
+          lastHealthCheckAt={lastHealthCheckAt}
+        />
+      )}
 
       {/* 2c. Cross-domain context bridge — Ray names what he's missing. */}
       <HomeContextBridge
