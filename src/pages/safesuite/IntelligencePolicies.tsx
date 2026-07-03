@@ -734,6 +734,19 @@ function PolicyPreview({
             </div>
           </section>
         )}
+
+        <PolicyVersionHistory
+          policyId={policy.id}
+          organizationName={policy.organization_name}
+          currentMarkdown={renderMarkdown(policy)}
+          renderVersionMarkdown={(v, orgName) => renderMarkdownFromParts({
+            title: v.title,
+            organization_name: orgName,
+            frameworks: v.frameworks ?? [],
+            sections: (v.sections as PolicySection[]) ?? [],
+            metadata: (v.metadata as PolicyRow['metadata']) ?? {},
+          })}
+        />
       </CardContent>
     </Card>
   );
