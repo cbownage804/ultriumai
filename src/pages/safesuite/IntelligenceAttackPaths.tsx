@@ -319,6 +319,7 @@ function AttackPathView({ path, onDelete }: { path: AttackPath; onDelete: () => 
         <div className="px-5 pt-4 overflow-x-auto">
           <TabsList className="bg-transparent p-0 h-auto gap-1 flex-wrap">
             <PathTab value="chain" label="Attack chain" icon={Layers} count={path.steps.length} />
+            <PathTab value="entities" label="Entities" icon={Users} count={countEntities(path.steps)} />
             <PathTab value="blast" label="Blast radius" icon={Radar} />
             <PathTab value="remediation" label="Remediation" icon={Wrench} count={path.remediation.length} />
             <PathTab value="assumptions" label="Assumptions" icon={Target} />
