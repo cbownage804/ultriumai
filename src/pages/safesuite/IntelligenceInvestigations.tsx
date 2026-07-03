@@ -407,7 +407,7 @@ function InvestigationWorkspace({ inv }: { inv: Investigation }) {
   const [busy, setBusy] = useState<FollowupType | null>(null);
   const [questionOpen, setQuestionOpen] = useState(false);
   const [question, setQuestion] = useState('');
-  const [iocHistory, setIocHistory] = useState<Record<string, { count: number; last_seen_at: string; first_seen_at: string; last_verdict: string | null }>>({});
+  const [iocHistory, setIocHistory] = useState<Record<string, { count: number; last_seen_at: string; first_seen_at: string; last_verdict: string | null; timestamps: string[] }>>({});
 
   const loadFollowups = useCallback(async () => {
     const { data } = await supabase
@@ -428,19 +428,42 @@ function InvestigationWorkspace({ inv }: { inv: Investigation }) {
     if (norms.length === 0) return;
     const { data } = await supabase
       .from('ray_ioc_index')
-      .select('ioc_type, ioc_value_norm, occurrence_count, first_seen_at, last_seen_at, last_verdict')
+      .select('ioc_type, ioc_value_norm, occurrence_count, first_seen_at, last_seen_at, last_verdict, investigation_ids')
       .in('ioc_value_norm', norms);
-    const map: Record<string, { count: number; last_seen_at: string; first_seen_at: string; last_verdict: string | null }> = {};
-    for (const r of (data as Array<{ ioc_type: string; ioc_value_norm: string; occurrence_count: number; first_seen_at: string; last_seen_at: string; last_verdict: string | null }> | null) ?? []) {
+
+    const rows = (data as Array<{
+      ioc_type: string; ioc_value_norm: string; occurrence_count: number;
+      first_seen_at: string; last_seen_at: string; last_verdict: string | null;
+      investigation_ids: string[] | null;
+    }> | null) ?? [];
+
+    // Batch-fetch created_at for every investigation this user has that references any of these IOCs.
+    const allInvIds = Array.from(new Set(rows.flatMap(r => r.investigation_ids ?? []).filter(Boolean)));
+    let invDates = new Map<string, string>();
+    if (allInvIds.length > 0) {
+      const { data: invRows } = await supabase
+        .from('ray_investigations')
+        .select('id, created_at')
+        .in('id', allInvIds);
+      invDates = new Map(((invRows as Array<{ id: string; created_at: string }> | null) ?? []).map(r => [r.id, r.created_at]));
+    }
+
+    const map: Record<string, { count: number; last_seen_at: string; first_seen_at: string; last_verdict: string | null; timestamps: string[] }> = {};
+    for (const r of rows) {
+      const timestamps = (r.investigation_ids ?? [])
+        .map(id => invDates.get(id))
+        .filter((t): t is string => Boolean(t));
       map[`${r.ioc_type}::${r.ioc_value_norm}`] = {
         count: r.occurrence_count,
         first_seen_at: r.first_seen_at,
         last_seen_at: r.last_seen_at,
         last_verdict: r.last_verdict,
+        timestamps,
       };
     }
     setIocHistory(map);
   }, [inv.id, inv.iocs]);
+
 
   useEffect(() => {
     setTab('overview');
@@ -1002,7 +1025,7 @@ function AskRayDialog({
 
 /* ---------------- Indicators panel with sort + filter ---------------- */
 
-type IocHistoryEntry = { count: number; last_seen_at: string; first_seen_at: string; last_verdict: string | null };
+type IocHistoryEntry = { count: number; last_seen_at: string; first_seen_at: string; last_verdict: string | null; timestamps: string[] };
 type IocItem = { type?: string; value?: string; note?: string };
 type IocSort = 'default' | 'prior_desc' | 'last_seen_desc' | 'first_seen_desc' | 'type_asc';
 
@@ -1165,10 +1188,86 @@ function IocsPanel({
                   </div>
                 )}
               </div>
+              {history && history.timestamps && history.timestamps.length > 0 && (
+                <IocSparkline timestamps={history.timestamps} />
+              )}
             </div>
+
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ---------------- Inline sparkline: sightings over time ---------------- */
+
+/**
+ * Renders a compact bar sparkline showing how often the IOC has appeared
+ * across the user's investigations, bucketed into weeks. Window auto-adapts:
+ * uses 12 weeks by default, or the full first-seen → now range if longer.
+ */
+function IocSparkline({ timestamps }: { timestamps: string[] }) {
+  const { buckets, max, rangeLabel, total } = useMemo(() => {
+    const dates = timestamps
+      .map(t => new Date(t).getTime())
+      .filter(t => Number.isFinite(t))
+      .sort((a, b) => a - b);
+    if (dates.length === 0) {
+      return { buckets: [] as number[], max: 0, rangeLabel: '', total: 0 };
+    }
+    const now = Date.now();
+    const first = dates[0];
+    const WEEK = 7 * 24 * 60 * 60 * 1000;
+    const spanWeeks = Math.max(1, Math.ceil((now - first) / WEEK) + 1);
+    const nBuckets = Math.min(24, Math.max(12, spanWeeks));
+    const start = now - nBuckets * WEEK;
+    const buckets = new Array<number>(nBuckets).fill(0);
+    for (const d of dates) {
+      const idx = Math.floor((d - start) / WEEK);
+      if (idx >= 0 && idx < nBuckets) buckets[idx] += 1;
+      else if (idx < 0) buckets[0] += 1;
+    }
+    const max = buckets.reduce((m, v) => Math.max(m, v), 0);
+    const startLabel = new Date(start).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    return { buckets, max, rangeLabel: `${startLabel} → now · weekly`, total: dates.length };
+  }, [timestamps]);
+
+  if (buckets.length === 0 || max === 0) return null;
+
+  const W = 96;
+  const H = 24;
+  const gap = 1;
+  const barW = (W - gap * (buckets.length - 1)) / buckets.length;
+
+  return (
+    <div
+      className="shrink-0 flex flex-col items-end gap-0.5"
+      title={`${total} sighting${total === 1 ? '' : 's'} · ${rangeLabel}`}
+      aria-label={`Sightings sparkline: ${total} sightings, ${rangeLabel}`}
+    >
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img">
+        {buckets.map((v, i) => {
+          const h = v === 0 ? 1 : (v / max) * (H - 2);
+          const x = i * (barW + gap);
+          const y = H - h;
+          return (
+            <rect
+              key={i}
+              x={x}
+              y={y}
+              width={barW}
+              height={h}
+              rx={0.5}
+              fill={v === 0 ? 'hsl(220 12% 28%)' : 'hsl(262 60% 68%)'}
+              opacity={v === 0 ? 0.5 : 0.85}
+            />
+          );
+        })}
+      </svg>
+      <span className="text-[9px] text-muted-foreground leading-none">
+        peak {max}/wk
+      </span>
     </div>
   );
 }
