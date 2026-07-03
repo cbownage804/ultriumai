@@ -413,6 +413,21 @@ serve(async (req) => {
     error: errorMsg,
   });
 
+  // Write-through into the Security Graph so newly-created recommendations
+  // show up on the timeline immediately (not just on the hourly projection).
+  // Fire-and-forget; failures here must never break a scan.
+  if (created > 0 || updated > 0 || auto_resolved > 0) {
+    try {
+      await admin.functions.invoke("ray-graph-sync", {
+        body: { since_hours: 2 },
+      });
+    } catch (e) {
+      console.warn("ray-graph-sync invoke failed", e);
+    }
+  }
+
+
+
   return new Response(
     JSON.stringify({
       ok: status === "ok",
