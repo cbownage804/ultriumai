@@ -99,7 +99,7 @@ function buildSections(tier: WraythTier): { top: NavGroup[]; bottom: NavItem[] }
 
   if (tier === 'free') {
     return {
-      top: [{ id: 'main', items: [home, vault, identity, threats('Threat Check'), ray] }],
+      top: [{ id: 'main', items: [home, vault, identity, threats('Threat Center'), ray] }],
       bottom: [billing, settings],
     };
   }
