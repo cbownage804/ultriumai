@@ -118,11 +118,11 @@ export function ExposureVaultImpact({ assets }: Props) {
                 Ray connected the dots
               </div>
               <h3 className="mt-1 text-base font-medium text-foreground">
-                Passwords in your vault use these exposed emails
+                Saved passwords use these breached emails
               </h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                A breach on the email is only half the story. If the account also stores a
-                password here, rotating it is the fastest way to shut the door.
+                A breach on the email is only half the story. If the account also has a
+                saved password here, rotating it is the fastest way to shut the door.
               </p>
             </div>
 
