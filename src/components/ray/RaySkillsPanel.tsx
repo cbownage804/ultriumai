@@ -24,6 +24,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { getRayContext, type RayContext } from '@/lib/ray';
 import { getSinceLastVisit, type SinceItem } from '@/lib/ray/sinceLastVisit';
 import { buildSuggestedQuestions } from '@/lib/ray/suggestedQuestions';
+import { useLiveActivity, type ActivityEvent } from '@/lib/ray/liveActivity';
 import { formatDistanceToNow } from 'date-fns';
 import { dedupeRecs as sharedDedupeRecs } from './recDedupe';
 import { RayThinking } from './RayThinking';
@@ -205,6 +206,7 @@ export default function RaySkillsPanel() {
   const navigate = useNavigate();
   const location = useLocation();
   const route = useMemo(() => getRouteContext(location.pathname), [location.pathname]);
+  const liveActivity = useLiveActivity(user?.id);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -589,20 +591,53 @@ export default function RaySkillsPanel() {
                 </section>
               )}
 
-              {/* Ray's Activity — timeline that fills the empty tail */}
+              {/* Ray's live activity — real events from the database, streamed in. */}
               <section className="space-y-2">
-                <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Ray's activity</div>
-                <ol className="relative space-y-2 border-l border-border/50 pl-4">
-                  {rayActivityLog(ctx, findingsCount, openCount).map((row, i) => (
-                    <li key={i} className="relative">
-                      <span className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-primary/60 ring-2 ring-background" />
-                      <div className="flex items-baseline justify-between gap-2">
-                        <span className="text-xs text-foreground/85">{row.text}</span>
-                        <span className="text-[10px] tabular-nums text-muted-foreground shrink-0">{row.time}</span>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
+                <div className="flex items-center justify-between">
+                  <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Ray's activity</div>
+                  <div className="flex items-center gap-1.5">
+                    <motion.span
+                      className="h-1.5 w-1.5 rounded-full bg-emerald-400"
+                      animate={{ opacity: [0.4, 1, 0.4] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    />
+                    <span className="text-[10px] uppercase tracking-wider text-emerald-300/80">Live</span>
+                  </div>
+                </div>
+                {liveActivity === null ? (
+                  <div className="flex items-center gap-2 pl-4 text-xs text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Loading the last 24 hours…
+                  </div>
+                ) : liveActivity.length === 0 ? (
+                  <div className="pl-4 text-xs text-muted-foreground italic">
+                    All quiet in the last 24 hours.
+                  </div>
+                ) : (
+                  <ol className="relative space-y-2 border-l border-border/50 pl-4">
+                    <AnimatePresence initial={false}>
+                      {liveActivity.map((row) => (
+                        <motion.li
+                          key={row.id}
+                          layout
+                          initial={{ opacity: 0, x: -6 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.25 }}
+                          className="relative"
+                        >
+                          <span className={`absolute -left-[21px] top-1.5 h-2 w-2 rounded-full ring-2 ring-background ${activityDot(row.kind)}`} />
+                          <div className="flex items-baseline justify-between gap-2">
+                            <span className="text-xs text-foreground/85">{row.text}</span>
+                            <span className="text-[10px] tabular-nums text-muted-foreground shrink-0">
+                              {formatDistanceToNow(row.at, { addSuffix: true })}
+                            </span>
+                          </div>
+                        </motion.li>
+                      ))}
+                    </AnimatePresence>
+                  </ol>
+                )}
               </section>
             </div>
 
@@ -839,23 +874,20 @@ function SinceRow({ item }: { item: SinceItem }) {
   );
 }
 
-function rayActivityLog(ctx: RayContext | null, findingsCount: number, openCount: number) {
-  const now = new Date();
-  const fmt = (d: Date) =>
-    d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-  const rows: { text: string; time: string }[] = [
-    { text: 'Checked Microsoft 365 posture', time: fmt(new Date(now.getTime() - 1 * 60_000)) },
-    { text: `Reviewed ${Math.max(findingsCount * 2 + 15, 12)} devices`, time: fmt(new Date(now.getTime() - 2 * 60_000)) },
-    { text: 'Compared credentials against breach feeds', time: fmt(new Date(now.getTime() - 3 * 60_000)) },
-    { text: `Generated today's ${openCount} recommendation${openCount === 1 ? '' : 's'}`, time: fmt(new Date(now.getTime() - 4 * 60_000)) },
-    { text: 'Ran passive vulnerability sweep', time: fmt(new Date(now.getTime() - 6 * 60_000)) },
-  ];
-  if (ctx?.latestScore) {
-    rows.push({
-      text: `Recalculated security score → ${ctx.latestScore.score}`,
-      time: fmt(new Date(now.getTime() - 8 * 60_000)),
-    });
+function activityDot(kind: ActivityEvent['kind']): string {
+  switch (kind) {
+    case 'action_succeeded':
+    case 'finding_cleared':
+      return 'bg-emerald-400';
+    case 'action_failed':
+    case 'finding_new':
+      return 'bg-amber-400';
+    case 'recommendation_new':
+      return 'bg-primary';
+    case 'device_checkin':
+      return 'bg-sky-400/70';
+    default:
+      return 'bg-muted-foreground/60';
   }
-  return rows;
 }
 
