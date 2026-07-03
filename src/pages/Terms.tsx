@@ -38,7 +38,7 @@ const Terms = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-muted-foreground">
-                By accessing or using Wrayth ("Services"), a product operated by Ultrium LLC ("Wrayth," "we," "us," or "our"), you ("User," "you," or "your") agree to be bound by these Terms of Service ("Terms"). If you are using the Services on behalf of an organization, you represent that you have authority to bind that organization to these Terms.
+                By accessing or using Wrayth ("Services"), a product operated by Ultrium AI ("Wrayth," "we," "us," or "our"), you ("User," "you," or "your") agree to be bound by these Terms of Service ("Terms"). If you are using the Services on behalf of an organization, you represent that you have authority to bind that organization to these Terms.
               </p>
               <p className="text-muted-foreground">
                 If you do not agree to these Terms, you may not access or use our Services.
@@ -46,7 +46,7 @@ const Terms = () => {
               <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
                 <p className="text-sm font-medium text-primary">
                   <AlertTriangle className="h-4 w-4 inline mr-2" />
-                  These Terms constitute a legally binding agreement between you and Ultrium LLC (operator of Wrayth). Please read them carefully.
+                  These Terms constitute a legally binding agreement between you and Ultrium AI (operator of Wrayth). Please read them carefully.
                 </p>
               </div>
             </CardContent>
@@ -238,7 +238,7 @@ const Terms = () => {
               <div>
                 <h4 className="font-medium mb-2">Our Intellectual Property</h4>
                 <p className="text-sm text-muted-foreground">
-                  Wrayth, our logos, and all software, content, and materials provided through the Services are owned by or licensed to Ultrium LLC. You may not copy, modify, distribute, or create derivative works without our written permission.
+                  Wrayth, our logos, and all software, content, and materials provided through the Services are owned by or licensed to Ultrium AI. You may not copy, modify, distribute, or create derivative works without our written permission.
                 </p>
               </div>
               <div>
@@ -385,7 +385,7 @@ const Terms = () => {
                 <div>
                   <h4 className="font-medium mb-2">Legal Entity</h4>
                   <p className="text-sm text-muted-foreground">
-                    Wrayth is a product operated by Ultrium LLC.<br />
+                    Wrayth is a product operated by Ultrium AI.<br />
                     Attn: Legal Department<br />
                     Richmond, Virginia 23220<br />
                     United States
@@ -402,7 +402,7 @@ const Terms = () => {
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                <strong>Entire Agreement:</strong> These Terms, together with our Privacy Policy and any service-specific terms, constitute the entire agreement between you and Ultrium LLC (operator of Wrayth).
+                <strong>Entire Agreement:</strong> These Terms, together with our Privacy Policy and any service-specific terms, constitute the entire agreement between you and Ultrium AI (operator of Wrayth).
               </p>
               <p className="text-sm text-muted-foreground">
                 <strong>Severability:</strong> If any provision of these Terms is found unenforceable, the remaining provisions will continue in effect.

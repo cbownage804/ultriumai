@@ -38,7 +38,7 @@ const Privacy = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-muted-foreground">
-                Wrayth ("we," "us," or "our"), a product operated by Ultrium LLC, is committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use Wrayth.
+                Wrayth ("we," "us," or "our"), a product operated by Ultrium AI, is committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use Wrayth.
               </p>
               <div className="grid md:grid-cols-2 gap-3 mt-4">
                 <div className="bg-muted/50 p-3 rounded-lg">
@@ -426,7 +426,7 @@ const Privacy = () => {
                 <div>
                   <h4 className="font-medium mb-2">Legal Entity</h4>
                   <p className="text-sm text-muted-foreground">
-                    Wrayth is a product operated by Ultrium LLC.<br />
+                    Wrayth is a product operated by Ultrium AI.<br />
                     Attn: Privacy Officer<br />
                     Richmond, Virginia 23220<br />
                     United States
