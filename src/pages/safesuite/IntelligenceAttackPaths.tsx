@@ -380,6 +380,7 @@ function AttackPathView({ path, onDelete }: { path: AttackPath; onDelete: () => 
                         ))}
                       </div>
                     )}
+                    <ReasoningPanel reasoning={s.reasoning} />
                   </li>
                 ))}
               </ol>
