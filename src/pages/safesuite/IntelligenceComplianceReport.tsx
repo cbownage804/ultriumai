@@ -932,7 +932,7 @@ function buildReportDocx(
   emit('Weak', weak);
   emit('Partial', partial);
 
-  children.push(h1('5. Impacted Systems'));
+  children.push(h1('6. Impacted Systems'));
   if (impacted.length === 0) {
     children.push(p('No specific systems were tagged. Treat gaps as org-wide.'));
   } else {
