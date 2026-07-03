@@ -767,12 +767,26 @@ def main() -> int:
         t.start()
         _log("action executor started")
 
+    HEARTBEAT_INTERVAL = 30       # seconds — keeps `last_seen_at` fresh
+    POSTURE_INTERVAL = 3600       # seconds — full posture snapshot cadence
+    last_posture_at = 0.0         # 0 → forces immediate posture on startup
+
     while True:
+        now_ts = time.time()
+        wait = HEARTBEAT_INTERVAL
         try:
-            posture = collect_posture()
-            resp = ingest(cfg, posture)
-            _log(f"check-in ok: {resp}")
-            wait = int(resp.get("next_check_in_seconds", 3600))
+            if now_ts - last_posture_at >= POSTURE_INTERVAL:
+                posture = collect_posture()
+                resp = ingest(cfg, posture)
+                last_posture_at = now_ts
+                _log(f"posture ok: {resp}")
+            else:
+                resp = ingest(cfg, {
+                    "heartbeat": True,
+                    "agent_version": AGENT_VERSION,
+                    "hostname": socket.gethostname(),
+                })
+                _log(f"heartbeat ok: {resp}")
         except HTTPError as e:
             if e.code == 401:
                 _log("server revoked this device — exiting.")
@@ -782,17 +796,16 @@ def main() -> int:
                     pass
                 return 0
             _log(f"http error {e.code}: {e.reason}")
-            wait = 300
+            wait = 60
         except URLError as e:
             _log(f"network error: {e}")
-            wait = 300
+            wait = 60
         except Exception as e:  # noqa: BLE001
             _log(f"unexpected: {e}")
-            wait = 600
+            wait = 60
 
-        # Jitter ±5 min
-        wait = max(60, wait + random.randint(-300, 300))
-        time.sleep(wait)
+        time.sleep(max(5, wait))
+
 
 
 if __name__ == "__main__":
