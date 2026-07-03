@@ -58,6 +58,7 @@ import {
   Scale,
   ScanSearch,
   GitBranch,
+  Network,
 } from 'lucide-react';
 import { AppSwitcher } from '@/components/AppSwitcher';
 
@@ -105,6 +106,7 @@ function getSections(opts?: { hasOrg?: boolean; isMSP?: boolean }): NavSection[]
   const intelligence: NavItem[] = [
     { label: 'Investigations', path: getWraythPath('/intelligence/investigations'), icon: ScanSearch, badge: 'NEW' },
     { label: 'Attack Paths', path: getWraythPath('/intelligence/attack-paths'), icon: GitBranch, badge: 'NEW' },
+    { label: 'Graph', path: getWraythPath('/intelligence/graph'), icon: Network, badge: 'NEW' },
     { label: 'Board Reports', path: getWraythPath('/intelligence/reports'), icon: FileText, badge: 'NEW' },
   ];
   return [
