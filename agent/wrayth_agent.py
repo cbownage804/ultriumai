@@ -674,8 +674,68 @@ $out -join "`n"
 
     _safe("update_categories", _update_categories)
 
-    posture["logged_in_user"] = os.environ.get("USERNAME", "")
+    posture["logged_in_user"] = _detect_interactive_user()
     return posture
+
+
+def _detect_interactive_user() -> str:
+    """
+    Return the interactively signed-in Windows user.
+
+    The agent typically runs as a service under LocalSystem, so
+    ``%USERNAME%`` resolves to the machine account (``HOSTNAME$``) — not the
+    person at the keyboard. Ask Windows directly instead:
+
+      1. ``quser`` / ``query user`` — lists sessions with a state column.
+         We take the row whose state is ``Active`` (or ``console``).
+      2. ``Win32_ComputerSystem.UserName`` via WMIC — returns the console
+         user in ``DOMAIN\\user`` form when someone is logged on.
+      3. Fall back to ``%USERNAME%`` only if it does not look like a
+         machine account (``ends with $``) and is not ``SYSTEM``.
+    """
+    # 1) quser
+    try:
+        out = subprocess.run(
+            ["quser"],
+            capture_output=True, text=True, timeout=6,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+        if out.returncode == 0 and out.stdout:
+            for line in out.stdout.splitlines()[1:]:
+                # "USERNAME  SESSIONNAME  ID  STATE  IDLE TIME  LOGON TIME"
+                parts = line.split()
+                if len(parts) < 4:
+                    continue
+                name = parts[0].lstrip(">").strip()
+                state = " ".join(parts).lower()
+                if "active" in state or "console" in state:
+                    if name and not name.endswith("$"):
+                        return name
+    except Exception:  # noqa: BLE001
+        pass
+
+    # 2) WMIC computer system owner
+    try:
+        out = subprocess.run(
+            ["wmic", "computersystem", "get", "username", "/value"],
+            capture_output=True, text=True, timeout=6,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+        if out.returncode == 0 and out.stdout:
+            for line in out.stdout.splitlines():
+                if "=" in line:
+                    val = line.split("=", 1)[1].strip()
+                    if val and not val.endswith("$"):
+                        # strip DOMAIN\ prefix so we return just the user
+                        return val.split("\\", 1)[-1]
+    except Exception:  # noqa: BLE001
+        pass
+
+    # 3) Environment fallback — only if it's not the machine account
+    env_user = os.environ.get("USERNAME", "") or ""
+    if env_user and not env_user.endswith("$") and env_user.upper() != "SYSTEM":
+        return env_user
+    return ""
 
 
 def collect_generic() -> dict[str, Any]:
