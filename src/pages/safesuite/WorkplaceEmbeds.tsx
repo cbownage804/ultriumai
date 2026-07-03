@@ -1,10 +1,15 @@
 /**
- * Workplace Embeds — connect Wrayth's KB assistant into Microsoft Teams and Slack.
- * Business/Enterprise feature. Ships as beta with placeholder OAuth + manifest download.
+ * Workplace Embeds — connect the Ray Security Assistant into Microsoft
+ * Teams (personal/static tab + optional bot) and Slack.
+ *
+ * NOTE: this is deliberately NOT a knowledge-base assistant. Ray answers
+ * from the user's Wrayth security context and approved organization
+ * memory. A real customer-document KB does not exist yet.
  */
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserSubscription } from "@/hooks/useUserSubscription";
+import { useActiveOrg } from "@/hooks/useActiveOrg";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Download, Plug, ShieldCheck, Lock, MessageSquare, Trash2, Sparkles, AlertTriangle } from "lucide-react";
+import { Loader2, Download, Plug, ShieldCheck, Lock, MessageSquare, Trash2, Sparkles, AlertTriangle, ExternalLink, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 
@@ -41,16 +46,21 @@ const providerMeta = {
   slack: { label: "Slack", accent: "from-fuchsia-500/20 to-purple-500/10" },
 } as const;
 
+type TenantLink = { id: string; organization_id: string; tenant_id: string; created_at: string };
+
 export default function WorkplaceEmbeds() {
   const subscription = useUserSubscription();
+  const { activeOrg, orgs } = useActiveOrg();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<Record<string, Integration | null>>({ microsoft_teams: null, slack: null });
   const [busy, setBusy] = useState<string | null>(null);
-  const [testPrompt, setTestPrompt] = useState("What is our password rotation policy?");
+  const [testPrompt, setTestPrompt] = useState("What did Ray flag on my devices this week?");
   const [testAnswer, setTestAnswer] = useState<string | null>(null);
   const [orgName, setOrgName] = useState("");
   const [tenantId, setTenantId] = useState("");
   const [msgs, setMsgs] = useState<WorkMsg[]>([]);
+  const [tenantLinks, setTenantLinks] = useState<TenantLink[]>([]);
+  const [linkTenantInput, setLinkTenantInput] = useState("");
 
   const tier = (subscription.tier || "").toLowerCase();
   const isEntitled = ["business", "enterprise"].includes(tier);
@@ -73,10 +83,21 @@ export default function WorkplaceEmbeds() {
       .order("created_at", { ascending: false })
       .limit(20);
     setMsgs((m || []) as WorkMsg[]);
+
+    if (activeOrg) {
+      const { data: links } = await supabase
+        .from("workplace_teams_org_links")
+        .select("id, organization_id, tenant_id, created_at")
+        .eq("organization_id", activeOrg.id)
+        .order("created_at", { ascending: false });
+      setTenantLinks((links || []) as TenantLink[]);
+    } else {
+      setTenantLinks([]);
+    }
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [activeOrg?.id]);
 
   const call = async (action: string, provider: string, payload?: any) => {
     setBusy(`${action}:${provider}`);
@@ -130,7 +151,10 @@ export default function WorkplaceEmbeds() {
   const downloadManifest = async () => {
     try {
       const { data, error } = await supabase.functions.invoke("workplace-teams-manifest", {
-        body: { org_name: orgName || "Your Organization" },
+        body: {
+          org_name: orgName || activeOrg?.name || "Your Organization",
+          org_id: activeOrg?.id ?? null,
+        },
       });
       if (error) throw error;
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -143,6 +167,51 @@ export default function WorkplaceEmbeds() {
       toast.success("Teams manifest downloaded.");
     } catch (e: any) { toast.error(e.message || "Manifest download failed"); }
   };
+
+  const embedUrl = activeOrg
+    ? `${window.location.origin}/app/ray/teams-embed?orgId=${activeOrg.id}`
+    : `${window.location.origin}/app/ray/teams-embed`;
+
+  const copyEmbedUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(embedUrl);
+      toast.success("Embed URL copied.");
+    } catch { toast.error("Copy failed."); }
+  };
+
+  const linkTenant = async () => {
+    const raw = linkTenantInput.trim();
+    if (!raw) return;
+    if (!activeOrg) { toast.error("Pick an organization first."); return; }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    setBusy("link_tenant");
+    try {
+      const { error } = await supabase.from("workplace_teams_org_links").insert({
+        organization_id: activeOrg.id,
+        tenant_id: raw,
+        linked_by: user.id,
+      });
+      if (error) throw error;
+      toast.success("Teams tenant linked to this organization.");
+      setLinkTenantInput("");
+      await load();
+    } catch (e: any) {
+      toast.error(e.message || "Link failed (tenant may already be linked).");
+    } finally { setBusy(null); }
+  };
+
+  const unlinkTenant = async (id: string) => {
+    setBusy(`unlink:${id}`);
+    try {
+      const { error } = await supabase.from("workplace_teams_org_links").delete().eq("id", id);
+      if (error) throw error;
+      toast.success("Tenant unlinked.");
+      await load();
+    } catch (e: any) { toast.error(e.message || "Unlink failed."); }
+    finally { setBusy(null); }
+  };
+
 
   const StatusBadge = ({ s }: { s: Integration["status"] | undefined }) => {
     const map: Record<string, string> = {
@@ -166,9 +235,9 @@ export default function WorkplaceEmbeds() {
           <Badge variant="outline" className="border-amber-500/40 text-amber-300">Business / Enterprise</Badge>
         </div>
         <p className="text-muted-foreground max-w-3xl">
-          Let your team chat with Ray, your approved company knowledge-base assistant, directly inside
-          Microsoft Teams and Slack. Ray answers from your approved company knowledge base only. It does
-          not expose private vault secrets.
+          Let your team chat with Ray, your Wrayth Security Assistant, directly inside Microsoft
+          Teams and Slack. Ray answers from your Wrayth security context and approved organization
+          memory. Vault secrets are never exposed.
         </p>
       </header>
 
@@ -214,7 +283,7 @@ export default function WorkplaceEmbeds() {
                   </CardTitle>
                   <CardDescription>
                     {p === "microsoft_teams"
-                      ? "Ship a Teams app bound to your tenant. Users @mention Wrayth to query the KB."
+                      ? "Ship a Teams app with a personal tab (Ray Assistant embedded) and, optionally, an @mention bot."
                       : "Install a Slack app with a slash command and app mention. Workspace-scoped."}
                   </CardDescription>
                 </div>
@@ -288,8 +357,98 @@ export default function WorkplaceEmbeds() {
 
       <Card>
         <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Link2 className="h-4 w-4" /> Teams tab embed &amp; tenant linking</CardTitle>
+          <CardDescription>
+            The Teams manifest ships a personal <strong>Ray Assistant</strong> tab that opens{" "}
+            <code className="text-xs">/app/ray/teams-embed</code> inside Teams. Link your
+            Microsoft tenant to this Wrayth organization so the tab auto-selects the right org
+            when a user opens it.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-1">
+            <Label>Embed URL for this organization</Label>
+            <div className="flex gap-2">
+              <Input value={embedUrl} readOnly className="font-mono text-xs" />
+              <Button size="sm" variant="outline" onClick={copyEmbedUrl}>Copy</Button>
+              <Button asChild size="sm" variant="outline">
+                <a href={embedUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1">
+                  <ExternalLink className="h-3 w-3" /> Preview
+                </a>
+              </Button>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              This is what the Teams tab points at. Preview it in a browser to sanity-check the
+              embed before uploading the manifest.
+            </p>
+          </div>
+
+          <Separator />
+
+          <div className="space-y-2">
+            <Label>Link a Microsoft tenant to {activeOrg?.name || "the active org"}</Label>
+            <div className="flex gap-2">
+              <Input
+                value={linkTenantInput}
+                onChange={(e) => setLinkTenantInput(e.target.value)}
+                placeholder="Microsoft tenant ID (GUID)"
+                disabled={!activeOrg || !isEntitled}
+              />
+              <Button
+                size="sm"
+                onClick={linkTenant}
+                disabled={!activeOrg || !isEntitled || busy === "link_tenant" || !linkTenantInput.trim()}
+              >
+                {busy === "link_tenant" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Link2 className="h-3 w-3" />}
+                <span className="ml-1">Link tenant</span>
+              </Button>
+            </div>
+            {!activeOrg && (
+              <p className="text-[11px] text-muted-foreground">
+                No active organization detected — {orgs.length > 0 ? "select one from the sidebar" : "create one first"}.
+              </p>
+            )}
+            {tenantLinks.length > 0 && (
+              <div className="space-y-1 pt-1">
+                {tenantLinks.map((l) => (
+                  <div key={l.id} className="flex items-center justify-between text-xs border rounded-md px-2 py-1.5">
+                    <div>
+                      <span className="text-muted-foreground mr-1">Tenant</span>
+                      <code className="font-mono">{l.tenant_id}</code>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => unlinkTenant(l.id)}
+                      disabled={busy === `unlink:${l.id}`}
+                    >
+                      {busy === `unlink:${l.id}` ? <Loader2 className="h-3 w-3 animate-spin" /> : "Unlink"}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <Alert className="border-emerald-500/20 bg-emerald-500/5">
+            <ShieldCheck className="h-4 w-4" />
+            <AlertTitle>What the tab shows</AlertTitle>
+            <AlertDescription className="text-xs">
+              Ray answers from your Wrayth security context and approved organization memory.
+              Vault secrets are never exposed. This is not a customer document knowledge base —
+              full document ingestion / retrieval will ship separately.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+
+
+
+      <Card>
+        <CardHeader>
           <CardTitle>Test the assistant</CardTitle>
-          <CardDescription>Runs a stubbed KB round-trip and logs it to workplace conversations.</CardDescription>
+          <CardDescription>Runs a stubbed Ray round-trip and logs it to workplace conversations.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <Textarea value={testPrompt} onChange={(e) => setTestPrompt(e.target.value)} rows={2} disabled={!isEntitled} />

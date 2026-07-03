@@ -71,6 +71,7 @@ const TrustCenter = lazy(() => import('@/pages/safesuite/TrustCenter'));
 const RayOnboarding = lazy(() => import('@/pages/onboarding/RayOnboarding'));
 const RayTimelinePage = lazy(() => import('@/pages/safesuite/RayTimelinePage'));
 const RayGraphExplorer = lazy(() => import('@/pages/safesuite/RayGraphExplorer'));
+const RayTeamsEmbed = lazy(() => import('@/pages/safesuite/RayTeamsEmbed'));
 
 const PlaybookRunnerPage = lazy(() => import('@/pages/safesuite/PlaybookRunnerPage'));
 const Integrations = lazy(() => import('@/pages/safesuite/Integrations'));
@@ -176,6 +177,14 @@ function AppRouter() {
         <Route path="/onboarding/ray" element={
           <ProtectedRoute>
             <SuspenseWrapper><RayOnboarding /></SuspenseWrapper>
+          </ProtectedRoute>
+        } />
+
+        {/* Ray embedded in Microsoft Teams personal/static tab.
+            Chrome-less on purpose — no WraythLayout wrapping it. */}
+        <Route path="/app/ray/teams-embed" element={
+          <ProtectedRoute>
+            <SuspenseWrapper><RayTeamsEmbed /></SuspenseWrapper>
           </ProtectedRoute>
         } />
 

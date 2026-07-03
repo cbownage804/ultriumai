@@ -36323,6 +36323,44 @@ export type Database = {
           },
         ]
       }
+      workplace_teams_org_links: {
+        Row: {
+          created_at: string
+          id: string
+          linked_by: string
+          notes: string | null
+          organization_id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          linked_by: string
+          notes?: string | null
+          organization_id: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          linked_by?: string
+          notes?: string | null
+          organization_id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workplace_teams_org_links_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "org_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wrayth_agent_release: {
         Row: {
           channel: string
@@ -37980,6 +38018,13 @@ export type Database = {
       portal_user_can_view_ticket: {
         Args: { p_portal_user_id: string; p_ticket_id: string }
         Returns: boolean
+      }
+      resolve_teams_tenant_org: {
+        Args: { _tenant_id: string }
+        Returns: {
+          organization_id: string
+          organization_name: string
+        }[]
       }
       send_notification: {
         Args: {

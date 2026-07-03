@@ -17,6 +17,7 @@
         "@elevenlabs/react": "^0.13.0",
         "@hello-pangea/dnd": "^18.0.1",
         "@hookform/resolvers": "^3.9.0",
+        "@microsoft/teams-js": "^2.53.1",
         "@monaco-editor/react": "^4.7.0",
         "@radix-ui/react-accordion": "^1.2.0",
         "@radix-ui/react-alert-dialog": "^1.1.1",
@@ -330,6 +331,8 @@
     "@livekit/protocol": ["@livekit/protocol@1.42.2", "", { "dependencies": { "@bufbuild/protobuf": "^1.10.0" } }, "sha512-0jeCwoMJKcwsZICg5S6RZM4xhJoF78qMvQELjACJQn6/VB+jmiySQKOSELTXvPBVafHfEbMlqxUw2UR1jTXs2g=="],
 
     "@marijn/find-cluster-break": ["@marijn/find-cluster-break@1.0.2", "", {}, "sha512-l0h88YhZFyKdXIFNfSWpyjStDjGHwZ/U7iobcK1cQQD8sejsONdQtTVU+1wVN1PBw40PiiHB1vA5S7VTfQiP9g=="],
+
+    "@microsoft/teams-js": ["@microsoft/teams-js@2.53.1", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@microsoft/teams-js/-/teams-js-2.53.1.tgz", { "dependencies": { "base64-js": "^1.3.1", "debug": "^4.3.3" } }, "sha512-GXVtIGMl9jdXBQybVSYSzaUCDzoDJDfG02xXhxuKCJqCvPSacXtFslZINPpvOk22r+ajj4+mBGyuI4sI3iRYUg=="],
 
     "@monaco-editor/loader": ["@monaco-editor/loader@1.7.0", "", { "dependencies": { "state-local": "^1.0.6" } }, "sha512-gIwR1HrJrrx+vfyOhYmCZ0/JcWqG5kbfG7+d3f/C1LXk2EvzAbHSg3MQ5lO2sMlo9izoAZ04shohfKLVT6crVA=="],
 
