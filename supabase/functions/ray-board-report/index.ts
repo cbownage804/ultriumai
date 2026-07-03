@@ -96,7 +96,7 @@ serve(async (req) => {
   const since = new Date(Date.now() - period_days * 86_400_000).toISOString();
   const { data: invs } = await admin
     .from("ray_investigations")
-    .select("id, input_type, input_label, verdict, confidence, confidence_score, summary, executive_summary, created_at")
+    .select("id, input_type, input_label, verdict, confidence, confidence_score, summary, executive_summary, mitre, created_at")
     .eq("user_id", userId)
     .eq("status", "complete")
     .gte("created_at", since)
