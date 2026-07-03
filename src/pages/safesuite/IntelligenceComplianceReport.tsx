@@ -900,7 +900,26 @@ function buildReportDocx(
     }));
   }
 
-  children.push(h1('4. Missing or Weak Controls'));
+  children.push(h1('4. Evidence Checklist'));
+  children.push(p('For every open gap, provide the artifacts listed below. Items already marked as gathered in the app are shown as [x]; outstanding items are [ ].'));
+  if (gaps.length === 0) {
+    children.push(p('No gaps to gather evidence for.'));
+  } else {
+    gaps.forEach((g, i) => {
+      const items = evidenceByGapIdx.get(i) ?? [];
+      children.push(h2(`#${i + 1} · ${g.control ?? 'Control'}${g.domain ? ` — ${g.domain}` : ''}`));
+      if (items.length === 0) {
+        children.push(p('No evidence items suggested.'));
+        return;
+      }
+      items.forEach(it => {
+        const done = !!checks[checkKey(scanId, i, it.id)];
+        children.push(bullet(`[${done ? 'x' : ' '}] ${it.label} (${it.kind}) — ${it.hint}`));
+      });
+    });
+  }
+
+  children.push(h1('5. Missing or Weak Controls'));
   const missing = gaps.filter(g => g._state === 'missing');
   const weak = gaps.filter(g => g._state === 'weak');
   const partial = gaps.filter(g => g._state === 'partial');
