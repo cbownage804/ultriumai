@@ -48,6 +48,10 @@ type Investigation = {
   confidence: string | null;
   confidence_score: number | null;
   technical_findings: Array<{ title?: string; detail?: string; severity?: string }>;
+  reasoning: {
+    points?: Array<{ point?: string; weight?: string }>;
+    caveats?: string;
+  } | null;
   mitre: Array<{ id?: string; name?: string; why?: string }>;
   iocs: Array<{ type?: string; value?: string; note?: string }>;
   recommended_response: Array<{ priority?: number; action?: string; owner?: string }>;
