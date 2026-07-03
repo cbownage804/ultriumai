@@ -389,7 +389,23 @@ export function EnrolledDevicesList() {
                     )}
                   </div>
                   <div className="text-xs text-muted-foreground truncate flex items-center gap-2 flex-wrap">
-                    <span>{d.os} · agent v{d.agent_version} · last seen {relative(d.last_seen_at)}</span>
+                    <span
+                      title={
+                        d.last_seen_at
+                          ? `Last heartbeat: ${new Date(d.last_seen_at).toLocaleString()}\nAgent posts every ~30s while running; longer gaps usually mean the machine is asleep, off, or offline.`
+                          : 'This device has never reported in.'
+                      }
+                    >
+                      {d.os} · agent v{d.agent_version} · last seen {relative(d.last_seen_at)}
+                    </span>
+                    {d.posture_captured_at && (
+                      <span
+                        className="text-[10px] text-muted-foreground/70"
+                        title={`Deep posture scan captured: ${new Date(d.posture_captured_at).toLocaleString()}`}
+                      >
+                        · posture {relative(d.posture_captured_at)}
+                      </span>
+                    )}
                     <AgentVersionBadge
                       current={d.agent_version}
                       deviceId={d.id}
