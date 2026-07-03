@@ -269,15 +269,9 @@ def collect_windows() -> dict[str, Any]:
     if lb:
         posture["last_boot"] = lb.strip()
 
-    # Pending updates (best-effort)
-    pending = _ps(
-        "try { (New-Object -ComObject Microsoft.Update.Session)."
-        "CreateUpdateSearcher().Search('IsInstalled=0').Updates.Count } catch { 0 }"
-    )
-    try:
-        posture["pending_updates"] = int(pending)
-    except ValueError:
-        posture["pending_updates"] = 0
+    # Pending updates count placeholder — real enumeration happens in
+    # _update_categories() below (single COM scan, produces titles + counts).
+    posture["pending_updates"] = 0
 
     # Last successful patch
     last_patch = _ps(
