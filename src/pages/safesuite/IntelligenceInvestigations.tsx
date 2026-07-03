@@ -407,7 +407,7 @@ function InvestigationWorkspace({ inv }: { inv: Investigation }) {
   const [busy, setBusy] = useState<FollowupType | null>(null);
   const [questionOpen, setQuestionOpen] = useState(false);
   const [question, setQuestion] = useState('');
-  const [iocHistory, setIocHistory] = useState<Record<string, { count: number; last_seen_at: string; first_seen_at: string; last_verdict: string | null }>>({});
+  const [iocHistory, setIocHistory] = useState<Record<string, { count: number; last_seen_at: string; first_seen_at: string; last_verdict: string | null; timestamps: string[] }>>({});
 
   const loadFollowups = useCallback(async () => {
     const { data } = await supabase
@@ -428,19 +428,42 @@ function InvestigationWorkspace({ inv }: { inv: Investigation }) {
     if (norms.length === 0) return;
     const { data } = await supabase
       .from('ray_ioc_index')
-      .select('ioc_type, ioc_value_norm, occurrence_count, first_seen_at, last_seen_at, last_verdict')
+      .select('ioc_type, ioc_value_norm, occurrence_count, first_seen_at, last_seen_at, last_verdict, investigation_ids')
       .in('ioc_value_norm', norms);
-    const map: Record<string, { count: number; last_seen_at: string; first_seen_at: string; last_verdict: string | null }> = {};
-    for (const r of (data as Array<{ ioc_type: string; ioc_value_norm: string; occurrence_count: number; first_seen_at: string; last_seen_at: string; last_verdict: string | null }> | null) ?? []) {
+
+    const rows = (data as Array<{
+      ioc_type: string; ioc_value_norm: string; occurrence_count: number;
+      first_seen_at: string; last_seen_at: string; last_verdict: string | null;
+      investigation_ids: string[] | null;
+    }> | null) ?? [];
+
+    // Batch-fetch created_at for every investigation this user has that references any of these IOCs.
+    const allInvIds = Array.from(new Set(rows.flatMap(r => r.investigation_ids ?? []).filter(Boolean)));
+    let invDates = new Map<string, string>();
+    if (allInvIds.length > 0) {
+      const { data: invRows } = await supabase
+        .from('ray_investigations')
+        .select('id, created_at')
+        .in('id', allInvIds);
+      invDates = new Map(((invRows as Array<{ id: string; created_at: string }> | null) ?? []).map(r => [r.id, r.created_at]));
+    }
+
+    const map: Record<string, { count: number; last_seen_at: string; first_seen_at: string; last_verdict: string | null; timestamps: string[] }> = {};
+    for (const r of rows) {
+      const timestamps = (r.investigation_ids ?? [])
+        .map(id => invDates.get(id))
+        .filter((t): t is string => Boolean(t));
       map[`${r.ioc_type}::${r.ioc_value_norm}`] = {
         count: r.occurrence_count,
         first_seen_at: r.first_seen_at,
         last_seen_at: r.last_seen_at,
         last_verdict: r.last_verdict,
+        timestamps,
       };
     }
     setIocHistory(map);
   }, [inv.id, inv.iocs]);
+
 
   useEffect(() => {
     setTab('overview');
