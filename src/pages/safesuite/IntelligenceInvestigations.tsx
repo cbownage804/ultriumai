@@ -27,7 +27,7 @@ import {
   ScanSearch, Sparkles, ShieldAlert, CheckCircle2, AlertTriangle,
   HelpCircle, Coins, Clock, Trash2, Brain, ListChecks,
   Target, Fingerprint, FileText, Layers, ChevronRight, Presentation,
-  MessageCircleQuestion, FileWarning, Send, Copy, Download,
+  MessageCircleQuestion, FileWarning, Send, Copy, Download, Lightbulb,
 } from 'lucide-react';
 
 type InputType =
