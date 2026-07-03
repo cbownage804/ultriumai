@@ -17887,6 +17887,7 @@ export type Database = {
           mitre: Json
           model: string | null
           org_id: string | null
+          reasoning: Json
           recommended_response: Json
           status: Database["public"]["Enums"]["ray_investigation_status"]
           summary: string | null
@@ -17913,6 +17914,7 @@ export type Database = {
           mitre?: Json
           model?: string | null
           org_id?: string | null
+          reasoning?: Json
           recommended_response?: Json
           status?: Database["public"]["Enums"]["ray_investigation_status"]
           summary?: string | null
@@ -17939,6 +17941,7 @@ export type Database = {
           mitre?: Json
           model?: string | null
           org_id?: string | null
+          reasoning?: Json
           recommended_response?: Json
           status?: Database["public"]["Enums"]["ray_investigation_status"]
           summary?: string | null

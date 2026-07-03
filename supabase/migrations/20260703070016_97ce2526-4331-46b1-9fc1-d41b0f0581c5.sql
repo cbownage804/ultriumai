@@ -1,0 +1,1 @@
+ALTER TABLE public.ray_investigations ADD COLUMN IF NOT EXISTS reasoning jsonb NOT NULL DEFAULT '{}'::jsonb;
