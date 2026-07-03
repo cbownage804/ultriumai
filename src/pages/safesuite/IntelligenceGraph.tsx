@@ -17,7 +17,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Brain, GitFork, Network, ScanSearch, Sparkles, TriangleAlert } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Brain, GitFork, Network, ScanSearch, Sparkles, TriangleAlert, ExternalLink, Clock, Fingerprint } from 'lucide-react';
 
 type Investigation = {
   id: string;
