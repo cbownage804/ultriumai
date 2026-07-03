@@ -516,6 +516,32 @@ export default function IntelligenceComplianceReport() {
             />
           </div>
 
+          {/* Evidence progress */}
+          {evidenceStats.total > 0 && (
+            <Card className="border-border bg-card">
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="shrink-0 h-10 w-10 rounded-sm bg-[hsl(262_70%_60%/0.12)] border border-[hsl(262_70%_60%/0.35)] flex items-center justify-center">
+                  <ClipboardCheck className="h-5 w-5 text-[hsl(262_70%_75%)]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground">Evidence checklist</div>
+                  <div className="text-sm mt-0.5">
+                    <span className="font-semibold tabular-nums">{evidenceStats.done}</span>
+                    <span className="text-muted-foreground"> of </span>
+                    <span className="font-semibold tabular-nums">{evidenceStats.total}</span>
+                    <span className="text-muted-foreground"> artifacts gathered across {filtered.length} gap{filtered.length === 1 ? '' : 's'}. Progress is saved in this browser.</span>
+                  </div>
+                  <div className="mt-2 h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full bg-[hsl(262_70%_60%)] transition-all"
+                      style={{ width: `${evidenceStats.total ? Math.round((evidenceStats.done / evidenceStats.total) * 100) : 0}%` }}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Executive summary */}
           {scan.executive_summary && (
             <Card className="border-border bg-card">
