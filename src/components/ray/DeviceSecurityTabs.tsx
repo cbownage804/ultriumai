@@ -625,7 +625,7 @@ export function DeviceSecurityTabs({ deviceId, posture, capturedAt }: Props) {
                 value={String(p.update_categories.security ?? 0)}
                 tone={(p.update_categories.security ?? 0) > 0 ? 'bad' : 'good'}
               />
-              <Row label="Drivers" value={String(p.update_categories.drivers ?? 0)} />
+              <Row label="Drivers (optional)" value={String(p.update_categories.drivers ?? 0)} />
               <Row label="Feature" value={String(p.update_categories.feature ?? 0)} />
               <Row label="Office / M365" value={String(p.update_categories.office ?? 0)} />
               <Row label="Other" value={String(p.update_categories.other ?? 0)} />
@@ -634,6 +634,32 @@ export function DeviceSecurityTabs({ deviceId, posture, capturedAt }: Props) {
             <Row label="Categories" value="Not reported yet" />
           )}
         </Section>
+
+        {p.pending_updates_list && p.pending_updates_list.length > 0 && (
+          <Section title="What's pending">
+            <ul className="space-y-1.5">
+              {p.pending_updates_list.map((u, i) => (
+                <li key={i} className="flex items-start gap-2 text-[11px] leading-snug">
+                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-violet-400/70" />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate">{u.title || u.kb || 'Update'}</div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {[u.kb, u.category, u.is_optional ? 'optional' : null].filter(Boolean).join(' · ')}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 text-[10px] text-muted-foreground">
+              Optional driver updates appear under Windows Update → Advanced options → Optional updates. Windows still reports "You're up to date" when only optional updates remain — Ray installs them anyway when you approve.
+            </p>
+          </Section>
+        )}
+        {typeof p.preview_updates_available === 'number' && p.preview_updates_available > 0 && (
+          <p className="text-[10px] text-muted-foreground">
+            {p.preview_updates_available} preview/Insider update{p.preview_updates_available === 1 ? '' : 's'} available from Microsoft — hidden here and skipped by Ray (not production-ready).
+          </p>
+        )}
       </TabsContent>
 
       {/* RECOVERY KEYS */}
