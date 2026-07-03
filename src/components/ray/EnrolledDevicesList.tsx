@@ -438,6 +438,15 @@ export function EnrolledDevicesList() {
               {d.posture && <DeviceAssessment posture={d.posture as never} />}
 
               {!d.revoked_at && (
+                <RayProactiveGreeting
+                  deviceId={d.id}
+                  hostname={d.hostname}
+                  posture={d.posture as never}
+                  score={(d.posture as never as { _ray?: { score?: number } } | null)?._ray?.score ?? null}
+                />
+              )}
+
+              {!d.revoked_at && (
                 <AskRayCommandBox
                   deviceId={d.id}
                   hostname={d.hostname}
