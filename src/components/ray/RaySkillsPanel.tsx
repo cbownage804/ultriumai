@@ -617,6 +617,9 @@ export default function RaySkillsPanel({ mode = 'compact', onModeChange, onClose
                 </section>
               )}
 
+              {/* Rotating tip — Ray filling idle space with something useful. */}
+              {currentTip && <TipCard tip={currentTip} onAsk={send} />}
+
               {/* Ray's live activity — real events from the database, streamed in. */}
               <section className="space-y-2">
                 <div className="flex items-center justify-between">
