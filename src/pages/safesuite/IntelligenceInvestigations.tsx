@@ -465,6 +465,8 @@ function InvestigationWorkspace({ inv }: { inv: Investigation }) {
   const actionCount = inv.recommended_response.length;
   const timelineCount = inv.timeline.length;
   const reportCount = followups.length;
+  const reasoningPoints = inv.reasoning?.points ?? [];
+  const reasoningCount = reasoningPoints.length;
 
   return (
     <Card className="overflow-hidden">
