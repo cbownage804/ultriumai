@@ -420,6 +420,11 @@ function InvestigationWorkspace({ inv, onOpenInvestigation }: { inv: Investigati
 
   const loadIocHistory = useCallback(async () => {
     if (!inv.iocs || inv.iocs.length === 0) { setIocHistory({}); return; }
+    // Defense-in-depth: even though RLS on ray_ioc_index scopes rows to
+    // auth.uid() = user_id, always filter explicitly by the investigation's
+    // owner so a misconfigured policy or a future service_role client cannot
+    // leak another tenant's indicators through this query.
+    if (!inv.user_id) { setIocHistory({}); return; }
     const norms = Array.from(new Set(
       inv.iocs
         .map(i => (typeof i.value === 'string' ? i.value.trim().toLowerCase() : ''))
@@ -429,7 +434,9 @@ function InvestigationWorkspace({ inv, onOpenInvestigation }: { inv: Investigati
     const { data } = await supabase
       .from('ray_ioc_index')
       .select('ioc_type, ioc_value_norm, occurrence_count, first_seen_at, last_seen_at, last_verdict, investigation_ids')
+      .eq('user_id', inv.user_id)
       .in('ioc_value_norm', norms);
+
 
     const rows = (data as Array<{
       ioc_type: string; ioc_value_norm: string; occurrence_count: number;
