@@ -111,7 +111,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     case 'wrayth-vault-save':
       if (info.selectionText) {
         // Could open save dialog with selected text
-        chrome.action.openPopup();
+        try { chrome.action?.openPopup?.(); } catch (_) {}
       }
       break;
   }
@@ -146,7 +146,7 @@ chrome.commands.onCommand.addListener(async (command) => {
 async function triggerAutofill(tab) {
   const session = await chrome.storage.session.get(['unlocked', 'masterKey']);
   if (!session.unlocked) {
-    chrome.action.openPopup();
+    try { chrome.action?.openPopup?.(); } catch (_) {}
     return;
   }
   
@@ -1243,16 +1243,31 @@ async function forceFullSync() {
 }
 
 // ===== Wrayth Ray side panel + chat relay =====
+// Firefox exposes chrome.sidebarAction instead of chrome.sidePanel.
+async function openRayPanel(windowId) {
+  try {
+    if (chrome.sidePanel && typeof chrome.sidePanel.open === 'function') {
+      if (windowId != null) await chrome.sidePanel.open({ windowId });
+      return true;
+    }
+    if (chrome.sidebarAction && typeof chrome.sidebarAction.open === 'function') {
+      await chrome.sidebarAction.open();
+      return true;
+    }
+  } catch (e) { console.warn('[Wrayth] openRayPanel failed', e); }
+  return false;
+}
+
 try {
-  chrome.sidePanel?.setPanelBehavior?.({ openPanelOnActionClick: false }).catch(() => {});
+  if (chrome.sidePanel && typeof chrome.sidePanel.setPanelBehavior === 'function') {
+    chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => {});
+  }
 } catch (_) {}
 
 chrome.commands.onCommand.addListener(async (command) => {
   if (command === 'open-ray') {
-    try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab?.windowId != null) await chrome.sidePanel.open({ windowId: tab.windowId });
-    } catch (e) { console.warn('[Wrayth] open-ray failed', e); }
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    await openRayPanel(tab?.windowId);
   }
 });
 
@@ -1272,12 +1287,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     (async () => {
       try {
         const windowId = sender?.tab?.windowId;
-        if (windowId != null) {
-          await chrome.sidePanel.open({ windowId });
-          sendResponse({ ok: true });
-        } else {
-          sendResponse({ ok: false, error: 'no-window' });
-        }
+        const opened = await openRayPanel(windowId);
+        sendResponse(opened ? { ok: true } : { ok: false, error: 'no-panel-support' });
       } catch (e) {
         sendResponse({ ok: false, error: String(e?.message || e) });
       }

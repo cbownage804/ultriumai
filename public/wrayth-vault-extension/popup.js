@@ -807,7 +807,11 @@ function showToast(message, type = 'success') {
   openBtn?.addEventListener('click', async () => {
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab?.windowId != null) await chrome.sidePanel.open({ windowId: tab.windowId });
+      if (chrome.sidePanel && typeof chrome.sidePanel.open === 'function' && tab?.windowId != null) {
+        await chrome.sidePanel.open({ windowId: tab.windowId });
+      } else if (chrome.sidebarAction && typeof chrome.sidebarAction.open === 'function') {
+        await chrome.sidebarAction.open();
+      }
     } catch (_) {}
   });
   scanBtn?.addEventListener('click', refresh);
