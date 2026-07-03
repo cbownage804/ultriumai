@@ -65,6 +65,9 @@ const SCHEMA = `{
       "gap": "1-2 sentences describing exactly what's missing.",
       "severity": "low | medium | high | critical",
       "effort": "low | medium | high",
+      "risk_score": 0-100,
+      "control_state": "missing | weak | partial",
+      "impacted_systems": ["short names of assets, apps, or services this gap affects (e.g. 'Okta', 'AWS prod', 'M365 mailboxes', 'Windows endpoints'). Empty array if truly org-wide."],
       "remediation": "1-2 sentences: what to actually do."
     }
   ],
