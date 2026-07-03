@@ -91,8 +91,25 @@ export function FloatingRayChat() {
     return () => window.removeEventListener('ray:panel-open', onOpen);
   }, []);
 
-  const { tone, label } = useMemo(() => toneFrom(ctx), [ctx]);
+  const { tone, priorityTag } = useMemo(() => toneFrom(ctx), [ctx]);
   const styles = TONE_STYLES[tone];
+  const location = useLocation();
+  const route = useMemo(() => getRouteContext(location.pathname), [location.pathname]);
+
+  // Rotating status verb, driven by the current route.
+  const [statusIdx, setStatusIdx] = useState(0);
+  useEffect(() => {
+    setStatusIdx(0);
+    if (route.statusPool.length <= 1) return;
+    const iv = setInterval(() => {
+      setStatusIdx((i) => (i + 1) % route.statusPool.length);
+    }, 3400);
+    return () => clearInterval(iv);
+  }, [route]);
+
+  const statusVerb = route.statusPool[statusIdx] ?? 'Watching';
+  const badgeSuffix = priorityTag ? ` · ${priorityTag}` : '';
+  const ariaLabel = `Ask Ray — ${statusVerb}${badgeSuffix}`;
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
