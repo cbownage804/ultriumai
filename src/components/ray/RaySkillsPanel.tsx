@@ -446,29 +446,24 @@ export default function RaySkillsPanel() {
                 </div>
               </div>
 
-              {/* Since your last visit — dynamic briefing */}
-              <section className="space-y-1.5">
-                <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Since your last visit</div>
-                <ul className="space-y-1 text-sm text-foreground/90">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                    <span>{Math.max(findingsCount * 2 + 15, 12)} devices checked</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                    <span>{Math.max(findingsCount * 5 + 22, 20)} applications reviewed</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                    <span>No new breaches detected</span>
-                  </li>
-                  {openCount > 0 && (
-                    <li className="flex items-center gap-2">
-                      <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                      <span>I found <span className="font-medium text-foreground">{openCount} recommendation{openCount === 1 ? '' : 's'}</span> worth your attention.</span>
-                    </li>
-                  )}
-                </ul>
+              {/* Since your last visit — real activity from the database. */}
+              <section className="rounded-lg border border-primary/20 bg-primary/[0.04] p-3 space-y-2">
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.22em] text-primary">
+                  <Activity className="h-3 w-3" />
+                  Since your last visit
+                </div>
+                {sinceItems === null ? (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Reviewing the last few hours…
+                  </div>
+                ) : (
+                  <ul className="space-y-1.5 text-xs text-foreground/85">
+                    {sinceItems.map((it, i) => (
+                      <SinceRow key={i} item={it} />
+                    ))}
+                  </ul>
+                )}
               </section>
 
               {/* Security score — centerpiece */}
