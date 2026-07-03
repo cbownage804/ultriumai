@@ -655,8 +655,20 @@ function StatCard({ label, value, sub, tone = 'default' }: {
   );
 }
 
-function GapRow({ rank, g }: { rank: number; g: Gap & { _risk: number; _state: string } }) {
+function GapRow({
+  rank, g, evidence, checks, onToggle, scanId, gapIdx,
+}: {
+  rank: number;
+  g: Gap & { _risk: number; _state: string };
+  evidence: EvidenceItem[];
+  checks: Record<string, boolean>;
+  onToggle: (key: string) => void;
+  scanId: string;
+  gapIdx: number;
+}) {
   const sev = (g.severity ?? 'medium').toLowerCase();
+  const [open, setOpen] = useState(false);
+  const done = evidence.filter(e => checks[checkKey(scanId, gapIdx, e.id)]).length;
   return (
     <div className="rounded-sm border border-border bg-muted/20 p-3 space-y-2">
       <div className="flex items-start justify-between gap-3">
@@ -697,6 +709,76 @@ function GapRow({ rank, g }: { rank: number; g: Gap & { _risk: number; _state: s
           </Badge>
         ))}
       </div>
+
+      {evidence.length > 0 && (
+        <div className="pt-2 border-t border-border/60">
+          <button
+            type="button"
+            onClick={() => setOpen(o => !o)}
+            className="w-full flex items-center justify-between gap-2 text-[11px] uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <span className="flex items-center gap-1.5">
+              {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+              Evidence checklist
+              <span className="normal-case tracking-normal text-muted-foreground/70">
+                ({done}/{evidence.length})
+              </span>
+            </span>
+            <span className={cn(
+              'h-1 w-16 rounded-full bg-muted overflow-hidden',
+              done === evidence.length && 'ring-1 ring-[hsl(140_60%_50%/0.6)]',
+            )}>
+              <span
+                className={cn(
+                  'block h-full transition-all',
+                  done === evidence.length ? 'bg-[hsl(140_60%_50%)]' : 'bg-[hsl(262_70%_60%)]',
+                )}
+                style={{ width: `${evidence.length ? (done / evidence.length) * 100 : 0}%` }}
+              />
+            </span>
+          </button>
+          {open && (
+            <ul className="mt-2 space-y-1.5">
+              {evidence.map(item => {
+                const key = checkKey(scanId, gapIdx, item.id);
+                const checked = !!checks[key];
+                const meta = KIND_META[item.kind];
+                const Icon = meta.icon;
+                return (
+                  <li key={item.id} className="flex items-start gap-2 rounded-sm bg-background/60 border border-border/60 p-2">
+                    <Checkbox
+                      checked={checked}
+                      onCheckedChange={() => onToggle(key)}
+                      className="mt-0.5"
+                      aria-label={`Mark ${item.label} as provided`}
+                    />
+                    <Icon className={cn('h-3.5 w-3.5 mt-0.5 shrink-0', meta.tone)} />
+                    <div className="min-w-0 flex-1">
+                      <div className={cn('text-[12px] font-medium leading-snug', checked && 'line-through text-muted-foreground')}>
+                        {item.label}
+                        <span className="ml-1.5 text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                          {item.kind}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-muted-foreground leading-snug mt-0.5">
+                        {item.hint}
+                      </div>
+                    </div>
+                    {item.href && (
+                      <Link
+                        to={item.href}
+                        className="shrink-0 inline-flex items-center gap-1 text-[11px] text-[hsl(262_70%_75%)] hover:underline"
+                      >
+                        Open <ExternalLink className="h-3 w-3" />
+                      </Link>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 }
