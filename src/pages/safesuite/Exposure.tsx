@@ -614,13 +614,32 @@ export default function WraythWeb() {
                         {getAssetIcon(asset.asset_type)}
                       </div>
                       <div>
-                        <p className="font-medium text-white">{asset.asset_value}</p>
-                        <p className="text-sm text-gray-400">
-                          {asset.asset_type} • Last scanned: {
-                            asset.last_scan_at 
-                              ? new Date(asset.last_scan_at).toLocaleDateString()
-                              : 'Never'
-                          }
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-medium text-white">{asset.asset_value}</p>
+                          {(() => {
+                            const n = asset.threats_found ?? 0;
+                            const label = n === 0 ? 'Healthy' : n >= 5 ? 'Critical' : n >= 2 ? 'Medium' : 'Low';
+                            const cls =
+                              n === 0
+                                ? 'border-green-500/30 bg-green-500/10 text-green-300'
+                                : n >= 5
+                                  ? 'border-red-500/30 bg-red-500/10 text-red-300'
+                                  : n >= 2
+                                    ? 'border-yellow-500/30 bg-yellow-500/10 text-yellow-200'
+                                    : 'border-violet-500/30 bg-violet-500/10 text-violet-200';
+                            return (
+                              <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] ${cls}`}>
+                                {label}
+                              </span>
+                            );
+                          })()}
+                        </div>
+                        <p className="text-sm text-gray-400 mt-0.5">
+                          {(asset.threats_found ?? 0) === 0
+                            ? 'No breach records'
+                            : `${asset.threats_found} breach record${asset.threats_found === 1 ? '' : 's'}`}
+                          {' · '}
+                          Last scanned {asset.last_scan_at ? new Date(asset.last_scan_at).toLocaleDateString() : 'never'}
                         </p>
                       </div>
                     </div>
