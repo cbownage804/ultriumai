@@ -136,9 +136,9 @@ export function ExposureVaultImpact({ assets }: Props) {
                     <div>
                       <div className="text-sm font-medium text-foreground">{m.email}</div>
                       <div className="text-xs text-muted-foreground">
-                        {m.breachCount} {m.breachCount === 1 ? 'exposure' : 'exposures'} · used by{' '}
-                        {m.entries.length} vault{' '}
-                        {m.entries.length === 1 ? 'entry' : 'entries'}
+                        {m.breachCount} {m.breachCount === 1 ? 'breach' : 'breaches'} · used by{' '}
+                        {m.entries.length} saved{' '}
+                        {m.entries.length === 1 ? 'password' : 'passwords'}
                       </div>
                     </div>
                     <Link
