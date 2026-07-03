@@ -254,7 +254,10 @@ function computeFindings(p: Posture): Array<{
         findings.push({
           severity: 'warn',
           title: 'Defender tamper protection is off.',
-          detail: 'Without it, malware can silently disable your antivirus.',
+          detail:
+            "Informational only — Microsoft blocks third-party software (including Wrayth) from toggling tamper protection. " +
+            "Turn it on yourself in Windows Security → Virus & threat protection → Manage settings → Tamper Protection. " +
+            "Without it, malware can silently disable your antivirus.",
         });
       }
       if ((p.antivirus.definitions_age_days ?? 0) > 7) {
