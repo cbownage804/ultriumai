@@ -348,7 +348,9 @@ export default function RaySkillsPanel() {
   const score = ctx?.latestScore?.score ?? null;
   const delta = ctx?.scoreDelta ?? null;
   const recs = useMemo(() => buildPriorityRecs(ctx), [ctx]);
-  const openCount = ctx?.recommendations.length ?? 0;
+  const dedupedAll = useMemo(() => dedupeRecs(ctx?.recommendations ?? []), [ctx]);
+  const openCount = dedupedAll.length;
+  const rawRecCount = ctx?.recommendations.length ?? 0;
   const findingsCount = ctx?.findings.length ?? 0;
 
   // "Since we last talked" — memory diff
