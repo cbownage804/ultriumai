@@ -729,6 +729,69 @@ function StatCell({ label, value }: { label: string; value: number }) {
   );
 }
 
+const WEIGHT_STYLE: Record<string, string> = {
+  decisive: 'bg-red-500/10 text-red-400 border-red-500/30',
+  strong: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+  supporting: 'bg-muted text-muted-foreground border-border',
+  mitigating: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+};
+
+function ReasoningPanel({
+  points, caveats, confidence, confidenceScore, compact,
+}: {
+  points: Array<{ point?: string; weight?: string }>;
+  caveats?: string;
+  confidence: string | null;
+  confidenceScore: number | null;
+  compact?: boolean;
+}) {
+  return (
+    <div className={cn(
+      'rounded-sm border p-4 space-y-3',
+      compact
+        ? 'border-[hsl(262_60%_64%/0.3)] bg-[hsl(262_60%_64%/0.05)]'
+        : 'border-border',
+    )}>
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Lightbulb className="h-4 w-4 text-[hsl(262_60%_70%)]" />
+          <span className="text-sm font-medium">Why Ray reached this verdict</span>
+        </div>
+        {confidence && (
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Confidence: <span className="text-foreground">{confidence}</span>
+            {typeof confidenceScore === 'number' && ` · ${confidenceScore}%`}
+          </span>
+        )}
+      </div>
+      <ul className="space-y-2">
+        {points.map((p, i) => {
+          const weight = (p.weight ?? '').toLowerCase();
+          const style = WEIGHT_STYLE[weight];
+          return (
+            <li key={i} className="flex items-start gap-2.5 text-sm">
+              <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[hsl(262_60%_64%)] shrink-0" />
+              <div className="min-w-0 flex-1">
+                <span className="leading-relaxed">{p.point}</span>
+                {style && (
+                  <Badge variant="outline" className={cn('ml-2 rounded-sm text-[9px] uppercase tracking-wider align-middle', style)}>
+                    {weight}
+                  </Badge>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      {caveats && (
+        <div className="text-xs text-muted-foreground border-t border-border/60 pt-2 italic">
+          {caveats}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Empty({ text }: { text: string }) {
   return <p className="text-sm text-muted-foreground py-6 text-center">{text}</p>;
 }
