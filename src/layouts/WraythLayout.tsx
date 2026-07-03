@@ -62,6 +62,7 @@ import {
   Bug,
   Terminal,
   FileWarning,
+  ClipboardCheck,
 } from 'lucide-react';
 import { AppSwitcher } from '@/components/AppSwitcher';
 
@@ -114,6 +115,7 @@ function getSections(opts?: { hasOrg?: boolean; isMSP?: boolean }): NavSection[]
     { label: 'Log Analysis', path: getWraythPath('/intelligence/logs'), icon: FileWarning },
     { label: 'Attack Paths', path: getWraythPath('/intelligence/attack-paths'), icon: GitBranch },
     { label: 'Graph', path: getWraythPath('/intelligence/graph'), icon: Network },
+    { label: 'Policy Generator', path: getWraythPath('/intelligence/policies'), icon: ClipboardCheck },
     { label: 'Board Reports', path: getWraythPath('/intelligence/reports'), icon: FileText },
   ];
   return [
