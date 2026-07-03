@@ -32,12 +32,12 @@ export function HomeContextBridge({ vaultLockedCardVisible, vaultCount }: Props)
   if (!ctx.vault && ctx.identity && !vaultLockedCardVisible) {
     return (
       <RayContextBridge
-        headline="I'm watching your identity — unlock the vault so I can connect the dots."
-        knows="You've told me which emails matter and I'm watching them. If any of them show up in a breach, I can only tell you which accounts to rotate once the vault is open."
+        headline="I'm watching your identity — unlock to verify whether any saved passwords are affected."
+        knows="You've told me which emails matter and I'm watching them. I can see breach signals on those identities, but I can't yet determine whether any of your saved passwords match — that check needs the vault open."
         needs={['vault']}
-        reason="Connect the identities I'm watching to the accounts they protect."
+        reason="Unlock to compare breached identities against your saved passwords."
         capabilities={[
-          'Match breached emails to real vault entries',
+          'Match breached identities to real vault entries',
           'Rank rotations by which accounts share the same password',
           'Turn a future breach into a one-click fix',
         ]}
@@ -68,7 +68,7 @@ export function HomeContextBridge({ vaultLockedCardVisible, vaultCount }: Props)
             </div>
           </div>
           <Button asChild className="bg-violet-500 text-white hover:bg-violet-500/90 shrink-0">
-            <Link to="/app/exposure">Set up Watch</Link>
+            <Link to="/app/exposure">Set up identity monitoring</Link>
           </Button>
         </div>
       </section>

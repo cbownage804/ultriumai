@@ -31,6 +31,8 @@ export interface CisoInput {
   monitoredAssets: number;
   mfaMissingCount?: number;
   reusedPasswordCount?: number;
+  /** True when Ray can see the vault contents (unlocked). Drives confidence copy. */
+  vaultUnlocked?: boolean;
   /**
    * Optional: the single most urgent account, if the caller already ranked
    * one. When present, Ray names it in the directive so the advice is
@@ -56,6 +58,7 @@ export function nextBestAction(input: CisoInput): CisoDirective {
     monitoredAssets,
     mfaMissingCount = 0,
     reusedPasswordCount = 0,
+    vaultUnlocked = true,
     topAccountTitle,
     topAccountReason,
   } = input;
@@ -75,17 +78,29 @@ export function nextBestAction(input: CisoInput): CisoDirective {
 
   if (breachedEmailCount > 0) {
     const leadsWithName = named && topAccountReason === 'breach';
+    // Confidence-aware copy: when the vault is sealed, Ray explicitly says
+    // he can't yet confirm whether any *saved* passwords are affected.
+    // When unlocked, he speaks with certainty about the matches he can see.
+    const headline = leadsWithName
+      ? `${named} appears in a breach — start there.`
+      : breachedEmailCount === 1
+        ? 'I found 1 breached identity.'
+        : `I found ${breachedEmailCount} breached identities.`;
+
+    const rationale = vaultUnlocked
+      ? "These identities appear in known data breaches. I can now check which of your saved passwords are affected and rank the rotations for you."
+      : "These identities appear in known data breaches — not necessarily passwords saved in your Vault. I can't yet determine whether any saved passwords are affected because your Vault is locked.";
+
+    const cta = vaultUnlocked
+      ? { label: 'Review affected accounts', to: '/app/passwords' }
+      : { label: 'Unlock to verify affected saved passwords', to: '/app/exposure' };
+
     return {
       id: 'exposed_identities',
       tone: 'critical',
-      headline: leadsWithName
-        ? `${named} appears in a breach — start there.`
-        : breachedEmailCount === 1
-          ? 'I found 1 breach exposure on a monitored identity.'
-          : `I found ${breachedEmailCount} breach exposures on monitored identities.`,
-      rationale:
-        "These are exposures tied to identities I'm watching — not confirmed saved passwords. Review the exposures on the Exposure page, then unlock Vault if you want me to check whether any saved passwords are reused or affected.",
-      cta: { label: 'View exposures', to: '/app/exposure' },
+      headline,
+      rationale,
+      cta,
     };
   }
 
@@ -131,13 +146,18 @@ export function nextBestAction(input: CisoInput): CisoDirective {
   }
 
   if (monitoredAssets === 0) {
+    // Ray shows inventory awareness — he speaks to what he already has,
+    // then names the exact next step and the payoff.
+    const inventoryLine =
+      vaultCount === 1
+        ? "I can see 1 saved password"
+        : `I can see ${vaultCount} saved passwords`;
     return {
       id: 'watch_identity',
       tone: 'warn',
-      headline: "Tell me which emails matter so I can watch them for you.",
-      rationale:
-        "Without an identity to watch, I can only react to what lands in your vault. Add the emails you use most and I'll flag new exposures the moment they appear.",
-      cta: { label: 'Set up Watch', to: '/app/exposure' },
+      headline: 'Tell me which emails matter and I can watch for breaches.',
+      rationale: `${inventoryLine}, but no identities to watch yet. Add the emails you use most and I'll flag new breaches the moment they appear${vaultUnlocked ? ' and match them against your saved passwords' : ' — unlock the Vault later and I can match them against saved passwords too'}. Takes under a minute.`,
+      cta: { label: 'Set up identity monitoring', to: '/app/exposure' },
     };
   }
 
