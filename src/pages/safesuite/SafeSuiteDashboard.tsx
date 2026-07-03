@@ -53,6 +53,7 @@ import { nextBestAction } from '@/lib/ray/ciso';
 import { VaultLockedCard } from '@/components/ray/VaultLockedCard';
 import { HomeContextBridge } from '@/components/ray/HomeContextBridge';
 import { HomeCapabilityTiles } from '@/components/ray/home/HomeCapabilityTiles';
+import { OnboardingOrTrends } from '@/components/ray/home/OnboardingOrTrends';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
 
 interface DashboardStats {
