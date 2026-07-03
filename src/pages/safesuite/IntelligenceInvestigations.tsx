@@ -611,41 +611,12 @@ function InvestigationWorkspace({ inv }: { inv: Investigation }) {
           </TabsContent>
 
           <TabsContent value="iocs" className="mt-0">
-            {iocCount === 0 ? <Empty text="Ray did not extract distinct indicators." /> : (
-              <div className="space-y-1.5">
-                {inv.iocs.map((ioc, i) => {
-                  const type = (ioc.type ?? '').toLowerCase();
-                  const norm = (ioc.value ?? '').trim().toLowerCase();
-                  const history = iocHistory[`${type}::${norm}`];
-                  // Prior sightings = total occurrences minus this one.
-                  const priorCount = history ? Math.max(0, history.count - 1) : 0;
-                  return (
-                    <div key={i} className="flex items-start gap-2 text-xs rounded-sm border border-border p-2">
-                      {ioc.type && <Badge variant="outline" className="rounded-sm text-[10px] uppercase shrink-0">{ioc.type}</Badge>}
-                      <div className="min-w-0 flex-1">
-                        <div className="font-mono text-foreground break-all">{ioc.value}</div>
-                        {ioc.note && <div className="text-muted-foreground mt-0.5">{ioc.note}</div>}
-                        {priorCount > 0 && (
-                          <div className="mt-1.5 inline-flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-sm border border-[hsl(262_60%_64%/0.35)] bg-[hsl(262_60%_64%/0.08)] text-[hsl(262_60%_82%)]">
-                            <Brain className="h-3 w-3" />
-                            I've seen this before — {priorCount} prior sighting{priorCount === 1 ? '' : 's'}
-                            {history?.first_seen_at && (
-                              <span className="text-muted-foreground">
-                                · since {new Date(history.first_seen_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                              </span>
-                            )}
-                            {history?.last_verdict && history.last_verdict !== inv.verdict && (
-                              <span className="text-muted-foreground">· last verdict: {history.last_verdict}</span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            {iocCount === 0
+              ? <Empty text="Ray did not extract distinct indicators." />
+              : <IocsPanel iocs={inv.iocs} iocHistory={iocHistory} invVerdict={inv.verdict} />
+            }
           </TabsContent>
+
 
           <TabsContent value="timeline" className="mt-0">
             {timelineCount === 0 ? <Empty text="No timeline reconstructed." /> : (
