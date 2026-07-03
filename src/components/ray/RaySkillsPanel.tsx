@@ -22,6 +22,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { getRayContext, type RayContext } from '@/lib/ray';
 import { formatDistanceToNow } from 'date-fns';
+import { dedupeRecs as sharedDedupeRecs } from './recDedupe';
 
 type RayCard = {
   title?: string;
