@@ -55,6 +55,14 @@ Name: "{commonappdata}\Wrayth";      Permissions: users-modify
 Name: "{commonappdata}\Wrayth\logs"; Permissions: users-modify
 
 [UninstallRun]
+; Tell the Wrayth backend the agent is going away, so the machine
+; disappears from the Threats dashboard immediately instead of lingering
+; as "last seen X minutes ago". We read api_base + device_token from the
+; existing wrayth-config.json and POST to /functions/v1/agent-uninstall.
+; Silent on any failure — network hiccups must not block local uninstall.
+Filename: "powershell.exe"; \
+  Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$ErrorActionPreference='SilentlyContinue'; $cfg = '{commonappdata}\Wrayth\wrayth-config.json'; if (Test-Path $cfg) {{ try {{ $j = Get-Content -Raw $cfg | ConvertFrom-Json; if ($j.device_token -and $j.api_base) {{ $u = ($j.api_base.TrimEnd('/')) + '/functions/v1/agent-uninstall'; Invoke-RestMethod -Method Post -Uri $u -Headers @{{ 'Authorization' = 'Bearer ' + $j.device_token; 'Content-Type' = 'application/json' }} -Body '{{}}' -TimeoutSec 8 | Out-Null }} }} catch {{}} }}"""; \
+  Flags: runhidden waituntilterminated; RunOnceId: "WraythNotifyBackend"
 ; Force-stop the WinSW-managed service (ignore errors if already stopped/disabled).
 Filename: "powershell.exe"; \
   Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""try {{ Set-Service -Name '{#MyServiceName}' -StartupType Manual -ErrorAction SilentlyContinue }} catch {{}}; try {{ Stop-Service -Name '{#MyServiceName}' -Force -ErrorAction SilentlyContinue }} catch {{}}; Get-Process -Name 'WraythService','WraythAgent' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue"""; \
