@@ -422,7 +422,7 @@ export default function RaySkillsPanel() {
                     <span className="text-2xl">👋</span> {greet()}, {firstName}.
                   </h2>
                   <p className="text-sm text-muted-foreground leading-snug max-w-md">
-                    I've been monitoring your environment while you were away.
+                    {route.subline}
                   </p>
 
                   {memoryLine && (
