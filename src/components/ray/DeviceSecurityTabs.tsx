@@ -73,6 +73,8 @@ export interface DevicePosture {
     sample_submission?: string;
   };
   update_categories?: { security?: number; drivers?: number; feature?: number; office?: number; other?: number };
+  pending_updates_list?: Array<{ title: string; kb?: string; category?: string; is_driver?: boolean; is_optional?: boolean; is_preview?: boolean }>;
+  preview_updates_available?: number;
   installed_software?: SoftwareEntry[];
   autoruns?: AutorunEntry[];
   non_ms_services?: ServiceEntry[];
