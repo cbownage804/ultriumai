@@ -235,9 +235,9 @@ export default function WorkplaceEmbeds() {
           <Badge variant="outline" className="border-amber-500/40 text-amber-300">Business / Enterprise</Badge>
         </div>
         <p className="text-muted-foreground max-w-3xl">
-          Let your team chat with Ray, your approved company knowledge-base assistant, directly inside
-          Microsoft Teams and Slack. Ray answers from your approved company knowledge base only. It does
-          not expose private vault secrets.
+          Let your team chat with Ray, your Wrayth Security Assistant, directly inside Microsoft
+          Teams and Slack. Ray answers from your Wrayth security context and approved organization
+          memory. Vault secrets are never exposed.
         </p>
       </header>
 
