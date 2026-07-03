@@ -490,23 +490,7 @@ function Detail({ a }: { a: Analysis }) {
         </TabsContent>
 
         <TabsContent value="response">
-          {a.recommended_response.length === 0
-            ? <p className="text-sm text-muted-foreground">No recommendations.</p>
-            : (
-              <ol className="space-y-2">
-                {[...a.recommended_response].sort((x, y) => (x.priority ?? 99) - (y.priority ?? 99)).map((r, i) => (
-                  <li key={i} className="rounded-sm border border-border p-3 flex gap-3">
-                    <div className="h-6 w-6 rounded-sm bg-[hsl(262_60%_64%/0.15)] text-[hsl(262_60%_78%)] flex items-center justify-center text-xs font-medium shrink-0">
-                      {r.priority ?? i + 1}
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-sm">{r.action}</div>
-                      {r.owner && <div className="text-[11px] uppercase tracking-wider text-muted-foreground mt-1">Owner · {r.owner}</div>}
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            )}
+          <ResponseChecklist id={a.id} items={a.recommended_response} />
         </TabsContent>
       </Tabs>
     </Card>
