@@ -301,6 +301,7 @@ function AppRouter() {
           <Route path="/app/intelligence/memory" element={<SuspenseWrapper><IntelligenceMemory /></SuspenseWrapper>} />
           <Route path="/app/intelligence/drafts" element={<SuspenseWrapper><IntelligenceDrafts /></SuspenseWrapper>} />
           <Route path="/app/intelligence/campaigns" element={<SuspenseWrapper><IntelligenceCampaigns /></SuspenseWrapper>} />
+          <Route path="/app/intelligence/cases" element={<SuspenseWrapper><IntelligenceCases /></SuspenseWrapper>} />
           <Route path="/app/settings" element={<SuspenseWrapper variant="form"><WraythSettings /></SuspenseWrapper>} />
         </Route>
 
