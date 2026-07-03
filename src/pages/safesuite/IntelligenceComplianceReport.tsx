@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
@@ -28,7 +29,8 @@ import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import {
   ClipboardCheck, ShieldAlert, FileDown, Loader2, ArrowLeft, Server,
-  Target, TrendingDown, ListChecks,
+  Target, TrendingDown, ListChecks, FolderOpen, KeyRound, MonitorSmartphone,
+  ScrollText, FileSearch, Camera, Settings2, ExternalLink, ChevronDown, ChevronRight,
 } from 'lucide-react';
 import {
   Document, Packer, Paragraph, HeadingLevel, TextRun, AlignmentType,
@@ -93,6 +95,208 @@ function stateOf(g: Gap): 'missing' | 'weak' | 'partial' {
   return 'partial';
 }
 
+// ─── Evidence checklist ──────────────────────────────────────────────────
+//
+// For every gap we synthesize a short, opinionated list of the exact
+// artifacts an auditor typically wants to close the finding. Each item
+// links to the most relevant place inside Wrayth (SafeDoc for documents,
+// SafePass for credentials, Vanguard for endpoint config, Ray for logs
+// & investigations) so users can jump straight to where the evidence lives.
+
+type EvidenceKind = 'document' | 'record' | 'config' | 'log' | 'screenshot' | 'policy';
+
+type EvidenceItem = {
+  id: string;
+  kind: EvidenceKind;
+  label: string;
+  hint: string;
+  href?: string;
+};
+
+const KIND_META: Record<EvidenceKind, { icon: typeof FolderOpen; tone: string }> = {
+  document:   { icon: FolderOpen,       tone: 'text-[hsl(220_80%_70%)]' },
+  record:     { icon: FileSearch,       tone: 'text-[hsl(200_70%_70%)]' },
+  config:     { icon: Settings2,        tone: 'text-[hsl(160_60%_65%)]' },
+  log:        { icon: ScrollText,       tone: 'text-[hsl(38_80%_70%)]' },
+  screenshot: { icon: Camera,           tone: 'text-[hsl(280_60%_75%)]' },
+  policy:     { icon: ClipboardCheck,   tone: 'text-[hsl(262_70%_75%)]' },
+};
+
+const EVIDENCE_ROUTES = {
+  documents:      '/app/intelligence/history',
+  policies:       '/app/intelligence/policies',
+  investigations: '/app/intelligence/investigations',
+  logs:           '/app/intelligence/logs',
+  reports:        '/app/intelligence/reports',
+  graph:          '/app/intelligence/graph',
+  vault:          '/app/products/safepass',
+};
+
+const EVIDENCE_RULES: Array<{
+  match: RegExp;
+  items: Omit<EvidenceItem, 'id'>[];
+}> = [
+  {
+    match: /\b(mfa|multi-?factor|2fa|otp|totp)\b/i,
+    items: [
+      { kind: 'screenshot', label: 'MFA enforcement screenshot', hint: 'IdP/tenant admin console showing MFA is required for all users.', href: EVIDENCE_ROUTES.documents },
+      { kind: 'record',     label: 'User MFA enrollment export',  hint: 'CSV/report of every active user with their MFA status.', href: EVIDENCE_ROUTES.reports },
+      { kind: 'policy',     label: 'Access control policy',       hint: 'Signed policy that mandates MFA and specifies allowed factors.', href: EVIDENCE_ROUTES.policies },
+    ],
+  },
+  {
+    match: /\b(password|credential|secret|vault|rotation)\b/i,
+    items: [
+      { kind: 'policy',   label: 'Password / credential policy', hint: 'Complexity, rotation cadence, storage rules, shared-account handling.', href: EVIDENCE_ROUTES.policies },
+      { kind: 'record',   label: 'Vault inventory + last-rotated dates', hint: 'Export from SafePass showing shared secrets and rotation timestamps.', href: EVIDENCE_ROUTES.vault },
+      { kind: 'log',      label: 'Rotation & access audit log',  hint: 'Who accessed which secret when, and last rotation events.',       href: EVIDENCE_ROUTES.logs },
+    ],
+  },
+  {
+    match: /\b(access|rbac|least[- ]?privilege|privilege|authorization|role)\b/i,
+    items: [
+      { kind: 'record',   label: 'Role / entitlement matrix',    hint: 'Mapping of roles → systems → permissions, plus current assignments.', href: EVIDENCE_ROUTES.reports },
+      { kind: 'record',   label: 'Access review sign-off',       hint: 'Most recent quarterly access review with owner approvals.',        href: EVIDENCE_ROUTES.documents },
+      { kind: 'log',      label: 'Privileged access audit log',  hint: 'Admin logins, sudo/elevation events, break-glass usage.',           href: EVIDENCE_ROUTES.logs },
+    ],
+  },
+  {
+    match: /\b(logging|log|audit|monitor|siem|detection)\b/i,
+    items: [
+      { kind: 'config',   label: 'Log source coverage list',     hint: 'Every in-scope system + which logs are shipped to the SIEM.',      href: EVIDENCE_ROUTES.graph },
+      { kind: 'log',      label: 'Sample log snapshots',         hint: 'At least 30 days of retention proof from each critical source.',   href: EVIDENCE_ROUTES.logs },
+      { kind: 'policy',   label: 'Log retention & review policy', hint: 'Retention windows, who reviews, how alerts are triaged.',         href: EVIDENCE_ROUTES.policies },
+    ],
+  },
+  {
+    match: /\b(backup|restore|recovery|dr|bcp|resilience)\b/i,
+    items: [
+      { kind: 'record',   label: 'Latest successful backup report', hint: 'Job status export for each critical system + retention proof.', href: EVIDENCE_ROUTES.reports },
+      { kind: 'document', label: 'Restore test evidence',        hint: 'Signed record of the last full restore test with timing/results.', href: EVIDENCE_ROUTES.documents },
+      { kind: 'policy',   label: 'DR / BCP plan',                hint: 'Current plan with RTO/RPO, contact tree, and last exercise date.', href: EVIDENCE_ROUTES.policies },
+    ],
+  },
+  {
+    match: /\b(vuln|patch|update|cve|scan)\b/i,
+    items: [
+      { kind: 'record',   label: 'Vulnerability scan export',    hint: 'Most recent scan showing findings, severities, and status.',       href: EVIDENCE_ROUTES.reports },
+      { kind: 'record',   label: 'Patch compliance report',      hint: 'Per-endpoint patch level + missing critical/important updates.',   href: EVIDENCE_ROUTES.reports },
+      { kind: 'policy',   label: 'Vulnerability management SLA', hint: 'SLA for triaging and remediating critical/high findings.',          href: EVIDENCE_ROUTES.policies },
+    ],
+  },
+  {
+    match: /\b(encrypt|tls|ssl|at[- ]rest|in[- ]transit|kms)\b/i,
+    items: [
+      { kind: 'config',     label: 'Encryption configuration',   hint: 'TLS versions/ciphers, at-rest encryption per datastore, KMS setup.', href: EVIDENCE_ROUTES.graph },
+      { kind: 'screenshot', label: 'Cert & key inventory',       hint: 'Certificates, expiries, key rotation cadence.',                    href: EVIDENCE_ROUTES.documents },
+      { kind: 'policy',     label: 'Cryptography policy',        hint: 'Approved algorithms, key lengths, rotation frequency.',            href: EVIDENCE_ROUTES.policies },
+    ],
+  },
+  {
+    match: /\b(incident|response|ir|breach|containment|forensic)\b/i,
+    items: [
+      { kind: 'policy',   label: 'Incident response runbook',    hint: 'Current IR plan with roles, escalation paths, comms tree.',        href: EVIDENCE_ROUTES.policies },
+      { kind: 'document', label: 'Tabletop / drill record',      hint: 'Last IR exercise: date, scenario, participants, lessons.',         href: EVIDENCE_ROUTES.documents },
+      { kind: 'record',   label: 'Recent investigation timeline', hint: 'A real Ray investigation with actions, artifacts, and outcome.',  href: EVIDENCE_ROUTES.investigations },
+    ],
+  },
+  {
+    match: /\b(training|awareness|phish|education)\b/i,
+    items: [
+      { kind: 'record',   label: 'Training completion roster',   hint: 'Per-user completion status for the last training cycle.',          href: EVIDENCE_ROUTES.reports },
+      { kind: 'document', label: 'Training content / curriculum', hint: 'Slides, modules, or LMS course used this cycle.',                 href: EVIDENCE_ROUTES.documents },
+      { kind: 'record',   label: 'Phishing simulation results',  hint: 'Click / report rates from the last simulation campaign.',          href: EVIDENCE_ROUTES.reports },
+    ],
+  },
+  {
+    match: /\b(vendor|third[- ]?party|supplier|contract|dpa)\b/i,
+    items: [
+      { kind: 'document', label: 'Vendor inventory',             hint: 'List of vendors, data types shared, criticality tier.',            href: EVIDENCE_ROUTES.documents },
+      { kind: 'document', label: 'Signed DPA / security addendum', hint: 'Executed data processing / security terms for each vendor.',     href: EVIDENCE_ROUTES.documents },
+      { kind: 'record',   label: 'Vendor risk assessment',       hint: 'Most recent questionnaire / SOC 2 review per vendor.',             href: EVIDENCE_ROUTES.reports },
+    ],
+  },
+  {
+    match: /\b(endpoint|edr|antivirus|av|device|laptop|workstation)\b/i,
+    items: [
+      { kind: 'record',   label: 'Endpoint inventory + agent status', hint: 'Every managed endpoint with EDR/AV agent health.',            href: EVIDENCE_ROUTES.reports },
+      { kind: 'config',   label: 'EDR / AV policy configuration', hint: 'Screenshots of enforced policies (real-time scan, tamper protection).', href: EVIDENCE_ROUTES.graph },
+      { kind: 'log',      label: 'Recent detection log sample',   hint: '30 days of detections/alerts from EDR console.',                   href: EVIDENCE_ROUTES.logs },
+    ],
+  },
+  {
+    match: /\b(network|firewall|segmentation|vpn|acl)\b/i,
+    items: [
+      { kind: 'config',     label: 'Firewall ruleset export',    hint: 'Current inbound/outbound rules with owner + justification.',       href: EVIDENCE_ROUTES.graph },
+      { kind: 'document',   label: 'Network diagram',            hint: 'Up-to-date diagram showing segmentation and trust boundaries.',    href: EVIDENCE_ROUTES.documents },
+      { kind: 'record',     label: 'Firewall change tickets',    hint: 'Recent change requests with approvals for network changes.',        href: EVIDENCE_ROUTES.documents },
+    ],
+  },
+  {
+    match: /\b(data|classification|dlp|retention|privacy|pii|phi)\b/i,
+    items: [
+      { kind: 'document', label: 'Data classification scheme',   hint: 'Tiers, examples, handling rules per tier.',                        href: EVIDENCE_ROUTES.documents },
+      { kind: 'record',   label: 'Data inventory / RoPA',        hint: 'Where each data type lives, retention window, legal basis.',       href: EVIDENCE_ROUTES.reports },
+      { kind: 'policy',   label: 'Data retention & disposal policy', hint: 'How long each class is kept and how it is destroyed.',         href: EVIDENCE_ROUTES.policies },
+    ],
+  },
+];
+
+const DEFAULT_EVIDENCE: Omit<EvidenceItem, 'id'>[] = [
+  { kind: 'policy',   label: 'Written control statement',   hint: 'Documented policy or standard that addresses this control.',       href: EVIDENCE_ROUTES.policies },
+  { kind: 'record',   label: 'Operational evidence sample', hint: 'At least one recent record showing the control operating.',        href: EVIDENCE_ROUTES.reports },
+  { kind: 'document', label: 'Owner sign-off',              hint: 'Named control owner with approval date on file.',                  href: EVIDENCE_ROUTES.documents },
+];
+
+function evidenceFor(g: Gap): EvidenceItem[] {
+  const text = [g.control, g.domain, g.gap, g.remediation].filter(Boolean).join(' ').toLowerCase();
+  const seen = new Set<string>();
+  const out: EvidenceItem[] = [];
+  for (const rule of EVIDENCE_RULES) {
+    if (!rule.match.test(text)) continue;
+    for (const item of rule.items) {
+      const key = `${item.kind}:${item.label}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ ...item, id: key });
+    }
+    if (out.length >= 6) break;
+  }
+  if (out.length < 3) {
+    for (const item of DEFAULT_EVIDENCE) {
+      const key = `${item.kind}:${item.label}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ ...item, id: key });
+    }
+  }
+  // Impacted-system-specific reminder — surfaces the exact assets to attach evidence for.
+  if ((g.impacted_systems ?? []).length) {
+    out.push({
+      id: 'record:impacted-systems',
+      kind: 'record',
+      label: `Evidence for each impacted system (${(g.impacted_systems ?? []).length})`,
+      hint: (g.impacted_systems ?? []).join(', '),
+      href: EVIDENCE_ROUTES.graph,
+    });
+  }
+  return out.slice(0, 7);
+}
+
+const CHECKS_STORAGE_KEY = 'ray.evidence.checks.v1';
+
+function loadChecks(): Record<string, boolean> {
+  try {
+    return JSON.parse(localStorage.getItem(CHECKS_STORAGE_KEY) || '{}');
+  } catch { return {}; }
+}
+function saveChecks(state: Record<string, boolean>) {
+  try { localStorage.setItem(CHECKS_STORAGE_KEY, JSON.stringify(state)); } catch { /* ignore */ }
+}
+function checkKey(scanId: string, gapIdx: number, evidenceId: string) {
+  return `${scanId}::${gapIdx}::${evidenceId}`;
+}
+
 export default function IntelligenceComplianceReport() {
   const { user } = useAuth();
   const [params, setParams] = useSearchParams();
@@ -103,6 +307,16 @@ export default function IntelligenceComplianceReport() {
   const [exporting, setExporting] = useState(false);
   const [severityFilter, setSeverityFilter] = useState<string>('all');
   const [domainFilter, setDomainFilter] = useState<string>('all');
+  const [checks, setChecks] = useState<Record<string, boolean>>(() => loadChecks());
+
+  const toggleCheck = useCallback((key: string) => {
+    setChecks(prev => {
+      const next = { ...prev, [key]: !prev[key] };
+      if (!next[key]) delete next[key];
+      saveChecks(next);
+      return next;
+    });
+  }, []);
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -166,16 +380,34 @@ export default function IntelligenceComplianceReport() {
     partial:  gaps.filter(g => g._state === 'partial').length,
   }), [gaps]);
 
+  // Evidence per gap (stable + deterministic given gap contents).
+  const evidenceByGapIdx = useMemo(() => {
+    const map = new Map<number, EvidenceItem[]>();
+    filtered.forEach((g, i) => map.set(i, evidenceFor(g)));
+    return map;
+  }, [filtered]);
+
+  const evidenceStats = useMemo(() => {
+    if (!scanId) return { total: 0, done: 0 };
+    let total = 0, done = 0;
+    filtered.forEach((_, i) => {
+      const items = evidenceByGapIdx.get(i) ?? [];
+      total += items.length;
+      items.forEach(it => { if (checks[checkKey(scanId, i, it.id)]) done += 1; });
+    });
+    return { total, done };
+  }, [filtered, evidenceByGapIdx, checks, scanId]);
+
   function pickScan(id: string) {
     setScanId(id);
     setParams({ id }, { replace: true });
   }
 
   async function exportDocx() {
-    if (!scan) return;
+    if (!scan || !scanId) return;
     setExporting(true);
     try {
-      const doc = buildReportDocx(scan, filtered, impactedSystems, buckets);
+      const doc = buildReportDocx(scan, filtered, impactedSystems, buckets, evidenceByGapIdx, checks, scanId);
       const blob = await Packer.toBlob(doc);
       const safe = `${scan.framework}-gap-report`.replace(/[^a-z0-9]+/gi, '-').toLowerCase();
       saveAs(blob, `${safe}.docx`);
@@ -284,6 +516,32 @@ export default function IntelligenceComplianceReport() {
             />
           </div>
 
+          {/* Evidence progress */}
+          {evidenceStats.total > 0 && (
+            <Card className="border-border bg-card">
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="shrink-0 h-10 w-10 rounded-sm bg-[hsl(262_70%_60%/0.12)] border border-[hsl(262_70%_60%/0.35)] flex items-center justify-center">
+                  <ClipboardCheck className="h-5 w-5 text-[hsl(262_70%_75%)]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground">Evidence checklist</div>
+                  <div className="text-sm mt-0.5">
+                    <span className="font-semibold tabular-nums">{evidenceStats.done}</span>
+                    <span className="text-muted-foreground"> of </span>
+                    <span className="font-semibold tabular-nums">{evidenceStats.total}</span>
+                    <span className="text-muted-foreground"> artifacts gathered across {filtered.length} gap{filtered.length === 1 ? '' : 's'}. Progress is saved in this browser.</span>
+                  </div>
+                  <div className="mt-2 h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full bg-[hsl(262_70%_60%)] transition-all"
+                      style={{ width: `${evidenceStats.total ? Math.round((evidenceStats.done / evidenceStats.total) * 100) : 0}%` }}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Executive summary */}
           {scan.executive_summary && (
             <Card className="border-border bg-card">
@@ -332,7 +590,16 @@ export default function IntelligenceComplianceReport() {
               ) : (
                 <div className="space-y-2">
                   {filtered.map((g, i) => (
-                    <GapRow key={i} rank={i + 1} g={g} />
+                    <GapRow
+                      key={i}
+                      rank={i + 1}
+                      g={g}
+                      evidence={evidenceByGapIdx.get(i) ?? []}
+                      checks={checks}
+                      onToggle={toggleCheck}
+                      scanId={scanId ?? ''}
+                      gapIdx={i}
+                    />
                   ))}
                 </div>
               )}
@@ -388,8 +655,20 @@ function StatCard({ label, value, sub, tone = 'default' }: {
   );
 }
 
-function GapRow({ rank, g }: { rank: number; g: Gap & { _risk: number; _state: string } }) {
+function GapRow({
+  rank, g, evidence, checks, onToggle, scanId, gapIdx,
+}: {
+  rank: number;
+  g: Gap & { _risk: number; _state: string };
+  evidence: EvidenceItem[];
+  checks: Record<string, boolean>;
+  onToggle: (key: string) => void;
+  scanId: string;
+  gapIdx: number;
+}) {
   const sev = (g.severity ?? 'medium').toLowerCase();
+  const [open, setOpen] = useState(false);
+  const done = evidence.filter(e => checks[checkKey(scanId, gapIdx, e.id)]).length;
   return (
     <div className="rounded-sm border border-border bg-muted/20 p-3 space-y-2">
       <div className="flex items-start justify-between gap-3">
@@ -430,6 +709,76 @@ function GapRow({ rank, g }: { rank: number; g: Gap & { _risk: number; _state: s
           </Badge>
         ))}
       </div>
+
+      {evidence.length > 0 && (
+        <div className="pt-2 border-t border-border/60">
+          <button
+            type="button"
+            onClick={() => setOpen(o => !o)}
+            className="w-full flex items-center justify-between gap-2 text-[11px] uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <span className="flex items-center gap-1.5">
+              {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+              Evidence checklist
+              <span className="normal-case tracking-normal text-muted-foreground/70">
+                ({done}/{evidence.length})
+              </span>
+            </span>
+            <span className={cn(
+              'h-1 w-16 rounded-full bg-muted overflow-hidden',
+              done === evidence.length && 'ring-1 ring-[hsl(140_60%_50%/0.6)]',
+            )}>
+              <span
+                className={cn(
+                  'block h-full transition-all',
+                  done === evidence.length ? 'bg-[hsl(140_60%_50%)]' : 'bg-[hsl(262_70%_60%)]',
+                )}
+                style={{ width: `${evidence.length ? (done / evidence.length) * 100 : 0}%` }}
+              />
+            </span>
+          </button>
+          {open && (
+            <ul className="mt-2 space-y-1.5">
+              {evidence.map(item => {
+                const key = checkKey(scanId, gapIdx, item.id);
+                const checked = !!checks[key];
+                const meta = KIND_META[item.kind];
+                const Icon = meta.icon;
+                return (
+                  <li key={item.id} className="flex items-start gap-2 rounded-sm bg-background/60 border border-border/60 p-2">
+                    <Checkbox
+                      checked={checked}
+                      onCheckedChange={() => onToggle(key)}
+                      className="mt-0.5"
+                      aria-label={`Mark ${item.label} as provided`}
+                    />
+                    <Icon className={cn('h-3.5 w-3.5 mt-0.5 shrink-0', meta.tone)} />
+                    <div className="min-w-0 flex-1">
+                      <div className={cn('text-[12px] font-medium leading-snug', checked && 'line-through text-muted-foreground')}>
+                        {item.label}
+                        <span className="ml-1.5 text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                          {item.kind}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-muted-foreground leading-snug mt-0.5">
+                        {item.hint}
+                      </div>
+                    </div>
+                    {item.href && (
+                      <Link
+                        to={item.href}
+                        className="shrink-0 inline-flex items-center gap-1 text-[11px] text-[hsl(262_70%_75%)] hover:underline"
+                      >
+                        Open <ExternalLink className="h-3 w-3" />
+                      </Link>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -482,6 +831,9 @@ function buildReportDocx(
   gaps: Array<Gap & { _risk: number; _state: string }>,
   impacted: Array<[string, number]>,
   buckets: { critical: number; high: number; medium: number; low: number; missing: number; weak: number; partial: number },
+  evidenceByGapIdx: Map<number, EvidenceItem[]>,
+  checks: Record<string, boolean>,
+  scanId: string,
 ): Document {
   const children: Paragraph[] = [];
   const h1 = (t: string) => new Paragraph({ heading: HeadingLevel.HEADING_1, spacing: { before: 320, after: 140 }, children: [new TextRun({ text: t, bold: true })] });
@@ -548,7 +900,26 @@ function buildReportDocx(
     }));
   }
 
-  children.push(h1('4. Missing or Weak Controls'));
+  children.push(h1('4. Evidence Checklist'));
+  children.push(p('For every open gap, provide the artifacts listed below. Items already marked as gathered in the app are shown as [x]; outstanding items are [ ].'));
+  if (gaps.length === 0) {
+    children.push(p('No gaps to gather evidence for.'));
+  } else {
+    gaps.forEach((g, i) => {
+      const items = evidenceByGapIdx.get(i) ?? [];
+      children.push(h2(`#${i + 1} · ${g.control ?? 'Control'}${g.domain ? ` — ${g.domain}` : ''}`));
+      if (items.length === 0) {
+        children.push(p('No evidence items suggested.'));
+        return;
+      }
+      items.forEach(it => {
+        const done = !!checks[checkKey(scanId, i, it.id)];
+        children.push(bullet(`[${done ? 'x' : ' '}] ${it.label} (${it.kind}) — ${it.hint}`));
+      });
+    });
+  }
+
+  children.push(h1('5. Missing or Weak Controls'));
   const missing = gaps.filter(g => g._state === 'missing');
   const weak = gaps.filter(g => g._state === 'weak');
   const partial = gaps.filter(g => g._state === 'partial');
@@ -561,7 +932,7 @@ function buildReportDocx(
   emit('Weak', weak);
   emit('Partial', partial);
 
-  children.push(h1('5. Impacted Systems'));
+  children.push(h1('6. Impacted Systems'));
   if (impacted.length === 0) {
     children.push(p('No specific systems were tagged. Treat gaps as org-wide.'));
   } else {
