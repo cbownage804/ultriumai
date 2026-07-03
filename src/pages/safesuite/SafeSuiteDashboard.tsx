@@ -726,7 +726,7 @@ export default function WraythDashboard() {
           Password count mirrors the Vault tile above (entry count is not
           secret; only contents are protected by the zero-knowledge vault). */}
       <RayWatchingCard
-        passwordCount={stats.passwordCount}
+        passwordCount={persistentVaultCount}
         identityCount={stats.monitoredAssets}
         threatCount={0}
       />
