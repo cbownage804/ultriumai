@@ -11,6 +11,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { getRayContext, type RayContext } from '@/lib/ray';
 import RaySkillsPanel from './RaySkillsPanel';
+import { dedupeRecs } from './recDedupe';
 
 export type RayPanelOpenDetail = {
   message?: string;
