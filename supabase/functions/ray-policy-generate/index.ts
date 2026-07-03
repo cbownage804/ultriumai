@@ -318,6 +318,8 @@ ${isRunbook ? RUNBOOK_SCHEMA : SCHEMA}`;
       exceptions: asStr(parsed.exceptions, 2000),
       definitions: asArr(parsed.definitions),
       revision_history: asArr(parsed.revision_history),
+      kind: isRunbook ? "runbook" : "policy",
+      source_refs: usedRefs,
       duration_ms: Date.now() - started,
     },
     model: result.model,
