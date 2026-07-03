@@ -52,6 +52,9 @@ verify_jwt = true
 [functions.ray-attack-path]
 verify_jwt = true
 
+[functions.ray-step-remediation]
+verify_jwt = true
+
 [functions.ray-analyze]
 verify_jwt = true
 
