@@ -122,10 +122,17 @@ export default function RayTimelinePage() {
           )}
         </div>
         {focused && (
-          <div className="w-full lg:w-72 flex-shrink-0">
+          <div className="w-full lg:w-72 flex-shrink-0 space-y-3">
+            <a
+              href={`/app/graph/${focused.id}`}
+              className="block rounded-xl border border-border/60 bg-card/40 p-3 text-xs text-violet-300 hover:border-violet-400/60"
+            >
+              Explore in graph →
+            </a>
             <RelatedEntitiesPanel entityId={focused.id} />
           </div>
         )}
+
       </div>
     </PageMotion>
   );
