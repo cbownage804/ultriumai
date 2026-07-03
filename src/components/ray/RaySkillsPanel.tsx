@@ -686,7 +686,7 @@ export default function RaySkillsPanel() {
   );
 }
 
-function PriorityRecRow({ rec, onAsk }: { rec: PriorityRec; onAsk: (q: string) => void }) {
+function PriorityRecRow({ rec, onAsk, onIgnore }: { rec: PriorityRec; onAsk: (q: string) => void; onIgnore?: () => void }) {
   const toneStyle =
     rec.tone === 'danger'
       ? 'border-red-500/40 bg-red-500/[0.04]'
