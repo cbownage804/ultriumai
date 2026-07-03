@@ -207,10 +207,19 @@ export function InstallAgentDialog({
             <ol className="space-y-3 text-sm">
               <li className="rounded-lg border border-border/60 p-3">
                 <div className="font-medium text-foreground mb-2">1. Download the installer</div>
-                <Button asChild size="sm" className="bg-violet-600 hover:bg-violet-500 text-white">
-                  <a href={SETUP_DOWNLOAD_URL} target="_blank" rel="noreferrer">
-                    <Download className="mr-2 h-4 w-4" /> WraythSetup.exe
-                  </a>
+                <Button
+                  size="sm"
+                  className="bg-violet-600 hover:bg-violet-500 text-white"
+                  onClick={(e) => {
+                    // Trigger the download in a fresh, disowned tab so the
+                    // browser's download bar / tab-swap can't dismiss this
+                    // dialog and force a new enrollment code.
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.open(SETUP_DOWNLOAD_URL, '_blank', 'noopener,noreferrer');
+                  }}
+                >
+                  <Download className="mr-2 h-4 w-4" /> WraythSetup.exe
                 </Button>
                 <p className="mt-2 text-[11px] text-muted-foreground/80">
                   One click. Signed Windows installer — no PowerShell, no ZIP.
