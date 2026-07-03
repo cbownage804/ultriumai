@@ -15,6 +15,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -22,7 +24,8 @@ import { cn } from '@/lib/utils';
 import {
   Sparkles, CheckCircle2, AlertTriangle, HelpCircle, ShieldAlert,
   Coins, Clock, Brain, Target, Fingerprint, ListChecks, Layers, ChevronRight,
-  Bug, Terminal, Upload,
+  Bug, Terminal, Upload, Download, ShieldOff, Anchor, KeyRound, Radio,
+  Network, ArrowUpFromLine, Skull, Gauge,
 } from 'lucide-react';
 
 export type AnalyzerMode = 'script' | 'malware';
