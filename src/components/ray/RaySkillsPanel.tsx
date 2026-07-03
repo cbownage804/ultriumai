@@ -557,50 +557,42 @@ export default function RaySkillsPanel() {
                 );
               })()}
 
-              {/* While you were away — richer activity feed */}
-              <section className="rounded-lg border border-primary/20 bg-primary/[0.04] p-3 space-y-2">
-                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.22em] text-primary">
-                  <Activity className="h-3 w-3" />
-                  While you were away
+              {/* Context-aware quick actions — driven by the current route. */}
+              <section className="space-y-2">
+                <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                  Quick actions · {route.areaLabel}
                 </div>
-                <ul className="space-y-1.5 text-xs text-foreground/85">
-                  <WhileAwayRow ok text={`${Math.max(findingsCount * 2 + 15, 12)} devices checked`} />
-                  <WhileAwayRow ok text="Windows updates reviewed" />
-                  <WhileAwayRow ok text="No malware detected" />
-                  <WhileAwayRow ok text="Passwords checked against new breach feeds" />
-                  {openCount > 0 && <WhileAwayRow text={`${Math.min(openCount, 3)} recommendation${Math.min(openCount, 3) === 1 ? '' : 's'} added`} />}
-                  <WhileAwayRow ok text="Regenerated today's priority list" />
-                </ul>
+                <div className="grid grid-cols-2 gap-2">
+                  {route.quickActions.map((a) => (
+                    <button
+                      key={a.label}
+                      onClick={() => send(a.prompt)}
+                      className="group flex items-start gap-2 rounded-lg border border-border/60 bg-card/40 px-3 py-2.5 text-left transition hover:border-primary/50 hover:bg-primary/5"
+                    >
+                      <span className="text-base leading-none mt-0.5">{a.emoji}</span>
+                      <span className="block text-sm text-foreground/90 leading-tight">{a.label}</span>
+                    </button>
+                  ))}
+                </div>
               </section>
 
-              {/* Quick actions — grouped with emoji + subtitle */}
-              <section className="space-y-3">
-                <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">How can I help?</div>
-                {(['Investigate', 'Understand', 'Learn'] as const).map((group) => {
-                  const items = QUICK_ACTIONS.filter((a) => a.group === group);
-                  if (items.length === 0) return null;
-                  return (
-                    <div key={group} className="space-y-1.5">
-                      <div className="text-[9px] uppercase tracking-wider text-muted-foreground/70">{group}</div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {items.map(({ label, subtitle, prompt, emoji }) => (
-                          <button
-                            key={label}
-                            onClick={() => send(prompt)}
-                            className="group flex items-start gap-2 rounded-lg border border-border/60 bg-card/40 px-3 py-2.5 text-left transition hover:border-primary/50 hover:bg-primary/5"
-                          >
-                            <span className="text-base leading-none mt-0.5">{emoji}</span>
-                            <span className="flex-1 min-w-0">
-                              <span className="block text-sm text-foreground/90 truncate">{label}</span>
-                              <span className="block text-[10px] text-muted-foreground truncate">{subtitle}</span>
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </section>
+              {/* Dynamic suggested questions — synthesized from posture + route. */}
+              {suggested.length > 0 && (
+                <section className="space-y-2">
+                  <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">You might ask</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {suggested.map((q) => (
+                      <button
+                        key={q.id}
+                        onClick={() => send(q.prompt)}
+                        className="rounded-full border border-border/60 bg-card/40 px-3 py-1.5 text-xs text-foreground/85 transition hover:border-primary/50 hover:bg-primary/5 hover:text-foreground"
+                      >
+                        {q.label}
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              )}
 
               {/* Ray's Activity — timeline that fills the empty tail */}
               <section className="space-y-2">
