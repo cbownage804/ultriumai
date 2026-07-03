@@ -580,7 +580,7 @@ Deno.serve(async (req) => {
       .eq('id', device.id);
 
     // Upsert latest posture
-    await admin.from('wrayth_device_posture').upsert(
+    const { error: upErr } = await admin.from('wrayth_device_posture').upsert(
       {
         device_id: device.id,
         user_id: device.user_id,
@@ -590,15 +590,22 @@ Deno.serve(async (req) => {
       },
       { onConflict: 'device_id' },
     );
+    if (upErr) {
+      console.error('posture upsert failed', upErr);
+      throw upErr;
+    }
 
     // Append history (best-effort)
-    await admin.from('wrayth_device_posture_history').insert({
+    const { error: histErr } = await admin.from('wrayth_device_posture_history').insert({
       device_id: device.id,
       user_id: device.user_id,
       captured_at: now,
       payload: enrichedPayload,
       findings,
     });
+    if (histErr) {
+      console.error('posture history insert failed', histErr);
+    }
 
 
     return new Response(JSON.stringify({ ok: true, next_check_in_seconds: 3600 }), {
