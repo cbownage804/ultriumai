@@ -357,6 +357,96 @@ export default function WorkplaceEmbeds() {
 
       <Card>
         <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Link2 className="h-4 w-4" /> Teams tab embed &amp; tenant linking</CardTitle>
+          <CardDescription>
+            The Teams manifest ships a personal <strong>Ray Assistant</strong> tab that opens{" "}
+            <code className="text-xs">/app/ray/teams-embed</code> inside Teams. Link your
+            Microsoft tenant to this Wrayth organization so the tab auto-selects the right org
+            when a user opens it.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-1">
+            <Label>Embed URL for this organization</Label>
+            <div className="flex gap-2">
+              <Input value={embedUrl} readOnly className="font-mono text-xs" />
+              <Button size="sm" variant="outline" onClick={copyEmbedUrl}>Copy</Button>
+              <Button asChild size="sm" variant="outline">
+                <a href={embedUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1">
+                  <ExternalLink className="h-3 w-3" /> Preview
+                </a>
+              </Button>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              This is what the Teams tab points at. Preview it in a browser to sanity-check the
+              embed before uploading the manifest.
+            </p>
+          </div>
+
+          <Separator />
+
+          <div className="space-y-2">
+            <Label>Link a Microsoft tenant to {activeOrg?.name || "the active org"}</Label>
+            <div className="flex gap-2">
+              <Input
+                value={linkTenantInput}
+                onChange={(e) => setLinkTenantInput(e.target.value)}
+                placeholder="Microsoft tenant ID (GUID)"
+                disabled={!activeOrg || !isEntitled}
+              />
+              <Button
+                size="sm"
+                onClick={linkTenant}
+                disabled={!activeOrg || !isEntitled || busy === "link_tenant" || !linkTenantInput.trim()}
+              >
+                {busy === "link_tenant" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Link2 className="h-3 w-3" />}
+                <span className="ml-1">Link tenant</span>
+              </Button>
+            </div>
+            {!activeOrg && (
+              <p className="text-[11px] text-muted-foreground">
+                No active organization detected — {orgs.length > 0 ? "select one from the sidebar" : "create one first"}.
+              </p>
+            )}
+            {tenantLinks.length > 0 && (
+              <div className="space-y-1 pt-1">
+                {tenantLinks.map((l) => (
+                  <div key={l.id} className="flex items-center justify-between text-xs border rounded-md px-2 py-1.5">
+                    <div>
+                      <span className="text-muted-foreground mr-1">Tenant</span>
+                      <code className="font-mono">{l.tenant_id}</code>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => unlinkTenant(l.id)}
+                      disabled={busy === `unlink:${l.id}`}
+                    >
+                      {busy === `unlink:${l.id}` ? <Loader2 className="h-3 w-3 animate-spin" /> : "Unlink"}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <Alert className="border-emerald-500/20 bg-emerald-500/5">
+            <ShieldCheck className="h-4 w-4" />
+            <AlertTitle>What the tab shows</AlertTitle>
+            <AlertDescription className="text-xs">
+              Ray answers from your Wrayth security context and approved organization memory.
+              Vault secrets are never exposed. This is not a customer document knowledge base —
+              full document ingestion / retrieval will ship separately.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+
+
+
+      <Card>
+        <CardHeader>
           <CardTitle>Test the assistant</CardTitle>
           <CardDescription>Runs a stubbed Ray round-trip and logs it to workplace conversations.</CardDescription>
         </CardHeader>
