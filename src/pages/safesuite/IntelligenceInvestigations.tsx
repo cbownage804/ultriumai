@@ -514,6 +514,15 @@ function InvestigationWorkspace({ inv }: { inv: Investigation }) {
                 <p className="text-sm italic text-muted-foreground">{inv.executive_summary}</p>
               </div>
             )}
+            {reasoningCount > 0 && (
+              <ReasoningPanel
+                points={reasoningPoints}
+                caveats={inv.reasoning?.caveats}
+                confidence={inv.confidence}
+                confidenceScore={inv.confidence_score}
+                compact
+              />
+            )}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2">
               <StatCell label="Findings" value={findingCount} />
               <StatCell label="MITRE" value={mitreCount} />
@@ -521,6 +530,19 @@ function InvestigationWorkspace({ inv }: { inv: Investigation }) {
               <StatCell label="Actions" value={actionCount} />
               <StatCell label="Reports" value={reportCount} />
             </div>
+          </TabsContent>
+
+          <TabsContent value="reasoning" className="mt-0">
+            {reasoningCount === 0 ? (
+              <Empty text="Ray did not record explicit reasoning for this investigation." />
+            ) : (
+              <ReasoningPanel
+                points={reasoningPoints}
+                caveats={inv.reasoning?.caveats}
+                confidence={inv.confidence}
+                confidenceScore={inv.confidence_score}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="findings" className="mt-0">
