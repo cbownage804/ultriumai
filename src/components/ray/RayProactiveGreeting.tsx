@@ -64,7 +64,11 @@ function relativeShort(iso: string): string {
   return `${Math.round(diff / 86_400_000)}d ago`;
 }
 
-function continuityLine(last: LastAction | null, score: number | null | undefined): string | null {
+function continuityLine(
+  last: LastAction | null,
+  score: number | null | undefined,
+  posture: DevicePosture | null,
+): string | null {
   if (!last) return null;
   const when = relativeShort(last.completed_at);
   const withinDay = Date.now() - new Date(last.completed_at).getTime() < 36 * 3600_000;
@@ -83,6 +87,16 @@ function continuityLine(last: LastAction | null, score: number | null | undefine
   }
   const detail = kbBits.length ? ` (${kbBits.slice(0, 2).join(', ')})` : '';
   const scorePart = typeof score === 'number' ? ` You\u2019re now at ${score}/100.` : '';
+
+  // Reconcile with current posture so we don't sound contradictory when Windows
+  // has surfaced additional pending updates since our last successful run.
+  const isUpdateAction = /update/i.test(last.action_type);
+  const pending = posture?.pending_updates ?? 0;
+  if (isUpdateAction && pending > 0) {
+    const n = pending === 1 ? '1 new update' : `${pending} new updates`;
+    return `Earlier (${when}) we ran ${label}${detail} successfully. Windows has since surfaced ${n} — that's what's showing as pending now.${scorePart}`;
+  }
+
   return `Earlier (${when}) we ran ${label}${detail} successfully.${scorePart}`;
 }
 
