@@ -240,12 +240,15 @@ function AppRouter() {
           <Route path="/app/trends" element={<SuspenseWrapper><Trends /></SuspenseWrapper>} />
           <Route path="/app/trust" element={<SuspenseWrapper><TrustCenter /></SuspenseWrapper>} />
           <Route path="/app/identity" element={<SuspenseWrapper><Identity /></SuspenseWrapper>} />
-          <Route path="/app/devices" element={<SuspenseWrapper><Devices /></SuspenseWrapper>} />
-          <Route path="/app/reports" element={<SuspenseWrapper><Reports /></SuspenseWrapper>} />
-          <Route path="/app/integrations" element={<SuspenseWrapper><Integrations /></SuspenseWrapper>} />
-          <Route path="/app/workplace-embeds" element={<SuspenseWrapper><WorkplaceEmbeds /></SuspenseWrapper>} />
-          <Route path="/app/org" element={<SuspenseWrapper><OrgDashboard /></SuspenseWrapper>} />
-          <Route path="/app/msp" element={<SuspenseWrapper><MspDashboard /></SuspenseWrapper>} />
+          <Route path="/app/devices" element={<TierGate requiredTier="pro" area="devices"><SuspenseWrapper><Devices /></SuspenseWrapper></TierGate>} />
+          <Route path="/app/reports" element={<TierGate requiredTier="pro" area="reports"><SuspenseWrapper><Reports /></SuspenseWrapper></TierGate>} />
+          <Route path="/app/integrations" element={<TierGate requiredTier="business" area="integrations"><SuspenseWrapper><Integrations /></SuspenseWrapper></TierGate>} />
+          <Route path="/app/workplace-embeds" element={<TierGate requiredTier="business" area="integrations"><SuspenseWrapper><WorkplaceEmbeds /></SuspenseWrapper></TierGate>} />
+          <Route path="/app/org" element={<TierGate requiredTier="business"><SuspenseWrapper><OrgDashboard /></SuspenseWrapper></TierGate>} />
+          <Route path="/app/msp" element={<TierGate requiredTier="business"><SuspenseWrapper><MspDashboard /></SuspenseWrapper></TierGate>} />
+
+          <Route path="/app/upgrade" element={<SuspenseWrapper><Upgrade /></SuspenseWrapper>} />
+
 
           {/* Canonical product routes */}
           <Route path="/app/passwords" element={<SuspenseWrapper><VaultHealth /></SuspenseWrapper>} />
