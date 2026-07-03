@@ -211,12 +211,20 @@ export function InstallAgentDialog({
                   size="sm"
                   className="bg-violet-600 hover:bg-violet-500 text-white"
                   onClick={(e) => {
-                    // Trigger the download in a fresh, disowned tab so the
-                    // browser's download bar / tab-swap can't dismiss this
-                    // dialog and force a new enrollment code.
+                    // Download via a hidden iframe. GitHub release assets
+                    // serve `Content-Disposition: attachment`, so the browser
+                    // saves the file without navigating this tab or opening
+                    // a popup that could steal focus and dismiss the dialog.
                     e.preventDefault();
                     e.stopPropagation();
-                    window.open(SETUP_DOWNLOAD_URL, '_blank', 'noopener,noreferrer');
+                    const iframe = document.createElement('iframe');
+                    iframe.style.display = 'none';
+                    iframe.src = SETUP_DOWNLOAD_URL;
+                    document.body.appendChild(iframe);
+                    window.setTimeout(() => iframe.remove(), 60_000);
+                    toast.success('Downloading WraythSetup.exe…', {
+                      description: 'Check your Downloads folder in a moment.',
+                    });
                   }}
                 >
                   <Download className="mr-2 h-4 w-4" /> WraythSetup.exe
