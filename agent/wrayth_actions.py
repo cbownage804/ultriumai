@@ -145,23 +145,40 @@ def _defender_full(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
 
 def _install_updates(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
     # Uses built-in COM: no extra module install required.
+    # Installs BOTH software updates (cumulative, .NET, defender defs, etc.)
+    # AND driver updates so the "pending updates" tile clears completely.
+    # Preview / beta / Insider items are filtered out — we never push
+    # pre-release code onto a managed endpoint.
     script = r"""
 $Session = New-Object -ComObject Microsoft.Update.Session
 $Searcher = $Session.CreateUpdateSearcher()
-$Result = $Searcher.Search("IsInstalled=0 and Type='Software'")
+# IsInstalled=0 with no Type filter returns software AND drivers.
+# IsHidden=0 respects anything the user has explicitly hidden.
+$Result = $Searcher.Search("IsInstalled=0 and IsHidden=0")
 if ($Result.Updates.Count -eq 0) { 'no_updates'; exit 0 }
 $ToInstall = New-Object -ComObject Microsoft.Update.UpdateColl
+$skipped = @()
 foreach ($u in $Result.Updates) {
-  if (-not $u.EulaAccepted) { $u.AcceptEula() }
+  $title = $u.Title
+  # Skip preview / beta / insider builds — never auto-install pre-release.
+  if ($title -match '(?i)preview|beta|insider') { $skipped += $title; continue }
+  if (-not $u.EulaAccepted) { try { $u.AcceptEula() } catch { $skipped += $title; continue } }
   $ToInstall.Add($u) | Out-Null
 }
+if ($ToInstall.Count -eq 0) { "no_updates skipped:$($skipped.Count)"; exit 0 }
 $Downloader = $Session.CreateUpdateDownloader()
 $Downloader.Updates = $ToInstall
 $Downloader.Download() | Out-Null
 $Installer = $Session.CreateUpdateInstaller()
 $Installer.Updates = $ToInstall
 $Ir = $Installer.Install()
-"installed:$($ToInstall.Count) rebootRequired:$($Ir.RebootRequired)"
+$sw = 0; $drv = 0
+foreach ($u in $ToInstall) {
+  $isDriver = $false
+  foreach ($c in $u.Categories) { if ($c.Type -eq 'Driver') { $isDriver = $true; break } }
+  if ($isDriver) { $drv++ } else { $sw++ }
+}
+"installed:$($ToInstall.Count) software:$sw drivers:$drv skipped:$($skipped.Count) rebootRequired:$($Ir.RebootRequired)"
 """
     rc, out, err = _ps(script, timeout=5400)
     return rc == 0, {"stdout": out}, err or None if rc != 0 else None
