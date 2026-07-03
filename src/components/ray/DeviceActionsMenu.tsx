@@ -278,7 +278,23 @@ export function DeviceActionsMenu({
   const [pending, setPending] = useState<ActionType | null>(null);
   const [recent, setRecent] = useState<ActionRow[]>([]);
   const [showAll, setShowAll] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{
+    action: ActionType;
+    params?: Record<string, unknown>;
+    label: string;
+    description: string;
+  } | null>(null);
   const sessionLockSupported = versionAtLeast(agentVersion, '0.1.1');
+
+  const HIGH_RISK: Set<ActionType> = new Set([
+    'disable_firewall',
+    'enable_rdp',
+    'disable_rdp_nla',
+    'enable_builtin_administrator',
+    'disable_builtin_administrator',
+    'disable_rdp',
+    'install_windows_updates',
+  ]);
 
 
   const load = async () => {
