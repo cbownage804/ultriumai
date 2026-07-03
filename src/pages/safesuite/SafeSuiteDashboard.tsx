@@ -611,20 +611,26 @@ export default function WraythDashboard() {
   }, [user]);
 
 
+  // Persistent inventory count — prefers safe metadata (row count from DB)
+  // so the tile stays accurate even when the vault is sealed.
+  const persistentVaultCount = sealedVaultCount ?? stats.passwordCount;
+
   const getStatForProduct = (productId: string): { label: string; value: number } => {
     switch (productId) {
       case 'vault':
-        return { label: 'Passwords', value: stats.passwordCount };
+        return {
+          label: vaultLocked ? 'Sealed · unlock to analyze health' : 'Stored',
+          value: persistentVaultCount,
+        };
       case 'scan':
         return { label: 'Scans this month', value: stats.scanCount };
       case 'watch':
-        return { label: 'Assets monitored', value: stats.monitoredAssets };
-
-
+        return { label: 'Identities watched', value: stats.monitoredAssets };
       default:
         return { label: '', value: 0 };
     }
   };
+
 
   // Ray's continuity briefing — feels like returning to a teammate, not opening software.
   const totalIssues = stats.weakPasswordCount;
