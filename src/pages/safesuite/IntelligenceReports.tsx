@@ -244,7 +244,7 @@ function ReportView({ report, onDelete }: { report: BoardReport; onDelete: () =>
     <Card className="overflow-hidden">
       <div className="p-5 border-b border-border flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Board report</div>
+          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Executive report</div>
           <div className="text-lg font-semibold mt-0.5 truncate">{report.title}</div>
         </div>
         <div className="flex items-center gap-1">
