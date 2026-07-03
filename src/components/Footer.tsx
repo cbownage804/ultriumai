@@ -19,7 +19,7 @@ export default function Footer() {
           </nav>
         </div>
         <div className="mt-6 pt-6 border-t border-border/60 text-center text-xs text-muted-foreground/80">
-          Wrayth is a product operated by Ultrium LLC.
+          Wrayth is a product operated by Ultrium AI.
         </div>
       </div>
     </footer>
