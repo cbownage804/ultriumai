@@ -463,117 +463,133 @@ $out -join "`n"
     posture["browser_extensions"] = extensions[:120]
 
     # -----------------------------------------------------------------
-    # v0.2.0 additions — deeper posture Ray can act on
+    # v0.2.x additions — deeper posture Ray can act on.
+    # Each block is wrapped independently so one slow/failing collector
+    # never blocks the baseline posture from uploading.
     # -----------------------------------------------------------------
 
+    def _safe(name: str, fn):
+        try:
+            fn()
+        except Exception as e:  # noqa: BLE001
+            _log(f"posture collector '{name}' failed: {e}")
+
     # RDP security detail (NLA + Remote Assistance)
-    rdp_detail = _ps(
-        "$rdp = (Get-ItemProperty 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server' -Name fDenyTSConnections -ErrorAction SilentlyContinue).fDenyTSConnections; "
-        "$nla = (Get-ItemProperty 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server\\WinStations\\RDP-Tcp' -Name UserAuthentication -ErrorAction SilentlyContinue).UserAuthentication; "
-        "$ra  = (Get-ItemProperty 'HKLM:\\System\\CurrentControlSet\\Control\\Remote Assistance' -Name fAllowToGetHelp -ErrorAction SilentlyContinue).fAllowToGetHelp; "
-        "\"$rdp|$nla|$ra\""
-    )
-    r_parts = (rdp_detail or "").split("|")
-    while len(r_parts) < 3:
-        r_parts.append("")
-    posture["rdp_security"] = {
-        "rdp_enabled": r_parts[0].strip() == "0",
-        "nla_enabled": r_parts[1].strip() == "1",
-        "remote_assistance_enabled": r_parts[2].strip() == "1",
-    }
+    def _rdp():
+        rdp_detail = _ps(
+            "$rdp = (Get-ItemProperty 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server' -Name fDenyTSConnections -ErrorAction SilentlyContinue).fDenyTSConnections; "
+            "$nla = (Get-ItemProperty 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server\\WinStations\\RDP-Tcp' -Name UserAuthentication -ErrorAction SilentlyContinue).UserAuthentication; "
+            "$ra  = (Get-ItemProperty 'HKLM:\\System\\CurrentControlSet\\Control\\Remote Assistance' -Name fAllowToGetHelp -ErrorAction SilentlyContinue).fAllowToGetHelp; "
+            "\"$rdp|$nla|$ra\""
+        )
+        r_parts = (rdp_detail or "").split("|")
+        while len(r_parts) < 3:
+            r_parts.append("")
+        posture["rdp_security"] = {
+            "rdp_enabled": r_parts[0].strip() == "0",
+            "nla_enabled": r_parts[1].strip() == "1",
+            "remote_assistance_enabled": r_parts[2].strip() == "1",
+        }
+    _safe("rdp_security", _rdp)
 
     # Local admin detail — enabled flag + built-in flag for each
-    admins_detail_raw = _ps(
-        "try { Get-LocalGroupMember -Group 'Administrators' | ForEach-Object { "
-        "  $u = $null; try { $u = Get-LocalUser -SID $_.SID -ErrorAction Stop } catch {} ; "
-        "  $enabled = if ($u) { $u.Enabled } else { 'unknown' } ; "
-        "  $builtin = if ($_.SID -like '*-500') { 'true' } else { 'false' } ; "
-        "  \"$($_.Name)|$($_.ObjectClass)|$enabled|$builtin|$($_.SID)\" } } catch {}"
-    )
-    admin_details: list[dict[str, Any]] = []
-    for line in (admins_detail_raw or "").splitlines():
-        parts = line.split("|", 4)
-        while len(parts) < 5:
-            parts.append("")
-        if not parts[0].strip():
-            continue
-        admin_details.append({
-            "name": parts[0].strip(),
-            "object_class": parts[1].strip(),
-            "enabled": parts[2].strip().lower() == "true",
-            "is_builtin": parts[3].strip().lower() == "true",
-            "sid": parts[4].strip(),
-        })
-    posture["local_admins_detail"] = admin_details[:20]
+    def _admins():
+        admins_detail_raw = _ps(
+            "try { Get-LocalGroupMember -Group 'Administrators' | ForEach-Object { "
+            "  $u = $null; try { $u = Get-LocalUser -SID $_.SID -ErrorAction Stop } catch {} ; "
+            "  $enabled = if ($u) { $u.Enabled } else { 'unknown' } ; "
+            "  $builtin = if ($_.SID -like '*-500') { 'true' } else { 'false' } ; "
+            "  \"$($_.Name)|$($_.ObjectClass)|$enabled|$builtin|$($_.SID)\" } } catch {}"
+        )
+        admin_details: list[dict[str, Any]] = []
+        for line in (admins_detail_raw or "").splitlines():
+            parts = line.split("|", 4)
+            while len(parts) < 5:
+                parts.append("")
+            if not parts[0].strip():
+                continue
+            admin_details.append({
+                "name": parts[0].strip(),
+                "object_class": parts[1].strip(),
+                "enabled": parts[2].strip().lower() == "true",
+                "is_builtin": parts[3].strip().lower() == "true",
+                "sid": parts[4].strip(),
+            })
+        posture["local_admins_detail"] = admin_details[:20]
+    _safe("local_admins_detail", _admins)
 
     # Browser password manager status
-    def _reg_dword(path: str, name: str) -> str:
-        return _ps(
-            f"try {{ (Get-ItemProperty '{path}' -Name {name} -ErrorAction Stop).{name} }} catch {{ '' }}"
-        ).strip()
-    chrome_off = _reg_dword("HKLM:\\SOFTWARE\\Policies\\Google\\Chrome", "PasswordManagerEnabled")
-    edge_off = _reg_dword("HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge", "PasswordManagerEnabled")
-    firefox_off = _reg_dword("HKLM:\\SOFTWARE\\Policies\\Mozilla\\Firefox", "PasswordManagerEnabled")
+    def _browser_pw():
+        def _reg_dword(path: str, name: str) -> str:
+            return _ps(
+                f"try {{ (Get-ItemProperty '{path}' -Name {name} -ErrorAction Stop).{name} }} catch {{ '' }}"
+            ).strip()
+        chrome_off = _reg_dword("HKLM:\\SOFTWARE\\Policies\\Google\\Chrome", "PasswordManagerEnabled")
+        edge_off = _reg_dword("HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge", "PasswordManagerEnabled")
+        firefox_off = _reg_dword("HKLM:\\SOFTWARE\\Policies\\Mozilla\\Firefox", "PasswordManagerEnabled")
 
-    def _count_passwords(login_db: Path) -> int:
-        if not login_db.exists():
-            return -1
-        try:
-            import sqlite3, shutil, tempfile
-            tmp = Path(tempfile.gettempdir()) / f"wrayth_{login_db.stat().st_mtime_ns}.db"
-            shutil.copy2(str(login_db), str(tmp))
-            with sqlite3.connect(f"file:{tmp}?mode=ro", uri=True, timeout=2) as db:
-                cur = db.execute("SELECT COUNT(*) FROM logins")
-                n = int(cur.fetchone()[0])
-            try: tmp.unlink()
-            except Exception: pass
-            return n
-        except Exception:
-            return -1
+        def _count_passwords(login_db: Path) -> int:
+            if not login_db.exists():
+                return -1
+            try:
+                import sqlite3, shutil, tempfile
+                tmp = Path(tempfile.gettempdir()) / f"wrayth_{login_db.stat().st_mtime_ns}.db"
+                shutil.copy2(str(login_db), str(tmp))
+                with sqlite3.connect(f"file:{tmp}?mode=ro", uri=True, timeout=2) as db:
+                    cur = db.execute("SELECT COUNT(*) FROM logins")
+                    n = int(cur.fetchone()[0])
+                try: tmp.unlink()
+                except Exception: pass
+                return n
+            except Exception:
+                return -1
 
-    local_app = Path(os.environ.get("LOCALAPPDATA", ""))
-    chrome_logins = _count_passwords(local_app / "Google/Chrome/User Data/Default/Login Data")
-    edge_logins = _count_passwords(local_app / "Microsoft/Edge/User Data/Default/Login Data")
-    posture["browser_passwords"] = {
-        "chrome": {
-            "manager_disabled_by_policy": chrome_off == "0",
-            "stored_count": chrome_logins,
-        },
-        "edge": {
-            "manager_disabled_by_policy": edge_off == "0",
-            "stored_count": edge_logins,
-        },
-        "firefox": {
-            "manager_disabled_by_policy": firefox_off == "0",
-            "stored_count": -1,
-        },
-    }
+        local_app = Path(os.environ.get("LOCALAPPDATA", ""))
+        chrome_logins = _count_passwords(local_app / "Google/Chrome/User Data/Default/Login Data")
+        edge_logins = _count_passwords(local_app / "Microsoft/Edge/User Data/Default/Login Data")
+        posture["browser_passwords"] = {
+            "chrome": {
+                "manager_disabled_by_policy": chrome_off == "0",
+                "stored_count": chrome_logins,
+            },
+            "edge": {
+                "manager_disabled_by_policy": edge_off == "0",
+                "stored_count": edge_logins,
+            },
+            "firefox": {
+                "manager_disabled_by_policy": firefox_off == "0",
+                "stored_count": -1,
+            },
+        }
+    _safe("browser_passwords", _browser_pw)
 
     # Defender detail
-    mpd = _ps(
-        "$s = Get-MpComputerStatus; $p = Get-MpPreference; "
-        "\"$($s.QuickScanEndTime)|$($s.FullScanEndTime)|$($p.MAPSReporting)|$($p.PUAProtection)|$($p.SubmitSamplesConsent)\""
-    )
-    m_parts = (mpd or "").split("|")
-    while len(m_parts) < 5:
-        m_parts.append("")
-    posture["defender_detail"] = {
-        "last_quick_scan": m_parts[0].strip(),
-        "last_full_scan": m_parts[1].strip(),
-        # MAPSReporting: 0=Off,1=Basic,2=Advanced (cloud protection)
-        "cloud_protection": m_parts[2].strip() in ("1", "2", "Basic", "Advanced"),
-        # PUAProtection: 0=Off,1=Enabled,2=AuditMode
-        "pua_protection": m_parts[3].strip() in ("1", "Enabled"),
-        "sample_submission": m_parts[4].strip(),
-    }
+    def _defender():
+        mpd = _ps(
+            "$s = Get-MpComputerStatus; $p = Get-MpPreference; "
+            "\"$($s.QuickScanEndTime)|$($s.FullScanEndTime)|$($p.MAPSReporting)|$($p.PUAProtection)|$($p.SubmitSamplesConsent)\""
+        )
+        m_parts = (mpd or "").split("|")
+        while len(m_parts) < 5:
+            m_parts.append("")
+        posture["defender_detail"] = {
+            "last_quick_scan": m_parts[0].strip(),
+            "last_full_scan": m_parts[1].strip(),
+            "cloud_protection": m_parts[2].strip() in ("1", "2", "Basic", "Advanced"),
+            "pua_protection": m_parts[3].strip() in ("1", "Enabled"),
+            "sample_submission": m_parts[4].strip(),
+        }
+    _safe("defender_detail", _defender)
 
-    # Startup impact — augment autoruns with signed/publisher/exists info
-    if autoruns:
-        # Rebuild autoruns entries with sig info for the top 40
+    # Startup impact — augment autoruns with signed/publisher/exists info.
+    # This was the biggest cost: 40 sequential PS invocations. Cap to 15
+    # and skip entirely on the very first check-in so posture uploads fast.
+    def _autoruns_enrich():
+        if not autoruns:
+            return
         enriched = []
-        for entry in autoruns[:40]:
+        for entry in autoruns[:15]:
             cmd = entry["command"]
-            # extract executable path
             exe = cmd
             if exe.startswith('"'):
                 end = exe.find('"', 1)
@@ -599,35 +615,44 @@ $out -join "`n"
                 "publisher": eparts[2].strip(),
                 "signed": eparts[1].strip() == "Valid",
             })
-        posture["autoruns"] = enriched + autoruns[40:]
+        posture["autoruns"] = enriched + autoruns[15:]
+    _safe("autoruns_enrich", _autoruns_enrich)
 
-    # Update categories
-    upd_cat = _ps(
-        "try { $s = (New-Object -ComObject Microsoft.Update.Session).CreateUpdateSearcher(); "
-        "$r = $s.Search('IsInstalled=0'); "
-        "$sec = 0; $drv = 0; $feat = 0; $off = 0; $other = 0; "
-        "foreach ($u in $r.Updates) { "
-        "  $cats = ($u.Categories | ForEach-Object { $_.Name }) -join ',' ; "
-        "  if ($cats -match 'Security') { $sec++ } "
-        "  elseif ($cats -match 'Driver') { $drv++ } "
-        "  elseif ($cats -match 'Feature') { $feat++ } "
-        "  elseif ($u.Title -match 'Office|Microsoft 365') { $off++ } "
-        "  else { $other++ } } "
-        "\"$sec|$drv|$feat|$off|$other\" } catch { '0|0|0|0|0' }"
-    )
-    u_parts = (upd_cat or "").split("|")
-    while len(u_parts) < 5:
-        u_parts.append("0")
-    def _int(x):
-        try: return int(x)
-        except: return 0
-    posture["update_categories"] = {
-        "security": _int(u_parts[0]),
-        "drivers": _int(u_parts[1]),
-        "feature": _int(u_parts[2]),
-        "office": _int(u_parts[3]),
-        "other": _int(u_parts[4]),
-    }
+    # Update categories — Microsoft.Update.Session.Search() can hang for
+    # many minutes on some machines. Skip entirely if `pending_updates`
+    # already gave us the raw count; only run when we truly need the split.
+    def _update_categories():
+        if int(posture.get("pending_updates") or 0) == 0:
+            posture["update_categories"] = {"security": 0, "drivers": 0, "feature": 0, "office": 0, "other": 0}
+            return
+        upd_cat = _ps(
+            "try { $s = (New-Object -ComObject Microsoft.Update.Session).CreateUpdateSearcher(); "
+            "$r = $s.Search('IsInstalled=0'); "
+            "$sec = 0; $drv = 0; $feat = 0; $off = 0; $other = 0; "
+            "foreach ($u in $r.Updates) { "
+            "  $cats = ($u.Categories | ForEach-Object { $_.Name }) -join ',' ; "
+            "  if ($cats -match 'Security') { $sec++ } "
+            "  elseif ($cats -match 'Driver') { $drv++ } "
+            "  elseif ($cats -match 'Feature') { $feat++ } "
+            "  elseif ($u.Title -match 'Office|Microsoft 365') { $off++ } "
+            "  else { $other++ } } "
+            "\"$sec|$drv|$feat|$off|$other\" } catch { '0|0|0|0|0' }",
+            timeout_seconds=45,
+        )
+        u_parts = (upd_cat or "").split("|")
+        while len(u_parts) < 5:
+            u_parts.append("0")
+        def _int(x):
+            try: return int(x)
+            except: return 0
+        posture["update_categories"] = {
+            "security": _int(u_parts[0]),
+            "drivers": _int(u_parts[1]),
+            "feature": _int(u_parts[2]),
+            "office": _int(u_parts[3]),
+            "other": _int(u_parts[4]),
+        }
+    _safe("update_categories", _update_categories)
 
     posture["logged_in_user"] = os.environ.get("USERNAME", "")
     return posture
