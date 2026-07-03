@@ -270,6 +270,7 @@ function buildPostureChips(p: Posture): Array<{
 export function EnrolledDevicesList() {
   const [devices, setDevices] = useState<Device[] | null>(null);
   const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [activeTabByDevice, setActiveTabByDevice] = useState<Record<string, string>>({});
 
   const load = async () => {
     const { data: rows, error } = await supabase
@@ -441,6 +442,7 @@ export function EnrolledDevicesList() {
                   hostname={d.hostname}
                   posture={d.posture as never}
                   disabled={!online}
+                  activeTab={activeTabByDevice[d.id] ?? 'posture'}
                 />
               )}
 
@@ -498,6 +500,8 @@ export function EnrolledDevicesList() {
                 deviceId={d.id}
                 posture={d.posture as never}
                 capturedAt={d.posture_captured_at}
+                value={activeTabByDevice[d.id] ?? 'posture'}
+                onValueChange={(v) => setActiveTabByDevice((prev) => ({ ...prev, [d.id]: v }))}
               />
 
               {!d.revoked_at && (
