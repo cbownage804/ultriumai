@@ -221,7 +221,8 @@ export function InstallAgentDialog({
                   */}
                   <a
                     href={SETUP_DOWNLOAD_URL}
-                    rel="noreferrer"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     onClick={() => {
                       toast.success('Downloading WraythSetup.exe…', {
                         description: 'Check your Downloads folder in a moment.',
