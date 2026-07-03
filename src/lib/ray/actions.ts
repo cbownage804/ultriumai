@@ -46,6 +46,10 @@ export function quickRoute(utterance: string): RayAction | null {
       'identity': { path: '/app/exposure', label: 'your exposure' },
       'timeline': { path: '/app/timeline', label: 'the timeline' },
       'history': { path: '/app/timeline', label: 'the timeline' },
+      'graph': { path: '/app/graph', label: 'the security graph' },
+      'security graph': { path: '/app/graph', label: 'the security graph' },
+      'explorer': { path: '/app/graph', label: 'the security graph' },
+
       'settings': { path: '/app/settings', label: 'settings' },
       'ray': { path: '/app/ray', label: 'Ray' },
     };
