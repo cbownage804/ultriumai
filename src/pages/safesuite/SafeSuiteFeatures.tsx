@@ -318,8 +318,9 @@ export default function WraythFeatures() {
             <Badge className="mb-4 bg-violet-500/10 text-violet-300 border-0">Ray</Badge>
             <h2 className="mb-3 text-4xl font-bold">Meet Ray</h2>
             <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-              Your cybersecurity teammate. Ray watches Vault, Scan, and Watch so you don't have to.
+              Your AI security analyst. Ray watches every layer of your posture so you don't have to.
             </p>
+
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
