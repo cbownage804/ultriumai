@@ -1199,3 +1199,75 @@ function IocsPanel({
     </div>
   );
 }
+
+/* ---------------- Inline sparkline: sightings over time ---------------- */
+
+/**
+ * Renders a compact bar sparkline showing how often the IOC has appeared
+ * across the user's investigations, bucketed into weeks. Window auto-adapts:
+ * uses 12 weeks by default, or the full first-seen → now range if longer.
+ */
+function IocSparkline({ timestamps }: { timestamps: string[] }) {
+  const { buckets, max, rangeLabel, total } = useMemo(() => {
+    const dates = timestamps
+      .map(t => new Date(t).getTime())
+      .filter(t => Number.isFinite(t))
+      .sort((a, b) => a - b);
+    if (dates.length === 0) {
+      return { buckets: [] as number[], max: 0, rangeLabel: '', total: 0 };
+    }
+    const now = Date.now();
+    const first = dates[0];
+    const WEEK = 7 * 24 * 60 * 60 * 1000;
+    const spanWeeks = Math.max(1, Math.ceil((now - first) / WEEK) + 1);
+    const nBuckets = Math.min(24, Math.max(12, spanWeeks));
+    const start = now - nBuckets * WEEK;
+    const buckets = new Array<number>(nBuckets).fill(0);
+    for (const d of dates) {
+      const idx = Math.floor((d - start) / WEEK);
+      if (idx >= 0 && idx < nBuckets) buckets[idx] += 1;
+      else if (idx < 0) buckets[0] += 1;
+    }
+    const max = buckets.reduce((m, v) => Math.max(m, v), 0);
+    const startLabel = new Date(start).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    return { buckets, max, rangeLabel: `${startLabel} → now · weekly`, total: dates.length };
+  }, [timestamps]);
+
+  if (buckets.length === 0 || max === 0) return null;
+
+  const W = 96;
+  const H = 24;
+  const gap = 1;
+  const barW = (W - gap * (buckets.length - 1)) / buckets.length;
+
+  return (
+    <div
+      className="shrink-0 flex flex-col items-end gap-0.5"
+      title={`${total} sighting${total === 1 ? '' : 's'} · ${rangeLabel}`}
+      aria-label={`Sightings sparkline: ${total} sightings, ${rangeLabel}`}
+    >
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img">
+        {buckets.map((v, i) => {
+          const h = v === 0 ? 1 : (v / max) * (H - 2);
+          const x = i * (barW + gap);
+          const y = H - h;
+          return (
+            <rect
+              key={i}
+              x={x}
+              y={y}
+              width={barW}
+              height={h}
+              rx={0.5}
+              fill={v === 0 ? 'hsl(220 12% 28%)' : 'hsl(262 60% 68%)'}
+              opacity={v === 0 ? 0.5 : 0.85}
+            />
+          );
+        })}
+      </svg>
+      <span className="text-[9px] text-muted-foreground leading-none">
+        peak {max}/wk
+      </span>
+    </div>
+  );
+}
