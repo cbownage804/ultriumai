@@ -30,6 +30,7 @@ import { AgentTrustCard } from './AgentTrustCard';
 import { DeviceTransparencyCard } from './DeviceTransparencyCard';
 import { DeviceAssessment } from './DeviceAssessment';
 import { AskRayCommandBox } from './AskRayCommandBox';
+import { RayProactiveGreeting } from './RayProactiveGreeting';
 
 interface Finding {
   severity: 'info' | 'warn' | 'critical';
