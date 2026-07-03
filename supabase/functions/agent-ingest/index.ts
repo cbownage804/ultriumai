@@ -539,7 +539,26 @@ Deno.serve(async (req) => {
       });
     }
 
-    const payload: Posture = await req.json();
+    const payload: Posture & { heartbeat?: boolean } = await req.json();
+
+    // ---- Heartbeat fast-path ------------------------------------------------
+    // The agent pings every 30s with { heartbeat: true } to keep last_seen_at
+    // fresh. Skip the expensive findings/score compute for those.
+    if (payload?.heartbeat === true) {
+      await admin
+        .from('wrayth_devices')
+        .update({
+          last_seen_at: new Date().toISOString(),
+          agent_version: payload.agent_version ?? undefined,
+          hostname: payload.hostname ?? undefined,
+        })
+        .eq('id', device.id);
+      return new Response(
+        JSON.stringify({ ok: true, kind: 'heartbeat', next_check_in_seconds: 30 }),
+        { headers: { ...cors, 'Content-Type': 'application/json' } },
+      );
+    }
+
 
     // Pull previous snapshot for drift detection
     const { data: prevRow } = await admin
