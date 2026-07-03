@@ -255,7 +255,7 @@ export default function IntelligenceGraph() {
               orgStats.topIocs.map(i => (
                 <button
                   key={i.ioc_value_norm}
-                  onClick={() => setSelected(i.ioc_value_norm)}
+                  onClick={() => { setSelected(i.ioc_value_norm); setDetailIoc(i); }}
                   className={`w-full text-left px-3 py-2 rounded-sm border transition-colors ${
                     selected === i.ioc_value_norm
                       ? 'border-[hsl(262_60%_64%/0.5)] bg-[hsl(262_60%_64%/0.08)]'
@@ -272,6 +272,9 @@ export default function IntelligenceGraph() {
                     <span className="uppercase tracking-wider">{i.ioc_type}</span>
                     <span>·</span>
                     <span>{i.occurrence_count} sightings</span>
+                    <span className="ml-auto inline-flex items-center gap-1 text-[hsl(262_60%_75%)]">
+                      <ExternalLink className="h-3 w-3" /> Details
+                    </span>
                   </div>
                 </button>
               ))
