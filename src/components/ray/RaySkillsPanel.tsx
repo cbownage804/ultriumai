@@ -503,31 +503,46 @@ export default function RaySkillsPanel() {
                 </Button>
               </section>
 
-              {/* Priority recommendations */}
-              {recs.length > 0 && (
-                <section className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Ray noticed</div>
-                    <div className="text-[10px] text-muted-foreground/70 italic">
-                      I'm 97% confident these are the highest-impact changes today.
+              {/* Today's biggest opportunity — one priority at a time. */}
+              {(() => {
+                const remaining = recs.filter((r) => !dismissedPriority.has(r.id));
+                const current = remaining[0];
+                if (!current) return null;
+                const queued = remaining.length - 1;
+                return (
+                  <section className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Today's biggest opportunity</div>
+                      {queued > 0 && (
+                        <div className="text-[10px] text-muted-foreground/70">
+                          {queued} more waiting
+                        </div>
+                      )}
                     </div>
-                  </div>
-                  <AnimatePresence>
-                    <div className="space-y-2">
-                      {recs.map((r, i) => (
-                        <motion.div
-                          key={r.id}
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.15, duration: 0.35 }}
-                        >
-                          <PriorityRecRow rec={r} onAsk={send} />
-                        </motion.div>
-                      ))}
-                    </div>
-                  </AnimatePresence>
-                </section>
-              )}
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={current.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.35 }}
+                      >
+                        <PriorityRecRow
+                          rec={current}
+                          onAsk={send}
+                          onIgnore={() =>
+                            setDismissedPriority((prev) => {
+                              const next = new Set(prev);
+                              next.add(current.id);
+                              return next;
+                            })
+                          }
+                        />
+                      </motion.div>
+                    </AnimatePresence>
+                  </section>
+                );
+              })()}
 
               {/* While you were away — richer activity feed */}
               <section className="rounded-lg border border-primary/20 bg-primary/[0.04] p-3 space-y-2">
