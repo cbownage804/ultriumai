@@ -114,7 +114,8 @@ end;
 
 function DetectExistingEnrollment(): Boolean;
 var
-  ConfigPath, Contents: String;
+  ConfigPath: String;
+  Contents: AnsiString;
 begin
   Result := False;
   ConfigPath := ExpandConstant('{commonappdata}\Wrayth\wrayth-config.json');
@@ -124,7 +125,7 @@ begin
     Exit;
   // Presence of a device_token means this machine is already enrolled.
   // Reusing the token keeps the same device row on the server (no duplicate).
-  Result := Pos('"device_token"', Contents) > 0;
+  Result := Pos('"device_token"', String(Contents)) > 0;
 end;
 
 procedure InitializeWizard();
