@@ -88,19 +88,25 @@ type NavSection = {
 };
 
 function getSections(opts?: { hasOrg?: boolean; isMSP?: boolean }): NavSection[] {
-  const main: NavItem[] = [
-    { label: 'Home',     path: getWraythPath('/dashboard'), icon: Home },
+  const protection: NavItem[] = [
+    { label: 'Home',      path: getWraythPath('/dashboard'), icon: Home },
     { label: 'Vault',     path: getWraythPath('/passwords'), icon: KeyRound, feature: 'vault' },
     { label: 'Threats',   path: getWraythPath('/threats'),   icon: ShieldAlert, feature: 'scan' },
     { label: 'Exposure',  path: getWraythPath('/exposure'),  icon: Globe, feature: 'watch' },
   ];
   if (opts?.hasOrg) {
-    main.push({ label: 'Organization', path: getWraythPath('/org'), icon: Building2 });
+    protection.push({ label: 'Organization', path: getWraythPath('/org'), icon: Building2 });
   }
   if (opts?.isMSP) {
-    main.push({ label: 'Clients', path: getWraythPath('/msp'), icon: Share2 });
+    protection.push({ label: 'Clients', path: getWraythPath('/msp'), icon: Share2 });
   }
-  return [{ id: 'main', items: main }];
+  const intelligence: NavItem[] = [
+    { label: 'Investigations', path: getWraythPath('/intelligence/investigations'), icon: ScanSearch, badge: 'NEW' },
+  ];
+  return [
+    { id: 'main', items: protection },
+    { id: 'intelligence', label: 'Intelligence', items: intelligence },
+  ];
 }
 
 function TierBadge({ tier }: { tier: string }) {
