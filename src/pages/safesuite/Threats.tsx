@@ -31,6 +31,8 @@ export default function WraythScan() {
           }}
         />
 
+        <ThreatsRayBrief />
+
         <div className="wrayth-chamfer border border-border bg-card/60 px-4 py-3">
           <RayActivityTicker context="threats" />
         </div>
