@@ -30,6 +30,7 @@ import { AgentTrustCard } from './AgentTrustCard';
 import { DeviceTransparencyCard } from './DeviceTransparencyCard';
 import { DeviceAssessment } from './DeviceAssessment';
 import { AskRayCommandBox } from './AskRayCommandBox';
+import { RayProactiveGreeting } from './RayProactiveGreeting';
 
 interface Finding {
   severity: 'info' | 'warn' | 'critical';
@@ -435,6 +436,15 @@ export function EnrolledDevicesList() {
               </div>
 
               {d.posture && <DeviceAssessment posture={d.posture as never} />}
+
+              {!d.revoked_at && (
+                <RayProactiveGreeting
+                  deviceId={d.id}
+                  hostname={d.hostname}
+                  posture={d.posture as never}
+                  score={(d.posture as never as { _ray?: { score?: number } } | null)?._ray?.score ?? null}
+                />
+              )}
 
               {!d.revoked_at && (
                 <AskRayCommandBox
