@@ -69,6 +69,7 @@ function RayMark({ className }: { className?: string }) {
 
 export function FloatingRayChat() {
   const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<PanelMode>('compact');
   const { user } = useAuth();
   const [ctx, setCtx] = useState<RayContext | null>(null);
 
