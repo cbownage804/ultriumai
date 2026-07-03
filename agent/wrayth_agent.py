@@ -33,7 +33,7 @@ try:
 except Exception:  # noqa: BLE001
     run_action_loop = None  # type: ignore
 
-AGENT_VERSION = "0.2.2"
+AGENT_VERSION = "0.2.3"
 
 # ---------------------------------------------------------------------------
 # Config on disk
@@ -757,10 +757,14 @@ def main() -> int:
 
     # Start the action executor in the background so approved actions
     # from the Wrayth UI get picked up between hourly posture reports.
+    # When an action succeeds we set `posture_refresh_event` so the main
+    # loop re-snapshots on its next tick — the UI reflects the fix in
+    # ~30s instead of waiting up to an hour.
+    posture_refresh_event = threading.Event()
     if run_action_loop is not None and platform.system() == "Windows":
         t = threading.Thread(
             target=run_action_loop,
-            args=(lambda: cfg, _log),
+            args=(lambda: cfg, _log, posture_refresh_event.set),
             name="wrayth-actions",
             daemon=True,
         )
@@ -775,11 +779,18 @@ def main() -> int:
         now_ts = time.time()
         wait = HEARTBEAT_INTERVAL
         try:
-            if now_ts - last_posture_at >= POSTURE_INTERVAL:
+            due = now_ts - last_posture_at >= POSTURE_INTERVAL
+            refresh_requested = posture_refresh_event.is_set()
+            if due or refresh_requested:
+                # Small settle delay so Windows finishes applying the
+                # change (e.g. Defender toggles) before we re-read it.
+                if refresh_requested and not due:
+                    time.sleep(3)
+                posture_refresh_event.clear()
                 posture = collect_posture()
                 resp = ingest(cfg, posture)
                 last_posture_at = now_ts
-                _log(f"posture ok: {resp}")
+                _log(f"posture ok{' (post-action)' if refresh_requested and not due else ''}: {resp}")
             else:
                 resp = ingest(cfg, {
                     "heartbeat": True,
@@ -804,7 +815,8 @@ def main() -> int:
             _log(f"unexpected: {e}")
             wait = 60
 
-        time.sleep(max(5, wait))
+        # Wake early if an action fires mid-wait so we can re-snapshot.
+        posture_refresh_event.wait(timeout=max(5, wait))
 
 
 

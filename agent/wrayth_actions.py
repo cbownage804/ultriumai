@@ -600,8 +600,13 @@ def report_result(
 # Executor loop (called from wrayth_agent.main via a background thread)
 # ---------------------------------------------------------------------------
 
-def run_action_loop(cfg_getter, log) -> None:
-    """cfg_getter() must return the current live config dict."""
+def run_action_loop(cfg_getter, log, on_action_applied=None) -> None:
+    """cfg_getter() must return the current live config dict.
+
+    on_action_applied(): optional callback invoked after any successful
+    action. The posture loop uses this to trigger an immediate re-snapshot
+    so the Wrayth UI reflects the fix without waiting for the hourly cycle.
+    """
     while True:
         cfg = cfg_getter() or {}
         api = (cfg.get("api_base") or "").rstrip("/")
@@ -611,6 +616,7 @@ def run_action_loop(cfg_getter, log) -> None:
             continue
         try:
             actions = poll_actions(api, token)
+            applied_any = False
             for a in actions:
                 atype = a.get("action_type")
                 aid = a.get("id")
@@ -624,9 +630,16 @@ def run_action_loop(cfg_getter, log) -> None:
                     ok, result, err = handler(a.get("params") or {})
                     report_result(api, token, aid, ok, result, err)
                     log(f"action {atype} {'ok' if ok else 'failed'}: {err or ''}")
+                    if ok:
+                        applied_any = True
                 except Exception as e:  # noqa: BLE001
                     report_result(api, token, aid, False, {}, str(e))
                     log(f"action {atype} crashed: {e}")
+            if applied_any and on_action_applied is not None:
+                try:
+                    on_action_applied()
+                except Exception as e:  # noqa: BLE001
+                    log(f"posture-refresh callback failed: {e}")
         except HTTPError as e:
             if e.code == 401:
                 log("action poll: device revoked")
