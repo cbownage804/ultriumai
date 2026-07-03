@@ -179,13 +179,14 @@ export default function WraythBilling() {
                 )}
               </div>
 
-              {/* Usage Summary */}
+              {/* Usage Summary — devices / identities only. No message or scan meters. */}
               {tier !== 'business' && (
                 <div className="pt-4 border-t border-border/50">
-                  <h4 className="text-sm font-medium mb-3">Your Usage</h4>
-                  <UsageSummary features={['vault', 'scan', 'watch']} />
+                  <h4 className="text-sm font-medium mb-3">Your coverage</h4>
+                  <UsageSummary features={['vault', 'watch']} />
                 </div>
               )}
+
             </CardContent>
           </Card>
         </motion.div>
