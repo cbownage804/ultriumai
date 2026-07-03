@@ -94,8 +94,8 @@ function routeQuestion(route: RouteContext): SuggestedQuestion | null {
     case 'exposure':
       return {
         id: 'exposure-worst',
-        label: 'Which exposure is the worst?',
-        prompt: 'Of my exposed identifiers, which single exposure is the highest risk and what should I do about it first?',
+        label: 'Which breach is the worst?',
+        prompt: 'Of my monitored identities, which single breach is the highest risk and what should I do about it first?',
       };
     case 'passwords':
       return {
