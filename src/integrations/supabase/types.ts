@@ -18080,6 +18080,57 @@ export type Database = {
         }
         Relationships: []
       }
+      ray_ioc_index: {
+        Row: {
+          created_at: string
+          first_seen_at: string
+          id: string
+          investigation_ids: string[]
+          ioc_type: string
+          ioc_value: string
+          ioc_value_norm: string
+          last_note: string | null
+          last_seen_at: string
+          last_verdict: string | null
+          occurrence_count: number
+          org_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          first_seen_at?: string
+          id?: string
+          investigation_ids?: string[]
+          ioc_type: string
+          ioc_value: string
+          ioc_value_norm: string
+          last_note?: string | null
+          last_seen_at?: string
+          last_verdict?: string | null
+          occurrence_count?: number
+          org_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          first_seen_at?: string
+          id?: string
+          investigation_ids?: string[]
+          ioc_type?: string
+          ioc_value?: string
+          ioc_value_norm?: string
+          last_note?: string | null
+          last_seen_at?: string
+          last_verdict?: string | null
+          occurrence_count?: number
+          org_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ray_memory: {
         Row: {
           confidence: number

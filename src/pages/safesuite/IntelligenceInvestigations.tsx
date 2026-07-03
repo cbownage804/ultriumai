@@ -405,6 +405,7 @@ function InvestigationWorkspace({ inv }: { inv: Investigation }) {
   const [busy, setBusy] = useState<FollowupType | null>(null);
   const [questionOpen, setQuestionOpen] = useState(false);
   const [question, setQuestion] = useState('');
+  const [iocHistory, setIocHistory] = useState<Record<string, { count: number; last_seen_at: string; first_seen_at: string; last_verdict: string | null }>>({});
 
   const loadFollowups = useCallback(async () => {
     const { data } = await supabase
@@ -415,11 +416,36 @@ function InvestigationWorkspace({ inv }: { inv: Investigation }) {
     setFollowups((data as Followup[] | null) ?? []);
   }, [inv.id]);
 
+  const loadIocHistory = useCallback(async () => {
+    if (!inv.iocs || inv.iocs.length === 0) { setIocHistory({}); return; }
+    const norms = Array.from(new Set(
+      inv.iocs
+        .map(i => (typeof i.value === 'string' ? i.value.trim().toLowerCase() : ''))
+        .filter(Boolean),
+    ));
+    if (norms.length === 0) return;
+    const { data } = await supabase
+      .from('ray_ioc_index')
+      .select('ioc_type, ioc_value_norm, occurrence_count, first_seen_at, last_seen_at, last_verdict')
+      .in('ioc_value_norm', norms);
+    const map: Record<string, { count: number; last_seen_at: string; first_seen_at: string; last_verdict: string | null }> = {};
+    for (const r of (data as Array<{ ioc_type: string; ioc_value_norm: string; occurrence_count: number; first_seen_at: string; last_seen_at: string; last_verdict: string | null }> | null) ?? []) {
+      map[`${r.ioc_type}::${r.ioc_value_norm}`] = {
+        count: r.occurrence_count,
+        first_seen_at: r.first_seen_at,
+        last_seen_at: r.last_seen_at,
+        last_verdict: r.last_verdict,
+      };
+    }
+    setIocHistory(map);
+  }, [inv.id, inv.iocs]);
+
   useEffect(() => {
     setTab('overview');
     setFollowups([]);
     loadFollowups();
-  }, [inv.id, loadFollowups]);
+    loadIocHistory();
+  }, [inv.id, loadFollowups, loadIocHistory]);
 
   async function runFollowup(type: FollowupType, q?: string) {
     setBusy(type);
@@ -585,15 +611,36 @@ function InvestigationWorkspace({ inv }: { inv: Investigation }) {
           <TabsContent value="iocs" className="mt-0">
             {iocCount === 0 ? <Empty text="Ray did not extract distinct indicators." /> : (
               <div className="space-y-1.5">
-                {inv.iocs.map((ioc, i) => (
-                  <div key={i} className="flex items-start gap-2 text-xs rounded-sm border border-border p-2">
-                    {ioc.type && <Badge variant="outline" className="rounded-sm text-[10px] uppercase shrink-0">{ioc.type}</Badge>}
-                    <div className="min-w-0 flex-1">
-                      <div className="font-mono text-foreground break-all">{ioc.value}</div>
-                      {ioc.note && <div className="text-muted-foreground mt-0.5">{ioc.note}</div>}
+                {inv.iocs.map((ioc, i) => {
+                  const type = (ioc.type ?? '').toLowerCase();
+                  const norm = (ioc.value ?? '').trim().toLowerCase();
+                  const history = iocHistory[`${type}::${norm}`];
+                  // Prior sightings = total occurrences minus this one.
+                  const priorCount = history ? Math.max(0, history.count - 1) : 0;
+                  return (
+                    <div key={i} className="flex items-start gap-2 text-xs rounded-sm border border-border p-2">
+                      {ioc.type && <Badge variant="outline" className="rounded-sm text-[10px] uppercase shrink-0">{ioc.type}</Badge>}
+                      <div className="min-w-0 flex-1">
+                        <div className="font-mono text-foreground break-all">{ioc.value}</div>
+                        {ioc.note && <div className="text-muted-foreground mt-0.5">{ioc.note}</div>}
+                        {priorCount > 0 && (
+                          <div className="mt-1.5 inline-flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-sm border border-[hsl(262_60%_64%/0.35)] bg-[hsl(262_60%_64%/0.08)] text-[hsl(262_60%_82%)]">
+                            <Brain className="h-3 w-3" />
+                            I've seen this before — {priorCount} prior sighting{priorCount === 1 ? '' : 's'}
+                            {history?.first_seen_at && (
+                              <span className="text-muted-foreground">
+                                · since {new Date(history.first_seen_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                              </span>
+                            )}
+                            {history?.last_verdict && history.last_verdict !== inv.verdict && (
+                              <span className="text-muted-foreground">· last verdict: {history.last_verdict}</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </TabsContent>
