@@ -17736,6 +17736,78 @@ export type Database = {
         }
         Relationships: []
       }
+      ray_compliance_scans: {
+        Row: {
+          compute_credits: number
+          created_at: string
+          domains: Json
+          duration_ms: number | null
+          error: string | null
+          executive_summary: string | null
+          framework: string
+          gaps: Json
+          id: string
+          model: string | null
+          org_id: string | null
+          organization_context: string | null
+          overall_score: number | null
+          posture: string | null
+          roadmap: Json
+          scope: string | null
+          status: string
+          totals: Json
+          updated_at: string
+          user_id: string
+          wins: Json
+        }
+        Insert: {
+          compute_credits?: number
+          created_at?: string
+          domains?: Json
+          duration_ms?: number | null
+          error?: string | null
+          executive_summary?: string | null
+          framework: string
+          gaps?: Json
+          id?: string
+          model?: string | null
+          org_id?: string | null
+          organization_context?: string | null
+          overall_score?: number | null
+          posture?: string | null
+          roadmap?: Json
+          scope?: string | null
+          status?: string
+          totals?: Json
+          updated_at?: string
+          user_id: string
+          wins?: Json
+        }
+        Update: {
+          compute_credits?: number
+          created_at?: string
+          domains?: Json
+          duration_ms?: number | null
+          error?: string | null
+          executive_summary?: string | null
+          framework?: string
+          gaps?: Json
+          id?: string
+          model?: string | null
+          org_id?: string | null
+          organization_context?: string | null
+          overall_score?: number | null
+          posture?: string | null
+          roadmap?: Json
+          scope?: string | null
+          status?: string
+          totals?: Json
+          updated_at?: string
+          user_id?: string
+          wins?: Json
+        }
+        Relationships: []
+      }
       ray_digests: {
         Row: {
           counts: Json
