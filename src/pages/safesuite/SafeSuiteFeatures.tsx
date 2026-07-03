@@ -92,18 +92,21 @@ const integrations = {
 };
 
 const compareRows: { label: string; free: boolean | string; pro: boolean | string; business: boolean | string }[] = [
-  { label: "Vault", free: true, pro: true, business: true },
-  { label: "Scan", free: "Limited", pro: true, business: true },
-  { label: "Watch", free: "Basic", pro: true, business: true },
-  { label: "Ray AI", free: "Limited", pro: true, business: true },
-  { label: "Identity Monitoring", free: false, pro: true, business: true },
-  { label: "Dark Web Monitoring", free: false, pro: true, business: true },
-  { label: "Unlimited Passwords", free: false, pro: true, business: true },
-  { label: "Unlimited Scans", free: false, pro: true, business: true },
-  { label: "Shared Vaults", free: false, pro: false, business: true },
-  { label: "Admin Portal & Audit Logs", free: false, pro: false, business: true },
-  { label: "SSO / SCIM", free: false, pro: false, business: true },
+  { label: "AI Security Analyst", free: true, pro: true, business: true },
+  { label: "Monitored devices", free: "1", pro: "5", business: "Unlimited" },
+  { label: "Monitored identities", free: "2", pro: "10", business: "Unlimited" },
+  { label: "Threat Analysis", free: "Limited", pro: "Unlimited", business: "Unlimited" },
+  { label: "Exposure Monitoring", free: true, pro: true, business: true },
+  { label: "AI Recommendations", free: false, pro: true, business: true },
+  { label: "Windows Endpoint Agent", free: false, pro: true, business: true },
+  { label: "One-click Remediation", free: false, pro: true, business: true },
+  { label: "Microsoft 365 Monitoring", free: false, pro: false, business: true },
+  { label: "Teams & Slack", free: false, pro: false, business: true },
+  { label: "Organization Memory", free: false, pro: false, business: true },
+  { label: "Executive Briefings", free: false, pro: false, business: true },
+  { label: "White-label & Multi-user", free: false, pro: false, business: true },
 ];
+
 
 // ─── Small components ───────────────────────────────────────────────────────
 
