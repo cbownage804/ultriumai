@@ -421,7 +421,11 @@ export function DeviceActionsMenu({
                 <DropdownMenuLabel className="text-xs text-muted-foreground">
                   If it's lost
                 </DropdownMenuLabel>
-                <DropdownMenuItem disabled={!sessionLockSupported} onClick={() => run('lock_screen')}>
+                <DropdownMenuItem
+                  title={ACTION_DESCRIPTIONS.lock_screen}
+                  disabled={!sessionLockSupported}
+                  onClick={() => run('lock_screen')}
+                >
                   <Lock className="mr-2 h-4 w-4" /> {ACTION_LABELS.lock_screen}
                 </DropdownMenuItem>
                 <DropdownMenuItem
