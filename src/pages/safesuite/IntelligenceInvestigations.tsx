@@ -1182,24 +1182,14 @@ function IocsPanel({
               <div className="min-w-0 flex-1">
                 <div className="font-mono text-foreground break-all">{ioc.value}</div>
                 {ioc.note && <div className="text-muted-foreground mt-0.5">{ioc.note}</div>}
-                {priorCount > 0 && (
-                  <div className="mt-1.5 inline-flex flex-wrap items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-sm border border-[hsl(262_60%_64%/0.35)] bg-[hsl(262_60%_64%/0.08)] text-[hsl(262_60%_82%)]">
-                    <Brain className="h-3 w-3" />
-                    I've seen this before — {priorCount} prior sighting{priorCount === 1 ? '' : 's'}
-                    {history?.first_seen_at && (
-                      <span className="text-muted-foreground">
-                        · since {new Date(history.first_seen_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                      </span>
-                    )}
-                    {history?.last_seen_at && (
-                      <span className="text-muted-foreground">
-                        · last {new Date(history.last_seen_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                      </span>
-                    )}
-                    {history?.last_verdict && history.last_verdict !== invVerdict && (
-                      <span className="text-muted-foreground">· last verdict: {history.last_verdict}</span>
-                    )}
-                  </div>
+                {priorCount > 0 && history && (
+                  <SeenBeforeCallout
+                    history={history}
+                    priorCount={priorCount}
+                    invVerdict={invVerdict}
+                    currentInvId={currentInvId}
+                    onOpenInvestigation={onOpenInvestigation}
+                  />
                 )}
               </div>
               {history && history.timestamps && history.timestamps.length > 0 && (
