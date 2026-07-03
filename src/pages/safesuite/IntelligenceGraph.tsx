@@ -17,7 +17,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Brain, GitFork, Network, ScanSearch, Sparkles, TriangleAlert } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Brain, GitFork, Network, ScanSearch, Sparkles, TriangleAlert, ExternalLink, Clock, Fingerprint } from 'lucide-react';
 
 type Investigation = {
   id: string;
@@ -133,6 +134,7 @@ export default function IntelligenceGraph() {
   const [investigations, setInvestigations] = useState<Investigation[]>([]);
   const [iocs, setIocs] = useState<IocRow[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
+  const [detailIoc, setDetailIoc] = useState<IocRow | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -232,6 +234,7 @@ export default function IntelligenceGraph() {
                 iocs={iocs}
                 selected={selected}
                 onSelect={setSelected}
+                onOpenIoc={setDetailIoc}
               />
             )}
           </CardContent>
@@ -252,7 +255,7 @@ export default function IntelligenceGraph() {
               orgStats.topIocs.map(i => (
                 <button
                   key={i.ioc_value_norm}
-                  onClick={() => setSelected(i.ioc_value_norm)}
+                  onClick={() => { setSelected(i.ioc_value_norm); setDetailIoc(i); }}
                   className={`w-full text-left px-3 py-2 rounded-sm border transition-colors ${
                     selected === i.ioc_value_norm
                       ? 'border-[hsl(262_60%_64%/0.5)] bg-[hsl(262_60%_64%/0.08)]'
@@ -269,6 +272,9 @@ export default function IntelligenceGraph() {
                     <span className="uppercase tracking-wider">{i.ioc_type}</span>
                     <span>·</span>
                     <span>{i.occurrence_count} sightings</span>
+                    <span className="ml-auto inline-flex items-center gap-1 text-[hsl(262_60%_75%)]">
+                      <ExternalLink className="h-3 w-3" /> Details
+                    </span>
                   </div>
                 </button>
               ))
@@ -328,12 +334,14 @@ export default function IntelligenceGraph() {
                   {c.sharedIocs.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {c.sharedIocs.slice(0, 6).map(ioc => (
-                        <span
+                        <button
                           key={ioc.ioc_value_norm}
-                          className="text-[10px] font-mono px-2 py-0.5 rounded-sm border border-[hsl(262_60%_64%/0.35)] bg-[hsl(262_60%_64%/0.06)] text-[hsl(262_60%_82%)]"
+                          type="button"
+                          onClick={() => setDetailIoc(ioc)}
+                          className="text-[10px] font-mono px-2 py-0.5 rounded-sm border border-[hsl(262_60%_64%/0.35)] bg-[hsl(262_60%_64%/0.06)] text-[hsl(262_60%_82%)] hover:bg-[hsl(262_60%_64%/0.14)]"
                         >
                           {ioc.ioc_value}
-                        </span>
+                        </button>
                       ))}
                       {c.sharedIocs.length > 6 && (
                         <span className="text-[10px] text-muted-foreground">
@@ -348,6 +356,9 @@ export default function IntelligenceGraph() {
           )}
         </CardContent>
       </Card>
+
+
+      <IocDetailsDialog ioc={detailIoc} onClose={() => setDetailIoc(null)} />
     </div>
   );
 }
@@ -386,11 +397,13 @@ function GraphSvg({
   iocs,
   selected,
   onSelect,
+  onOpenIoc,
 }: {
   investigations: Investigation[];
   iocs: IocRow[];
   selected: string | null;
   onSelect: (id: string | null) => void;
+  onOpenIoc: (ioc: IocRow) => void;
 }) {
   const width = 720;
   const height = 460;
@@ -446,7 +459,8 @@ function GraphSvg({
         {iocPos.map(p => {
           const active = selected === p.id;
           return (
-            <g key={p.id} className="cursor-pointer" onClick={() => onSelect(active ? null : p.id)}>
+            <g key={p.id} className="cursor-pointer" onClick={() => { onSelect(active ? null : p.id); onOpenIoc(p.node); }}>
+
               <circle
                 cx={p.x} cy={p.y}
                 r={active ? 5 : 3.2}
@@ -522,5 +536,124 @@ function LegendDot({ color, label }: { color: string; label: string }) {
       <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: color }} />
       {label}
     </span>
+  );
+}
+
+/**
+ * IOC Details Dialog — shows every prior sighting of the selected indicator,
+ * pulled from `ray_investigations` using the ids stored on `ray_ioc_index`.
+ * Each row lists the investigation name, the date it ran, and the verdict Ray
+ * assigned in that case.
+ */
+type Sighting = {
+  id: string;
+  input_label: string | null;
+  input_type: string;
+  verdict: string | null;
+  created_at: string;
+};
+
+function IocDetailsDialog({ ioc, onClose }: { ioc: IocRow | null; onClose: () => void }) {
+  const [sightings, setSightings] = useState<Sighting[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!ioc) { setSightings([]); return; }
+    const ids = (ioc.investigation_ids || []).filter(Boolean);
+    if (ids.length === 0) { setSightings([]); return; }
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const { data } = await supabase
+        .from('ray_investigations')
+        .select('id,input_label,input_type,verdict,created_at')
+        .in('id', ids)
+        .order('created_at', { ascending: false });
+      if (cancelled) return;
+      setSightings((data as Sighting[]) ?? []);
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [ioc]);
+
+  const verdictCounts = useMemo(() => {
+    const c: Record<string, number> = {};
+    sightings.forEach(s => {
+      const v = (s.verdict || 'unknown').toLowerCase();
+      c[v] = (c[v] || 0) + 1;
+    });
+    return c;
+  }, [sightings]);
+
+  return (
+    <Dialog open={!!ioc} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-muted-foreground">
+            <Fingerprint className="h-3.5 w-3.5" />
+            Indicator · {ioc?.ioc_type}
+          </div>
+          <DialogTitle className="font-mono text-base break-all">
+            {ioc?.ioc_value}
+          </DialogTitle>
+          <DialogDescription>
+            {ioc
+              ? `Seen in ${ioc.occurrence_count} investigation${ioc.occurrence_count === 1 ? '' : 's'} · first observed ${new Date(ioc.first_seen_at).toLocaleDateString()} · last observed ${new Date(ioc.last_seen_at).toLocaleDateString()}`
+              : ''}
+          </DialogDescription>
+        </DialogHeader>
+
+        {ioc && (
+          <div className="flex flex-wrap gap-1.5 -mt-1">
+            {Object.entries(verdictCounts).map(([v, n]) => (
+              <Badge key={v} variant="outline" className={`text-[10px] ${verdictBadgeClass(v)}`}>
+                {v} · {n}
+              </Badge>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-2 space-y-2 max-h-[52vh] overflow-y-auto pr-1">
+          {loading ? (
+            <div className="space-y-2">
+              {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
+            </div>
+          ) : sightings.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-6 text-center">
+              No prior sightings recorded for this indicator.
+            </p>
+          ) : (
+            sightings.map(s => (
+              <Link
+                key={s.id}
+                to={`/app/intelligence/investigations?id=${s.id}`}
+                onClick={onClose}
+                className="block rounded-sm border border-border bg-background/40 hover:bg-accent transition-colors px-3 py-2"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium truncate">
+                      {s.input_label || `${s.input_type} investigation`}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
+                      <Clock className="h-3 w-3" />
+                      {new Date(s.created_at).toLocaleString()}
+                      <span>·</span>
+                      <span className="uppercase tracking-wider">{s.input_type}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge variant="outline" className={`text-[10px] ${verdictBadgeClass(s.verdict)}`}>
+                      {s.verdict || 'unknown'}
+                    </Badge>
+                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+                  </div>
+                </div>
+              </Link>
+            ))
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
