@@ -52,6 +52,7 @@ import { CisoNextAction } from '@/components/ray/CisoNextAction';
 import { nextBestAction } from '@/lib/ray/ciso';
 import { VaultLockedCard } from '@/components/ray/VaultLockedCard';
 import { HomeContextBridge } from '@/components/ray/HomeContextBridge';
+import { HomeCapabilityTiles } from '@/components/ray/home/HomeCapabilityTiles';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
 
 interface DashboardStats {
@@ -655,6 +656,11 @@ export default function WraythDashboard() {
         vaultCount={stats.passwordCount}
       />
 
+
+      {/* 2d. Capability spine — surfaces devices, priorities, live activity,
+           M365, org memory, and agent releases so Home reflects everything
+           Ray has been built to do. */}
+      <HomeCapabilityTiles />
 
       {/* 2. Ask Ray — reinforces AI-first experience */}
       <div data-tour="quick-actions">
