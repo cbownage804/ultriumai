@@ -24,9 +24,10 @@ import { toast } from 'sonner';
 import { DeviceActionsMenu } from './DeviceActionsMenu';
 import { DeviceSecurityTabs } from './DeviceSecurityTabs';
 import { RayFixPanel } from './RayFixPanel';
-import { DeviceTimeline } from './DeviceTimeline';
+import { DeviceSecurityHistory } from './DeviceSecurityHistory';
 import { AgentVersionBadge } from './AgentVersionBadge';
 import { AgentTrustCard } from './AgentTrustCard';
+import { DeviceTransparencyCard } from './DeviceTransparencyCard';
 import { DeviceAssessment } from './DeviceAssessment';
 import { AskRayCommandBox } from './AskRayCommandBox';
 
@@ -68,6 +69,7 @@ interface Device {
   os_version: string | null;
   agent_version: string;
   last_seen_at: string | null;
+  enrolled_at: string | null;
   revoked_at: string | null;
   findings: Finding[];
   posture: Posture | null;
@@ -272,7 +274,7 @@ export function EnrolledDevicesList() {
   const load = async () => {
     const { data: rows, error } = await supabase
       .from('wrayth_devices')
-      .select('id, hostname, os, os_version, agent_version, last_seen_at, revoked_at, release_channel, last_update_check_at')
+      .select('id, hostname, os, os_version, agent_version, last_seen_at, enrolled_at, revoked_at, release_channel, last_update_check_at')
       // Hide devices whose agent has been uninstalled/revoked so a machine
       // that ran WraythSetup.exe /uninstall disappears from the dashboard.
       .is('revoked_at', null)
@@ -509,9 +511,14 @@ export function EnrolledDevicesList() {
                 </details>
               )}
 
-              <DeviceTimeline deviceId={d.id} lastSeenAt={d.last_seen_at} />
+              <DeviceTransparencyCard posture={d.posture as never} capturedAt={d.posture_captured_at} />
 
-
+              <DeviceSecurityHistory
+                deviceId={d.id}
+                hostname={d.hostname}
+                lastSeenAt={d.last_seen_at}
+                createdAt={d.enrolled_at}
+              />
 
             </div>
           );
