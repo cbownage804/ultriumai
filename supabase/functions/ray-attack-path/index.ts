@@ -86,7 +86,8 @@ Guidance:
 - 3-6 steps typical.
 - Prioritise remediation by which step closes the earliest link in the chain.
 - Never fabricate specific device names, IPs, or user identities that were not in the input.
-- For "entities": only list users, devices, accounts, apps, services, networks, or data stores whose identifiers appear in the source investigation or scenario. If none are known for a step, return an empty array — do not invent placeholders like "user@example.com" or "PC-01".`;
+- For "entities": only list users, devices, accounts, apps, services, networks, or data stores whose identifiers appear in the source investigation or scenario. If none are known for a step, return an empty array — do not invent placeholders like "user@example.com" or "PC-01".
+- For "reasoning.evidence": each entry MUST cite the actual source — quote or paraphrase text from the investigation/scenario, or name a well-known technique for general_knowledge. Do NOT invent quotes. If a step rests entirely on assumption, keep "evidence" short and put the leap into "assumptions".`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
