@@ -537,9 +537,9 @@ export default function WraythWeb() {
 
         {/* Add new asset */}
         <section className="rounded-2xl border border-border bg-card/40 p-5 sm:p-6">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">Add an identity to monitor</div>
+          <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">Protect another identity</div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Ray will scan the dark web and breach feeds for any mention of it.
+            Ray will continuously watch public breach databases and dark-web intelligence for new exposures on this identity.
           </p>
           <div className="mt-4 flex flex-col sm:flex-row gap-2">
             <select
