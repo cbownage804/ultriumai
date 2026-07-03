@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from '@/hooks/useAuth';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import EnhancedErrorBoundary from '@/components/EnhancedErrorBoundary';
+import { TierGate } from '@/components/safesuite/TierGate';
 import CookieConsent from '@/components/CookieConsent';
 import { PageTransition } from '@/components/transitions/PageTransition';
 import { PageSkeleton, LoadingSpinner } from '@/components/ui/PageSkeleton';
