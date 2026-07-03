@@ -30,6 +30,7 @@ import {
   LevelFormat, PageOrientation,
 } from 'docx';
 import { saveAs } from 'file-saver';
+import PolicyVersionHistory from '@/components/intelligence/PolicyVersionHistory';
 
 type PolicyClause = { id?: string; text?: string };
 type PolicySection = {
@@ -734,6 +735,19 @@ function PolicyPreview({
             </div>
           </section>
         )}
+
+        <PolicyVersionHistory
+          policyId={policy.id}
+          organizationName={policy.organization_name}
+          currentMarkdown={renderMarkdown(policy)}
+          renderVersionMarkdown={(v, orgName) => renderMarkdownFromParts({
+            title: v.title,
+            organization_name: orgName,
+            frameworks: v.frameworks ?? [],
+            sections: (v.sections as PolicySection[]) ?? [],
+            metadata: (v.metadata as PolicyRow['metadata']) ?? {},
+          })}
+        />
       </CardContent>
     </Card>
   );
@@ -742,6 +756,25 @@ function PolicyPreview({
 // ─── Renderers ──────────────────────────────────────────────────────────────
 
 function renderMarkdown(p: PolicyRow): string {
+  return renderMarkdownFromParts({
+    title: p.title,
+    organization_name: p.organization_name,
+    frameworks: p.frameworks,
+    sections: p.sections,
+    metadata: p.metadata,
+  });
+}
+
+/** Shared renderer used by both live policies and historical version snapshots
+ * (which don't carry organization_name — the parent injects it). Keeping a
+ * single renderer means the version diff shows exactly what the user reads. */
+export function renderMarkdownFromParts(p: {
+  title: string;
+  organization_name: string | null;
+  frameworks: string[];
+  sections: PolicySection[];
+  metadata: PolicyRow['metadata'];
+}): string {
   const m = p.metadata ?? {};
   const parts: string[] = [];
   parts.push(`# ${p.title}\n`);
@@ -758,7 +791,7 @@ function renderMarkdown(p: PolicyRow): string {
     m.roles.forEach(r => parts.push(`- **${r.role}:** ${r.responsibility}`));
     parts.push('');
   }
-  p.sections.forEach((s, i) => {
+  (p.sections ?? []).forEach((s, i) => {
     parts.push(`## ${i + 1}. ${s.heading}\n`);
     (s.clauses ?? []).forEach((c, j) => {
       parts.push(`**${c.id || `${i + 1}.${j + 1}`}** ${c.text}\n`);
