@@ -290,6 +290,7 @@ function AppRouter() {
           <Route path="/app/intelligence/logs" element={<SuspenseWrapper><IntelligenceLogs /></SuspenseWrapper>} />
           <Route path="/app/intelligence/policies" element={<SuspenseWrapper><IntelligencePolicies /></SuspenseWrapper>} />
           <Route path="/app/intelligence/compliance" element={<SuspenseWrapper><IntelligenceCompliance /></SuspenseWrapper>} />
+          <Route path="/app/intelligence/compliance/report" element={<SuspenseWrapper><IntelligenceComplianceReport /></SuspenseWrapper>} />
           <Route path="/app/intelligence" element={<SuspenseWrapper><IntelligenceHub /></SuspenseWrapper>} />
           <Route path="/app/intelligence/history" element={<SuspenseWrapper><IntelligenceHistory /></SuspenseWrapper>} />
           <Route path="/app/intelligence/drafts" element={<SuspenseWrapper><IntelligenceDrafts /></SuspenseWrapper>} />
