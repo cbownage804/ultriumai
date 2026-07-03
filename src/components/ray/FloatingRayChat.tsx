@@ -158,7 +158,7 @@ export function FloatingRayChat() {
             </span>
 
             {/* Label + contextual status (rotates by route) */}
-            <div className="flex flex-col items-start leading-tight pr-1 min-w-[128px]">
+            <div className="flex flex-col items-start leading-tight pr-1 min-w-[168px]">
               <div className="flex items-center gap-1.5 text-sm font-medium text-white">
                 Ray
                 <motion.span
@@ -168,7 +168,7 @@ export function FloatingRayChat() {
                   transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
                 />
               </div>
-              <span className="relative h-[14px] w-full overflow-hidden text-[10px] uppercase tracking-[0.18em] text-white/60">
+              <span className="relative h-[14px] w-full overflow-visible text-[10px] uppercase tracking-[0.18em] text-white/60">
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.span
                     key={statusVerb + badgeSuffix}
@@ -176,13 +176,14 @@ export function FloatingRayChat() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -6 }}
                     transition={{ duration: 0.28 }}
-                    className="absolute inset-0 whitespace-nowrap"
+                    className="absolute inset-y-0 left-0 whitespace-nowrap"
                   >
                     {statusVerb}{badgeSuffix}
                   </motion.span>
                 </AnimatePresence>
               </span>
             </div>
+
 
             {/* Subtle light sweep on hover */}
             <span
