@@ -13,6 +13,7 @@ type Target = "chromium" | "firefox";
 
 const SHARED_FILES = [
   'background.js',
+  'browser-compat.js',
   'content.js',
   'content.css',
   'popup.html',
