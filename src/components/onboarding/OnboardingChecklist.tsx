@@ -81,7 +81,7 @@ export const OnboardingChecklist = ({
         {
           id: 'first_password',
           title: 'Save your first password',
-          description: 'Store a password in Vault vault',
+          description: 'Store a password in your Wrayth vault',
           icon: <Key className="h-4 w-4" />,
           href: '/app/passwords',
           isComplete: completedItems.includes('first_password'),
