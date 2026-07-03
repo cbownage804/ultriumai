@@ -167,7 +167,31 @@ export function FloatingRayChat() {
                   transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
                 />
               </div>
-              <span className="text-[10px] uppercase tracking-[0.18em] text-white/60">{label}</span>
+            <div className="flex flex-col items-start leading-tight pr-1 min-w-[112px]">
+              <div className="flex items-center gap-1.5 text-sm font-medium text-white">
+                Ray
+                <motion.span
+                  aria-hidden
+                  className={`inline-block h-1.5 w-1.5 rounded-full ${styles.dot}`}
+                  animate={{ opacity: [0.4, 1, 0.4] }}
+                  transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+                />
+              </div>
+              <span className="relative h-[14px] w-full overflow-hidden text-[10px] uppercase tracking-[0.18em] text-white/60">
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.span
+                    key={statusVerb + badgeSuffix}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.28 }}
+                    className="absolute inset-0 whitespace-nowrap"
+                  >
+                    {statusVerb}{badgeSuffix}
+                  </motion.span>
+                </AnimatePresence>
+              </span>
+            </div>
             </div>
 
             {/* Subtle light sweep on hover */}
