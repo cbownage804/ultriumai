@@ -17563,6 +17563,111 @@ export type Database = {
         }
         Relationships: []
       }
+      ray_entities: {
+        Row: {
+          attributes: Json
+          created_at: string
+          external_id: string | null
+          first_seen_at: string
+          id: string
+          last_seen_at: string
+          name: string
+          org_id: string | null
+          type: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          attributes?: Json
+          created_at?: string
+          external_id?: string | null
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          name: string
+          org_id?: string | null
+          type: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          attributes?: Json
+          created_at?: string
+          external_id?: string | null
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          name?: string
+          org_id?: string | null
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      ray_events: {
+        Row: {
+          body: string | null
+          created_at: string
+          dedup_key: string | null
+          entity_id: string
+          event_type: string
+          id: string
+          occurred_at: string
+          org_id: string | null
+          payload: Json
+          related_entity_id: string | null
+          severity: string
+          source: string
+          title: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          dedup_key?: string | null
+          entity_id: string
+          event_type: string
+          id?: string
+          occurred_at?: string
+          org_id?: string | null
+          payload?: Json
+          related_entity_id?: string | null
+          severity?: string
+          source?: string
+          title: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          dedup_key?: string | null
+          entity_id?: string
+          event_type?: string
+          id?: string
+          occurred_at?: string
+          org_id?: string | null
+          payload?: Json
+          related_entity_id?: string | null
+          severity?: string
+          source?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ray_events_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "ray_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ray_events_related_entity_id_fkey"
+            columns: ["related_entity_id"]
+            isOneToOne: false
+            referencedRelation: "ray_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ray_findings: {
         Row: {
           created_at: string
@@ -18461,6 +18566,51 @@ export type Database = {
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ray_relationships: {
+        Row: {
+          attributes: Json
+          created_at: string
+          id: string
+          org_id: string | null
+          relationship_type: string
+          source_entity_id: string
+          target_entity_id: string
+        }
+        Insert: {
+          attributes?: Json
+          created_at?: string
+          id?: string
+          org_id?: string | null
+          relationship_type: string
+          source_entity_id: string
+          target_entity_id: string
+        }
+        Update: {
+          attributes?: Json
+          created_at?: string
+          id?: string
+          org_id?: string | null
+          relationship_type?: string
+          source_entity_id?: string
+          target_entity_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ray_relationships_source_entity_id_fkey"
+            columns: ["source_entity_id"]
+            isOneToOne: false
+            referencedRelation: "ray_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ray_relationships_target_entity_id_fkey"
+            columns: ["target_entity_id"]
+            isOneToOne: false
+            referencedRelation: "ray_entities"
             referencedColumns: ["id"]
           },
         ]
