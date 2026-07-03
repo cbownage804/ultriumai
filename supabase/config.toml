@@ -55,6 +55,9 @@ verify_jwt = true
 [functions.ray-analyze]
 verify_jwt = true
 
+[functions.ray-log-analyze]
+verify_jwt = true
+
 
 [functions.ray-chat]
 verify_jwt = true
