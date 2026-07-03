@@ -381,7 +381,7 @@ export default function RaySkillsPanel({ mode = 'compact', onModeChange, onClose
       { label: 'Ready', icon: CheckCircle2 },
     ];
     return (
-      <Card className="flex h-[720px] flex-col overflow-hidden border-border/60 bg-gradient-to-b from-background to-background/60">
+      <Card className="flex h-full min-h-0 flex-col overflow-hidden border-border/60 bg-gradient-to-b from-background to-background/60">
         <CardContent className="flex flex-1 flex-col items-center justify-center gap-6 p-6">
           <motion.div
             className="relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary/40 to-primary/10"
@@ -423,7 +423,7 @@ export default function RaySkillsPanel({ mode = 'compact', onModeChange, onClose
   }
 
   return (
-    <Card className="flex h-[720px] flex-col overflow-hidden border-border/60 bg-gradient-to-b from-background to-background/60">
+    <Card className="flex h-full min-h-0 flex-col overflow-hidden border-border/60 bg-gradient-to-b from-background to-background/60">
       <CardContent className="flex flex-1 flex-col gap-0 overflow-hidden p-0">
         <div ref={scrollRef} className="flex-1 overflow-y-auto">
           {empty ? (
