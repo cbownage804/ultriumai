@@ -35,6 +35,7 @@ const TILES: Tile[] = [
   { id: 'investigations', label: 'Investigations', desc: 'Deep threat analysis of URLs, IPs, hashes, emails, and alerts.', href: '/app/intelligence/investigations', icon: ScanSearch, cost: 3, status: 'live' },
   { id: 'attack-paths',    label: 'Attack Paths',   desc: 'Reason about how a threat could progress and what it blasts.', href: '/app/intelligence/attack-paths',   icon: GitBranch,  cost: 20, status: 'live' },
   { id: 'graph',           label: 'Graph',          desc: 'See how every investigation and IOC connects across your org.', href: '/app/intelligence/graph',         icon: Network,    cost: 0,  status: 'live' },
+  { id: 'memory',          label: 'Memory',         desc: '"Have I seen this before?" — paste any IOC, see every prior sighting.', href: '/app/intelligence/memory', icon: Brain,      cost: 0,  status: 'live' },
   { id: 'reports',         label: 'Board Reports',  desc: 'Executive digest across 7, 30, or 90 days of security activity.', href: '/app/intelligence/reports',   icon: FileText,   cost: 8,  status: 'live' },
   { id: 'malware',         label: 'Malware Analysis', desc: 'Explain what a binary, hash, or strings dump actually does.',       href: '/app/intelligence/malware', icon: Bug,        cost: 4,  status: 'live' },
   { id: 'scripts',         label: 'Script Analysis',  desc: 'Paste PowerShell, Bash, Python — get intent, risk, and MITRE.',    href: '/app/intelligence/scripts', icon: Terminal,   cost: 2,  status: 'live' },
