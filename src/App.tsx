@@ -180,6 +180,14 @@ function AppRouter() {
           </ProtectedRoute>
         } />
 
+        {/* Ray embedded in Microsoft Teams personal/static tab.
+            Chrome-less on purpose — no WraythLayout wrapping it. */}
+        <Route path="/app/ray/teams-embed" element={
+          <ProtectedRoute>
+            <SuspenseWrapper><RayTeamsEmbed /></SuspenseWrapper>
+          </ProtectedRoute>
+        } />
+
 
 
         <Route element={
