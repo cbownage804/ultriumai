@@ -259,6 +259,51 @@ ${SCHEMA_HINT}`;
     });
   }
 
+  // Best-effort IOC index upsert — never block the investigation on this.
+  try {
+    const iocs = patch.iocs as Array<{ type?: string; value?: string; note?: string }>;
+    const verdict = patch.verdict;
+    const nowIso = new Date().toISOString();
+    for (const ioc of iocs) {
+      const type = typeof ioc.type === "string" ? ioc.type.toLowerCase().trim() : "";
+      const value = typeof ioc.value === "string" ? ioc.value.trim() : "";
+      if (!type || !value) continue;
+      const norm = value.toLowerCase();
+      // Try to update existing
+      const { data: existing } = await admin
+        .from("ray_ioc_index")
+        .select("id, occurrence_count, investigation_ids")
+        .eq("user_id", userId)
+        .eq("ioc_type", type)
+        .eq("ioc_value_norm", norm)
+        .maybeSingle();
+      if (existing) {
+        const row = existing as { id: string; occurrence_count: number; investigation_ids: string[] };
+        const ids = Array.from(new Set([...(row.investigation_ids ?? []), investigationId])).slice(-25);
+        await admin.from("ray_ioc_index").update({
+          last_seen_at: nowIso,
+          occurrence_count: (row.occurrence_count ?? 0) + 1,
+          investigation_ids: ids,
+          last_verdict: verdict,
+          last_note: ioc.note ?? null,
+          updated_at: nowIso,
+        }).eq("id", row.id);
+      } else {
+        await admin.from("ray_ioc_index").insert({
+          user_id: userId, org_id: orgId,
+          ioc_type: type, ioc_value: value, ioc_value_norm: norm,
+          first_seen_at: nowIso, last_seen_at: nowIso,
+          occurrence_count: 1,
+          investigation_ids: [investigationId],
+          last_verdict: verdict,
+          last_note: ioc.note ?? null,
+        });
+      }
+    }
+  } catch (e) {
+    console.error("ioc_index_upsert_failed", (e as Error).message);
+  }
+
   return new Response(JSON.stringify({ ok: true, investigation: finalRow }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
