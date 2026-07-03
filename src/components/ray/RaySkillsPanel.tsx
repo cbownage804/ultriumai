@@ -23,6 +23,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { getRayContext, type RayContext } from '@/lib/ray';
 import { formatDistanceToNow } from 'date-fns';
 import { dedupeRecs as sharedDedupeRecs } from './recDedupe';
+import { RayThinking } from './RayThinking';
 
 type RayCard = {
   title?: string;
@@ -600,9 +601,11 @@ export default function RaySkillsPanel() {
                 ),
               )}
               {loading && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Ray is thinking…
-                </div>
+                <RayThinking
+                  userMessage={
+                    [...turns].reverse().find((t) => t.role === 'user')?.text ?? null
+                  }
+                />
               )}
             </div>
           )}
