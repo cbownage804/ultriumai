@@ -69,7 +69,7 @@ interface Device {
   os_version: string | null;
   agent_version: string;
   last_seen_at: string | null;
-  created_at: string | null;
+  enrolled_at: string | null;
   revoked_at: string | null;
   findings: Finding[];
   posture: Posture | null;
@@ -274,7 +274,7 @@ export function EnrolledDevicesList() {
   const load = async () => {
     const { data: rows, error } = await supabase
       .from('wrayth_devices')
-      .select('id, hostname, os, os_version, agent_version, last_seen_at, created_at, revoked_at, release_channel, last_update_check_at')
+      .select('id, hostname, os, os_version, agent_version, last_seen_at, enrolled_at, revoked_at, release_channel, last_update_check_at')
       // Hide devices whose agent has been uninstalled/revoked so a machine
       // that ran WraythSetup.exe /uninstall disappears from the dashboard.
       .is('revoked_at', null)
@@ -517,7 +517,7 @@ export function EnrolledDevicesList() {
                 deviceId={d.id}
                 hostname={d.hostname}
                 lastSeenAt={d.last_seen_at}
-                createdAt={d.created_at}
+                createdAt={d.enrolled_at}
               />
 
             </div>
