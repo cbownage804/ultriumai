@@ -358,7 +358,7 @@ export default function WorkplaceEmbeds() {
       <Card>
         <CardHeader>
           <CardTitle>Test the assistant</CardTitle>
-          <CardDescription>Runs a stubbed KB round-trip and logs it to workplace conversations.</CardDescription>
+          <CardDescription>Runs a stubbed Ray round-trip and logs it to workplace conversations.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <Textarea value={testPrompt} onChange={(e) => setTestPrompt(e.target.value)} rows={2} disabled={!isEntitled} />
