@@ -18,8 +18,16 @@ import { cn } from '@/lib/utils';
 import {
   Sparkles, Coins, GitBranch, Brain, Clock, Trash2, Layers, Radar,
   Wrench, Target, ShieldAlert, AlertTriangle, CheckCircle2, HelpCircle,
+  User, Laptop, KeyRound, AppWindow, Network, Database, Users,
 } from 'lucide-react';
 
+type EntityKind = 'user' | 'device' | 'account' | 'service' | 'app' | 'network' | 'data';
+type StepEntity = {
+  kind?: EntityKind | string;
+  name?: string;
+  role?: 'actor' | 'target' | 'pivot' | 'credential' | 'witness' | string;
+  why?: string;
+};
 type AttackStep = {
   phase?: string;
   title?: string;
@@ -27,6 +35,7 @@ type AttackStep = {
   mitre_id?: string;
   likelihood?: string;
   if_successful?: string;
+  entities?: StepEntity[];
 };
 type BlastRadius = {
   users_affected?: string;
