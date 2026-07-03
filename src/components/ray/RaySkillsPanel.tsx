@@ -158,20 +158,35 @@ function buildPriorityRecs(ctx: RayContext | null): PriorityRec[] {
     unique.push(r);
     if (unique.length >= 3) break;
   }
-  return unique.map((r, i) => ({
-    id: r.id,
-    title: r.title,
-    why:
-      (r.body && r.body.trim()) ||
-      (r.objective && r.objective.trim()) ||
-      "I flagged this because it materially affects your security posture.",
-    severity: r.severity,
-    tone: severityToTone(r.severity),
-    priority: i + 1,
-    actionLabel: 'Enable',
-    prompt: `Tell me more about "${r.title}" and how to fix it.`,
-  }));
+  return unique.map((r, i) => {
+    const tone = severityToTone(r.severity);
+    const impactPoints = tone === 'danger' ? 12 : tone === 'warn' ? 8 : 4;
+    const secs = r.estimated_fix_seconds ?? (tone === 'danger' ? 300 : 120);
+    const durationLabel = secs >= 3600
+      ? `${Math.round(secs / 3600)} hr`
+      : secs >= 60 ? `${Math.round(secs / 60)} min` : `${secs} sec`;
+    const slug = (r.rule_slug || '').toLowerCase();
+    const needsReboot = /bitlocker|update|patch|reboot|kernel/.test(slug + ' ' + r.title.toLowerCase());
+    return {
+      id: r.id,
+      title: r.title,
+      why:
+        (r.body && r.body.trim()) ||
+        (r.objective && r.objective.trim()) ||
+        "I flagged this because it materially affects your security posture.",
+      severity: r.severity,
+      tone,
+      priority: i + 1,
+      impactPoints,
+      durationLabel,
+      needsReboot,
+      askPrompt: `Explain in detail why "${r.title}" matters and what the risk is if I ignore it.`,
+      impactPrompt: `Show me the exact impact "${r.title}" will have on my security score and posture.`,
+      fixPrompt: `Walk me through fixing "${r.title}" now, step by step.`,
+    };
+  });
 }
+
 
 // ---- memory (localStorage) ---------------------------------------------------
 
