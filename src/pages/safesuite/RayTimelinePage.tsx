@@ -110,6 +110,17 @@ export default function RayTimelinePage() {
         description={description}
       />
 
+      <div className="mt-4">
+        <a
+          href={focused ? `/app/graph/${focused.id}` : "/app/graph"}
+          className="inline-flex items-center gap-1 text-xs text-violet-300 hover:text-violet-200"
+        >
+          Open Security Graph →
+        </a>
+      </div>
+
+
+
       <div className="mt-6 flex flex-col gap-6 lg:flex-row">
         <div className="flex-1 min-w-0 space-y-4">
           <TimelineFilters value={filters} onChange={setFilters} />
