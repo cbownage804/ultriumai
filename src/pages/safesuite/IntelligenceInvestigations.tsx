@@ -819,6 +819,21 @@ function FollowupCard({ followup, onDelete }: { followup: Followup; onDelete: ()
     URL.revokeObjectURL(url);
   }
 
+  function downloadPdf() {
+    if (!followup.content) return;
+    try {
+      exportFollowupPdf(followup.content, {
+        title: followup.title,
+        subtitle: meta.label,
+        kicker: new Date(followup.created_at).toLocaleString(),
+      });
+      toast.success('PDF exported.');
+    } catch (e) {
+      toast.error('Could not export PDF.');
+      console.error(e);
+    }
+  }
+
   return (
     <div className="rounded-sm border border-border overflow-hidden">
       <div className="px-4 py-2.5 border-b border-border bg-muted/20 flex items-center justify-between gap-2 flex-wrap">
@@ -835,8 +850,11 @@ function FollowupCard({ followup, onDelete }: { followup: Followup; onDelete: ()
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={copy} aria-label="Copy">
             <Copy className="h-3.5 w-3.5" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={download} aria-label="Download">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={download} aria-label="Download Markdown">
             <Download className="h-3.5 w-3.5" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={downloadPdf} aria-label="Download PDF">
+            <FileDown className="h-3.5 w-3.5" />
           </Button>
           <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={onDelete} aria-label="Delete">
             <Trash2 className="h-3.5 w-3.5" />
