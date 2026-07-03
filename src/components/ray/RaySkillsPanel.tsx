@@ -350,7 +350,6 @@ export default function RaySkillsPanel() {
   const recs = useMemo(() => buildPriorityRecs(ctx), [ctx]);
   const dedupedAll = useMemo(() => dedupeRecs(ctx?.recommendations ?? []), [ctx]);
   const openCount = dedupedAll.length;
-  const rawRecCount = ctx?.recommendations.length ?? 0;
   const findingsCount = ctx?.findings.length ?? 0;
 
   // "Since we last talked" — memory diff
