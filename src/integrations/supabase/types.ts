@@ -19105,6 +19105,56 @@ export type Database = {
         }
         Relationships: []
       }
+      ray_policy_versions: {
+        Row: {
+          created_at: string
+          frameworks: string[]
+          id: string
+          markdown: string | null
+          metadata: Json
+          note: string | null
+          policy_id: string
+          sections: Json
+          title: string
+          user_id: string
+          version_number: number
+        }
+        Insert: {
+          created_at?: string
+          frameworks?: string[]
+          id?: string
+          markdown?: string | null
+          metadata?: Json
+          note?: string | null
+          policy_id: string
+          sections?: Json
+          title: string
+          user_id: string
+          version_number: number
+        }
+        Update: {
+          created_at?: string
+          frameworks?: string[]
+          id?: string
+          markdown?: string | null
+          metadata?: Json
+          note?: string | null
+          policy_id?: string
+          sections?: Json
+          title?: string
+          user_id?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ray_policy_versions_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "ray_policies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ray_profiles: {
         Row: {
           audience: string | null
