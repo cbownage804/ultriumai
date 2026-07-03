@@ -148,7 +148,7 @@ const EVIDENCE_RULES: Array<{
     match: /\b(password|credential|secret|vault|rotation)\b/i,
     items: [
       { kind: 'policy',   label: 'Password / credential policy', hint: 'Complexity, rotation cadence, storage rules, shared-account handling.', href: EVIDENCE_ROUTES.policies },
-      { kind: 'record',   label: 'Vault inventory + last-rotated dates', hint: 'Export from SafePass showing shared secrets and rotation timestamps.', href: EVIDENCE_ROUTES.vault },
+      { kind: 'record',   label: 'Vault inventory + last-rotated dates', hint: 'Export from your Wrayth vault showing shared secrets and rotation timestamps.', href: EVIDENCE_ROUTES.vault },
       { kind: 'log',      label: 'Rotation & access audit log',  hint: 'Who accessed which secret when, and last rotation events.',       href: EVIDENCE_ROUTES.logs },
     ],
   },
