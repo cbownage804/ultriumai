@@ -405,10 +405,11 @@ export function DeviceActionsMenu({
             <ChevronDown className="ml-1 h-3.5 w-3.5" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-72 max-h-[min(70vh,32rem)] overflow-y-auto">
+        <DropdownMenuContent align="end" className="w-80 max-h-[min(70vh,32rem)] overflow-y-auto">
           {(() => {
             let hiddenCount = 0;
 
+            // Simple one-off action (no toggle state).
             const Item = ({
               action,
               icon: Icon,
@@ -431,14 +432,14 @@ export function DeviceActionsMenu({
               }
               const text = label ?? ACTION_LABELS[action];
               return (
-              <DropdownMenuItem
+                <DropdownMenuItem
                   title={ACTION_DESCRIPTIONS[action]}
                   onClick={(e) => {
                     if (satisfied === true) {
                       e.preventDefault();
                       return;
                     }
-                    run(action, params);
+                    requestAction(action, params, label);
                   }}
                   className={className}
                 >
@@ -459,41 +460,163 @@ export function DeviceActionsMenu({
               );
             };
 
+            // Toggle row for reversible settings. Shows a Switch reflecting current
+            // posture. Flipping it sends the corresponding enable/disable action.
+            const Toggle = ({
+              label,
+              tooltip,
+              enableAction,
+              disableAction,
+              enableParams,
+              disableParams,
+              satisfied,
+            }: {
+              label: string;
+              tooltip: string;
+              enableAction: ActionType;
+              disableAction: ActionType;
+              enableParams?: Record<string, unknown>;
+              disableParams?: Record<string, unknown>;
+              // true = currently in the "enabled" (desired-on) state,
+              // false = currently off, null = unknown
+              satisfied: boolean | null;
+            }) => {
+              const checked = satisfied === true;
+              const unknown = satisfied === null;
+              return (
+                <div
+                  title={tooltip}
+                  className="flex items-center justify-between gap-2 px-2 py-1.5 text-sm"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-foreground/90">{label}</div>
+                    {unknown && (
+                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">
+                        unknown
+                      </div>
+                    )}
+                  </div>
+                  <Switch
+                    checked={checked}
+                    disabled={pending !== null}
+                    onCheckedChange={(next) => {
+                      if (next) {
+                        requestAction(enableAction, enableParams, label);
+                      } else {
+                        requestAction(disableAction, disableParams, label);
+                      }
+                    }}
+                  />
+                </div>
+              );
+            };
+
+            const chromeSat = isAlreadySatisfied('disable_browser_password_manager', posture, { browser: 'chrome' });
+            const edgeSat = isAlreadySatisfied('disable_browser_password_manager', posture, { browser: 'edge' });
+            const firefoxSat = isAlreadySatisfied('disable_browser_password_manager', posture, { browser: 'firefox' });
+
             const sections = (
               <>
                 <DropdownMenuLabel className="text-xs text-muted-foreground">
                   Protection
                 </DropdownMenuLabel>
                 <Item action="enable_bitlocker" icon={ShieldCheck} />
-                <Item action="enable_firewall" icon={ShieldCheck} />
+                <Toggle
+                  label="Windows Firewall"
+                  tooltip={ACTION_DESCRIPTIONS.enable_firewall}
+                  enableAction="enable_firewall"
+                  disableAction="disable_firewall"
+                  satisfied={isAlreadySatisfied('enable_firewall', posture)}
+                />
                 <Item action="enable_defender" icon={ShieldCheck} />
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-xs text-muted-foreground">Scans</DropdownMenuLabel>
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Defender</DropdownMenuLabel>
                 <Item action="run_defender_quick_scan" icon={Sparkles} forceEnabled />
                 <Item action="run_defender_full_scan" icon={Sparkles} forceEnabled />
-                <Item action="enable_defender_pua" icon={ShieldCheck} />
-                <Item action="enable_defender_cloud" icon={ShieldCheck} />
+                <Toggle
+                  label="Defender PUA protection"
+                  tooltip={ACTION_DESCRIPTIONS.enable_defender_pua}
+                  enableAction="enable_defender_pua"
+                  disableAction="disable_defender_pua"
+                  satisfied={isAlreadySatisfied('enable_defender_pua', posture)}
+                />
+                <Toggle
+                  label="Defender cloud protection"
+                  tooltip={ACTION_DESCRIPTIONS.enable_defender_cloud}
+                  enableAction="enable_defender_cloud"
+                  disableAction="disable_defender_cloud"
+                  satisfied={isAlreadySatisfied('enable_defender_cloud', posture)}
+                />
                 <Item action="update_defender_signatures" icon={RefreshCw} />
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel className="text-xs text-muted-foreground">Remote access</DropdownMenuLabel>
-                <Item action="disable_rdp" icon={ShieldCheck} />
-                <Item action="enable_rdp_nla" icon={ShieldCheck} />
-                <Item action="disable_remote_assistance" icon={ShieldCheck} />
+                <Toggle
+                  label="Remote Desktop (RDP)"
+                  tooltip="On = RDP allowed. Off = incoming Remote Desktop connections blocked."
+                  enableAction="enable_rdp"
+                  disableAction="disable_rdp"
+                  satisfied={
+                    posture?.rdp_security?.rdp_enabled === undefined
+                      ? null
+                      : posture.rdp_security.rdp_enabled === true
+                  }
+                />
+                <Toggle
+                  label="Require NLA for RDP"
+                  tooltip={ACTION_DESCRIPTIONS.enable_rdp_nla}
+                  enableAction="enable_rdp_nla"
+                  disableAction="disable_rdp_nla"
+                  satisfied={isAlreadySatisfied('enable_rdp_nla', posture)}
+                />
+                <Toggle
+                  label="Remote Assistance allowed"
+                  tooltip="On = users can invite helpers. Off = Remote Assistance blocked."
+                  enableAction="enable_remote_assistance"
+                  disableAction="disable_remote_assistance"
+                  satisfied={
+                    posture?.rdp_security?.remote_assistance_enabled === undefined
+                      ? null
+                      : posture.rdp_security.remote_assistance_enabled === true
+                  }
+                />
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-xs text-muted-foreground">Passwords & accounts</DropdownMenuLabel>
-                <Item
-                  action="disable_browser_password_manager"
-                  icon={ShieldCheck}
-                  label="Disable Chrome password manager"
-                  params={{ browser: 'chrome' }}
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Browser password managers</DropdownMenuLabel>
+                <Toggle
+                  label="Chrome password manager disabled"
+                  tooltip={ACTION_DESCRIPTIONS.disable_browser_password_manager}
+                  enableAction="disable_browser_password_manager"
+                  disableAction="enable_browser_password_manager"
+                  enableParams={{ browser: 'chrome' }}
+                  disableParams={{ browser: 'chrome' }}
+                  satisfied={chromeSat}
                 />
-                <Item
-                  action="disable_browser_password_manager"
-                  icon={ShieldCheck}
-                  label="Disable Edge password manager"
-                  params={{ browser: 'edge' }}
+                <Toggle
+                  label="Edge password manager disabled"
+                  tooltip={ACTION_DESCRIPTIONS.disable_browser_password_manager}
+                  enableAction="disable_browser_password_manager"
+                  disableAction="enable_browser_password_manager"
+                  enableParams={{ browser: 'edge' }}
+                  disableParams={{ browser: 'edge' }}
+                  satisfied={edgeSat}
                 />
-                <Item action="disable_builtin_administrator" icon={ShieldCheck} />
+                <Toggle
+                  label="Firefox password manager disabled"
+                  tooltip={ACTION_DESCRIPTIONS.disable_browser_password_manager}
+                  enableAction="disable_browser_password_manager"
+                  disableAction="enable_browser_password_manager"
+                  enableParams={{ browser: 'firefox' }}
+                  disableParams={{ browser: 'firefox' }}
+                  satisfied={firefoxSat}
+                />
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Local accounts</DropdownMenuLabel>
+                <Toggle
+                  label="Built-in Administrator disabled"
+                  tooltip={ACTION_DESCRIPTIONS.disable_builtin_administrator}
+                  enableAction="disable_builtin_administrator"
+                  disableAction="enable_builtin_administrator"
+                  satisfied={isAlreadySatisfied('disable_builtin_administrator', posture)}
+                />
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel className="text-xs text-muted-foreground">Maintenance</DropdownMenuLabel>
                 <Item action="install_windows_updates" icon={RefreshCw} />
@@ -504,13 +627,13 @@ export function DeviceActionsMenu({
                 <DropdownMenuItem
                   title={ACTION_DESCRIPTIONS.lock_screen}
                   disabled={!sessionLockSupported}
-                  onClick={() => run('lock_screen')}
+                  onClick={() => requestAction('lock_screen')}
                 >
                   <Lock className="mr-2 h-4 w-4" /> {ACTION_LABELS.lock_screen}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   title={ACTION_DESCRIPTIONS.sign_out_user}
-                  onClick={() => run('sign_out_user')}
+                  onClick={() => requestAction('sign_out_user')}
                   className="text-red-300 focus:text-red-200"
                 >
                   <LogOut className="mr-2 h-4 w-4" /> {ACTION_LABELS.sign_out_user}
@@ -544,6 +667,39 @@ export function DeviceActionsMenu({
         </DropdownMenuContent>
 
       </DropdownMenu>
+
+      <AlertDialog
+        open={confirmAction !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirmAction(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmAction?.label}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction?.description}
+              <br />
+              <br />
+              This is a high-impact change. Are you sure you want Ray to run it on this device?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!confirmAction) return;
+                const { action, params } = confirmAction;
+                setConfirmAction(null);
+                run(action, params, { confirmed: true });
+              }}
+            >
+              Yes, run it
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       {recent.length > 0 && (
         <div className="space-y-1 rounded-md border border-border/60 bg-background/40 p-2">
