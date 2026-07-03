@@ -376,21 +376,43 @@ def _disable_remote_assistance(_p: dict[str, Any]) -> tuple[bool, dict, str | No
     }, err or None if rc != 0 else None
 
 
-def _disable_browser_password_manager(p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+_BROWSER_POLICY_PATHS = {
+    "chrome": "HKLM:\\SOFTWARE\\Policies\\Google\\Chrome",
+    "edge": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge",
+    "firefox": "HKLM:\\SOFTWARE\\Policies\\Mozilla\\Firefox",
+}
+
+
+def _set_browser_password_manager(p: dict[str, Any], enabled: bool) -> tuple[bool, dict, str | None]:
     browser = str(p.get("browser") or "all").lower()
+    targets = ("chrome", "edge", "firefox") if browser == "all" else (browser,)
     scripts = []
-    if browser in ("all", "chrome"):
-        scripts.append(
-            "New-Item -Path 'HKLM:\\SOFTWARE\\Policies\\Google\\Chrome' -Force | Out-Null; "
-            "Set-ItemProperty 'HKLM:\\SOFTWARE\\Policies\\Google\\Chrome' -Name PasswordManagerEnabled -Value 0 -Type DWord;"
-        )
-    if browser in ("all", "edge"):
-        scripts.append(
-            "New-Item -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge' -Force | Out-Null; "
-            "Set-ItemProperty 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge' -Name PasswordManagerEnabled -Value 0 -Type DWord;"
-        )
+    for b in targets:
+        path = _BROWSER_POLICY_PATHS.get(b)
+        if not path:
+            continue
+        if enabled:
+            # Remove the disable policy so the browser reverts to the user's choice (default = enabled).
+            scripts.append(
+                f"if (Test-Path '{path}') {{ Remove-ItemProperty '{path}' -Name PasswordManagerEnabled -ErrorAction SilentlyContinue }};"
+            )
+        else:
+            scripts.append(
+                f"New-Item -Path '{path}' -Force | Out-Null; "
+                f"Set-ItemProperty '{path}' -Name PasswordManagerEnabled -Value 0 -Type DWord;"
+            )
+    if not scripts:
+        return False, {"browser": browser}, "unsupported browser"
     rc, out, err = _ps(" ".join(scripts) + " 'ok'")
-    return rc == 0, {"stdout": out, "browser": browser}, err or None if rc != 0 else None
+    return rc == 0, {"stdout": out, "browser": browser, "enabled": enabled}, err or None if rc != 0 else None
+
+
+def _disable_browser_password_manager(p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    return _set_browser_password_manager(p, enabled=False)
+
+
+def _enable_browser_password_manager(p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    return _set_browser_password_manager(p, enabled=True)
 
 
 def _remove_local_admin(p: dict[str, Any]) -> tuple[bool, dict, str | None]:
