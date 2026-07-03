@@ -17640,6 +17640,102 @@ export type Database = {
         }
         Relationships: []
       }
+      ray_code_analyses: {
+        Row: {
+          behaviors: Json
+          completed_at: string | null
+          confidence: string | null
+          confidence_score: number | null
+          cost_ray_compute: number
+          created_at: string
+          duration_ms: number | null
+          error: string | null
+          evidence: Json
+          executive_summary: string | null
+          id: string
+          input_label: string | null
+          input_payload: string
+          intent: string | null
+          iocs: Json
+          language: string | null
+          mitre: Json
+          mode: string
+          model: string | null
+          org_id: string | null
+          reasoning: Json
+          recommended_response: Json
+          risk_summary: string | null
+          status: string
+          summary: string | null
+          technical_findings: Json
+          timeline: Json
+          user_id: string
+          verdict: string | null
+        }
+        Insert: {
+          behaviors?: Json
+          completed_at?: string | null
+          confidence?: string | null
+          confidence_score?: number | null
+          cost_ray_compute?: number
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          evidence?: Json
+          executive_summary?: string | null
+          id?: string
+          input_label?: string | null
+          input_payload: string
+          intent?: string | null
+          iocs?: Json
+          language?: string | null
+          mitre?: Json
+          mode: string
+          model?: string | null
+          org_id?: string | null
+          reasoning?: Json
+          recommended_response?: Json
+          risk_summary?: string | null
+          status?: string
+          summary?: string | null
+          technical_findings?: Json
+          timeline?: Json
+          user_id: string
+          verdict?: string | null
+        }
+        Update: {
+          behaviors?: Json
+          completed_at?: string | null
+          confidence?: string | null
+          confidence_score?: number | null
+          cost_ray_compute?: number
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          evidence?: Json
+          executive_summary?: string | null
+          id?: string
+          input_label?: string | null
+          input_payload?: string
+          intent?: string | null
+          iocs?: Json
+          language?: string | null
+          mitre?: Json
+          mode?: string
+          model?: string | null
+          org_id?: string | null
+          reasoning?: Json
+          recommended_response?: Json
+          risk_summary?: string | null
+          status?: string
+          summary?: string | null
+          technical_findings?: Json
+          timeline?: Json
+          user_id?: string
+          verdict?: string | null
+        }
+        Relationships: []
+      }
       ray_digests: {
         Row: {
           counts: Json
