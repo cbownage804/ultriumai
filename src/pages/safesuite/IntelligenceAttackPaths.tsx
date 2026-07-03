@@ -360,10 +360,21 @@ function AttackPathView({ path, onDelete }: { path: AttackPath; onDelete: () => 
                         {s.if_successful}
                       </p>
                     )}
+                    {s.entities && s.entities.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {s.entities.map((e, ei) => (
+                          <EntityChip key={ei} entity={e} />
+                        ))}
+                      </div>
+                    )}
                   </li>
                 ))}
               </ol>
             )}
+          </TabsContent>
+
+          <TabsContent value="entities" className="mt-0">
+            <EntitiesView steps={path.steps} />
           </TabsContent>
 
           <TabsContent value="blast" className="mt-0">
