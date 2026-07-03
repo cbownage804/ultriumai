@@ -119,9 +119,39 @@ type PriorityRec = {
   prompt: string;
 };
 
+const STOPWORDS = new Set([
+  'the','a','an','your','my','with','for','and','to','of','in','on','is','be','are',
+  'about','from','this','that','it','into','via','using','use','how','why','what',
+  'wrayth','ray','please','can','you','me','i',
+]);
+
+function topicKey(text: string): string {
+  const words = (text || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length > 2 && !STOPWORDS.has(w));
+  // signature = first two meaningful words, sorted for stability
+  return words.slice(0, 2).sort().join('|');
+}
+
 function buildPriorityRecs(ctx: RayContext | null): PriorityRec[] {
   if (!ctx) return [];
-  return ctx.recommendations.slice(0, 3).map((r, i) => ({
+  // Dedupe near-duplicates: same rule_slug, same category, or same topic signature.
+  const seen = new Set<string>();
+  const unique: typeof ctx.recommendations = [];
+  for (const r of ctx.recommendations) {
+    const keys = [
+      r.rule_slug ? `slug:${r.rule_slug}` : null,
+      r.category ? `cat:${r.category}` : null,
+      `topic:${topicKey(r.title)}`,
+    ].filter(Boolean) as string[];
+    if (keys.some((k) => seen.has(k))) continue;
+    keys.forEach((k) => seen.add(k));
+    unique.push(r);
+    if (unique.length >= 3) break;
+  }
+  return unique.map((r, i) => ({
     id: r.id,
     title: r.title,
     why:
