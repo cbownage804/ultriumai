@@ -30,6 +30,7 @@ import { toast } from 'sonner';
 type ActionType =
   | 'enable_bitlocker'
   | 'enable_firewall'
+  | 'disable_firewall'
   | 'enable_defender'
   | 'run_defender_quick_scan'
   | 'run_defender_full_scan'
@@ -37,17 +38,25 @@ type ActionType =
   | 'lock_screen'
   | 'sign_out_user'
   | 'disable_rdp'
+  | 'enable_rdp'
   | 'enable_rdp_nla'
+  | 'disable_rdp_nla'
   | 'disable_remote_assistance'
+  | 'enable_remote_assistance'
   | 'disable_browser_password_manager'
+  | 'enable_browser_password_manager'
   | 'disable_builtin_administrator'
+  | 'enable_builtin_administrator'
   | 'enable_defender_pua'
+  | 'disable_defender_pua'
   | 'enable_defender_cloud'
+  | 'disable_defender_cloud'
   | 'update_defender_signatures';
 
 const ACTION_LABELS: Record<ActionType, string> = {
   enable_bitlocker: 'Turn on BitLocker (encrypt C:)',
   enable_firewall: 'Turn on Windows Firewall',
+  disable_firewall: 'Turn off Windows Firewall',
   enable_defender: 'Turn on Defender + update signatures',
   run_defender_quick_scan: 'Run Defender quick scan',
   run_defender_full_scan: 'Run Defender full scan',
@@ -55,12 +64,19 @@ const ACTION_LABELS: Record<ActionType, string> = {
   lock_screen: 'Lock the screen',
   sign_out_user: 'Sign the user out',
   disable_rdp: 'Disable Remote Desktop',
+  enable_rdp: 'Enable Remote Desktop',
   enable_rdp_nla: 'Require Network Level Auth for RDP',
+  disable_rdp_nla: 'Remove NLA requirement for RDP',
   disable_remote_assistance: 'Disable Remote Assistance',
+  enable_remote_assistance: 'Enable Remote Assistance',
   disable_browser_password_manager: 'Disable browser password manager',
+  enable_browser_password_manager: 'Re-enable browser password manager',
   disable_builtin_administrator: 'Disable built-in Administrator',
+  enable_builtin_administrator: 'Enable built-in Administrator',
   enable_defender_pua: 'Enable Defender PUA protection',
+  disable_defender_pua: 'Disable Defender PUA protection',
   enable_defender_cloud: 'Enable Defender cloud protection',
+  disable_defender_cloud: 'Disable Defender cloud protection',
   update_defender_signatures: 'Update Defender signatures',
 };
 
@@ -69,6 +85,8 @@ const ACTION_DESCRIPTIONS: Record<ActionType, string> = {
     'Encrypts the system drive (C:) with BitLocker so data is unreadable if the device is lost or stolen.',
   enable_firewall:
     'Turns on the Windows Defender Firewall for all network profiles, blocking unauthorized inbound connections.',
+  disable_firewall:
+    'Turns OFF the Windows Defender Firewall on all profiles. Only do this for short-term troubleshooting.',
   enable_defender:
     'Activates Microsoft Defender Antivirus, enables real-time protection, and downloads the latest threat signatures.',
   run_defender_quick_scan:
@@ -83,18 +101,32 @@ const ACTION_DESCRIPTIONS: Record<ActionType, string> = {
     'Signs the currently signed-in user out of Windows. Unsaved work may be lost.',
   disable_rdp:
     'Turns off Remote Desktop so no one can connect to this machine from the network.',
+  enable_rdp:
+    'Turns Remote Desktop back on and re-enables the RDP firewall rules.',
   enable_rdp_nla:
     'Requires Network Level Authentication for Remote Desktop, blocking weaker legacy connections.',
+  disable_rdp_nla:
+    'Removes the NLA requirement from Remote Desktop. Less secure — legacy clients can connect.',
   disable_remote_assistance:
     'Disables Remote Assistance so outside helpers cannot take control of the desktop.',
+  enable_remote_assistance:
+    'Re-enables Windows Remote Assistance invitations.',
   disable_browser_password_manager:
-    'Blocks Chrome/Edge from saving or autofilling passwords via group policy.',
+    'Blocks the browser from saving or autofilling passwords via enterprise policy.',
+  enable_browser_password_manager:
+    'Removes the enterprise policy so the browser\'s built-in password manager works normally again.',
   disable_builtin_administrator:
     'Disables the built-in Windows Administrator account to reduce the attack surface.',
+  enable_builtin_administrator:
+    'Re-enables the built-in Windows Administrator account. Usually not recommended.',
   enable_defender_pua:
     'Turns on Potentially Unwanted Application (PUA) blocking to catch adware and bundleware.',
+  disable_defender_pua:
+    'Turns off Defender\'s PUA (adware/bundleware) blocking.',
   enable_defender_cloud:
     'Enables cloud-delivered protection so Defender can check unknown files against Microsoft\'s cloud in real time.',
+  disable_defender_cloud:
+    'Turns off Defender cloud-delivered protection. Detection of brand-new threats will be slower.',
   update_defender_signatures:
     'Downloads the newest malware definitions so Defender can recognize the latest threats.',
 };
