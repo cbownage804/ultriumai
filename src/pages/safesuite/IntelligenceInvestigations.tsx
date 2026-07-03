@@ -315,7 +315,7 @@ export default function IntelligenceInvestigations() {
           </Card>
 
           {loading && !selected && <ResultSkeleton />}
-          {selected && <InvestigationWorkspace inv={selected} />}
+          {selected && <InvestigationWorkspace inv={selected} onOpenInvestigation={setSelectedId} />}
           {!loading && !selected && history.length === 0 && <EmptyState />}
         </div>
 
