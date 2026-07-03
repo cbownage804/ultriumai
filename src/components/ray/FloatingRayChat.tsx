@@ -196,10 +196,20 @@ export function FloatingRayChat() {
       </SheetTrigger>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-lg p-0 border-l bg-background overflow-hidden"
+        hideCloseButton
+        className={[
+          'p-0 border-l bg-background overflow-hidden transition-[max-width] duration-300 ease-out',
+          mode === 'compact' ? 'w-full sm:max-w-md' : '',
+          mode === 'expanded' ? 'w-full sm:max-w-xl' : '',
+          mode === 'workspace' ? 'w-full sm:max-w-[42vw] lg:max-w-[38vw]' : '',
+        ].join(' ')}
       >
-        <div className="h-full p-4">
-          <RaySkillsPanel />
+        <div className="h-full p-3 sm:p-4">
+          <RaySkillsPanel
+            mode={mode}
+            onModeChange={setMode}
+            onClose={() => setOpen(false)}
+          />
         </div>
       </SheetContent>
     </Sheet>
