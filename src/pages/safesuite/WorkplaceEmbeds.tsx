@@ -83,10 +83,21 @@ export default function WorkplaceEmbeds() {
       .order("created_at", { ascending: false })
       .limit(20);
     setMsgs((m || []) as WorkMsg[]);
+
+    if (activeOrg) {
+      const { data: links } = await supabase
+        .from("workplace_teams_org_links")
+        .select("id, organization_id, tenant_id, created_at")
+        .eq("organization_id", activeOrg.id)
+        .order("created_at", { ascending: false });
+      setTenantLinks((links || []) as TenantLink[]);
+    } else {
+      setTenantLinks([]);
+    }
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [activeOrg?.id]);
 
   const call = async (action: string, provider: string, payload?: any) => {
     setBusy(`${action}:${provider}`);
