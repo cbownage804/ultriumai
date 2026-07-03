@@ -1034,7 +1034,8 @@ function AskRayDialog({
 
 /* ---------------- Indicators panel with sort + filter ---------------- */
 
-type IocHistoryEntry = { count: number; last_seen_at: string; first_seen_at: string; last_verdict: string | null; timestamps: string[] };
+type IocSighting = { id: string; created_at: string; verdict: string | null; label: string };
+type IocHistoryEntry = { count: number; last_seen_at: string; first_seen_at: string; last_verdict: string | null; timestamps: string[]; sightings: IocSighting[] };
 type IocItem = { type?: string; value?: string; note?: string };
 type IocSort = 'default' | 'prior_desc' | 'last_seen_desc' | 'first_seen_desc' | 'type_asc';
 
@@ -1042,10 +1043,14 @@ function IocsPanel({
   iocs,
   iocHistory,
   invVerdict,
+  currentInvId,
+  onOpenInvestigation,
 }: {
   iocs: IocItem[];
   iocHistory: Record<string, IocHistoryEntry>;
   invVerdict: string | null;
+  currentInvId: string;
+  onOpenInvestigation: (id: string) => void;
 }) {
   const [sort, setSort] = useState<IocSort>('prior_desc');
   const [typeFilter, setTypeFilter] = useState<string>('all');
