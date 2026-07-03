@@ -1,6 +1,6 @@
 /**
  * Threats — Managed by Ray.
- * Unified design: no hero artwork, no module logo.
+ * Built on RayPageTemplate for consistency with every other module.
  */
 import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
 import { ScanApp } from '@/components/apps/SafeScanApp';
@@ -12,27 +12,39 @@ import { RayContextBridge } from '@/components/ray/RayContextBridge';
 import { ThreatScanInput } from '@/components/ray/ThreatScanInput';
 import { ThreatAllClearCard } from '@/components/ray/ThreatAllClearCard';
 import { ThreatsRayBrief } from '@/components/ray/ThreatsRayBrief';
+import { RayPageTemplate } from '@/components/ray/RayPageTemplate';
 
 export default function WraythScan() {
   return (
     <FeatureGate feature="scan">
-      <div className="space-y-6">
-        <RayPageHeader
-          title="Threat Center"
-          question="Got something suspicious? Send it to me and I'll take a look."
-          description="Paste a URL, drop a file, forward an email — I'll tell you plainly whether it's safe, and whether it touches anything you actually use."
-          explain={{
-            title: 'How Ray decides what is a threat',
-            bullets: [
-              'Files and URLs are scored by known-malware signatures, reputation feeds, and heuristic analysis.',
-              'Emails are checked for phishing patterns, spoofed senders, and suspicious links.',
-              'Ray always tells you plainly: safe, suspicious, or malicious — never just a raw score.',
-            ],
-          }}
-        />
-
-        <ThreatsRayBrief />
-
+      <RayPageTemplate
+        header={
+          <RayPageHeader
+            title="Threat Center"
+            question="Got something suspicious? Send it to me and I'll take a look."
+            description="Paste a URL, drop a file, forward an email — I'll tell you plainly whether it's safe, and whether it touches anything you actually use."
+            explain={{
+              title: 'How Ray decides what is a threat',
+              bullets: [
+                'Files and URLs are scored by known-malware signatures, reputation feeds, and heuristic analysis.',
+                'Emails are checked for phishing patterns, spoofed senders, and suspicious links.',
+                'Ray always tells you plainly: safe, suspicious, or malicious — never just a raw score.',
+              ],
+            }}
+          />
+        }
+        brief={<ThreatsRayBrief />}
+        sinceLines={[
+          { label: 'No active threats require your attention' },
+          { label: 'Reputation feeds refreshed' },
+          { label: 'Inbound submissions triaged' },
+        ]}
+        protectLines={[
+          "I'm still watching incoming files and URLs as you submit them.",
+          'I keep phishing patterns and malware signatures updated in the background.',
+          "If anything comes back malicious, I'll surface it here and interrupt you if it's serious.",
+        ]}
+      >
         <div className="wrayth-chamfer border border-border bg-card/60 px-4 py-3">
           <RayActivityTicker context="threats" />
         </div>
@@ -64,7 +76,7 @@ export default function WraythScan() {
         >
           <ScanApp isWhiteLabeled={false} brandName="Wrayth" hideHeader={true} />
         </motion.div>
-      </div>
+      </RayPageTemplate>
     </FeatureGate>
   );
 }

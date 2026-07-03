@@ -19,6 +19,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { ModuleRayBrief } from '@/components/ray/ModuleRayBrief';
+import { HowIProtectYouCard } from '@/components/ray/HowIProtectYouCard';
 import { formatDistanceToNow } from 'date-fns';
 import {
   ShieldCheck, Sparkles, Coins, Loader2, Trash2, Target,
@@ -148,6 +150,27 @@ export default function IntelligenceCompliance() {
         </p>
       </div>
 
+      <ModuleRayBrief
+        eventPatterns={['event_type.ilike.compliance%', 'event_type.ilike.gap%', 'event_type.ilike.control%']}
+        idleLines={[
+          "I haven't run a compliance scan for you in the last couple of days.",
+          'Give me a framework and I\u2019ll compare your posture and draft the remediation.',
+        ]}
+        composer={({ events }) => {
+          const scans = events.filter((e) => /compliance|scan/i.test(e.event_type)).length;
+          const gaps = events.filter((e) => /gap|missing|partial/i.test(e.event_type + ' ' + (e.summary ?? ''))).length;
+          const lines: string[] = [];
+          lines.push(scans === 1 ? 'I ran 1 compliance scan for you recently.' : `I ran ${scans} compliance scans for you recently.`);
+          if (gaps > 0) {
+            lines.push(gaps === 1 ? 'I found 1 control worth closing.' : `I found ${gaps} controls worth closing.`);
+          } else {
+            lines.push('No new gaps opened up since your last review.');
+          }
+          lines.push("I've drafted remediation guidance you can hand to your team.");
+          return { lines, tone: gaps > 3 ? 'warn' : 'ok' };
+        }}
+      />
+
       <div className="grid lg:grid-cols-[380px_1fr] gap-6">
         {/* Form + history */}
         <div className="space-y-4">
@@ -271,6 +294,15 @@ export default function IntelligenceCompliance() {
           )}
         </div>
       </div>
+
+      <HowIProtectYouCard
+        title="While you work…"
+        lines={[
+          "I'm comparing your posture against the framework you selected.",
+          "I'll flag any control that drifts out of compliance.",
+          "I'll keep the 30/60/90 roadmap current as you close gaps.",
+        ]}
+      />
     </div>
   );
 }
