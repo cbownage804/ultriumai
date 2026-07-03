@@ -81,51 +81,50 @@ const fmtRC = (rc: number): string =>
 /* -------------------------------- taxonomy -------------------------------- */
 
 const USAGE_LABELS: Record<string, string> = {
-  deep_investigation: 'Deep investigations',
+  deep_investigation: 'Advanced threat analysis',
+  threat_analysis: 'Advanced threat analysis',
+  log_analysis: 'Log analysis',
+  documentation: 'Large document review',
+  // Reserved for future work — kept so historical ledger rows still label cleanly.
   executive_report: 'Executive reports',
-  threat_analysis: 'Threat analysis',
   policy_generation: 'Policy generation',
   compliance_analysis: 'Compliance analysis',
   remediation_plan: 'Incident response plans',
   briefing: 'Executive briefings',
   security_coach: 'Security coaching',
-  log_analysis: 'Log analysis',
   powershell: 'PowerShell review',
-  documentation: 'Document review',
 };
 
-// Real, quotable per-task pricing so users can do the math in their head.
+// Real, quotable per-task pricing. Only lists what actually exists today.
 const TASK_PRICING: { task: string; cost: number | 'Free' }[] = [
   { task: 'Ask Ray a question', cost: 'Free' },
   { task: 'Explain a security score', cost: 'Free' },
+  { task: 'Security coaching (BitLocker, updates, posture)', cost: 'Free' },
   { task: 'Daily & Weekly Brief', cost: 'Free' },
+  { task: 'Recommendations & guided remediation', cost: 'Free' },
   { task: 'Standard threat analysis', cost: 'Free' },
-  { task: 'Review a PowerShell script', cost: 2 },
-  { task: 'Deep phishing investigation', cost: 3 },
-  { task: 'Executive report', cost: 5 },
-  { task: 'Log file analysis', cost: 5 },
-  { task: 'Incident Response Plan', cost: 10 },
-  { task: 'Compliance framework analysis', cost: 15 },
-  { task: 'Review a 100-page security document', cost: 20 },
+  { task: 'Advanced threat analysis (URL, email, VirusTotal)', cost: 3 },
 ];
 
+// Only surface premium features that actually ship today.
 const PREMIUM_FEATURES: { icon: typeof ScanSearch; title: string; sub: string }[] = [
-  { icon: ScanSearch, title: 'Deep threat investigations', sub: 'Full URL, header, SPF/DKIM/DMARC, WHOIS, VirusTotal, passive DNS.' },
-  { icon: FileText, title: 'Executive incident reports', sub: 'PDF, timeline, root cause, MITRE ATT&CK, exec + technical summary.' },
-  { icon: ScrollText, title: 'Policy generation', sub: 'Password, IR, AUP, AI governance, HIPAA, SOC 2 — drafted end to end.' },
-  { icon: ShieldCheck, title: 'Compliance analysis', sub: 'Compare your posture against SOC 2, HIPAA, PCI, CIS, NIST.' },
-  { icon: ClipboardList, title: 'Remediation plans', sub: 'Time, impact, rollback, comms, approvals, maintenance window.' },
-  { icon: BookOpen, title: 'Board & MSP briefings', sub: 'Board reports, exec summaries, technical summaries, client reports.' },
-  { icon: Brain, title: 'Security coaching', sub: '"Explain Zero Trust", "Teach me BitLocker", "Why does Tamper Protection matter?"' },
-  { icon: Terminal, title: 'PowerShell & log analysis', sub: 'Generate scripts, decode Windows / firewall / Sentinel logs.' },
+  {
+    icon: ScanSearch,
+    title: 'Advanced threat analysis',
+    sub: 'URL analysis, email analysis, threat reasoning, VirusTotal enrichment.',
+  },
 ];
 
 const ALWAYS_INCLUDED = [
   'Ray conversations',
   '24/7 monitoring',
-  'Recommendations',
+  'AI-powered recommendations',
+  'Guided remediation',
   'Daily & weekly briefs',
   'Device monitoring',
+  'Device posture analysis',
+  'Device timeline',
+  'Security score coaching',
   'Threat monitoring',
   'Microsoft 365 monitoring',
   'Endpoint agent',
