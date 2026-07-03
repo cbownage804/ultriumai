@@ -493,6 +493,7 @@ function InvestigationWorkspace({ inv }: { inv: Investigation }) {
         <div className="px-5 pt-4 overflow-x-auto">
           <TabsList className="bg-transparent p-0 h-auto gap-1 flex-wrap">
             <WorkspaceTab value="overview" label="Overview" icon={Brain} />
+            <WorkspaceTab value="reasoning" label="Ray's Thinking" icon={Lightbulb} count={reasoningCount} />
             <WorkspaceTab value="findings" label="Findings" icon={ListChecks} count={findingCount} />
             <WorkspaceTab value="mitre" label="MITRE" icon={Target} count={mitreCount} />
             <WorkspaceTab value="iocs" label="Indicators" icon={Fingerprint} count={iocCount} />
