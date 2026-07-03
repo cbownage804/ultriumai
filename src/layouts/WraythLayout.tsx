@@ -116,6 +116,7 @@ function getSections(opts?: { hasOrg?: boolean; isMSP?: boolean }): NavSection[]
     { label: 'Attack Paths', path: getWraythPath('/intelligence/attack-paths'), icon: GitBranch },
     { label: 'Graph', path: getWraythPath('/intelligence/graph'), icon: Network },
     { label: 'Policy Generator', path: getWraythPath('/intelligence/policies'), icon: ClipboardCheck },
+    { label: 'Compliance', path: getWraythPath('/intelligence/compliance'), icon: ShieldCheck },
     { label: 'Board Reports', path: getWraythPath('/intelligence/reports'), icon: FileText },
   ];
   return [

@@ -61,6 +61,9 @@ verify_jwt = true
 [functions.ray-policy-generate]
 verify_jwt = true
 
+[functions.ray-compliance-scan]
+verify_jwt = true
+
 
 [functions.ray-chat]
 verify_jwt = true

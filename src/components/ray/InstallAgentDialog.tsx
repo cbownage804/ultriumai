@@ -212,7 +212,7 @@ export function InstallAgentDialog({
         {trigger ?? (
           <Button className="bg-violet-600 hover:bg-violet-500 text-white">
             <MonitorDown className="mr-2 h-4 w-4" />
-            Install agent
+            Install Wrayth Agent
           </Button>
         )}
       </DialogTrigger>
@@ -220,11 +220,11 @@ export function InstallAgentDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-violet-400" />
-            Install the Wrayth agent
+            Install the Wrayth Agent
           </DialogTitle>
           <DialogDescription>
-            A tiny read-only reporter that lets Ray watch this machine's
-            hygiene. It never runs code, never sees your files.
+            Ray's secure device sensor. It reports security signals so Ray can
+            continuously monitor posture — it never reads your files, screens, or keystrokes.
           </DialogDescription>
         </DialogHeader>
 
