@@ -460,6 +460,7 @@ export default function RaySkillsPanel({ mode = 'compact', onModeChange, onClose
                     </p>
                   )}
                 </div>
+                <ModeControls mode={mode} onModeChange={onModeChange} onClose={onClose} />
               </div>
 
               {/* Since your last visit — real activity from the database. */}
