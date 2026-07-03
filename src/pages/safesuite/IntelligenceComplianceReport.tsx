@@ -564,7 +564,16 @@ export default function IntelligenceComplianceReport() {
               ) : (
                 <div className="space-y-2">
                   {filtered.map((g, i) => (
-                    <GapRow key={i} rank={i + 1} g={g} />
+                    <GapRow
+                      key={i}
+                      rank={i + 1}
+                      g={g}
+                      evidence={evidenceByGapIdx.get(i) ?? []}
+                      checks={checks}
+                      onToggle={toggleCheck}
+                      scanId={scanId ?? ''}
+                      gapIdx={i}
+                    />
                   ))}
                 </div>
               )}
