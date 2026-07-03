@@ -768,3 +768,204 @@ function ReasoningPanel({ reasoning }: { reasoning?: StepReasoning }) {
     </details>
   );
 }
+
+/* --------------------- one-click per-step remediation --------------------- */
+
+type StepAction = {
+  priority?: number;
+  title?: string;
+  detail?: string;
+  owner?: 'user' | 'it' | 'soc' | 'leadership' | string;
+  difficulty?: 'low' | 'medium' | 'high' | string;
+  effort?: 'minutes' | 'hours' | 'days' | string;
+  kind?: 'preventative' | 'detective' | 'corrective' | 'compensating' | string;
+  closes?: string;
+  targets?: string[];
+  verification?: string;
+};
+
+type StepPlan = {
+  summary?: string | null;
+  actions?: StepAction[];
+  quick_wins?: string[];
+  long_term?: string[];
+  cost_credits?: number;
+};
+
+const KIND_STYLE: Record<string, string> = {
+  preventative: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
+  detective:    'bg-sky-500/10 text-sky-300 border-sky-500/30',
+  corrective:   'bg-amber-500/10 text-amber-300 border-amber-500/30',
+  compensating: 'bg-violet-500/10 text-violet-300 border-violet-500/30',
+};
+
+const DIFFICULTY_STYLE: Record<string, string> = {
+  low:    'text-emerald-300',
+  medium: 'text-amber-300',
+  high:   'text-red-300',
+};
+
+function StepRemediation({ pathId, stepIndex, step }: { pathId: string; stepIndex: number; step: AttackStep }) {
+  const [loading, setLoading] = useState(false);
+  const [plan, setPlan] = useState<StepPlan | null>(null);
+
+  async function planIt() {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('ray-step-remediation', {
+        body: { attack_path_id: pathId, step_index: stepIndex },
+      });
+      if (error) throw error;
+      const p = (data as { plan?: StepPlan })?.plan ?? null;
+      if (!p) throw new Error('No plan returned.');
+      setPlan(p);
+      toast.success(`Remediation plan ready. ${p.cost_credits ?? 2} Credits used.`);
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Ray could not plan this step.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (!plan) {
+    return (
+      <div className="mt-3">
+        <Button
+          onClick={planIt}
+          disabled={loading}
+          size="sm"
+          variant="outline"
+          className="h-8 gap-2 text-xs border-[hsl(262_60%_64%/0.4)] text-[hsl(262_60%_80%)] hover:bg-[hsl(262_60%_64%/0.08)]"
+        >
+          {loading
+            ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Ray is planning…</>
+            : <><Zap className="h-3.5 w-3.5" /> Plan remediation for this step
+                <span className="text-[10px] text-muted-foreground ml-1">2 Credits</span></>}
+        </Button>
+      </div>
+    );
+  }
+
+  const actions = (plan.actions ?? []).slice().sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
+
+  return (
+    <div className="mt-3 rounded-sm border border-[hsl(262_60%_64%/0.4)] bg-[hsl(262_60%_64%/0.05)] p-3 space-y-3">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-[hsl(262_60%_75%)]">
+          <Rocket className="h-3.5 w-3.5" /> Remediation plan for step {stepIndex + 1}
+        </div>
+        <Button
+          onClick={planIt}
+          disabled={loading}
+          size="sm"
+          variant="ghost"
+          className="h-7 px-2 text-[11px] text-muted-foreground hover:text-foreground"
+        >
+          {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Re-plan'}
+        </Button>
+      </div>
+
+      {plan.summary && (
+        <p className="text-xs text-foreground/90 leading-relaxed">{plan.summary}</p>
+      )}
+
+      {(plan.quick_wins?.length ?? 0) > 0 && (
+        <div className="flex items-start gap-2 text-xs">
+          <Timer className="h-3.5 w-3.5 text-emerald-300 mt-0.5 shrink-0" />
+          <div>
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground mr-2">Do today</span>
+            <span className="text-foreground/85">{plan.quick_wins!.join(' · ')}</span>
+          </div>
+        </div>
+      )}
+
+      {actions.length === 0 ? (
+        <Empty text="No actions produced." />
+      ) : (
+        <ol className="space-y-2">
+          {actions.map((a, i) => (
+            <li key={i} className="flex items-start gap-2 rounded-sm border border-border/60 bg-background/40 p-2.5">
+              <span className="h-6 w-6 shrink-0 rounded-full bg-[hsl(262_60%_64%/0.15)] text-[hsl(262_60%_75%)] text-xs flex items-center justify-center">
+                {a.priority ?? i + 1}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-medium">{a.title ?? 'Action'}</span>
+                  {a.kind && (
+                    <Badge variant="outline" className={cn(
+                      'rounded-sm text-[9px] uppercase tracking-wider',
+                      KIND_STYLE[a.kind.toLowerCase()] ?? '',
+                    )}>
+                      {a.kind}
+                    </Badge>
+                  )}
+                  {a.owner && (
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      Owner: {a.owner}
+                    </span>
+                  )}
+                  {a.difficulty && (
+                    <span className={cn(
+                      'text-[10px] uppercase tracking-wider',
+                      DIFFICULTY_STYLE[a.difficulty.toLowerCase()] ?? 'text-muted-foreground',
+                    )}>
+                      {a.difficulty} effort
+                    </span>
+                  )}
+                  {a.effort && (
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      ~{a.effort}
+                    </span>
+                  )}
+                </div>
+                {a.detail && (
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{a.detail}</p>
+                )}
+                {a.targets && a.targets.length > 0 && (
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {a.targets.map((t, ti) => (
+                      <span
+                        key={ti}
+                        className="inline-flex items-center gap-1 rounded-sm border border-border bg-muted/30 px-1.5 py-0.5 text-[10px] text-foreground/80"
+                      >
+                        <Target className="h-2.5 w-2.5" /> {t}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {a.closes && (
+                  <p className="text-[11px] text-foreground/75 mt-1">
+                    <span className="text-muted-foreground uppercase tracking-wider text-[9px] mr-1">Closes:</span>
+                    {a.closes}
+                  </p>
+                )}
+                {a.verification && (
+                  <p className="text-[11px] text-foreground/75 mt-0.5 flex items-start gap-1">
+                    <ShieldCheck className="h-3 w-3 text-emerald-300 mt-0.5 shrink-0" />
+                    <span>
+                      <span className="text-muted-foreground uppercase tracking-wider text-[9px] mr-1">Verify:</span>
+                      {a.verification}
+                    </span>
+                  </p>
+                )}
+              </div>
+            </li>
+          ))}
+        </ol>
+      )}
+
+      {(plan.long_term?.length ?? 0) > 0 && (
+        <div className="flex items-start gap-2 text-xs pt-1 border-t border-border/60">
+          <Clock className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+          <div>
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground mr-2">Long-term</span>
+            <span className="text-foreground/80">{plan.long_term!.join(' · ')}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Reference — silences unused import warning on step in future refactors */}
+      <span className="hidden">{step?.phase}</span>
+    </div>
+  );
+}
