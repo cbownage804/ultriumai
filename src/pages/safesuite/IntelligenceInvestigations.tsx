@@ -1275,3 +1275,162 @@ function IocSparkline({ timestamps }: { timestamps: string[] }) {
     </div>
   );
 }
+
+/* ---------------- "Seen before" verdict-history callout ---------------- */
+
+/**
+ * Rich version of the prior-sightings badge:
+ *  - tallies every verdict Ray has assigned to this indicator across all
+ *    investigations the user has run,
+ *  - highlights whether the current verdict is consistent or has flipped,
+ *  - and lists every past investigation where the verdict differed from the
+ *    current one, each as a clickable link that jumps into that case.
+ */
+function verdictDotClass(v: string | null | undefined): string {
+  switch ((v || '').toLowerCase()) {
+    case 'malicious':  return 'bg-[hsl(0_70%_60%)]';
+    case 'suspicious': return 'bg-[hsl(38_90%_58%)]';
+    case 'benign':     return 'bg-[hsl(142_60%_50%)]';
+    default:           return 'bg-[hsl(220_12%_55%)]';
+  }
+}
+
+function verdictPillClass(v: string | null | undefined): string {
+  switch ((v || '').toLowerCase()) {
+    case 'malicious':  return 'bg-[hsl(0_70%_60%/0.12)] text-[hsl(0_80%_78%)] border-[hsl(0_70%_60%/0.35)]';
+    case 'suspicious': return 'bg-[hsl(38_90%_58%/0.12)] text-[hsl(38_95%_75%)] border-[hsl(38_90%_58%/0.35)]';
+    case 'benign':     return 'bg-[hsl(142_60%_50%/0.12)] text-[hsl(142_70%_72%)] border-[hsl(142_60%_50%/0.35)]';
+    default:           return 'bg-muted text-muted-foreground border-border';
+  }
+}
+
+function SeenBeforeCallout({
+  history,
+  priorCount,
+  invVerdict,
+  currentInvId,
+  onOpenInvestigation,
+}: {
+  history: IocHistoryEntry;
+  priorCount: number;
+  invVerdict: string | null;
+  currentInvId: string;
+  onOpenInvestigation: (id: string) => void;
+}) {
+  const current = (invVerdict || 'unknown').toLowerCase();
+
+  // Only "prior" sightings — exclude the current investigation.
+  const priorSightings = useMemo(
+    () => history.sightings.filter(s => s.id !== currentInvId),
+    [history.sightings, currentInvId],
+  );
+
+  const verdictTally = useMemo(() => {
+    const t: Record<string, number> = {};
+    for (const s of priorSightings) {
+      const v = (s.verdict || 'unknown').toLowerCase();
+      t[v] = (t[v] || 0) + 1;
+    }
+    return Object.entries(t).sort((a, b) => b[1] - a[1]);
+  }, [priorSightings]);
+
+  const differing = useMemo(
+    () => priorSightings.filter(s => (s.verdict || 'unknown').toLowerCase() !== current),
+    [priorSightings, current],
+  );
+
+  const flipped = differing.length > 0;
+
+  return (
+    <details className="group mt-1.5 rounded-sm border border-[hsl(262_60%_64%/0.35)] bg-[hsl(262_60%_64%/0.06)] open:bg-[hsl(262_60%_64%/0.09)]">
+      <summary className="cursor-pointer list-none px-2 py-1 flex flex-wrap items-center gap-1.5 text-[10px] text-[hsl(262_60%_82%)]">
+        <Brain className="h-3 w-3" />
+        <span className="font-medium">
+          Seen {priorCount} time{priorCount === 1 ? '' : 's'} before
+        </span>
+        {history.first_seen_at && (
+          <span className="text-muted-foreground">
+            · since {new Date(history.first_seen_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+          </span>
+        )}
+        {verdictTally.length > 0 && (
+          <span className="flex items-center gap-1 ml-1">
+            {verdictTally.map(([v, n]) => (
+              <span
+                key={v}
+                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm border text-[9px] uppercase tracking-wider ${verdictPillClass(v)}`}
+                title={`${n} prior investigation${n === 1 ? '' : 's'} marked ${v}`}
+              >
+                <span className={`h-1.5 w-1.5 rounded-full ${verdictDotClass(v)}`} />
+                {v} · {n}
+              </span>
+            ))}
+          </span>
+        )}
+        {flipped && (
+          <span className="inline-flex items-center gap-1 ml-1 px-1.5 py-0.5 rounded-sm border border-[hsl(38_90%_58%/0.45)] bg-[hsl(38_90%_58%/0.12)] text-[hsl(38_95%_78%)] text-[9px] uppercase tracking-wider">
+            <AlertTriangle className="h-2.5 w-2.5" />
+            verdict changed
+          </span>
+        )}
+        <ChevronRight className="h-3 w-3 ml-auto text-muted-foreground transition-transform group-open:rotate-90" />
+      </summary>
+
+      <div className="border-t border-[hsl(262_60%_64%/0.2)] px-2 py-2 space-y-2 text-[10px]">
+        {differing.length > 0 && (
+          <div>
+            <div className="text-muted-foreground uppercase tracking-wider text-[9px] mb-1">
+              Prior investigations where the verdict differed from now ({current})
+            </div>
+            <ul className="space-y-1">
+              {differing.map(s => (
+                <li key={s.id}>
+                  <button
+                    type="button"
+                    onClick={() => onOpenInvestigation(s.id)}
+                    className="w-full text-left flex items-center gap-2 px-2 py-1 rounded-sm border border-border bg-background/50 hover:bg-accent transition-colors"
+                  >
+                    <span className={`h-2 w-2 rounded-full shrink-0 ${verdictDotClass(s.verdict)}`} />
+                    <span className={`px-1.5 py-0.5 rounded-sm border text-[9px] uppercase tracking-wider shrink-0 ${verdictPillClass(s.verdict)}`}>
+                      {s.verdict || 'unknown'}
+                    </span>
+                    <span className="text-foreground/90 truncate flex-1">{s.label}</span>
+                    <span className="text-muted-foreground shrink-0">
+                      {new Date(s.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span>
+                    <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {priorSightings.length > differing.length && (
+          <div>
+            <div className="text-muted-foreground uppercase tracking-wider text-[9px] mb-1">
+              Prior investigations that agreed with now ({current})
+            </div>
+            <ul className="space-y-1">
+              {priorSightings.filter(s => (s.verdict || 'unknown').toLowerCase() === current).slice(0, 5).map(s => (
+                <li key={s.id}>
+                  <button
+                    type="button"
+                    onClick={() => onOpenInvestigation(s.id)}
+                    className="w-full text-left flex items-center gap-2 px-2 py-1 rounded-sm border border-border/60 bg-background/30 hover:bg-accent transition-colors"
+                  >
+                    <span className={`h-2 w-2 rounded-full shrink-0 ${verdictDotClass(s.verdict)}`} />
+                    <span className="text-foreground/80 truncate flex-1">{s.label}</span>
+                    <span className="text-muted-foreground shrink-0">
+                      {new Date(s.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </details>
+  );
+}
