@@ -5,7 +5,7 @@
 
 #define MyAppName        "Wrayth Device Agent"
 #define MyAppShortName   "WraythAgent"
-#define MyAppPublisher   "Ultrium LLC"
+#define MyAppPublisher   "Ultrium AI"
 #define MyAppURL         "https://ultriumai.com"
 #define MyAppExeName     "WraythAgent.exe"
 #define MyServiceName    "WraythAgent"
@@ -43,7 +43,7 @@ WizardImageFile=WizardImage.bmp,WizardImage-large.bmp
 WizardSmallImageFile=WizardSmallImage.bmp,WizardSmallImage-large.bmp
 WizardImageStretch=yes
 WizardImageAlphaFormat=defined
-AppCopyright=© Ultrium LLC
+AppCopyright=© Ultrium AI
 VersionInfoCompany={#MyAppPublisher}
 VersionInfoDescription={#MyAppName} Setup
 VersionInfoProductName={#MyAppName}
