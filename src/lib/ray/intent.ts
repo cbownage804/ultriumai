@@ -316,6 +316,8 @@ function pageFor(skill: string): string {
     case 'exposure': return '/app/exposure';
     case 'devices': return '/app/devices';
     case 'timeline': return '/app/timeline';
+    case 'graph': return '/app/graph';
+
     case 'score': return '/app/trends';
     case 'recommendations': return '/app/missions';
     default: return '/app/ray';
