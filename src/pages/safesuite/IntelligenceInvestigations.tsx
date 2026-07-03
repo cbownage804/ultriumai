@@ -401,7 +401,7 @@ function EmptyState() {
 
 /* ---------------- Workspace ---------------- */
 
-function InvestigationWorkspace({ inv }: { inv: Investigation }) {
+function InvestigationWorkspace({ inv, onOpenInvestigation }: { inv: Investigation; onOpenInvestigation: (id: string) => void }) {
   const [tab, setTab] = useState('overview');
   const [followups, setFollowups] = useState<Followup[]>([]);
   const [busy, setBusy] = useState<FollowupType | null>(null);
