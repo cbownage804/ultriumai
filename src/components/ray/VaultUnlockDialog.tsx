@@ -26,11 +26,11 @@ interface Props {
 }
 
 const DEFAULT_CAPABILITIES = [
+  'Match saved passwords against known breaches',
   'Detect reused passwords',
-  'Check breach exposure',
   'Measure password strength',
   'Recommend safer replacements',
-  'Connect breaches to real accounts',
+  'Connect breached identities to real accounts',
 ];
 
 export function VaultUnlockDialog({ trigger, reason, capabilities }: Props) {
