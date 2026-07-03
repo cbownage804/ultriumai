@@ -214,7 +214,11 @@ function AppRouter() {
           </ProtectedRoute>
         }>
           <Route path="/app/dashboard" element={<SuspenseWrapper><WraythDashboard /></SuspenseWrapper>} />
+          <Route path="/app/dashboard" element={<SuspenseWrapper><RayCommandCenter /></SuspenseWrapper>} />
+          <Route path="/app/dashboard/classic" element={<SuspenseWrapper><WraythDashboard /></SuspenseWrapper>} />
+          <Route path="/app/command" element={<Navigate to="/app/dashboard" replace />} />
           <Route path="/app/brief" element={<SuspenseWrapper><MorningBrief /></SuspenseWrapper>} />
+          
           
           <Route path="/app/ray" element={<SuspenseWrapper><Ray /></SuspenseWrapper>} />
           <Route path="/app/ray/skills" element={<SuspenseWrapper><RaySkills /></SuspenseWrapper>} />
