@@ -95,6 +95,8 @@ const IntelligenceReports = lazy(() => import('@/pages/safesuite/IntelligenceRep
 const IntelligenceAttackPaths = lazy(() => import('@/pages/safesuite/IntelligenceAttackPaths'));
 const IntelligenceGraph = lazy(() => import('@/pages/safesuite/IntelligenceGraph'));
 const IntelligenceHub = lazy(() => import('@/pages/safesuite/IntelligenceHub'));
+const IntelligenceScripts = lazy(() => import('@/pages/safesuite/IntelligenceScripts'));
+const IntelligenceMalware = lazy(() => import('@/pages/safesuite/IntelligenceMalware'));
 
 // Dev-only: internal Launch Checklist (Wrayth 5.0 polish sprint).
 const LaunchChecklist = lazy(() => import('@/pages/dev/LaunchChecklist'));
@@ -277,6 +279,8 @@ function AppRouter() {
           <Route path="/app/intelligence/reports" element={<SuspenseWrapper><IntelligenceReports /></SuspenseWrapper>} />
           <Route path="/app/intelligence/attack-paths" element={<SuspenseWrapper><IntelligenceAttackPaths /></SuspenseWrapper>} />
           <Route path="/app/intelligence/graph" element={<SuspenseWrapper><IntelligenceGraph /></SuspenseWrapper>} />
+          <Route path="/app/intelligence/scripts" element={<SuspenseWrapper><IntelligenceScripts /></SuspenseWrapper>} />
+          <Route path="/app/intelligence/malware" element={<SuspenseWrapper><IntelligenceMalware /></SuspenseWrapper>} />
           <Route path="/app/intelligence" element={<SuspenseWrapper><IntelligenceHub /></SuspenseWrapper>} />
           <Route path="/app/settings" element={<SuspenseWrapper variant="form"><WraythSettings /></SuspenseWrapper>} />
         </Route>
