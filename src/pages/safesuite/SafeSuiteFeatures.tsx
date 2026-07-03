@@ -200,8 +200,9 @@ export default function WraythFeatures() {
       <section id="vault" className="border-b border-border py-24 px-4">
         <div className="mx-auto max-w-6xl">
           <div className="mb-12 max-w-2xl">
-            <Badge className="mb-4 bg-yellow-500/10 text-yellow-500 border-0">Vault</Badge>
-            <h2 className="mb-3 text-4xl font-bold">Vault</h2>
+            <Badge className="mb-4 bg-yellow-500/10 text-yellow-500 border-0">Password Monitoring</Badge>
+            <h2 className="mb-3 text-4xl font-bold">Password Monitoring</h2>
+
             <p className="text-lg text-muted-foreground">
               Your passwords never leave your device. Ray only sees them after
               <span className="text-foreground"> you </span> unlock the Vault.
