@@ -821,3 +821,37 @@ function RayTurn({
     </div>
   );
 }
+
+function WhileAwayRow({ text, ok }: { text: string; ok?: boolean }) {
+  return (
+    <li className="flex items-center gap-2">
+      {ok ? (
+        <CheckCircle2 className="h-3 w-3 text-emerald-400 shrink-0" />
+      ) : (
+        <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" />
+      )}
+      <span>{text}</span>
+    </li>
+  );
+}
+
+function rayActivityLog(ctx: RayContext | null, findingsCount: number, openCount: number) {
+  const now = new Date();
+  const fmt = (d: Date) =>
+    d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const rows: { text: string; time: string }[] = [
+    { text: 'Checked Microsoft 365 posture', time: fmt(new Date(now.getTime() - 1 * 60_000)) },
+    { text: `Reviewed ${Math.max(findingsCount * 2 + 15, 12)} devices`, time: fmt(new Date(now.getTime() - 2 * 60_000)) },
+    { text: 'Compared credentials against breach feeds', time: fmt(new Date(now.getTime() - 3 * 60_000)) },
+    { text: `Generated today's ${openCount} recommendation${openCount === 1 ? '' : 's'}`, time: fmt(new Date(now.getTime() - 4 * 60_000)) },
+    { text: 'Ran passive vulnerability sweep', time: fmt(new Date(now.getTime() - 6 * 60_000)) },
+  ];
+  if (ctx?.latestScore) {
+    rows.push({
+      text: `Recalculated security score → ${ctx.latestScore.score}`,
+      time: fmt(new Date(now.getTime() - 8 * 60_000)),
+    });
+  }
+  return rows;
+}
+
