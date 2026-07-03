@@ -315,7 +315,7 @@ export default function IntelligenceInvestigations() {
           </Card>
 
           {loading && !selected && <ResultSkeleton />}
-          {selected && <InvestigationWorkspace inv={selected} />}
+          {selected && <InvestigationWorkspace inv={selected} onOpenInvestigation={setSelectedId} />}
           {!loading && !selected && history.length === 0 && <EmptyState />}
         </div>
 
@@ -401,13 +401,13 @@ function EmptyState() {
 
 /* ---------------- Workspace ---------------- */
 
-function InvestigationWorkspace({ inv }: { inv: Investigation }) {
+function InvestigationWorkspace({ inv, onOpenInvestigation }: { inv: Investigation; onOpenInvestigation: (id: string) => void }) {
   const [tab, setTab] = useState('overview');
   const [followups, setFollowups] = useState<Followup[]>([]);
   const [busy, setBusy] = useState<FollowupType | null>(null);
   const [questionOpen, setQuestionOpen] = useState(false);
   const [question, setQuestion] = useState('');
-  const [iocHistory, setIocHistory] = useState<Record<string, { count: number; last_seen_at: string; first_seen_at: string; last_verdict: string | null; timestamps: string[] }>>({});
+  const [iocHistory, setIocHistory] = useState<Record<string, IocHistoryEntry>>({});
 
   const loadFollowups = useCallback(async () => {
     const { data } = await supabase
@@ -437,32 +437,41 @@ function InvestigationWorkspace({ inv }: { inv: Investigation }) {
       investigation_ids: string[] | null;
     }> | null) ?? [];
 
-    // Batch-fetch created_at for every investigation this user has that references any of these IOCs.
+    // Batch-fetch investigation metadata (date, verdict, label) for every
+    // linked investigation so we can render verdict history and jump-to links.
     const allInvIds = Array.from(new Set(rows.flatMap(r => r.investigation_ids ?? []).filter(Boolean)));
-    let invDates = new Map<string, string>();
+    let invMeta = new Map<string, { created_at: string; verdict: string | null; input_label: string | null; input_type: string }>();
     if (allInvIds.length > 0) {
       const { data: invRows } = await supabase
         .from('ray_investigations')
-        .select('id, created_at')
+        .select('id, created_at, verdict, input_label, input_type')
         .in('id', allInvIds);
-      invDates = new Map(((invRows as Array<{ id: string; created_at: string }> | null) ?? []).map(r => [r.id, r.created_at]));
+      invMeta = new Map(((invRows as Array<{ id: string; created_at: string; verdict: string | null; input_label: string | null; input_type: string }> | null) ?? [])
+        .map(r => [r.id, { created_at: r.created_at, verdict: r.verdict, input_label: r.input_label, input_type: r.input_type }]));
     }
 
-    const map: Record<string, { count: number; last_seen_at: string; first_seen_at: string; last_verdict: string | null; timestamps: string[] }> = {};
+    const map: Record<string, IocHistoryEntry> = {};
     for (const r of rows) {
-      const timestamps = (r.investigation_ids ?? [])
-        .map(id => invDates.get(id))
-        .filter((t): t is string => Boolean(t));
+      const sightings: IocSighting[] = (r.investigation_ids ?? [])
+        .map(id => {
+          const m = invMeta.get(id);
+          if (!m) return null;
+          return { id, created_at: m.created_at, verdict: m.verdict, label: m.input_label || m.input_type };
+        })
+        .filter((s): s is IocSighting => s !== null)
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       map[`${r.ioc_type}::${r.ioc_value_norm}`] = {
         count: r.occurrence_count,
         first_seen_at: r.first_seen_at,
         last_seen_at: r.last_seen_at,
         last_verdict: r.last_verdict,
-        timestamps,
+        timestamps: sightings.map(s => s.created_at),
+        sightings,
       };
     }
     setIocHistory(map);
   }, [inv.id, inv.iocs]);
+
 
 
   useEffect(() => {
@@ -636,7 +645,7 @@ function InvestigationWorkspace({ inv }: { inv: Investigation }) {
           <TabsContent value="iocs" className="mt-0">
             {iocCount === 0
               ? <Empty text="Ray did not extract distinct indicators." />
-              : <IocsPanel iocs={inv.iocs} iocHistory={iocHistory} invVerdict={inv.verdict} />
+              : <IocsPanel iocs={inv.iocs} iocHistory={iocHistory} invVerdict={inv.verdict} currentInvId={inv.id} onOpenInvestigation={onOpenInvestigation} />
             }
           </TabsContent>
 
@@ -1025,7 +1034,8 @@ function AskRayDialog({
 
 /* ---------------- Indicators panel with sort + filter ---------------- */
 
-type IocHistoryEntry = { count: number; last_seen_at: string; first_seen_at: string; last_verdict: string | null; timestamps: string[] };
+type IocSighting = { id: string; created_at: string; verdict: string | null; label: string };
+type IocHistoryEntry = { count: number; last_seen_at: string; first_seen_at: string; last_verdict: string | null; timestamps: string[]; sightings: IocSighting[] };
 type IocItem = { type?: string; value?: string; note?: string };
 type IocSort = 'default' | 'prior_desc' | 'last_seen_desc' | 'first_seen_desc' | 'type_asc';
 
@@ -1033,10 +1043,14 @@ function IocsPanel({
   iocs,
   iocHistory,
   invVerdict,
+  currentInvId,
+  onOpenInvestigation,
 }: {
   iocs: IocItem[];
   iocHistory: Record<string, IocHistoryEntry>;
   invVerdict: string | null;
+  currentInvId: string;
+  onOpenInvestigation: (id: string) => void;
 }) {
   const [sort, setSort] = useState<IocSort>('prior_desc');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -1168,24 +1182,14 @@ function IocsPanel({
               <div className="min-w-0 flex-1">
                 <div className="font-mono text-foreground break-all">{ioc.value}</div>
                 {ioc.note && <div className="text-muted-foreground mt-0.5">{ioc.note}</div>}
-                {priorCount > 0 && (
-                  <div className="mt-1.5 inline-flex flex-wrap items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-sm border border-[hsl(262_60%_64%/0.35)] bg-[hsl(262_60%_64%/0.08)] text-[hsl(262_60%_82%)]">
-                    <Brain className="h-3 w-3" />
-                    I've seen this before — {priorCount} prior sighting{priorCount === 1 ? '' : 's'}
-                    {history?.first_seen_at && (
-                      <span className="text-muted-foreground">
-                        · since {new Date(history.first_seen_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                      </span>
-                    )}
-                    {history?.last_seen_at && (
-                      <span className="text-muted-foreground">
-                        · last {new Date(history.last_seen_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                      </span>
-                    )}
-                    {history?.last_verdict && history.last_verdict !== invVerdict && (
-                      <span className="text-muted-foreground">· last verdict: {history.last_verdict}</span>
-                    )}
-                  </div>
+                {priorCount > 0 && history && (
+                  <SeenBeforeCallout
+                    history={history}
+                    priorCount={priorCount}
+                    invVerdict={invVerdict}
+                    currentInvId={currentInvId}
+                    onOpenInvestigation={onOpenInvestigation}
+                  />
                 )}
               </div>
               {history && history.timestamps && history.timestamps.length > 0 && (
@@ -1269,5 +1273,164 @@ function IocSparkline({ timestamps }: { timestamps: string[] }) {
         peak {max}/wk
       </span>
     </div>
+  );
+}
+
+/* ---------------- "Seen before" verdict-history callout ---------------- */
+
+/**
+ * Rich version of the prior-sightings badge:
+ *  - tallies every verdict Ray has assigned to this indicator across all
+ *    investigations the user has run,
+ *  - highlights whether the current verdict is consistent or has flipped,
+ *  - and lists every past investigation where the verdict differed from the
+ *    current one, each as a clickable link that jumps into that case.
+ */
+function verdictDotClass(v: string | null | undefined): string {
+  switch ((v || '').toLowerCase()) {
+    case 'malicious':  return 'bg-[hsl(0_70%_60%)]';
+    case 'suspicious': return 'bg-[hsl(38_90%_58%)]';
+    case 'benign':     return 'bg-[hsl(142_60%_50%)]';
+    default:           return 'bg-[hsl(220_12%_55%)]';
+  }
+}
+
+function verdictPillClass(v: string | null | undefined): string {
+  switch ((v || '').toLowerCase()) {
+    case 'malicious':  return 'bg-[hsl(0_70%_60%/0.12)] text-[hsl(0_80%_78%)] border-[hsl(0_70%_60%/0.35)]';
+    case 'suspicious': return 'bg-[hsl(38_90%_58%/0.12)] text-[hsl(38_95%_75%)] border-[hsl(38_90%_58%/0.35)]';
+    case 'benign':     return 'bg-[hsl(142_60%_50%/0.12)] text-[hsl(142_70%_72%)] border-[hsl(142_60%_50%/0.35)]';
+    default:           return 'bg-muted text-muted-foreground border-border';
+  }
+}
+
+function SeenBeforeCallout({
+  history,
+  priorCount,
+  invVerdict,
+  currentInvId,
+  onOpenInvestigation,
+}: {
+  history: IocHistoryEntry;
+  priorCount: number;
+  invVerdict: string | null;
+  currentInvId: string;
+  onOpenInvestigation: (id: string) => void;
+}) {
+  const current = (invVerdict || 'unknown').toLowerCase();
+
+  // Only "prior" sightings — exclude the current investigation.
+  const priorSightings = useMemo(
+    () => history.sightings.filter(s => s.id !== currentInvId),
+    [history.sightings, currentInvId],
+  );
+
+  const verdictTally = useMemo(() => {
+    const t: Record<string, number> = {};
+    for (const s of priorSightings) {
+      const v = (s.verdict || 'unknown').toLowerCase();
+      t[v] = (t[v] || 0) + 1;
+    }
+    return Object.entries(t).sort((a, b) => b[1] - a[1]);
+  }, [priorSightings]);
+
+  const differing = useMemo(
+    () => priorSightings.filter(s => (s.verdict || 'unknown').toLowerCase() !== current),
+    [priorSightings, current],
+  );
+
+  const flipped = differing.length > 0;
+
+  return (
+    <details className="group mt-1.5 rounded-sm border border-[hsl(262_60%_64%/0.35)] bg-[hsl(262_60%_64%/0.06)] open:bg-[hsl(262_60%_64%/0.09)]">
+      <summary className="cursor-pointer list-none px-2 py-1 flex flex-wrap items-center gap-1.5 text-[10px] text-[hsl(262_60%_82%)]">
+        <Brain className="h-3 w-3" />
+        <span className="font-medium">
+          Seen {priorCount} time{priorCount === 1 ? '' : 's'} before
+        </span>
+        {history.first_seen_at && (
+          <span className="text-muted-foreground">
+            · since {new Date(history.first_seen_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+          </span>
+        )}
+        {verdictTally.length > 0 && (
+          <span className="flex items-center gap-1 ml-1">
+            {verdictTally.map(([v, n]) => (
+              <span
+                key={v}
+                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm border text-[9px] uppercase tracking-wider ${verdictPillClass(v)}`}
+                title={`${n} prior investigation${n === 1 ? '' : 's'} marked ${v}`}
+              >
+                <span className={`h-1.5 w-1.5 rounded-full ${verdictDotClass(v)}`} />
+                {v} · {n}
+              </span>
+            ))}
+          </span>
+        )}
+        {flipped && (
+          <span className="inline-flex items-center gap-1 ml-1 px-1.5 py-0.5 rounded-sm border border-[hsl(38_90%_58%/0.45)] bg-[hsl(38_90%_58%/0.12)] text-[hsl(38_95%_78%)] text-[9px] uppercase tracking-wider">
+            <AlertTriangle className="h-2.5 w-2.5" />
+            verdict changed
+          </span>
+        )}
+        <ChevronRight className="h-3 w-3 ml-auto text-muted-foreground transition-transform group-open:rotate-90" />
+      </summary>
+
+      <div className="border-t border-[hsl(262_60%_64%/0.2)] px-2 py-2 space-y-2 text-[10px]">
+        {differing.length > 0 && (
+          <div>
+            <div className="text-muted-foreground uppercase tracking-wider text-[9px] mb-1">
+              Prior investigations where the verdict differed from now ({current})
+            </div>
+            <ul className="space-y-1">
+              {differing.map(s => (
+                <li key={s.id}>
+                  <button
+                    type="button"
+                    onClick={() => onOpenInvestigation(s.id)}
+                    className="w-full text-left flex items-center gap-2 px-2 py-1 rounded-sm border border-border bg-background/50 hover:bg-accent transition-colors"
+                  >
+                    <span className={`h-2 w-2 rounded-full shrink-0 ${verdictDotClass(s.verdict)}`} />
+                    <span className={`px-1.5 py-0.5 rounded-sm border text-[9px] uppercase tracking-wider shrink-0 ${verdictPillClass(s.verdict)}`}>
+                      {s.verdict || 'unknown'}
+                    </span>
+                    <span className="text-foreground/90 truncate flex-1">{s.label}</span>
+                    <span className="text-muted-foreground shrink-0">
+                      {new Date(s.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span>
+                    <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {priorSightings.length > differing.length && (
+          <div>
+            <div className="text-muted-foreground uppercase tracking-wider text-[9px] mb-1">
+              Prior investigations that agreed with now ({current})
+            </div>
+            <ul className="space-y-1">
+              {priorSightings.filter(s => (s.verdict || 'unknown').toLowerCase() === current).slice(0, 5).map(s => (
+                <li key={s.id}>
+                  <button
+                    type="button"
+                    onClick={() => onOpenInvestigation(s.id)}
+                    className="w-full text-left flex items-center gap-2 px-2 py-1 rounded-sm border border-border/60 bg-background/30 hover:bg-accent transition-colors"
+                  >
+                    <span className={`h-2 w-2 rounded-full shrink-0 ${verdictDotClass(s.verdict)}`} />
+                    <span className="text-foreground/80 truncate flex-1">{s.label}</span>
+                    <span className="text-muted-foreground shrink-0">
+                      {new Date(s.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </details>
   );
 }
