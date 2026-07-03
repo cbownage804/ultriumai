@@ -271,6 +271,7 @@ function AppRouter() {
           <Route path="/app/billing" element={<SuspenseWrapper><WraythBilling /></SuspenseWrapper>} />
           <Route path="/app/credits" element={<SuspenseWrapper><AiCredits /></SuspenseWrapper>} />
           <Route path="/app/intelligence/investigations" element={<SuspenseWrapper><IntelligenceInvestigations /></SuspenseWrapper>} />
+          <Route path="/app/intelligence/reports" element={<SuspenseWrapper><IntelligenceReports /></SuspenseWrapper>} />
           <Route path="/app/intelligence" element={<Navigate to="/app/intelligence/investigations" replace />} />
           <Route path="/app/settings" element={<SuspenseWrapper variant="form"><WraythSettings /></SuspenseWrapper>} />
         </Route>
