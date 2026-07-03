@@ -18227,6 +18227,140 @@ export type Database = {
         }
         Relationships: []
       }
+      ray_log_analyses: {
+        Row: {
+          chunk_count: number
+          chunks_complete: number
+          completed_at: string | null
+          cost_ray_compute: number
+          created_at: string
+          critical_findings: Json
+          duration_ms: number | null
+          error: string | null
+          evidence: Json
+          executive_summary: string | null
+          id: string
+          input_label: string | null
+          iocs: Json
+          mitre: Json
+          model: string | null
+          org_id: string | null
+          recommendations: Json
+          source_kind: string
+          status: string
+          summary: string | null
+          timeline: Json
+          total_bytes: number
+          total_lines: number
+          user_id: string
+        }
+        Insert: {
+          chunk_count?: number
+          chunks_complete?: number
+          completed_at?: string | null
+          cost_ray_compute?: number
+          created_at?: string
+          critical_findings?: Json
+          duration_ms?: number | null
+          error?: string | null
+          evidence?: Json
+          executive_summary?: string | null
+          id?: string
+          input_label?: string | null
+          iocs?: Json
+          mitre?: Json
+          model?: string | null
+          org_id?: string | null
+          recommendations?: Json
+          source_kind?: string
+          status?: string
+          summary?: string | null
+          timeline?: Json
+          total_bytes?: number
+          total_lines?: number
+          user_id: string
+        }
+        Update: {
+          chunk_count?: number
+          chunks_complete?: number
+          completed_at?: string | null
+          cost_ray_compute?: number
+          created_at?: string
+          critical_findings?: Json
+          duration_ms?: number | null
+          error?: string | null
+          evidence?: Json
+          executive_summary?: string | null
+          id?: string
+          input_label?: string | null
+          iocs?: Json
+          mitre?: Json
+          model?: string | null
+          org_id?: string | null
+          recommendations?: Json
+          source_kind?: string
+          status?: string
+          summary?: string | null
+          timeline?: Json
+          total_bytes?: number
+          total_lines?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ray_log_chunks: {
+        Row: {
+          analysis_id: string
+          chunk_index: number
+          created_at: string
+          error: string | null
+          findings: Json
+          id: string
+          iocs: Json
+          line_end: number
+          line_start: number
+          status: string
+          summary: string | null
+          user_id: string
+        }
+        Insert: {
+          analysis_id: string
+          chunk_index: number
+          created_at?: string
+          error?: string | null
+          findings?: Json
+          id?: string
+          iocs?: Json
+          line_end: number
+          line_start: number
+          status?: string
+          summary?: string | null
+          user_id: string
+        }
+        Update: {
+          analysis_id?: string
+          chunk_index?: number
+          created_at?: string
+          error?: string | null
+          findings?: Json
+          id?: string
+          iocs?: Json
+          line_end?: number
+          line_start?: number
+          status?: string
+          summary?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ray_log_chunks_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "ray_log_analyses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ray_memory: {
         Row: {
           confidence: number

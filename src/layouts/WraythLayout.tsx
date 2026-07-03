@@ -61,6 +61,7 @@ import {
   Network,
   Bug,
   Terminal,
+  FileWarning,
 } from 'lucide-react';
 import { AppSwitcher } from '@/components/AppSwitcher';
 
@@ -110,6 +111,7 @@ function getSections(opts?: { hasOrg?: boolean; isMSP?: boolean }): NavSection[]
     { label: 'Investigations', path: getWraythPath('/intelligence/investigations'), icon: ScanSearch },
     { label: 'Script Analysis', path: getWraythPath('/intelligence/scripts'), icon: Terminal },
     { label: 'Malware Analysis', path: getWraythPath('/intelligence/malware'), icon: Bug },
+    { label: 'Log Analysis', path: getWraythPath('/intelligence/logs'), icon: FileWarning },
     { label: 'Attack Paths', path: getWraythPath('/intelligence/attack-paths'), icon: GitBranch },
     { label: 'Graph', path: getWraythPath('/intelligence/graph'), icon: Network },
     { label: 'Board Reports', path: getWraythPath('/intelligence/reports'), icon: FileText },
