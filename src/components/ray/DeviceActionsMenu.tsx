@@ -481,25 +481,44 @@ export function DeviceActionsMenu({
               // false = currently off, null = unknown
               satisfied: boolean | null;
             }) => {
-              const checked = satisfied === true;
               const unknown = satisfied === null;
+              // Hide unreported rows by default so the menu doesn't look broken.
+              if (unknown && !showAll) {
+                hiddenCount += 1;
+                return null;
+              }
+              const checked = satisfied === true;
+              const stateLabel = unknown ? 'Not reported' : checked ? 'On' : 'Off';
+              const stateClass = unknown
+                ? 'bg-muted/40 text-muted-foreground/80 border-border/60'
+                : checked
+                  ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                  : 'bg-rose-500/10 text-rose-300 border-rose-500/25';
               return (
                 <div
                   title={tooltip}
-                  className="flex items-center justify-between gap-2 px-2 py-1.5 text-sm"
+                  className="flex items-center justify-between gap-3 px-2 py-2 text-sm"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-foreground/90">{label}</div>
-                    {unknown && (
-                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">
-                        unknown
-                      </div>
-                    )}
+                    <div
+                      className={`mt-0.5 inline-flex items-center rounded-full border px-1.5 py-px text-[10px] font-medium uppercase tracking-wide ${stateClass}`}
+                    >
+                      {stateLabel}
+                    </div>
                   </div>
                   <Switch
                     checked={checked}
-                    disabled={pending !== null}
+                    disabled={pending !== null || unknown}
+                    className={
+                      unknown
+                        ? 'h-6 w-11 opacity-60'
+                        : checked
+                          ? 'h-6 w-11 bg-gradient-to-r from-emerald-500 to-emerald-400 shadow-[0_0_0_3px_hsl(var(--background)),0_0_12px_hsl(160_84%_50%/0.45)] data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-emerald-500 data-[state=checked]:to-emerald-400'
+                          : 'h-6 w-11 data-[state=unchecked]:bg-rose-500/25'
+                    }
                     onCheckedChange={(next) => {
+                      if (unknown) return;
                       if (next) {
                         requestAction(enableAction, enableParams, label);
                       } else {
@@ -510,6 +529,7 @@ export function DeviceActionsMenu({
                 </div>
               );
             };
+
 
             const chromeSat = isAlreadySatisfied('disable_browser_password_manager', posture, { browser: 'chrome' });
             const edgeSat = isAlreadySatisfied('disable_browser_password_manager', posture, { browser: 'edge' });
@@ -656,8 +676,8 @@ export function DeviceActionsMenu({
                     >
                       <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-400" />
                       {showAll
-                        ? 'Hide already-configured items'
-                        : `Show ${hiddenCount} already-configured item${hiddenCount === 1 ? '' : 's'}`}
+                        ? 'Hide already-configured & unreported items'
+                        : `Show ${hiddenCount} configured / unreported item${hiddenCount === 1 ? '' : 's'}`}
                     </DropdownMenuItem>
                   </>
                 )}
