@@ -307,6 +307,16 @@ export default function IntelligenceComplianceReport() {
   const [exporting, setExporting] = useState(false);
   const [severityFilter, setSeverityFilter] = useState<string>('all');
   const [domainFilter, setDomainFilter] = useState<string>('all');
+  const [checks, setChecks] = useState<Record<string, boolean>>(() => loadChecks());
+
+  const toggleCheck = useCallback((key: string) => {
+    setChecks(prev => {
+      const next = { ...prev, [key]: !prev[key] };
+      if (!next[key]) delete next[key];
+      saveChecks(next);
+      return next;
+    });
+  }, []);
 
   const load = useCallback(async () => {
     if (!user) return;
