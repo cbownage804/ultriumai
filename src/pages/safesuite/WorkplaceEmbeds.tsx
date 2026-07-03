@@ -151,7 +151,10 @@ export default function WorkplaceEmbeds() {
   const downloadManifest = async () => {
     try {
       const { data, error } = await supabase.functions.invoke("workplace-teams-manifest", {
-        body: { org_name: orgName || "Your Organization" },
+        body: {
+          org_name: orgName || activeOrg?.name || "Your Organization",
+          org_id: activeOrg?.id ?? null,
+        },
       });
       if (error) throw error;
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -164,6 +167,51 @@ export default function WorkplaceEmbeds() {
       toast.success("Teams manifest downloaded.");
     } catch (e: any) { toast.error(e.message || "Manifest download failed"); }
   };
+
+  const embedUrl = activeOrg
+    ? `${window.location.origin}/app/ray/teams-embed?orgId=${activeOrg.id}`
+    : `${window.location.origin}/app/ray/teams-embed`;
+
+  const copyEmbedUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(embedUrl);
+      toast.success("Embed URL copied.");
+    } catch { toast.error("Copy failed."); }
+  };
+
+  const linkTenant = async () => {
+    const raw = linkTenantInput.trim();
+    if (!raw) return;
+    if (!activeOrg) { toast.error("Pick an organization first."); return; }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    setBusy("link_tenant");
+    try {
+      const { error } = await supabase.from("workplace_teams_org_links").insert({
+        organization_id: activeOrg.id,
+        tenant_id: raw,
+        linked_by: user.id,
+      });
+      if (error) throw error;
+      toast.success("Teams tenant linked to this organization.");
+      setLinkTenantInput("");
+      await load();
+    } catch (e: any) {
+      toast.error(e.message || "Link failed (tenant may already be linked).");
+    } finally { setBusy(null); }
+  };
+
+  const unlinkTenant = async (id: string) => {
+    setBusy(`unlink:${id}`);
+    try {
+      const { error } = await supabase.from("workplace_teams_org_links").delete().eq("id", id);
+      if (error) throw error;
+      toast.success("Tenant unlinked.");
+      await load();
+    } catch (e: any) { toast.error(e.message || "Unlink failed."); }
+    finally { setBusy(null); }
+  };
+
 
   const StatusBadge = ({ s }: { s: Integration["status"] | undefined }) => {
     const map: Record<string, string> = {
