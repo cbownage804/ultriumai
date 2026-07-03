@@ -527,7 +527,7 @@ export default function WraythWeb() {
               />
               {assetType === 'email' && (
                 <p className="text-xs text-muted-foreground">
-                  We'll check public breach corpora (Have I Been Pwned and dark-web feeds) for any exposure of this address.
+                  We'll check public breach corpora (Have I Been Pwned and dark-web feeds) for any breaches involving this address.
                 </p>
               )}
               {assetType === 'domain' && (
