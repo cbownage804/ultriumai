@@ -1,19 +1,18 @@
 /**
- * Wrayth Layout — Ray-first navigation.
+ * Wrayth Layout — tier-aware Ray-first navigation.
  *
- * Sidebar grammar: Home / Ray, then Protection (Passwords, Threats,
- * Exposure, Identity, Devices, Reports), then Workspace, then bottom
- * (Settings, Billing, Account, Admin). Old product names live only in DB and
- * route paths.
+ * Free/Pro users get a flat, minimal sidebar. Business/Enterprise users get
+ * collapsible groups (Protection, Intelligence, +More) with localStorage-
+ * persisted expansion state and a "Show all tools" toggle.
  */
 
 import wraythBrandSidebar from '@/assets/wrayth-brand-full.png.asset.json';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useWraythSubscription } from '@/hooks/useSafeSuite';
-import { SAFESUITE_TIERS } from '@/config/safeSuiteTiers';
+import { SAFESUITE_TIERS, type WraythTier } from '@/config/safeSuiteTiers';
 import { isWraythDomain } from '@/utils/subdomain';
 
 import { Button } from '@/components/ui/button';
@@ -30,11 +29,9 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import {
   Home,
-  Eye,
   KeyRound,
   ShieldAlert,
   Globe,
-  UserCircle2,
   Monitor,
   FileText,
   Settings,
@@ -44,17 +41,9 @@ import {
   Shield,
   ShieldCheck,
   Crown,
-  Lock,
   Sparkles,
   Coins,
-  Users,
-  Building2,
-  Share2,
   Plug,
-  Code2,
-  Activity,
-  Target,
-  LineChart,
   Scale,
   ScanSearch,
   GitBranch,
@@ -63,6 +52,12 @@ import {
   Terminal,
   FileWarning,
   ClipboardCheck,
+  Bot,
+  ChevronDown,
+  Eye,
+  Building2,
+  Cable,
+  BarChart3,
 } from 'lucide-react';
 import { AppSwitcher } from '@/components/AppSwitcher';
 
@@ -72,8 +67,6 @@ import { FloatingRayChat } from '@/components/ray/FloatingRayChat';
 import { RayPresence } from '@/components/ray/RayPresence';
 import { RayContextProvider } from '@/components/ray/RayContext';
 import { SidebarBriefing } from '@/components/ray/SidebarBriefing';
-import { useActiveOrg } from '@/hooks/useActiveOrg';
-import { useAccountType } from '@/hooks/useAccountType';
 
 function getWraythPath(path: string): string {
   return isWraythDomain() ? path : `/app${path}`;
@@ -83,46 +76,102 @@ type NavItem = {
   label: string;
   path: string;
   icon: React.ComponentType<{ className?: string }>;
-  feature?: 'vault' | 'scan' | 'watch' | null;
-  badge?: string;
-  external?: boolean;
 };
 
-type NavSection = {
+type NavGroup = {
   id: string;
   label?: string;
+  collapsible?: boolean;
+  defaultOpen?: boolean;
   items: NavItem[];
 };
 
-function getSections(opts?: { hasOrg?: boolean; isMSP?: boolean }): NavSection[] {
-  const protection: NavItem[] = [
-    { label: 'Home',      path: getWraythPath('/dashboard'), icon: Home },
-    { label: 'Vault',     path: getWraythPath('/passwords'), icon: KeyRound, feature: 'vault' },
-    { label: 'Threats',   path: getWraythPath('/threats'),   icon: ShieldAlert, feature: 'scan' },
-    { label: 'Identity Monitoring',  path: getWraythPath('/exposure'),  icon: Globe, feature: 'watch' },
-  ];
-  if (opts?.hasOrg) {
-    protection.push({ label: 'Organization', path: getWraythPath('/org'), icon: Building2 });
+function buildSections(tier: WraythTier): { top: NavGroup[]; bottom: NavItem[] } {
+  const home: NavItem = { label: 'Home', path: getWraythPath('/dashboard'), icon: Home };
+  const vault: NavItem = { label: 'Vault', path: getWraythPath('/passwords'), icon: KeyRound };
+  const identity: NavItem = { label: 'Identity Monitoring', path: getWraythPath('/exposure'), icon: Globe };
+  const threats = (label: string): NavItem => ({ label, path: getWraythPath('/threats'), icon: ShieldAlert });
+  const devices: NavItem = { label: 'Devices', path: getWraythPath('/devices'), icon: Monitor };
+  const ray: NavItem = { label: 'Ray', path: getWraythPath('/ray'), icon: Bot };
+  const reports: NavItem = { label: 'Reports', path: getWraythPath('/reports'), icon: FileText };
+  const billing: NavItem = { label: 'Billing', path: getWraythPath('/billing'), icon: CreditCard };
+  const settings: NavItem = { label: 'Settings', path: getWraythPath('/settings'), icon: Settings };
+
+  if (tier === 'free') {
+    return {
+      top: [{ id: 'main', items: [home, vault, identity, threats('Threat Check'), ray] }],
+      bottom: [billing, settings],
+    };
   }
-  if (opts?.isMSP) {
-    protection.push({ label: 'Clients', path: getWraythPath('/msp'), icon: Share2 });
+
+  if (tier === 'pro') {
+    return {
+      top: [{ id: 'main', items: [home, vault, identity, threats('Threat Center'), devices, ray, reports] }],
+      bottom: [billing, settings],
+    };
   }
-  const intelligence: NavItem[] = [
-    { label: 'Overview', path: getWraythPath('/intelligence'), icon: Sparkles },
-    { label: 'Investigations', path: getWraythPath('/intelligence/investigations'), icon: ScanSearch },
-    { label: 'Script Analysis', path: getWraythPath('/intelligence/scripts'), icon: Terminal },
-    { label: 'Malware Analysis', path: getWraythPath('/intelligence/malware'), icon: Bug },
-    { label: 'Log Analysis', path: getWraythPath('/intelligence/logs'), icon: FileWarning },
-    { label: 'Attack Paths', path: getWraythPath('/intelligence/attack-paths'), icon: GitBranch },
-    { label: 'Graph', path: getWraythPath('/intelligence/graph'), icon: Network },
-    { label: 'Policy Generator', path: getWraythPath('/intelligence/policies'), icon: ClipboardCheck },
-    { label: 'Compliance', path: getWraythPath('/intelligence/compliance'), icon: ShieldCheck },
-    { label: 'Board Reports', path: getWraythPath('/intelligence/reports'), icon: FileText },
+
+  // business / enterprise — grouped
+  const protection: NavGroup = {
+    id: 'protection',
+    label: 'Protection',
+    collapsible: true,
+    defaultOpen: true,
+    items: [vault, identity, threats('Threat Center'), devices],
+  };
+  const intelligence: NavGroup = {
+    id: 'intelligence',
+    label: 'Intelligence',
+    collapsible: true,
+    defaultOpen: true,
+    items: [
+      { label: 'Overview', path: getWraythPath('/intelligence'), icon: Sparkles },
+      { label: 'Investigations', path: getWraythPath('/intelligence/investigations'), icon: ScanSearch },
+      { label: 'Script Analysis', path: getWraythPath('/intelligence/scripts'), icon: Terminal },
+      { label: 'Malware Analysis', path: getWraythPath('/intelligence/malware'), icon: Bug },
+      { label: 'Log Analysis', path: getWraythPath('/intelligence/logs'), icon: FileWarning },
+      { label: 'Attack Paths', path: getWraythPath('/intelligence/attack-paths'), icon: GitBranch },
+      { label: 'Graph', path: getWraythPath('/intelligence/graph'), icon: Network },
+      { label: 'Policy Generator', path: getWraythPath('/intelligence/policies'), icon: ClipboardCheck },
+      { label: 'Compliance', path: getWraythPath('/intelligence/compliance'), icon: ShieldCheck },
+    ],
+  };
+
+  const topGroups: NavGroup[] = [
+    { id: 'main', items: [home, ray] },
+    protection,
+    intelligence,
   ];
-  return [
-    { id: 'main', items: protection },
-    { id: 'intelligence', label: 'AI Intelligence', items: intelligence },
+
+  const bottom: NavItem[] = [
+    { label: 'Integrations', path: getWraythPath('/integrations'), icon: Plug },
   ];
+
+  if (tier === 'enterprise') {
+    topGroups.push({
+      id: 'enterprise',
+      label: 'Enterprise',
+      collapsible: true,
+      defaultOpen: false,
+      items: [
+        { label: 'Executive Dashboard', path: getWraythPath('/dashboard'), icon: BarChart3 },
+        reports,
+        { label: 'Organization Settings', path: getWraythPath('/org'), icon: Building2 },
+        { label: 'Compliance Exports', path: getWraythPath('/intelligence/compliance'), icon: ClipboardCheck },
+        { label: 'API / Automation', path: getWraythPath('/integrations'), icon: Cable },
+      ],
+    });
+  } else {
+    // business also gets Reports as a plain footer item
+    bottom.push(reports);
+  }
+
+  bottom.push(billing);
+  bottom.push({ label: 'Ray Credits', path: getWraythPath('/credits'), icon: Coins });
+  bottom.push({ label: 'Trust Center', path: getWraythPath('/trust'), icon: Scale });
+  bottom.push(settings);
+
+  return { top: topGroups, bottom };
 }
 
 function TierBadge({ tier }: { tier: string }) {
@@ -131,11 +180,13 @@ function TierBadge({ tier }: { tier: string }) {
     free: 'bg-muted text-muted-foreground',
     pro: 'bg-primary/10 text-primary border-primary/20',
     business: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
+    enterprise: 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/20',
   };
   const icons: Record<string, React.ReactNode> = {
     free: <Shield className="h-3 w-3" />,
     pro: <Sparkles className="h-3 w-3" />,
     business: <Crown className="h-3 w-3" />,
+    enterprise: <Crown className="h-3 w-3" />,
   };
   return (
     <Badge variant="outline" className={cn('gap-1', variants[tier])}>
@@ -148,13 +199,13 @@ function TierBadge({ tier }: { tier: string }) {
 function SideLink({
   item,
   isActive,
-  isLocked,
   onClick,
+  indent = false,
 }: {
   item: NavItem;
   isActive: boolean;
-  isLocked: boolean;
   onClick?: () => void;
+  indent?: boolean;
 }) {
   const Icon = item.icon;
   return (
@@ -164,36 +215,65 @@ function SideLink({
       className={cn(
         'group flex items-center gap-3 px-3 py-2 rounded-sm text-sm transition-colors',
         'text-muted-foreground hover:bg-accent hover:text-foreground',
+        indent && 'pl-9',
         isActive && 'bg-[hsl(262_60%_64%/0.08)] text-foreground',
-        isLocked && 'opacity-60',
       )}
     >
       <Icon className={cn('h-4 w-4 shrink-0', isActive && 'text-[hsl(262_60%_70%)]')} />
       <span className="flex-1 truncate">{item.label}</span>
-      {item.badge && (
-        <span className="text-[9px] font-medium tracking-wider uppercase px-1.5 py-0.5 rounded-sm bg-border/60 text-muted-foreground">
-          {item.badge}
-        </span>
-      )}
-      {isLocked && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
     </Link>
   );
 }
 
+const GROUP_STATE_KEY = 'wrayth.nav.groups.v1';
+
+function loadGroupState(): Record<string, boolean> {
+  try {
+    const raw = localStorage.getItem(GROUP_STATE_KEY);
+    if (!raw) return {};
+    return JSON.parse(raw) as Record<string, boolean>;
+  } catch {
+    return {};
+  }
+}
+
 function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
   const location = useLocation();
-  const { tier, tierConfig } = useWraythSubscription();
+  const { tier } = useWraythSubscription();
   const { user } = useAuth();
-  const { hasOrg } = useActiveOrg();
-  const { isMSPOrMSSP } = useAccountType();
-  const sections = getSections({ hasOrg, isMSP: isMSPOrMSSP });
   const landingPath = isWraythDomain() ? '/' : '/app';
   const isAdmin = user?.email?.endsWith('@ultriumai.com') && user?.email_confirmed_at != null;
+
+  const { top, bottom } = useMemo(() => buildSections(tier as WraythTier), [tier]);
+
+  const [groupOpen, setGroupOpen] = useState<Record<string, boolean>>(() => {
+    const saved = loadGroupState();
+    const initial: Record<string, boolean> = {};
+    for (const g of top) {
+      if (g.collapsible) initial[g.id] = saved[g.id] ?? g.defaultOpen ?? true;
+    }
+    return initial;
+  });
+  const [showAll, setShowAll] = useState(false);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(GROUP_STATE_KEY, JSON.stringify(groupOpen));
+    } catch {
+      /* ignore */
+    }
+  }, [groupOpen]);
 
   const isActive = (path: string) => {
     if (path.endsWith('/dashboard')) return location.pathname === path;
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
+
+  const toggleGroup = (id: string) => {
+    setGroupOpen((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const isGrouped = tier === 'business' || tier === 'enterprise';
 
   return (
     <aside className="flex flex-col h-full bg-card border-r border-border">
@@ -227,37 +307,55 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-5 overflow-y-auto">
-        {sections.map((section) => (
-          <div key={section.id} className="space-y-1">
-            {section.label && (
-              <div className="px-3 mb-1 text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70">
-                {section.label}
-              </div>
-            )}
-            {section.items.map((item) => {
-              const locked = item.feature ? !tierConfig.features[item.feature].enabled : false;
-              return (
-                <SideLink
-                  key={item.path}
-                  item={item}
-                  isActive={isActive(item.path)}
-                  isLocked={locked}
-                  onClick={onItemClick}
-                />
-              );
-            })}
-          </div>
-        ))}
+      <nav className="flex-1 px-3 py-4 space-y-4 overflow-y-auto">
+        {top.map((group) => {
+          const open = !group.collapsible || showAll || groupOpen[group.id];
+          return (
+            <div key={group.id} className="space-y-1">
+              {group.label && group.collapsible ? (
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group.id)}
+                  className="w-full flex items-center justify-between px-3 py-1 text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 hover:text-foreground transition-colors"
+                >
+                  <span>{group.label}</span>
+                  <ChevronDown
+                    className={cn(
+                      'h-3.5 w-3.5 transition-transform',
+                      open ? 'rotate-0' : '-rotate-90',
+                    )}
+                  />
+                </button>
+              ) : group.label ? (
+                <div className="px-3 mb-1 text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70">
+                  {group.label}
+                </div>
+              ) : null}
+              {open &&
+                group.items.map((item) => (
+                  <SideLink
+                    key={item.path + item.label}
+                    item={item}
+                    isActive={isActive(item.path)}
+                    onClick={onItemClick}
+                    indent={!!group.label && group.collapsible}
+                  />
+                ))}
+            </div>
+          );
+        })}
       </nav>
 
       {/* Footer */}
       <div className="px-3 py-3 border-t border-border space-y-1">
-        <SideLink item={{ label: 'Integrations', path: getWraythPath('/integrations'), icon: Plug }} isActive={isActive(getWraythPath('/integrations'))} isLocked={false} onClick={onItemClick} />
-        <SideLink item={{ label: 'Settings', path: getWraythPath('/settings'), icon: Settings }} isActive={isActive(getWraythPath('/settings'))} isLocked={false} onClick={onItemClick} />
-        <SideLink item={{ label: 'Billing',  path: getWraythPath('/billing'),  icon: CreditCard }} isActive={isActive(getWraythPath('/billing'))} isLocked={false} onClick={onItemClick} />
-        <SideLink item={{ label: 'Ray Credits', path: getWraythPath('/credits'), icon: Coins }} isActive={isActive(getWraythPath('/credits'))} isLocked={false} onClick={onItemClick} />
-        <SideLink item={{ label: 'Trust Center', path: getWraythPath('/trust'), icon: Scale }} isActive={isActive(getWraythPath('/trust'))} isLocked={false} onClick={onItemClick} />
+        {bottom.map((item) => (
+          <SideLink
+            key={item.path + item.label}
+            item={item}
+            isActive={isActive(item.path)}
+            onClick={onItemClick}
+          />
+        ))}
         {isAdmin && (
           <Link
             to="/admin"
@@ -267,6 +365,16 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
             <Crown className="h-4 w-4" />
             <span>Admin</span>
           </Link>
+        )}
+        {isGrouped && (
+          <button
+            type="button"
+            onClick={() => setShowAll((v) => !v)}
+            className="w-full flex items-center gap-2 px-3 py-2 mt-1 rounded-sm text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          >
+            <Eye className="h-3.5 w-3.5" />
+            {showAll ? 'Collapse groups' : 'Show all tools'}
+          </button>
         )}
       </div>
     </aside>
@@ -317,7 +425,7 @@ function WraythLayoutInner() {
             <div className="flex items-center gap-1 sm:gap-2">
               <RayPresence />
               <AppSwitcher />
-              
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="gap-2 min-h-[44px] px-2 sm:px-3">
@@ -361,8 +469,6 @@ function WraythLayoutInner() {
 }
 
 export default function WraythLayout() {
-  // MFA is optional and lives inside Ray onboarding + /app/mfa. We no longer
-  // force a 2FA wall in front of the app.
   return (
     <RayContextProvider>
       <WraythLayoutInner />
