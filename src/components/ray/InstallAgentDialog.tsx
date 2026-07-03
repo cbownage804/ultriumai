@@ -41,6 +41,23 @@ interface EnrollState {
   expiresAt: string;
 }
 
+const ENROLL_STORAGE_KEY = 'wrayth.installDialog.enroll';
+
+function loadStoredEnroll(): EnrollState | null {
+  try {
+    const raw = sessionStorage.getItem(ENROLL_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as EnrollState;
+    if (!parsed?.expiresAt || new Date(parsed.expiresAt).getTime() < Date.now()) {
+      sessionStorage.removeItem(ENROLL_STORAGE_KEY);
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
 export function InstallAgentDialog({
   trigger,
 }: {
@@ -48,25 +65,50 @@ export function InstallAgentDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [enroll, setEnroll] = useState<EnrollState | null>(null);
+  // Hydrate from sessionStorage so a closed/reopened dialog (or a browser
+  // focus loss while the download tab pops open) keeps the SAME enrollment
+  // code instead of minting a fresh one every time.
+  const [enroll, setEnroll] = useState<EnrollState | null>(() => loadStoredEnroll());
   const [confirmed, setConfirmed] = useState(false);
   const pollRef = useRef<number | null>(null);
 
-  const reset = () => {
-    setEnroll(null);
-    setConfirmed(false);
-    if (pollRef.current) {
+  // Persist the code so it survives dialog close/reopen and full-page
+  // re-renders. Cleared automatically once it expires (see loadStoredEnroll).
+  useEffect(() => {
+    if (enroll) {
+      try { sessionStorage.setItem(ENROLL_STORAGE_KEY, JSON.stringify(enroll)); } catch {}
+    }
+  }, [enroll]);
+
+  // Only tear down the poll interval on close — do NOT clear the code,
+  // otherwise reopening the dialog after the download bar steals focus
+  // forces the user to redeem a new code.
+  useEffect(() => {
+    if (!open && pollRef.current) {
       window.clearInterval(pollRef.current);
       pollRef.current = null;
     }
-  };
-
-  useEffect(() => {
-    if (!open) reset();
     return () => {
       if (pollRef.current) window.clearInterval(pollRef.current);
     };
   }, [open]);
+
+  // If the stored code expires while the dialog is mounted, drop it so
+  // the user sees the "Get my install bundle" starting state again.
+  useEffect(() => {
+    if (!enroll) return;
+    const ms = new Date(enroll.expiresAt).getTime() - Date.now();
+    if (ms <= 0) {
+      setEnroll(null);
+      try { sessionStorage.removeItem(ENROLL_STORAGE_KEY); } catch {}
+      return;
+    }
+    const t = window.setTimeout(() => {
+      setEnroll(null);
+      try { sessionStorage.removeItem(ENROLL_STORAGE_KEY); } catch {}
+    }, ms + 250);
+    return () => window.clearTimeout(t);
+  }, [enroll]);
 
   const startEnroll = async () => {
     setLoading(true);
@@ -165,10 +207,19 @@ export function InstallAgentDialog({
             <ol className="space-y-3 text-sm">
               <li className="rounded-lg border border-border/60 p-3">
                 <div className="font-medium text-foreground mb-2">1. Download the installer</div>
-                <Button asChild size="sm" className="bg-violet-600 hover:bg-violet-500 text-white">
-                  <a href={SETUP_DOWNLOAD_URL} target="_blank" rel="noreferrer">
-                    <Download className="mr-2 h-4 w-4" /> WraythSetup.exe
-                  </a>
+                <Button
+                  size="sm"
+                  className="bg-violet-600 hover:bg-violet-500 text-white"
+                  onClick={(e) => {
+                    // Trigger the download in a fresh, disowned tab so the
+                    // browser's download bar / tab-swap can't dismiss this
+                    // dialog and force a new enrollment code.
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.open(SETUP_DOWNLOAD_URL, '_blank', 'noopener,noreferrer');
+                  }}
+                >
+                  <Download className="mr-2 h-4 w-4" /> WraythSetup.exe
                 </Button>
                 <p className="mt-2 text-[11px] text-muted-foreground/80">
                   One click. Signed Windows installer — no PowerShell, no ZIP.
