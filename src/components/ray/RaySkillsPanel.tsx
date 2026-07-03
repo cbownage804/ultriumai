@@ -15,6 +15,11 @@ import {
   CheckCircle2,
   AlertTriangle,
   Activity,
+  Maximize2,
+  Minimize2,
+  PanelRightOpen,
+  Lightbulb,
+  X,
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getRouteContext } from '@/lib/ray/routeContext';
@@ -25,9 +30,12 @@ import { getRayContext, type RayContext } from '@/lib/ray';
 import { getSinceLastVisit, type SinceItem } from '@/lib/ray/sinceLastVisit';
 import { buildSuggestedQuestions } from '@/lib/ray/suggestedQuestions';
 import { useLiveActivity, type ActivityEvent } from '@/lib/ray/liveActivity';
+import { pickTips, type RayTip } from '@/lib/ray/tips';
 import { formatDistanceToNow } from 'date-fns';
 import { dedupeRecs as sharedDedupeRecs } from './recDedupe';
 import { RayThinking } from './RayThinking';
+
+export type PanelMode = 'compact' | 'expanded' | 'workspace';
 
 type RayCard = {
   title?: string;
@@ -190,7 +198,13 @@ function writeMemory(m: RayMemory) {
 
 // ---- component ---------------------------------------------------------------
 
-export default function RaySkillsPanel() {
+export type RaySkillsPanelProps = {
+  mode?: PanelMode;
+  onModeChange?: (mode: PanelMode) => void;
+  onClose?: () => void;
+};
+
+export default function RaySkillsPanel({ mode = 'compact', onModeChange, onClose }: RaySkillsPanelProps = {}) {
   const { user } = useAuth();
   const [input, setInput] = useState('');
   const [turns, setTurns] = useState<Turn[]>([]);
@@ -354,6 +368,17 @@ export default function RaySkillsPanel() {
   // Dynamic "you might ask" chips — synthesized from ctx + route.
   const suggested = useMemo(() => buildSuggestedQuestions(ctx, route), [ctx, route]);
 
+  // Rotating tip — fills the tail so Ray always feels like it's thinking.
+  const tips = useMemo(() => pickTips(route), [route]);
+  const [tipIdx, setTipIdx] = useState(0);
+  useEffect(() => {
+    setTipIdx(0);
+    if (tips.length <= 1) return;
+    const iv = setInterval(() => setTipIdx((i) => (i + 1) % tips.length), 12_000);
+    return () => clearInterval(iv);
+  }, [tips]);
+  const currentTip = tips[tipIdx] ?? null;
+
   const empty = turns.length === 0;
   const scoreTone =
     score == null ? 'text-foreground' : score >= 80 ? 'text-emerald-300' : score >= 60 ? 'text-amber-300' : 'text-red-300';
@@ -367,7 +392,7 @@ export default function RaySkillsPanel() {
       { label: 'Ready', icon: CheckCircle2 },
     ];
     return (
-      <Card className="flex h-[720px] flex-col overflow-hidden border-border/60 bg-gradient-to-b from-background to-background/60">
+      <Card className="flex h-full min-h-0 flex-col overflow-hidden border-border/60 bg-gradient-to-b from-background to-background/60">
         <CardContent className="flex flex-1 flex-col items-center justify-center gap-6 p-6">
           <motion.div
             className="relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary/40 to-primary/10"
@@ -409,7 +434,7 @@ export default function RaySkillsPanel() {
   }
 
   return (
-    <Card className="flex h-[720px] flex-col overflow-hidden border-border/60 bg-gradient-to-b from-background to-background/60">
+    <Card className="flex h-full min-h-0 flex-col overflow-hidden border-border/60 bg-gradient-to-b from-background to-background/60">
       <CardContent className="flex flex-1 flex-col gap-0 overflow-hidden p-0">
         <div ref={scrollRef} className="flex-1 overflow-y-auto">
           {empty ? (
@@ -446,6 +471,7 @@ export default function RaySkillsPanel() {
                     </p>
                   )}
                 </div>
+                <ModeControls mode={mode} onModeChange={onModeChange} onClose={onClose} />
               </div>
 
               {/* Since your last visit — real activity from the database. */}
@@ -590,6 +616,9 @@ export default function RaySkillsPanel() {
                   </div>
                 </section>
               )}
+
+              {/* Rotating tip — Ray filling idle space with something useful. */}
+              {currentTip && <TipCard tip={currentTip} onAsk={send} />}
 
               {/* Ray's live activity — real events from the database, streamed in. */}
               <section className="space-y-2">
@@ -889,5 +918,78 @@ function activityDot(kind: ActivityEvent['kind']): string {
     default:
       return 'bg-muted-foreground/60';
   }
+}
+
+function ModeControls({
+  mode,
+  onModeChange,
+  onClose,
+}: {
+  mode: PanelMode;
+  onModeChange?: (m: PanelMode) => void;
+  onClose?: () => void;
+}) {
+  if (!onModeChange && !onClose) return null;
+  const btn =
+    'flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted/40 hover:text-foreground';
+  return (
+    <div className="flex items-center gap-0.5 shrink-0">
+      {onModeChange && mode === 'compact' && (
+        <button className={btn} onClick={() => onModeChange('expanded')} aria-label="Expand Ray" title="Expand">
+          <Maximize2 className="h-3.5 w-3.5" />
+        </button>
+      )}
+      {onModeChange && mode === 'expanded' && (
+        <>
+          <button className={btn} onClick={() => onModeChange('compact')} aria-label="Shrink Ray" title="Compact">
+            <Minimize2 className="h-3.5 w-3.5" />
+          </button>
+          <button className={btn} onClick={() => onModeChange('workspace')} aria-label="Open workspace" title="Workspace">
+            <PanelRightOpen className="h-3.5 w-3.5" />
+          </button>
+        </>
+      )}
+      {onModeChange && mode === 'workspace' && (
+        <button className={btn} onClick={() => onModeChange('expanded')} aria-label="Exit workspace" title="Exit workspace">
+          <Minimize2 className="h-3.5 w-3.5" />
+        </button>
+      )}
+      {onClose && (
+        <button className={btn} onClick={onClose} aria-label="Close Ray" title="Close">
+          <X className="h-3.5 w-3.5" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function TipCard({ tip, onAsk }: { tip: RayTip; onAsk: (q: string) => void }) {
+  const kindLabel =
+    tip.kind === 'didyouknow' ? 'Did you know?' : tip.kind === 'nudge' ? 'Worth a look' : 'Security tip';
+  return (
+    <AnimatePresence mode="wait">
+      <motion.section
+        key={tip.id}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -6 }}
+        transition={{ duration: 0.35 }}
+        className="rounded-lg border border-amber-500/25 bg-gradient-to-br from-amber-500/[0.06] via-background to-background p-3 space-y-2"
+      >
+        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.22em] text-amber-300/90">
+          <Lightbulb className="h-3 w-3" />
+          {kindLabel}
+        </div>
+        <div className="text-sm font-medium text-foreground leading-snug">{tip.title}</div>
+        <p className="text-xs text-foreground/75 leading-relaxed">{tip.body}</p>
+        <button
+          onClick={() => onAsk(tip.prompt)}
+          className="text-xs text-primary hover:underline underline-offset-2"
+        >
+          Tell me more →
+        </button>
+      </motion.section>
+    </AnimatePresence>
+  );
 }
 

@@ -12,7 +12,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/hooks/useAuth';
 import { getRayContext, type RayContext } from '@/lib/ray';
 import { getRouteContext } from '@/lib/ray/routeContext';
-import RaySkillsPanel from './RaySkillsPanel';
+import RaySkillsPanel, { type PanelMode } from './RaySkillsPanel';
 import { dedupeRecs } from './recDedupe';
 
 export type RayPanelOpenDetail = {
@@ -69,6 +69,7 @@ function RayMark({ className }: { className?: string }) {
 
 export function FloatingRayChat() {
   const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<PanelMode>('compact');
   const { user } = useAuth();
   const [ctx, setCtx] = useState<RayContext | null>(null);
 
@@ -195,10 +196,18 @@ export function FloatingRayChat() {
       </SheetTrigger>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-lg p-0 border-l bg-background overflow-hidden"
+        className={[
+          'p-0 border-l bg-background overflow-hidden transition-[max-width] duration-300 ease-out',
+          mode === 'compact' ? 'w-full sm:max-w-md' : '',
+          mode === 'expanded' ? 'w-full sm:max-w-xl' : '',
+          mode === 'workspace' ? 'w-full sm:max-w-[42vw] lg:max-w-[38vw]' : '',
+        ].join(' ')}
       >
-        <div className="h-full p-4">
-          <RaySkillsPanel />
+        <div className="h-full p-3 sm:p-4 pt-10">
+          <RaySkillsPanel
+            mode={mode}
+            onModeChange={setMode}
+          />
         </div>
       </SheetContent>
     </Sheet>
