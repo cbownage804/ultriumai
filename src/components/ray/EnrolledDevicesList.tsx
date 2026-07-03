@@ -27,6 +27,8 @@ import { RayFixPanel } from './RayFixPanel';
 import { DeviceTimeline } from './DeviceTimeline';
 import { AgentVersionBadge } from './AgentVersionBadge';
 import { AgentTrustCard } from './AgentTrustCard';
+import { DeviceAssessment } from './DeviceAssessment';
+import { AskRayCommandBox } from './AskRayCommandBox';
 
 interface Finding {
   severity: 'info' | 'warn' | 'critical';
@@ -429,6 +431,17 @@ export function EnrolledDevicesList() {
                 </Button>
               </div>
 
+              {d.posture && <DeviceAssessment posture={d.posture as never} />}
+
+              {!d.revoked_at && (
+                <AskRayCommandBox
+                  deviceId={d.id}
+                  hostname={d.hostname}
+                  posture={d.posture as never}
+                  disabled={!online}
+                />
+              )}
+
               {d.posture && (
                 <RayFixPanel
                   deviceId={d.id}
@@ -449,8 +462,6 @@ export function EnrolledDevicesList() {
                   </div>
                 );
               })()}
-
-
 
               {d.findings.length > 0 && (
                 <div className="space-y-1.5">
@@ -480,17 +491,26 @@ export function EnrolledDevicesList() {
                   )}
                 </div>
               )}
-              {!d.revoked_at && (
-                <div className="pt-1">
-                  <DeviceActionsMenu deviceId={d.id} agentVersion={d.agent_version} disabled={!online} posture={d.posture as never} />
-                </div>
-              )}
+
               <DeviceSecurityTabs
                 deviceId={d.id}
                 posture={d.posture as never}
                 capturedAt={d.posture_captured_at}
               />
+
+              {!d.revoked_at && (
+                <details className="group pt-1">
+                  <summary className="cursor-pointer list-none text-[11px] uppercase tracking-[0.22em] text-muted-foreground/70 hover:text-foreground/80 transition-colors">
+                    Advanced actions <span className="opacity-60 group-open:hidden">▾</span><span className="opacity-60 hidden group-open:inline">▴</span>
+                  </summary>
+                  <div className="pt-2">
+                    <DeviceActionsMenu deviceId={d.id} agentVersion={d.agent_version} disabled={!online} posture={d.posture as never} />
+                  </div>
+                </details>
+              )}
+
               <DeviceTimeline deviceId={d.id} lastSeenAt={d.last_seen_at} />
+
 
 
             </div>
