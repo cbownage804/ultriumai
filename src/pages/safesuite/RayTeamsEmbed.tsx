@@ -17,7 +17,7 @@
  * scan-derived security context). We do NOT ingest or retrieve
  * customer documents here — that feature does not exist yet.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
