@@ -874,23 +874,20 @@ function SinceRow({ item }: { item: SinceItem }) {
   );
 }
 
-function rayActivityLog(ctx: RayContext | null, findingsCount: number, openCount: number) {
-  const now = new Date();
-  const fmt = (d: Date) =>
-    d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-  const rows: { text: string; time: string }[] = [
-    { text: 'Checked Microsoft 365 posture', time: fmt(new Date(now.getTime() - 1 * 60_000)) },
-    { text: `Reviewed ${Math.max(findingsCount * 2 + 15, 12)} devices`, time: fmt(new Date(now.getTime() - 2 * 60_000)) },
-    { text: 'Compared credentials against breach feeds', time: fmt(new Date(now.getTime() - 3 * 60_000)) },
-    { text: `Generated today's ${openCount} recommendation${openCount === 1 ? '' : 's'}`, time: fmt(new Date(now.getTime() - 4 * 60_000)) },
-    { text: 'Ran passive vulnerability sweep', time: fmt(new Date(now.getTime() - 6 * 60_000)) },
-  ];
-  if (ctx?.latestScore) {
-    rows.push({
-      text: `Recalculated security score → ${ctx.latestScore.score}`,
-      time: fmt(new Date(now.getTime() - 8 * 60_000)),
-    });
+function activityDot(kind: ActivityEvent['kind']): string {
+  switch (kind) {
+    case 'action_succeeded':
+    case 'finding_cleared':
+      return 'bg-emerald-400';
+    case 'action_failed':
+    case 'finding_new':
+      return 'bg-amber-400';
+    case 'recommendation_new':
+      return 'bg-primary';
+    case 'device_checkin':
+      return 'bg-sky-400/70';
+    default:
+      return 'bg-muted-foreground/60';
   }
-  return rows;
 }
 
