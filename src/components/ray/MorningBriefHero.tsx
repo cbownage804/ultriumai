@@ -213,7 +213,7 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
       ok: score == null ? true : score >= 80,
     },
     {
-      label: "Threats",
+      label: "Threat Center",
       value: threatsCount === 0 ? "None detected" : `${threatsCount} open`,
       ok: threatsCount === 0,
     },
