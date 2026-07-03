@@ -30,6 +30,7 @@ import {
   LevelFormat, PageOrientation,
 } from 'docx';
 import { saveAs } from 'file-saver';
+import PolicyVersionHistory from '@/components/intelligence/PolicyVersionHistory';
 
 type PolicyClause = { id?: string; text?: string };
 type PolicySection = {
