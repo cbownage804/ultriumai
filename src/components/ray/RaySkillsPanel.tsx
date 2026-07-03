@@ -24,6 +24,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { getRayContext, type RayContext } from '@/lib/ray';
 import { getSinceLastVisit, type SinceItem } from '@/lib/ray/sinceLastVisit';
 import { buildSuggestedQuestions } from '@/lib/ray/suggestedQuestions';
+import { useLiveActivity, type ActivityEvent } from '@/lib/ray/liveActivity';
 import { formatDistanceToNow } from 'date-fns';
 import { dedupeRecs as sharedDedupeRecs } from './recDedupe';
 import { RayThinking } from './RayThinking';
