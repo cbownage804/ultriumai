@@ -245,12 +245,16 @@ function verdictBadge(v: string | null) {
 
 export default function IntelligenceInvestigations() {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [inputType, setInputType] = useState<InputType>('url');
   const [payload, setPayload] = useState('');
   const [label, setLabel] = useState('');
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<Investigation[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // When set, we auto-chain a follow-up on the next successful investigation.
+  const [pendingChain, setPendingChain] = useState<FollowupType | null>(null);
+  const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
 
   const selectedInputSpec = useMemo(
     () => INPUT_TYPES.find((t) => t.id === inputType)!,
@@ -272,6 +276,40 @@ export default function IntelligenceInvestigations() {
       setHistory((data as Investigation[] | null) ?? []);
     })();
   }, [user]);
+
+  // Prefill from ?q= (Ask Ray) or ?template= (deep link from Command Center).
+  useEffect(() => {
+    const q = searchParams.get('q');
+    const templateId = searchParams.get('template');
+    if (q) {
+      setPayload(q);
+      setInputType(detectInputType(q));
+    }
+    if (templateId) {
+      const tpl = TEMPLATES.find(t => t.id === templateId);
+      if (tpl) applyTemplate(tpl);
+    }
+    if (q || templateId) {
+      // Clear params so re-navigation doesn't loop.
+      const next = new URLSearchParams(searchParams);
+      next.delete('q'); next.delete('template');
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function applyTemplate(tpl: Template) {
+    setInputType(tpl.inputType);
+    setLabel(tpl.labelSeed);
+    setPendingChain(tpl.chainReport);
+    setActiveTemplateId(tpl.id);
+  }
+
+  function clearTemplate() {
+    setActiveTemplateId(null);
+    setPendingChain(null);
+    setLabel('');
+  }
 
   async function runInvestigation() {
     if (!payload.trim()) {
@@ -295,6 +333,27 @@ export default function IntelligenceInvestigations() {
         setPayload('');
         setLabel('');
         toast.success(`Investigation complete. ${inv.cost_ray_compute} Ray Compute used.`);
+
+        // ---- Template chaining -------------------------------------------------
+        // If a template asked us to chain a follow-up AND the verdict warrants it,
+        // fire the follow-up automatically. Only chain on malicious/suspicious so
+        // Ray doesn't burn compute writing reports for benign cases.
+        const chain = pendingChain;
+        if (chain && inv.status === 'complete' && (inv.verdict === 'malicious' || inv.verdict === 'suspicious')) {
+          toast.info(`Chaining ${FOLLOWUP_META[chain].label.toLowerCase()}…`);
+          try {
+            const { error: fErr } = await supabase.functions.invoke('ray-investigate-followup', {
+              body: { investigation_id: inv.id, followup_type: chain, question: null },
+            });
+            if (fErr) throw fErr;
+            toast.success(`${FOLLOWUP_META[chain].label} chained automatically.`);
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : 'Chained follow-up failed.';
+            toast.error(msg);
+          }
+        }
+        setPendingChain(null);
+        setActiveTemplateId(null);
       } else {
         toast.error('Ray could not complete this investigation.');
       }
@@ -315,6 +374,9 @@ export default function IntelligenceInvestigations() {
     setHistory((prev) => prev.filter((h) => h.id !== id));
     if (selectedId === id) setSelectedId(null);
   }
+
+  const activeTemplate = activeTemplateId ? TEMPLATES.find(t => t.id === activeTemplateId) ?? null : null;
+
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
