@@ -582,8 +582,21 @@ Deno.serve(async (req) => {
 
     const fixPlan = buildFixPlan(payload);
     const securityScore = computeSecurityScore(payload, findings);
-    // Attach Ray's derived context to the stored payload so the UI has one source of truth
-    const enrichedPayload = { ...payload, _ray: { score: securityScore, fix_plan: fixPlan } };
+    // Attach Ray's derived context to the stored payload so the UI has one source of truth.
+    // Strip NUL bytes (\u0000) anywhere in the payload — Postgres JSONB rejects them
+    // (error 22P05) and Windows tools occasionally emit them in registry/WMI strings.
+    const stripNuls = (v: unknown): unknown => {
+      if (typeof v === 'string') return v.replace(/\u0000/g, '');
+      if (Array.isArray(v)) return v.map(stripNuls);
+      if (v && typeof v === 'object') {
+        const out: Record<string, unknown> = {};
+        for (const [k, val] of Object.entries(v as Record<string, unknown>)) out[k] = stripNuls(val);
+        return out;
+      }
+      return v;
+    };
+    const enrichedPayload = stripNuls({ ...payload, _ray: { score: securityScore, fix_plan: fixPlan } }) as Record<string, unknown>;
+    const sanitizedFindings = stripNuls(findings) as typeof findings;
 
     const now = new Date().toISOString();
 
@@ -605,7 +618,7 @@ Deno.serve(async (req) => {
         user_id: device.user_id,
         captured_at: now,
         payload: enrichedPayload,
-        findings,
+        findings: sanitizedFindings,
       },
       { onConflict: 'device_id' },
     );
@@ -620,7 +633,7 @@ Deno.serve(async (req) => {
       user_id: device.user_id,
       captured_at: now,
       payload: enrichedPayload,
-      findings,
+      findings: sanitizedFindings,
     });
     if (histErr) {
       console.error('posture history insert failed', histErr);
