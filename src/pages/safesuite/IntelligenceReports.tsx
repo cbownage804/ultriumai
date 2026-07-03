@@ -231,7 +231,7 @@ function ReportView({ report, onDelete }: { report: BoardReport; onDelete: () =>
       exportFollowupPdf(report.content, {
         title: report.title,
         subtitle: `${t.total ?? 0} investigation${(t.total ?? 0) === 1 ? '' : 's'} · generated ${new Date(report.created_at).toLocaleString()}`,
-        kicker: 'BOARD REPORT',
+        kicker: 'EXECUTIVE REPORT',
       });
       toast.success('PDF exported.');
     } catch (e) {
