@@ -380,16 +380,34 @@ export default function IntelligenceComplianceReport() {
     partial:  gaps.filter(g => g._state === 'partial').length,
   }), [gaps]);
 
+  // Evidence per gap (stable + deterministic given gap contents).
+  const evidenceByGapIdx = useMemo(() => {
+    const map = new Map<number, EvidenceItem[]>();
+    filtered.forEach((g, i) => map.set(i, evidenceFor(g)));
+    return map;
+  }, [filtered]);
+
+  const evidenceStats = useMemo(() => {
+    if (!scanId) return { total: 0, done: 0 };
+    let total = 0, done = 0;
+    filtered.forEach((_, i) => {
+      const items = evidenceByGapIdx.get(i) ?? [];
+      total += items.length;
+      items.forEach(it => { if (checks[checkKey(scanId, i, it.id)]) done += 1; });
+    });
+    return { total, done };
+  }, [filtered, evidenceByGapIdx, checks, scanId]);
+
   function pickScan(id: string) {
     setScanId(id);
     setParams({ id }, { replace: true });
   }
 
   async function exportDocx() {
-    if (!scan) return;
+    if (!scan || !scanId) return;
     setExporting(true);
     try {
-      const doc = buildReportDocx(scan, filtered, impactedSystems, buckets);
+      const doc = buildReportDocx(scan, filtered, impactedSystems, buckets, evidenceByGapIdx, checks, scanId);
       const blob = await Packer.toBlob(doc);
       const safe = `${scan.framework}-gap-report`.replace(/[^a-z0-9]+/gi, '-').toLowerCase();
       saveAs(blob, `${safe}.docx`);
