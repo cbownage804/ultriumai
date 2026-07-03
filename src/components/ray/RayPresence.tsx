@@ -24,7 +24,7 @@ function path(p: string) {
 function summary(ctx: RayContext | null): string {
   if (!ctx) return 'Getting oriented…';
   if (!ctx.hasOnboarded) return "Let's finish setting you up.";
-  const openRecs = ctx.recommendations.length;
+  const openRecs = dedupeRecs(ctx.recommendations).length;
   const score = ctx.latestScore?.score ?? null;
   if (score === null) return "Building today's assessment…";
   if (openRecs === 0) return 'Nothing needs your attention right now.';
