@@ -263,6 +263,9 @@ export function DeviceSecurityTabs({ deviceId, posture, capturedAt }: Props) {
     return { text: v ? 'On' : 'Off', tone: 'bad' };
   };
 
+  const assessment = useMemo(() => assessDevice(posture), [posture]);
+  const tabs = assessment?.tabs;
+
   return (
     <Tabs defaultValue="posture" className="w-full">
       <TabsList className="grid w-full grid-cols-4 sm:grid-cols-8 h-auto">
