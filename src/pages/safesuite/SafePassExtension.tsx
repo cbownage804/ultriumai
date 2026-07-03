@@ -5,48 +5,51 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Download, Globe, Monitor, CheckCircle2, AlertTriangle, Beaker } from "lucide-react";
+import { Download, Chrome, Globe, Flame, CheckCircle2, AlertTriangle, Beaker } from "lucide-react";
 import JSZip from "jszip";
 import { toast } from "sonner";
 
-const VaultExtension = () => {
-  const [isDownloading, setIsDownloading] = useState(false);
+type Target = "chromium" | "firefox";
 
-  const downloadExtension = async () => {
-    setIsDownloading(true);
+const SHARED_FILES = [
+  'background.js',
+  'content.js',
+  'content.css',
+  'popup.html',
+  'popup.js',
+  'popup.css',
+  'sidepanel.html',
+  'sidepanel.js',
+  'sidepanel.css',
+  'content/detector.js',
+  'content/context-bar.js',
+  'content/concepts.js',
+  'content/ray-overlay.css',
+  'icons/icon16.png',
+  'icons/icon32.png',
+  'icons/icon48.png',
+  'icons/icon128.png',
+];
+
+const ExtensionPage = () => {
+  const [downloading, setDownloading] = useState<Target | null>(null);
+
+  const buildZip = async (target: Target) => {
+    setDownloading(target);
     try {
       const zip = new JSZip();
-      
-      // Fetch all extension files
-      const files = [
-        'manifest.json',
-        'background.js',
-        'content.js',
-        'content.css',
-        'popup.html',
-        'popup.js',
-        'popup.css',
-        'sidepanel.html',
-        'sidepanel.js',
-        'sidepanel.css',
-        'content/detector.js',
-        'content/context-bar.js',
-        'content/concepts.js',
-        'content/ray-overlay.css',
+      const manifestFile = target === "firefox" ? "manifest.firefox.json" : "manifest.json";
 
-        'icons/icon16.png',
-        'icons/icon32.png',
-        'icons/icon48.png',
-        'icons/icon128.png'
-      ];
+      const manifestRes = await fetch(`/wrayth-vault-extension/${manifestFile}`);
+      if (!manifestRes.ok) throw new Error("Manifest fetch failed");
+      const manifestText = await manifestRes.text();
+      zip.file("manifest.json", manifestText);
 
-
-      for (const file of files) {
+      for (const file of SHARED_FILES) {
         try {
           const response = await fetch(`/wrayth-vault-extension/${file}`);
           if (response.ok) {
-            const content = await response.blob();
-            zip.file(file, content);
+            zip.file(file, await response.blob());
           }
         } catch (e) {
           devLog.warn(`Could not fetch ${file}`, e);
@@ -57,145 +60,180 @@ const VaultExtension = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "wrayth-vault-extension.zip";
+      a.download = target === "firefox" ? "wrayth-firefox.zip" : "wrayth-chrome-edge.zip";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      
-      toast.success("Extension downloaded successfully!");
+
+      toast.success(`${target === "firefox" ? "Firefox" : "Chrome / Edge"} extension ready`);
     } catch (error) {
       console.error("Download failed:", error);
-      toast.error("Failed to download extension");
+      toast.error("Failed to build extension");
     } finally {
-      setIsDownloading(false);
+      setDownloading(null);
     }
   };
 
-  const steps = [
-    "Download the extension ZIP file",
-    "Extract the ZIP to a folder on your computer",
-    "Open Chrome/Edge and go to chrome://extensions or edge://extensions",
-    "Enable 'Developer mode' (toggle in top right)",
-    "Click 'Load unpacked' and select the extracted folder",
-    "The Vault icon will appear in your browser toolbar"
+  const chromiumSteps = [
+    "Download and unzip the file",
+    "Open chrome://extensions (or edge://extensions, brave://extensions)",
+    "Enable Developer mode in the top-right",
+    "Click 'Load unpacked' and select the unzipped folder",
+    "Pin Wrayth to your toolbar",
+  ];
+
+  const firefoxSteps = [
+    "Download and unzip the file",
+    "Open about:debugging in Firefox",
+    "Click 'This Firefox' → 'Load Temporary Add-on…'",
+    "Select the manifest.json inside the unzipped folder",
+    "Wrayth stays until Firefox restarts (permanent install ships via AMO)",
   ];
 
   return (
     <FeatureGate feature="vault">
-    <div className="space-y-6">
-      <div>
-        <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold">Browser Extension</h1>
-          <Badge variant="outline" className="bg-yellow-500/10 text-yellow-400 border-yellow-500/30 flex items-center gap-1">
-            <Beaker className="h-3 w-3" />
-            BETA
-          </Badge>
+      <div className="space-y-6">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold">Wrayth Browser Extension</h1>
+            <Badge variant="outline" className="bg-yellow-500/10 text-yellow-400 border-yellow-500/30 flex items-center gap-1">
+              <Beaker className="h-3 w-3" />
+              BETA
+            </Badge>
+          </div>
+          <p className="text-muted-foreground mt-1">
+            Ray in your browser — autofill, site trust, and identity awareness across every tab.
+          </p>
         </div>
-        <p className="text-muted-foreground mt-1">
-          Install the Vault extension for seamless autofill
-        </p>
-      </div>
 
-      {/* Beta Disclaimer */}
-      <Alert className="bg-yellow-500/10 border-yellow-500/30">
-        <AlertTriangle className="h-4 w-4 text-yellow-400" />
-        <AlertDescription className="text-yellow-200/80">
-          <span className="font-semibold text-yellow-400">Beta Software:</span> This extension is currently in development. 
-          While we've tested core functionality, you may encounter bugs or missing features. 
-          Please report any issues to our support team. Your vault data remains encrypted and secure.
-        </AlertDescription>
-      </Alert>
+        <Alert className="bg-yellow-500/10 border-yellow-500/30">
+          <AlertTriangle className="h-4 w-4 text-yellow-400" />
+          <AlertDescription className="text-yellow-200/80">
+            <span className="font-semibold text-yellow-400">Beta:</span> the extension is functional but not yet in the
+            Chrome Web Store, Edge Add-ons, or Firefox AMO. Install via developer mode for now — one-click store
+            installs are coming next.
+          </AlertDescription>
+        </Alert>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="border-primary/20">
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card className="border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Chrome className="h-5 w-5 text-primary" />
+                Chrome, Edge, Brave, Arc, Opera
+              </CardTitle>
+              <CardDescription>
+                All Chromium browsers. Includes the Ray side panel and every keyboard shortcut.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button
+                onClick={() => buildZip("chromium")}
+                disabled={downloading !== null}
+                className="w-full"
+                size="lg"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                {downloading === "chromium" ? "Preparing…" : "Download for Chrome / Edge"}
+              </Button>
+              <ol className="space-y-2">
+                {chromiumSteps.map((step, i) => (
+                  <li key={i} className="flex items-start gap-3 text-sm">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-medium flex items-center justify-center">
+                      {i + 1}
+                    </span>
+                    <span className="text-muted-foreground">{step}</span>
+                  </li>
+                ))}
+              </ol>
+              <p className="text-xs text-muted-foreground">Manifest V3 • Chrome 114+ • Edge 114+</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-orange-500/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Flame className="h-5 w-5 text-orange-400" />
+                Firefox
+              </CardTitle>
+              <CardDescription>
+                Native Firefox build. Uses the Firefox sidebar in place of the Chromium side panel.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button
+                onClick={() => buildZip("firefox")}
+                disabled={downloading !== null}
+                variant="outline"
+                className="w-full border-orange-500/40"
+                size="lg"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                {downloading === "firefox" ? "Preparing…" : "Download for Firefox"}
+              </Button>
+              <ol className="space-y-2">
+                {firefoxSteps.map((step, i) => (
+                  <li key={i} className="flex items-start gap-3 text-sm">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-500/10 text-orange-400 text-xs font-medium flex items-center justify-center">
+                      {i + 1}
+                    </span>
+                    <span className="text-muted-foreground">{step}</span>
+                  </li>
+                ))}
+              </ol>
+              <p className="text-xs text-muted-foreground">Manifest V3 • Firefox 121+</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Download className="h-5 w-5 text-primary" />
-              Download Extension
+              <CheckCircle2 className="h-5 w-5 text-green-500" />
+              What Ray does in your browser
             </CardTitle>
-            <CardDescription>
-              Get the Vault browser extension for Chrome and Edge
-            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-3">
-              <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg">
-                <Globe className="h-5 w-5" />
-                <span className="text-sm font-medium">Chrome</span>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg">
-                <Monitor className="h-5 w-5" />
-                <span className="text-sm font-medium">Edge</span>
-              </div>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                { title: "Auto-detect login forms", desc: "Ray finds username, password, and TOTP fields on every site." },
+                { title: "One-click autofill", desc: "Fill saved credentials without opening the vault." },
+                { title: "Encrypted vault sync", desc: "Syncs live with your Wrayth vault — AES-256, client-side keys." },
+                { title: "Save new logins", desc: "Ray prompts to save credentials when you sign up or change a password." },
+                { title: "Site trust in real time", desc: "Ray flags phishing, brand impersonation, and untrusted domains before you type." },
+                { title: "Explain this page", desc: "Ask Ray to translate any page — terms, forms, privacy policies — in plain English." },
+              ].map((f, i) => (
+                <div key={i} className="p-3 rounded-lg bg-muted/50">
+                  <h4 className="font-medium text-sm">{f.title}</h4>
+                  <p className="text-xs text-muted-foreground mt-1">{f.desc}</p>
+                </div>
+              ))}
             </div>
-            
-            <Button 
-              onClick={downloadExtension} 
-              disabled={isDownloading}
-              className="w-full"
-              size="lg"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              {isDownloading ? "Preparing download..." : "Download Extension (ZIP)"}
-            </Button>
-
-            <p className="text-xs text-muted-foreground">
-              Version 1.1.0 • Manifest V3 • Works on Chrome 88+ and Edge
-            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Installation Steps</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5 text-muted-foreground" />
+              Coming to the stores
+            </CardTitle>
             <CardDescription>
-              Follow these steps to install the extension
+              We're preparing signed submissions so you can install Wrayth with one click.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ol className="space-y-3">
-              {steps.map((step, index) => (
-                <li key={index} className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-medium flex items-center justify-center">
-                    {index + 1}
-                  </span>
-                  <span className="text-sm text-muted-foreground">{step}</span>
-                </li>
-              ))}
-            </ol>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li>• Chrome Web Store — review submission in progress</li>
+              <li>• Microsoft Edge Add-ons — same package, staged after Chrome</li>
+              <li>• Firefox AMO (addons.mozilla.org) — signing queued behind Chromium release</li>
+            </ul>
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-green-500" />
-            Extension Features
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              { title: "Auto-detect Login Forms", desc: "Automatically finds username and password fields" },
-              { title: "One-Click Autofill", desc: "Fill credentials with a single click" },
-              { title: "Secure Vault Sync", desc: "Syncs with your encrypted Vault vault" },
-              { title: "Save New Passwords", desc: "Prompts to save new credentials when you sign up" },
-              { title: "AES-256 Encryption", desc: "All data encrypted with your master password" },
-              { title: "Offline Access", desc: "Cached credentials work without internet" }
-            ].map((feature, i) => (
-              <div key={i} className="p-3 rounded-lg bg-muted/50">
-                <h4 className="font-medium text-sm">{feature.title}</h4>
-                <p className="text-xs text-muted-foreground mt-1">{feature.desc}</p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
     </FeatureGate>
   );
 };
 
-export default VaultExtension;
+export default ExtensionPage;
