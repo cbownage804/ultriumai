@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { isWraythDomain } from '@/utils/subdomain';
 import { useAuth } from '@/hooks/useAuth';
 import { getRayContext, type RayContext } from '@/lib/ray';
+import { dedupeRecs } from './recDedupe';
 
 function path(p: string) {
   return isWraythDomain() ? p : `/app${p}`;
