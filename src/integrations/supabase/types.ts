@@ -17407,6 +17407,60 @@ export type Database = {
         }
         Relationships: []
       }
+      ray_board_reports: {
+        Row: {
+          completed_at: string | null
+          content: string | null
+          cost_ray_compute: number
+          created_at: string
+          duration_ms: number | null
+          error: string | null
+          id: string
+          investigation_ids: string[]
+          model: string | null
+          org_id: string | null
+          period_days: number
+          status: string
+          title: string
+          totals: Json
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          content?: string | null
+          cost_ray_compute?: number
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          investigation_ids?: string[]
+          model?: string | null
+          org_id?: string | null
+          period_days?: number
+          status?: string
+          title?: string
+          totals?: Json
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          content?: string | null
+          cost_ray_compute?: number
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          investigation_ids?: string[]
+          model?: string | null
+          org_id?: string | null
+          period_days?: number
+          status?: string
+          title?: string
+          totals?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       ray_briefings: {
         Row: {
           bullets: Json
