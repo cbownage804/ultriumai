@@ -18970,6 +18970,69 @@ export type Database = {
         }
         Relationships: []
       }
+      ray_policies: {
+        Row: {
+          compute_credits: number
+          created_at: string
+          error: string | null
+          frameworks: string[]
+          id: string
+          jurisdiction: string | null
+          markdown: string | null
+          metadata: Json
+          model: string | null
+          org_id: string | null
+          organization_name: string | null
+          policy_type: string
+          sections: Json
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+          version: number
+        }
+        Insert: {
+          compute_credits?: number
+          created_at?: string
+          error?: string | null
+          frameworks?: string[]
+          id?: string
+          jurisdiction?: string | null
+          markdown?: string | null
+          metadata?: Json
+          model?: string | null
+          org_id?: string | null
+          organization_name?: string | null
+          policy_type: string
+          sections?: Json
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+          version?: number
+        }
+        Update: {
+          compute_credits?: number
+          created_at?: string
+          error?: string | null
+          frameworks?: string[]
+          id?: string
+          jurisdiction?: string | null
+          markdown?: string | null
+          metadata?: Json
+          model?: string | null
+          org_id?: string | null
+          organization_name?: string | null
+          policy_type?: string
+          sections?: Json
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+          version?: number
+        }
+        Relationships: []
+      }
       ray_profiles: {
         Row: {
           audience: string | null
