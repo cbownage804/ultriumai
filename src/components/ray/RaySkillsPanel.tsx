@@ -16,7 +16,8 @@ import {
   AlertTriangle,
   Activity,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { getRouteContext } from '@/lib/ray/routeContext';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
