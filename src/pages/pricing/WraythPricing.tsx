@@ -1,3 +1,8 @@
+/**
+ * Wrayth Pricing
+ * Repositioned around Ray + outcomes. Devices, identities, and organization
+ * capabilities define the plan — not scan counts, message counts, or minutes.
+ */
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,8 +36,12 @@ interface PlanCard {
   priceSuffix?: string;
   badge?: string;
   featured?: boolean;
+  /** Positive capabilities the plan includes (outcomes, not features). */
   features: string[];
-  usage: string[];
+  /** Physical limits that define the plan — devices, identities, seats. */
+  limits: string[];
+  /** What this plan doesn't include (helps buyers self-select up). */
+  notIncluded?: string[];
   cta: { label: string; to: string };
   ctaVariant?: 'default' | 'outline';
 }
@@ -42,17 +51,31 @@ const PLANS: PlanCard[] = [
     id: 'free',
     name: 'Free',
     icon: Shield,
-    tagline: 'Meet Ray. Start protecting yourself in minutes.',
+    tagline: 'For individuals who want to experience Ray.',
     price: '$0',
     badge: 'Free Forever',
     features: [
-      'Ray secures your passwords in a zero-knowledge vault',
-      'Ray scans links and files on demand',
-      'Ray watches the dark web for your email',
-      'Ray answers security questions in chat',
-      'Browser extension included',
+      'Ray AI Assistant',
+      'Security Score',
+      'Weekly Security Brief',
+      'Threat Analysis',
+      'Exposure Monitoring',
+      'Knowledge Assistant',
+      'Timeline',
     ],
-    usage: ['25 vault items', '5 scans / month', '25 Ray conversations / month'],
+    limits: [
+      '1 monitored device',
+      '2 monitored identities',
+      '10 URL scans / month',
+      '5 email analyses / month',
+    ],
+    notIncluded: [
+      'Teams & Slack',
+      'Device remediation',
+      'Recommendations engine',
+      'Organization Memory',
+      'Microsoft 365 monitoring',
+    ],
     cta: { label: 'Start Free', to: '/auth?mode=signup' },
     ctaVariant: 'outline',
   },
@@ -60,18 +83,32 @@ const PLANS: PlanCard[] = [
     id: 'pro',
     name: 'Pro',
     icon: Zap,
-    tagline: 'Ray, fully unlocked for power users.',
-    price: '$12',
-    priceSuffix: '/mo',
+    tagline: 'For individuals and power users who want the full endpoint story.',
+    price: '$15',
+    priceSuffix: '/month',
     features: [
-      'Ray secures unlimited passwords',
-      'Ray monitors your identity everywhere',
-      'Ray keeps your passwords healthy and rotates them',
-      'Ray explains every threat in plain English',
-      'Ray watches historical breach intelligence',
-      'Ray talks back — voice conversations',
+      'Everything in Free',
+      'Windows endpoint agent',
+      'AI Recommendations engine',
+      'Device timeline',
+      'Password monitoring',
+      'Browser extension analysis',
+      'Startup & software inventory',
+      'Windows Update monitoring',
+      'One-click safe remediations',
+      'Explain security score',
+      'Unlimited threat analysis',
     ],
-    usage: ['100 scans / month', '100 Ray conversations / month', '2 min Ray Voice / month'],
+    limits: [
+      '5 monitored devices',
+      '10 monitored identities',
+    ],
+    notIncluded: [
+      'Teams & Slack',
+      'Multi-user administration',
+      'Organization Memory',
+      'Microsoft 365 monitoring',
+    ],
     cta: { label: 'Start Pro', to: '/auth?mode=signup&plan=pro' },
     ctaVariant: 'outline',
   },
@@ -79,38 +116,60 @@ const PLANS: PlanCard[] = [
     id: 'business',
     name: 'Business',
     icon: Building2,
-    tagline: 'One AI security teammate for your whole team.',
-    price: '$24',
-    priceSuffix: '/user/mo',
-    badge: 'Most Popular · Best for Teams',
+    tagline: 'The flagship plan. One AI security teammate for the whole company.',
+    price: '$39',
+    priceSuffix: '/user/month',
+    badge: 'Most Popular',
     featured: true,
     features: [
-      'Everything in Pro, for every seat',
-      'Ray manages shared team vaults',
-      'Ray enforces roles and permissions',
-      'Ray keeps a full audit trail',
-      'Ray monitors threats across your team',
-      'White-label branding',
+      'Everything in Pro',
+      'Microsoft 365 security monitoring',
+      'Teams integration',
+      'Slack integration',
+      'Organization Memory',
+      'Company Knowledge Base',
+      'Daily & Weekly Executive Brief',
+      'Ray Organization Timeline',
+      'Approval workflows',
+      'Full device remediation',
+      'Risk approval system',
+      'Audit history',
+      'Release channels',
+      'Multiple administrators',
+      'White-label portal',
+      'Priority support',
     ],
-    usage: ['500 scans / month', '250 Ray conversations / month', 'Up to 20 team members'],
+    limits: [
+      'Unlimited monitored devices',
+      'Unlimited monitored identities',
+    ],
     cta: { label: 'Start Business', to: '/auth?mode=signup&plan=business' },
   },
   {
     id: 'enterprise',
     name: 'Enterprise',
     icon: Crown,
-    tagline: 'Built for enterprises, MSPs, governments, and regulated industries.',
-    price: 'Custom',
-    badge: 'Enterprise',
+    tagline: 'Governance, scale, and control for regulated organizations and MSPs.',
+    price: 'Contact Sales',
+    badge: 'Governance',
     features: [
       'Everything in Business',
-      'Ray integrates with SSO / SCIM (Entra, Okta)',
-      'Ray operates across MSP multi-tenant portals',
-      'Ray generates compliance reports (SOC 2, HIPAA)',
-      'Dedicated onboarding & priority SLAs',
-      'API access & custom integrations',
+      'SSO (SAML / OIDC)',
+      'SCIM provisioning',
+      'Multiple organizations & tenants',
+      'Advanced RBAC',
+      'Custom AI policies',
+      'Custom Ray skills',
+      'Private AI models',
+      'SIEM integration',
+      'API access',
+      'Custom compliance reports',
+      'Dedicated Success Manager',
+      'Private deployment (future)',
+      'Unlimited white-label',
+      'Unlimited admins & organizations',
     ],
-    usage: ['500+, 1000+, or unlimited seats', 'Custom scan & Ray capacity', 'Dedicated success manager'],
+    limits: [],
     cta: { label: 'Contact Sales', to: '/contact?interest=enterprise' },
     ctaVariant: 'outline',
   },
@@ -120,88 +179,110 @@ type Cell = boolean | string;
 
 const COMPARISON: { category: string; rows: { label: string; values: [Cell, Cell, Cell, Cell] }[] }[] = [
   {
-    category: 'Core Platform',
+    category: 'Coverage',
     rows: [
-      { label: 'Password Vault', values: ['25 items', 'Unlimited', 'Unlimited', 'Unlimited'] },
-      { label: 'Threat Scans', values: ['5 / mo', '100 / mo', '500 / mo', 'Custom'] },
-      { label: 'Dark Web Monitoring', values: ['Basic', true, true, true] },
-      { label: 'Identity Monitoring', values: [false, true, true, true] },
-      { label: 'Browser Extension', values: [true, true, true, true] },
+      { label: 'Monitored devices', values: ['1', '5', 'Unlimited', 'Unlimited'] },
+      { label: 'Monitored identities', values: ['2', '10', 'Unlimited', 'Unlimited'] },
+      { label: 'Users / seats', values: ['1', '1', 'Per seat', 'Unlimited'] },
     ],
   },
   {
-    category: 'Ray AI',
+    category: 'AI Security Analyst',
     rows: [
       { label: 'Ray AI Assistant', values: [true, true, true, true] },
-      { label: 'AI Threat Explanations', values: [false, true, true, true] },
-      { label: 'Ray Voice', values: [false, true, true, 'Custom'] },
-      { label: 'Ray Conversations', values: ['25 / mo', '100 / mo', '250 / mo', 'Custom'] },
+      { label: 'Security Score & explanations', values: [true, true, true, true] },
+      { label: 'AI Recommendations engine', values: [false, true, true, true] },
+      { label: 'Organization Memory', values: [false, false, true, true] },
+      { label: 'Company Knowledge Base', values: [false, false, true, true] },
     ],
   },
   {
-    category: 'Teams & Organizations',
+    category: 'Monitoring',
     rows: [
-      { label: 'Shared Vaults', values: [false, false, true, true] },
-      { label: 'Organization Management', values: [false, false, true, true] },
-      { label: 'Role-Based Access', values: [false, false, true, true] },
-      { label: 'Audit Logs', values: [false, false, true, true] },
-      { label: 'White-Label Branding', values: [false, false, true, true] },
+      { label: 'Threat Analysis', values: ['Limited', 'Unlimited', 'Unlimited', 'Unlimited'] },
+      { label: 'Exposure Monitoring', values: [true, true, true, true] },
+      { label: 'Password monitoring', values: [false, true, true, true] },
+      { label: 'Windows endpoint agent', values: [false, true, true, true] },
+      { label: 'Device timeline', values: [false, true, true, true] },
+      { label: 'Microsoft 365 monitoring', values: [false, false, true, true] },
     ],
   },
   {
-    category: 'Enterprise',
+    category: 'Remediation',
+    rows: [
+      { label: 'One-click safe fixes', values: [false, true, true, true] },
+      { label: 'Full device remediation', values: [false, false, true, true] },
+      { label: 'Approval workflows', values: [false, false, true, true] },
+      { label: 'Release channels', values: [false, false, true, true] },
+    ],
+  },
+  {
+    category: 'Collaboration',
+    rows: [
+      { label: 'Teams integration', values: [false, false, true, true] },
+      { label: 'Slack integration', values: [false, false, true, true] },
+      { label: 'Daily & Weekly Executive Brief', values: [false, false, true, true] },
+      { label: 'Multiple administrators', values: [false, false, true, true] },
+      { label: 'White-label portal', values: [false, false, true, 'Unlimited'] },
+    ],
+  },
+  {
+    category: 'Governance',
     rows: [
       { label: 'SSO / SCIM', values: [false, false, false, true] },
-      { label: 'MSP Multi-Tenant Portal', values: [false, false, false, true] },
-      { label: 'Compliance Reports', values: [false, false, false, true] },
-      { label: 'API Access', values: [false, false, false, true] },
-      { label: 'Custom Integrations', values: [false, false, false, true] },
-      { label: 'Dedicated Support', values: [false, false, false, true] },
+      { label: 'Multiple organizations & tenants', values: [false, false, false, true] },
+      { label: 'Advanced RBAC', values: [false, false, false, true] },
+      { label: 'Custom AI policies & Ray skills', values: [false, false, false, true] },
+      { label: 'Private AI models', values: [false, false, false, true] },
+      { label: 'SIEM integration', values: [false, false, false, true] },
+      { label: 'API access', values: [false, false, false, true] },
+      { label: 'Custom compliance reports', values: [false, false, false, true] },
+      { label: 'Dedicated Success Manager', values: [false, false, false, true] },
     ],
   },
 ];
 
 const FAQS = [
   {
+    question: 'What actually consumes Ray Compute?',
+    answer:
+      "Everyday Ray usage — chat, briefs, monitoring, recommendations, and standard threat analysis — is included with every plan. Ray Compute is only spent on premium AI horsepower like advanced threat investigations. You'll never wonder \"am I paying every time Ray helps me?\"",
+  },
+  {
+    question: 'Why is there no per-message or per-scan limit on paid plans?',
+    answer:
+      "Because a security platform shouldn't make you ration protection. Paid plans include unlimited threat analysis. We scale plans by monitored devices, monitored identities, and organization capabilities — not by counting messages.",
+  },
+  {
     question: 'Can I upgrade later?',
     answer:
-      'Yes. You can upgrade or downgrade at any time from your billing settings. Upgrades are prorated instantly, and downgrades take effect at the end of your billing cycle.',
+      'Yes. Upgrade or downgrade any time from your billing settings. Upgrades are prorated instantly, downgrades take effect at the end of your billing cycle.',
   },
   {
     question: 'Can I cancel anytime?',
     answer:
-      'Absolutely. There are no long-term contracts on Pro or Business. Cancel from your billing portal and you keep access through the end of your paid period.',
+      'Absolutely. No long-term contracts on Pro or Business. Cancel from your billing portal and you keep access through the end of your paid period.',
   },
   {
-    question: 'How is my data encrypted?',
+    question: 'How is my data protected?',
     answer:
-      'Wrayth uses zero-knowledge, device-local encryption. Your vault is encrypted with a key derived from your master password using PBKDF2 (600,000 iterations). We never see your data — not your passwords, not your notes, not your keys.',
+      "Wrayth uses zero-knowledge, device-local encryption for anything sensitive. Ray watches your security posture — not your files, photos, documents, emails, camera, microphone, or keystrokes.",
   },
   {
-    question: 'What happens if I exceed my scan limit?',
+    question: 'How does Business differ from Enterprise?',
     answer:
-      'Ray will let you know and pause additional scans until the next billing cycle. You can upgrade instantly to unlock more capacity — no interruptions to your saved data or monitoring.',
+      "Business is the flagship plan for companies that want the full AI security teammate across their whole team — M365, Teams, Slack, Org Memory, white-label. Enterprise is a governance package on top: SSO, SCIM, multi-org, RBAC, custom AI policies, SIEM, compliance reporting, dedicated CSM.",
   },
   {
     question: 'Do you offer student or nonprofit discounts?',
     answer:
       'Yes. We offer 50% off Pro for verified students and qualifying nonprofits. Contact support@wrayth.com from your institutional email to get started.',
   },
-  {
-    question: 'How does Business differ from Enterprise?',
-    answer:
-      'Business is designed for teams up to ~20 people who need shared vaults, RBAC, and audit logs. Enterprise adds SSO/SCIM, multi-tenant MSP capabilities, compliance reporting, API access, and dedicated onboarding — built for organizations with hundreds or thousands of users.',
-  },
-  {
-    question: 'Is there a free trial for paid plans?',
-    answer:
-      'The Free plan is available forever with no time limit. For Pro and Business, we offer a 14-day money-back guarantee on your first subscription.',
-  },
 ];
 
 const TRUST_LINE = [
-  { icon: Lock, label: 'Zero-Knowledge Encryption' },
-  { icon: Sparkles, label: 'AI-Powered Protection' },
+  { icon: Lock, label: 'Privacy by design' },
+  { icon: Sparkles, label: 'AI-Powered Security' },
   { icon: Globe, label: 'Cross-Platform' },
 ];
 
@@ -233,11 +314,13 @@ export default function WraythPricing() {
         <div className="text-center max-w-3xl mx-auto">
           <Badge className="mb-4">Pricing</Badge>
           <h1 className="text-4xl md:text-6xl font-bold mb-6 tracking-tight">
-            Protection that grows with you
+            An AI security analyst
+            <br className="hidden md:block" /> that scales with your team
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground mb-6">
-            Every plan includes Vault, Scan, Watch, and Ray — your AI security teammate.
-            Upgrade as your security needs expand.
+            Wrayth continuously monitors your security posture, watches for threats, explains
+            risks in plain English, and helps you fix them — all through Ray, your AI security
+            analyst. Plans scale by monitored devices, identities, and organization capabilities.
           </p>
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
             {TRUST_LINE.map(({ icon: Icon, label }) => (
@@ -286,7 +369,21 @@ export default function WraythPricing() {
                   <CardDescription className="mt-2">{plan.tagline}</CardDescription>
                 </CardHeader>
                 <CardContent className="flex-1 flex flex-col pt-0">
-                  <div className="border-t border-border/50 pt-4">
+                  {plan.limits.length > 0 && (
+                    <div className="border-t border-border/50 pt-4">
+                      <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1.5">
+                        Coverage
+                      </p>
+                      <ul className="space-y-0.5">
+                        {plan.limits.map((u, i) => (
+                          <li key={i} className="text-xs text-muted-foreground">
+                            {u}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <div className="mt-4 pt-4 border-t border-border/50">
                     <ul className="space-y-2">
                       {plan.features.map((f, i) => (
                         <li key={i} className="flex items-start gap-2 text-sm">
@@ -296,18 +393,21 @@ export default function WraythPricing() {
                       ))}
                     </ul>
                   </div>
-                  <div className="mt-4 pt-4 border-t border-border/50">
-                    <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1.5">
-                      Usage
-                    </p>
-                    <ul className="space-y-0.5">
-                      {plan.usage.map((u, i) => (
-                        <li key={i} className="text-xs text-muted-foreground">
-                          {u}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                  {plan.notIncluded && plan.notIncluded.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-border/50">
+                      <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1.5">
+                        Not included
+                      </p>
+                      <ul className="space-y-1">
+                        {plan.notIncluded.map((n, i) => (
+                          <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
+                            <Minus className="h-3 w-3 mt-0.5 shrink-0" />
+                            <span>{n}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                   <div className="mt-4 pt-4 border-t border-border/50">
                     <Button
                       asChild
@@ -344,16 +444,16 @@ export default function WraythPricing() {
       {/* Comparison */}
       <section className="container mx-auto px-4 py-20 border-t border-border/50">
         <div className="text-center max-w-2xl mx-auto mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Compare every feature</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Compare every capability</h2>
           <p className="text-muted-foreground">
-            The full picture of what's included in each plan.
+            Grouped by outcome — coverage, intelligence, monitoring, remediation, collaboration, governance.
           </p>
         </div>
         <div className="max-w-6xl mx-auto overflow-x-auto">
           <table className="w-full min-w-[720px] border-separate border-spacing-0">
             <thead className="sticky top-0 bg-background">
               <tr>
-                <th className="text-left py-4 px-4 font-medium text-sm w-1/3">Feature</th>
+                <th className="text-left py-4 px-4 font-medium text-sm w-1/3">Capability</th>
                 {['Free', 'Pro', 'Business', 'Enterprise'].map((name) => (
                   <th
                     key={name}
@@ -428,11 +528,12 @@ export default function WraythPricing() {
       <section className="container mx-auto px-4 py-24 border-t border-border/50">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl md:text-5xl font-bold mb-6 tracking-tight">
-            Ready to meet Ray?
+            Your AI security analyst never sleeps.
           </h2>
           <p className="text-lg text-muted-foreground mb-8">
-            Put an AI security teammate on your side — watching your vault, your identity,
-            and the dark web, 24/7.
+            Ray continuously monitors your devices, identities, and Microsoft 365 tenant.
+            It explains what matters, recommends what to fix, and remediates approved issues
+            in seconds.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button asChild size="lg">
