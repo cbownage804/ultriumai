@@ -11,6 +11,7 @@ import { RayActivityTicker } from '@/components/ray/RayActivityTicker';
 import { RayContextBridge } from '@/components/ray/RayContextBridge';
 import { ThreatScanInput } from '@/components/ray/ThreatScanInput';
 import { ThreatAllClearCard } from '@/components/ray/ThreatAllClearCard';
+import { ThreatsRayBrief } from '@/components/ray/ThreatsRayBrief';
 
 export default function WraythScan() {
   return (
@@ -29,6 +30,8 @@ export default function WraythScan() {
             ],
           }}
         />
+
+        <ThreatsRayBrief />
 
         <div className="wrayth-chamfer border border-border bg-card/60 px-4 py-3">
           <RayActivityTicker context="threats" />

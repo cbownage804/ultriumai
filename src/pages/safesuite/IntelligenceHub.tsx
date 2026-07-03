@@ -20,6 +20,7 @@ import {
   ScanSearch, Bug, FileText, ClipboardCheck, ShieldCheck, ShieldAlert, Terminal, FileWarning,
   GitBranch, Network, Sparkles, Coins, Brain, ArrowUpRight, History, BookOpen, Layers, Briefcase,
 } from 'lucide-react';
+import { IntelligenceRayBrief } from '@/components/ray/IntelligenceRayBrief';
 
 type Tile = {
   id: string;
@@ -177,6 +178,8 @@ export default function IntelligenceHub() {
           {stats.shipped} of {stats.total} modules live · new modules ship every sprint
         </div>
       </div>
+
+      <IntelligenceRayBrief />
 
       {/* Module tiles */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">

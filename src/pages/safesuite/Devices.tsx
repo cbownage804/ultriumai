@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { RayPageHeader } from '@/components/ray/RayPageHeader';
 import { RayConversationCard } from '@/components/ray/RayConversationCard';
+import { DevicesRayBrief } from '@/components/ray/DevicesRayBrief';
 import { cn } from '@/lib/utils';
 
 interface DeviceRow {
@@ -120,6 +121,8 @@ export default function Devices() {
         title="Devices"
         description="Every place I've seen you sign in from."
       />
+
+      <DevicesRayBrief deviceCount={devices.length} />
 
       <RayConversationCard context="devices" />
 
