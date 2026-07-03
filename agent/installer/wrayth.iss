@@ -68,9 +68,22 @@ Filename: "{app}\WraythService.exe"; Parameters: "uninstall"; Flags: runhidden w
 Filename: "powershell.exe"; \
   Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$marker = '{tmp}\wrayth-agent-reboot-required.flag'; if (Get-Service -Name '{#MyServiceName}' -ErrorAction SilentlyContinue) {{ & sc.exe delete '{#MyServiceName}' | Out-Null; for ($i = 0; $i -lt 20; $i++) {{ Start-Sleep -Milliseconds 500; if (-not (Get-Service -Name '{#MyServiceName}' -ErrorAction SilentlyContinue)) {{ break }} }}; if (Get-Service -Name '{#MyServiceName}' -ErrorAction SilentlyContinue) {{ Set-Content -Path $marker -Value 'Service deletion is pending reboot.' -Encoding ASCII }} }}"""; \
   Flags: runhidden waituntilterminated; RunOnceId: "ScDeleteWraythSvc"
+; Wait for the WraythAgent / WraythService processes AND their open file
+; handles to actually release, then retry-delete the on-disk files that
+; Inno's built-in [UninstallDelete] sweep otherwise trips over ("Some
+; elements could not be removed. These can be removed manually.").
+; We loop up to ~15s so slow log flushes / AV scanners get a chance.
+Filename: "powershell.exe"; \
+  Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$ErrorActionPreference='SilentlyContinue'; for ($i = 0; $i -lt 30; $i++) {{ $p = Get-Process -Name 'WraythService','WraythAgent'; if (-not $p) {{ break }}; Stop-Process -InputObject $p -Force; Start-Sleep -Milliseconds 500 }}; $targets = @('{app}\WraythAgent.exe','{app}\WraythService.exe','{app}\WraythService.xml','{app}\install-wrayth-service.ps1'); Get-ChildItem -Path '{app}' -Filter 'WraythService*.log' -ErrorAction SilentlyContinue | ForEach-Object {{ $targets += $_.FullName }}; Get-ChildItem -Path '{app}' -Filter 'WraythService*.wrapper.log' -ErrorAction SilentlyContinue | ForEach-Object {{ $targets += $_.FullName }}; foreach ($t in $targets) {{ for ($j = 0; $j -lt 10; $j++) {{ if (-not (Test-Path -LiteralPath $t)) {{ break }}; try {{ Remove-Item -LiteralPath $t -Force -ErrorAction Stop }} catch {{ Start-Sleep -Milliseconds 400 }} }} }}; Get-ChildItem -Path '{commonappdata}\Wrayth\logs' -File -ErrorAction SilentlyContinue | ForEach-Object {{ for ($j = 0; $j -lt 10; $j++) {{ try {{ Remove-Item -LiteralPath $_.FullName -Force -ErrorAction Stop; break }} catch {{ Start-Sleep -Milliseconds 400 }} }} }}"""; \
+  Flags: runhidden waituntilterminated; RunOnceId: "WraythReleaseHandles"
 
 [UninstallDelete]
+; Both {app} and the ProgramData tree — the retry loop above already tried
+; hard, but this catches anything the loop didn't know about (e.g. rotated
+; log files or ancillary files added by future versions).
 Type: filesandordirs; Name: "{commonappdata}\Wrayth"
+Type: filesandordirs; Name: "{app}\WraythService*.log"
+Type: filesandordirs; Name: "{app}\WraythService*.wrapper.log"
 
 [Code]
 var
