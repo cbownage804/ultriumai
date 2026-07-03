@@ -563,28 +563,60 @@ function renderMarkdown(p: PolicyRow): string {
   return parts.join('\n');
 }
 
+/**
+ * Canonical section order enforced on every exported policy so downstream
+ * reviewers, auditors, and GRC tooling always see the same shape:
+ *   1. Purpose  2. Scope  3. Controls  4. Procedures  5. Exceptions  6. References
+ * Roles & Responsibilities and Definitions are inserted only when populated so
+ * they never break the six-section contract.
+ */
+const PROCEDURE_HINTS = /(procedure|process|workflow|runbook|playbook|steps?|response|handling|operation|lifecycle|onboard|offboard|escalat|containment|recovery|restore|drill)/i;
+
+function classifySections(sections: PolicySection[]) {
+  const controls: PolicySection[] = [];
+  const procedures: PolicySection[] = [];
+  sections.forEach(s => {
+    const h = (s.heading ?? '').toLowerCase();
+    if (PROCEDURE_HINTS.test(h)) procedures.push(s);
+    else controls.push(s);
+  });
+  return { controls, procedures };
+}
+
 function buildDocx(p: PolicyRow): Document {
   const m = p.metadata ?? {};
   const children: Paragraph[] = [];
 
-  const h = (text: string, level: (typeof HeadingLevel)[keyof typeof HeadingLevel]) =>
+  const h1 = (text: string) =>
     new Paragraph({
-      heading: level,
-      spacing: { before: 240, after: 120 },
-      children: [new TextRun({ text })],
+      heading: HeadingLevel.HEADING_1,
+      spacing: { before: 320, after: 140 },
+      children: [new TextRun({ text, bold: true })],
     });
-  const p1 = (text: string) =>
+  const h2 = (text: string) =>
+    new Paragraph({
+      heading: HeadingLevel.HEADING_2,
+      spacing: { before: 200, after: 100 },
+      children: [new TextRun({ text, bold: true })],
+    });
+  const para = (text: string) =>
     new Paragraph({
       spacing: { after: 120 },
       children: [new TextRun({ text })],
     });
-  const bullet = (text: string) =>
+  const bullet = (runs: TextRun[]) =>
     new Paragraph({
       numbering: { reference: 'bullets', level: 0 },
-      children: [new TextRun({ text })],
+      spacing: { after: 60 },
+      children: runs,
+    });
+  const muted = (text: string) =>
+    new Paragraph({
+      spacing: { after: 160 },
+      children: [new TextRun({ text, italics: true, size: 18, color: '666666' })],
     });
 
-  // Title
+  // ----- Title block --------------------------------------------------------
   children.push(new Paragraph({
     alignment: AlignmentType.CENTER,
     spacing: { after: 200 },
@@ -596,86 +628,172 @@ function buildDocx(p: PolicyRow): Document {
   if (m.version) meta.push(`Version: ${m.version}`);
   if (m.effective_date) meta.push(`Effective: ${m.effective_date}`);
   if (m.review_cycle) meta.push(`Review cycle: ${m.review_cycle}`);
-  if (p.frameworks?.length) meta.push(`Frameworks: ${p.frameworks.join(', ')}`);
+  if (p.jurisdiction) meta.push(`Jurisdiction: ${p.jurisdiction}`);
   if (meta.length) {
     children.push(new Paragraph({
       alignment: AlignmentType.CENTER,
-      spacing: { after: 240 },
+      spacing: { after: 320 },
       children: [new TextRun({ text: meta.join('  \u2022  '), italics: true, size: 20, color: '666666' })],
     }));
   }
 
-  if (m.executive_summary) {
-    children.push(h('Executive Summary', HeadingLevel.HEADING_1));
-    children.push(p1(m.executive_summary));
-  }
-  if (m.scope) {
-    children.push(h('Scope', HeadingLevel.HEADING_1));
-    children.push(p1(m.scope));
-  }
+  const { controls: controlSections, procedures: procedureSections } = classifySections(p.sections ?? []);
+
+  // ----- 1. Purpose ---------------------------------------------------------
+  children.push(h1('1. Purpose'));
+  children.push(para(
+    m.executive_summary?.trim()
+      || `This ${p.title} defines the mandatory requirements, responsibilities, and controls that ${p.organization_name || 'the organization'} follows to reduce risk and meet ${p.frameworks?.join(', ') || 'applicable'} obligations.`
+  ));
+
+  // ----- 2. Scope -----------------------------------------------------------
+  children.push(h1('2. Scope'));
+  children.push(para(
+    m.scope?.trim()
+      || 'This policy applies to all employees, contractors, systems, applications, and data owned or operated by the organization, regardless of location or hosting model.'
+  ));
   if (Array.isArray(m.roles) && m.roles.length) {
-    children.push(h('Roles & Responsibilities', HeadingLevel.HEADING_1));
+    children.push(h2('Roles & Responsibilities'));
     m.roles.forEach(r => {
-      children.push(new Paragraph({
-        numbering: { reference: 'bullets', level: 0 },
-        children: [
-          new TextRun({ text: `${r.role ?? ''}: `, bold: true }),
-          new TextRun({ text: r.responsibility ?? '' }),
-        ],
-      }));
+      children.push(bullet([
+        new TextRun({ text: `${r.role ?? 'Role'}: `, bold: true }),
+        new TextRun({ text: r.responsibility ?? '' }),
+      ]));
     });
   }
 
-  p.sections.forEach((s, i) => {
-    children.push(h(`${i + 1}. ${s.heading ?? 'Section'}`, HeadingLevel.HEADING_1));
-    (s.clauses ?? []).forEach((c, j) => {
-      children.push(new Paragraph({
-        spacing: { after: 100 },
-        children: [
-          new TextRun({ text: `${c.id || `${i + 1}.${j + 1}`}  `, bold: true }),
-          new TextRun({ text: c.text ?? '' }),
-        ],
-      }));
+  // ----- 3. Controls --------------------------------------------------------
+  children.push(h1('3. Controls'));
+  if (controlSections.length === 0) {
+    children.push(para('No prescriptive controls were generated for this policy. Review with your security team before publication.'));
+  } else {
+    controlSections.forEach((s, i) => {
+      children.push(h2(`3.${i + 1} ${s.heading ?? 'Control Set'}`));
+      (s.clauses ?? []).forEach((c, j) => {
+        children.push(new Paragraph({
+          spacing: { after: 100 },
+          children: [
+            new TextRun({ text: `${c.id || `3.${i + 1}.${j + 1}`}  `, bold: true }),
+            new TextRun({ text: c.text ?? '' }),
+          ],
+        }));
+      });
+      if (s.controls?.length) {
+        children.push(muted(
+          `Mapped controls: ${s.controls.map(c => `${c.framework ?? ''} ${c.id ?? ''}`.trim()).filter(Boolean).join(', ')}`
+        ));
+      }
     });
-    if (s.controls?.length) {
-      children.push(new Paragraph({
-        spacing: { after: 160 },
-        children: [
-          new TextRun({
-            text: `Controls: ${s.controls.map(c => `${c.framework ?? ''} ${c.id ?? ''}`.trim()).join(', ')}`,
-            italics: true, size: 18, color: '666666',
-          }),
-        ],
-      }));
-    }
-  });
+  }
 
-  if (m.enforcement) {
-    children.push(h('Enforcement', HeadingLevel.HEADING_1));
-    children.push(p1(m.enforcement));
+  // ----- 4. Procedures ------------------------------------------------------
+  children.push(h1('4. Procedures'));
+  if (procedureSections.length === 0) {
+    children.push(para('Operational procedures for enforcing this policy are maintained in the corresponding runbooks. Document owners must review procedures at least annually.'));
+  } else {
+    procedureSections.forEach((s, i) => {
+      children.push(h2(`4.${i + 1} ${s.heading ?? 'Procedure'}`));
+      (s.clauses ?? []).forEach((c, j) => {
+        children.push(new Paragraph({
+          spacing: { after: 100 },
+          children: [
+            new TextRun({ text: `${c.id || `4.${i + 1}.${j + 1}`}  `, bold: true }),
+            new TextRun({ text: c.text ?? '' }),
+          ],
+        }));
+      });
+      if (s.controls?.length) {
+        children.push(muted(
+          `Mapped controls: ${s.controls.map(c => `${c.framework ?? ''} ${c.id ?? ''}`.trim()).filter(Boolean).join(', ')}`
+        ));
+      }
+    });
   }
-  if (m.exceptions) {
-    children.push(h('Exceptions', HeadingLevel.HEADING_1));
-    children.push(p1(m.exceptions));
+
+  // ----- 5. Exceptions ------------------------------------------------------
+  children.push(h1('5. Exceptions'));
+  children.push(para(
+    m.exceptions?.trim()
+      || 'Exceptions to this policy require written approval from the policy owner and the CISO (or designated security lead). All exceptions must be documented with a business justification, compensating controls, and an expiration date not to exceed twelve (12) months.'
+  ));
+  if (m.enforcement?.trim()) {
+    children.push(h2('Enforcement'));
+    children.push(para(m.enforcement));
   }
+
+  // ----- 6. References ------------------------------------------------------
+  children.push(h1('6. References'));
+
+  if (p.frameworks?.length) {
+    children.push(h2('Frameworks'));
+    p.frameworks.forEach(f => {
+      children.push(bullet([new TextRun({ text: f })]));
+    });
+  }
+
+  const allControls = (p.sections ?? []).flatMap(s => s.controls ?? []);
+  if (allControls.length) {
+    children.push(h2('Control Mappings'));
+    const seen = new Set<string>();
+    allControls.forEach(c => {
+      const key = `${c.framework ?? ''}|${c.id ?? ''}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      children.push(bullet([
+        new TextRun({ text: `${c.framework ?? ''} ${c.id ?? ''}`.trim(), bold: true }),
+        ...(c.why ? [new TextRun({ text: ` — ${c.why}` })] : []),
+      ]));
+    });
+  }
+
   if (Array.isArray(m.definitions) && m.definitions.length) {
-    children.push(h('Definitions', HeadingLevel.HEADING_1));
+    children.push(h2('Definitions'));
     m.definitions.forEach(d => {
-      children.push(new Paragraph({
-        numbering: { reference: 'bullets', level: 0 },
-        children: [
-          new TextRun({ text: `${d.term ?? ''}: `, bold: true }),
-          new TextRun({ text: d.definition ?? '' }),
-        ],
-      }));
+      children.push(bullet([
+        new TextRun({ text: `${d.term ?? ''}: `, bold: true }),
+        new TextRun({ text: d.definition ?? '' }),
+      ]));
     });
   }
+
+  if (Array.isArray(m.revision_history) && m.revision_history.length) {
+    children.push(h2('Revision History'));
+    m.revision_history.forEach(r => {
+      children.push(bullet([
+        new TextRun({ text: `v${r.version ?? '?'} `, bold: true }),
+        new TextRun({ text: `(${r.date ?? 'n/d'}) — ${r.note ?? ''}` }),
+      ]));
+    });
+  }
+
+  // Always leave a "generated by" trailer so re-imports are traceable.
+  children.push(new Paragraph({
+    spacing: { before: 320 },
+    alignment: AlignmentType.CENTER,
+    children: [new TextRun({
+      text: `Generated by Ray \u00b7 Wrayth \u2014 policy id ${p.id}`,
+      italics: true, size: 16, color: '999999',
+    })],
+  }));
 
   return new Document({
-    creator: 'Ray · Wrayth',
+    creator: 'Ray \u00b7 Wrayth',
     title: p.title,
+    description: `${p.policy_type} policy${p.organization_name ? ` for ${p.organization_name}` : ''}`,
     styles: {
       default: { document: { run: { font: 'Arial', size: 22 } } },
+      paragraphStyles: [
+        {
+          id: 'Heading1', name: 'Heading 1', basedOn: 'Normal', next: 'Normal', quickFormat: true,
+          run: { size: 30, bold: true, font: 'Arial', color: '111827' },
+          paragraph: { spacing: { before: 320, after: 140 }, outlineLevel: 0 },
+        },
+        {
+          id: 'Heading2', name: 'Heading 2', basedOn: 'Normal', next: 'Normal', quickFormat: true,
+          run: { size: 26, bold: true, font: 'Arial', color: '1f2937' },
+          paragraph: { spacing: { before: 200, after: 100 }, outlineLevel: 1 },
+        },
+      ],
     },
     numbering: {
       config: [
