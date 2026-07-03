@@ -206,6 +206,7 @@ export default function RaySkillsPanel() {
   const navigate = useNavigate();
   const location = useLocation();
   const route = useMemo(() => getRouteContext(location.pathname), [location.pathname]);
+  const liveActivity = useLiveActivity(user?.id);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
