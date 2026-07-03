@@ -229,8 +229,9 @@ export default function WraythFeatures() {
       <section id="scan" className="border-b border-border bg-red-500/[0.02] py-24 px-4">
         <div className="mx-auto max-w-6xl">
           <div className="mb-12 max-w-2xl">
-            <Badge className="mb-4 bg-red-500/10 text-red-500 border-0">Scan</Badge>
-            <h2 className="mb-3 text-4xl font-bold">Scan</h2>
+            <Badge className="mb-4 bg-red-500/10 text-red-500 border-0">Threat Analysis</Badge>
+            <h2 className="mb-3 text-4xl font-bold">Threat Analysis</h2>
+
             <p className="text-lg text-muted-foreground">
               Instantly analyze anything suspicious. Get a verdict, an explanation, and a next step.
             </p>
