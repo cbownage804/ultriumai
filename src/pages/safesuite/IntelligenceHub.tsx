@@ -21,6 +21,7 @@ import {
   GitBranch, Network, Sparkles, Coins, Brain, ArrowUpRight, History, BookOpen, Layers, Briefcase,
 } from 'lucide-react';
 import { IntelligenceRayBrief } from '@/components/ray/IntelligenceRayBrief';
+import { HowIProtectYouCard } from '@/components/ray/HowIProtectYouCard';
 
 type Tile = {
   id: string;
