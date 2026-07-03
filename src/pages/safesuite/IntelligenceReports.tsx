@@ -100,14 +100,15 @@ export default function IntelligenceReports() {
           <div className="flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-muted-foreground">
             <Sparkles className="h-3.5 w-3.5 text-[hsl(262_60%_70%)]" /> Wrayth Intelligence
           </div>
-          <h1 className="text-2xl sm:text-3xl font-semibold mt-1">Board Reports</h1>
+          <h1 className="text-2xl sm:text-3xl font-semibold mt-1">Executive Reports</h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-            Ray reads every completed investigation in the period and writes a board-ready summary — what happened, what
-            it means, and what still needs attention.
+            Ray draws from the entire knowledge graph — investigations, attack paths, compliance posture,
+            open recommendations, MITRE techniques, and resurfaced IOCs — and writes a leadership-ready
+            report you can hand to the board.
           </p>
         </div>
         <Badge variant="outline" className="gap-1.5 rounded-sm">
-          <Coins className="h-3.5 w-3.5" /> 5 Ray Compute / report
+          <Coins className="h-3.5 w-3.5" /> 8 Ray Compute / report
         </Badge>
       </div>
 
@@ -136,7 +137,7 @@ export default function IntelligenceReports() {
           <p className="text-xs text-muted-foreground">Ray only reads your own investigations — no third parties involved.</p>
           <Button onClick={generate} disabled={loading} className="gap-2 min-h-[40px]">
             {loading ? <><Brain className="h-4 w-4 animate-pulse" /> Ray is writing…</>
-              : <><Presentation className="h-4 w-4" /> Generate report (5 RC)</>}
+              : <><Presentation className="h-4 w-4" /> Generate report (8 RC)</>}
           </Button>
         </div>
       </Card>
@@ -191,10 +192,10 @@ function EmptyState() {
       <div className="mx-auto h-12 w-12 rounded-full bg-[hsl(262_60%_64%/0.1)] flex items-center justify-center mb-3">
         <Presentation className="h-6 w-6 text-[hsl(262_60%_70%)]" />
       </div>
-      <h3 className="text-base font-medium">Generate your first board report</h3>
+      <h3 className="text-base font-medium">Generate your first executive report</h3>
       <p className="text-sm text-muted-foreground max-w-md mx-auto mt-1">
-        Pick a reporting period above and Ray will synthesise every investigation in that window into a single
-        leadership-ready summary.
+        Pick a reporting period above and Ray will synthesise investigations, attack paths, compliance
+        posture, MITRE observations, and open recommendations into a leadership-ready summary.
       </p>
     </Card>
   );
@@ -230,7 +231,7 @@ function ReportView({ report, onDelete }: { report: BoardReport; onDelete: () =>
       exportFollowupPdf(report.content, {
         title: report.title,
         subtitle: `${t.total ?? 0} investigation${(t.total ?? 0) === 1 ? '' : 's'} · generated ${new Date(report.created_at).toLocaleString()}`,
-        kicker: 'BOARD REPORT',
+        kicker: 'EXECUTIVE REPORT',
       });
       toast.success('PDF exported.');
     } catch (e) {
@@ -243,7 +244,7 @@ function ReportView({ report, onDelete }: { report: BoardReport; onDelete: () =>
     <Card className="overflow-hidden">
       <div className="p-5 border-b border-border flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Board report</div>
+          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Executive report</div>
           <div className="text-lg font-semibold mt-0.5 truncate">{report.title}</div>
         </div>
         <div className="flex items-center gap-1">

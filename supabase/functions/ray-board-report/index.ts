@@ -16,31 +16,44 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
-const COST = 5;
+const COST = 8;
 const MODEL = "google/gemini-2.5-flash";
 
 const RAY_SYSTEM = `You are Ray, the AI security analyst inside Wrayth.
-You are writing a board-level report summarising the security investigations
-run during a reporting period. Voice: calm, precise, first-person plural
-("we investigated", "we recommend"), plain English, zero jargon unless
-essential. Never invent investigations, IOCs, or verdicts beyond what the
-input contains. If the period was quiet, say so plainly.
+You are writing an executive-grade security report drawn from the full
+knowledge graph: investigations, attack paths, compliance posture, open
+recommendations, and the MITRE ATT&CK techniques Ray has observed. Voice:
+calm, precise, first-person plural ("we investigated", "we recommend"),
+plain English for the executive sections, technical for the appendix.
+Never invent investigations, IOCs, scores, techniques, or verdicts that
+are not in the input. If the period was quiet, say so plainly.
 
 Return clean Markdown with these sections in order:
-# Board Report — <period label>
+# Executive Report — <period label>
 ## Executive summary
-2-4 sentences.
+3-5 sentences. Lead with the risk score and trajectory. Name the single
+most important thing leadership should know this period.
+## Risk posture
+Current risk score, delta vs previous, compliance %, and a one-line
+interpretation. If any are missing, say "not yet measured".
 ## By the numbers
-Bulleted list: total investigations, verdict breakdown, notable trends.
-## Notable investigations
-For each of up to 5 most significant cases: bold title, one-sentence what,
-one-sentence why-it-matters.
+Bulleted list: total investigations, verdict breakdown, attack paths
+reasoned, open recommendations, high-severity items.
+## Attack timeline
+Chronological bullets (oldest → newest, dates in short form) of the most
+significant events in the period. Skip if none.
+## MITRE summary
+Grouped bullets of the ATT&CK techniques observed and how often. Skip if
+none were tagged.
+## Open risks
+The recommendations and gaps still outstanding, ranked by severity.
 ## What we did
-Concrete response actions taken or recommended.
-## What still needs attention
-Open items, follow-ups, or gaps.
-## Recommendations for the board
-3-5 short, decision-oriented bullets.
+Concrete response actions taken or investigations resolved.
+## Recommendations for leadership
+3-5 short, decision-oriented bullets tied to business impact.
+## Technical appendix
+Compact table-style bullets: notable IOCs, affected assets, and case IDs
+for auditors. Keep under ~15 lines.
 
 No preamble, no chain-of-thought, no code fences around the Markdown.`;
 
@@ -53,6 +66,7 @@ type Inv = {
   confidence_score: number | null;
   summary: string | null;
   executive_summary: string | null;
+  mitre: unknown;
   created_at: string;
 };
 
@@ -82,7 +96,7 @@ serve(async (req) => {
   const since = new Date(Date.now() - period_days * 86_400_000).toISOString();
   const { data: invs } = await admin
     .from("ray_investigations")
-    .select("id, input_type, input_label, verdict, confidence, confidence_score, summary, executive_summary, created_at")
+    .select("id, input_type, input_label, verdict, confidence, confidence_score, summary, executive_summary, mitre, created_at")
     .eq("user_id", userId)
     .eq("status", "complete")
     .gte("created_at", since)
@@ -103,6 +117,54 @@ serve(async (req) => {
   const periodLabel = period_days === 7 ? "Last 7 days"
     : period_days === 90 ? "Last 90 days" : "Last 30 days";
 
+  // Broader knowledge-graph pull for the executive report.
+  const [pathsRes, recsRes, scanRes, iocRes] = await Promise.all([
+    admin.from("ray_attack_paths")
+      .select("id, title, severity, summary, created_at")
+      .eq("user_id", userId).eq("status", "complete")
+      .gte("created_at", since)
+      .order("created_at", { ascending: false }).limit(20),
+    admin.from("ray_recommendations")
+      .select("title, severity, priority, category, body, status, created_at")
+      .eq("user_id", userId).eq("status", "open")
+      .order("priority", { ascending: false, nullsFirst: false })
+      .limit(20),
+    admin.from("ray_compliance_scans")
+      .select("overall_score, framework, created_at")
+      .eq("user_id", userId).eq("status", "complete")
+      .order("created_at", { ascending: false }).limit(2),
+    admin.from("ray_ioc_index")
+      .select("ioc_type, ioc_value, verdict, last_seen_at")
+      .eq("user_id", userId)
+      .gte("last_seen_at", since)
+      .order("last_seen_at", { ascending: false }).limit(20),
+  ]);
+
+  const paths = (pathsRes.data ?? []) as Array<{ id: string; title: string | null; severity: string | null; summary: string | null; created_at: string }>;
+  const recs = (recsRes.data ?? []) as Array<{ title: string; severity: string | null; priority: number | null; category: string | null; body: string | null; status: string; created_at: string }>;
+  const scans = (scanRes.data ?? []) as Array<{ overall_score: number | null; framework: string | null; created_at: string }>;
+  const iocs = (iocRes.data ?? []) as Array<{ ioc_type: string; ioc_value: string; verdict: string | null; last_seen_at: string }>;
+
+  // Aggregate MITRE techniques across investigations.
+  const mitreCount = new Map<string, number>();
+  for (const inv of investigations) {
+    const m = (inv as unknown as { mitre?: Array<{ technique?: string; id?: string; name?: string }> }).mitre;
+    if (Array.isArray(m)) {
+      for (const t of m) {
+        const key = t?.technique || t?.id || t?.name;
+        if (key) mitreCount.set(String(key), (mitreCount.get(String(key)) ?? 0) + 1);
+      }
+    }
+  }
+  const mitreList = Array.from(mitreCount.entries())
+    .sort((a, b) => b[1] - a[1]).slice(0, 12)
+    .map(([k, v]) => `${k} (×${v})`);
+
+  const currentScore = scans[0]?.overall_score ?? null;
+  const prevScore = scans[1]?.overall_score ?? null;
+  const scoreDelta = currentScore != null && prevScore != null
+    ? Math.round((currentScore - prevScore) * 10) / 10 : null;
+
   // Resolve org
   const { data: membership } = await admin
     .from("org_team_members")
@@ -114,7 +176,7 @@ serve(async (req) => {
     .from("ray_board_reports")
     .insert({
       user_id: userId, org_id: orgId, period_days,
-      title: `Board Report — ${periodLabel}`,
+      title: `Executive Report — ${periodLabel}`,
       status: "running", totals,
       investigation_ids: investigations.map(i => i.id),
       cost_ray_compute: COST,
@@ -136,17 +198,47 @@ serve(async (req) => {
   }
 
   const caseList = investigations.map((i, idx) => {
-    return `${idx + 1}. [${i.verdict ?? "unknown"}] (${i.input_type}) ${i.input_label ?? "(unlabelled)"}\n   Summary: ${i.summary ?? "-"}\n   Executive: ${i.executive_summary ?? "-"}`;
+    const d = new Date(i.created_at).toISOString().slice(0, 10);
+    return `${idx + 1}. [${d}] [${i.verdict ?? "unknown"}] (${i.input_type}) ${i.input_label ?? "(unlabelled)"}\n   Summary: ${i.summary ?? "-"}\n   Executive: ${i.executive_summary ?? "-"}\n   CaseID: ${i.id}`;
   }).join("\n\n");
+
+  const pathList = paths.map((p, idx) =>
+    `${idx + 1}. [${p.severity ?? "n/a"}] ${p.title ?? "Attack path"} — ${p.summary ?? "-"}`
+  ).join("\n");
+
+  const recList = recs.map((r, idx) =>
+    `${idx + 1}. [${r.severity ?? "n/a"}${r.priority != null ? `/p${r.priority}` : ""}] ${r.title}${r.category ? ` (${r.category})` : ""}`
+  ).join("\n");
+
+  const iocList = iocs.map((i, idx) =>
+    `${idx + 1}. ${i.ioc_type}: ${i.ioc_value}${i.verdict ? ` (${i.verdict})` : ""}`
+  ).join("\n");
 
   const userPrompt = `Reporting period: ${periodLabel}
 Cases in period: ${totals.total}
 Verdict breakdown: malicious=${totals.malicious}, suspicious=${totals.suspicious}, benign=${totals.benign}, inconclusive=${totals.inconclusive}
 
+RISK POSTURE:
+${currentScore != null
+  ? `Current risk/compliance score: ${currentScore}${scans[0]?.framework ? ` (${scans[0].framework})` : ""}${scoreDelta != null ? ` — delta ${scoreDelta >= 0 ? "+" : ""}${scoreDelta} vs previous scan` : " — no prior scan to compare"}`
+  : "No compliance scan on file yet."}
+
+ATTACK PATHS REASONED (${paths.length}):
+${pathList || "(none)"}
+
+OPEN RECOMMENDATIONS (${recs.length}):
+${recList || "(none)"}
+
+MITRE TECHNIQUES OBSERVED:
+${mitreList.length ? mitreList.join(", ") : "(none tagged)"}
+
+NOTABLE IOCS SEEN OR RESURFACED (${iocs.length}):
+${iocList || "(none)"}
+
 CASES:
 ${caseList || "(No investigations were run in this period.)"}
 
-Write the board report now.`;
+Write the executive report now.`;
 
   let content: string | null = null;
   let aiError: string | null = null;
