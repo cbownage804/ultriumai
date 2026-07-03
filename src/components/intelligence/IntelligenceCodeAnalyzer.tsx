@@ -335,26 +335,43 @@ function Detail({ a }: { a: Analysis }) {
     );
   }
 
+  const isMalware = a.mode === 'malware';
+  const likelihood = typeof a.confidence_score === 'number'
+    ? a.confidence_score
+    : (a.confidence === 'high' ? 85 : a.confidence === 'medium' ? 60 : a.confidence === 'low' ? 30 : 0);
+  const riskLevel = deriveRisk(a);
+
   return (
     <Card className="border-border bg-card">
-      <div className="p-5 border-b border-border">
-        <div className={cn('inline-flex items-center gap-2 text-sm', t.color)}>
-          <V className="h-4 w-4" />
-          <span className="font-medium">{t.label}</span>
-          {a.confidence && (
-            <span className="text-muted-foreground">· {a.confidence} confidence
-              {typeof a.confidence_score === 'number' ? ` (${a.confidence_score})` : ''}
-            </span>
-          )}
+      <div className="p-5 border-b border-border space-y-3">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <div className={cn('inline-flex items-center gap-2 text-sm', t.color)}>
+            <V className="h-4 w-4" />
+            <span className="font-medium">{t.label}</span>
+            {a.confidence && (
+              <span className="text-muted-foreground">· {a.confidence} confidence</span>
+            )}
+          </div>
+          <div className="inline-flex items-center gap-2 text-xs">
+            <Badge variant="outline" className={cn('text-[10px] uppercase tracking-wider', SEVERITY[riskLevel] ?? SEVERITY.info)}>
+              Risk · {riskLevel}
+            </Badge>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <Gauge className="h-3.5 w-3.5 text-muted-foreground" />
+          <div className="text-[11px] uppercase tracking-wider text-muted-foreground w-20">Likelihood</div>
+          <Progress value={likelihood} className="h-1.5 flex-1" />
+          <div className="text-xs text-muted-foreground w-10 text-right tabular-nums">{likelihood}%</div>
         </div>
         {a.intent && (
-          <div className="mt-3 text-sm">
+          <div className="text-sm">
             <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Intent · </span>
             {a.intent}
           </div>
         )}
         {a.risk_summary && (
-          <div className="mt-1 text-sm text-muted-foreground">{a.risk_summary}</div>
+          <div className="text-sm text-muted-foreground">{a.risk_summary}</div>
         )}
       </div>
 
