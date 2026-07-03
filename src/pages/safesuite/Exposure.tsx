@@ -20,6 +20,8 @@ import { AIRecommendationsDisplay } from '@/components/safeweb/AIRecommendations
 import { RayConversationCard } from '@/components/ray/RayConversationCard';
 import { ExposureVaultImpact } from '@/components/ray/ExposureVaultImpact';
 import { ExposureLockedBridge } from '@/components/ray/ExposureLockedBridge';
+import { SinceLastVisitCard } from '@/components/ray/SinceLastVisitCard';
+import { HowIProtectYouCard } from '@/components/ray/HowIProtectYouCard';
 
 import { RayPageHeader } from '@/components/ray/RayPageHeader';
 import {
