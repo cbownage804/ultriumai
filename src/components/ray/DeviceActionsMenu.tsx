@@ -73,6 +73,101 @@ interface ActionRow {
   error: string | null;
 }
 
+interface PostureShape {
+  disk_encryption?: { enabled?: boolean; percent_encrypted?: number };
+  firewall?: { enabled?: boolean; all_profiles_enabled?: boolean };
+  antivirus?: { enabled?: boolean; realtime_protection?: boolean; definitions_age_days?: number };
+  rdp_security?: { rdp_enabled?: boolean; nla_enabled?: boolean; remote_assistance_enabled?: boolean };
+  browser_passwords?: {
+    chrome?: { manager_disabled_by_policy?: boolean };
+    edge?: { manager_disabled_by_policy?: boolean };
+  };
+  defender_detail?: { cloud_protection?: boolean; pua_protection?: boolean };
+  local_admins_detail?: Array<{ name: string; enabled?: boolean; is_builtin?: boolean }>;
+  pending_updates?: number;
+}
+
+/**
+ * For each action, decide whether the device is already in the target state.
+ * Returns `true` when the action would be a no-op ("already on" / "already off").
+ * Returns `false` when the action is still relevant.
+ * Returns `null` when we don't have enough posture data to judge.
+ */
+function isAlreadySatisfied(
+  action: ActionType,
+  posture: PostureShape | null | undefined,
+  params?: Record<string, unknown>,
+): boolean | null {
+  if (!posture) return null;
+  switch (action) {
+    case 'enable_bitlocker': {
+      const e = posture.disk_encryption;
+      if (!e) return null;
+      if (e.enabled === true) return true;
+      if (typeof e.percent_encrypted === 'number' && e.percent_encrypted >= 100) return true;
+      return false;
+    }
+    case 'enable_firewall': {
+      const f = posture.firewall;
+      if (!f) return null;
+      return f.all_profiles_enabled === true || f.enabled === true ? true : false;
+    }
+    case 'enable_defender': {
+      const a = posture.antivirus;
+      if (!a) return null;
+      return a.enabled === true && a.realtime_protection !== false ? true : false;
+    }
+    case 'enable_defender_cloud': {
+      const v = posture.defender_detail?.cloud_protection;
+      return v === undefined ? null : v === true;
+    }
+    case 'enable_defender_pua': {
+      const v = posture.defender_detail?.pua_protection;
+      return v === undefined ? null : v === true;
+    }
+    case 'update_defender_signatures': {
+      const d = posture.antivirus?.definitions_age_days;
+      if (d === undefined) return null;
+      return d <= 1;
+    }
+    case 'disable_rdp': {
+      const v = posture.rdp_security?.rdp_enabled;
+      return v === undefined ? null : v === false;
+    }
+    case 'enable_rdp_nla': {
+      const r = posture.rdp_security;
+      if (!r) return null;
+      // Not applicable if RDP is off — mark satisfied so it collapses.
+      if (r.rdp_enabled === false) return true;
+      return r.nla_enabled === undefined ? null : r.nla_enabled === true;
+    }
+    case 'disable_remote_assistance': {
+      const v = posture.rdp_security?.remote_assistance_enabled;
+      return v === undefined ? null : v === false;
+    }
+    case 'disable_browser_password_manager': {
+      const browser = (params?.browser as 'chrome' | 'edge' | undefined) ?? undefined;
+      if (!browser) return null;
+      const v = posture.browser_passwords?.[browser]?.manager_disabled_by_policy;
+      return v === undefined ? null : v === true;
+    }
+    case 'disable_builtin_administrator': {
+      const admins = posture.local_admins_detail;
+      if (!admins || admins.length === 0) return null;
+      const builtin = admins.find((a) => a.is_builtin);
+      if (!builtin) return null;
+      return builtin.enabled === false;
+    }
+    case 'install_windows_updates': {
+      const n = posture.pending_updates;
+      return n === undefined ? null : n === 0;
+    }
+    default:
+      return null;
+  }
+}
+
+
 function versionAtLeast(version: string | null | undefined, minimum: string): boolean {
   const parse = (value: string | null | undefined) =>
     String(value ?? '0')
