@@ -486,6 +486,8 @@ export default function WraythDashboard() {
   const [breachedEmailCount, setBreachedEmailCount] = useState(0);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [sealedVaultCount, setSealedVaultCount] = useState<number | null>(null);
+  const [lastHealthCheckAt, setLastHealthCheckAt] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
