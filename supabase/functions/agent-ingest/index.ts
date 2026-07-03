@@ -618,7 +618,7 @@ Deno.serve(async (req) => {
         user_id: device.user_id,
         captured_at: now,
         payload: enrichedPayload,
-        findings,
+        findings: sanitizedFindings,
       },
       { onConflict: 'device_id' },
     );
