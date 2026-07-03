@@ -189,14 +189,18 @@ export function DeviceActionsMenu({
   deviceId,
   agentVersion,
   disabled,
+  posture,
 }: {
   deviceId: string;
   agentVersion?: string | null;
   disabled?: boolean;
+  posture?: PostureShape | null;
 }) {
   const [pending, setPending] = useState<ActionType | null>(null);
   const [recent, setRecent] = useState<ActionRow[]>([]);
+  const [showAll, setShowAll] = useState(false);
   const sessionLockSupported = versionAtLeast(agentVersion, '0.1.1');
+
 
   const load = async () => {
     const { data } = await supabase
