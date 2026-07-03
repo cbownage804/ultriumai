@@ -33,7 +33,7 @@ try:
 except Exception:  # noqa: BLE001
     run_action_loop = None  # type: ignore
 
-AGENT_VERSION = "0.2.5"
+AGENT_VERSION = "0.2.6"
 
 # ---------------------------------------------------------------------------
 # Config on disk
@@ -622,7 +622,11 @@ $out -join "`n"
     def _update_categories():
         raw = _ps(
             "try { "
+            "$MU='7971f918-a847-4430-9279-4a52d1efe18d'; "
+            "try { $sm=New-Object -ComObject Microsoft.Update.ServiceManager; "
+            "  if (-not ($sm.Services | Where-Object { $_.ServiceID -eq $MU })) { $sm.AddService2($MU,7,'') | Out-Null } } catch {} "
             "$s = (New-Object -ComObject Microsoft.Update.Session).CreateUpdateSearcher(); "
+            "try { $s.ServerSelection = 3; $s.ServiceID = $MU } catch {} "
             "$r = $s.Search('IsInstalled=0 and IsHidden=0'); "
             "$out = @(); "
             "foreach ($u in $r.Updates) { "
