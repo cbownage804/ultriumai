@@ -68,7 +68,7 @@ export function HomeContextBridge({ vaultLockedCardVisible, vaultCount }: Props)
             </div>
           </div>
           <Button asChild className="bg-violet-500 text-white hover:bg-violet-500/90 shrink-0">
-            <Link to="/app/exposure">Set up Watch</Link>
+            <Link to="/app/exposure">Set up identity monitoring</Link>
           </Button>
         </div>
       </section>
