@@ -85,6 +85,157 @@ const POLICY_TYPES: Array<{ id: string; label: string; blurb: string }> = [
 
 const FRAMEWORKS = ['CIS v8', 'NIST CSF 2.0', 'ISO 27001', 'SOC 2', 'HIPAA', 'PCI DSS', 'GDPR'];
 
+/**
+ * Curated policy templates. Each template is a *starting configuration* — it
+ * preselects the underlying policy_type, the frameworks most auditors expect
+ * for that document, and structured guidance that Ray uses to produce the
+ * right sections in the right voice. Users can still tweak everything after
+ * applying a template.
+ */
+type PolicyTemplate = {
+  id: string;
+  label: string;
+  blurb: string;
+  icon: typeof ClipboardCheck;
+  policy_type: string;
+  frameworks: string[];
+  jurisdiction?: string;
+  notes: string;
+};
+
+const TEMPLATES: PolicyTemplate[] = [
+  {
+    id: 'employee_onboarding',
+    label: 'Employee Onboarding',
+    blurb: 'Identity, access, endpoint, and training checkpoints for new hires.',
+    icon: UserPlus,
+    policy_type: 'access_control',
+    frameworks: ['CIS v8', 'NIST CSF 2.0', 'SOC 2'],
+    notes: [
+      'Focus: secure onboarding of new employees and contractors.',
+      'Required sections: identity provisioning, least-privilege role assignment,',
+      'device issuance and hardening, MFA enrollment, security awareness training,',
+      'acceptable-use acknowledgement, and a 30/60/90-day access review checkpoint.',
+      'Include an offboarding cross-reference and a checklist HR/IT can execute.',
+    ].join(' '),
+  },
+  {
+    id: 'incident_response',
+    label: 'Incident Response Plan',
+    blurb: 'NIST 800-61 lifecycle with severity matrix and comms tree.',
+    icon: Siren,
+    policy_type: 'incident_response',
+    frameworks: ['NIST CSF 2.0', 'CIS v8', 'SOC 2', 'ISO 27001'],
+    notes: [
+      'Follow the NIST SP 800-61 lifecycle: Preparation, Detection & Analysis,',
+      'Containment, Eradication, Recovery, and Post-Incident Activity.',
+      'Include a severity matrix (SEV-1 to SEV-4) with response SLAs, an on-call',
+      'escalation and communications tree (internal, legal, customer, regulator),',
+      'evidence-handling requirements, and a lessons-learned template.',
+    ].join(' '),
+  },
+  {
+    id: 'access_control',
+    label: 'Access Control Policy',
+    blurb: 'RBAC, least privilege, joiner-mover-leaver, quarterly reviews.',
+    icon: KeyRound,
+    policy_type: 'access_control',
+    frameworks: ['CIS v8', 'NIST CSF 2.0', 'ISO 27001', 'SOC 2'],
+    notes: [
+      'Cover identity lifecycle (joiner/mover/leaver), role-based access control,',
+      'least-privilege enforcement, privileged access management, quarterly access',
+      'reviews with attestation, break-glass accounts, and service-account governance.',
+    ].join(' '),
+  },
+  {
+    id: 'hipaa_phi',
+    label: 'HIPAA / PHI Handling',
+    blurb: 'Safeguards, BAAs, breach notification for healthcare workloads.',
+    icon: HeartPulse,
+    policy_type: 'data_classification',
+    frameworks: ['HIPAA', 'NIST CSF 2.0', 'SOC 2'],
+    jurisdiction: 'United States',
+    notes: [
+      'Target: US healthcare / SaaS handling Protected Health Information (PHI).',
+      'Include administrative, physical, and technical safeguards from the HIPAA',
+      'Security Rule, minimum-necessary standard, Business Associate Agreement',
+      'requirements, encryption at rest and in transit, audit logging, and the',
+      '60-day breach notification workflow under the HIPAA Breach Notification Rule.',
+    ].join(' '),
+  },
+  {
+    id: 'pci_dss',
+    label: 'PCI DSS 4.0 Cardholder Data',
+    blurb: 'Scoping, network segmentation, key management, quarterly scans.',
+    icon: CreditCard,
+    policy_type: 'data_classification',
+    frameworks: ['PCI DSS', 'NIST CSF 2.0'],
+    notes: [
+      'Align with PCI DSS 4.0. Define cardholder data environment (CDE) scope,',
+      'network segmentation, storage restrictions (PAN, SAD), encryption and key',
+      'management, quarterly ASV scans, penetration testing cadence, and evidence',
+      'collection for annual assessment.',
+    ].join(' '),
+  },
+  {
+    id: 'remote_work',
+    label: 'Remote Work & BYOD',
+    blurb: 'VPN, endpoint hardening, home network, personal device controls.',
+    icon: Laptop,
+    policy_type: 'remote_work',
+    frameworks: ['CIS v8', 'NIST CSF 2.0', 'SOC 2'],
+    notes: [
+      'Combine remote-work and BYOD controls: VPN / ZTNA requirements, endpoint',
+      'hardening baselines, EDR enrollment, disk encryption, screen-lock timers,',
+      'home-network minimums, personal-device enrollment via MDM, containerization',
+      'of corporate data, and revocation on termination or device loss.',
+    ].join(' '),
+  },
+  {
+    id: 'disaster_recovery',
+    label: 'Disaster Recovery & BCP',
+    blurb: 'RTO/RPO, failover regions, restore drills, comms plan.',
+    icon: RefreshCw,
+    policy_type: 'disaster_recovery',
+    frameworks: ['ISO 27001', 'NIST CSF 2.0', 'SOC 2'],
+    notes: [
+      'Cover business impact analysis, tiered RTO/RPO by system criticality,',
+      'multi-region failover strategy, backup frequency and retention, quarterly',
+      'restore drills with sign-off, communications plan for customers and staff,',
+      'and post-event review procedure.',
+    ].join(' '),
+  },
+  {
+    id: 'email_security',
+    label: 'Email Security & Phishing',
+    blurb: 'SPF/DKIM/DMARC, phishing reporting, mailbox rules, quarantine.',
+    icon: Mail,
+    policy_type: 'email_security',
+    frameworks: ['CIS v8', 'NIST CSF 2.0'],
+    notes: [
+      'Mandate SPF, DKIM, and DMARC (p=reject) on all sending domains, inbound',
+      'anti-phishing and impersonation protection, external-sender banners,',
+      'user reporting via a dedicated phish button, quarantine review SLAs, and',
+      'auto-forwarding restrictions.',
+    ].join(' '),
+  },
+  {
+    id: 'vendor_risk',
+    label: 'Vendor / Third-Party Risk',
+    blurb: 'Tiered due diligence, DPAs, continuous monitoring, offboarding.',
+    icon: Cloud,
+    policy_type: 'vendor_risk',
+    frameworks: ['SOC 2', 'ISO 27001', 'NIST CSF 2.0'],
+    notes: [
+      'Tier vendors by data sensitivity and business criticality. Require',
+      'security questionnaires (SIG or CAIQ), SOC 2 or ISO 27001 evidence for',
+      'high-tier vendors, Data Processing Addenda where PII is involved,',
+      'continuous monitoring, annual re-assessment, and offboarding with data',
+      'return or destruction attestation.',
+    ].join(' '),
+  },
+];
+
 const COST = 10;
 
 export default function IntelligencePolicies() {
