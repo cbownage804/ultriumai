@@ -36,7 +36,7 @@ SolidCompression=yes
 WizardStyle=modern
 SetupIconFile=favicon.ico
 UninstallDisplayName={#MyAppName}
-UninstallDisplayIcon={app}\{#MyAppExeName}
+UninstallDisplayIcon={app}\wrayth.ico
 CloseApplications=no
 ; Wrayth branding for the setup wizard
 WizardImageFile=WizardImage.bmp,WizardImage-large.bmp
