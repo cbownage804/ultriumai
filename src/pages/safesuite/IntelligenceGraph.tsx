@@ -234,6 +234,7 @@ export default function IntelligenceGraph() {
                 iocs={iocs}
                 selected={selected}
                 onSelect={setSelected}
+                onOpenIoc={setDetailIoc}
               />
             )}
           </CardContent>
