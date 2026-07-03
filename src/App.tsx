@@ -282,6 +282,7 @@ function AppRouter() {
           <Route path="/app/intelligence/graph" element={<SuspenseWrapper><IntelligenceGraph /></SuspenseWrapper>} />
           <Route path="/app/intelligence/scripts" element={<SuspenseWrapper><IntelligenceScripts /></SuspenseWrapper>} />
           <Route path="/app/intelligence/malware" element={<SuspenseWrapper><IntelligenceMalware /></SuspenseWrapper>} />
+          <Route path="/app/intelligence/logs" element={<SuspenseWrapper><IntelligenceLogs /></SuspenseWrapper>} />
           <Route path="/app/intelligence" element={<SuspenseWrapper><IntelligenceHub /></SuspenseWrapper>} />
           <Route path="/app/settings" element={<SuspenseWrapper variant="form"><WraythSettings /></SuspenseWrapper>} />
         </Route>
