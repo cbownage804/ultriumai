@@ -676,8 +676,8 @@ export function DeviceActionsMenu({
                     >
                       <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-400" />
                       {showAll
-                        ? 'Hide already-configured items'
-                        : `Show ${hiddenCount} already-configured item${hiddenCount === 1 ? '' : 's'}`}
+                        ? 'Hide already-configured & unreported items'
+                        : `Show ${hiddenCount} configured / unreported item${hiddenCount === 1 ? '' : 's'}`}
                     </DropdownMenuItem>
                   </>
                 )}
