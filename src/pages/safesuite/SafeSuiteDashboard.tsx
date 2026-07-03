@@ -678,8 +678,12 @@ export default function WraythDashboard() {
 
   return (
     <div className="min-h-screen bg-background -m-4 lg:-m-6 p-4 lg:p-6 space-y-4 sm:space-y-6">
-      {/* 1. CISO hero — the single answer to "what would you tell me to do next?" */}
-      {!vaultLocked && stats.passwordCount > 0 && <CisoNextAction directive={cisoDirective} />}
+      {/* 1. CISO hero — the single answer to "what would you tell me to do next?"
+           Shows when we have inventory OR any monitored/breach signal, even sealed.
+           Ray's copy is confidence-aware and explains what he can and can't yet see. */}
+      {(persistentVaultCount > 0 || breachedEmailCount > 0 || stats.monitoredAssets > 0) && (
+        <CisoNextAction directive={cisoDirective} />
+      )}
 
       {/* 2. Morning Brief (lifecycle-aware) — narrative context under the directive. */}
       <LifecycleAwareTop firstName={firstName} />
