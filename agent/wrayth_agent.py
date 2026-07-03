@@ -107,7 +107,7 @@ def _run(cmd: list[str], timeout: int = 15) -> str:
         return ""
 
 
-def _ps(script: str) -> str:
+def _ps(script: str, timeout_seconds: int = 25) -> str:
     return _run(
         [
             "powershell.exe",
@@ -117,7 +117,7 @@ def _ps(script: str) -> str:
             "-Command",
             script,
         ],
-        timeout=25,
+        timeout=timeout_seconds,
     )
 
 
