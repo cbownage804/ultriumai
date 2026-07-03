@@ -30,7 +30,7 @@ const CATEGORY_LABEL: Record<string, string> = {
   credential: "Passwords & Breaches",
   identity: "Identity",
   device: "Devices",
-  exposure: "Exposure",
+  exposure: "Identity Monitoring",
   mfa: "MFA",
   passkey: "Passkeys",
 };
