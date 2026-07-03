@@ -32,7 +32,12 @@ const POLICY_TYPES = new Set([
   "password", "acceptable_use", "incident_response", "disaster_recovery",
   "byod", "access_control", "data_classification", "remote_work",
   "vendor_risk", "sdlc", "backup", "email_security", "mfa",
+  "incident_runbook", "detection_runbook", "response_playbook",
 ]);
+
+const RUNBOOK_TYPES = new Set(["incident_runbook", "detection_runbook", "response_playbook"]);
+
+type SourceRef = { kind: "investigation" | "log_analysis" | "code_analysis"; id: string };
 
 const SYSTEM = `You are Ray, an AI security policy author inside Wrayth.
 You draft clear, enforceable organizational security policies that map to
