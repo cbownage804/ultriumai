@@ -165,10 +165,11 @@ export function useLiveActivity(userId: string | undefined) {
         { event: 'INSERT', schema: 'public', table: 'ray_findings', filter: `user_id=eq.${userId}` },
         (payload) => {
           const f: any = payload.new;
+          const label = String(f.kind ?? 'a new finding').replace(/_/g, ' ');
           push({
             id: `fin-${f.id}`,
             kind: 'finding_new',
-            text: `Noticed: ${f.title ?? 'a new finding'}`,
+            text: `Noticed: ${label}`,
             at: new Date(f.created_at ?? Date.now()),
           });
         },
