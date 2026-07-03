@@ -1,77 +1,144 @@
-# v0.4 — Ray becomes an AI Security Copilot
+# v0.5 — Security Graph foundation + Incident Timeline UI
 
-Big scope. I want to land it in **four shippable slices** so we always have a working product, not a half-built vision. Each slice is ~1 build session.
-
----
-
-## Slice 1 — Recommendations Engine (the "no one asked, Ray noticed" moment)
-
-**Goal:** Home screen shows a "Ray found N things worth your attention" card.
-
-- New table `ray_recommendations` — one row per detected finding, per user/org, with `severity`, `category` (device/identity/threat/knowledge), `title`, `body`, `evidence` JSON, `status` (new/reviewed/dismissed/resolved), `first_seen_at`, `last_seen_at`, `linked_action_id`.
-- New edge function `ray-scan` — runs the four skills in "scan mode" (no user question) against fleet + identity + threat data, dedupes into `ray_recommendations` by a stable fingerprint so we don't spam duplicates every run.
-- New component `RayRecommendationsCard` on `/app/ray` and dashboard home: greeting + top 3 by severity, [Review] button → `/app/ray/recommendations` list page.
-- Cron: every 6h via `pg_cron` → `ray-scan` for each active org member.
-
-**Non-goals:** email/Teams/Slack digest (slice 3), auto-remediation (already gated in agent).
-
-## Slice 2 — Unified Conversational Ray
-
-**Goal:** Kill the "pick a skill" mental model. One chat box, Ray decides.
-
-- Rename `/app/ray/skills` UX to just **Ray**. The classifier already picks a skill; we stop surfacing the skill name as the primary label and instead show it as a small badge on the response ("routed via device").
-- Add a **home Ray composer** on `/app/ray` (and a floating "Ask Ray" button in the app shell) that opens the same router.
-- Add **recommendation-aware follow-ups**: when a rec is open, Ray's system prompt is seeded with "the user is looking at rec X — evidence Y". So "what should I do?" gets a scoped answer.
-- Keep skill isolation server-side. UI is unified; internals unchanged.
-
-## Slice 3 — Weekly Security Digest
-
-**Goal:** Monday morning email/in-app card summarizing the week.
-
-- New table `ray_digests` — one row per org per week: score_before, score_after, counts (breaches, devices improved, reboots pending, updates installed, extensions removed), highlights JSON.
-- New edge function `ray-digest-build` — aggregates from `ray_recommendations`, `ray_security_scores`, `ray_org_timeline`, breach/device tables into a digest row.
-- New edge function `ray-digest-send` — renders + emails via existing `send-email`; also posts to Teams/Slack via the workplace-message adapters we just shipped.
-- Cron: Monday 9am local (stored per org).
-- In-app view at `/app/ray/digest` shows the latest digest with the same content.
-
-## Slice 4 — Organization Memory (highest leverage per your note)
-
-**Goal:** Ray knows facts about *your* org and uses them in reasoning.
-
-- New table `ray_org_memory` — `(org_id, key, value, confidence, source, verified_by, verified_at)`. Examples: `sanctioned_saas=["Microsoft 365","Duo"]`, `banned_saas=["Dropbox"]`, `mfa_provider="Duo"`, `password_policy_min=14`.
-- Admin UI at `/app/ray/memory` — CRUD + "Ray suggested this — confirm?" queue for inferred facts (e.g. "I noticed 40/42 logins use Duo — mark Duo as your MFA provider?").
-- **Wire into skills:** threat skill and knowledge skill get org memory injected into their prompt/evidence. Phishing verdict can now cite "your org does not use Dropbox" as evidence.
-- New edge function `ray-memory-infer` (nightly) — proposes new memory entries from observed signals.
-
-## Deferred to v0.5 (explicitly not this milestone)
-
-- **Security Graph** — real graph store + reasoning. This is a v0.5 architectural change; slice 4's memory is the pragmatic first step.
-- **Incident Timeline UI** — we already have `ray_org_timeline`; a proper per-user/device timeline view is a v0.5 UI slice.
-- Auto-remediation of recommendations (would reuse the existing action safety gates; skipped now to keep scope contained).
+One foundation, not four features. Everything future (recommendations, memory, incidents, reporting) becomes a view over the same graph.
 
 ---
 
-## Technical details
+## Phase A — Security Graph foundation
 
-- All new tables get `org_id`-scoped RLS + `GRANT`s per project convention. `ray_recommendations` and `ray_org_memory` use `has_role`/org membership checks, not `auth.uid()` alone.
-- Recommendation fingerprint = `sha1(org_id || category || subject_id || rule_slug)` stored as `fingerprint TEXT UNIQUE` per org.
-- `ray-scan`, `ray-digest-build`, `ray-memory-infer` are `verify_jwt = false` and called by pg_cron with the service role.
-- Recommendations reuse the existing `RayResponse.actions` contract; buttons only appear when a real navigate target or approved playbook exists (same gate as workplace embeds).
-- No changes to agent collectors, no new device-side code. This is all backend intelligence + UI on top of data we already collect.
+Three normalized tables in Postgres. No graph DB, no over-engineering.
+
+### `ray_entities`
+The nodes. Anything Ray reasons about.
+
+- `id` uuid pk
+- `org_id` uuid (nullable — some entities are user-scoped)
+- `user_id` uuid (nullable — owner when applicable)
+- `type` text — `user | device | account | mailbox | organization | breach | recommendation | incident | memory | password | extension | policy | threat`
+- `external_id` text — stable id in source system (e.g. device serial, M365 UPN, breach id)
+- `name` text
+- `attributes` jsonb — type-specific facts (OS, tenant, provider, severity, etc.)
+- `first_seen_at`, `last_seen_at`, `created_at`, `updated_at`
+- Unique: `(org_id, type, external_id)` when `external_id` is set
+
+### `ray_relationships`
+The edges. Directional, typed.
+
+- `id` uuid pk
+- `org_id` uuid
+- `source_entity_id` → `ray_entities.id`
+- `target_entity_id` → `ray_entities.id`
+- `relationship_type` text — `owns | uses | member_of | affects | resolves | detected_on | linked_to | derived_from | targets`
+- `attributes` jsonb, `created_at`
+- Unique: `(source_entity_id, target_entity_id, relationship_type)`
+
+### `ray_events`
+The timeline. Timestamped facts about a single entity (or pair).
+
+- `id` uuid pk
+- `org_id` uuid
+- `entity_id` → `ray_entities.id` (primary subject)
+- `related_entity_id` uuid nullable (secondary subject when the event links two entities)
+- `event_type` text — `posture_changed | recommendation_opened | recommendation_resolved | breach_detected | password_rotated | mfa_enabled | device_isolated | patch_installed | threat_detected | incident_opened | incident_closed | memory_learned | login_anomaly | agent_action`
+- `severity` text — `info | success | warn | danger`
+- `title` text, `body` text
+- `payload` jsonb — full evidence
+- `source` text — `ray-scan | agent | user | edge-fn:<name>`
+- `occurred_at` timestamptz, `created_at` timestamptz
+
+### RLS, grants, indexes
+- Every table `org_id`-scoped via `has_role`/org membership (never `auth.uid()` alone — per MSP data isolation rule).
+- `service_role` full access; `authenticated` scoped SELECT via org membership; INSERT restricted to org admins for entities/relationships; events insert-only from edge functions (service role).
+- Indexes: `(org_id, type)`, `(entity_id, occurred_at desc)`, `(org_id, occurred_at desc)`, `(source_entity_id)`, `(target_entity_id)`.
+
+### Backfill adapters (no data migration, just projection)
+A single edge function `ray-graph-sync` that idempotently upserts entities/relationships/events from existing tables:
+
+- Users → `ray_entities(type=user)` from `profiles`
+- Devices → `ray_entities(type=device)` from `rmm_agents`, relationship `user owns device`
+- Recommendations → entity + relationships to their subject; event on create/resolve
+- Breaches → entity + `affects` relationship to user/account; event
+- Incidents → entity; events on state changes
+- Memory → `ray_entities(type=memory)` from `ray_org_memory`
+- Timeline history → replay `ray_org_timeline` into `ray_events` on first run only (guarded flag)
+
+Cron: reuse existing 6h `ray-scan` schedule, add a light hourly `ray-graph-sync` for deltas.
+
+### Write-through hooks (make the graph live)
+- `ray-scan`: on recommendation upsert → also insert an event.
+- `ray-router` skills: whenever a skill produces a finding, emit an event.
+- Agent action pipeline: on action result → event.
+- No new API surface for consumers yet — everything reads from the three tables.
+
+---
+
+## Phase B — Incident Timeline UI
+
+First consumer of the graph. Trivial once Phase A ships.
+
+### Route
+`/app/timeline/:entityType?/:entityId?` — with the current `/app/timeline` becoming the org-wide feed by default.
+
+### Data
+```
+SELECT * FROM ray_events
+WHERE org_id = $org
+  AND ($entity_id IS NULL OR entity_id = $entity_id OR related_entity_id = $entity_id)
+ORDER BY occurred_at DESC LIMIT 200
+```
+Cursor pagination on `occurred_at`.
+
+### UI
+- Filter bar: entity type (user/device/incident/all), severity, source, date range, free-text search.
+- Vertical timeline with severity-colored dots, grouped by day.
+- Each event card: title, subject entity chip (clickable → filter to that entity), evidence expand, "Ask Ray" button that seeds the existing floating chat with the event as context (reuses the `ray:panel-send` event bus already wired in `RaySkillsPanel`).
+- Sidebar "Related" panel: for a selected entity, list connected entities from `ray_relationships` — clicking one refocuses the timeline.
+- Empty state directs to run `ray-graph-sync` (dev tool) or "come back after Ray's next scan".
+
+### Components
+- `src/components/ray/timeline/EventList.tsx`
+- `src/components/ray/timeline/EventCard.tsx`
+- `src/components/ray/timeline/EntityChip.tsx`
+- `src/components/ray/timeline/RelatedEntitiesPanel.tsx`
+- `src/components/ray/timeline/TimelineFilters.tsx`
+- Update `src/pages/safesuite/RayTimelinePage.tsx` to compose them and read graph events instead of the current `ray_org_timeline` direct query.
+
+### Legacy `ray_org_timeline`
+Keep the table (used by digest). Backfill it once into `ray_events`; going forward, new writes go through `ray_events` and a small trigger mirrors to `ray_org_timeline` for the digest builder until the digest is refactored in a later slice.
+
+---
+
+## Explicit non-goals (per your prompt)
+- No graph database.
+- No auto-remediation beyond what's already gated.
+- No conversational polish pass.
+- No cross-skill reasoning yet — that's Phase C, next milestone.
+- No Relationship Explorer visualization — Phase D.
+
+---
+
+## Technical section
+
+- Fingerprint entities via `(org_id, type, external_id)` uniqueness so adapters are idempotent.
+- Relationships are dedup'd via the composite unique; adapters use `on conflict do nothing`.
+- Events are append-only (no update path exposed). A `dedup_key` text column with a partial unique index prevents duplicate replay during backfill.
+- All new edge functions: `verify_jwt = false`, invoked by pg_cron with service role, following existing `ray-scan`/`ray-digest-*` pattern.
+- Tests:
+  - Deno unit test for adapter idempotency (double-run leaves table stable).
+  - Deno unit test for event insert dedup.
+  - Vitest for `EventList` filter reducer.
+- Indexes chosen for the two hot queries: entity-scoped timeline and org-wide recent feed.
+- No changes to agent, no new device-side code, no changes to existing skill contracts.
 
 ---
 
 ## Order of build
 
-1. **Slice 1** first (Recommendations) — biggest visible payoff, unblocks slices 3 & 4.
-2. **Slice 4** next (Org Memory) — you flagged it as highest priority, and it makes slice 2 and future threat skill dramatically better.
-3. **Slice 2** (Unified Ray UX) — cheap once 1 + 4 are in.
-4. **Slice 3** (Digest) — last, because it aggregates outputs of 1, 2, 4.
+1. Migration: three tables + RLS + grants + indexes.
+2. `ray-graph-sync` edge function with adapters + one-time backfill flag.
+3. Write-through hooks in `ray-scan` and `ray-router`.
+4. Timeline UI reading `ray_events`.
+5. Related entities panel + entity-scoped route param.
+6. Tests + a short QA note appended to `docs/v0.4-qa-report.md` (or a new `v0.5-*` file).
 
-## Questions before I start
-
-1. **Digest delivery default:** email + in-app only, or also auto-post to any connected Teams/Slack workspace on Mondays?
-2. **Recommendation scope:** per-user (Brandon sees his devices) or per-org (any admin sees the whole fleet)? Assuming org-scoped for admins, user-scoped for members — confirm?
-3. **Org memory seeding:** ship with a starter set (common SaaS, common MFA providers) so Ray has something to reason with on day one, or fully empty until admin/Ray populates it?
-
-Answer those and I'll start with Slice 1.
+Approve and I'll start with the migration.
