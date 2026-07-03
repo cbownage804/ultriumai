@@ -405,6 +405,7 @@ function InvestigationWorkspace({ inv }: { inv: Investigation }) {
   const [busy, setBusy] = useState<FollowupType | null>(null);
   const [questionOpen, setQuestionOpen] = useState(false);
   const [question, setQuestion] = useState('');
+  const [iocHistory, setIocHistory] = useState<Record<string, { count: number; last_seen_at: string; first_seen_at: string; last_verdict: string | null }>>({});
 
   const loadFollowups = useCallback(async () => {
     const { data } = await supabase
@@ -415,11 +416,36 @@ function InvestigationWorkspace({ inv }: { inv: Investigation }) {
     setFollowups((data as Followup[] | null) ?? []);
   }, [inv.id]);
 
+  const loadIocHistory = useCallback(async () => {
+    if (!inv.iocs || inv.iocs.length === 0) { setIocHistory({}); return; }
+    const norms = Array.from(new Set(
+      inv.iocs
+        .map(i => (typeof i.value === 'string' ? i.value.trim().toLowerCase() : ''))
+        .filter(Boolean),
+    ));
+    if (norms.length === 0) return;
+    const { data } = await supabase
+      .from('ray_ioc_index')
+      .select('ioc_type, ioc_value_norm, occurrence_count, first_seen_at, last_seen_at, last_verdict')
+      .in('ioc_value_norm', norms);
+    const map: Record<string, { count: number; last_seen_at: string; first_seen_at: string; last_verdict: string | null }> = {};
+    for (const r of (data as Array<{ ioc_type: string; ioc_value_norm: string; occurrence_count: number; first_seen_at: string; last_seen_at: string; last_verdict: string | null }> | null) ?? []) {
+      map[`${r.ioc_type}::${r.ioc_value_norm}`] = {
+        count: r.occurrence_count,
+        first_seen_at: r.first_seen_at,
+        last_seen_at: r.last_seen_at,
+        last_verdict: r.last_verdict,
+      };
+    }
+    setIocHistory(map);
+  }, [inv.id, inv.iocs]);
+
   useEffect(() => {
     setTab('overview');
     setFollowups([]);
     loadFollowups();
-  }, [inv.id, loadFollowups]);
+    loadIocHistory();
+  }, [inv.id, loadFollowups, loadIocHistory]);
 
   async function runFollowup(type: FollowupType, q?: string) {
     setBusy(type);
