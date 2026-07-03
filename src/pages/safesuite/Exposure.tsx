@@ -436,65 +436,102 @@ export default function WraythWeb() {
           }
         />
 
-        <RayConversationCard context="exposure" />
-
-        <ExposureLockedBridge assets={assets} />
-        <ExposureVaultImpact assets={assets} />
-
-
-
-
-
-        {/* Unified stats — matches Passwords page rhythm */}
         {(() => {
-          const totalThreats = assets.reduce((acc, a) => acc + (a.threats_found || 0), 0);
-          const cleanCount = assets.filter((a) => a.last_scan_at && a.threats_found === 0).length;
-          return (
-            <section className="rounded-2xl border border-border bg-card/40 p-5 sm:p-6">
-              <div className="grid grid-cols-3 gap-6">
-                <div>
-                  <div className="text-3xl sm:text-4xl font-extralight tabular-nums leading-none text-foreground">
-                    {assets.length}
-                  </div>
-                  <div className="mt-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-                    Watched
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className="text-left"
-                  onClick={async () => {
-                    const withThreats = assets.filter((a) => a.threats_found > 0);
-                    for (const asset of withThreats) {
-                      if (!expandedAssets.has(asset.id)) {
-                        await loadThreatsForAsset(asset.id);
-                        setExpandedAssets((prev) => new Set(prev).add(asset.id));
-                      }
-                    }
-                  }}
-                >
-                  <div
-                    className={`text-3xl sm:text-4xl font-extralight tabular-nums leading-none ${
-                      totalThreats > 0 ? 'text-yellow-300' : 'text-foreground'
-                    }`}
-                  >
-                    {totalThreats}
-                  </div>
-                  <div className="mt-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-                    Historical breaches
-                  </div>
+          const totalBreaches = assets.reduce((acc, a) => acc + (a.threats_found || 0), 0);
+          const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+          const newlySeen = assets.filter(
+            (a) => a.last_scan_at && new Date(a.last_scan_at).getTime() >= weekAgo && (a.threats_found ?? 0) > 0,
+          ).length;
+          const monitored = assets.length;
+          const healthy =
+            monitored === 0
+              ? "You haven't asked me to watch anything yet."
+              : totalBreaches === 0
+                ? `I've reviewed your ${monitored} monitored identit${monitored === 1 ? 'y' : 'ies'} and there are no breach records.`
+                : `I've reviewed your ${monitored} monitored identit${monitored === 1 ? 'y' : 'ies'} and found ${totalBreaches} historical breach record${totalBreaches === 1 ? '' : 's'}. ${newlySeen === 0 ? 'No new breach alerts since your last visit.' : `${newlySeen} identit${newlySeen === 1 ? 'y' : 'ies'} surfaced fresh breach signals this week.`}`;
 
-                </button>
-                <div>
-                  <div className="text-3xl sm:text-4xl font-extralight tabular-nums leading-none text-green-300">
-                    {cleanCount}
+          const lastScanAt = assets
+            .map((a) => (a.last_scan_at ? new Date(a.last_scan_at).getTime() : 0))
+            .reduce((max, t) => (t > max ? t : max), 0);
+          const rescanned = assets.filter(
+            (a) => a.last_scan_at && Date.now() - new Date(a.last_scan_at).getTime() < 24 * 60 * 60 * 1000,
+          ).length;
+
+          return (
+            <>
+              <RayConversationCard context="exposure" healthyLine={healthy} />
+
+              <ExposureLockedBridge assets={assets} />
+              <ExposureVaultImpact assets={assets} />
+
+              <SinceLastVisitCard
+                since={lastScanAt ? new Date(lastScanAt) : null}
+                lines={[
+                  {
+                    label: newlySeen === 0 ? 'No new breaches' : `${newlySeen} new breach signal${newlySeen === 1 ? '' : 's'}`,
+                    ok: newlySeen === 0,
+                  },
+                  {
+                    label:
+                      rescanned === 0
+                        ? 'No identities rescanned yet'
+                        : `${rescanned} identit${rescanned === 1 ? 'y' : 'ies'} rescanned`,
+                    ok: rescanned > 0,
+                  },
+                  { label: 'No newly exposed saved passwords', ok: true },
+                  { label: 'Monitoring active', ok: true },
+                ]}
+              />
+
+              <section className="rounded-2xl border border-border bg-card/40 p-5 sm:p-6">
+                <div className="grid grid-cols-3 gap-6">
+                  <div>
+                    <div className="text-3xl sm:text-4xl font-extralight tabular-nums leading-none text-foreground">
+                      {monitored}
+                    </div>
+                    <div className="mt-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+                      Monitored Identities
+                    </div>
                   </div>
-                  <div className="mt-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-                    Clean
+                  <button
+                    type="button"
+                    className="text-left"
+                    onClick={async () => {
+                      const withThreats = assets.filter((a) => a.threats_found > 0);
+                      for (const asset of withThreats) {
+                        if (!expandedAssets.has(asset.id)) {
+                          await loadThreatsForAsset(asset.id);
+                          setExpandedAssets((prev) => new Set(prev).add(asset.id));
+                        }
+                      }
+                    }}
+                  >
+                    <div
+                      className={`text-3xl sm:text-4xl font-extralight tabular-nums leading-none ${
+                        totalBreaches > 0 ? 'text-yellow-300' : 'text-foreground'
+                      }`}
+                    >
+                      {totalBreaches}
+                    </div>
+                    <div className="mt-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+                      Historical Exposure Events
+                    </div>
+                  </button>
+                  <div>
+                    <div
+                      className={`text-3xl sm:text-4xl font-extralight tabular-nums leading-none ${
+                        newlySeen > 0 ? 'text-yellow-300' : 'text-green-300'
+                      }`}
+                    >
+                      {newlySeen}
+                    </div>
+                    <div className="mt-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+                      New Breaches
+                    </div>
                   </div>
                 </div>
-              </div>
-            </section>
+              </section>
+            </>
           );
         })()}
 
