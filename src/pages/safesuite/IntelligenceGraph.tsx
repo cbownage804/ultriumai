@@ -538,3 +538,122 @@ function LegendDot({ color, label }: { color: string; label: string }) {
     </span>
   );
 }
+
+/**
+ * IOC Details Dialog — shows every prior sighting of the selected indicator,
+ * pulled from `ray_investigations` using the ids stored on `ray_ioc_index`.
+ * Each row lists the investigation name, the date it ran, and the verdict Ray
+ * assigned in that case.
+ */
+type Sighting = {
+  id: string;
+  input_label: string | null;
+  input_type: string;
+  verdict: string | null;
+  created_at: string;
+};
+
+function IocDetailsDialog({ ioc, onClose }: { ioc: IocRow | null; onClose: () => void }) {
+  const [sightings, setSightings] = useState<Sighting[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!ioc) { setSightings([]); return; }
+    const ids = (ioc.investigation_ids || []).filter(Boolean);
+    if (ids.length === 0) { setSightings([]); return; }
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const { data } = await supabase
+        .from('ray_investigations')
+        .select('id,input_label,input_type,verdict,created_at')
+        .in('id', ids)
+        .order('created_at', { ascending: false });
+      if (cancelled) return;
+      setSightings((data as Sighting[]) ?? []);
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [ioc]);
+
+  const verdictCounts = useMemo(() => {
+    const c: Record<string, number> = {};
+    sightings.forEach(s => {
+      const v = (s.verdict || 'unknown').toLowerCase();
+      c[v] = (c[v] || 0) + 1;
+    });
+    return c;
+  }, [sightings]);
+
+  return (
+    <Dialog open={!!ioc} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-muted-foreground">
+            <Fingerprint className="h-3.5 w-3.5" />
+            Indicator · {ioc?.ioc_type}
+          </div>
+          <DialogTitle className="font-mono text-base break-all">
+            {ioc?.ioc_value}
+          </DialogTitle>
+          <DialogDescription>
+            {ioc
+              ? `Seen in ${ioc.occurrence_count} investigation${ioc.occurrence_count === 1 ? '' : 's'} · first observed ${new Date(ioc.first_seen_at).toLocaleDateString()} · last observed ${new Date(ioc.last_seen_at).toLocaleDateString()}`
+              : ''}
+          </DialogDescription>
+        </DialogHeader>
+
+        {ioc && (
+          <div className="flex flex-wrap gap-1.5 -mt-1">
+            {Object.entries(verdictCounts).map(([v, n]) => (
+              <Badge key={v} variant="outline" className={`text-[10px] ${verdictBadgeClass(v)}`}>
+                {v} · {n}
+              </Badge>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-2 space-y-2 max-h-[52vh] overflow-y-auto pr-1">
+          {loading ? (
+            <div className="space-y-2">
+              {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
+            </div>
+          ) : sightings.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-6 text-center">
+              No prior sightings recorded for this indicator.
+            </p>
+          ) : (
+            sightings.map(s => (
+              <Link
+                key={s.id}
+                to={`/app/intelligence/investigations?id=${s.id}`}
+                onClick={onClose}
+                className="block rounded-sm border border-border bg-background/40 hover:bg-accent transition-colors px-3 py-2"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium truncate">
+                      {s.input_label || `${s.input_type} investigation`}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
+                      <Clock className="h-3 w-3" />
+                      {new Date(s.created_at).toLocaleString()}
+                      <span>·</span>
+                      <span className="uppercase tracking-wider">{s.input_type}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge variant="outline" className={`text-[10px] ${verdictBadgeClass(s.verdict)}`}>
+                      {s.verdict || 'unknown'}
+                    </Badge>
+                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+                  </div>
+                </div>
+              </Link>
+            ))
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
