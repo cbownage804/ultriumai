@@ -627,9 +627,11 @@ Deno.serve(async (req) => {
     }
 
 
-    return new Response(JSON.stringify({ ok: true, next_check_in_seconds: 3600 }), {
-      headers: { ...cors, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ ok: true, kind: 'posture', next_check_in_seconds: 30, next_posture_seconds: 3600 }),
+      { headers: { ...cors, 'Content-Type': 'application/json' } },
+    );
+
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err?.message ?? 'server_error' }), {
       status: 500,
