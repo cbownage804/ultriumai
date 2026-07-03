@@ -17640,6 +17640,130 @@ export type Database = {
         }
         Relationships: []
       }
+      ray_case_items: {
+        Row: {
+          case_id: string
+          created_at: string
+          id: string
+          item_type: string
+          label: string | null
+          metadata: Json
+          ref_id: string
+          user_id: string
+        }
+        Insert: {
+          case_id: string
+          created_at?: string
+          id?: string
+          item_type: string
+          label?: string | null
+          metadata?: Json
+          ref_id: string
+          user_id: string
+        }
+        Update: {
+          case_id?: string
+          created_at?: string
+          id?: string
+          item_type?: string
+          label?: string | null
+          metadata?: Json
+          ref_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ray_case_items_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "ray_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ray_case_notes: {
+        Row: {
+          body: string
+          case_id: string
+          created_at: string
+          id: string
+          note_type: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          case_id: string
+          created_at?: string
+          id?: string
+          note_type?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          case_id?: string
+          created_at?: string
+          id?: string
+          note_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ray_case_notes_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "ray_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ray_cases: {
+        Row: {
+          assignee: string | null
+          closed_at: string | null
+          created_at: string
+          id: string
+          opened_at: string
+          org_id: string | null
+          severity: string
+          status: string
+          summary: string | null
+          tags: string[]
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assignee?: string | null
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          opened_at?: string
+          org_id?: string | null
+          severity?: string
+          status?: string
+          summary?: string | null
+          tags?: string[]
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assignee?: string | null
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          opened_at?: string
+          org_id?: string | null
+          severity?: string
+          status?: string
+          summary?: string | null
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ray_code_analyses: {
         Row: {
           behaviors: Json
