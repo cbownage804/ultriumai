@@ -340,3 +340,13 @@ ${isRunbook ? RUNBOOK_SCHEMA : SCHEMA}`;
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 });
+
+function truncate(v: unknown, max: number): string {
+  if (typeof v !== "string") return "";
+  return v.length > max ? v.slice(0, max) + "…" : v;
+}
+
+function jsonSlice(v: unknown, maxItems: number): string {
+  if (!Array.isArray(v)) return "[]";
+  try { return JSON.stringify(v.slice(0, maxItems)); } catch { return "[]"; }
+}
