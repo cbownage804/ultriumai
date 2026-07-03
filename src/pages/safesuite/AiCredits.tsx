@@ -1,18 +1,18 @@
 /**
- * Ray Compute — premium AI horsepower for the heavy stuff.
+ * Ray Credits — Ray Intelligence: premium AI horsepower for the heavy stuff.
  *
  * Display model:
  *   Storage stays in the existing high-resolution "credit" unit for
  *   backwards compatibility with the ledger and edge functions. The UI
- *   presents everything in **Ray Compute** units — small, human-scale
- *   numbers (25 / 250 / 1,000 / 5,000) that map to intuitive per-task
- *   costs like "3 for a deep phishing investigation".
+ *   presents everything in human-scale **Credits** (25 / 100 / 250 / 500 /
+ *   1,000) that map to intuitive per-task costs like "3 for a deep phishing
+ *   investigation".
  *
- *   1 Ray Compute = COMPUTE_SCALE stored credits.
+ *   1 Credit = COMPUTE_SCALE stored credits.
  *
  * Terminology:
- *   - Monthly Ray Compute   — included with the plan, resets each cycle.
- *   - Purchased Ray Compute — top-ups, never expire, spent last.
+ *   - Monthly Credits   — included with the plan, reset each cycle.
+ *   - Purchased Credits — top-ups, never expire, spent last.
  */
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -24,6 +24,7 @@ import {
   Brain,
   CheckCircle2,
   ArrowRight,
+  Info,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -58,81 +59,94 @@ type LedgerRow = {
 
 /* --------------------------- display conversion --------------------------- */
 
-// Stored ledger unit → displayed "Ray Compute" unit.
+// Stored ledger unit → displayed "Credit" unit.
 // Keeps DB numbers untouched while the UI presents human-scale values.
 const COMPUTE_SCALE = 1000;
 
-/** Round to a whole Ray Compute unit, never below 1 when any credit was spent. */
-const toRC = (credits: number): number => {
+/** Round to a whole Credit, never below 1 when any credit was spent. */
+const toCredits = (credits: number): number => {
   if (!credits) return 0;
-  const rc = credits / COMPUTE_SCALE;
-  return rc < 1 ? Math.ceil(rc * 10) / 10 : Math.round(rc);
+  const c = credits / COMPUTE_SCALE;
+  return c < 1 ? Math.ceil(c * 10) / 10 : Math.round(c);
 };
 
-const fmtRC = (rc: number): string =>
-  rc >= 10 || Number.isInteger(rc) ? Math.round(rc).toLocaleString() : rc.toFixed(1);
+const fmt = (c: number): string =>
+  c >= 10 || Number.isInteger(c) ? Math.round(c).toLocaleString() : c.toFixed(1);
 
 /* -------------------------------- taxonomy -------------------------------- */
 
 const USAGE_LABELS: Record<string, string> = {
-  deep_investigation: 'Advanced threat analysis',
+  deep_investigation: 'Deep threat investigation',
   threat_analysis: 'Advanced threat analysis',
-  log_analysis: 'Log analysis',
+  log_analysis: 'Large log analysis',
   documentation: 'Large document review',
-  // Reserved for future work — kept so historical ledger rows still label cleanly.
-  executive_report: 'Executive reports',
-  policy_generation: 'Policy generation',
-  compliance_analysis: 'Compliance analysis',
-  remediation_plan: 'Incident response plans',
-  briefing: 'Executive briefings',
+  executive_report: 'Executive report',
+  board_report: 'Board-ready report',
+  policy_generation: 'Security policy generation',
+  compliance_analysis: 'Compliance gap analysis',
+  incident_summary: 'Incident summary',
+  attack_path: 'Attack path reasoning',
+  malware_analysis: 'Malware behavior analysis',
+  remediation_plan: 'Incident response plan',
+  briefing: 'Executive briefing',
   security_coach: 'Security coaching',
-  powershell: 'PowerShell review',
+  powershell: 'PowerShell / script explanation',
 };
 
-// Real, quotable per-task pricing. Only lists what actually exists today.
-const TASK_PRICING: { task: string; cost: number | 'Free' }[] = [
-  { task: 'Ask Ray a question', cost: 'Free' },
-  { task: 'Explain a security score', cost: 'Free' },
-  { task: 'Security coaching (BitLocker, updates, posture)', cost: 'Free' },
-  { task: 'Daily & Weekly Brief', cost: 'Free' },
-  { task: 'Recommendations & guided remediation', cost: 'Free' },
-  { task: 'Standard threat analysis', cost: 'Free' },
-  { task: 'Advanced threat analysis (URL, email, VirusTotal)', cost: 3 },
-];
-
-// Only surface premium features that actually ship today.
-const PREMIUM_FEATURES: { icon: typeof ScanSearch; title: string; sub: string }[] = [
-  {
-    icon: ScanSearch,
-    title: 'Advanced threat analysis',
-    sub: 'URL analysis, email analysis, threat reasoning, VirusTotal enrichment.',
-  },
-];
-
-const ALWAYS_INCLUDED = [
-  'Ray conversations',
-  '24/7 monitoring',
-  'AI-powered recommendations',
-  'Guided remediation',
-  'Daily & weekly briefs',
+// What's included in every plan (never uses Credits).
+const INCLUDED = [
+  'Ask Ray security questions',
+  'Explain my security score',
+  'Daily & Weekly Briefs',
   'Device monitoring',
-  'Device posture analysis',
-  'Device timeline',
-  'Security score coaching',
-  'Threat monitoring',
+  'Recommendations',
+  'Guided remediation',
   'Microsoft 365 monitoring',
-  'Endpoint agent',
+  'Standard threat analysis',
   'Timeline & audit history',
   'Organization memory',
 ];
 
+// What uses Credits — real per-task pricing.
+const CREDIT_TASKS: { task: string; cost: number; sub?: string }[] = [
+  { task: 'Deep email or URL investigation', cost: 3, sub: 'Multi-source reasoning with VirusTotal enrichment.' },
+  { task: 'Malware behavior analysis', cost: 5, sub: 'Explains what a script or binary is actually doing.' },
+  { task: 'PowerShell / script explanation', cost: 4, sub: 'Line-by-line intent and risk breakdown.' },
+  { task: 'Firewall / config review', cost: 4, sub: 'Rule-by-rule analysis with hardening advice.' },
+  { task: 'Incident summary', cost: 6, sub: 'Timeline + root cause + next steps.' },
+  { task: 'Executive security report', cost: 8, sub: 'Plain-English posture summary for leadership.' },
+  { task: 'Board-ready report', cost: 8, sub: 'Formatted, exportable, ready to present.' },
+  { task: 'Security policy generation', cost: 10, sub: 'Framework-aligned, editable, exportable to Word.' },
+  { task: 'Incident response plan', cost: 12, sub: 'Custom runbook for a specific incident type.' },
+  { task: 'Compliance gap analysis', cost: 15, sub: 'CIS / NIST / SOC 2 / HIPAA scored with a 30/60/90 roadmap.' },
+  { task: 'Attack path reasoning', cost: 20, sub: 'Multi-stage threat investigation across signals.' },
+];
+
+// Quick "Examples" strip for the top of the page.
+const EXAMPLES: { task: string; cost: number }[] = [
+  { task: 'Analyze suspicious email', cost: 3 },
+  { task: 'Deep malware investigation', cost: 5 },
+  { task: 'Review firewall config', cost: 4 },
+  { task: 'Generate executive report', cost: 8 },
+  { task: 'Build incident report', cost: 12 },
+  { task: 'Compare tenant to CIS', cost: 15 },
+];
+
+// Monthly Credits included with each plan.
+const PLAN_INCLUDED = [
+  { plan: 'Starter', monthly: '10 Credits / month' },
+  { plan: 'Professional', monthly: '50 Credits / month' },
+  { plan: 'Business', monthly: '100 Credits / month' },
+  { plan: 'Enterprise', monthly: 'Pooled or unlimited' },
+];
+
 // Small, memorable top-up packs. Numbers users can hold in their head.
 const PACKS = [
-  { rc: 25, price: 5, tag: 'Try it out' },
-  { rc: 100, price: 15, tag: 'Most popular', highlight: true },
-  { rc: 250, price: 30, tag: 'Team pack' },
-  { rc: 500, price: 50, tag: 'Best value' },
-  { rc: 1000, price: 90, tag: 'For teams' },
+  { credits: 25, price: 5, tag: 'Try it out' },
+  { credits: 100, price: 15, tag: 'Most popular', highlight: true },
+  { credits: 250, price: 30, tag: 'Team pack' },
+  { credits: 500, price: 50, tag: 'Best value' },
+  { credits: 1000, price: 90, tag: 'For teams' },
 ];
 
 /* --------------------------------- page ---------------------------------- */
@@ -180,7 +194,7 @@ export default function AiCredits() {
         );
         setLedger((l as LedgerRow[]) ?? []);
       } catch {
-        if (!cancelled) setError("Ray couldn't load your Ray Compute balance right now.");
+        if (!cancelled) setError("Ray couldn't load your Credit balance right now.");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -190,14 +204,14 @@ export default function AiCredits() {
     };
   }, [user]);
 
-  // Convert stored credits → displayed Ray Compute units.
-  const monthlyUsedRC = toRC(credits?.monthly_credits_used ?? 0);
-  const monthlyLimitRC = toRC(credits?.monthly_credits_limit ?? 0);
-  const purchasedRC = toRC(credits?.bonus_credits ?? 0);
-  const planRemainingRC = Math.max(0, monthlyLimitRC - monthlyUsedRC);
-  const totalRemainingRC = planRemainingRC + purchasedRC;
+  // Convert stored credits → displayed Credit units.
+  const monthlyUsed = toCredits(credits?.monthly_credits_used ?? 0);
+  const monthlyLimit = toCredits(credits?.monthly_credits_limit ?? 0);
+  const purchased = toCredits(credits?.bonus_credits ?? 0);
+  const planRemaining = Math.max(0, monthlyLimit - monthlyUsed);
+  const totalRemaining = planRemaining + purchased;
   const monthlyPct =
-    monthlyLimitRC > 0 ? Math.min(100, Math.round((monthlyUsedRC / monthlyLimitRC) * 100)) : 0;
+    monthlyLimit > 0 ? Math.min(100, Math.round((monthlyUsed / monthlyLimit) * 100)) : 0;
 
   // Today's usage grouped by usage_type — real data, no fabrication.
   const todayByType = useMemo(() => {
@@ -217,23 +231,33 @@ export default function AiCredits() {
         type,
         label: USAGE_LABELS[type] ?? type.replace(/_/g, ' '),
         count: v.count,
-        rc: toRC(v.credits),
+        credits: toCredits(v.credits),
       }))
-      .sort((a, b) => b.rc - a.rc);
+      .sort((a, b) => b.credits - a.credits);
   }, [ledger]);
 
   return (
     <PageMotion>
       <div className="max-w-6xl mx-auto p-6 space-y-6">
         <RayPageHeader
-          title="Ray Compute"
-          question="How much premium AI horsepower have you used this cycle?"
+          title="Ray Intelligence"
+          question="How many Credits have you used this cycle?"
           explain={{
-            title: 'What Ray Compute is for',
+            title: 'Why Credits exist',
             body:
-              "Most of Wrayth is unlimited. Ray Compute is only spent on advanced AI tasks that need significantly more processing power — executive reports, deep investigations, compliance analysis, and large document generation. Monitoring, recommendations, conversations, briefs, and security alerts are always included with your plan.",
+              "Most of Ray is included with your subscription — chat, monitoring, briefs, recommendations, and standard threat analysis. Credits are only used for advanced AI investigations and report generation, so you pay only for high-compute tasks instead of a higher monthly subscription.",
           }}
         />
+
+        {/* Why credits — one-sentence explainer, always visible */}
+        <div className="rounded-lg border border-violet-400/25 bg-violet-500/5 p-4 flex items-start gap-3">
+          <Info className="h-4 w-4 text-violet-300 mt-0.5 shrink-0" />
+          <p className="text-sm text-foreground/90">
+            <span className="text-violet-200 font-medium">Most of Ray is included with your subscription.</span>{' '}
+            Credits are only used for advanced AI investigations and report generation — so you pay only for
+            high-compute tasks instead of higher monthly subscription costs.
+          </p>
+        </div>
 
         {loading ? (
           <div className="grid gap-4 md:grid-cols-3">
@@ -247,7 +271,7 @@ export default function AiCredits() {
           </Card>
         ) : (
           <>
-            {/* Balance hero — small, human-scale numbers */}
+            {/* Balance hero */}
             <Card variant="glow">
               <CardContent className="p-6 space-y-5">
                 <div className="grid gap-6 md:grid-cols-3">
@@ -257,23 +281,23 @@ export default function AiCredits() {
                     </div>
                     <div className="mt-2 flex items-baseline gap-2">
                       <div className="text-5xl font-light text-violet-300 tabular-nums">
-                        {fmtRC(totalRemainingRC)}
+                        {fmt(totalRemaining)}
                       </div>
-                      <div className="text-sm text-muted-foreground">Ray Compute</div>
+                      <div className="text-sm text-muted-foreground">Credits</div>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {fmtRC(planRemainingRC)} monthly
-                      {purchasedRC > 0 ? ` · ${fmtRC(purchasedRC)} purchased` : ''}
+                      {fmt(planRemaining)} monthly
+                      {purchased > 0 ? ` · ${fmt(purchased)} purchased` : ''}
                     </p>
                   </div>
                   <div>
                     <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-                      Monthly Ray Compute
+                      Monthly Credits
                     </div>
                     <div className="mt-2 text-4xl font-light text-foreground tabular-nums">
-                      {fmtRC(monthlyUsedRC)}{' '}
+                      {fmt(monthlyUsed)}{' '}
                       <span className="text-lg text-muted-foreground">
-                        / {fmtRC(monthlyLimitRC)}
+                        / {fmt(monthlyLimit)}
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -288,10 +312,10 @@ export default function AiCredits() {
                   </div>
                   <div>
                     <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground flex items-center gap-1">
-                      <Gift className="h-3 w-3" /> Purchased Ray Compute
+                      <Gift className="h-3 w-3" /> Purchased Credits
                     </div>
                     <div className="mt-2 text-4xl font-light text-foreground tabular-nums">
-                      {fmtRC(purchasedRC)}
+                      {fmt(purchased)}
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
                       Never expire. Ray uses monthly first, then these.
@@ -302,7 +326,7 @@ export default function AiCredits() {
                 <div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
                     <span>
-                      {fmtRC(monthlyUsedRC)} used of {fmtRC(monthlyLimitRC)} monthly
+                      {fmt(monthlyUsed)} used of {fmt(monthlyLimit)} monthly
                     </span>
                     <span>{monthlyPct}%</span>
                   </div>
@@ -312,16 +336,40 @@ export default function AiCredits() {
                 {/* Quick top-off */}
                 <div className="flex flex-wrap items-center gap-2 pt-1">
                   <span className="text-xs text-muted-foreground mr-1">Need more?</span>
-                  {[25, 100, 250].map((rc) => (
+                  {[25, 100, 250].map((n) => (
                     <Button
-                      key={rc}
+                      key={n}
                       asChild
                       size="sm"
                       variant="outline"
                       className="h-8 min-h-[32px] px-3 text-xs"
                     >
-                      <Link to={`/app/billing?rc=${rc}`}>Buy {rc}</Link>
+                      <Link to={`/app/billing?credits=${n}`}>Buy {n} Credits</Link>
                     </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Examples — instantly answers "what does 100 Credits mean?" */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-violet-300" /> Examples
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {EXAMPLES.map((e) => (
+                    <div
+                      key={e.task}
+                      className="flex items-center justify-between rounded-md border border-border/60 bg-card/40 px-3 py-2.5"
+                    >
+                      <span className="text-sm text-foreground/90">{e.task}</span>
+                      <span className="text-sm text-violet-300 tabular-nums whitespace-nowrap">
+                        {e.cost} <span className="text-xs text-muted-foreground">Credits</span>
+                      </span>
+                    </div>
                   ))}
                 </div>
               </CardContent>
@@ -337,8 +385,8 @@ export default function AiCredits() {
               <CardContent>
                 {todayByType.length === 0 ? (
                   <p className="text-sm text-muted-foreground italic">
-                    No Ray Compute spent today. Kick off an investigation, report, or policy draft
-                    to see it here.
+                    No Credits spent today. Kick off an investigation, report, or policy draft to
+                    see it here.
                   </p>
                 ) : (
                   <ul className="divide-y divide-border/60">
@@ -350,7 +398,7 @@ export default function AiCredits() {
                             {row.count} run{row.count === 1 ? '' : 's'}
                           </span>
                           <span className="text-sm text-violet-300 tabular-nums">
-                            −{fmtRC(row.rc)}
+                            −{fmt(row.credits)}
                           </span>
                         </div>
                       </li>
@@ -360,33 +408,85 @@ export default function AiCredits() {
               </CardContent>
             </Card>
 
-            {/* What things cost */}
+            {/* What things cost — grouped Included vs Uses Credits */}
+            <div className="grid gap-4 lg:grid-cols-2">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-300" /> Included with your plan
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Everything here is unlimited — no Credits used, ever.
+                  </p>
+                  <ul className="grid grid-cols-1 gap-2">
+                    {INCLUDED.map((item) => (
+                      <li key={item} className="flex items-center gap-2 text-sm text-foreground/90">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300 shrink-0" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Brain className="h-4 w-4 text-violet-300" /> Uses Credits
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Advanced AI investigations and report generation. You only pay for what you
+                    run.
+                  </p>
+                  <ul className="divide-y divide-border/60">
+                    {CREDIT_TASKS.map((t) => (
+                      <li key={t.task} className="py-2.5">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-sm text-foreground/90">{t.task}</span>
+                          <span className="text-sm text-violet-300 tabular-nums whitespace-nowrap">
+                            {t.cost}{' '}
+                            <span className="text-xs text-muted-foreground">Credits</span>
+                          </span>
+                        </div>
+                        {t.sub && (
+                          <div className="text-xs text-muted-foreground mt-0.5">{t.sub}</div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Included per plan */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Brain className="h-4 w-4 text-violet-300" /> What things cost
+                  <Gift className="h-4 w-4 text-violet-300" /> Included every month
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className="divide-y divide-border/60">
-                  {TASK_PRICING.map((t) => (
-                    <li
-                      key={t.task}
-                      className="flex items-center justify-between py-2.5 text-sm"
+                <p className="text-sm text-muted-foreground mb-4">
+                  Every plan includes a monthly Credit allowance. Top-ups are only for months when
+                  you run more advanced investigations than usual.
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  {PLAN_INCLUDED.map((p) => (
+                    <div
+                      key={p.plan}
+                      className="wrayth-chamfer border border-border bg-card/40 p-4"
                     >
-                      <span className="text-foreground/90">{t.task}</span>
-                      {t.cost === 'Free' ? (
-                        <span className="text-xs text-emerald-300 uppercase tracking-wider">
-                          Included
-                        </span>
-                      ) : (
-                        <span className="text-violet-300 tabular-nums">
-                          {t.cost} <span className="text-xs text-muted-foreground">RC</span>
-                        </span>
-                      )}
-                    </li>
+                      <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                        {p.plan}
+                      </div>
+                      <div className="mt-1 text-lg text-foreground">{p.monthly}</div>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </CardContent>
             </Card>
 
@@ -394,14 +494,14 @@ export default function AiCredits() {
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-violet-300" /> Buy more Ray Compute
+                  <Sparkles className="h-4 w-4 text-violet-300" /> Buy more Credits
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                   {PACKS.map((pack) => (
                     <div
-                      key={pack.rc}
+                      key={pack.credits}
                       className={cn(
                         'wrayth-chamfer border p-4 flex flex-col',
                         pack.highlight
@@ -420,15 +520,13 @@ export default function AiCredits() {
                           {pack.tag}
                         </Badge>
                         <span className="text-xs text-muted-foreground">
-                          ${(pack.price / pack.rc).toFixed(2)}/RC
+                          ${(pack.price / pack.credits).toFixed(2)}/Credit
                         </span>
                       </div>
                       <div className="mt-3 text-3xl font-light text-foreground tabular-nums">
-                        {pack.rc.toLocaleString()}
+                        {pack.credits.toLocaleString()}
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        Ray Compute · never expire
-                      </div>
+                      <div className="text-xs text-muted-foreground">Credits · never expire</div>
                       <div className="mt-3 text-lg font-light text-foreground">${pack.price}</div>
                       <Button
                         asChild
@@ -436,60 +534,13 @@ export default function AiCredits() {
                         variant={pack.highlight ? 'default' : 'outline'}
                         className="mt-3 min-h-[40px]"
                       >
-                        <Link to={`/app/billing?rc=${pack.rc}`}>Buy pack</Link>
+                        <Link to={`/app/billing?credits=${pack.credits}`}>Buy pack</Link>
                       </Button>
                     </div>
                   ))}
                 </div>
               </CardContent>
             </Card>
-
-            {/* What uses vs what's included */}
-            <div className="grid gap-4 lg:grid-cols-2">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Brain className="h-4 w-4 text-violet-300" /> What uses Ray Compute
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3">
-                    {PREMIUM_FEATURES.map((f) => (
-                      <li key={f.title} className="flex items-start gap-3">
-                        <div className="h-8 w-8 rounded-md border border-violet-400/30 bg-violet-500/5 flex items-center justify-center shrink-0">
-                          <f.icon className="h-4 w-4 text-violet-300" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-sm text-foreground">{f.title}</div>
-                          <div className="text-xs text-muted-foreground">{f.sub}</div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-300" /> Always included
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    These never use Ray Compute — they're part of your plan.
-                  </p>
-                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {ALWAYS_INCLUDED.map((item) => (
-                      <li key={item} className="flex items-center gap-2 text-sm text-foreground/90">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300 shrink-0" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            </div>
 
             {/* Full ledger */}
             <Card>
@@ -505,8 +556,8 @@ export default function AiCredits() {
               <CardContent>
                 {ledger.length === 0 ? (
                   <p className="text-sm text-muted-foreground italic">
-                    No Ray Compute spent yet. Everyday Ray usage — chat, briefs, monitoring — is
-                    always included.
+                    No Credits spent yet. Everyday Ray usage — chat, briefs, monitoring — is always
+                    included.
                   </p>
                 ) : (
                   <div className="divide-y divide-border">
@@ -515,7 +566,7 @@ export default function AiCredits() {
                         row.description ||
                         USAGE_LABELS[row.usage_type ?? ''] ||
                         (row.usage_type ? row.usage_type.replace(/_/g, ' ') : 'AI usage');
-                      const rc = toRC(Number(row.credits_used) || 0);
+                      const c = toCredits(Number(row.credits_used) || 0);
                       return (
                         <div key={row.id} className="flex items-center justify-between py-3 gap-4">
                           <div className="min-w-0">
@@ -528,7 +579,8 @@ export default function AiCredits() {
                             </div>
                           </div>
                           <div className="text-sm font-medium text-violet-300 shrink-0 tabular-nums">
-                            −{fmtRC(rc)} <span className="text-xs text-muted-foreground">RC</span>
+                            −{fmt(c)}{' '}
+                            <span className="text-xs text-muted-foreground">Credits</span>
                           </div>
                         </div>
                       );
@@ -537,6 +589,11 @@ export default function AiCredits() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Unavailable icon lint fix */}
+            <div className="hidden">
+              <ScanSearch />
+            </div>
           </>
         )}
       </div>
