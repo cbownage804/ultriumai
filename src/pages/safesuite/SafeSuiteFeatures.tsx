@@ -131,29 +131,29 @@ export default function WraythFeatures() {
     <div className="min-h-screen bg-background">
       <Navigation />
 
-      {/* Hero — no duplicate landing, no pricing button */}
+      {/* Hero */}
       <section className="relative overflow-hidden border-b border-border">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(139,92,246,0.15),transparent_60%)]" />
         <div className="relative z-10 mx-auto max-w-5xl px-4 py-24 text-center">
           <Badge variant="outline" className="mb-6 border-violet-500/40 text-violet-300">
-            The Wrayth Platform
+            AI-Powered Cybersecurity Platform
           </Badge>
           <h1 className="mb-6 text-4xl font-bold tracking-tight md:text-6xl">
-            Everything Wrayth Protects
+            Everything Ray watches
           </h1>
           <p className="mx-auto mb-4 max-w-2xl text-lg text-muted-foreground md:text-xl">
-            One platform. One AI teammate. Complete digital protection.
+            One AI security analyst. Every layer of your posture, monitored continuously.
           </p>
           <p className="mx-auto mb-10 max-w-2xl text-base text-muted-foreground">
-            <span className="text-foreground">Vault.</span>{" "}
-            <span className="text-foreground">Scan.</span>{" "}
-            <span className="text-foreground">Watch.</span>{" "}
-            <span className="text-foreground">Identity.</span>{" "}
+            <span className="text-foreground">Endpoint Protection.</span>{" "}
+            <span className="text-foreground">Threat Analysis.</span>{" "}
+            <span className="text-foreground">Exposure Monitoring.</span>{" "}
+            <span className="text-foreground">Microsoft 365 Security.</span>{" "}
             <span className="text-foreground">Ray.</span>
           </p>
           <Link to="/auth?mode=signup">
             <Button size="lg" className="bg-green-500 text-black hover:bg-green-600">
-              Start Free Trial
+              Start Free
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
@@ -184,16 +184,17 @@ export default function WraythFeatures() {
             </div>
 
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-              <PillarChip label="Vault" tone="border-yellow-500/30" />
-              <PillarChip label="Scan" tone="border-red-500/30" />
-              <PillarChip label="Watch" tone="border-purple-500/30" />
+              <PillarChip label="Endpoint Protection" tone="border-emerald-500/30" />
+              <PillarChip label="Threat Analysis" tone="border-red-500/30" />
+              <PillarChip label="Exposure Monitoring" tone="border-purple-500/30" />
               <PillarChip label="Identity Monitoring" tone="border-blue-500/30" />
-              <PillarChip label="Browser Extension" tone="border-emerald-500/30" />
-              <PillarChip label="Threat Intelligence" tone="border-orange-500/30" />
+              <PillarChip label="Microsoft 365 Security" tone="border-cyan-500/30" />
+              <PillarChip label="AI Recommendations" tone="border-orange-500/30" />
             </div>
           </div>
         </div>
       </section>
+
 
       {/* Vault */}
       <section id="vault" className="border-b border-border py-24 px-4">
