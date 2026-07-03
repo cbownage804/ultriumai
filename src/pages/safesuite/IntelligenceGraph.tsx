@@ -459,7 +459,8 @@ function GraphSvg({
         {iocPos.map(p => {
           const active = selected === p.id;
           return (
-            <g key={p.id} className="cursor-pointer" onClick={() => onSelect(active ? null : p.id)}>
+            <g key={p.id} className="cursor-pointer" onClick={() => { onSelect(active ? null : p.id); onOpenIoc(p.node); }}>
+
               <circle
                 cx={p.x} cy={p.y}
                 r={active ? 5 : 3.2}
