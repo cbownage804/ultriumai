@@ -165,3 +165,6 @@ verify_jwt = false
 
 
 
+
+[functions.agent-uninstall]
+verify_jwt = false
