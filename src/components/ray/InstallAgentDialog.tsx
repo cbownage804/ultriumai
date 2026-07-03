@@ -88,10 +88,16 @@ export function InstallAgentDialog({
       window.clearInterval(pollRef.current);
       pollRef.current = null;
     }
+    // When the dialog closes after a successful connection, reload
+    // so the enrolled devices list picks up the new machine.
+    if (!open && confirmed) {
+      try { sessionStorage.removeItem(ENROLL_STORAGE_KEY); } catch {}
+      window.setTimeout(() => window.location.reload(), 150);
+    }
     return () => {
       if (pollRef.current) window.clearInterval(pollRef.current);
     };
-  }, [open]);
+  }, [open, confirmed]);
 
   // If the stored code expires while the dialog is mounted, drop it so
   // the user sees the "Get my install bundle" starting state again.
