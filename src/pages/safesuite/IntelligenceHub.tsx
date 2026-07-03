@@ -18,7 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
 import {
   ScanSearch, Bug, FileText, ClipboardCheck, ShieldCheck, Terminal, FileWarning,
-  GitBranch, Network, Sparkles, Coins, Brain, ArrowUpRight, History,
+  GitBranch, Network, Sparkles, Coins, Brain, ArrowUpRight, History, BookOpen,
 } from 'lucide-react';
 
 type Tile = {
@@ -41,6 +41,7 @@ const TILES: Tile[] = [
   { id: 'logs',            label: 'Log Analysis',     desc: 'Summarize huge log files: EVTX, Sentinel, Defender, syslog, IIS, firewall.', href: '/app/intelligence/logs', icon: FileWarning,cost: 5,  status: 'live' },
   { id: 'compliance',      label: 'Compliance',       desc: 'Gap-analyze against CIS, NIST, HIPAA, SOC 2, ISO 27001 with a 30/60/90 roadmap.', href: '/app/intelligence/compliance', icon: ShieldCheck,cost: 15, status: 'live' },
   { id: 'policies',        label: 'Policy Generator', desc: 'Generate password, IR, DR, AUP, BYOD policies — editable, DOCX export.', href: '/app/intelligence/policies', icon: ClipboardCheck, cost: 10, status: 'live' },
+  { id: 'drafts',          label: 'Drafts from Findings', desc: 'Turn investigation, log, and malware findings into policies + runbooks.', href: '/app/intelligence/drafts', icon: BookOpen, cost: 10, status: 'live' },
   { id: 'history',         label: 'History & Evidence', desc: 'Unified timeline across every module — see how they share graph + memory.', href: '/app/intelligence/history', icon: History, cost: 0, status: 'live' },
 ];
 
