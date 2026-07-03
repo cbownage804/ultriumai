@@ -22,6 +22,8 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { getRayContext, type RayContext } from '@/lib/ray';
+import { getSinceLastVisit, type SinceItem } from '@/lib/ray/sinceLastVisit';
+import { buildSuggestedQuestions } from '@/lib/ray/suggestedQuestions';
 import { formatDistanceToNow } from 'date-fns';
 import { dedupeRecs as sharedDedupeRecs } from './recDedupe';
 import { RayThinking } from './RayThinking';
@@ -199,6 +201,7 @@ export default function RaySkillsPanel() {
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const [memory, setMemory] = useState<RayMemory | null>(null);
   const [dismissedPriority, setDismissedPriority] = useState<Set<string>>(new Set());
+  const [sinceItems, setSinceItems] = useState<SinceItem[] | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const route = useMemo(() => getRouteContext(location.pathname), [location.pathname]);
@@ -210,11 +213,18 @@ export default function RaySkillsPanel() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [turns, loading]);
 
-  // Load context + snapshot previous memory
+  // Load context + snapshot previous memory + "since last visit"
   useEffect(() => {
     let active = true;
     if (!user) return;
-    setMemory(readMemory());
+    const prev = readMemory();
+    setMemory(prev);
+    // Query "since last visit" against the *previous* visit timestamp before
+    // we overwrite it, so the panel reflects a real diff on the second open.
+    const sinceIso = prev?.lastVisitAt ?? new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    void getSinceLastVisit(user.id, sinceIso).then((s) => {
+      if (active) setSinceItems(s.items);
+    });
     void getRayContext(user.id).then((c) => {
       if (!active) return;
       setCtx(c);
@@ -339,6 +349,9 @@ export default function RaySkillsPanel() {
 
   const target = score != null ? Math.min(100, score + Math.max(6, openCount * 4)) : null;
 
+  // Dynamic "you might ask" chips — synthesized from ctx + route.
+  const suggested = useMemo(() => buildSuggestedQuestions(ctx, route), [ctx, route]);
+
   const empty = turns.length === 0;
   const scoreTone =
     score == null ? 'text-foreground' : score >= 80 ? 'text-emerald-300' : score >= 60 ? 'text-amber-300' : 'text-red-300';
@@ -433,29 +446,24 @@ export default function RaySkillsPanel() {
                 </div>
               </div>
 
-              {/* Since your last visit — dynamic briefing */}
-              <section className="space-y-1.5">
-                <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Since your last visit</div>
-                <ul className="space-y-1 text-sm text-foreground/90">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                    <span>{Math.max(findingsCount * 2 + 15, 12)} devices checked</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                    <span>{Math.max(findingsCount * 5 + 22, 20)} applications reviewed</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                    <span>No new breaches detected</span>
-                  </li>
-                  {openCount > 0 && (
-                    <li className="flex items-center gap-2">
-                      <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                      <span>I found <span className="font-medium text-foreground">{openCount} recommendation{openCount === 1 ? '' : 's'}</span> worth your attention.</span>
-                    </li>
-                  )}
-                </ul>
+              {/* Since your last visit — real activity from the database. */}
+              <section className="rounded-lg border border-primary/20 bg-primary/[0.04] p-3 space-y-2">
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.22em] text-primary">
+                  <Activity className="h-3 w-3" />
+                  Since your last visit
+                </div>
+                {sinceItems === null ? (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Reviewing the last few hours…
+                  </div>
+                ) : (
+                  <ul className="space-y-1.5 text-xs text-foreground/85">
+                    {sinceItems.map((it, i) => (
+                      <SinceRow key={i} item={it} />
+                    ))}
+                  </ul>
+                )}
               </section>
 
               {/* Security score — centerpiece */}
@@ -544,50 +552,42 @@ export default function RaySkillsPanel() {
                 );
               })()}
 
-              {/* While you were away — richer activity feed */}
-              <section className="rounded-lg border border-primary/20 bg-primary/[0.04] p-3 space-y-2">
-                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.22em] text-primary">
-                  <Activity className="h-3 w-3" />
-                  While you were away
+              {/* Context-aware quick actions — driven by the current route. */}
+              <section className="space-y-2">
+                <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                  Quick actions · {route.areaLabel}
                 </div>
-                <ul className="space-y-1.5 text-xs text-foreground/85">
-                  <WhileAwayRow ok text={`${Math.max(findingsCount * 2 + 15, 12)} devices checked`} />
-                  <WhileAwayRow ok text="Windows updates reviewed" />
-                  <WhileAwayRow ok text="No malware detected" />
-                  <WhileAwayRow ok text="Passwords checked against new breach feeds" />
-                  {openCount > 0 && <WhileAwayRow text={`${Math.min(openCount, 3)} recommendation${Math.min(openCount, 3) === 1 ? '' : 's'} added`} />}
-                  <WhileAwayRow ok text="Regenerated today's priority list" />
-                </ul>
+                <div className="grid grid-cols-2 gap-2">
+                  {route.quickActions.map((a) => (
+                    <button
+                      key={a.label}
+                      onClick={() => send(a.prompt)}
+                      className="group flex items-start gap-2 rounded-lg border border-border/60 bg-card/40 px-3 py-2.5 text-left transition hover:border-primary/50 hover:bg-primary/5"
+                    >
+                      <span className="text-base leading-none mt-0.5">{a.emoji}</span>
+                      <span className="block text-sm text-foreground/90 leading-tight">{a.label}</span>
+                    </button>
+                  ))}
+                </div>
               </section>
 
-              {/* Quick actions — grouped with emoji + subtitle */}
-              <section className="space-y-3">
-                <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">How can I help?</div>
-                {(['Investigate', 'Understand', 'Learn'] as const).map((group) => {
-                  const items = QUICK_ACTIONS.filter((a) => a.group === group);
-                  if (items.length === 0) return null;
-                  return (
-                    <div key={group} className="space-y-1.5">
-                      <div className="text-[9px] uppercase tracking-wider text-muted-foreground/70">{group}</div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {items.map(({ label, subtitle, prompt, emoji }) => (
-                          <button
-                            key={label}
-                            onClick={() => send(prompt)}
-                            className="group flex items-start gap-2 rounded-lg border border-border/60 bg-card/40 px-3 py-2.5 text-left transition hover:border-primary/50 hover:bg-primary/5"
-                          >
-                            <span className="text-base leading-none mt-0.5">{emoji}</span>
-                            <span className="flex-1 min-w-0">
-                              <span className="block text-sm text-foreground/90 truncate">{label}</span>
-                              <span className="block text-[10px] text-muted-foreground truncate">{subtitle}</span>
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </section>
+              {/* Dynamic suggested questions — synthesized from posture + route. */}
+              {suggested.length > 0 && (
+                <section className="space-y-2">
+                  <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">You might ask</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {suggested.map((q) => (
+                      <button
+                        key={q.id}
+                        onClick={() => send(q.prompt)}
+                        className="rounded-full border border-border/60 bg-card/40 px-3 py-1.5 text-xs text-foreground/85 transition hover:border-primary/50 hover:bg-primary/5 hover:text-foreground"
+                      >
+                        {q.label}
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              )}
 
               {/* Ray's Activity — timeline that fills the empty tail */}
               <section className="space-y-2">
@@ -826,15 +826,15 @@ function RayTurn({
   );
 }
 
-function WhileAwayRow({ text, ok }: { text: string; ok?: boolean }) {
+function SinceRow({ item }: { item: SinceItem }) {
+  const Icon =
+    item.tone === 'good' ? CheckCircle2 : item.tone === 'warn' ? AlertTriangle : Activity;
+  const color =
+    item.tone === 'good' ? 'text-emerald-400' : item.tone === 'warn' ? 'text-amber-400' : 'text-muted-foreground';
   return (
     <li className="flex items-center gap-2">
-      {ok ? (
-        <CheckCircle2 className="h-3 w-3 text-emerald-400 shrink-0" />
-      ) : (
-        <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" />
-      )}
-      <span>{text}</span>
+      <Icon className={`h-3 w-3 shrink-0 ${color}`} />
+      <span>{item.label}</span>
     </li>
   );
 }
