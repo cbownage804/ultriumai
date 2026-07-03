@@ -32,7 +32,7 @@ type Tile = {
 };
 
 const TILES: Tile[] = [
-  { id: 'investigations', label: 'Investigations', desc: 'Deep threat analysis of URLs, IPs, hashes, emails, and alerts.', href: '/app/intelligence/investigations', icon: ScanSearch, cost: 3, status: 'live' },
+  { id: 'investigations', label: 'Investigations', desc: 'Deep analysis of URLs, IPs, hashes, emails, alerts — one-click templates auto-chain reports.', href: '/app/intelligence/investigations', icon: ScanSearch, cost: 3, status: 'live' },
   { id: 'attack-paths',    label: 'Attack Paths',   desc: 'Reason about how a threat could progress and what it blasts.', href: '/app/intelligence/attack-paths',   icon: GitBranch,  cost: 20, status: 'live' },
   { id: 'graph',           label: 'Graph',          desc: 'See how every investigation and IOC connects across your org.', href: '/app/intelligence/graph',         icon: Network,    cost: 0,  status: 'live' },
   { id: 'memory',          label: 'Memory',         desc: '"Have I seen this before?" — paste any IOC, see every prior sighting.', href: '/app/intelligence/memory', icon: Brain,      cost: 0,  status: 'live' },

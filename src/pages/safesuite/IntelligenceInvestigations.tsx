@@ -9,6 +9,7 @@
  * accumulates value over time.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -136,6 +137,100 @@ const FOLLOWUP_META: Record<FollowupType, { icon: React.ComponentType<{ classNam
   },
 };
 
+// -----------------------------------------------------------------------------
+// One-click investigation templates.
+// Each template preselects an input type, seeds a helpful label, and (optionally)
+// auto-chains a follow-up report when the case comes back malicious/suspicious.
+// -----------------------------------------------------------------------------
+type Template = {
+  id: string;
+  label: string;
+  desc: string;
+  inputType: InputType;
+  labelSeed: string;
+  placeholder: string;
+  chainReport: FollowupType | null;
+  icon: React.ComponentType<{ className?: string }>;
+};
+
+const TEMPLATES: Template[] = [
+  {
+    id: 'phishing_url',
+    label: 'Phishing URL',
+    desc: 'Investigate a link + auto-generate an incident report if malicious.',
+    inputType: 'url',
+    labelSeed: 'Phishing URL triage',
+    placeholder: 'https://login-microsft365.support/verify',
+    chainReport: 'incident_report',
+    icon: ScanSearch,
+  },
+  {
+    id: 'suspicious_login',
+    label: 'Suspicious M365 login',
+    desc: 'Reason over an M365 sign-in alert and chain a management explainer.',
+    inputType: 'm365_alert',
+    labelSeed: 'M365 suspicious login',
+    placeholder: 'Paste the sign-in alert JSON or narrative…',
+    chainReport: 'management_explanation',
+    icon: AlertTriangle,
+  },
+  {
+    id: 'ransomware_hash',
+    label: 'Ransomware indicator',
+    desc: 'Analyse a hash and auto-generate an executive report on impact.',
+    inputType: 'file_hash',
+    labelSeed: 'Ransomware hash triage',
+    placeholder: 'SHA-256 of the suspicious binary',
+    chainReport: 'executive_report',
+    icon: ShieldAlert,
+  },
+  {
+    id: 'powershell',
+    label: 'Suspicious PowerShell',
+    desc: 'Break down intent + MITRE, then explain it in plain English.',
+    inputType: 'powershell',
+    labelSeed: 'PowerShell triage',
+    placeholder: 'powershell -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA…',
+    chainReport: 'management_explanation',
+    icon: FileWarning,
+  },
+  {
+    id: 'malicious_email',
+    label: 'Malicious email',
+    desc: 'Investigate the body + auto-chain an incident report if bad.',
+    inputType: 'email',
+    labelSeed: 'Reported phishing email',
+    placeholder: 'Paste the full email body users flagged…',
+    chainReport: 'incident_report',
+    icon: MessageCircleQuestion,
+  },
+  {
+    id: 'defender_alert',
+    label: 'Defender alert triage',
+    desc: 'Turn a Defender alert into a case + executive report.',
+    inputType: 'defender_alert',
+    labelSeed: 'Defender alert',
+    placeholder: 'Paste the Defender alert JSON or summary…',
+    chainReport: 'executive_report',
+    icon: Target,
+  },
+];
+
+/** Best-effort classification of a raw query string into an investigation input type. */
+function detectInputType(q: string): InputType {
+  const s = q.trim();
+  if (!s) return 'url';
+  if (/^[a-f0-9]{32}$|^[a-f0-9]{40}$|^[a-f0-9]{64}$/i.test(s)) return 'file_hash';
+  if (/^(https?:\/\/|www\.)/i.test(s)) return 'url';
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(s)) return 'ip';
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)) return 'email';
+  if (/^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(s) && !s.includes(' ')) return 'domain';
+  if (/get-\w+|invoke-\w+|-enc\s|powershell/i.test(s)) return 'powershell';
+  return 'url';
+}
+
+
+
 function verdictBadge(v: string | null) {
   const key = (v ?? '').toLowerCase();
   const style = VERDICT_STYLE[key] ?? VERDICT_STYLE.inconclusive;
@@ -150,12 +245,16 @@ function verdictBadge(v: string | null) {
 
 export default function IntelligenceInvestigations() {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [inputType, setInputType] = useState<InputType>('url');
   const [payload, setPayload] = useState('');
   const [label, setLabel] = useState('');
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<Investigation[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // When set, we auto-chain a follow-up on the next successful investigation.
+  const [pendingChain, setPendingChain] = useState<FollowupType | null>(null);
+  const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
 
   const selectedInputSpec = useMemo(
     () => INPUT_TYPES.find((t) => t.id === inputType)!,
@@ -177,6 +276,40 @@ export default function IntelligenceInvestigations() {
       setHistory((data as Investigation[] | null) ?? []);
     })();
   }, [user]);
+
+  // Prefill from ?q= (Ask Ray) or ?template= (deep link from Command Center).
+  useEffect(() => {
+    const q = searchParams.get('q');
+    const templateId = searchParams.get('template');
+    if (q) {
+      setPayload(q);
+      setInputType(detectInputType(q));
+    }
+    if (templateId) {
+      const tpl = TEMPLATES.find(t => t.id === templateId);
+      if (tpl) applyTemplate(tpl);
+    }
+    if (q || templateId) {
+      // Clear params so re-navigation doesn't loop.
+      const next = new URLSearchParams(searchParams);
+      next.delete('q'); next.delete('template');
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function applyTemplate(tpl: Template) {
+    setInputType(tpl.inputType);
+    setLabel(tpl.labelSeed);
+    setPendingChain(tpl.chainReport);
+    setActiveTemplateId(tpl.id);
+  }
+
+  function clearTemplate() {
+    setActiveTemplateId(null);
+    setPendingChain(null);
+    setLabel('');
+  }
 
   async function runInvestigation() {
     if (!payload.trim()) {
@@ -200,6 +333,27 @@ export default function IntelligenceInvestigations() {
         setPayload('');
         setLabel('');
         toast.success(`Investigation complete. ${inv.cost_ray_compute} Ray Compute used.`);
+
+        // ---- Template chaining -------------------------------------------------
+        // If a template asked us to chain a follow-up AND the verdict warrants it,
+        // fire the follow-up automatically. Only chain on malicious/suspicious so
+        // Ray doesn't burn compute writing reports for benign cases.
+        const chain = pendingChain;
+        if (chain && inv.status === 'complete' && (inv.verdict === 'malicious' || inv.verdict === 'suspicious')) {
+          toast.info(`Chaining ${FOLLOWUP_META[chain].label.toLowerCase()}…`);
+          try {
+            const { error: fErr } = await supabase.functions.invoke('ray-investigate-followup', {
+              body: { investigation_id: inv.id, followup_type: chain, question: null },
+            });
+            if (fErr) throw fErr;
+            toast.success(`${FOLLOWUP_META[chain].label} chained automatically.`);
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : 'Chained follow-up failed.';
+            toast.error(msg);
+          }
+        }
+        setPendingChain(null);
+        setActiveTemplateId(null);
       } else {
         toast.error('Ray could not complete this investigation.');
       }
@@ -220,6 +374,9 @@ export default function IntelligenceInvestigations() {
     setHistory((prev) => prev.filter((h) => h.id !== id));
     if (selectedId === id) setSelectedId(null);
   }
+
+  const activeTemplate = activeTemplateId ? TEMPLATES.find(t => t.id === activeTemplateId) ?? null : null;
+
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -242,6 +399,59 @@ export default function IntelligenceInvestigations() {
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6">
         <div className="space-y-6 min-w-0">
+          {/* Templates strip — one-click investigation launchers with optional chaining */}
+          <Card className="p-4 space-y-3 border-[hsl(262_60%_64%/0.25)] bg-[hsl(262_60%_64%/0.03)]">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-xs uppercase tracking-[0.22em] text-muted-foreground flex items-center gap-2">
+                <Sparkles className="h-3 w-3 text-[hsl(262_60%_70%)]" /> Investigation templates
+              </div>
+              {activeTemplate && (
+                <button
+                  type="button"
+                  onClick={clearTemplate}
+                  className="text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {TEMPLATES.map((tpl) => {
+                const Icon = tpl.icon;
+                const isActive = activeTemplateId === tpl.id;
+                return (
+                  <button
+                    key={tpl.id}
+                    type="button"
+                    onClick={() => applyTemplate(tpl)}
+                    className={cn(
+                      'text-left rounded-sm border px-3 py-2.5 transition-colors flex items-start gap-2.5',
+                      isActive
+                        ? 'border-[hsl(262_60%_64%/0.55)] bg-[hsl(262_60%_64%/0.10)]'
+                        : 'border-border bg-card hover:border-[hsl(262_60%_64%/0.35)] hover:bg-[hsl(262_60%_64%/0.05)]',
+                    )}
+                  >
+                    <div className="h-7 w-7 rounded-sm bg-[hsl(262_60%_64%/0.10)] border border-[hsl(262_60%_64%/0.25)] flex items-center justify-center shrink-0">
+                      <Icon className="h-3.5 w-3.5 text-[hsl(262_60%_78%)]" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-medium truncate">{tpl.label}</div>
+                      <div className="text-[10px] text-muted-foreground line-clamp-2 mt-0.5">{tpl.desc}</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            {activeTemplate && (
+              <div className="text-[10px] text-muted-foreground flex items-center gap-1.5 pt-1 border-t border-border/60">
+                <ListChecks className="h-3 w-3 text-[hsl(262_60%_70%)]" />
+                Chain: {activeTemplate.chainReport
+                  ? `on malicious/suspicious verdict → ${FOLLOWUP_META[activeTemplate.chainReport].label}`
+                  : 'no auto-chain'}
+              </div>
+            )}
+          </Card>
+
           <Card className="p-5 space-y-4">
             <div>
               <label className="text-xs uppercase tracking-wider text-muted-foreground">
