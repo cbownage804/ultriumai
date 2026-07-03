@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
 import {
-  ScanSearch, Bug, FileText, ClipboardCheck, ShieldCheck, Terminal, FileWarning,
+  ScanSearch, Bug, FileText, ClipboardCheck, ShieldCheck, ShieldAlert, Terminal, FileWarning,
   GitBranch, Network, Sparkles, Coins, Brain, ArrowUpRight, History, BookOpen,
 } from 'lucide-react';
 
