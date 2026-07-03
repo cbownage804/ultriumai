@@ -198,7 +198,10 @@ export default function RaySkillsPanel() {
   const [bootStep, setBootStep] = useState(0);
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const [memory, setMemory] = useState<RayMemory | null>(null);
+  const [dismissedPriority, setDismissedPriority] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
+  const location = useLocation();
+  const route = useMemo(() => getRouteContext(location.pathname), [location.pathname]);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
