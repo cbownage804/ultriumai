@@ -25,6 +25,7 @@ const WraythLayout = lazy(() => import('@/layouts/WraythLayout'));
 const WraythLanding = lazy(() => import('@/pages/safesuite/SafeSuiteLanding'));
 const WraythAuth = lazy(() => import('@/pages/safesuite/SafeSuiteAuth'));
 const WraythDashboard = lazy(() => import('@/pages/safesuite/SafeSuiteDashboard'));
+const RayCommandCenter = lazy(() => import('@/pages/safesuite/RayCommandCenter'));
 const WraythBilling = lazy(() => import('@/pages/safesuite/SafeSuiteBilling'));
 const WraythSettings = lazy(() => import('@/pages/safesuite/SafeSuiteSettings'));
 const Passwords = lazy(() => import('@/pages/safesuite/Passwords'));
@@ -212,8 +213,12 @@ function AppRouter() {
             <SuspenseWrapper><WraythLayout /></SuspenseWrapper>
           </ProtectedRoute>
         }>
-          <Route path="/app/dashboard" element={<SuspenseWrapper><WraythDashboard /></SuspenseWrapper>} />
+          
+          <Route path="/app/dashboard" element={<SuspenseWrapper><RayCommandCenter /></SuspenseWrapper>} />
+          <Route path="/app/dashboard/classic" element={<SuspenseWrapper><WraythDashboard /></SuspenseWrapper>} />
+          <Route path="/app/command" element={<Navigate to="/app/dashboard" replace />} />
           <Route path="/app/brief" element={<SuspenseWrapper><MorningBrief /></SuspenseWrapper>} />
+          
           
           <Route path="/app/ray" element={<SuspenseWrapper><Ray /></SuspenseWrapper>} />
           <Route path="/app/ray/skills" element={<SuspenseWrapper><RaySkills /></SuspenseWrapper>} />
