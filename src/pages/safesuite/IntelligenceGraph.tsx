@@ -356,7 +356,7 @@ export default function IntelligenceGraph() {
           )}
         </CardContent>
       </Card>
-      </Card>
+
 
       <IocDetailsDialog ioc={detailIoc} onClose={() => setDetailIoc(null)} />
     </div>
