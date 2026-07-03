@@ -251,6 +251,16 @@ export default function IntelligencePolicies() {
   const [jurisdiction, setJurisdiction] = useState('');
   const [selectedFrameworks, setSelectedFrameworks] = useState<string[]>(['CIS v8', 'NIST CSF 2.0']);
   const [notes, setNotes] = useState('');
+  const [templateId, setTemplateId] = useState<string | null>(null);
+
+  function applyTemplate(t: PolicyTemplate) {
+    setTemplateId(t.id);
+    setPolicyType(t.policy_type);
+    setSelectedFrameworks(t.frameworks);
+    if (t.jurisdiction) setJurisdiction(t.jurisdiction);
+    setNotes(t.notes);
+    toast.success(`${t.label} template applied.`);
+  }
 
   const load = useCallback(async () => {
     if (!user) return;
