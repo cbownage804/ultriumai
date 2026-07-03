@@ -155,27 +155,13 @@ export default function RayTeamsEmbed() {
   // 3. Combine sources to decide the effective org.
   useEffect(() => {
     if (authLoading || orgsLoading) return;
-    // Explicit query param wins (if the user actually belongs to it).
-    if (explicitOrgId) {
-      const match = orgs.find((o) => o.id === explicitOrgId);
-      if (match) {
-        setResolved({ id: match.id, name: match.name, source: 'query' });
-        setResolving(false);
-        return;
-      }
-    }
-    if (tenantLinkedOrg && orgs.some((o) => o.id === tenantLinkedOrg.id)) {
-      setResolved({ id: tenantLinkedOrg.id, name: tenantLinkedOrg.name, source: 'tenant_link' });
-      setResolving(false);
-      return;
-    }
-    if (activeOrg) {
-      setResolved({ id: activeOrg.id, name: activeOrg.name, source: 'active' });
-      setResolving(false);
-      return;
-    }
-    // No org at all — solo user or picker required.
-    setResolved(null);
+    const next = resolveEmbedOrg({
+      explicitOrgId,
+      tenantLinkedOrg,
+      activeOrg: activeOrg ? { id: activeOrg.id, name: activeOrg.name } : null,
+      orgs: orgs.map((o) => ({ id: o.id, name: o.name })),
+    });
+    setResolved(next);
     setResolving(false);
   }, [authLoading, orgsLoading, explicitOrgId, tenantLinkedOrg, activeOrg, orgs]);
 
@@ -194,9 +180,12 @@ export default function RayTeamsEmbed() {
     }
   }, [resolved, switchOrg]);
 
-  // 5. Fire tab_opened once per mount, after resolution.
+  // 5. Fire tab_opened once per mount, after resolution. Ref guard is
+  // synchronous — safe against React 18 StrictMode double-invocation
+  // and any re-render that would otherwise re-enter this effect.
   useEffect(() => {
-    if (logged || resolving || !user) return;
+    if (loggedRef.current || resolving || !user) return;
+    loggedRef.current = true;
     void logTabOpened({
       userId: user.id,
       userEmail: user.email ?? null,
@@ -204,8 +193,7 @@ export default function RayTeamsEmbed() {
       orgId: resolved?.id,
       source: resolved?.source ?? 'active',
     });
-    setLogged(true);
-  }, [logged, resolving, user, teamsCtx?.tenantId, resolved]);
+  }, [resolving, user, teamsCtx?.tenantId, resolved]);
 
   const showPicker = !resolving && !resolved && orgs.length > 0;
   const soloUser = !resolving && !resolved && orgs.length === 0;
