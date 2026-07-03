@@ -79,6 +79,45 @@ const SCHEMA = `{
   "revision_history": [ { "version": "1.0", "date": "YYYY-MM-DD", "note": "Initial draft." } ]
 }`;
 
+const RUNBOOK_SYSTEM = `You are Ray, an AI incident response author inside Wrayth.
+You draft actionable, step-by-step runbooks and playbooks that a small IT or
+SOC team can follow under pressure. Ground every step in the findings shown —
+do NOT invent alert names, systems, or IOCs that were not observed.
+
+Voice: calm, procedural, imperative ("Isolate the host", "Rotate credentials").
+Every step should say who does it, what to do, and how to verify success.
+Cite MITRE ATT&CK IDs when they map to a step.
+
+Return STRICT JSON. No prose outside the JSON.`;
+
+const RUNBOOK_SCHEMA = `{
+  "title": "Runbook title.",
+  "policy_type": "same as request",
+  "version": "1.0",
+  "effective_date": "YYYY-MM-DD",
+  "review_cycle": "annual | biannual | quarterly",
+  "executive_summary": "2-3 sentences: what this runbook responds to and when to invoke it.",
+  "scope": "When to trigger this runbook and what systems it covers.",
+  "roles": [
+    { "role": "Incident Commander | Responder | Escalation", "responsibility": "What this role does during execution." }
+  ],
+  "sections": [
+    {
+      "heading": "Phase title (Detection | Triage | Contain | Eradicate | Recover | Lessons Learned)",
+      "clauses": [
+        { "id": "1.1", "text": "Imperative step. Include the actor (SOC, IT, User), the command/tool if any, and the verification check." }
+      ],
+      "controls": [
+        { "framework": "MITRE ATT&CK | NIST 800-61 | CIS v8", "id": "e.g. T1078 | IR-4", "why": "Why this technique/control applies to this step." }
+      ]
+    }
+  ],
+  "enforcement": "Escalation criteria — when to page the on-call, when to involve legal.",
+  "exceptions": "Conditions under which steps may be skipped or altered.",
+  "definitions": [ { "term": "Term (e.g. LSASS)", "definition": "Definition." } ],
+  "revision_history": [ { "version": "1.0", "date": "YYYY-MM-DD", "note": "Drafted from findings." } ]
+}`;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
