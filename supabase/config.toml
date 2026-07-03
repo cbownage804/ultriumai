@@ -153,6 +153,10 @@ verify_jwt = false
 [functions.ray-graph-sync]
 verify_jwt = false
 
+[functions.ray-graph-reason]
+verify_jwt = false
+
+
 
 
 

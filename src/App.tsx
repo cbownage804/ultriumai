@@ -70,6 +70,8 @@ const Trends = lazy(() => import('@/pages/safesuite/Trends'));
 const TrustCenter = lazy(() => import('@/pages/safesuite/TrustCenter'));
 const RayOnboarding = lazy(() => import('@/pages/onboarding/RayOnboarding'));
 const RayTimelinePage = lazy(() => import('@/pages/safesuite/RayTimelinePage'));
+const RayGraphExplorer = lazy(() => import('@/pages/safesuite/RayGraphExplorer'));
+
 const PlaybookRunnerPage = lazy(() => import('@/pages/safesuite/PlaybookRunnerPage'));
 const Integrations = lazy(() => import('@/pages/safesuite/Integrations'));
 const WorkplaceEmbeds = lazy(() => import('@/pages/safesuite/WorkplaceEmbeds'));
@@ -197,6 +199,9 @@ function AppRouter() {
           <Route path="/app/ray/secure/:provider" element={<SuspenseWrapper><SecureProviderLauncher /></SuspenseWrapper>} />
           <Route path="/app/timeline" element={<SuspenseWrapper><RayTimelinePage /></SuspenseWrapper>} />
           <Route path="/app/timeline/:entityType/:entityId" element={<SuspenseWrapper><RayTimelinePage /></SuspenseWrapper>} />
+          <Route path="/app/graph" element={<SuspenseWrapper><RayGraphExplorer /></SuspenseWrapper>} />
+          <Route path="/app/graph/:entityId" element={<SuspenseWrapper><RayGraphExplorer /></SuspenseWrapper>} />
+
 
           <Route path="/app/missions" element={<SuspenseWrapper><Missions /></SuspenseWrapper>} />
           <Route path="/app/trends" element={<SuspenseWrapper><Trends /></SuspenseWrapper>} />
