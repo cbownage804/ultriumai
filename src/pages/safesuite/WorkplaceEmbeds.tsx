@@ -283,7 +283,7 @@ export default function WorkplaceEmbeds() {
                   </CardTitle>
                   <CardDescription>
                     {p === "microsoft_teams"
-                      ? "Ship a Teams app bound to your tenant. Users @mention Wrayth to query the KB."
+                      ? "Ship a Teams app with a personal tab (Ray Assistant embedded) and, optionally, an @mention bot."
                       : "Install a Slack app with a slash command and app mention. Workspace-scoped."}
                   </CardDescription>
                 </div>
