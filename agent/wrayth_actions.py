@@ -453,6 +453,55 @@ def _update_defender_signatures(_p: dict[str, Any]) -> tuple[bool, dict, str | N
     return rc == 0, {"stdout": out}, err or None if rc != 0 else None
 
 
+def _disable_defender_pua(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    rc, out, err = _ps("Set-MpPreference -PUAProtection Disabled; 'ok'")
+    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+
+
+def _disable_defender_cloud(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    rc, out, err = _ps(
+        "Set-MpPreference -MAPSReporting Disabled -SubmitSamplesConsent NeverSend; 'ok'"
+    )
+    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+
+
+def _disable_firewall(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    rc, out, err = _ps("Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False; 'ok'")
+    return rc == 0, {"stdout": out, "rollback_possible": True, "rollback_action": "enable_firewall"}, err or None if rc != 0 else None
+
+
+def _enable_rdp(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    rc, out, err = _ps(
+        "Set-ItemProperty 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server' "
+        "-Name fDenyTSConnections -Value 0; "
+        "Enable-NetFirewallRule -DisplayGroup 'Remote Desktop' -ErrorAction SilentlyContinue; 'ok'"
+    )
+    return rc == 0, {"stdout": out, "rollback_possible": True, "rollback_action": "disable_rdp"}, err or None if rc != 0 else None
+
+
+def _disable_rdp_nla(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    rc, out, err = _ps(
+        "Set-ItemProperty 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server\\WinStations\\RDP-Tcp' "
+        "-Name UserAuthentication -Value 0; 'ok'"
+    )
+    return rc == 0, {"stdout": out, "rollback_possible": True, "rollback_action": "enable_rdp_nla"}, err or None if rc != 0 else None
+
+
+def _enable_remote_assistance(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    rc, out, err = _ps(
+        "Set-ItemProperty 'HKLM:\\System\\CurrentControlSet\\Control\\Remote Assistance' "
+        "-Name fAllowToGetHelp -Value 1; 'ok'"
+    )
+    return rc == 0, {"stdout": out, "rollback_possible": True, "rollback_action": "disable_remote_assistance"}, err or None if rc != 0 else None
+
+
+def _enable_builtin_administrator(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    rc, out, err = _ps(
+        "Get-LocalUser | Where-Object { $_.SID -like '*-500' } | Enable-LocalUser; 'ok'"
+    )
+    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+
+
 def _disable_startup_item(p: dict[str, Any]) -> tuple[bool, dict, str | None]:
     location = str(p.get("location") or "").strip()
     name = str(p.get("name") or "").strip()
