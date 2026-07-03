@@ -368,6 +368,17 @@ export default function RaySkillsPanel({ mode = 'compact', onModeChange, onClose
   // Dynamic "you might ask" chips — synthesized from ctx + route.
   const suggested = useMemo(() => buildSuggestedQuestions(ctx, route), [ctx, route]);
 
+  // Rotating tip — fills the tail so Ray always feels like it's thinking.
+  const tips = useMemo(() => pickTips(route), [route]);
+  const [tipIdx, setTipIdx] = useState(0);
+  useEffect(() => {
+    setTipIdx(0);
+    if (tips.length <= 1) return;
+    const iv = setInterval(() => setTipIdx((i) => (i + 1) % tips.length), 12_000);
+    return () => clearInterval(iv);
+  }, [tips]);
+  const currentTip = tips[tipIdx] ?? null;
+
   const empty = turns.length === 0;
   const scoreTone =
     score == null ? 'text-foreground' : score >= 80 ? 'text-emerald-300' : score >= 60 ? 'text-amber-300' : 'text-red-300';
