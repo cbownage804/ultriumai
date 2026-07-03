@@ -192,10 +192,10 @@ function EmptyState() {
       <div className="mx-auto h-12 w-12 rounded-full bg-[hsl(262_60%_64%/0.1)] flex items-center justify-center mb-3">
         <Presentation className="h-6 w-6 text-[hsl(262_60%_70%)]" />
       </div>
-      <h3 className="text-base font-medium">Generate your first board report</h3>
+      <h3 className="text-base font-medium">Generate your first executive report</h3>
       <p className="text-sm text-muted-foreground max-w-md mx-auto mt-1">
-        Pick a reporting period above and Ray will synthesise every investigation in that window into a single
-        leadership-ready summary.
+        Pick a reporting period above and Ray will synthesise investigations, attack paths, compliance
+        posture, MITRE observations, and open recommendations into a leadership-ready summary.
       </p>
     </Card>
   );
