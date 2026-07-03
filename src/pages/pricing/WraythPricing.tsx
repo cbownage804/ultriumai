@@ -244,9 +244,9 @@ const COMPARISON: { category: string; rows: { label: string; values: [Cell, Cell
 
 const FAQS = [
   {
-    question: 'What actually consumes Ray Compute?',
+    question: 'What actually uses Credits?',
     answer:
-      "Everyday Ray usage — chat, briefs, monitoring, recommendations, and standard threat analysis — is included with every plan. Ray Compute is only spent on premium AI horsepower like advanced threat investigations. You'll never wonder \"am I paying every time Ray helps me?\"",
+      "Most of Ray is included with your subscription — chat, briefs, monitoring, recommendations, guided remediation, and standard threat analysis. Credits are only used for advanced AI investigations and report generation (deep threat investigations, executive reports, policy generation, compliance analysis, attack-path reasoning, large log analysis). You pay only for high-compute tasks instead of higher monthly subscription costs.",
   },
   {
     question: 'Why is there no per-message or per-scan limit on paid plans?',
