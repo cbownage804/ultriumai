@@ -429,6 +429,7 @@ export function DeviceActionsMenu({
                   <Lock className="mr-2 h-4 w-4" /> {ACTION_LABELS.lock_screen}
                 </DropdownMenuItem>
                 <DropdownMenuItem
+                  title={ACTION_DESCRIPTIONS.sign_out_user}
                   onClick={() => run('sign_out_user')}
                   className="text-red-300 focus:text-red-200"
                 >
