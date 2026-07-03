@@ -392,7 +392,7 @@ function buildScoreDeltaBullets(briefs: Brief[]): string[] {
     out.push(`${stats.threats?.critical} critical threat${stats.threats?.critical === 1 ? '' : 's'} need attention.`);
   }
   if ((stats.exposure?.new_breaches ?? 0) > 0) {
-    out.push(`${stats.exposure?.new_breaches} new exposure${stats.exposure?.new_breaches === 1 ? '' : 's'} detected.`);
+    out.push(`${stats.exposure?.new_breaches} new breach${stats.exposure?.new_breaches === 1 ? '' : 'es'} on monitored identities.`);
   }
   if (out.length === 0) out.push("I'll keep watching and tell you the moment I see why.");
   return out;
