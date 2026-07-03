@@ -17815,6 +17815,59 @@ export type Database = {
         }
         Relationships: []
       }
+      ray_investigation_followups: {
+        Row: {
+          content: string | null
+          cost_ray_compute: number
+          created_at: string
+          error: string | null
+          followup_type: Database["public"]["Enums"]["ray_investigation_followup_type"]
+          id: string
+          investigation_id: string
+          model: string | null
+          question: string | null
+          status: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          cost_ray_compute?: number
+          created_at?: string
+          error?: string | null
+          followup_type: Database["public"]["Enums"]["ray_investigation_followup_type"]
+          id?: string
+          investigation_id: string
+          model?: string | null
+          question?: string | null
+          status?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          cost_ray_compute?: number
+          created_at?: string
+          error?: string | null
+          followup_type?: Database["public"]["Enums"]["ray_investigation_followup_type"]
+          id?: string
+          investigation_id?: string
+          model?: string | null
+          question?: string | null
+          status?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ray_investigation_followups_investigation_id_fkey"
+            columns: ["investigation_id"]
+            isOneToOne: false
+            referencedRelation: "ray_investigations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ray_investigations: {
         Row: {
           completed_at: string | null
@@ -38190,6 +38243,11 @@ export type Database = {
       device_status: "online" | "offline" | "stale" | "unknown"
       helpdesk_role: "msp_admin" | "msp_staff" | "client_admin" | "client_staff"
       portal_user_role: "admin" | "manager" | "user" | "readonly"
+      ray_investigation_followup_type:
+        | "executive_report"
+        | "management_explanation"
+        | "incident_report"
+        | "question"
       ray_investigation_input_type:
         | "url"
         | "email"
@@ -38372,6 +38430,12 @@ export const Constants = {
       device_status: ["online", "offline", "stale", "unknown"],
       helpdesk_role: ["msp_admin", "msp_staff", "client_admin", "client_staff"],
       portal_user_role: ["admin", "manager", "user", "readonly"],
+      ray_investigation_followup_type: [
+        "executive_report",
+        "management_explanation",
+        "incident_report",
+        "question",
+      ],
       ray_investigation_input_type: [
         "url",
         "email",
