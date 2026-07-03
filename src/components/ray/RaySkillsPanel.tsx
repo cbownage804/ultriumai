@@ -668,16 +668,44 @@ function PriorityRecRow({ rec, onAsk }: { rec: PriorityRec; onAsk: (q: string) =
             {severityLabel}
           </span>
         </div>
-        <Button size="sm" variant="secondary" className="h-7 rounded-full px-3 text-xs"
-          onClick={() => onAsk(rec.prompt)}>
-          Review
-        </Button>
       </div>
       <div className="mt-1.5 text-sm font-medium text-foreground">{rec.title}</div>
-      <p className="mt-1 text-xs text-muted-foreground leading-relaxed line-clamp-3">{rec.why}</p>
+
+      <div className="mt-2 space-y-1.5">
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground/80">Why this matters</div>
+        <p className="text-xs text-foreground/80 leading-relaxed line-clamp-3">{rec.why}</p>
+      </div>
+
+      <div className="mt-3 grid grid-cols-3 gap-2 rounded-md border border-border/40 bg-background/40 px-2 py-1.5 text-[11px]">
+        <div className="flex flex-col">
+          <span className="text-muted-foreground/70 text-[9px] uppercase tracking-wider">Impact</span>
+          <span className="text-emerald-300 font-medium tabular-nums">+{rec.impactPoints} score</span>
+        </div>
+        <div className="flex flex-col">
+          <span className="text-muted-foreground/70 text-[9px] uppercase tracking-wider">Time</span>
+          <span className="text-foreground/90 font-medium">{rec.durationLabel}</span>
+        </div>
+        <div className="flex flex-col">
+          <span className="text-muted-foreground/70 text-[9px] uppercase tracking-wider">Risk</span>
+          <span className="text-foreground/90 font-medium">{rec.needsReboot ? 'Reboot' : 'None'}</span>
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        <Button size="sm" className="h-7 rounded-full px-3 text-xs" onClick={() => onAsk(rec.fixPrompt)}>
+          Fix now
+        </Button>
+        <Button size="sm" variant="secondary" className="h-7 rounded-full px-3 text-xs" onClick={() => onAsk(rec.askPrompt)}>
+          Tell me why
+        </Button>
+        <Button size="sm" variant="ghost" className="h-7 rounded-full px-3 text-xs" onClick={() => onAsk(rec.impactPrompt)}>
+          Show impact
+        </Button>
+      </div>
     </div>
   );
 }
+
 
 function RayTurn({
   response,
