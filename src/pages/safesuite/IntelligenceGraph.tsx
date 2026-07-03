@@ -397,11 +397,13 @@ function GraphSvg({
   iocs,
   selected,
   onSelect,
+  onOpenIoc,
 }: {
   investigations: Investigation[];
   iocs: IocRow[];
   selected: string | null;
   onSelect: (id: string | null) => void;
+  onOpenIoc: (ioc: IocRow) => void;
 }) {
   const width = 720;
   const height = 460;
