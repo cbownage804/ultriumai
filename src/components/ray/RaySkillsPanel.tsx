@@ -15,6 +15,11 @@ import {
   CheckCircle2,
   AlertTriangle,
   Activity,
+  Maximize2,
+  Minimize2,
+  PanelRightOpen,
+  Lightbulb,
+  X,
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getRouteContext } from '@/lib/ray/routeContext';
@@ -25,9 +30,12 @@ import { getRayContext, type RayContext } from '@/lib/ray';
 import { getSinceLastVisit, type SinceItem } from '@/lib/ray/sinceLastVisit';
 import { buildSuggestedQuestions } from '@/lib/ray/suggestedQuestions';
 import { useLiveActivity, type ActivityEvent } from '@/lib/ray/liveActivity';
+import { pickTips, type RayTip } from '@/lib/ray/tips';
 import { formatDistanceToNow } from 'date-fns';
 import { dedupeRecs as sharedDedupeRecs } from './recDedupe';
 import { RayThinking } from './RayThinking';
+
+export type PanelMode = 'compact' | 'expanded' | 'workspace';
 
 type RayCard = {
   title?: string;
