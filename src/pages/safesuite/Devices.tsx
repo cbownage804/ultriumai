@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { RayPageHeader } from '@/components/ray/RayPageHeader';
 import { RayConversationCard } from '@/components/ray/RayConversationCard';
+import { DevicesRayBrief } from '@/components/ray/DevicesRayBrief';
 import { cn } from '@/lib/utils';
 
 interface DeviceRow {
