@@ -665,12 +665,13 @@ export default function WraythDashboard() {
     weakestEntry && (weakestEntry.password_strength_score ?? 100) < 60 ? 'weak' : undefined;
 
   const cisoDirective = nextBestAction({
-    vaultCount: stats.passwordCount,
+    vaultCount: persistentVaultCount,
     weakCount: stats.weakPasswordCount,
     strongCount: stats.strongPasswordCount,
     breachedEmailCount,
     monitoredAssets: stats.monitoredAssets,
     monitoredEmailsWithoutVaultLink: 0,
+    vaultUnlocked: !vaultLocked,
     topAccountTitle,
     topAccountReason,
   });
