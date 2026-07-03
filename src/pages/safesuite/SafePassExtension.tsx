@@ -96,13 +96,7 @@ const ExtensionPage = () => {
     <FeatureGate feature="vault">
       <div className="space-y-6">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold">Wrayth Browser Extension</h1>
-            <Badge variant="outline" className="bg-yellow-500/10 text-yellow-400 border-yellow-500/30 flex items-center gap-1">
-              <Beaker className="h-3 w-3" />
-              BETA
-            </Badge>
-          </div>
+          <h1 className="text-3xl font-bold">Wrayth Browser Extension</h1>
           <p className="text-muted-foreground mt-1">
             Ray in your browser — autofill, site trust, and identity awareness across every tab.
           </p>
@@ -111,9 +105,8 @@ const ExtensionPage = () => {
         <Alert className="bg-yellow-500/10 border-yellow-500/30">
           <AlertTriangle className="h-4 w-4 text-yellow-400" />
           <AlertDescription className="text-yellow-200/80">
-            <span className="font-semibold text-yellow-400">Beta:</span> the extension is functional but not yet in the
-            Chrome Web Store, Edge Add-ons, or Firefox AMO. Install via developer mode for now — one-click store
-            installs are coming next.
+            One-click store installs are coming after Chrome Web Store, Edge Add-ons, and Firefox AMO approval.
+            Until then, install the packages below via developer mode.
           </AlertDescription>
         </Alert>
 
@@ -123,9 +116,12 @@ const ExtensionPage = () => {
               <CardTitle className="flex items-center gap-2">
                 <Chrome className="h-5 w-5 text-primary" />
                 Chrome, Edge, Brave, Arc, Opera
+                <Badge variant="outline" className="ml-2 bg-green-500/10 text-green-400 border-green-500/30">
+                  Production-ready
+                </Badge>
               </CardTitle>
               <CardDescription>
-                All Chromium browsers. Includes the Ray side panel and every keyboard shortcut.
+                All Chromium browsers. Includes the Ray side panel and every keyboard shortcut. Store install coming soon.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -157,9 +153,13 @@ const ExtensionPage = () => {
               <CardTitle className="flex items-center gap-2">
                 <Flame className="h-5 w-5 text-orange-400" />
                 Firefox
+                <Badge variant="outline" className="ml-2 bg-yellow-500/10 text-yellow-400 border-yellow-500/30 flex items-center gap-1">
+                  <Beaker className="h-3 w-3" />
+                  Beta
+                </Badge>
               </CardTitle>
               <CardDescription>
-                Native Firefox build. Uses the Firefox sidebar in place of the Chromium side panel.
+                Native Firefox build using the Firefox sidebar in place of the Chromium side panel. Firefox Add-ons listing coming soon.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
