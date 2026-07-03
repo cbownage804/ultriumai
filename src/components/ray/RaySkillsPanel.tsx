@@ -611,10 +611,6 @@ export default function RaySkillsPanel() {
               </section>
             </div>
 
-                  );
-                })}
-              </section>
-            </div>
           ) : (
             <div className="space-y-4 p-4">
               {turns.map((turn, i) =>
