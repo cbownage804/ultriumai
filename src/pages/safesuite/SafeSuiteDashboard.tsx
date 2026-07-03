@@ -699,22 +699,22 @@ export default function WraythDashboard() {
         <UsageLimitBanner feature="vault" />
       </div>
 
-      {/* 5. Timeline — the single source of truth for Ray's actions */}
+      {/* 5. Timeline — compressed today-only tail. Deep history lives at /app/timeline. */}
       <div className="wrayth-chamfer border border-border bg-card p-5">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <div className="text-[11px] uppercase tracking-[0.22em] text-violet-300/80">Ray's timeline</div>
-            <h2 className="mt-1 text-lg font-light text-foreground">Everything I've done lately</h2>
+            <div className="text-[11px] uppercase tracking-[0.22em] text-violet-300/80">Today so far</div>
+            <h2 className="mt-1 text-lg font-light text-foreground">What Ray touched today</h2>
           </div>
           <Link to="/app/timeline" className="text-xs text-violet-300 hover:text-violet-200 inline-flex items-center gap-1">
-            View all <ArrowRight className="h-3 w-3" />
+            Full timeline <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
-        <RayTimeline limit={8} embedded />
+        <RayTimeline limit={5} embedded />
       </div>
 
-      {/* 6. Getting Started — hides itself when complete */}
-      <OnboardingChecklist product="safesuite" />
+      {/* 6. Getting Started → Security Trends once onboarding is done. */}
+      <OnboardingOrTrends />
 
       {/* 7. Upgrade — framed as Ray's recommendation */}
       <SubscriptionBanner />
