@@ -286,8 +286,9 @@ export default function WraythFeatures() {
       <section id="watch" className="border-b border-border py-24 px-4">
         <div className="mx-auto max-w-6xl">
           <div className="mb-12 max-w-2xl">
-            <Badge className="mb-4 bg-purple-500/10 text-purple-400 border-0">Watch</Badge>
-            <h2 className="mb-3 text-4xl font-bold">Watch</h2>
+            <Badge className="mb-4 bg-purple-500/10 text-purple-400 border-0">Exposure Monitoring</Badge>
+            <h2 className="mb-3 text-4xl font-bold">Exposure Monitoring</h2>
+
             <p className="text-lg text-muted-foreground">
               Continuous monitoring. Not periodic scanning. Real-time awareness of your exposure.
             </p>
