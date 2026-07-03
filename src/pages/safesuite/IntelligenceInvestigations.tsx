@@ -1188,7 +1188,11 @@ function IocsPanel({
                   </div>
                 )}
               </div>
+              {history && history.timestamps && history.timestamps.length > 0 && (
+                <IocSparkline timestamps={history.timestamps} />
+              )}
             </div>
+
           ))}
         </div>
       )}
