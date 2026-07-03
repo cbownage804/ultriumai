@@ -920,3 +920,76 @@ function activityDot(kind: ActivityEvent['kind']): string {
   }
 }
 
+function ModeControls({
+  mode,
+  onModeChange,
+  onClose,
+}: {
+  mode: PanelMode;
+  onModeChange?: (m: PanelMode) => void;
+  onClose?: () => void;
+}) {
+  if (!onModeChange && !onClose) return null;
+  const btn =
+    'flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted/40 hover:text-foreground';
+  return (
+    <div className="flex items-center gap-0.5 shrink-0">
+      {onModeChange && mode === 'compact' && (
+        <button className={btn} onClick={() => onModeChange('expanded')} aria-label="Expand Ray" title="Expand">
+          <Maximize2 className="h-3.5 w-3.5" />
+        </button>
+      )}
+      {onModeChange && mode === 'expanded' && (
+        <>
+          <button className={btn} onClick={() => onModeChange('compact')} aria-label="Shrink Ray" title="Compact">
+            <Minimize2 className="h-3.5 w-3.5" />
+          </button>
+          <button className={btn} onClick={() => onModeChange('workspace')} aria-label="Open workspace" title="Workspace">
+            <PanelRightOpen className="h-3.5 w-3.5" />
+          </button>
+        </>
+      )}
+      {onModeChange && mode === 'workspace' && (
+        <button className={btn} onClick={() => onModeChange('expanded')} aria-label="Exit workspace" title="Exit workspace">
+          <Minimize2 className="h-3.5 w-3.5" />
+        </button>
+      )}
+      {onClose && (
+        <button className={btn} onClick={onClose} aria-label="Close Ray" title="Close">
+          <X className="h-3.5 w-3.5" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function TipCard({ tip, onAsk }: { tip: RayTip; onAsk: (q: string) => void }) {
+  const kindLabel =
+    tip.kind === 'didyouknow' ? 'Did you know?' : tip.kind === 'nudge' ? 'Worth a look' : 'Security tip';
+  return (
+    <AnimatePresence mode="wait">
+      <motion.section
+        key={tip.id}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -6 }}
+        transition={{ duration: 0.35 }}
+        className="rounded-lg border border-amber-500/25 bg-gradient-to-br from-amber-500/[0.06] via-background to-background p-3 space-y-2"
+      >
+        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.22em] text-amber-300/90">
+          <Lightbulb className="h-3 w-3" />
+          {kindLabel}
+        </div>
+        <div className="text-sm font-medium text-foreground leading-snug">{tip.title}</div>
+        <p className="text-xs text-foreground/75 leading-relaxed">{tip.body}</p>
+        <button
+          onClick={() => onAsk(tip.prompt)}
+          className="text-xs text-primary hover:underline underline-offset-2"
+        >
+          Tell me more →
+        </button>
+      </motion.section>
+    </AnimatePresence>
+  );
+}
+
