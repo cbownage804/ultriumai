@@ -204,9 +204,10 @@ export default function WraythFeatures() {
             <h2 className="mb-3 text-4xl font-bold">Password Monitoring</h2>
 
             <p className="text-lg text-muted-foreground">
-              Your passwords never leave your device. Ray only sees them after
-              <span className="text-foreground"> you </span> unlock the Vault.
+              Zero-knowledge password storage with continuous breach monitoring. Your credentials
+              never leave your device unencrypted &mdash; Ray only sees them after <span className="text-foreground">you</span> unlock them.
             </p>
+
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
