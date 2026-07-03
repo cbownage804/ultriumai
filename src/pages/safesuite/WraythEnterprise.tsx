@@ -37,11 +37,12 @@ const designPartnerSegments = [
 ];
 
 const platformModules = [
-  { icon: KeyRound, label: "Vault", description: "Zero-knowledge credentials & secrets" },
-  { icon: Search, label: "Scan", description: "URL, file & attachment analysis" },
-  { icon: Radar, label: "Watch", description: "Dark web & domain monitoring" },
-  { icon: Fingerprint, label: "Identity", description: "SSO, SCIM & identity graph" },
+  { icon: ShieldCheck, label: 'Endpoint Protection', description: 'Windows agent, posture monitoring, one-click remediation' },
+  { icon: Search, label: 'Threat Analysis', description: 'URL, email, and attachment investigation with AI verdicts' },
+  { icon: Radar, label: 'Exposure Monitoring', description: 'Dark web and identity monitoring, continuous' },
+  { icon: Fingerprint, label: 'Identity & Access', description: 'SSO, SCIM, and the identity graph across your org' },
 ];
+
 
 const orgCapabilities = [
   { icon: Building2, title: "Unlimited Organizations", description: "Model your company, subsidiaries, and departments however you need." },
