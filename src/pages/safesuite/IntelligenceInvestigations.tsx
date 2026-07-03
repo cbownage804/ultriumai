@@ -599,9 +599,19 @@ export default function IntelligenceInvestigations() {
           </div>
         </aside>
       </div>
+
+      <HowIProtectYouCard
+        title="While you work…"
+        lines={[
+          "I'm keeping every case file — findings, MITRE mapping, IOCs — in one place.",
+          "I'm automatically correlating new evidence against your existing investigations.",
+          "If I recognize an artifact from a previous case, I'll tell you before you ask.",
+        ]}
+      />
     </div>
   );
 }
+
 
 function ResultSkeleton() {
   return (
