@@ -95,6 +95,208 @@ function stateOf(g: Gap): 'missing' | 'weak' | 'partial' {
   return 'partial';
 }
 
+// ─── Evidence checklist ──────────────────────────────────────────────────
+//
+// For every gap we synthesize a short, opinionated list of the exact
+// artifacts an auditor typically wants to close the finding. Each item
+// links to the most relevant place inside Wrayth (SafeDoc for documents,
+// SafePass for credentials, Vanguard for endpoint config, Ray for logs
+// & investigations) so users can jump straight to where the evidence lives.
+
+type EvidenceKind = 'document' | 'record' | 'config' | 'log' | 'screenshot' | 'policy';
+
+type EvidenceItem = {
+  id: string;
+  kind: EvidenceKind;
+  label: string;
+  hint: string;
+  href?: string;
+};
+
+const KIND_META: Record<EvidenceKind, { icon: typeof FolderOpen; tone: string }> = {
+  document:   { icon: FolderOpen,       tone: 'text-[hsl(220_80%_70%)]' },
+  record:     { icon: FileSearch,       tone: 'text-[hsl(200_70%_70%)]' },
+  config:     { icon: Settings2,        tone: 'text-[hsl(160_60%_65%)]' },
+  log:        { icon: ScrollText,       tone: 'text-[hsl(38_80%_70%)]' },
+  screenshot: { icon: Camera,           tone: 'text-[hsl(280_60%_75%)]' },
+  policy:     { icon: ClipboardCheck,   tone: 'text-[hsl(262_70%_75%)]' },
+};
+
+const EVIDENCE_ROUTES = {
+  documents:      '/app/intelligence/history',
+  policies:       '/app/intelligence/policies',
+  investigations: '/app/intelligence/investigations',
+  logs:           '/app/intelligence/logs',
+  reports:        '/app/intelligence/reports',
+  graph:          '/app/intelligence/graph',
+  vault:          '/app/products/safepass',
+};
+
+const EVIDENCE_RULES: Array<{
+  match: RegExp;
+  items: Omit<EvidenceItem, 'id'>[];
+}> = [
+  {
+    match: /\b(mfa|multi-?factor|2fa|otp|totp)\b/i,
+    items: [
+      { kind: 'screenshot', label: 'MFA enforcement screenshot', hint: 'IdP/tenant admin console showing MFA is required for all users.', href: EVIDENCE_ROUTES.documents },
+      { kind: 'record',     label: 'User MFA enrollment export',  hint: 'CSV/report of every active user with their MFA status.', href: EVIDENCE_ROUTES.reports },
+      { kind: 'policy',     label: 'Access control policy',       hint: 'Signed policy that mandates MFA and specifies allowed factors.', href: EVIDENCE_ROUTES.policies },
+    ],
+  },
+  {
+    match: /\b(password|credential|secret|vault|rotation)\b/i,
+    items: [
+      { kind: 'policy',   label: 'Password / credential policy', hint: 'Complexity, rotation cadence, storage rules, shared-account handling.', href: EVIDENCE_ROUTES.policies },
+      { kind: 'record',   label: 'Vault inventory + last-rotated dates', hint: 'Export from SafePass showing shared secrets and rotation timestamps.', href: EVIDENCE_ROUTES.vault },
+      { kind: 'log',      label: 'Rotation & access audit log',  hint: 'Who accessed which secret when, and last rotation events.',       href: EVIDENCE_ROUTES.logs },
+    ],
+  },
+  {
+    match: /\b(access|rbac|least[- ]?privilege|privilege|authorization|role)\b/i,
+    items: [
+      { kind: 'record',   label: 'Role / entitlement matrix',    hint: 'Mapping of roles → systems → permissions, plus current assignments.', href: EVIDENCE_ROUTES.reports },
+      { kind: 'record',   label: 'Access review sign-off',       hint: 'Most recent quarterly access review with owner approvals.',        href: EVIDENCE_ROUTES.documents },
+      { kind: 'log',      label: 'Privileged access audit log',  hint: 'Admin logins, sudo/elevation events, break-glass usage.',           href: EVIDENCE_ROUTES.logs },
+    ],
+  },
+  {
+    match: /\b(logging|log|audit|monitor|siem|detection)\b/i,
+    items: [
+      { kind: 'config',   label: 'Log source coverage list',     hint: 'Every in-scope system + which logs are shipped to the SIEM.',      href: EVIDENCE_ROUTES.graph },
+      { kind: 'log',      label: 'Sample log snapshots',         hint: 'At least 30 days of retention proof from each critical source.',   href: EVIDENCE_ROUTES.logs },
+      { kind: 'policy',   label: 'Log retention & review policy', hint: 'Retention windows, who reviews, how alerts are triaged.',         href: EVIDENCE_ROUTES.policies },
+    ],
+  },
+  {
+    match: /\b(backup|restore|recovery|dr|bcp|resilience)\b/i,
+    items: [
+      { kind: 'record',   label: 'Latest successful backup report', hint: 'Job status export for each critical system + retention proof.', href: EVIDENCE_ROUTES.reports },
+      { kind: 'document', label: 'Restore test evidence',        hint: 'Signed record of the last full restore test with timing/results.', href: EVIDENCE_ROUTES.documents },
+      { kind: 'policy',   label: 'DR / BCP plan',                hint: 'Current plan with RTO/RPO, contact tree, and last exercise date.', href: EVIDENCE_ROUTES.policies },
+    ],
+  },
+  {
+    match: /\b(vuln|patch|update|cve|scan)\b/i,
+    items: [
+      { kind: 'record',   label: 'Vulnerability scan export',    hint: 'Most recent scan showing findings, severities, and status.',       href: EVIDENCE_ROUTES.reports },
+      { kind: 'record',   label: 'Patch compliance report',      hint: 'Per-endpoint patch level + missing critical/important updates.',   href: EVIDENCE_ROUTES.reports },
+      { kind: 'policy',   label: 'Vulnerability management SLA', hint: 'SLA for triaging and remediating critical/high findings.',          href: EVIDENCE_ROUTES.policies },
+    ],
+  },
+  {
+    match: /\b(encrypt|tls|ssl|at[- ]rest|in[- ]transit|kms)\b/i,
+    items: [
+      { kind: 'config',     label: 'Encryption configuration',   hint: 'TLS versions/ciphers, at-rest encryption per datastore, KMS setup.', href: EVIDENCE_ROUTES.graph },
+      { kind: 'screenshot', label: 'Cert & key inventory',       hint: 'Certificates, expiries, key rotation cadence.',                    href: EVIDENCE_ROUTES.documents },
+      { kind: 'policy',     label: 'Cryptography policy',        hint: 'Approved algorithms, key lengths, rotation frequency.',            href: EVIDENCE_ROUTES.policies },
+    ],
+  },
+  {
+    match: /\b(incident|response|ir|breach|containment|forensic)\b/i,
+    items: [
+      { kind: 'policy',   label: 'Incident response runbook',    hint: 'Current IR plan with roles, escalation paths, comms tree.',        href: EVIDENCE_ROUTES.policies },
+      { kind: 'document', label: 'Tabletop / drill record',      hint: 'Last IR exercise: date, scenario, participants, lessons.',         href: EVIDENCE_ROUTES.documents },
+      { kind: 'record',   label: 'Recent investigation timeline', hint: 'A real Ray investigation with actions, artifacts, and outcome.',  href: EVIDENCE_ROUTES.investigations },
+    ],
+  },
+  {
+    match: /\b(training|awareness|phish|education)\b/i,
+    items: [
+      { kind: 'record',   label: 'Training completion roster',   hint: 'Per-user completion status for the last training cycle.',          href: EVIDENCE_ROUTES.reports },
+      { kind: 'document', label: 'Training content / curriculum', hint: 'Slides, modules, or LMS course used this cycle.',                 href: EVIDENCE_ROUTES.documents },
+      { kind: 'record',   label: 'Phishing simulation results',  hint: 'Click / report rates from the last simulation campaign.',          href: EVIDENCE_ROUTES.reports },
+    ],
+  },
+  {
+    match: /\b(vendor|third[- ]?party|supplier|contract|dpa)\b/i,
+    items: [
+      { kind: 'document', label: 'Vendor inventory',             hint: 'List of vendors, data types shared, criticality tier.',            href: EVIDENCE_ROUTES.documents },
+      { kind: 'document', label: 'Signed DPA / security addendum', hint: 'Executed data processing / security terms for each vendor.',     href: EVIDENCE_ROUTES.documents },
+      { kind: 'record',   label: 'Vendor risk assessment',       hint: 'Most recent questionnaire / SOC 2 review per vendor.',             href: EVIDENCE_ROUTES.reports },
+    ],
+  },
+  {
+    match: /\b(endpoint|edr|antivirus|av|device|laptop|workstation)\b/i,
+    items: [
+      { kind: 'record',   label: 'Endpoint inventory + agent status', hint: 'Every managed endpoint with EDR/AV agent health.',            href: EVIDENCE_ROUTES.reports },
+      { kind: 'config',   label: 'EDR / AV policy configuration', hint: 'Screenshots of enforced policies (real-time scan, tamper protection).', href: EVIDENCE_ROUTES.graph },
+      { kind: 'log',      label: 'Recent detection log sample',   hint: '30 days of detections/alerts from EDR console.',                   href: EVIDENCE_ROUTES.logs },
+    ],
+  },
+  {
+    match: /\b(network|firewall|segmentation|vpn|acl)\b/i,
+    items: [
+      { kind: 'config',     label: 'Firewall ruleset export',    hint: 'Current inbound/outbound rules with owner + justification.',       href: EVIDENCE_ROUTES.graph },
+      { kind: 'document',   label: 'Network diagram',            hint: 'Up-to-date diagram showing segmentation and trust boundaries.',    href: EVIDENCE_ROUTES.documents },
+      { kind: 'record',     label: 'Firewall change tickets',    hint: 'Recent change requests with approvals for network changes.',        href: EVIDENCE_ROUTES.documents },
+    ],
+  },
+  {
+    match: /\b(data|classification|dlp|retention|privacy|pii|phi)\b/i,
+    items: [
+      { kind: 'document', label: 'Data classification scheme',   hint: 'Tiers, examples, handling rules per tier.',                        href: EVIDENCE_ROUTES.documents },
+      { kind: 'record',   label: 'Data inventory / RoPA',        hint: 'Where each data type lives, retention window, legal basis.',       href: EVIDENCE_ROUTES.reports },
+      { kind: 'policy',   label: 'Data retention & disposal policy', hint: 'How long each class is kept and how it is destroyed.',         href: EVIDENCE_ROUTES.policies },
+    ],
+  },
+];
+
+const DEFAULT_EVIDENCE: Omit<EvidenceItem, 'id'>[] = [
+  { kind: 'policy',   label: 'Written control statement',   hint: 'Documented policy or standard that addresses this control.',       href: EVIDENCE_ROUTES.policies },
+  { kind: 'record',   label: 'Operational evidence sample', hint: 'At least one recent record showing the control operating.',        href: EVIDENCE_ROUTES.reports },
+  { kind: 'document', label: 'Owner sign-off',              hint: 'Named control owner with approval date on file.',                  href: EVIDENCE_ROUTES.documents },
+];
+
+function evidenceFor(g: Gap): EvidenceItem[] {
+  const text = [g.control, g.domain, g.gap, g.remediation].filter(Boolean).join(' ').toLowerCase();
+  const seen = new Set<string>();
+  const out: EvidenceItem[] = [];
+  for (const rule of EVIDENCE_RULES) {
+    if (!rule.match.test(text)) continue;
+    for (const item of rule.items) {
+      const key = `${item.kind}:${item.label}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ ...item, id: key });
+    }
+    if (out.length >= 6) break;
+  }
+  if (out.length < 3) {
+    for (const item of DEFAULT_EVIDENCE) {
+      const key = `${item.kind}:${item.label}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ ...item, id: key });
+    }
+  }
+  // Impacted-system-specific reminder — surfaces the exact assets to attach evidence for.
+  if ((g.impacted_systems ?? []).length) {
+    out.push({
+      id: 'record:impacted-systems',
+      kind: 'record',
+      label: `Evidence for each impacted system (${(g.impacted_systems ?? []).length})`,
+      hint: (g.impacted_systems ?? []).join(', '),
+      href: EVIDENCE_ROUTES.graph,
+    });
+  }
+  return out.slice(0, 7);
+}
+
+const CHECKS_STORAGE_KEY = 'ray.evidence.checks.v1';
+
+function loadChecks(): Record<string, boolean> {
+  try {
+    return JSON.parse(localStorage.getItem(CHECKS_STORAGE_KEY) || '{}');
+  } catch { return {}; }
+}
+function saveChecks(state: Record<string, boolean>) {
+  try { localStorage.setItem(CHECKS_STORAGE_KEY, JSON.stringify(state)); } catch { /* ignore */ }
+}
+function checkKey(scanId: string, gapIdx: number, evidenceId: string) {
+  return `${scanId}::${gapIdx}::${evidenceId}`;
+}
+
 export default function IntelligenceComplianceReport() {
   const { user } = useAuth();
   const [params, setParams] = useSearchParams();
