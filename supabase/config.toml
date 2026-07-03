@@ -46,6 +46,9 @@ verify_jwt = true
 [functions.ray-investigate-followup]
 verify_jwt = true
 
+[functions.ray-board-report]
+verify_jwt = true
+
 
 [functions.ray-chat]
 verify_jwt = true
