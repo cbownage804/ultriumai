@@ -56,7 +56,7 @@ export function RayPresence() {
   const score = ctx?.latestScore?.score ?? null;
   const scoreTone =
     score == null ? 'text-foreground' : score >= 80 ? 'text-green-300' : score >= 60 ? 'text-yellow-300' : 'text-red-300';
-  const openRecs = ctx?.recommendations.length ?? 0;
+  const openRecs = ctx ? dedupeRecs(ctx.recommendations).length : 0;
   const lastSync = ctx?.latestScore?.created_at ? new Date(ctx.latestScore.created_at) : null;
 
   return (
