@@ -18,7 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
 import {
   ScanSearch, Bug, FileText, ClipboardCheck, ShieldCheck, ShieldAlert, Terminal, FileWarning,
-  GitBranch, Network, Sparkles, Coins, Brain, ArrowUpRight, History, BookOpen,
+  GitBranch, Network, Sparkles, Coins, Brain, ArrowUpRight, History, BookOpen, Layers,
 } from 'lucide-react';
 
 type Tile = {
@@ -36,6 +36,7 @@ const TILES: Tile[] = [
   { id: 'attack-paths',    label: 'Attack Paths',   desc: 'Reason about how a threat could progress and what it blasts.', href: '/app/intelligence/attack-paths',   icon: GitBranch,  cost: 20, status: 'live' },
   { id: 'graph',           label: 'Graph',          desc: 'See how every investigation and IOC connects across your org.', href: '/app/intelligence/graph',         icon: Network,    cost: 0,  status: 'live' },
   { id: 'memory',          label: 'Memory',         desc: '"Have I seen this before?" — paste any IOC, see every prior sighting.', href: '/app/intelligence/memory', icon: Brain,      cost: 0,  status: 'live' },
+  { id: 'campaigns',       label: 'Campaigns',      desc: 'Ray clusters investigations that share IOCs into named threat narratives.', href: '/app/intelligence/campaigns', icon: Layers, cost: 0, status: 'live' },
   { id: 'reports',         label: 'Executive Reports',  desc: 'Board-ready digest across the full graph: risk score, MITRE, timeline, open risks.', href: '/app/intelligence/reports',   icon: FileText,   cost: 8,  status: 'live' },
   { id: 'malware',         label: 'Malware Analysis', desc: 'Explain what a binary, hash, or strings dump actually does.',       href: '/app/intelligence/malware', icon: Bug,        cost: 4,  status: 'live' },
   { id: 'scripts',         label: 'Script Analysis',  desc: 'Paste PowerShell, Bash, Python — get intent, risk, and MITRE.',    href: '/app/intelligence/scripts', icon: Terminal,   cost: 2,  status: 'live' },

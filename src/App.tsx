@@ -99,6 +99,7 @@ const IntelligenceCommand = lazy(() => import('@/pages/safesuite/IntelligenceCom
 const IntelligenceHistory = lazy(() => import('@/pages/safesuite/IntelligenceHistory'));
 const IntelligenceMemory = lazy(() => import('@/pages/safesuite/IntelligenceMemory'));
 const IntelligenceDrafts = lazy(() => import('@/pages/safesuite/IntelligenceDrafts'));
+const IntelligenceCampaigns = lazy(() => import('@/pages/safesuite/IntelligenceCampaigns'));
 const IntelligenceScripts = lazy(() => import('@/pages/safesuite/IntelligenceScripts'));
 const IntelligenceMalware = lazy(() => import('@/pages/safesuite/IntelligenceMalware'));
 const IntelligenceLogs = lazy(() => import('@/pages/safesuite/IntelligenceLogs'));
@@ -298,6 +299,7 @@ function AppRouter() {
           <Route path="/app/intelligence/history" element={<SuspenseWrapper><IntelligenceHistory /></SuspenseWrapper>} />
           <Route path="/app/intelligence/memory" element={<SuspenseWrapper><IntelligenceMemory /></SuspenseWrapper>} />
           <Route path="/app/intelligence/drafts" element={<SuspenseWrapper><IntelligenceDrafts /></SuspenseWrapper>} />
+          <Route path="/app/intelligence/campaigns" element={<SuspenseWrapper><IntelligenceCampaigns /></SuspenseWrapper>} />
           <Route path="/app/settings" element={<SuspenseWrapper variant="form"><WraythSettings /></SuspenseWrapper>} />
         </Route>
 
