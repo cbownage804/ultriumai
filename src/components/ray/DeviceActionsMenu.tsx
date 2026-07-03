@@ -148,6 +148,7 @@ interface PostureShape {
   browser_passwords?: {
     chrome?: { manager_disabled_by_policy?: boolean };
     edge?: { manager_disabled_by_policy?: boolean };
+    firefox?: { manager_disabled_by_policy?: boolean };
   };
   defender_detail?: { cloud_protection?: boolean; pua_protection?: boolean };
   local_admins_detail?: Array<{ name: string; enabled?: boolean; is_builtin?: boolean }>;
