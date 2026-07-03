@@ -26,7 +26,6 @@ import { DeviceSecurityTabs } from './DeviceSecurityTabs';
 import { RayFixPanel } from './RayFixPanel';
 import { DeviceSecurityHistory } from './DeviceSecurityHistory';
 import { AgentVersionBadge } from './AgentVersionBadge';
-import { AgentTrustCard } from './AgentTrustCard';
 import { DeviceTransparencyCard } from './DeviceTransparencyCard';
 import { DeviceAssessment } from './DeviceAssessment';
 import { AskRayCommandBox } from './AskRayCommandBox';
@@ -538,7 +537,6 @@ export function EnrolledDevicesList() {
           );
         })}
       </CardContent>
-      <div className="px-6 pb-6"><AgentTrustCard /></div>
     </Card>
   );
 }
