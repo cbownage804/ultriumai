@@ -53,6 +53,12 @@ const SCHEMA_HINT = `{
   "confidence_score": 0-100,
   "summary": "2-4 plain-English sentences a non-technical owner can read.",
   "executive_summary": "1-2 sentence board-level takeaway.",
+  "reasoning": {
+    "points": [
+      { "point": "One concrete, evidence-based reason grounded in the artifact — no chain-of-thought, no restating the artifact.", "weight": "supporting | strong | decisive | mitigating" }
+    ],
+    "caveats": "Optional: what would change the verdict, or what Ray could not determine from the artifact alone."
+  },
   "technical_findings": [
     { "title": "Short title", "detail": "Technical detail grounded in the input.", "severity": "info | low | medium | high | critical" }
   ],
@@ -69,7 +75,9 @@ const SCHEMA_HINT = `{
     { "step": "Observation or action", "detail": "Optional detail" }
   ],
   "evidence": { "notes": "Free-form structured evidence — parsed headers, url decomposition, sender reputation notes, etc." }
-}`;
+}
+
+Guidance for "reasoning.points": produce 3–6 short, standalone bullets that a user could read to understand *why* you reached the verdict. Each bullet is one observable fact or inference tied to the artifact — not internal deliberation, not a restatement of the finding titles. Prefer concrete details (domain age if inferable, header mismatches, suspicious language, encoding patterns, known-bad structure) over generic statements.`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
