@@ -7,7 +7,7 @@
  * renders but says "not reported yet" so the operator can tell the
  * difference between "off" and "unknown".
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +15,8 @@ import { Button } from '@/components/ui/button';
 import { Copy, Eye, EyeOff, KeyRound, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
+import { assessDevice } from '@/lib/ray/deviceAssessment';
+import { TabNarrative } from './DeviceAssessment';
 
 interface SoftwareEntry { name: string; version?: string; publisher?: string }
 interface AutorunEntry {
