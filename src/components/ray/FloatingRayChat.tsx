@@ -12,7 +12,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/hooks/useAuth';
 import { getRayContext, type RayContext } from '@/lib/ray';
 import { getRouteContext } from '@/lib/ray/routeContext';
-import RaySkillsPanel from './RaySkillsPanel';
+import RaySkillsPanel, { type PanelMode } from './RaySkillsPanel';
 import { dedupeRecs } from './recDedupe';
 
 export type RayPanelOpenDetail = {
