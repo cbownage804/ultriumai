@@ -349,6 +349,9 @@ export default function RaySkillsPanel() {
 
   const target = score != null ? Math.min(100, score + Math.max(6, openCount * 4)) : null;
 
+  // Dynamic "you might ask" chips — synthesized from ctx + route.
+  const suggested = useMemo(() => buildSuggestedQuestions(ctx, route), [ctx, route]);
+
   const empty = turns.length === 0;
   const scoreTone =
     score == null ? 'text-foreground' : score >= 80 ? 'text-emerald-300' : score >= 60 ? 'text-amber-300' : 'text-red-300';
