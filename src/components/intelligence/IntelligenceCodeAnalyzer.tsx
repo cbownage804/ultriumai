@@ -230,10 +230,10 @@ export function IntelligenceCodeAnalyzer({ mode }: { mode: AnalyzerMode }) {
               </label>
               <Textarea
                 value={payload}
-                onChange={e => setPayload(e.target.value.slice(0, 60_000))}
+                onChange={e => onPayloadChange(e.target.value)}
                 placeholder={mode === 'script'
                   ? 'Paste script source here…'
-                  : 'Paste hash, strings output, or suspicious payload here…'}
+                  : 'Paste a hash (MD5/SHA1/SHA256), strings dump, or suspicious payload here…'}
                 className="mt-1 min-h-[220px] font-mono text-xs"
               />
             </div>
