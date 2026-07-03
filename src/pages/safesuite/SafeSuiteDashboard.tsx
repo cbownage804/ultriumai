@@ -584,6 +584,33 @@ export default function WraythDashboard() {
     fetchDashboardData();
   }, [user, entries]);
 
+  // Persistent sealed-vault metadata: row count + last health check timestamp.
+  // Safe to fetch regardless of unlock state — this is metadata, not contents.
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    (async () => {
+      const [{ count }, { data: lastCheck }] = await Promise.all([
+        supabase
+          .from('safepass_entries')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id),
+        supabase
+          .from('password_audit_logs')
+          .select('created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
+      if (!active) return;
+      setSealedVaultCount(count ?? 0);
+      setLastHealthCheckAt(lastCheck?.created_at ?? null);
+    })();
+    return () => { active = false; };
+  }, [user]);
+
+
   const getStatForProduct = (productId: string): { label: string; value: number } => {
     switch (productId) {
       case 'vault':
