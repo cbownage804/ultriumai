@@ -69,6 +69,13 @@ Source: "..\dist\WraythAgent.exe";       DestDir: "{app}"; Flags: ignoreversion
 Source: "..\dist\WraythService.exe";     DestDir: "{app}"; Flags: ignoreversion
 Source: "WraythService.xml";             DestDir: "{app}"; Flags: ignoreversion
 Source: "install-wrayth-service.ps1";     DestDir: "{app}"; Flags: ignoreversion
+; Ship the Wrayth icon so Add/Remove Programs and Start Menu shortcuts use
+; the Wrayth mark instead of a generic Windows executable icon.
+Source: "favicon.ico";                    DestDir: "{app}"; DestName: "wrayth.ico"; Flags: ignoreversion
+
+[Icons]
+Name: "{group}\Wrayth"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\wrayth.ico"; Comment: "Wrayth Device Agent"
+Name: "{group}\Uninstall Wrayth"; Filename: "{uninstallexe}"; IconFilename: "{app}\wrayth.ico"
 
 [Dirs]
 Name: "{commonappdata}\Wrayth";      Permissions: users-modify
