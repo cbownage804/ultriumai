@@ -307,7 +307,7 @@ export default function WraythEnterprise() {
           <SectionHeading
             eyebrow="Ray for Enterprise"
             title="An AI security teammate for every tenant"
-            description="Ray isn't a chatbot bolted onto a dashboard. Ray is the intelligence layer that investigates, explains, and remediates across Vault, Scan, Watch, and Identity — for every org and every managed client."
+            description="Ray isn't a chatbot bolted onto a dashboard. Ray is the intelligence layer that investigates, explains, and remediates across endpoints, threats, exposure, and identity — for every org and every managed client."
             tone="violet"
           />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
