@@ -111,7 +111,7 @@ const platformArchitecture = [
   { label: "Users & Devices", detail: "Employees, admins, clients — every identity anchored." },
   { label: "Browser Extension & Apps", detail: "Native clients on every OS, plus MV3 browser extension." },
   { label: "Encrypted Vault", detail: "Zero-knowledge storage — Wrayth never sees plaintext." },
-  { label: "Ray AI", detail: "Cross-module intelligence layer — Vault, Scan, Watch, Identity." },
+  { label: "Ray AI", detail: "Cross-module intelligence layer — Endpoint, Threat, Exposure, Identity." },
   { label: "Threat Intelligence", detail: "HIBP, dark web, malware IOC, and domain reputation feeds." },
   { label: "Audit & SIEM Stream", detail: "Immutable event log, streamed to your SIEM in real time." },
   { label: "Admin Console", detail: "Multi-tenant governance, RBAC, and compliance reporting." },
