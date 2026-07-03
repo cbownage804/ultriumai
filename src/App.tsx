@@ -91,6 +91,7 @@ const PaymentCancel = lazy(() => import('@/pages/PaymentCancel'));
 const WraythResources = lazy(() => import('@/pages/WraythResources'));
 const AiCredits = lazy(() => import('@/pages/safesuite/AiCredits'));
 const IntelligenceInvestigations = lazy(() => import('@/pages/safesuite/IntelligenceInvestigations'));
+const IntelligenceReports = lazy(() => import('@/pages/safesuite/IntelligenceReports'));
 
 // Dev-only: internal Launch Checklist (Wrayth 5.0 polish sprint).
 const LaunchChecklist = lazy(() => import('@/pages/dev/LaunchChecklist'));
