@@ -29,6 +29,7 @@ import {
   HelpCircle, Coins, Clock, Trash2, Brain, ListChecks,
   Target, Fingerprint, FileText, Layers, ChevronRight, Presentation,
   MessageCircleQuestion, FileWarning, Send, Copy, Download, Lightbulb, FileDown,
+  Search, ArrowUpDown, Filter,
 } from 'lucide-react';
 import { exportFollowupPdf } from '@/lib/wraythPdf';
 
