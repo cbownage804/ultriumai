@@ -264,10 +264,10 @@ export function AskRayPalette() {
               <CommandItem onSelect={() => goTo('/app/pass')} className="gap-2">
                 <KeyRound className="h-4 w-4" /> Passwords
               </CommandItem>
-              <CommandItem onSelect={() => goTo('/app/scan')} className="gap-2">
-                <ScanSearch className="h-4 w-4" /> Threats
+              <CommandItem onSelect={() => goTo('/app/threats')} className="gap-2">
+                <ScanSearch className="h-4 w-4" /> Threat Center
               </CommandItem>
-              <CommandItem onSelect={() => goTo('/app/web')} className="gap-2">
+              <CommandItem onSelect={() => goTo('/app/exposure')} className="gap-2">
                 <Globe className="h-4 w-4" /> Identity Monitoring
               </CommandItem>
               <CommandItem onSelect={() => goTo('/app/settings')} className="gap-2">
