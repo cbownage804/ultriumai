@@ -6,6 +6,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { getRayContext, type RayContext } from '@/lib/ray';
+import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import { ExplainThis } from './ExplainThis';
