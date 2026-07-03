@@ -732,16 +732,23 @@ function PriorityRecRow({ rec, onAsk, onIgnore }: { rec: PriorityRec; onAsk: (q:
         </div>
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-1.5">
+      <div className="mt-3 flex flex-wrap items-center gap-1.5">
         <Button size="sm" className="h-7 rounded-full px-3 text-xs" onClick={() => onAsk(rec.fixPrompt)}>
           Fix now
         </Button>
         <Button size="sm" variant="secondary" className="h-7 rounded-full px-3 text-xs" onClick={() => onAsk(rec.askPrompt)}>
           Tell me why
         </Button>
-        <Button size="sm" variant="ghost" className="h-7 rounded-full px-3 text-xs" onClick={() => onAsk(rec.impactPrompt)}>
-          Show impact
-        </Button>
+        {onIgnore && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 rounded-full px-3 text-xs text-muted-foreground hover:text-foreground ml-auto"
+            onClick={onIgnore}
+          >
+            Ignore
+          </Button>
+        )}
       </div>
     </div>
   );
