@@ -201,6 +201,7 @@ export default function RaySkillsPanel() {
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const [memory, setMemory] = useState<RayMemory | null>(null);
   const [dismissedPriority, setDismissedPriority] = useState<Set<string>>(new Set());
+  const [sinceItems, setSinceItems] = useState<SinceItem[] | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const route = useMemo(() => getRouteContext(location.pathname), [location.pathname]);
