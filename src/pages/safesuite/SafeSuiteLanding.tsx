@@ -1,26 +1,32 @@
 /**
  * Wrayth Landing Page
- * Sells Ray — the AI cybersecurity teammate.
- * Vault / Scan / Watch are framed as capabilities, not products.
+ * AI-powered cybersecurity platform, centered on Ray as the AI security analyst.
+ * Product names (Vault / Scan / Watch) are gone from marketing — outcomes only.
  */
 
 import { Link } from 'react-router-dom';
 import Navigation from '@/components/safesuite/SafeSuiteNav';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { SAFESUITE_TIERS, formatMonthlyPrice } from '@/config/safeSuiteTiers';
+import { SAFESUITE_TIERS } from '@/config/safeSuiteTiers';
 import heroWrayth from '@/assets/hero-wrayth.jpg';
 import wraythLogo from '@/assets/wrayth-brand-full.png.asset.json';
 import {
   ArrowRight,
   Check,
-  KeyRound,
+  ShieldCheck,
   ScanSearch,
   Globe,
   Star,
   Crown,
+  MessageCircle,
+  Brain,
+  Wand2,
+  MessagesSquare,
+  EyeOff,
+  Eye,
 } from 'lucide-react';
+
 
 // Ray's capabilities — not products. Each one is something Ray *does*.
 const capabilities = [
