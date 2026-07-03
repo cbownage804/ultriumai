@@ -27,7 +27,7 @@ import {
   ScanSearch, Sparkles, ShieldAlert, CheckCircle2, AlertTriangle,
   HelpCircle, Coins, Clock, Trash2, Brain, ListChecks,
   Target, Fingerprint, FileText, Layers, ChevronRight, Presentation,
-  MessageCircleQuestion, FileWarning, Send, Copy, Download,
+  MessageCircleQuestion, FileWarning, Send, Copy, Download, Lightbulb,
 } from 'lucide-react';
 
 type InputType =
@@ -48,6 +48,10 @@ type Investigation = {
   confidence: string | null;
   confidence_score: number | null;
   technical_findings: Array<{ title?: string; detail?: string; severity?: string }>;
+  reasoning: {
+    points?: Array<{ point?: string; weight?: string }>;
+    caveats?: string;
+  } | null;
   mitre: Array<{ id?: string; name?: string; why?: string }>;
   iocs: Array<{ type?: string; value?: string; note?: string }>;
   recommended_response: Array<{ priority?: number; action?: string; owner?: string }>;
@@ -461,6 +465,8 @@ function InvestigationWorkspace({ inv }: { inv: Investigation }) {
   const actionCount = inv.recommended_response.length;
   const timelineCount = inv.timeline.length;
   const reportCount = followups.length;
+  const reasoningPoints = inv.reasoning?.points ?? [];
+  const reasoningCount = reasoningPoints.length;
 
   return (
     <Card className="overflow-hidden">
@@ -487,6 +493,7 @@ function InvestigationWorkspace({ inv }: { inv: Investigation }) {
         <div className="px-5 pt-4 overflow-x-auto">
           <TabsList className="bg-transparent p-0 h-auto gap-1 flex-wrap">
             <WorkspaceTab value="overview" label="Overview" icon={Brain} />
+            <WorkspaceTab value="reasoning" label="Ray's Thinking" icon={Lightbulb} count={reasoningCount} />
             <WorkspaceTab value="findings" label="Findings" icon={ListChecks} count={findingCount} />
             <WorkspaceTab value="mitre" label="MITRE" icon={Target} count={mitreCount} />
             <WorkspaceTab value="iocs" label="Indicators" icon={Fingerprint} count={iocCount} />
@@ -507,6 +514,15 @@ function InvestigationWorkspace({ inv }: { inv: Investigation }) {
                 <p className="text-sm italic text-muted-foreground">{inv.executive_summary}</p>
               </div>
             )}
+            {reasoningCount > 0 && (
+              <ReasoningPanel
+                points={reasoningPoints}
+                caveats={inv.reasoning?.caveats}
+                confidence={inv.confidence}
+                confidenceScore={inv.confidence_score}
+                compact
+              />
+            )}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2">
               <StatCell label="Findings" value={findingCount} />
               <StatCell label="MITRE" value={mitreCount} />
@@ -514,6 +530,19 @@ function InvestigationWorkspace({ inv }: { inv: Investigation }) {
               <StatCell label="Actions" value={actionCount} />
               <StatCell label="Reports" value={reportCount} />
             </div>
+          </TabsContent>
+
+          <TabsContent value="reasoning" className="mt-0">
+            {reasoningCount === 0 ? (
+              <Empty text="Ray did not record explicit reasoning for this investigation." />
+            ) : (
+              <ReasoningPanel
+                points={reasoningPoints}
+                caveats={inv.reasoning?.caveats}
+                confidence={inv.confidence}
+                confidenceScore={inv.confidence_score}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="findings" className="mt-0">
@@ -696,6 +725,69 @@ function StatCell({ label, value }: { label: string; value: number }) {
     <div className="rounded-sm border border-border px-3 py-2">
       <div className="text-lg font-medium leading-none">{value}</div>
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">{label}</div>
+    </div>
+  );
+}
+
+const WEIGHT_STYLE: Record<string, string> = {
+  decisive: 'bg-red-500/10 text-red-400 border-red-500/30',
+  strong: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+  supporting: 'bg-muted text-muted-foreground border-border',
+  mitigating: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+};
+
+function ReasoningPanel({
+  points, caveats, confidence, confidenceScore, compact,
+}: {
+  points: Array<{ point?: string; weight?: string }>;
+  caveats?: string;
+  confidence: string | null;
+  confidenceScore: number | null;
+  compact?: boolean;
+}) {
+  return (
+    <div className={cn(
+      'rounded-sm border p-4 space-y-3',
+      compact
+        ? 'border-[hsl(262_60%_64%/0.3)] bg-[hsl(262_60%_64%/0.05)]'
+        : 'border-border',
+    )}>
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Lightbulb className="h-4 w-4 text-[hsl(262_60%_70%)]" />
+          <span className="text-sm font-medium">Why Ray reached this verdict</span>
+        </div>
+        {confidence && (
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Confidence: <span className="text-foreground">{confidence}</span>
+            {typeof confidenceScore === 'number' && ` · ${confidenceScore}%`}
+          </span>
+        )}
+      </div>
+      <ul className="space-y-2">
+        {points.map((p, i) => {
+          const weight = (p.weight ?? '').toLowerCase();
+          const style = WEIGHT_STYLE[weight];
+          return (
+            <li key={i} className="flex items-start gap-2.5 text-sm">
+              <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[hsl(262_60%_64%)] shrink-0" />
+              <div className="min-w-0 flex-1">
+                <span className="leading-relaxed">{p.point}</span>
+                {style && (
+                  <Badge variant="outline" className={cn('ml-2 rounded-sm text-[9px] uppercase tracking-wider align-middle', style)}>
+                    {weight}
+                  </Badge>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      {caveats && (
+        <div className="text-xs text-muted-foreground border-t border-border/60 pt-2 italic">
+          {caveats}
+        </div>
+      )}
     </div>
   );
 }
