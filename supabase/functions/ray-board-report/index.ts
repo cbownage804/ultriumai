@@ -66,6 +66,7 @@ type Inv = {
   confidence_score: number | null;
   summary: string | null;
   executive_summary: string | null;
+  mitre: unknown;
   created_at: string;
 };
 
