@@ -295,23 +295,24 @@ function AppRouter() {
           <Route path="/app/exposure/settings" element={<SuspenseWrapper variant="form"><WatchSettings /></SuspenseWrapper>} />
           <Route path="/app/billing" element={<SuspenseWrapper><WraythBilling /></SuspenseWrapper>} />
           <Route path="/app/credits" element={<SuspenseWrapper><AiCredits /></SuspenseWrapper>} />
-          <Route path="/app/intelligence/investigations" element={<SuspenseWrapper><IntelligenceInvestigations /></SuspenseWrapper>} />
-          <Route path="/app/intelligence/reports" element={<SuspenseWrapper><IntelligenceReports /></SuspenseWrapper>} />
-          <Route path="/app/intelligence/attack-paths" element={<SuspenseWrapper><IntelligenceAttackPaths /></SuspenseWrapper>} />
-          <Route path="/app/intelligence/graph" element={<SuspenseWrapper><IntelligenceGraph /></SuspenseWrapper>} />
-          <Route path="/app/intelligence/scripts" element={<SuspenseWrapper><IntelligenceScripts /></SuspenseWrapper>} />
-          <Route path="/app/intelligence/malware" element={<SuspenseWrapper><IntelligenceMalware /></SuspenseWrapper>} />
-          <Route path="/app/intelligence/logs" element={<SuspenseWrapper><IntelligenceLogs /></SuspenseWrapper>} />
-          <Route path="/app/intelligence/policies" element={<SuspenseWrapper><IntelligencePolicies /></SuspenseWrapper>} />
-          <Route path="/app/intelligence/compliance" element={<SuspenseWrapper><IntelligenceCompliance /></SuspenseWrapper>} />
-          <Route path="/app/intelligence/compliance/report" element={<SuspenseWrapper><IntelligenceComplianceReport /></SuspenseWrapper>} />
-          <Route path="/app/intelligence" element={<SuspenseWrapper><IntelligenceCommand /></SuspenseWrapper>} />
-          <Route path="/app/intelligence/modules" element={<SuspenseWrapper><IntelligenceHub /></SuspenseWrapper>} />
-          <Route path="/app/intelligence/history" element={<SuspenseWrapper><IntelligenceHistory /></SuspenseWrapper>} />
-          <Route path="/app/intelligence/memory" element={<SuspenseWrapper><IntelligenceMemory /></SuspenseWrapper>} />
-          <Route path="/app/intelligence/drafts" element={<SuspenseWrapper><IntelligenceDrafts /></SuspenseWrapper>} />
-          <Route path="/app/intelligence/campaigns" element={<SuspenseWrapper><IntelligenceCampaigns /></SuspenseWrapper>} />
-          <Route path="/app/intelligence/cases" element={<SuspenseWrapper><IntelligenceCases /></SuspenseWrapper>} />
+          <Route path="/app/intelligence/investigations" element={<TierGate requiredTier="business" area="investigations"><SuspenseWrapper><IntelligenceInvestigations /></SuspenseWrapper></TierGate>} />
+          <Route path="/app/intelligence/reports" element={<TierGate requiredTier="business" area="reports"><SuspenseWrapper><IntelligenceReports /></SuspenseWrapper></TierGate>} />
+          <Route path="/app/intelligence/attack-paths" element={<TierGate requiredTier="business" area="attack-paths"><SuspenseWrapper><IntelligenceAttackPaths /></SuspenseWrapper></TierGate>} />
+          <Route path="/app/intelligence/graph" element={<TierGate requiredTier="business" area="graph"><SuspenseWrapper><IntelligenceGraph /></SuspenseWrapper></TierGate>} />
+          <Route path="/app/intelligence/scripts" element={<TierGate requiredTier="business" area="scripts"><SuspenseWrapper><IntelligenceScripts /></SuspenseWrapper></TierGate>} />
+          <Route path="/app/intelligence/malware" element={<TierGate requiredTier="business" area="malware"><SuspenseWrapper><IntelligenceMalware /></SuspenseWrapper></TierGate>} />
+          <Route path="/app/intelligence/logs" element={<TierGate requiredTier="business" area="intelligence"><SuspenseWrapper><IntelligenceLogs /></SuspenseWrapper></TierGate>} />
+          <Route path="/app/intelligence/policies" element={<TierGate requiredTier="business" area="policies"><SuspenseWrapper><IntelligencePolicies /></SuspenseWrapper></TierGate>} />
+          <Route path="/app/intelligence/compliance" element={<TierGate requiredTier="business" area="compliance"><SuspenseWrapper><IntelligenceCompliance /></SuspenseWrapper></TierGate>} />
+          <Route path="/app/intelligence/compliance/report" element={<TierGate requiredTier="business" area="compliance"><SuspenseWrapper><IntelligenceComplianceReport /></SuspenseWrapper></TierGate>} />
+          <Route path="/app/intelligence" element={<TierGate requiredTier="business" area="intelligence"><SuspenseWrapper><IntelligenceCommand /></SuspenseWrapper></TierGate>} />
+          <Route path="/app/intelligence/modules" element={<TierGate requiredTier="business" area="intelligence"><SuspenseWrapper><IntelligenceHub /></SuspenseWrapper></TierGate>} />
+          <Route path="/app/intelligence/history" element={<TierGate requiredTier="business" area="intelligence"><SuspenseWrapper><IntelligenceHistory /></SuspenseWrapper></TierGate>} />
+          <Route path="/app/intelligence/memory" element={<TierGate requiredTier="business" area="intelligence"><SuspenseWrapper><IntelligenceMemory /></SuspenseWrapper></TierGate>} />
+          <Route path="/app/intelligence/drafts" element={<TierGate requiredTier="business" area="intelligence"><SuspenseWrapper><IntelligenceDrafts /></SuspenseWrapper></TierGate>} />
+          <Route path="/app/intelligence/campaigns" element={<TierGate requiredTier="business" area="intelligence"><SuspenseWrapper><IntelligenceCampaigns /></SuspenseWrapper></TierGate>} />
+          <Route path="/app/intelligence/cases" element={<TierGate requiredTier="business" area="intelligence"><SuspenseWrapper><IntelligenceCases /></SuspenseWrapper></TierGate>} />
+
           <Route path="/app/settings" element={<SuspenseWrapper variant="form"><WraythSettings /></SuspenseWrapper>} />
         </Route>
 
