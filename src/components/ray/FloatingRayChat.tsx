@@ -11,6 +11,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { getRayContext, type RayContext } from '@/lib/ray';
 import RaySkillsPanel from './RaySkillsPanel';
+import { dedupeRecs } from './recDedupe';
 
 export type RayPanelOpenDetail = {
   message?: string;
@@ -35,7 +36,7 @@ const TONE_STYLES: Record<Tone, { ring: string; glow: string; dot: string; core:
 
 function toneFrom(ctx: RayContext | null): { tone: Tone; label: string } {
   if (!ctx) return { tone: 'scanning', label: 'Scanning…' };
-  const recs = ctx.recommendations ?? [];
+  const recs = dedupeRecs(ctx.recommendations ?? []);
   const critical = recs.some((r) => ['critical', 'high'].includes((r.severity ?? '').toLowerCase()));
   if (critical) return { tone: 'threat', label: 'Something needs you' };
   if (recs.length > 0) {

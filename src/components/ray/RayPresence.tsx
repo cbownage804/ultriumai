@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { isWraythDomain } from '@/utils/subdomain';
 import { useAuth } from '@/hooks/useAuth';
 import { getRayContext, type RayContext } from '@/lib/ray';
+import { dedupeRecs } from './recDedupe';
 
 function path(p: string) {
   return isWraythDomain() ? p : `/app${p}`;
@@ -23,7 +24,7 @@ function path(p: string) {
 function summary(ctx: RayContext | null): string {
   if (!ctx) return 'Getting oriented…';
   if (!ctx.hasOnboarded) return "Let's finish setting you up.";
-  const openRecs = ctx.recommendations.length;
+  const openRecs = dedupeRecs(ctx.recommendations).length;
   const score = ctx.latestScore?.score ?? null;
   if (score === null) return "Building today's assessment…";
   if (openRecs === 0) return 'Nothing needs your attention right now.';
@@ -55,7 +56,7 @@ export function RayPresence() {
   const score = ctx?.latestScore?.score ?? null;
   const scoreTone =
     score == null ? 'text-foreground' : score >= 80 ? 'text-green-300' : score >= 60 ? 'text-yellow-300' : 'text-red-300';
-  const openRecs = ctx?.recommendations.length ?? 0;
+  const openRecs = ctx ? dedupeRecs(ctx.recommendations).length : 0;
   const lastSync = ctx?.latestScore?.created_at ? new Date(ctx.latestScore.created_at) : null;
 
   return (
