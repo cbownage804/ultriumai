@@ -117,9 +117,14 @@ type PriorityRec = {
   severity: string;
   tone: NoticeTone;
   priority: number;
-  actionLabel: string;
-  prompt: string;
+  impactPoints: number;
+  durationLabel: string;
+  needsReboot: boolean;
+  askPrompt: string;
+  impactPrompt: string;
+  fixPrompt: string;
 };
+
 
 const STOPWORDS = new Set([
   'the','a','an','your','my','with','for','and','to','of','in','on','is','be','are',
