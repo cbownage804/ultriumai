@@ -155,20 +155,21 @@ export default function WraythLanding() {
             />
             <div className="flex items-center gap-2 mb-8 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
               <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              Wrayth · AI security platform
+              AI-Powered Cybersecurity Platform
             </div>
 
             <h1 className="text-5xl md:text-7xl font-semibold tracking-tight text-foreground mb-8 leading-[1.05]">
-              Meet <span className="text-primary">Ray</span>.
+              Your AI <span className="text-primary">Security Analyst</span>
               <br />
-              Your AI cybersecurity teammate.
+              Never Sleeps.
             </h1>
 
             <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl leading-relaxed">
-              Ray protects your passwords, analyzes suspicious emails and files,
-              monitors the dark web for exposed credentials, and guides you through
-              every security decision&mdash;in plain English.
+              Wrayth continuously monitors your devices, passwords, Microsoft 365 tenant,
+              and security posture. Ray explains what matters, recommends what to fix,
+              and can remediate approved issues in seconds &mdash; in plain English.
             </p>
+
 
             <div className="flex flex-col sm:flex-row gap-3">
               <Link to="/auth?tab=signup&return=safesuite&path=%2Fonboarding%2Fray">
