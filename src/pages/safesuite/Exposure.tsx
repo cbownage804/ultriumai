@@ -514,7 +514,7 @@ export default function WraythWeb() {
                       {totalBreaches}
                     </div>
                     <div className="mt-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-                      Historical Exposure Events
+                      Historical Breach Events
                     </div>
                   </button>
                   <div>

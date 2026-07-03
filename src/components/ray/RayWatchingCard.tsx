@@ -78,7 +78,7 @@ export function RayWatchingCard({ passwordCount, identityCount, threatCount }: P
   const stats = [
     { label: 'Identities', value: identityCount },
     { label: 'Passwords', value: passwordCount },
-    { label: 'Threats', value: threatCount },
+    { label: 'Threat Center', value: threatCount },
   ];
 
   return (

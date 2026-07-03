@@ -32,8 +32,8 @@ import { PageMotion } from '@/components/ray/PageMotion';
 const HEALTH_AREAS: Array<{ key: keyof RayOrgHealth; label: string; icon: any }> = [
   { key: 'identity_score',   label: 'Identities',  icon: Users },
   { key: 'device_score',     label: 'Devices',     icon: Monitor },
-  { key: 'threat_score',     label: 'Threats',     icon: AlertTriangle },
-  { key: 'exposure_score',   label: 'Exposure',    icon: Eye },
+  { key: 'threat_score',     label: 'Threat Center', icon: AlertTriangle },
+  { key: 'exposure_score',   label: 'Identity Monitoring', icon: Eye },
   { key: 'compliance_score', label: 'Compliance',  icon: ClipboardCheck },
   { key: 'training_score',   label: 'Training',    icon: GraduationCap },
   { key: 'software_score',   label: 'Software',    icon: Package },
