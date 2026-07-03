@@ -213,11 +213,18 @@ export default function RaySkillsPanel() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [turns, loading]);
 
-  // Load context + snapshot previous memory
+  // Load context + snapshot previous memory + "since last visit"
   useEffect(() => {
     let active = true;
     if (!user) return;
-    setMemory(readMemory());
+    const prev = readMemory();
+    setMemory(prev);
+    // Query "since last visit" against the *previous* visit timestamp before
+    // we overwrite it, so the panel reflects a real diff on the second open.
+    const sinceIso = prev?.lastVisitAt ?? new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    void getSinceLastVisit(user.id, sinceIso).then((s) => {
+      if (active) setSinceItems(s.items);
+    });
     void getRayContext(user.id).then((c) => {
       if (!active) return;
       setCtx(c);
