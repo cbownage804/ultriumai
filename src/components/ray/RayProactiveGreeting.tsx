@@ -131,7 +131,7 @@ export function RayProactiveGreeting({ hostname, posture, deviceId, score }: Pro
     [firstName, hostname, posture, seed],
   );
   const bullets = useMemo(() => deviceNarrative(posture), [posture]);
-  const cont = useMemo(() => continuityLine(lastAction, score), [lastAction, score]);
+  const cont = useMemo(() => continuityLine(lastAction, score, posture), [lastAction, score, posture]);
 
   if (!posture && !firstName) return null;
 
