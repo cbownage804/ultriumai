@@ -486,6 +486,8 @@ export default function WraythDashboard() {
   const [breachedEmailCount, setBreachedEmailCount] = useState(0);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [sealedVaultCount, setSealedVaultCount] = useState<number | null>(null);
+  const [lastHealthCheckAt, setLastHealthCheckAt] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -582,20 +584,53 @@ export default function WraythDashboard() {
     fetchDashboardData();
   }, [user, entries]);
 
+  // Persistent sealed-vault metadata: row count + last health check timestamp.
+  // Safe to fetch regardless of unlock state — this is metadata, not contents.
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    (async () => {
+      const [{ count }, { data: lastCheck }] = await Promise.all([
+        supabase
+          .from('safepass_entries')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id),
+        supabase
+          .from('password_audit_logs')
+          .select('created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
+      if (!active) return;
+      setSealedVaultCount(count ?? 0);
+      setLastHealthCheckAt(lastCheck?.created_at ?? null);
+    })();
+    return () => { active = false; };
+  }, [user]);
+
+
+  // Persistent inventory count — prefers safe metadata (row count from DB)
+  // so the tile stays accurate even when the vault is sealed.
+  const persistentVaultCount = sealedVaultCount ?? stats.passwordCount;
+
   const getStatForProduct = (productId: string): { label: string; value: number } => {
     switch (productId) {
       case 'vault':
-        return { label: 'Passwords', value: stats.passwordCount };
+        return {
+          label: vaultLocked ? 'Sealed · unlock to analyze health' : 'Stored',
+          value: persistentVaultCount,
+        };
       case 'scan':
         return { label: 'Scans this month', value: stats.scanCount };
       case 'watch':
-        return { label: 'Assets monitored', value: stats.monitoredAssets };
-
-
+        return { label: 'Identities watched', value: stats.monitoredAssets };
       default:
         return { label: '', value: 0 };
     }
   };
+
 
   // Ray's continuity briefing — feels like returning to a teammate, not opening software.
   const totalIssues = stats.weakPasswordCount;
@@ -649,7 +684,12 @@ export default function WraythDashboard() {
       <LifecycleAwareTop firstName={firstName} />
 
       {/* 2b. Vault: encrypted black box until unlocked. */}
-      {vaultLocked && <VaultLockedCard />}
+      {vaultLocked && (
+        <VaultLockedCard
+          vaultCount={persistentVaultCount}
+          lastHealthCheckAt={lastHealthCheckAt}
+        />
+      )}
 
       {/* 2c. Cross-domain context bridge — Ray names what he's missing. */}
       <HomeContextBridge
@@ -686,7 +726,7 @@ export default function WraythDashboard() {
           Password count mirrors the Vault tile above (entry count is not
           secret; only contents are protected by the zero-knowledge vault). */}
       <RayWatchingCard
-        passwordCount={stats.passwordCount}
+        passwordCount={persistentVaultCount}
         identityCount={stats.monitoredAssets}
         threatCount={0}
       />

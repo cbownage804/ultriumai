@@ -76,18 +76,19 @@ export function nextBestAction(input: CisoInput): CisoDirective {
   if (breachedEmailCount > 0) {
     const leadsWithName = named && topAccountReason === 'breach';
     return {
-      id: 'rotate_breached',
+      id: 'exposed_identities',
       tone: 'critical',
       headline: leadsWithName
-        ? `Rotate ${named} first — it's tied to a known breach.`
+        ? `${named} appears in a breach — start there.`
         : breachedEmailCount === 1
-          ? 'Rotate the one password tied to a known breach — today.'
-          : `Rotate the ${breachedEmailCount} passwords tied to known breaches — today.`,
+          ? 'I found 1 breach exposure on a monitored identity.'
+          : `I found ${breachedEmailCount} breach exposures on monitored identities.`,
       rationale:
-        "A breached credential is the shortest path an attacker has into your accounts. Everything else on this list can wait a week. This can't.",
-      cta: { label: 'Open breached accounts', to: '/app/passwords/list?filter=breached' },
+        "These are exposures tied to identities I'm watching — not confirmed saved passwords. Review the exposures on the Exposure page, then unlock Vault if you want me to check whether any saved passwords are reused or affected.",
+      cta: { label: 'View exposures', to: '/app/exposure' },
     };
   }
+
 
   if (weakCount >= Math.max(3, Math.ceil(vaultCount * 0.25))) {
     const leadsWithName = named && topAccountReason === 'weak';
