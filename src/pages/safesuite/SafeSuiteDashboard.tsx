@@ -676,10 +676,10 @@ export default function WraythDashboard() {
       </div>
 
       {/* 4. Recommendations — Ray watching + notices + account health.
-          When vault is locked, hide the password-count tile so Ray doesn't
-          leak metadata about a resource it claims not to see. */}
+          Password count mirrors the Vault tile above (entry count is not
+          secret; only contents are protected by the zero-knowledge vault). */}
       <RayWatchingCard
-        passwordCount={vaultLocked ? 0 : stats.passwordCount}
+        passwordCount={stats.passwordCount}
         identityCount={stats.monitoredAssets}
         threatCount={0}
       />
