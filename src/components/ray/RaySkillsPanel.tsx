@@ -60,19 +60,21 @@ const SEVERITY_CLASS: Record<string, string> = {
 
 const QUICK_ACTIONS: {
   label: string;
+  subtitle: string;
   prompt: string;
   emoji: string;
   group: 'Investigate' | 'Understand' | 'Learn';
 }[] = [
-  { label: 'Analyze Threat', prompt: 'I want to analyze a suspicious email. What do you need from me?', emoji: '🛡', group: 'Investigate' },
-  { label: 'Scan URL', prompt: 'Can you scan a URL for me?', emoji: '🌐', group: 'Investigate' },
-  { label: 'Check Devices', prompt: 'Which of my devices are most vulnerable right now?', emoji: '💻', group: 'Investigate' },
-  { label: 'Microsoft 365', prompt: 'What should I know about my Microsoft 365 security today?', emoji: '☁️', group: 'Investigate' },
-  { label: 'Passwords', prompt: 'Review my password health and any exposed accounts.', emoji: '🔑', group: 'Understand' },
-  { label: 'Explain Score', prompt: 'Explain my security score and how to improve it.', emoji: '📊', group: 'Understand' },
-  { label: 'Recommendations', prompt: "Walk me through today's recommendations in priority order.", emoji: '📈', group: 'Understand' },
-  { label: 'Company Knowledge', prompt: 'What do you know about my company and environment?', emoji: '📚', group: 'Learn' },
+  { label: 'Analyze Threat', subtitle: 'Paste anything suspicious', prompt: 'I want to analyze a suspicious email. What do you need from me?', emoji: '🛡', group: 'Investigate' },
+  { label: 'Scan URL', subtitle: 'Check a link before you click', prompt: 'Can you scan a URL for me?', emoji: '🌐', group: 'Investigate' },
+  { label: 'Devices', subtitle: 'Find what is vulnerable', prompt: 'Which of my devices are most vulnerable right now?', emoji: '💻', group: 'Investigate' },
+  { label: 'Microsoft 365', subtitle: 'Review tenant security', prompt: 'What should I know about my Microsoft 365 security today?', emoji: '☁️', group: 'Investigate' },
+  { label: 'Passwords', subtitle: 'Health and exposed accounts', prompt: 'Review my password health and any exposed accounts.', emoji: '🔑', group: 'Understand' },
+  { label: 'Explain Score', subtitle: 'What moves the number', prompt: 'Explain my security score and how to improve it.', emoji: '📊', group: 'Understand' },
+  { label: 'Recommendations', subtitle: "Today's priority list", prompt: "Walk me through today's recommendations in priority order.", emoji: '📈', group: 'Understand' },
+  { label: 'Company Knowledge', subtitle: 'What Ray knows about you', prompt: 'What do you know about my company and environment?', emoji: '📚', group: 'Learn' },
 ];
+
 
 const ROTATING_PLACEHOLDERS = [
   'Ask me why your score changed…',
