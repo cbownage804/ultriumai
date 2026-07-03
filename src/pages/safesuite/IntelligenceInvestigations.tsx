@@ -399,6 +399,59 @@ export default function IntelligenceInvestigations() {
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6">
         <div className="space-y-6 min-w-0">
+          {/* Templates strip — one-click investigation launchers with optional chaining */}
+          <Card className="p-4 space-y-3 border-[hsl(262_60%_64%/0.25)] bg-[hsl(262_60%_64%/0.03)]">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-xs uppercase tracking-[0.22em] text-muted-foreground flex items-center gap-2">
+                <Sparkles className="h-3 w-3 text-[hsl(262_60%_70%)]" /> Investigation templates
+              </div>
+              {activeTemplate && (
+                <button
+                  type="button"
+                  onClick={clearTemplate}
+                  className="text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {TEMPLATES.map((tpl) => {
+                const Icon = tpl.icon;
+                const isActive = activeTemplateId === tpl.id;
+                return (
+                  <button
+                    key={tpl.id}
+                    type="button"
+                    onClick={() => applyTemplate(tpl)}
+                    className={cn(
+                      'text-left rounded-sm border px-3 py-2.5 transition-colors flex items-start gap-2.5',
+                      isActive
+                        ? 'border-[hsl(262_60%_64%/0.55)] bg-[hsl(262_60%_64%/0.10)]'
+                        : 'border-border bg-card hover:border-[hsl(262_60%_64%/0.35)] hover:bg-[hsl(262_60%_64%/0.05)]',
+                    )}
+                  >
+                    <div className="h-7 w-7 rounded-sm bg-[hsl(262_60%_64%/0.10)] border border-[hsl(262_60%_64%/0.25)] flex items-center justify-center shrink-0">
+                      <Icon className="h-3.5 w-3.5 text-[hsl(262_60%_78%)]" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-medium truncate">{tpl.label}</div>
+                      <div className="text-[10px] text-muted-foreground line-clamp-2 mt-0.5">{tpl.desc}</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            {activeTemplate && (
+              <div className="text-[10px] text-muted-foreground flex items-center gap-1.5 pt-1 border-t border-border/60">
+                <ListChecks className="h-3 w-3 text-[hsl(262_60%_70%)]" />
+                Chain: {activeTemplate.chainReport
+                  ? `on malicious/suspicious verdict → ${FOLLOWUP_META[activeTemplate.chainReport].label}`
+                  : 'no auto-chain'}
+              </div>
+            )}
+          </Card>
+
           <Card className="p-5 space-y-4">
             <div>
               <label className="text-xs uppercase tracking-wider text-muted-foreground">
