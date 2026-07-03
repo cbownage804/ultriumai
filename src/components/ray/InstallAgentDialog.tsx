@@ -165,6 +165,41 @@ export function InstallAgentDialog({
     URL.revokeObjectURL(url);
   };
 
+  const downloadSetup = () => {
+    const downloadWindow = window.open(
+      'about:blank',
+      'wrayth-setup-download',
+      'popup,width=420,height=260'
+    );
+
+    if (!downloadWindow) {
+      toast.error('Download popup was blocked', {
+        description: 'Allow popups for this site, then click WraythSetup.exe again.',
+      });
+      return;
+    }
+
+    try {
+      downloadWindow.opener = null;
+      downloadWindow.location.href = SETUP_DOWNLOAD_URL;
+    } catch {
+      downloadWindow.close();
+      toast.error("I couldn't start the installer download");
+      return;
+    }
+
+    window.setTimeout(() => {
+      try {
+        if (!downloadWindow.closed) downloadWindow.close();
+      } catch {}
+      window.focus();
+    }, 3000);
+
+    toast.success('Downloading WraythSetup.exe…', {
+      description: 'If a small download tab appears, it will close automatically.',
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -208,29 +243,16 @@ export function InstallAgentDialog({
               <li className="rounded-lg border border-border/60 p-3">
                 <div className="font-medium text-foreground mb-2">1. Download the installer</div>
                 <Button
-                  asChild
+                  type="button"
                   size="sm"
                   className="bg-violet-600 hover:bg-violet-500 text-white"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    downloadSetup();
+                  }}
                 >
-                  {/*
-                    Plain anchor — no target="_blank", no window.open.
-                    GitHub release assets respond with
-                    `Content-Disposition: attachment`, so the browser starts
-                    a download without navigating this tab. That keeps the
-                    dialog (and the enrollment code) on screen.
-                  */}
-                  <a
-                    href={SETUP_DOWNLOAD_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => {
-                      toast.success('Downloading WraythSetup.exe…', {
-                        description: 'Check your Downloads folder in a moment.',
-                      });
-                    }}
-                  >
-                    <Download className="mr-2 h-4 w-4" /> WraythSetup.exe
-                  </a>
+                  <Download className="mr-2 h-4 w-4" /> WraythSetup.exe
                 </Button>
                 <p className="mt-2 text-[11px] text-muted-foreground/80">
                   One click. Signed Windows installer — no PowerShell, no ZIP.
