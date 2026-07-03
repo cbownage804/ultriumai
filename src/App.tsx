@@ -213,7 +213,7 @@ function AppRouter() {
             <SuspenseWrapper><WraythLayout /></SuspenseWrapper>
           </ProtectedRoute>
         }>
-          <Route path="/app/dashboard" element={<SuspenseWrapper><WraythDashboard /></SuspenseWrapper>} />
+          
           <Route path="/app/dashboard" element={<SuspenseWrapper><RayCommandCenter /></SuspenseWrapper>} />
           <Route path="/app/dashboard/classic" element={<SuspenseWrapper><WraythDashboard /></SuspenseWrapper>} />
           <Route path="/app/command" element={<Navigate to="/app/dashboard" replace />} />
