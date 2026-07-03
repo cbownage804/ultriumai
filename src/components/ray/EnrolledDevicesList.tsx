@@ -22,7 +22,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { DeviceActionsMenu } from './DeviceActionsMenu';
-import { DeviceIntelPanel } from './DeviceIntelPanel';
+import { DeviceSecurityTabs } from './DeviceSecurityTabs';
 import { RayFixPanel } from './RayFixPanel';
 import { DeviceTimeline } from './DeviceTimeline';
 import { AgentVersionBadge } from './AgentVersionBadge';
@@ -69,6 +69,7 @@ interface Device {
   revoked_at: string | null;
   findings: Finding[];
   posture: Posture | null;
+  posture_captured_at: string | null;
 }
 
 function relative(iso: string | null): string {
@@ -281,18 +282,21 @@ export function EnrolledDevicesList() {
     }
     const { data: posture } = await supabase
       .from('wrayth_device_posture')
-      .select('device_id, findings, payload');
+      .select('device_id, findings, payload, captured_at');
     const findingsByDevice = new Map<string, Finding[]>();
     const postureByDevice = new Map<string, Posture>();
+    const postureAtByDevice = new Map<string, string>();
     for (const p of posture ?? []) {
       findingsByDevice.set(p.device_id, (p.findings as unknown as Finding[]) ?? []);
       postureByDevice.set(p.device_id, (p.payload as unknown as Posture) ?? {});
+      if (p.captured_at) postureAtByDevice.set(p.device_id, p.captured_at as string);
     }
     setDevices(
       (rows ?? []).map((r) => ({
         ...r,
         findings: findingsByDevice.get(r.id) ?? [],
         posture: postureByDevice.get(r.id) ?? null,
+        posture_captured_at: postureAtByDevice.get(r.id) ?? null,
       })),
     );
   };
@@ -385,7 +389,23 @@ export function EnrolledDevicesList() {
                     )}
                   </div>
                   <div className="text-xs text-muted-foreground truncate flex items-center gap-2 flex-wrap">
-                    <span>{d.os} · agent v{d.agent_version} · last seen {relative(d.last_seen_at)}</span>
+                    <span
+                      title={
+                        d.last_seen_at
+                          ? `Last heartbeat: ${new Date(d.last_seen_at).toLocaleString()}\nAgent posts every ~30s while running; longer gaps usually mean the machine is asleep, off, or offline.`
+                          : 'This device has never reported in.'
+                      }
+                    >
+                      {d.os} · agent v{d.agent_version} · last seen {relative(d.last_seen_at)}
+                    </span>
+                    {d.posture_captured_at && (
+                      <span
+                        className="text-[10px] text-muted-foreground/70"
+                        title={`Deep posture scan captured: ${new Date(d.posture_captured_at).toLocaleString()}`}
+                      >
+                        · posture {relative(d.posture_captured_at)}
+                      </span>
+                    )}
                     <AgentVersionBadge
                       current={d.agent_version}
                       deviceId={d.id}
@@ -465,7 +485,11 @@ export function EnrolledDevicesList() {
                   <DeviceActionsMenu deviceId={d.id} agentVersion={d.agent_version} disabled={!online} posture={d.posture as never} />
                 </div>
               )}
-              <DeviceIntelPanel deviceId={d.id} posture={d.posture as never} />
+              <DeviceSecurityTabs
+                deviceId={d.id}
+                posture={d.posture as never}
+                capturedAt={d.posture_captured_at}
+              />
               <DeviceTimeline deviceId={d.id} lastSeenAt={d.last_seen_at} />
 
 
