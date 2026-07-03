@@ -999,3 +999,176 @@ function AskRayDialog({
     </Dialog>
   );
 }
+
+/* ---------------- Indicators panel with sort + filter ---------------- */
+
+type IocHistoryEntry = { count: number; last_seen_at: string; first_seen_at: string; last_verdict: string | null };
+type IocItem = { type?: string; value?: string; note?: string };
+type IocSort = 'default' | 'prior_desc' | 'last_seen_desc' | 'first_seen_desc' | 'type_asc';
+
+function IocsPanel({
+  iocs,
+  iocHistory,
+  invVerdict,
+}: {
+  iocs: IocItem[];
+  iocHistory: Record<string, IocHistoryEntry>;
+  invVerdict: string | null;
+}) {
+  const [sort, setSort] = useState<IocSort>('prior_desc');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [query, setQuery] = useState('');
+  const [repeatOnly, setRepeatOnly] = useState(false);
+
+  const types = useMemo(() => {
+    const set = new Set<string>();
+    iocs.forEach(i => { if (i.type) set.add(i.type); });
+    return Array.from(set).sort();
+  }, [iocs]);
+
+  const rows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const enriched = iocs.map((ioc, i) => {
+      const type = (ioc.type ?? '').toLowerCase();
+      const norm = (ioc.value ?? '').trim().toLowerCase();
+      const history = iocHistory[`${type}::${norm}`];
+      const priorCount = history ? Math.max(0, history.count - 1) : 0;
+      return {
+        idx: i,
+        ioc,
+        history,
+        priorCount,
+        lastSeen: history?.last_seen_at ? new Date(history.last_seen_at).getTime() : 0,
+        firstSeen: history?.first_seen_at ? new Date(history.first_seen_at).getTime() : 0,
+      };
+    });
+
+    const filtered = enriched.filter(r => {
+      if (typeFilter !== 'all' && (r.ioc.type ?? '') !== typeFilter) return false;
+      if (repeatOnly && r.priorCount === 0) return false;
+      if (q) {
+        const hay = `${r.ioc.type ?? ''} ${r.ioc.value ?? ''} ${r.ioc.note ?? ''}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+
+    const sorted = [...filtered];
+    switch (sort) {
+      case 'prior_desc':
+        sorted.sort((a, b) => b.priorCount - a.priorCount || b.lastSeen - a.lastSeen);
+        break;
+      case 'last_seen_desc':
+        sorted.sort((a, b) => b.lastSeen - a.lastSeen || b.priorCount - a.priorCount);
+        break;
+      case 'first_seen_desc':
+        sorted.sort((a, b) => b.firstSeen - a.firstSeen);
+        break;
+      case 'type_asc':
+        sorted.sort((a, b) => (a.ioc.type ?? '').localeCompare(b.ioc.type ?? '') || b.priorCount - a.priorCount);
+        break;
+      case 'default':
+      default:
+        sorted.sort((a, b) => a.idx - b.idx);
+    }
+    return sorted;
+  }, [iocs, iocHistory, sort, typeFilter, query, repeatOnly]);
+
+  const shownCount = rows.length;
+  const totalCount = iocs.length;
+
+  return (
+    <div className="space-y-3">
+      {/* Controls */}
+      <div className="flex flex-wrap items-center gap-2 rounded-sm border border-border bg-muted/20 p-2">
+        <div className="relative flex-1 min-w-[180px]">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search indicators…"
+            className="h-8 pl-7 text-xs"
+          />
+        </div>
+
+        <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <SelectTrigger className="h-8 w-[140px] text-xs gap-1">
+            <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+            <SelectValue placeholder="All types" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All types</SelectItem>
+            {types.map(t => (
+              <SelectItem key={t} value={t}>{t}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={sort} onValueChange={(v) => setSort(v as IocSort)}>
+          <SelectTrigger className="h-8 w-[200px] text-xs gap-1">
+            <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="prior_desc">Most prior sightings</SelectItem>
+            <SelectItem value="last_seen_desc">Most recent sighting</SelectItem>
+            <SelectItem value="first_seen_desc">Newest first seen</SelectItem>
+            <SelectItem value="type_asc">Type (A–Z)</SelectItem>
+            <SelectItem value="default">Original order</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Button
+          type="button"
+          variant={repeatOnly ? 'default' : 'outline'}
+          size="sm"
+          className="h-8 text-xs gap-1.5"
+          onClick={() => setRepeatOnly(v => !v)}
+        >
+          <Brain className="h-3.5 w-3.5" />
+          Repeat offenders
+        </Button>
+
+        <span className="text-[10px] text-muted-foreground ml-auto">
+          {shownCount} / {totalCount}
+        </span>
+      </div>
+
+      {/* Rows */}
+      {rows.length === 0 ? (
+        <Empty text="No indicators match your filters." />
+      ) : (
+        <div className="space-y-1.5">
+          {rows.map(({ ioc, history, priorCount, idx }) => (
+            <div key={idx} className="flex items-start gap-2 text-xs rounded-sm border border-border p-2">
+              {ioc.type && <Badge variant="outline" className="rounded-sm text-[10px] uppercase shrink-0">{ioc.type}</Badge>}
+              <div className="min-w-0 flex-1">
+                <div className="font-mono text-foreground break-all">{ioc.value}</div>
+                {ioc.note && <div className="text-muted-foreground mt-0.5">{ioc.note}</div>}
+                {priorCount > 0 && (
+                  <div className="mt-1.5 inline-flex flex-wrap items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-sm border border-[hsl(262_60%_64%/0.35)] bg-[hsl(262_60%_64%/0.08)] text-[hsl(262_60%_82%)]">
+                    <Brain className="h-3 w-3" />
+                    I've seen this before — {priorCount} prior sighting{priorCount === 1 ? '' : 's'}
+                    {history?.first_seen_at && (
+                      <span className="text-muted-foreground">
+                        · since {new Date(history.first_seen_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                      </span>
+                    )}
+                    {history?.last_seen_at && (
+                      <span className="text-muted-foreground">
+                        · last {new Date(history.last_seen_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                      </span>
+                    )}
+                    {history?.last_verdict && history.last_verdict !== invVerdict && (
+                      <span className="text-muted-foreground">· last verdict: {history.last_verdict}</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
