@@ -46,16 +46,21 @@ const providerMeta = {
   slack: { label: "Slack", accent: "from-fuchsia-500/20 to-purple-500/10" },
 } as const;
 
+type TenantLink = { id: string; organization_id: string; tenant_id: string; created_at: string };
+
 export default function WorkplaceEmbeds() {
   const subscription = useUserSubscription();
+  const { activeOrg, orgs } = useActiveOrg();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<Record<string, Integration | null>>({ microsoft_teams: null, slack: null });
   const [busy, setBusy] = useState<string | null>(null);
-  const [testPrompt, setTestPrompt] = useState("What is our password rotation policy?");
+  const [testPrompt, setTestPrompt] = useState("What did Ray flag on my devices this week?");
   const [testAnswer, setTestAnswer] = useState<string | null>(null);
   const [orgName, setOrgName] = useState("");
   const [tenantId, setTenantId] = useState("");
   const [msgs, setMsgs] = useState<WorkMsg[]>([]);
+  const [tenantLinks, setTenantLinks] = useState<TenantLink[]>([]);
+  const [linkTenantInput, setLinkTenantInput] = useState("");
 
   const tier = (subscription.tier || "").toLowerCase();
   const isEntitled = ["business", "enterprise"].includes(tier);
