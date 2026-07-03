@@ -38,9 +38,29 @@ SetupIconFile=favicon.ico
 UninstallDisplayName={#MyAppName}
 UninstallDisplayIcon={app}\{#MyAppExeName}
 CloseApplications=no
+; Wrayth branding for the setup wizard
+WizardImageFile=WizardImage.bmp,WizardImage-large.bmp
+WizardSmallImageFile=WizardSmallImage.bmp,WizardSmallImage-large.bmp
+WizardImageStretch=yes
+WizardImageAlphaFormat=defined
+AppCopyright=© Ultrium LLC
+VersionInfoCompany={#MyAppPublisher}
+VersionInfoDescription={#MyAppName} Setup
+VersionInfoProductName={#MyAppName}
+VersionInfoProductVersion={#MyAppVersion}
+VersionInfoVersion={#MyAppVersion}
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
+
+[Messages]
+WelcomeLabel1=Welcome to the [name] Setup
+WelcomeLabel2=This will install the Wrayth device agent on your computer and connect it to your Wrayth workspace.%n%nWrayth continuously monitors this device's security posture and reports findings to your Threat Center.
+FinishedHeadingLabel=Wrayth is protecting this device
+FinishedLabelNoIcons=The Wrayth agent is now installed and running as a Windows service. This device will appear in your Threat Center within a minute.
+ClickFinish=Click Finish to close the Wrayth setup wizard.
+SetupAppTitle=Wrayth Setup
+SetupWindowTitle=Wrayth Setup - {#MyAppName}
 
 [Files]
 Source: "..\dist\WraythAgent.exe";       DestDir: "{app}"; Flags: ignoreversion
