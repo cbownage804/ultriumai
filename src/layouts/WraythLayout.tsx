@@ -104,14 +104,15 @@ function getSections(opts?: { hasOrg?: boolean; isMSP?: boolean }): NavSection[]
     protection.push({ label: 'Clients', path: getWraythPath('/msp'), icon: Share2 });
   }
   const intelligence: NavItem[] = [
-    { label: 'Investigations', path: getWraythPath('/intelligence/investigations'), icon: ScanSearch, badge: 'NEW' },
-    { label: 'Attack Paths', path: getWraythPath('/intelligence/attack-paths'), icon: GitBranch, badge: 'NEW' },
-    { label: 'Graph', path: getWraythPath('/intelligence/graph'), icon: Network, badge: 'NEW' },
-    { label: 'Board Reports', path: getWraythPath('/intelligence/reports'), icon: FileText, badge: 'NEW' },
+    { label: 'Overview', path: getWraythPath('/intelligence'), icon: Sparkles },
+    { label: 'Investigations', path: getWraythPath('/intelligence/investigations'), icon: ScanSearch },
+    { label: 'Attack Paths', path: getWraythPath('/intelligence/attack-paths'), icon: GitBranch },
+    { label: 'Graph', path: getWraythPath('/intelligence/graph'), icon: Network },
+    { label: 'Board Reports', path: getWraythPath('/intelligence/reports'), icon: FileText },
   ];
   return [
     { id: 'main', items: protection },
-    { id: 'intelligence', label: 'Intelligence', items: intelligence },
+    { id: 'intelligence', label: 'AI Intelligence', items: intelligence },
   ];
 }
 
