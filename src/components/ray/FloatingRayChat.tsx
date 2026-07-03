@@ -156,18 +156,8 @@ export function FloatingRayChat() {
               <RayMark className="relative h-5 w-5 text-white" />
             </span>
 
-            {/* Label + contextual status */}
-            <div className="flex flex-col items-start leading-tight pr-1">
-              <div className="flex items-center gap-1.5 text-sm font-medium text-white">
-                Ray
-                <motion.span
-                  aria-hidden
-                  className={`inline-block h-1.5 w-1.5 rounded-full ${styles.dot}`}
-                  animate={{ opacity: [0.4, 1, 0.4] }}
-                  transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
-                />
-              </div>
-            <div className="flex flex-col items-start leading-tight pr-1 min-w-[112px]">
+            {/* Label + contextual status (rotates by route) */}
+            <div className="flex flex-col items-start leading-tight pr-1 min-w-[128px]">
               <div className="flex items-center gap-1.5 text-sm font-medium text-white">
                 Ray
                 <motion.span
@@ -191,7 +181,6 @@ export function FloatingRayChat() {
                   </motion.span>
                 </AnimatePresence>
               </span>
-            </div>
             </div>
 
             {/* Subtle light sweep on hover */}
