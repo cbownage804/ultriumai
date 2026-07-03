@@ -39,7 +39,7 @@ const TILES: Tile[] = [
   { id: 'malware',         label: 'Malware Analysis', desc: 'Explain what a binary, hash, or strings dump actually does.',       href: '/app/intelligence/malware', icon: Bug,        cost: 4,  status: 'live' },
   { id: 'scripts',         label: 'Script Analysis',  desc: 'Paste PowerShell, Bash, Python — get intent, risk, and MITRE.',    href: '/app/intelligence/scripts', icon: Terminal,   cost: 2,  status: 'live' },
   { id: 'logs',            label: 'Log Analysis',     desc: 'Summarize huge log files: EVTX, Sentinel, Defender, syslog, IIS, firewall.', href: '/app/intelligence/logs', icon: FileWarning,cost: 5,  status: 'live' },
-  { id: 'compliance',      label: 'Compliance',       desc: 'Gap-analyze against CIS, NIST, HIPAA, SOC 2, ISO 27001.',                                                        icon: ShieldCheck,cost: 15, status: 'soon' },
+  { id: 'compliance',      label: 'Compliance',       desc: 'Gap-analyze against CIS, NIST, HIPAA, SOC 2, ISO 27001 with a 30/60/90 roadmap.', href: '/app/intelligence/compliance', icon: ShieldCheck,cost: 15, status: 'live' },
   { id: 'policies',        label: 'Policy Generator', desc: 'Generate password, IR, DR, AUP, BYOD policies — editable, DOCX export.', href: '/app/intelligence/policies', icon: ClipboardCheck, cost: 10, status: 'live' },
 ];
 
