@@ -137,7 +137,7 @@ export default function IntelligenceReports() {
           <p className="text-xs text-muted-foreground">Ray only reads your own investigations — no third parties involved.</p>
           <Button onClick={generate} disabled={loading} className="gap-2 min-h-[40px]">
             {loading ? <><Brain className="h-4 w-4 animate-pulse" /> Ray is writing…</>
-              : <><Presentation className="h-4 w-4" /> Generate report (5 RC)</>}
+              : <><Presentation className="h-4 w-4" /> Generate report (8 RC)</>}
           </Button>
         </div>
       </Card>
