@@ -71,6 +71,7 @@ const TrustCenter = lazy(() => import('@/pages/safesuite/TrustCenter'));
 const RayOnboarding = lazy(() => import('@/pages/onboarding/RayOnboarding'));
 const RayTimelinePage = lazy(() => import('@/pages/safesuite/RayTimelinePage'));
 const RayGraphExplorer = lazy(() => import('@/pages/safesuite/RayGraphExplorer'));
+const RayTeamsEmbed = lazy(() => import('@/pages/safesuite/RayTeamsEmbed'));
 
 const PlaybookRunnerPage = lazy(() => import('@/pages/safesuite/PlaybookRunnerPage'));
 const Integrations = lazy(() => import('@/pages/safesuite/Integrations'));
