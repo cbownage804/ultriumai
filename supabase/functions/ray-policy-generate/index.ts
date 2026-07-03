@@ -159,6 +159,82 @@ serve(async (req) => {
     .slice(0, 8);
   const notes = body.notes ? String(body.notes).slice(0, 4000) : "";
 
+  // Optional grounding: pull findings from the user's investigations / log /
+  // code analyses so the draft is derived from real evidence.
+  const rawRefs = Array.isArray(body.source_refs) ? body.source_refs : [];
+  const sourceRefs: SourceRef[] = rawRefs
+    .filter((r): r is SourceRef =>
+      !!r && typeof r === "object"
+        && typeof (r as SourceRef).id === "string"
+        && ((r as SourceRef).kind === "investigation"
+          || (r as SourceRef).kind === "log_analysis"
+          || (r as SourceRef).kind === "code_analysis"))
+    .slice(0, 10);
+
+  let sourceContext = "";
+  const usedRefs: Array<SourceRef & { title: string }> = [];
+  if (sourceRefs.length > 0) {
+    const byKind = {
+      investigation: sourceRefs.filter((r) => r.kind === "investigation").map((r) => r.id),
+      log_analysis: sourceRefs.filter((r) => r.kind === "log_analysis").map((r) => r.id),
+      code_analysis: sourceRefs.filter((r) => r.kind === "code_analysis").map((r) => r.id),
+    };
+    const [invRes, logRes, codeRes] = await Promise.all([
+      byKind.investigation.length
+        ? userClient.from("ray_investigations")
+            .select("id, input_label, input_type, verdict, summary, technical_findings, mitre, iocs, recommended_response")
+            .in("id", byKind.investigation)
+        : Promise.resolve({ data: [], error: null }),
+      byKind.log_analysis.length
+        ? userClient.from("ray_log_analyses")
+            .select("id, input_label, source_kind, summary, critical_findings, mitre, iocs, recommendations")
+            .in("id", byKind.log_analysis)
+        : Promise.resolve({ data: [], error: null }),
+      byKind.code_analysis.length
+        ? userClient.from("ray_code_analyses")
+            .select("id, input_label, mode, language, verdict, summary, behaviors, mitre, iocs, recommended_response")
+            .in("id", byKind.code_analysis)
+        : Promise.resolve({ data: [], error: null }),
+    ]);
+
+    const chunks: string[] = [];
+    for (const r of (invRes.data ?? []) as Array<Record<string, unknown>>) {
+      const label = (r.input_label as string) || (r.input_type as string) || "investigation";
+      usedRefs.push({ kind: "investigation", id: String(r.id), title: label });
+      chunks.push(`INVESTIGATION · ${label}
+verdict: ${r.verdict ?? "unknown"}
+summary: ${truncate(r.summary, 800)}
+findings: ${jsonSlice(r.technical_findings, 8)}
+mitre: ${jsonSlice(r.mitre, 12)}
+iocs: ${jsonSlice(r.iocs, 12)}
+recommended_response: ${jsonSlice(r.recommended_response, 8)}`);
+    }
+    for (const r of (logRes.data ?? []) as Array<Record<string, unknown>>) {
+      const label = (r.input_label as string) || (r.source_kind as string) || "log";
+      usedRefs.push({ kind: "log_analysis", id: String(r.id), title: label });
+      chunks.push(`LOG ANALYSIS · ${label} (${r.source_kind})
+summary: ${truncate(r.summary, 800)}
+critical_findings: ${jsonSlice(r.critical_findings, 10)}
+mitre: ${jsonSlice(r.mitre, 12)}
+iocs: ${jsonSlice(r.iocs, 12)}
+recommendations: ${jsonSlice(r.recommendations, 8)}`);
+    }
+    for (const r of (codeRes.data ?? []) as Array<Record<string, unknown>>) {
+      const label = (r.input_label as string) || `${r.mode} · ${r.language}`;
+      usedRefs.push({ kind: "code_analysis", id: String(r.id), title: label });
+      chunks.push(`CODE / MALWARE · ${label}
+verdict: ${r.verdict ?? "unknown"}
+summary: ${truncate(r.summary, 800)}
+behaviors: ${jsonSlice(r.behaviors, 12)}
+mitre: ${jsonSlice(r.mitre, 12)}
+iocs: ${jsonSlice(r.iocs, 12)}
+recommended_response: ${jsonSlice(r.recommended_response, 8)}`);
+    }
+    if (chunks.length) {
+      sourceContext = `\nGROUND YOUR DRAFT IN THESE FINDINGS. Do not invent details not shown here.\n\n${chunks.join("\n\n---\n\n").slice(0, 24000)}\n`;
+    }
+  }
+
   const cost = RAY_COMPUTE_COSTS.policy_generation;
 
   // Resolve org
@@ -170,7 +246,9 @@ serve(async (req) => {
     .maybeSingle();
   const orgId = (membership as { organization_id?: string } | null)?.organization_id ?? null;
 
-  const provisionalTitle = `${policyType.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())} Policy`;
+  const isRunbook = RUNBOOK_TYPES.has(policyType);
+  const humanType = policyType.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const provisionalTitle = isRunbook ? humanType : `${humanType} Policy`;
 
   const { data: pending, error: insErr } = await admin
     .from("ray_policies")
@@ -194,17 +272,19 @@ serve(async (req) => {
   }
   const policyId = (pending as { id: string }).id;
 
-  const userPrompt = `Draft a security policy with the following parameters. Return STRICT JSON matching the schema exactly (all keys present, arrays may be empty).
+  const userPrompt = `Draft a ${isRunbook ? "response runbook" : "security policy"} with the following parameters. Return STRICT JSON matching the schema exactly (all keys present, arrays may be empty).
 
-POLICY TYPE: ${policyType}
-${orgName ? `ORGANIZATION: ${orgName}\n` : ""}${jurisdiction ? `JURISDICTION: ${jurisdiction}\n` : ""}${frameworks.length ? `TARGET FRAMEWORKS: ${frameworks.join(", ")}\n` : ""}${notes ? `ADDITIONAL CONTEXT / NOTES:\n${notes}\n` : ""}
-Write 5-9 substantive sections. Every clause must be enforceable ("must", "shall", "may not") — no vague guidance. Map controls to the frameworks listed above; if none listed, map to CIS v8 and NIST CSF 2.0. Use TODAY as effective_date.
+${isRunbook ? "RUNBOOK" : "POLICY"} TYPE: ${policyType}
+${orgName ? `ORGANIZATION: ${orgName}\n` : ""}${jurisdiction ? `JURISDICTION: ${jurisdiction}\n` : ""}${frameworks.length ? `TARGET FRAMEWORKS: ${frameworks.join(", ")}\n` : ""}${notes ? `ADDITIONAL CONTEXT / NOTES:\n${notes}\n` : ""}${sourceContext}
+${isRunbook
+  ? "Write 5-8 phase sections (Detection, Triage, Contain, Eradicate, Recover, Lessons Learned as appropriate). Every clause must be an imperative step with actor + action + verification. Cite MITRE ATT&CK IDs where they map."
+  : "Write 5-9 substantive sections. Every clause must be enforceable (\"must\", \"shall\", \"may not\") — no vague guidance. Map controls to the frameworks listed above; if none listed, map to CIS v8 and NIST CSF 2.0."} Use TODAY as effective_date.
 
 SCHEMA:
-${SCHEMA}`;
+${isRunbook ? RUNBOOK_SCHEMA : SCHEMA}`;
 
   const result = await aiCall<Record<string, unknown>>({
-    system: SYSTEM,
+    system: isRunbook ? RUNBOOK_SYSTEM : SYSTEM,
     user: userPrompt,
     model: DEEP_MODEL,
     jsonMode: true,
