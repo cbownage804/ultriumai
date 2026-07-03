@@ -334,12 +334,14 @@ export default function IntelligenceGraph() {
                   {c.sharedIocs.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {c.sharedIocs.slice(0, 6).map(ioc => (
-                        <span
+                        <button
                           key={ioc.ioc_value_norm}
-                          className="text-[10px] font-mono px-2 py-0.5 rounded-sm border border-[hsl(262_60%_64%/0.35)] bg-[hsl(262_60%_64%/0.06)] text-[hsl(262_60%_82%)]"
+                          type="button"
+                          onClick={() => setDetailIoc(ioc)}
+                          className="text-[10px] font-mono px-2 py-0.5 rounded-sm border border-[hsl(262_60%_64%/0.35)] bg-[hsl(262_60%_64%/0.06)] text-[hsl(262_60%_82%)] hover:bg-[hsl(262_60%_64%/0.14)]"
                         >
                           {ioc.ioc_value}
-                        </span>
+                        </button>
                       ))}
                       {c.sharedIocs.length > 6 && (
                         <span className="text-[10px] text-muted-foreground">
