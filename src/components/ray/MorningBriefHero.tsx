@@ -218,8 +218,8 @@ export function MorningBriefHero({ showFullBriefLink = true, variant = "home", f
       ok: threatsCount === 0,
     },
     {
-      label: "Exposure",
-      value: exposureCount === 0 ? "Nothing new" : `${exposureCount} identit${exposureCount === 1 ? "y" : "ies"} watched`,
+      label: "Identity Monitoring",
+      value: exposureCount === 0 ? "Nothing new" : `${exposureCount} monitored identit${exposureCount === 1 ? "y" : "ies"}`,
       ok: !s?.exposure?.new_breaches,
     },
     {
