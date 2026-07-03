@@ -19,6 +19,7 @@ import {
   Sparkles, Coins, GitBranch, Brain, Clock, Trash2, Layers, Radar,
   Wrench, Target, ShieldAlert, AlertTriangle, CheckCircle2, HelpCircle,
   User, Laptop, KeyRound, AppWindow, Network, Database, Users,
+  Quote, Lightbulb, ChevronDown, ChevronRight,
 } from 'lucide-react';
 
 type EntityKind = 'user' | 'device' | 'account' | 'service' | 'app' | 'network' | 'data';
@@ -28,6 +29,17 @@ type StepEntity = {
   role?: 'actor' | 'target' | 'pivot' | 'credential' | 'witness' | string;
   why?: string;
 };
+type EvidenceItem = {
+  source?: 'investigation' | 'scenario' | 'mitre' | 'general_knowledge' | string;
+  quote?: string;
+  supports?: string;
+};
+type StepReasoning = {
+  why?: string;
+  evidence?: EvidenceItem[];
+  assumptions?: string[];
+  confidence?: 'low' | 'medium' | 'high' | string;
+};
 type AttackStep = {
   phase?: string;
   title?: string;
@@ -36,6 +48,7 @@ type AttackStep = {
   likelihood?: string;
   if_successful?: string;
   entities?: StepEntity[];
+  reasoning?: StepReasoning;
 };
 type BlastRadius = {
   users_affected?: string;
@@ -367,6 +380,7 @@ function AttackPathView({ path, onDelete }: { path: AttackPath; onDelete: () => 
                         ))}
                       </div>
                     )}
+                    <ReasoningPanel reasoning={s.reasoning} />
                   </li>
                 ))}
               </ol>
@@ -649,5 +663,106 @@ function EntitiesView({ steps }: { steps: AttackStep[] }) {
         })}
       </ul>
     </div>
+  );
+}
+
+/* ---------------------- "Why Ray thinks this" panel ---------------------- */
+
+const SOURCE_META: Record<string, { label: string; className: string }> = {
+  investigation:     { label: 'Investigation', className: 'bg-sky-500/10 text-sky-300 border-sky-500/30' },
+  scenario:          { label: 'Scenario',      className: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30' },
+  mitre:             { label: 'MITRE ATT&CK',  className: 'bg-violet-500/10 text-violet-300 border-violet-500/30' },
+  general_knowledge: { label: 'Known pattern', className: 'bg-muted text-muted-foreground border-border' },
+};
+
+const CONFIDENCE_STYLE: Record<string, string> = {
+  low:    'bg-amber-500/10 text-amber-300 border-amber-500/30',
+  medium: 'bg-sky-500/10 text-sky-300 border-sky-500/30',
+  high:   'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
+};
+
+function ReasoningPanel({ reasoning }: { reasoning?: StepReasoning }) {
+  if (!reasoning) return null;
+  const { why, evidence = [], assumptions = [], confidence } = reasoning;
+  const hasContent = Boolean(why) || evidence.length > 0 || assumptions.length > 0;
+  if (!hasContent) return null;
+
+  return (
+    <details className="group mt-3 rounded-sm border border-[hsl(262_60%_64%/0.25)] bg-[hsl(262_60%_64%/0.04)] open:bg-[hsl(262_60%_64%/0.06)]">
+      <summary className="list-none cursor-pointer select-none px-3 py-2 flex items-center gap-2 text-[11px] uppercase tracking-wider text-[hsl(262_60%_75%)]">
+        <ChevronRight className="h-3.5 w-3.5 transition-transform group-open:hidden" />
+        <ChevronDown className="h-3.5 w-3.5 transition-transform hidden group-open:block" />
+        <Brain className="h-3.5 w-3.5" />
+        <span>Why Ray thinks this</span>
+        {confidence && (
+          <span className={cn(
+            'ml-auto rounded-sm border px-1.5 py-0.5 text-[9px] normal-case tracking-normal',
+            CONFIDENCE_STYLE[confidence.toLowerCase()] ?? 'bg-muted text-muted-foreground border-border',
+          )}>
+            {confidence} confidence
+          </span>
+        )}
+      </summary>
+
+      <div className="px-3 pb-3 space-y-3">
+        {why && (
+          <p className="text-xs text-foreground/90 leading-relaxed">{why}</p>
+        )}
+
+        {evidence.length > 0 && (
+          <div>
+            <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-1.5 flex items-center gap-1.5">
+              <Quote className="h-3 w-3" /> Evidence
+            </div>
+            <ul className="space-y-1.5">
+              {evidence.map((ev, i) => {
+                const meta = SOURCE_META[(ev.source ?? '').toLowerCase()] ?? {
+                  label: ev.source ?? 'Source',
+                  className: 'bg-muted text-muted-foreground border-border',
+                };
+                return (
+                  <li key={i} className="rounded-sm border border-border/60 bg-background/40 p-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={cn(
+                        'inline-flex items-center rounded-sm border px-1.5 py-0.5 text-[9px] uppercase tracking-wider',
+                        meta.className,
+                      )}>
+                        {meta.label}
+                      </span>
+                      {ev.supports && (
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                          Supports: {ev.supports}
+                        </span>
+                      )}
+                    </div>
+                    {ev.quote && (
+                      <p className="text-xs text-foreground/85 mt-1 italic leading-relaxed border-l-2 border-border pl-2">
+                        "{ev.quote}"
+                      </p>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+
+        {assumptions.length > 0 && (
+          <div>
+            <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-1.5 flex items-center gap-1.5">
+              <Lightbulb className="h-3 w-3" /> Assumptions
+            </div>
+            <ul className="space-y-1">
+              {assumptions.map((a, i) => (
+                <li key={i} className="text-xs text-foreground/80 flex items-start gap-2">
+                  <span className="text-muted-foreground mt-0.5">•</span>
+                  <span>{a}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </details>
   );
 }
