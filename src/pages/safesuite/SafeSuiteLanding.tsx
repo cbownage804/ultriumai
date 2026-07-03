@@ -28,37 +28,37 @@ import {
 } from 'lucide-react';
 
 
-// Ray's capabilities — not products. Each one is something Ray *does*.
+// Ray's capabilities — outcomes, not product names.
 const capabilities = [
   {
-    icon: KeyRound,
-    title: 'Ray protects your passwords.',
+    icon: ShieldCheck,
+    title: 'Ray protects every device.',
     blurb:
-      "A complete zero-knowledge password manager, with Ray watching over it. Import from any browser or password manager, and Ray flags weak or reused passwords, checks each one against known breaches, and offers stronger replacements when you're ready.",
+      "The Windows endpoint agent reports posture continuously: encryption, firewall, patches, Defender, local admins, BitLocker, Secure Boot, TPM, and more. Ray explains what matters and remediates approved issues with one click.",
     bullets: [
-      'Secure credential vault',
-      'Weak-password detection',
-      'Stronger password recommendations',
-      'Ongoing password health monitoring',
+      'Endpoint posture monitoring',
+      'Device timeline & audit history',
+      'One-click safe remediations',
+      'Windows Update & software inventory',
     ],
   },
   {
     icon: ScanSearch,
     title: 'Ray analyzes suspicious content.',
     blurb:
-      "Forward an email, drop in a document, paste a URL — Ray reads it, understands what it's doing, and explains the threat in plain English. No security degree required.",
+      "Forward an email, paste a URL, drop in a file — Ray reads it, understands what it's doing, and explains the threat in plain English. No security degree required.",
     bullets: [
-      'Emails, documents, URLs, QR codes, attachments',
-      'AI threat analysis',
-      'Plain-English explanations',
-      'Calm guidance on what to do next',
+      'Advanced threat analysis',
+      'URL, email, and attachment inspection',
+      'VirusTotal-enriched verdicts',
+      'Plain-English guidance on what to do next',
     ],
   },
   {
     icon: Globe,
-    title: 'Ray watches your digital exposure.',
+    title: 'Ray watches your exposure.',
     blurb:
-      "Ray continuously monitors the dark web for your leaked credentials and identities, alerts you the moment something surfaces, and walks you through exactly how to respond.",
+      "Ray continuously monitors the dark web for leaked credentials and identities, alerts you the moment something surfaces, and walks you through exactly how to respond.",
     bullets: [
       'Dark web monitoring',
       'Credential leak alerts',
@@ -67,6 +67,49 @@ const capabilities = [
     ],
   },
 ];
+
+// Everything Ray watches — the full monitoring surface.
+const RAY_WATCHES = [
+  'Devices', 'Passwords', 'Threats', 'Dark Web', 'Microsoft 365', 'Software',
+  'Windows Updates', 'Browser Extensions', 'Startup Programs', 'Network Exposure',
+  'Local Admins', 'BitLocker', 'Firewall', 'Defender', 'Secure Boot', 'TPM',
+  'RDP', 'Services', 'Ports', 'Compliance',
+];
+
+// Traditional cybersecurity vs Ray.
+const CONTRASTS = [
+  { trad: 'Traditional tools generate alerts.', ray: 'Ray explains them.' },
+  { trad: 'Traditional tools require dashboards.', ray: 'Ray starts conversations.' },
+  { trad: 'Traditional tools expect security expertise.', ray: 'Ray teaches as it protects.' },
+  { trad: 'Traditional tools stop after detection.', ray: 'Ray recommends and remediates.' },
+];
+
+// One-click remediation actions Ray can take.
+const REMEDIATIONS = [
+  'Enable BitLocker', 'Enable Firewall', 'Install Updates', 'Run Defender Scan',
+  'Disable RDP', 'Remove Local Admin', 'Lock Device', 'Sign Out User',
+  'Update Defender', 'Disable Browser Password Manager',
+];
+
+// Where Ray shows up.
+const RAY_EVERYWHERE = [
+  { icon: MessagesSquare, label: 'Inside Wrayth', sub: 'Chat, briefs, timeline.' },
+  { icon: MessageCircle, label: 'Microsoft Teams', sub: 'Ray answers in-channel.' },
+  { icon: MessageCircle, label: 'Slack', sub: 'Same Ray, different room.' },
+  { icon: Wand2, label: 'Weekly Briefs', sub: 'Executive summary, every Monday.' },
+  { icon: Brain, label: 'Daily Digests', sub: 'What Ray touched while you were away.' },
+];
+
+// Privacy: what Ray never sees vs what it monitors.
+const RAY_NEVER_SEES = [
+  'Files', 'Photos', 'Documents', 'Clipboard', 'Passwords', 'Emails',
+  'Camera', 'Microphone', 'Screen', 'Keystrokes',
+];
+const RAY_MONITORS = [
+  'Security posture', 'Patching', 'Encryption', 'Threats',
+  'Configuration', 'Software inventory', 'Compliance',
+];
+
 
 export default function WraythLanding() {
   return (
