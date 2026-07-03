@@ -357,27 +357,31 @@ export function DeviceSecurityTabs({ deviceId, posture, capturedAt, value, onVal
           />
           {(() => {
             const raw = (p.logged_in_user ?? '').trim();
-            // Windows reports the machine account (HOSTNAME$) when no
-            // interactive user is signed in. That's a Windows-level truth,
-            // not a bug we can fix from Ray — surface it honestly.
-            const isMachineAccount = raw.endsWith('$') || /^system$/i.test(raw);
+            // Windows returns the machine account (HOSTNAME$) when the
+            // agent is running as SYSTEM and queries %USERNAME% instead of
+            // the interactive session. Newer agent builds detect the
+            // console user via quser / WMIC — surface a clear message when
+            // we still see the machine account so it's obvious the agent
+            // needs an update, not that "no one is signed in".
+            const isMachineAccount = raw.endsWith('$');
+            const isSystem = /^system$/i.test(raw);
             if (!raw) {
               return (
                 <Row
                   label="Signed-in user"
-                  value="No one signed in"
+                  value="Not reported"
                   tone="neutral"
-                  hint="Windows didn't report an interactive session at the time of capture."
+                  hint="The agent didn't report an interactive session at the time of capture."
                 />
               );
             }
-            if (isMachineAccount) {
+            if (isMachineAccount || isSystem) {
               return (
                 <Row
                   label="Signed-in user"
-                  value="No one signed in"
-                  tone="neutral"
-                  hint={`Windows reported the machine account (${raw}), which means no person was interactively signed in when Ray checked.`}
+                  value="Agent update required"
+                  tone="warn"
+                  hint={`Windows returned the machine account (${raw}). Update the Wrayth agent to v0.1.2+ so it detects the console user via quser instead of the SYSTEM context.`}
                 />
               );
             }
