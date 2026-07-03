@@ -399,6 +399,24 @@ export default function IntelligenceInvestigations() {
         </Badge>
       </div>
 
+      <ModuleRayBrief
+        eventPatterns={['event_type.ilike.investigation%', 'event_type.ilike.followup%', 'event_type.ilike.case%']}
+        windowHours={168}
+        idleLines={[
+          "I haven't opened any investigations for you this week.",
+          'Give me an artifact — a URL, hash, IP, or PowerShell command — and I\u2019ll open a case.',
+        ]}
+        composer={({ events }) => {
+          const opened = events.filter((e) => /investigation/i.test(e.event_type)).length;
+          const followups = events.filter((e) => /followup|report/i.test(e.event_type)).length;
+          const lines: string[] = [];
+          lines.push(opened === 1 ? "I've completed 1 investigation this week." : `I've completed ${opened} investigations this week.`);
+          if (followups > 0) lines.push(followups === 1 ? "I've drafted 1 follow-up report." : `I've drafted ${followups} follow-up reports.`);
+          lines.push("I'll correlate anything new against your existing cases automatically.");
+          return { lines, tone: 'ok' };
+        }}
+      />
+
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6">
         <div className="space-y-6 min-w-0">
           {/* Templates strip — one-click investigation launchers with optional chaining */}
