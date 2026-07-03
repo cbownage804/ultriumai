@@ -17815,6 +17815,87 @@ export type Database = {
         }
         Relationships: []
       }
+      ray_investigations: {
+        Row: {
+          completed_at: string | null
+          confidence: string | null
+          confidence_score: number | null
+          cost_ray_compute: number
+          created_at: string
+          duration_ms: number | null
+          error: string | null
+          evidence: Json
+          executive_summary: string | null
+          id: string
+          input_label: string | null
+          input_payload: string
+          input_type: Database["public"]["Enums"]["ray_investigation_input_type"]
+          iocs: Json
+          mitre: Json
+          model: string | null
+          org_id: string | null
+          recommended_response: Json
+          status: Database["public"]["Enums"]["ray_investigation_status"]
+          summary: string | null
+          technical_findings: Json
+          timeline: Json
+          user_id: string
+          verdict: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          confidence?: string | null
+          confidence_score?: number | null
+          cost_ray_compute?: number
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          evidence?: Json
+          executive_summary?: string | null
+          id?: string
+          input_label?: string | null
+          input_payload: string
+          input_type: Database["public"]["Enums"]["ray_investigation_input_type"]
+          iocs?: Json
+          mitre?: Json
+          model?: string | null
+          org_id?: string | null
+          recommended_response?: Json
+          status?: Database["public"]["Enums"]["ray_investigation_status"]
+          summary?: string | null
+          technical_findings?: Json
+          timeline?: Json
+          user_id: string
+          verdict?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          confidence?: string | null
+          confidence_score?: number | null
+          cost_ray_compute?: number
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          evidence?: Json
+          executive_summary?: string | null
+          id?: string
+          input_label?: string | null
+          input_payload?: string
+          input_type?: Database["public"]["Enums"]["ray_investigation_input_type"]
+          iocs?: Json
+          mitre?: Json
+          model?: string | null
+          org_id?: string | null
+          recommended_response?: Json
+          status?: Database["public"]["Enums"]["ray_investigation_status"]
+          summary?: string | null
+          technical_findings?: Json
+          timeline?: Json
+          user_id?: string
+          verdict?: string | null
+        }
+        Relationships: []
+      }
       ray_memory: {
         Row: {
           confidence: number
@@ -38109,6 +38190,18 @@ export type Database = {
       device_status: "online" | "offline" | "stale" | "unknown"
       helpdesk_role: "msp_admin" | "msp_staff" | "client_admin" | "client_staff"
       portal_user_role: "admin" | "manager" | "user" | "readonly"
+      ray_investigation_input_type:
+        | "url"
+        | "email"
+        | "email_headers"
+        | "ip"
+        | "domain"
+        | "file_hash"
+        | "powershell"
+        | "event_log"
+        | "defender_alert"
+        | "m365_alert"
+      ray_investigation_status: "pending" | "running" | "complete" | "failed"
       safedoc_role: "admin" | "editor" | "viewer" | "none"
       tech_visibility_mode: "shadow" | "branded" | "hybrid"
       wrayth_action_status:
@@ -38279,6 +38372,19 @@ export const Constants = {
       device_status: ["online", "offline", "stale", "unknown"],
       helpdesk_role: ["msp_admin", "msp_staff", "client_admin", "client_staff"],
       portal_user_role: ["admin", "manager", "user", "readonly"],
+      ray_investigation_input_type: [
+        "url",
+        "email",
+        "email_headers",
+        "ip",
+        "domain",
+        "file_hash",
+        "powershell",
+        "event_log",
+        "defender_alert",
+        "m365_alert",
+      ],
+      ray_investigation_status: ["pending", "running", "complete", "failed"],
       safedoc_role: ["admin", "editor", "viewer", "none"],
       tech_visibility_mode: ["shadow", "branded", "hybrid"],
       wrayth_action_status: [

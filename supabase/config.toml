@@ -40,6 +40,10 @@ verify_jwt = true
 [functions.ray-briefing]
 verify_jwt = true
 
+[functions.ray-investigate]
+verify_jwt = true
+
+
 [functions.ray-chat]
 verify_jwt = true
 
