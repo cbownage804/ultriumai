@@ -118,7 +118,7 @@ export default function Devices() {
     <div className="max-w-4xl mx-auto space-y-6">
       <RayPageHeader
         title="Devices"
-        description="Every place I\u2019ve seen you sign in from."
+        description="Every place I've seen you sign in from."
       />
 
       <RayConversationCard context="devices" />
