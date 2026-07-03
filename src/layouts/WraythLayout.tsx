@@ -246,23 +246,43 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
 
   const { top, bottom } = useMemo(() => buildSections(tier as WraythTier), [tier]);
 
-  const [groupOpen, setGroupOpen] = useState<Record<string, boolean>>(() => {
+  const [groupOpen, setGroupOpen] = useState<Record<string, boolean>>(() => loadGroupState());
+
+  // Reconcile whenever the visible group set changes (e.g. tier loads or upgrades).
+  // Seed any newly-visible collapsible groups from saved state, falling back to
+  // their defaultOpen. Keeps prior saved values for groups the user has toggled.
+  useEffect(() => {
     const saved = loadGroupState();
-    const initial: Record<string, boolean> = {};
-    for (const g of top) {
-      if (g.collapsible) initial[g.id] = saved[g.id] ?? g.defaultOpen ?? true;
-    }
-    return initial;
-  });
+    setGroupOpen((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      for (const g of top) {
+        if (!g.collapsible) continue;
+        if (next[g.id] === undefined) {
+          next[g.id] = saved[g.id] ?? g.defaultOpen ?? true;
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [top]);
+
   const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     try {
-      localStorage.setItem(GROUP_STATE_KEY, JSON.stringify(groupOpen));
+      // Merge with any existing saved state so we never drop keys for groups
+      // that aren't currently visible (e.g. tier changed temporarily).
+      const saved = loadGroupState();
+      localStorage.setItem(
+        GROUP_STATE_KEY,
+        JSON.stringify({ ...saved, ...groupOpen }),
+      );
     } catch {
       /* ignore */
     }
   }, [groupOpen]);
+
 
   const isActive = (path: string) => {
     if (path.endsWith('/dashboard')) return location.pathname === path;
