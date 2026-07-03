@@ -111,7 +111,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     case 'wrayth-vault-save':
       if (info.selectionText) {
         // Could open save dialog with selected text
-        chrome.action.openPopup();
+        try { chrome.action?.openPopup?.(); } catch (_) {}
       }
       break;
   }
