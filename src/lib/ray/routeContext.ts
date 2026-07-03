@@ -29,6 +29,12 @@ export type RayArea =
   | 'timeline'
   | 'other';
 
+export type QuickAction = {
+  label: string;
+  emoji: string;
+  prompt: string;
+};
+
 export type RouteContext = {
   area: RayArea;
   /** Short human name of the area, e.g. "Threat Center". */
@@ -37,6 +43,8 @@ export type RouteContext = {
   subline: string;
   /** Verbs the floating launcher cycles through while idle. */
   statusPool: string[];
+  /** Route-specific quick action chips shown above suggested questions. */
+  quickActions: QuickAction[];
 };
 
 function pickDeviceHost(): string | null {
