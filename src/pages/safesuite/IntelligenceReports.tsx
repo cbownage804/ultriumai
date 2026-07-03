@@ -100,14 +100,15 @@ export default function IntelligenceReports() {
           <div className="flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-muted-foreground">
             <Sparkles className="h-3.5 w-3.5 text-[hsl(262_60%_70%)]" /> Wrayth Intelligence
           </div>
-          <h1 className="text-2xl sm:text-3xl font-semibold mt-1">Board Reports</h1>
+          <h1 className="text-2xl sm:text-3xl font-semibold mt-1">Executive Reports</h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-            Ray reads every completed investigation in the period and writes a board-ready summary — what happened, what
-            it means, and what still needs attention.
+            Ray draws from the entire knowledge graph — investigations, attack paths, compliance posture,
+            open recommendations, MITRE techniques, and resurfaced IOCs — and writes a leadership-ready
+            report you can hand to the board.
           </p>
         </div>
         <Badge variant="outline" className="gap-1.5 rounded-sm">
-          <Coins className="h-3.5 w-3.5" /> 5 Ray Compute / report
+          <Coins className="h-3.5 w-3.5" /> 8 Ray Compute / report
         </Badge>
       </div>
 
