@@ -88,6 +88,8 @@ interface Props {
   deviceId: string;
   posture: DevicePosture | null;
   capturedAt?: string | null;
+  value?: string;
+  onValueChange?: (v: string) => void;
 }
 
 function fmtDuration(seconds: number): string {
@@ -197,7 +199,7 @@ function List({
   );
 }
 
-export function DeviceSecurityTabs({ deviceId, posture, capturedAt }: Props) {
+export function DeviceSecurityTabs({ deviceId, posture, capturedAt, value, onValueChange }: Props) {
   const [recovery, setRecovery] = useState<{ key: string; id: string; capturedAt: string } | null>(
     null,
   );
@@ -267,7 +269,7 @@ export function DeviceSecurityTabs({ deviceId, posture, capturedAt }: Props) {
   const tabs = assessment?.tabs;
 
   return (
-    <Tabs defaultValue="posture" className="w-full">
+    <Tabs value={value} onValueChange={onValueChange} defaultValue={value ? undefined : 'posture'} className="w-full">
       <TabsList className="grid w-full grid-cols-4 sm:grid-cols-8 h-auto">
         <TabsTrigger value="posture" className="text-[11px]">Posture</TabsTrigger>
         <TabsTrigger value="system" className="text-[11px]">System</TabsTrigger>
