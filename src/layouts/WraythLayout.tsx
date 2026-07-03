@@ -58,6 +58,7 @@ import {
   Scale,
   ScanSearch,
   GitBranch,
+  Network,
 } from 'lucide-react';
 import { AppSwitcher } from '@/components/AppSwitcher';
 
