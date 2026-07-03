@@ -33,7 +33,7 @@ try:
 except Exception:  # noqa: BLE001
     run_action_loop = None  # type: ignore
 
-AGENT_VERSION = "0.2.3"
+AGENT_VERSION = "0.2.4"
 
 # ---------------------------------------------------------------------------
 # Config on disk
