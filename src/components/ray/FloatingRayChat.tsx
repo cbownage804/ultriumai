@@ -6,10 +6,12 @@
  * soft glow. Opens the full Ray conversation on click.
  */
 import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { getRayContext, type RayContext } from '@/lib/ray';
+import { getRouteContext } from '@/lib/ray/routeContext';
 import RaySkillsPanel from './RaySkillsPanel';
 import { dedupeRecs } from './recDedupe';
 
@@ -34,16 +36,16 @@ const TONE_STYLES: Record<Tone, { ring: string; glow: string; dot: string; core:
   idle:      { ring: 'ring-primary/30',     glow: 'shadow-[0_0_36px_-10px_hsl(262_70%_60%/0.55)]', dot: 'bg-primary',     core: 'from-primary/40 to-primary/20' },
 };
 
-function toneFrom(ctx: RayContext | null): { tone: Tone; label: string } {
-  if (!ctx) return { tone: 'scanning', label: 'Scanning…' };
+function toneFrom(ctx: RayContext | null): { tone: Tone; priorityTag: string | null } {
+  if (!ctx) return { tone: 'scanning', priorityTag: null };
   const recs = dedupeRecs(ctx.recommendations ?? []);
   const critical = recs.some((r) => ['critical', 'high'].includes((r.severity ?? '').toLowerCase()));
-  if (critical) return { tone: 'threat', label: 'Something needs you' };
+  if (critical) return { tone: 'threat', priorityTag: `${recs.length} priority` };
   if (recs.length > 0) {
-    return { tone: 'attention', label: `${recs.length} recommendation${recs.length === 1 ? '' : 's'}` };
+    return { tone: 'attention', priorityTag: `${recs.length} priority` };
   }
-  if (!ctx.hasOnboarded) return { tone: 'idle', label: 'Let\'s get set up' };
-  return { tone: 'healthy', label: 'Everything looks good' };
+  if (!ctx.hasOnboarded) return { tone: 'idle', priorityTag: 'Setup' };
+  return { tone: 'healthy', priorityTag: 'All clear' };
 }
 
 /** Ray's identity mark — a stylized watching core. */
@@ -89,14 +91,31 @@ export function FloatingRayChat() {
     return () => window.removeEventListener('ray:panel-open', onOpen);
   }, []);
 
-  const { tone, label } = useMemo(() => toneFrom(ctx), [ctx]);
+  const { tone, priorityTag } = useMemo(() => toneFrom(ctx), [ctx]);
   const styles = TONE_STYLES[tone];
+  const location = useLocation();
+  const route = useMemo(() => getRouteContext(location.pathname), [location.pathname]);
+
+  // Rotating status verb, driven by the current route.
+  const [statusIdx, setStatusIdx] = useState(0);
+  useEffect(() => {
+    setStatusIdx(0);
+    if (route.statusPool.length <= 1) return;
+    const iv = setInterval(() => {
+      setStatusIdx((i) => (i + 1) % route.statusPool.length);
+    }, 3400);
+    return () => clearInterval(iv);
+  }, [route]);
+
+  const statusVerb = route.statusPool[statusIdx] ?? 'Watching';
+  const badgeSuffix = priorityTag ? ` · ${priorityTag}` : '';
+  const ariaLabel = `Ask Ray — ${statusVerb}${badgeSuffix}`;
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <button
-          aria-label={`Ask Ray — ${label}`}
+          aria-label={ariaLabel}
           className={`group fixed bottom-8 right-8 z-40 safe-area-inset-bottom outline-none`}
         >
           {/* Ambient breathing glow */}
@@ -137,8 +156,8 @@ export function FloatingRayChat() {
               <RayMark className="relative h-5 w-5 text-white" />
             </span>
 
-            {/* Label + contextual status */}
-            <div className="flex flex-col items-start leading-tight pr-1">
+            {/* Label + contextual status (rotates by route) */}
+            <div className="flex flex-col items-start leading-tight pr-1 min-w-[128px]">
               <div className="flex items-center gap-1.5 text-sm font-medium text-white">
                 Ray
                 <motion.span
@@ -148,7 +167,20 @@ export function FloatingRayChat() {
                   transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
                 />
               </div>
-              <span className="text-[10px] uppercase tracking-[0.18em] text-white/60">{label}</span>
+              <span className="relative h-[14px] w-full overflow-hidden text-[10px] uppercase tracking-[0.18em] text-white/60">
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.span
+                    key={statusVerb + badgeSuffix}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.28 }}
+                    className="absolute inset-0 whitespace-nowrap"
+                  >
+                    {statusVerb}{badgeSuffix}
+                  </motion.span>
+                </AnimatePresence>
+              </span>
             </div>
 
             {/* Subtle light sweep on hover */}

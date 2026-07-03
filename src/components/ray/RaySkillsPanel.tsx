@@ -16,7 +16,8 @@ import {
   AlertTriangle,
   Activity,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { getRouteContext } from '@/lib/ray/routeContext';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
@@ -197,7 +198,10 @@ export default function RaySkillsPanel() {
   const [bootStep, setBootStep] = useState(0);
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const [memory, setMemory] = useState<RayMemory | null>(null);
+  const [dismissedPriority, setDismissedPriority] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
+  const location = useLocation();
+  const route = useMemo(() => getRouteContext(location.pathname), [location.pathname]);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -418,7 +422,7 @@ export default function RaySkillsPanel() {
                     <span className="text-2xl">👋</span> {greet()}, {firstName}.
                   </h2>
                   <p className="text-sm text-muted-foreground leading-snug max-w-md">
-                    I've been monitoring your environment while you were away.
+                    {route.subline}
                   </p>
 
                   {memoryLine && (
@@ -499,31 +503,46 @@ export default function RaySkillsPanel() {
                 </Button>
               </section>
 
-              {/* Priority recommendations */}
-              {recs.length > 0 && (
-                <section className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Ray noticed</div>
-                    <div className="text-[10px] text-muted-foreground/70 italic">
-                      I'm 97% confident these are the highest-impact changes today.
+              {/* Today's biggest opportunity — one priority at a time. */}
+              {(() => {
+                const remaining = recs.filter((r) => !dismissedPriority.has(r.id));
+                const current = remaining[0];
+                if (!current) return null;
+                const queued = remaining.length - 1;
+                return (
+                  <section className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Today's biggest opportunity</div>
+                      {queued > 0 && (
+                        <div className="text-[10px] text-muted-foreground/70">
+                          {queued} more waiting
+                        </div>
+                      )}
                     </div>
-                  </div>
-                  <AnimatePresence>
-                    <div className="space-y-2">
-                      {recs.map((r, i) => (
-                        <motion.div
-                          key={r.id}
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.15, duration: 0.35 }}
-                        >
-                          <PriorityRecRow rec={r} onAsk={send} />
-                        </motion.div>
-                      ))}
-                    </div>
-                  </AnimatePresence>
-                </section>
-              )}
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={current.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.35 }}
+                      >
+                        <PriorityRecRow
+                          rec={current}
+                          onAsk={send}
+                          onIgnore={() =>
+                            setDismissedPriority((prev) => {
+                              const next = new Set(prev);
+                              next.add(current.id);
+                              return next;
+                            })
+                          }
+                        />
+                      </motion.div>
+                    </AnimatePresence>
+                  </section>
+                );
+              })()}
 
               {/* While you were away — richer activity feed */}
               <section className="rounded-lg border border-primary/20 bg-primary/[0.04] p-3 space-y-2">
@@ -667,7 +686,7 @@ export default function RaySkillsPanel() {
   );
 }
 
-function PriorityRecRow({ rec, onAsk }: { rec: PriorityRec; onAsk: (q: string) => void }) {
+function PriorityRecRow({ rec, onAsk, onIgnore }: { rec: PriorityRec; onAsk: (q: string) => void; onIgnore?: () => void }) {
   const toneStyle =
     rec.tone === 'danger'
       ? 'border-red-500/40 bg-red-500/[0.04]'
@@ -713,16 +732,23 @@ function PriorityRecRow({ rec, onAsk }: { rec: PriorityRec; onAsk: (q: string) =
         </div>
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-1.5">
+      <div className="mt-3 flex flex-wrap items-center gap-1.5">
         <Button size="sm" className="h-7 rounded-full px-3 text-xs" onClick={() => onAsk(rec.fixPrompt)}>
           Fix now
         </Button>
         <Button size="sm" variant="secondary" className="h-7 rounded-full px-3 text-xs" onClick={() => onAsk(rec.askPrompt)}>
           Tell me why
         </Button>
-        <Button size="sm" variant="ghost" className="h-7 rounded-full px-3 text-xs" onClick={() => onAsk(rec.impactPrompt)}>
-          Show impact
-        </Button>
+        {onIgnore && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 rounded-full px-3 text-xs text-muted-foreground hover:text-foreground ml-auto"
+            onClick={onIgnore}
+          >
+            Ignore
+          </Button>
+        )}
       </div>
     </div>
   );
