@@ -585,17 +585,21 @@ Deno.serve(async (req) => {
     // Attach Ray's derived context to the stored payload so the UI has one source of truth.
     // Strip NUL bytes (\u0000) anywhere in the payload — Postgres JSONB rejects them
     // (error 22P05) and Windows tools occasionally emit them in registry/WMI strings.
+    // Sanitize both values and object keys because JSONB rejects NULs in either place.
     const stripNuls = (v: unknown): unknown => {
       if (typeof v === 'string') return v.replace(/\u0000/g, '');
       if (Array.isArray(v)) return v.map(stripNuls);
       if (v && typeof v === 'object') {
         const out: Record<string, unknown> = {};
-        for (const [k, val] of Object.entries(v as Record<string, unknown>)) out[k] = stripNuls(val);
+        for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
+          out[k.replace(/\u0000/g, '')] = stripNuls(val);
+        }
         return out;
       }
       return v;
     };
-    const enrichedPayload = stripNuls({ ...payload, _ray: { score: securityScore, fix_plan: fixPlan } }) as Record<string, unknown>;
+    const sanitizedPayload = stripNuls(payload) as Posture;
+    const enrichedPayload = stripNuls({ ...sanitizedPayload, _ray: { score: securityScore, fix_plan: fixPlan } }) as Record<string, unknown>;
     const sanitizedFindings = stripNuls(findings) as typeof findings;
 
     const now = new Date().toISOString();
