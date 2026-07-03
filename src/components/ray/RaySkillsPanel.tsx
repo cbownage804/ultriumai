@@ -198,7 +198,13 @@ function writeMemory(m: RayMemory) {
 
 // ---- component ---------------------------------------------------------------
 
-export default function RaySkillsPanel() {
+export type RaySkillsPanelProps = {
+  mode?: PanelMode;
+  onModeChange?: (mode: PanelMode) => void;
+  onClose?: () => void;
+};
+
+export default function RaySkillsPanel({ mode = 'compact', onModeChange, onClose }: RaySkillsPanelProps = {}) {
   const { user } = useAuth();
   const [input, setInput] = useState('');
   const [turns, setTurns] = useState<Turn[]>([]);
