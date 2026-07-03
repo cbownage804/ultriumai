@@ -379,9 +379,19 @@ export default function IntelligenceGraph() {
 
 
       <IocDetailsDialog ioc={detailIoc} onClose={() => setDetailIoc(null)} />
+
+      <HowIProtectYouCard
+        title="While you work…"
+        lines={[
+          "I'm continuously connecting your identities, devices, and investigations.",
+          "I'm looking for repeat offenders and quiet clusters you'd miss on your own.",
+          "If two cases quietly share the same actor, I'll surface it here.",
+        ]}
+      />
     </div>
   );
 }
+
 
 function StatCard({ label, value, icon, accent }: { label: string; value: number; icon: React.ReactNode; accent?: boolean }) {
   return (
