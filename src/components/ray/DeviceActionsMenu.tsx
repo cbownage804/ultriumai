@@ -64,6 +64,41 @@ const ACTION_LABELS: Record<ActionType, string> = {
   update_defender_signatures: 'Update Defender signatures',
 };
 
+const ACTION_DESCRIPTIONS: Record<ActionType, string> = {
+  enable_bitlocker:
+    'Encrypts the system drive (C:) with BitLocker so data is unreadable if the device is lost or stolen.',
+  enable_firewall:
+    'Turns on the Windows Defender Firewall for all network profiles, blocking unauthorized inbound connections.',
+  enable_defender:
+    'Activates Microsoft Defender Antivirus, enables real-time protection, and downloads the latest threat signatures.',
+  run_defender_quick_scan:
+    'Runs a fast scan of common malware locations to catch active threats without slowing the machine.',
+  run_defender_full_scan:
+    'Scans every file on the system. Slower but more thorough than a quick scan.',
+  install_windows_updates:
+    'Downloads and installs all pending Windows security patches and feature updates.',
+  lock_screen:
+    'Immediately locks the Windows session. The signed-in user must enter their password to unlock.',
+  sign_out_user:
+    'Signs the currently signed-in user out of Windows. Unsaved work may be lost.',
+  disable_rdp:
+    'Turns off Remote Desktop so no one can connect to this machine from the network.',
+  enable_rdp_nla:
+    'Requires Network Level Authentication for Remote Desktop, blocking weaker legacy connections.',
+  disable_remote_assistance:
+    'Disables Remote Assistance so outside helpers cannot take control of the desktop.',
+  disable_browser_password_manager:
+    'Blocks Chrome/Edge from saving or autofilling passwords via group policy.',
+  disable_builtin_administrator:
+    'Disables the built-in Windows Administrator account to reduce the attack surface.',
+  enable_defender_pua:
+    'Turns on Potentially Unwanted Application (PUA) blocking to catch adware and bundleware.',
+  enable_defender_cloud:
+    'Enables cloud-delivered protection so Defender can check unknown files against Microsoft\'s cloud in real time.',
+  update_defender_signatures:
+    'Downloads the newest malware definitions so Defender can recognize the latest threats.',
+};
+
 interface ActionRow {
   id: string;
   action_type: ActionType;
@@ -310,7 +345,8 @@ export function DeviceActionsMenu({
               }
               const text = label ?? ACTION_LABELS[action];
               return (
-                <DropdownMenuItem
+              <DropdownMenuItem
+                  title={ACTION_DESCRIPTIONS[action]}
                   onClick={(e) => {
                     if (satisfied === true) {
                       e.preventDefault();
@@ -379,10 +415,15 @@ export function DeviceActionsMenu({
                 <DropdownMenuLabel className="text-xs text-muted-foreground">
                   If it's lost
                 </DropdownMenuLabel>
-                <DropdownMenuItem disabled={!sessionLockSupported} onClick={() => run('lock_screen')}>
+                <DropdownMenuItem
+                  title={ACTION_DESCRIPTIONS.lock_screen}
+                  disabled={!sessionLockSupported}
+                  onClick={() => run('lock_screen')}
+                >
                   <Lock className="mr-2 h-4 w-4" /> {ACTION_LABELS.lock_screen}
                 </DropdownMenuItem>
                 <DropdownMenuItem
+                  title={ACTION_DESCRIPTIONS.sign_out_user}
                   onClick={() => run('sign_out_user')}
                   className="text-red-300 focus:text-red-200"
                 >
