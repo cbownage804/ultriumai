@@ -136,8 +136,23 @@ export function IntelligenceCodeAnalyzer({ mode }: { mode: AnalyzerMode }) {
   const onFile = async (f: File) => {
     if (f.size > 500_000) { toast.error('File too large (max 500 KB)'); return; }
     const text = await f.text();
-    setPayload(text.slice(0, 60_000));
+    const trimmed = text.trim();
+    // If the uploaded/pasted content is a bare hash, treat it as a hash artifact.
+    if (mode === 'malware' && /^[a-f0-9]{32}$|^[a-f0-9]{40}$|^[a-f0-9]{64}$/i.test(trimmed)) {
+      setPayload(trimmed.toLowerCase());
+      setLanguage('hash');
+    } else {
+      setPayload(text.slice(0, 60_000));
+    }
     if (!label) setLabel(f.name);
+  };
+
+  const onPayloadChange = (v: string) => {
+    const next = v.slice(0, 60_000);
+    setPayload(next);
+    if (mode === 'malware' && /^[a-f0-9]{32}$|^[a-f0-9]{40}$|^[a-f0-9]{64}$/i.test(next.trim())) {
+      setLanguage('hash');
+    }
   };
 
   const run = async () => {
