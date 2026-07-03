@@ -208,26 +208,28 @@ export function InstallAgentDialog({
               <li className="rounded-lg border border-border/60 p-3">
                 <div className="font-medium text-foreground mb-2">1. Download the installer</div>
                 <Button
+                  asChild
                   size="sm"
                   className="bg-violet-600 hover:bg-violet-500 text-white"
-                  onClick={(e) => {
-                    // Download via a hidden iframe. GitHub release assets
-                    // serve `Content-Disposition: attachment`, so the browser
-                    // saves the file without navigating this tab or opening
-                    // a popup that could steal focus and dismiss the dialog.
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const iframe = document.createElement('iframe');
-                    iframe.style.display = 'none';
-                    iframe.src = SETUP_DOWNLOAD_URL;
-                    document.body.appendChild(iframe);
-                    window.setTimeout(() => iframe.remove(), 60_000);
-                    toast.success('Downloading WraythSetup.exe…', {
-                      description: 'Check your Downloads folder in a moment.',
-                    });
-                  }}
                 >
-                  <Download className="mr-2 h-4 w-4" /> WraythSetup.exe
+                  {/*
+                    Plain anchor — no target="_blank", no window.open.
+                    GitHub release assets respond with
+                    `Content-Disposition: attachment`, so the browser starts
+                    a download without navigating this tab. That keeps the
+                    dialog (and the enrollment code) on screen.
+                  */}
+                  <a
+                    href={SETUP_DOWNLOAD_URL}
+                    rel="noreferrer"
+                    onClick={() => {
+                      toast.success('Downloading WraythSetup.exe…', {
+                        description: 'Check your Downloads folder in a moment.',
+                      });
+                    }}
+                  >
+                    <Download className="mr-2 h-4 w-4" /> WraythSetup.exe
+                  </a>
                 </Button>
                 <p className="mt-2 text-[11px] text-muted-foreground/80">
                   One click. Signed Windows installer — no PowerShell, no ZIP.
