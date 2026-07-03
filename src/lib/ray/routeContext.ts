@@ -97,12 +97,12 @@ export function getRouteContext(pathname: string): RouteContext {
   if (p.startsWith('/app/exposure')) {
     return {
       area: 'exposure',
-      areaLabel: 'Exposure',
-      subline: "You're on Exposure. I've been comparing your identifiers against fresh breach feeds.",
-      statusPool: ['Comparing breach feeds', 'Checking exposures', 'Scanning identities', 'Watching leaks'],
+      areaLabel: 'Identity Monitoring',
+      subline: "You're on Identity Monitoring. I've been comparing your monitored identities against fresh breach feeds.",
+      statusPool: ['Comparing breach feeds', 'Checking monitored identities', 'Scanning for breaches', 'Watching leaks'],
       quickActions: [
-        qa('Highest-risk exposure', '⚠️', 'Of my exposed identifiers, which single exposure is the highest risk and what should I do about it first?'),
-        qa('What changed this week?', '📅', 'Summarize new exposures detected in the last 7 days.'),
+        qa('Highest-risk breach', '⚠️', 'Of my monitored identities, which single breach is the highest risk and what should I do about it first?'),
+        qa('What changed this week?', '📅', 'Summarize new breaches on my monitored identities in the last 7 days.'),
         qa('Add an identifier', '➕', 'Walk me through adding a new identifier (email, domain, phone) for you to monitor.'),
       ],
     };

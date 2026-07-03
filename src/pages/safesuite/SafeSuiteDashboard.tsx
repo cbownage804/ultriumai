@@ -407,10 +407,10 @@ const productCardsConfig = [
     id: 'watch',
     feature: 'watch' as keyof TierFeatures,
     productLogo: safeSuiteProducts.watch.logo,
-    title: 'Exposure',
-    description: 'Ray watches the dark web for your identity.',
+    title: 'Identity Monitoring',
+    description: 'Ray watches the open and dark web for your monitored identities.',
     path: '/app/exposure',
-    statLabel: 'Identities watched'
+    statLabel: 'Monitored identities'
   },
 ];
 
@@ -557,7 +557,7 @@ export default function WraythDashboard() {
             text = 'Ray analyzed a threat';
           } else if (resourceLower === 'breach_check') {
             type = 'breach';
-            text = 'Ray ran an exposure check';
+            text = 'Ray checked your monitored identities';
           } else if (actionLower.includes('ray') || actionLower.includes('assist')) {
             type = 'password';
             text = 'Ray conversation';

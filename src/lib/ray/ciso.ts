@@ -71,7 +71,7 @@ export function nextBestAction(input: CisoInput): CisoDirective {
       tone: 'warn',
       headline: "Start by giving me something to protect.",
       rationale:
-        "I can't recommend rotations, spot reuse, or link exposures to real accounts until your vault has passwords in it. Import from your browser or manager — five minutes and I take over from there.",
+        "I can't recommend rotations, spot reuse, or link breaches to real accounts until your vault has saved passwords in it. Import from your browser or manager — five minutes and I take over from there.",
       cta: { label: 'Import passwords', to: '/app/passwords/import' },
     };
   }

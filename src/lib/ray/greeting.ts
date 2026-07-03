@@ -117,8 +117,8 @@ function openerFor(inputs: GreetingInputs, seed: number): string {
   }
   if (page === 'exposure') {
     return pick([
-      `I looked at exposure while you were away \u2014 there\u2019s a couple of items worth reviewing.`,
-      `Here\u2019s what I\u2019m watching on the exposure side.`,
+      `I checked your monitored identities while you were away \u2014 there\u2019s a couple of items worth reviewing.`,
+      `Here\u2019s what I\u2019m watching on your monitored identities.`,
     ], seed);
   }
   if (page === 'identity') {

@@ -99,7 +99,7 @@ function getSections(opts?: { hasOrg?: boolean; isMSP?: boolean }): NavSection[]
     { label: 'Home',      path: getWraythPath('/dashboard'), icon: Home },
     { label: 'Vault',     path: getWraythPath('/passwords'), icon: KeyRound, feature: 'vault' },
     { label: 'Threats',   path: getWraythPath('/threats'),   icon: ShieldAlert, feature: 'scan' },
-    { label: 'Exposure',  path: getWraythPath('/exposure'),  icon: Globe, feature: 'watch' },
+    { label: 'Identity Monitoring',  path: getWraythPath('/exposure'),  icon: Globe, feature: 'watch' },
   ];
   if (opts?.hasOrg) {
     protection.push({ label: 'Organization', path: getWraythPath('/org'), icon: Building2 });

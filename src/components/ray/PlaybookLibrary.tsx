@@ -27,7 +27,7 @@ const CATEGORY_LABEL: Record<PlaybookCategory, string> = {
   credential: 'Passwords & breaches',
   identity: 'Identity',
   device: 'Devices',
-  exposure: 'Exposure',
+  exposure: 'Identity Monitoring',
   mfa: 'MFA',
   passkey: 'Passkeys',
 };

@@ -25,7 +25,7 @@ const CATEGORIES: { id: Category; label: string }[] = [
   { id: 'all', label: 'All' },
   { id: 'passwords', label: 'Passwords' },
   { id: 'threats', label: 'Threats' },
-  { id: 'exposure', label: 'Exposure' },
+  { id: 'exposure', label: 'Identity Monitoring' },
   { id: 'ray', label: "Ray's actions" },
 ];
 
