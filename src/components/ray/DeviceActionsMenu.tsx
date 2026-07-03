@@ -351,7 +351,8 @@ export function DeviceActionsMenu({
               }
               const text = label ?? ACTION_LABELS[action];
               return (
-                <DropdownMenuItem
+              <DropdownMenuItem
+                  title={ACTION_DESCRIPTIONS[action]}
                   onClick={(e) => {
                     if (satisfied === true) {
                       e.preventDefault();
