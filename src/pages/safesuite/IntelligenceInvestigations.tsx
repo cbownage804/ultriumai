@@ -645,7 +645,7 @@ function InvestigationWorkspace({ inv, onOpenInvestigation }: { inv: Investigati
           <TabsContent value="iocs" className="mt-0">
             {iocCount === 0
               ? <Empty text="Ray did not extract distinct indicators." />
-              : <IocsPanel iocs={inv.iocs} iocHistory={iocHistory} invVerdict={inv.verdict} />
+              : <IocsPanel iocs={inv.iocs} iocHistory={iocHistory} invVerdict={inv.verdict} currentInvId={inv.id} onOpenInvestigation={onOpenInvestigation} />
             }
           </TabsContent>
 
