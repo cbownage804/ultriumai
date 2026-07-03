@@ -568,75 +568,87 @@ export function DeviceActionsMenu({
                   satisfied={isAlreadySatisfied('enable_defender_cloud', posture)}
                 />
                 <Item action="update_defender_signatures" icon={RefreshCw} />
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-xs text-muted-foreground">Remote access</DropdownMenuLabel>
-                <Toggle
-                  label="Remote Desktop (RDP)"
-                  tooltip="On = RDP allowed. Off = incoming Remote Desktop connections blocked."
-                  enableAction="enable_rdp"
-                  disableAction="disable_rdp"
-                  satisfied={
-                    posture?.rdp_security?.rdp_enabled === undefined
-                      ? null
-                      : posture.rdp_security.rdp_enabled === true
-                  }
-                />
-                <Toggle
-                  label="Require NLA for RDP"
-                  tooltip={ACTION_DESCRIPTIONS.enable_rdp_nla}
-                  enableAction="enable_rdp_nla"
-                  disableAction="disable_rdp_nla"
-                  satisfied={isAlreadySatisfied('enable_rdp_nla', posture)}
-                />
-                <Toggle
-                  label="Remote Assistance allowed"
-                  tooltip="On = users can invite helpers. Off = Remote Assistance blocked."
-                  enableAction="enable_remote_assistance"
-                  disableAction="disable_remote_assistance"
-                  satisfied={
-                    posture?.rdp_security?.remote_assistance_enabled === undefined
-                      ? null
-                      : posture.rdp_security.remote_assistance_enabled === true
-                  }
-                />
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-xs text-muted-foreground">Browser password managers</DropdownMenuLabel>
-                <Toggle
-                  label="Chrome password manager disabled"
-                  tooltip={ACTION_DESCRIPTIONS.disable_browser_password_manager}
-                  enableAction="disable_browser_password_manager"
-                  disableAction="enable_browser_password_manager"
-                  enableParams={{ browser: 'chrome' }}
-                  disableParams={{ browser: 'chrome' }}
-                  satisfied={chromeSat}
-                />
-                <Toggle
-                  label="Edge password manager disabled"
-                  tooltip={ACTION_DESCRIPTIONS.disable_browser_password_manager}
-                  enableAction="disable_browser_password_manager"
-                  disableAction="enable_browser_password_manager"
-                  enableParams={{ browser: 'edge' }}
-                  disableParams={{ browser: 'edge' }}
-                  satisfied={edgeSat}
-                />
-                <Toggle
-                  label="Firefox password manager disabled"
-                  tooltip={ACTION_DESCRIPTIONS.disable_browser_password_manager}
-                  enableAction="disable_browser_password_manager"
-                  disableAction="enable_browser_password_manager"
-                  enableParams={{ browser: 'firefox' }}
-                  disableParams={{ browser: 'firefox' }}
-                  satisfied={firefoxSat}
-                />
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-xs text-muted-foreground">Local accounts</DropdownMenuLabel>
-                <Toggle
-                  label="Built-in Administrator disabled"
-                  tooltip={ACTION_DESCRIPTIONS.disable_builtin_administrator}
-                  enableAction="disable_builtin_administrator"
-                  disableAction="enable_builtin_administrator"
-                  satisfied={isAlreadySatisfied('disable_builtin_administrator', posture)}
-                />
+                {(posture?.rdp_security || showAll) && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="text-xs text-muted-foreground">Remote access</DropdownMenuLabel>
+                    <Toggle
+                      label="Remote Desktop (RDP)"
+                      tooltip="On = RDP allowed. Off = incoming Remote Desktop connections blocked."
+                      enableAction="enable_rdp"
+                      disableAction="disable_rdp"
+                      satisfied={
+                        posture?.rdp_security?.rdp_enabled === undefined
+                          ? null
+                          : posture.rdp_security.rdp_enabled === true
+                      }
+                    />
+                    <Toggle
+                      label="Require NLA for RDP"
+                      tooltip={ACTION_DESCRIPTIONS.enable_rdp_nla}
+                      enableAction="enable_rdp_nla"
+                      disableAction="disable_rdp_nla"
+                      satisfied={isAlreadySatisfied('enable_rdp_nla', posture)}
+                    />
+                    <Toggle
+                      label="Remote Assistance allowed"
+                      tooltip="On = users can invite helpers. Off = Remote Assistance blocked."
+                      enableAction="enable_remote_assistance"
+                      disableAction="disable_remote_assistance"
+                      satisfied={
+                        posture?.rdp_security?.remote_assistance_enabled === undefined
+                          ? null
+                          : posture.rdp_security.remote_assistance_enabled === true
+                      }
+                    />
+                  </>
+                )}
+                {(posture?.browser_passwords || showAll) && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="text-xs text-muted-foreground">Browser password managers</DropdownMenuLabel>
+                    <Toggle
+                      label="Chrome password manager disabled"
+                      tooltip={ACTION_DESCRIPTIONS.disable_browser_password_manager}
+                      enableAction="disable_browser_password_manager"
+                      disableAction="enable_browser_password_manager"
+                      enableParams={{ browser: 'chrome' }}
+                      disableParams={{ browser: 'chrome' }}
+                      satisfied={chromeSat}
+                    />
+                    <Toggle
+                      label="Edge password manager disabled"
+                      tooltip={ACTION_DESCRIPTIONS.disable_browser_password_manager}
+                      enableAction="disable_browser_password_manager"
+                      disableAction="enable_browser_password_manager"
+                      enableParams={{ browser: 'edge' }}
+                      disableParams={{ browser: 'edge' }}
+                      satisfied={edgeSat}
+                    />
+                    <Toggle
+                      label="Firefox password manager disabled"
+                      tooltip={ACTION_DESCRIPTIONS.disable_browser_password_manager}
+                      enableAction="disable_browser_password_manager"
+                      disableAction="enable_browser_password_manager"
+                      enableParams={{ browser: 'firefox' }}
+                      disableParams={{ browser: 'firefox' }}
+                      satisfied={firefoxSat}
+                    />
+                  </>
+                )}
+                {(posture?.local_admins_detail || showAll) && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="text-xs text-muted-foreground">Local accounts</DropdownMenuLabel>
+                    <Toggle
+                      label="Built-in Administrator disabled"
+                      tooltip={ACTION_DESCRIPTIONS.disable_builtin_administrator}
+                      enableAction="disable_builtin_administrator"
+                      disableAction="enable_builtin_administrator"
+                      satisfied={isAlreadySatisfied('disable_builtin_administrator', posture)}
+                    />
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel className="text-xs text-muted-foreground">Maintenance</DropdownMenuLabel>
                 <Item action="install_windows_updates" icon={RefreshCw} />
