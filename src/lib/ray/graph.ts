@@ -100,9 +100,14 @@ export async function fetchEvents(params: FetchEventsParams = {}): Promise<RayEv
     query = query.in("event_type", params.eventTypes);
   }
   if (params.search && params.search.trim()) {
-    const term = params.search.trim().replace(/[%,]/g, "");
-    query = query.or(`title.ilike.%${term}%,body.ilike.%${term}%`);
+    // PostgREST .or() parses commas, parens, and dots as syntax. Strip them
+    // (plus wildcard chars) so caller input can't escape the ilike operand.
+    const term = params.search.trim().replace(/[%,().\\*]/g, "").slice(0, 100);
+    if (term) {
+      query = query.or(`title.ilike.%${term}%,body.ilike.%${term}%`);
+    }
   }
+
   if (params.beforeIso) {
     query = query.lt("occurred_at", params.beforeIso);
   }
