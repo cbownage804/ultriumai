@@ -20,6 +20,7 @@ import {
   Wrench, Target, ShieldAlert, AlertTriangle, CheckCircle2, HelpCircle,
   User, Laptop, KeyRound, AppWindow, Network, Database, Users,
   Quote, Lightbulb, ChevronDown, ChevronRight,
+  Zap, Loader2, Rocket, Timer, ShieldCheck,
 } from 'lucide-react';
 
 type EntityKind = 'user' | 'device' | 'account' | 'service' | 'app' | 'network' | 'data';
