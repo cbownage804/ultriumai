@@ -85,6 +85,32 @@ async function logTabOpened(input: {
   }
 }
 
+export type ResolutionInputs = {
+  explicitOrgId: string | null;
+  tenantLinkedOrg: { id: string; name: string } | null;
+  activeOrg: { id: string; name: string } | null;
+  orgs: Array<{ id: string; name: string }>;
+};
+
+/**
+ * Pure resolver used by both the component and tests.
+ * Order: explicit ?orgId= (only if the caller belongs to it) →
+ * linked Teams tenant (only if the caller belongs to it) → active org →
+ * null (picker or solo user).
+ */
+export function resolveEmbedOrg(input: ResolutionInputs): ResolvedOrg | null {
+  const { explicitOrgId, tenantLinkedOrg, activeOrg, orgs } = input;
+  if (explicitOrgId) {
+    const match = orgs.find((o) => o.id === explicitOrgId);
+    if (match) return { id: match.id, name: match.name, source: 'query' };
+  }
+  if (tenantLinkedOrg && orgs.some((o) => o.id === tenantLinkedOrg.id)) {
+    return { id: tenantLinkedOrg.id, name: tenantLinkedOrg.name, source: 'tenant_link' };
+  }
+  if (activeOrg) return { id: activeOrg.id, name: activeOrg.name, source: 'active' };
+  return null;
+}
+
 export default function RayTeamsEmbed() {
   const { user, loading: authLoading } = useAuth();
   const [searchParams] = useSearchParams();
@@ -96,7 +122,9 @@ export default function RayTeamsEmbed() {
   const [tenantLinkedOrg, setTenantLinkedOrg] = useState<{ id: string; name: string } | null>(null);
   const [resolving, setResolving] = useState(true);
   const [resolved, setResolved] = useState<ResolvedOrg | null>(null);
-  const [logged, setLogged] = useState(false);
+  // Ref, not state — survives StrictMode double-invocation and cannot
+  // cause a re-render loop that re-fires the log.
+  const loggedRef = useRef(false);
 
   // 1. Boot the Teams SDK and capture tenant context.
   useEffect(() => {
