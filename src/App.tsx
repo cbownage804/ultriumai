@@ -93,6 +93,7 @@ const AiCredits = lazy(() => import('@/pages/safesuite/AiCredits'));
 const IntelligenceInvestigations = lazy(() => import('@/pages/safesuite/IntelligenceInvestigations'));
 const IntelligenceReports = lazy(() => import('@/pages/safesuite/IntelligenceReports'));
 const IntelligenceAttackPaths = lazy(() => import('@/pages/safesuite/IntelligenceAttackPaths'));
+const IntelligenceGraph = lazy(() => import('@/pages/safesuite/IntelligenceGraph'));
 
 // Dev-only: internal Launch Checklist (Wrayth 5.0 polish sprint).
 const LaunchChecklist = lazy(() => import('@/pages/dev/LaunchChecklist'));
