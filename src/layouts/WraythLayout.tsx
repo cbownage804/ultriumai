@@ -56,6 +56,7 @@ import {
   Target,
   LineChart,
   Scale,
+  ScanSearch,
 } from 'lucide-react';
 import { AppSwitcher } from '@/components/AppSwitcher';
 
