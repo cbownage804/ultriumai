@@ -39,7 +39,15 @@ const SCHEMA_HINT = `{
       "detail": "What happens in this step, grounded in the artifact.",
       "mitre_id": "T-code if applicable, otherwise omit",
       "likelihood": "low | medium | high",
-      "if_successful": "What the attacker gains from this step."
+      "if_successful": "What the attacker gains from this step.",
+      "entities": [
+        {
+          "kind": "user | device | account | service | app | network | data",
+          "name": "Exact identifier from the input (email, hostname, UPN, IP, app name). Do NOT invent — omit the entity if you have no name.",
+          "role": "actor | target | pivot | credential | witness",
+          "why": "One short sentence: why this entity is involved in THIS step."
+        }
+      ]
     }
   ],
   "blast_radius": {
@@ -60,7 +68,11 @@ const SCHEMA_HINT = `{
   "assumptions": "Anything Ray had to assume because the input didn't specify it."
 }
 
-Guidance: 3-6 steps typical. Prioritise remediation by which step closes the earliest link in the chain. Never fabricate specific device names, IPs, or user identities that were not in the input.`;
+Guidance:
+- 3-6 steps typical.
+- Prioritise remediation by which step closes the earliest link in the chain.
+- Never fabricate specific device names, IPs, or user identities that were not in the input.
+- For "entities": only list users, devices, accounts, apps, services, networks, or data stores whose identifiers appear in the source investigation or scenario. If none are known for a step, return an empty array — do not invent placeholders like "user@example.com" or "PC-01".`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
