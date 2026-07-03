@@ -134,6 +134,7 @@ export default function IntelligenceGraph() {
   const [investigations, setInvestigations] = useState<Investigation[]>([]);
   const [iocs, setIocs] = useState<IocRow[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
+  const [detailIoc, setDetailIoc] = useState<IocRow | null>(null);
 
   useEffect(() => {
     if (!user) return;
