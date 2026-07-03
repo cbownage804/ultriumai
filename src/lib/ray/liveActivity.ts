@@ -85,10 +85,11 @@ async function fetchInitial(userId: string): Promise<ActivityEvent[]> {
     }
   }
   for (const f of findingsRes.data ?? []) {
-    if (f.reviewed_at) {
-      events.push({ id: `fin-r-${f.id}`, kind: 'finding_cleared', text: `Cleared: ${f.title}`, at: new Date(f.reviewed_at) });
+    const label = String(f.kind ?? 'finding').replace(/_/g, ' ');
+    if (f.resolved_at) {
+      events.push({ id: `fin-r-${f.id}`, kind: 'finding_cleared', text: `Cleared: ${label}`, at: new Date(f.resolved_at) });
     } else {
-      events.push({ id: `fin-${f.id}`, kind: 'finding_new', text: `Noticed: ${f.title}`, at: new Date(f.created_at) });
+      events.push({ id: `fin-${f.id}`, kind: 'finding_new', text: `Noticed: ${label}`, at: new Date(f.created_at) });
     }
   }
   for (const r of recsRes.data ?? []) {
