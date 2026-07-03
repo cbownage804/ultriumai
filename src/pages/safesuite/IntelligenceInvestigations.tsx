@@ -1025,7 +1025,7 @@ function AskRayDialog({
 
 /* ---------------- Indicators panel with sort + filter ---------------- */
 
-type IocHistoryEntry = { count: number; last_seen_at: string; first_seen_at: string; last_verdict: string | null };
+type IocHistoryEntry = { count: number; last_seen_at: string; first_seen_at: string; last_verdict: string | null; timestamps: string[] };
 type IocItem = { type?: string; value?: string; note?: string };
 type IocSort = 'default' | 'prior_desc' | 'last_seen_desc' | 'first_seen_desc' | 'type_asc';
 
