@@ -56,8 +56,8 @@ export async function getSinceLastVisit(userId: string, sinceIso: string): Promi
 
   const devicesChecked = devices.filter((d) => d.last_seen_at && d.last_seen_at >= sinceIso).length;
 
-  const completed = actions.filter((a) => a.status === 'completed');
-  const failed = actions.filter((a) => a.status === 'failed');
+  const completed = actions.filter((a) => a.status === 'succeeded');
+  const failed = actions.filter((a) => a.status === 'failed' || a.status === 'cancelled');
 
   const items: SinceItem[] = [];
 
