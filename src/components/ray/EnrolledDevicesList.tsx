@@ -27,6 +27,8 @@ import { RayFixPanel } from './RayFixPanel';
 import { DeviceTimeline } from './DeviceTimeline';
 import { AgentVersionBadge } from './AgentVersionBadge';
 import { AgentTrustCard } from './AgentTrustCard';
+import { DeviceAssessment } from './DeviceAssessment';
+import { AskRayCommandBox } from './AskRayCommandBox';
 
 interface Finding {
   severity: 'info' | 'warn' | 'critical';
