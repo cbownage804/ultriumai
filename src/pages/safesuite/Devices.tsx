@@ -122,6 +122,8 @@ export default function Devices() {
         description="Every place I've seen you sign in from."
       />
 
+      <DevicesRayBrief deviceCount={devices.length} />
+
       <RayConversationCard context="devices" />
 
       <section className="rounded-2xl border border-border bg-card/40 overflow-hidden">
