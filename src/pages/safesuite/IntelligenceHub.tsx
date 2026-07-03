@@ -18,7 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
 import {
   ScanSearch, Bug, FileText, ClipboardCheck, ShieldCheck, Terminal, FileWarning,
-  GitBranch, Network, Sparkles, Coins, Brain, ArrowUpRight,
+  GitBranch, Network, Sparkles, Coins, Brain, ArrowUpRight, History,
 } from 'lucide-react';
 
 type Tile = {
