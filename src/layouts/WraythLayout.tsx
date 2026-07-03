@@ -57,6 +57,7 @@ import {
   LineChart,
   Scale,
   ScanSearch,
+  GitBranch,
 } from 'lucide-react';
 import { AppSwitcher } from '@/components/AppSwitcher';
 
