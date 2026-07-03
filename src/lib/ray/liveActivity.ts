@@ -49,7 +49,7 @@ async function fetchInitial(userId: string): Promise<ActivityEvent[]> {
       .limit(10),
     supabase
       .from('ray_findings')
-      .select('id, title, created_at, reviewed_at')
+      .select('id, kind, created_at, resolved_at')
       .eq('user_id', userId)
       .gte('created_at', since)
       .order('created_at', { ascending: false })
