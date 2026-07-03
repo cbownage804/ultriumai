@@ -355,10 +355,34 @@ export function DeviceSecurityTabs({ deviceId, posture, capturedAt, value, onVal
             }
             hint="15 minutes or less is a common baseline."
           />
-          <Row
-            label="Signed-in user"
-            value={p.logged_in_user || 'Unknown'}
-          />
+          {(() => {
+            const raw = (p.logged_in_user ?? '').trim();
+            // Windows reports the machine account (HOSTNAME$) when no
+            // interactive user is signed in. That's a Windows-level truth,
+            // not a bug we can fix from Ray — surface it honestly.
+            const isMachineAccount = raw.endsWith('$') || /^system$/i.test(raw);
+            if (!raw) {
+              return (
+                <Row
+                  label="Signed-in user"
+                  value="No one signed in"
+                  tone="neutral"
+                  hint="Windows didn't report an interactive session at the time of capture."
+                />
+              );
+            }
+            if (isMachineAccount) {
+              return (
+                <Row
+                  label="Signed-in user"
+                  value="No one signed in"
+                  tone="neutral"
+                  hint={`Windows reported the machine account (${raw}), which means no person was interactively signed in when Ray checked.`}
+                />
+              );
+            }
+            return <Row label="Signed-in user" value={raw} />;
+          })()}
         </Section>
       </TabsContent>
 
