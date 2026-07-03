@@ -22,7 +22,8 @@ import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import {
   ClipboardCheck, Coins, Sparkles, FileDown, Trash2, Loader2, ShieldCheck,
-  BookOpen, Users, Copy,
+  BookOpen, Users, Copy, UserPlus, Siren, KeyRound, HeartPulse, CreditCard,
+  Laptop, RefreshCw, Mail, Cloud, ScrollText, Check,
 } from 'lucide-react';
 import {
   Document, Packer, Paragraph, HeadingLevel, TextRun, AlignmentType,
