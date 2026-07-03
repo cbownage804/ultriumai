@@ -115,7 +115,7 @@ export function FloatingRayChat() {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <button
-          aria-label={`Ask Ray — ${label}`}
+          aria-label={ariaLabel}
           className={`group fixed bottom-8 right-8 z-40 safe-area-inset-bottom outline-none`}
         >
           {/* Ambient breathing glow */}
