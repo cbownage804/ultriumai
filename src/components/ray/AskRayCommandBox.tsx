@@ -14,14 +14,15 @@
  * commands: pressing one sends a natural-language instruction to Ray.
  */
 import { useMemo, useState, type KeyboardEvent } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowUp, Sparkles, ShieldCheck, Search, Wrench, GitCompare, Lock, Wifi,
-  Users, Download, Package, KeyRound, Server,
+  Users, Download, Package, KeyRound, Server, Lightbulb,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { tabNudge } from '@/lib/ray/greeting';
 import type { DevicePosture } from './DeviceSecurityTabs';
 
 interface Props {
@@ -140,7 +141,10 @@ function placeholderFor(tab: string | undefined, disabled: boolean): string {
 
 export function AskRayCommandBox({ deviceId, hostname, posture, disabled, activeTab }: Props) {
   const [value, setValue] = useState('');
+  const [dismissedNudgeTab, setDismissedNudgeTab] = useState<string | null>(null);
   const chips = useMemo(() => tabChips(activeTab, posture), [activeTab, posture]);
+  const nudge = useMemo(() => tabNudge(activeTab, posture), [activeTab, posture]);
+  const nudgeVisible = !!nudge && dismissedNudgeTab !== activeTab && !value;
   const isTyping = value.length > 0;
 
   const submit = () => {
@@ -168,6 +172,43 @@ export function AskRayCommandBox({ deviceId, hostname, posture, disabled, active
         <Sparkles className="h-3.5 w-3.5 text-violet-300" />
         <span className="text-[10px] uppercase tracking-[0.22em] text-violet-200/80">Ask Ray</span>
       </div>
+
+      {/* Tab-aware nudge — Ray notices which panel you opened and offers to help. */}
+      <AnimatePresence initial={false}>
+        {nudgeVisible && nudge && (
+          <motion.div
+            key={`nudge-${activeTab}`}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.22 }}
+            className="mb-2 overflow-hidden"
+          >
+            <div className="flex items-start gap-2 rounded-lg border border-violet-500/20 bg-violet-500/5 px-2.5 py-2 text-[12px] leading-snug">
+              <Lightbulb className="h-3.5 w-3.5 mt-0.5 shrink-0 text-violet-200" />
+              <div className="flex-1">
+                <span className="text-foreground/95">{nudge.observation}</span>{' '}
+                <span className="text-muted-foreground">{nudge.offer}</span>
+              </div>
+              <button
+                onClick={() => sendToRay(nudge.prompt, deviceId, hostname)}
+                disabled={disabled}
+                className="shrink-0 rounded-full bg-violet-500/90 px-2.5 py-0.5 text-[10px] font-medium text-white hover:bg-violet-400 disabled:opacity-40 transition-colors"
+              >
+                Yes
+              </button>
+              <button
+                onClick={() => setDismissedNudgeTab(activeTab ?? '')}
+                className="shrink-0 rounded-full border border-border/40 px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground/80 hover:border-border transition-colors"
+                aria-label="Dismiss nudge"
+              >
+                Not now
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
 
       <div className="relative">
         <Textarea
