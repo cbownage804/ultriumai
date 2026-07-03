@@ -86,7 +86,7 @@ const SCHEMA = `{
     { "title": "Short title", "detail": "Technical detail tied to a code region or string.", "severity": "info | low | medium | high | critical" }
   ],
   "behaviors": [
-    { "category": "persistence | discovery | defense_evasion | credential_access | execution | c2 | exfiltration | impact | lateral_movement | collection | other", "detail": "What Ray observed.", "evidence": "Optional: a short quoted excerpt or line reference from the artifact." }
+    { "category": "downloads_payload | disables_defender | persistence | credential_theft | c2_attempts | lateral_movement | exfiltration | impact | discovery | defense_evasion | credential_access | execution | c2 | collection | other", "detail": "What Ray observed.", "evidence": "Optional: a short quoted excerpt or line reference from the artifact." }
   ],
   "mitre": [
     { "id": "T1059.001", "name": "PowerShell", "why": "Why this technique applies to the artifact." }
