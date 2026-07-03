@@ -1,0 +1,106 @@
+{
+  "manifest_version": 3,
+  "name": "Wrayth — Ray for your browser",
+  "version": "4.1.0",
+  "description": "Ray accompanies you across the web. Explain any page in plain English, real-time site trust, password intelligence, identity awareness — all synced to Wrayth.",
+
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "wrayth@ultriumai.com",
+      "strict_min_version": "121.0"
+    }
+  },
+
+  "permissions": [
+    "storage",
+    "alarms",
+    "notifications",
+    "clipboardWrite",
+    "clipboardRead",
+    "contextMenus",
+    "activeTab",
+    "tabs",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+P",
+        "mac": "Command+Shift+P"
+      },
+      "description": "Open Wrayth popup"
+    },
+    "autofill": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+L",
+        "mac": "Command+Shift+L"
+      },
+      "description": "Autofill credentials"
+    },
+    "generate-password": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+G",
+        "mac": "Command+Shift+G"
+      },
+      "description": "Generate password"
+    },
+    "lock-vault": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+K",
+        "mac": "Command+Shift+K"
+      },
+      "description": "Lock vault"
+    }
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Wrayth — Click to open Ray (Ctrl+Shift+P)",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "sidebar_action": {
+    "default_panel": "sidepanel.html",
+    "default_title": "Ray — Wrayth",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content/detector.js", "content/context-bar.js", "content/concepts.js"],
+      "css": ["content/ray-overlay.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "scripts": ["background.js"],
+    "type": "module"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*", "content/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
