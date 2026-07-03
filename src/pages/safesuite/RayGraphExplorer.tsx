@@ -173,7 +173,8 @@ export default function RayGraphExplorer() {
         subtitle="Security Graph"
         description="Every entity Ray knows about and how they connect. Click any node to recenter."
       />
-      <div className="mt-4 flex gap-2">
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <EntitySearch onPick={(id) => navigate(`/app/graph/${id}`)} />
         {focus && (
           <>
             <Button
