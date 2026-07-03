@@ -17407,6 +17407,80 @@ export type Database = {
         }
         Relationships: []
       }
+      ray_attack_paths: {
+        Row: {
+          assumptions: string | null
+          blast_radius: Json
+          completed_at: string | null
+          cost_ray_compute: number
+          created_at: string
+          duration_ms: number | null
+          error: string | null
+          id: string
+          investigation_id: string | null
+          model: string | null
+          org_id: string | null
+          remediation: Json
+          scenario: string | null
+          severity: string | null
+          status: string
+          steps: Json
+          summary: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          assumptions?: string | null
+          blast_radius?: Json
+          completed_at?: string | null
+          cost_ray_compute?: number
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          investigation_id?: string | null
+          model?: string | null
+          org_id?: string | null
+          remediation?: Json
+          scenario?: string | null
+          severity?: string | null
+          status?: string
+          steps?: Json
+          summary?: string | null
+          title?: string
+          user_id: string
+        }
+        Update: {
+          assumptions?: string | null
+          blast_radius?: Json
+          completed_at?: string | null
+          cost_ray_compute?: number
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          investigation_id?: string | null
+          model?: string | null
+          org_id?: string | null
+          remediation?: Json
+          scenario?: string | null
+          severity?: string | null
+          status?: string
+          steps?: Json
+          summary?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ray_attack_paths_investigation_id_fkey"
+            columns: ["investigation_id"]
+            isOneToOne: false
+            referencedRelation: "ray_investigations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ray_board_reports: {
         Row: {
           completed_at: string | null
