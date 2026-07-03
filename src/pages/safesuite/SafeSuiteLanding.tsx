@@ -1,58 +1,64 @@
 /**
  * Wrayth Landing Page
- * Sells Ray — the AI cybersecurity teammate.
- * Vault / Scan / Watch are framed as capabilities, not products.
+ * AI-powered cybersecurity platform, centered on Ray as the AI security analyst.
+ * Product names (Vault / Scan / Watch) are gone from marketing — outcomes only.
  */
 
 import { Link } from 'react-router-dom';
 import Navigation from '@/components/safesuite/SafeSuiteNav';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { SAFESUITE_TIERS, formatMonthlyPrice } from '@/config/safeSuiteTiers';
+import { SAFESUITE_TIERS } from '@/config/safeSuiteTiers';
 import heroWrayth from '@/assets/hero-wrayth.jpg';
 import wraythLogo from '@/assets/wrayth-brand-full.png.asset.json';
 import {
   ArrowRight,
   Check,
-  KeyRound,
+  ShieldCheck,
   ScanSearch,
   Globe,
   Star,
   Crown,
+  MessageCircle,
+  Brain,
+  Wand2,
+  MessagesSquare,
+  EyeOff,
+  Eye,
 } from 'lucide-react';
 
-// Ray's capabilities — not products. Each one is something Ray *does*.
+
+// Ray's capabilities — outcomes, not product names.
 const capabilities = [
   {
-    icon: KeyRound,
-    title: 'Ray protects your passwords.',
+    icon: ShieldCheck,
+    title: 'Ray protects every device.',
     blurb:
-      "A complete zero-knowledge password manager, with Ray watching over it. Import from any browser or password manager, and Ray flags weak or reused passwords, checks each one against known breaches, and offers stronger replacements when you're ready.",
+      "The Windows endpoint agent reports posture continuously: encryption, firewall, patches, Defender, local admins, BitLocker, Secure Boot, TPM, and more. Ray explains what matters and remediates approved issues with one click.",
     bullets: [
-      'Secure credential vault',
-      'Weak-password detection',
-      'Stronger password recommendations',
-      'Ongoing password health monitoring',
+      'Endpoint posture monitoring',
+      'Device timeline & audit history',
+      'One-click safe remediations',
+      'Windows Update & software inventory',
     ],
   },
   {
     icon: ScanSearch,
     title: 'Ray analyzes suspicious content.',
     blurb:
-      "Forward an email, drop in a document, paste a URL — Ray reads it, understands what it's doing, and explains the threat in plain English. No security degree required.",
+      "Forward an email, paste a URL, drop in a file — Ray reads it, understands what it's doing, and explains the threat in plain English. No security degree required.",
     bullets: [
-      'Emails, documents, URLs, QR codes, attachments',
-      'AI threat analysis',
-      'Plain-English explanations',
-      'Calm guidance on what to do next',
+      'Advanced threat analysis',
+      'URL, email, and attachment inspection',
+      'VirusTotal-enriched verdicts',
+      'Plain-English guidance on what to do next',
     ],
   },
   {
     icon: Globe,
-    title: 'Ray watches your digital exposure.',
+    title: 'Ray watches your exposure.',
     blurb:
-      "Ray continuously monitors the dark web for your leaked credentials and identities, alerts you the moment something surfaces, and walks you through exactly how to respond.",
+      "Ray continuously monitors the dark web for leaked credentials and identities, alerts you the moment something surfaces, and walks you through exactly how to respond.",
     bullets: [
       'Dark web monitoring',
       'Credential leak alerts',
@@ -61,6 +67,49 @@ const capabilities = [
     ],
   },
 ];
+
+// Everything Ray watches — the full monitoring surface.
+const RAY_WATCHES = [
+  'Devices', 'Passwords', 'Threats', 'Dark Web', 'Microsoft 365', 'Software',
+  'Windows Updates', 'Browser Extensions', 'Startup Programs', 'Network Exposure',
+  'Local Admins', 'BitLocker', 'Firewall', 'Defender', 'Secure Boot', 'TPM',
+  'RDP', 'Services', 'Ports', 'Compliance',
+];
+
+// Traditional cybersecurity vs Ray.
+const CONTRASTS = [
+  { trad: 'Traditional tools generate alerts.', ray: 'Ray explains them.' },
+  { trad: 'Traditional tools require dashboards.', ray: 'Ray starts conversations.' },
+  { trad: 'Traditional tools expect security expertise.', ray: 'Ray teaches as it protects.' },
+  { trad: 'Traditional tools stop after detection.', ray: 'Ray recommends and remediates.' },
+];
+
+// One-click remediation actions Ray can take.
+const REMEDIATIONS = [
+  'Enable BitLocker', 'Enable Firewall', 'Install Updates', 'Run Defender Scan',
+  'Disable RDP', 'Remove Local Admin', 'Lock Device', 'Sign Out User',
+  'Update Defender', 'Disable Browser Password Manager',
+];
+
+// Where Ray shows up.
+const RAY_EVERYWHERE = [
+  { icon: MessagesSquare, label: 'Inside Wrayth', sub: 'Chat, briefs, timeline.' },
+  { icon: MessageCircle, label: 'Microsoft Teams', sub: 'Ray answers in-channel.' },
+  { icon: MessageCircle, label: 'Slack', sub: 'Same Ray, different room.' },
+  { icon: Wand2, label: 'Weekly Briefs', sub: 'Executive summary, every Monday.' },
+  { icon: Brain, label: 'Daily Digests', sub: 'What Ray touched while you were away.' },
+];
+
+// Privacy: what Ray never sees vs what it monitors.
+const RAY_NEVER_SEES = [
+  'Files', 'Photos', 'Documents', 'Clipboard', 'Passwords', 'Emails',
+  'Camera', 'Microphone', 'Screen', 'Keystrokes',
+];
+const RAY_MONITORS = [
+  'Security posture', 'Patching', 'Encryption', 'Threats',
+  'Configuration', 'Software inventory', 'Compliance',
+];
+
 
 export default function WraythLanding() {
   return (
@@ -106,20 +155,21 @@ export default function WraythLanding() {
             />
             <div className="flex items-center gap-2 mb-8 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
               <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              Wrayth · AI security platform
+              AI-Powered Cybersecurity Platform
             </div>
 
             <h1 className="text-5xl md:text-7xl font-semibold tracking-tight text-foreground mb-8 leading-[1.05]">
-              Meet <span className="text-primary">Ray</span>.
+              Your AI <span className="text-primary">Security Analyst</span>
               <br />
-              Your AI cybersecurity teammate.
+              Never Sleeps.
             </h1>
 
             <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl leading-relaxed">
-              Ray protects your passwords, analyzes suspicious emails and files,
-              monitors the dark web for exposed credentials, and guides you through
-              every security decision&mdash;in plain English.
+              Wrayth continuously monitors your devices, passwords, Microsoft 365 tenant,
+              and security posture. Ray explains what matters, recommends what to fix,
+              and can remediate approved issues in seconds &mdash; in plain English.
             </p>
+
 
             <div className="flex flex-col sm:flex-row gap-3">
               <Link to="/auth?tab=signup&return=safesuite&path=%2Fonboarding%2Fray">
@@ -202,6 +252,165 @@ export default function WraythLanding() {
           </p>
         </div>
       </section>
+
+      {/* EVERYTHING RAY WATCHES */}
+      <section className="py-24 border-t border-border">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mb-10">
+            <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+              Continuous monitoring
+            </div>
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
+              Everything Ray watches
+            </h2>
+            <p className="mt-3 text-muted-foreground">
+              Twenty layers of your security posture, monitored continuously. No dashboards
+              to babysit &mdash; Ray tells you when something matters.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {RAY_WATCHES.map((item) => (
+              <span
+                key={item}
+                className="text-sm px-3 py-1.5 rounded-md border border-border/70 bg-card/40 text-foreground/90"
+              >
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* WHAT MAKES WRAYTH DIFFERENT */}
+      <section className="py-24 border-t border-border">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mb-12">
+            <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+              What makes Wrayth different
+            </div>
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
+              Alerts don't protect you. Ray does.
+            </h2>
+          </div>
+          <div className="grid gap-px bg-border border border-border wrayth-chamfer overflow-hidden">
+            {CONTRASTS.map((c) => (
+              <div key={c.trad} className="bg-background p-6 md:p-8 grid md:grid-cols-2 gap-4 md:gap-10">
+                <p className="text-muted-foreground line-through decoration-muted-foreground/40 text-base md:text-lg">
+                  {c.trad}
+                </p>
+                <p className="text-foreground font-medium text-base md:text-lg">
+                  <span className="text-primary">Ray</span>{' '}
+                  {c.ray.replace(/^Ray\s*/, '').toLowerCase().replace(/^./, (m) => m.toLowerCase())}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ONE-CLICK REMEDIATION */}
+      <section className="py-24 border-t border-border">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mb-10">
+            <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+              One-click remediation
+            </div>
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
+              Ray doesn't just recommend. Ray fixes.
+            </h2>
+            <p className="mt-3 text-muted-foreground">
+              Approved actions Ray can perform on your endpoints in seconds.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {REMEDIATIONS.map((action) => (
+              <div
+                key={action}
+                className="flex items-center gap-3 rounded-sm border border-border/60 bg-card/30 px-4 py-3"
+              >
+                <Wand2 className="h-4 w-4 text-primary shrink-0" />
+                <span className="text-sm text-foreground">{action}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* RAY WORKS EVERYWHERE */}
+      <section className="py-24 border-t border-border">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mb-10">
+            <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+              Ray works everywhere
+            </div>
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
+              Same analyst. Every surface.
+            </h2>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            {RAY_EVERYWHERE.map((e) => (
+              <div key={e.label} className="rounded-sm border border-border/60 bg-card/30 p-5">
+                <e.icon className="h-5 w-5 text-primary mb-3" />
+                <div className="text-base font-medium text-foreground">{e.label}</div>
+                <p className="mt-1 text-sm text-muted-foreground">{e.sub}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* PRIVACY — WHAT RAY NEVER SEES */}
+      <section className="py-24 border-t border-border">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mb-12">
+            <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+              Privacy by design
+            </div>
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
+              Ray monitors security. Not you.
+            </h2>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="rounded-sm border border-border/60 bg-card/30 p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <EyeOff className="h-4 w-4 text-muted-foreground" />
+                <span className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+                  Ray never sees
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {RAY_NEVER_SEES.map((item) => (
+                  <span
+                    key={item}
+                    className="text-sm px-3 py-1.5 rounded-md border border-border/60 bg-background/60 text-muted-foreground"
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-sm border border-primary/30 bg-primary/[0.03] p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Eye className="h-4 w-4 text-primary" />
+                <span className="text-[11px] uppercase tracking-[0.22em] text-primary">
+                  Ray does monitor
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {RAY_MONITORS.map((item) => (
+                  <span
+                    key={item}
+                    className="text-sm px-3 py-1.5 rounded-md border border-primary/30 bg-primary/[0.06] text-foreground"
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
 
       {/* PLAYBOOKS — what Ray actually does, in your hands */}
       <section className="py-24 border-t border-border">
@@ -338,13 +547,15 @@ export default function WraythLanding() {
       <section className="py-28">
         <div className="container mx-auto px-4 max-w-3xl">
           <h2 className="text-3xl md:text-5xl font-semibold tracking-tight text-foreground mb-6 leading-tight">
-            Stop managing security tools.
+            Monitoring is included.
             <br />
-            <span className="text-muted-foreground">Start working with Ray.</span>
+            <span className="text-muted-foreground">Intelligence uses Compute.</span>
           </h2>
           <p className="text-muted-foreground mb-10 max-w-xl">
-            Stop juggling security software. Let Ray handle it for you.
+            The security platform protects you automatically. Ray Compute is only spent when
+            you ask for premium AI horsepower &mdash; and you'll always know why.
           </p>
+
           <Link to="/auth?tab=signup">
             <Button size="lg" className="wrayth-chamfer-sm gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
               Experience Ray

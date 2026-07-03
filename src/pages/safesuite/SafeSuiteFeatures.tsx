@@ -92,18 +92,21 @@ const integrations = {
 };
 
 const compareRows: { label: string; free: boolean | string; pro: boolean | string; business: boolean | string }[] = [
-  { label: "Vault", free: true, pro: true, business: true },
-  { label: "Scan", free: "Limited", pro: true, business: true },
-  { label: "Watch", free: "Basic", pro: true, business: true },
-  { label: "Ray AI", free: "Limited", pro: true, business: true },
-  { label: "Identity Monitoring", free: false, pro: true, business: true },
-  { label: "Dark Web Monitoring", free: false, pro: true, business: true },
-  { label: "Unlimited Passwords", free: false, pro: true, business: true },
-  { label: "Unlimited Scans", free: false, pro: true, business: true },
-  { label: "Shared Vaults", free: false, pro: false, business: true },
-  { label: "Admin Portal & Audit Logs", free: false, pro: false, business: true },
-  { label: "SSO / SCIM", free: false, pro: false, business: true },
+  { label: "AI Security Analyst", free: true, pro: true, business: true },
+  { label: "Monitored devices", free: "1", pro: "5", business: "Unlimited" },
+  { label: "Monitored identities", free: "2", pro: "10", business: "Unlimited" },
+  { label: "Threat Analysis", free: "Limited", pro: "Unlimited", business: "Unlimited" },
+  { label: "Exposure Monitoring", free: true, pro: true, business: true },
+  { label: "AI Recommendations", free: false, pro: true, business: true },
+  { label: "Windows Endpoint Agent", free: false, pro: true, business: true },
+  { label: "One-click Remediation", free: false, pro: true, business: true },
+  { label: "Microsoft 365 Monitoring", free: false, pro: false, business: true },
+  { label: "Teams & Slack", free: false, pro: false, business: true },
+  { label: "Organization Memory", free: false, pro: false, business: true },
+  { label: "Executive Briefings", free: false, pro: false, business: true },
+  { label: "White-label & Multi-user", free: false, pro: false, business: true },
 ];
+
 
 // ─── Small components ───────────────────────────────────────────────────────
 
@@ -128,29 +131,29 @@ export default function WraythFeatures() {
     <div className="min-h-screen bg-background">
       <Navigation />
 
-      {/* Hero — no duplicate landing, no pricing button */}
+      {/* Hero */}
       <section className="relative overflow-hidden border-b border-border">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(139,92,246,0.15),transparent_60%)]" />
         <div className="relative z-10 mx-auto max-w-5xl px-4 py-24 text-center">
           <Badge variant="outline" className="mb-6 border-violet-500/40 text-violet-300">
-            The Wrayth Platform
+            AI-Powered Cybersecurity Platform
           </Badge>
           <h1 className="mb-6 text-4xl font-bold tracking-tight md:text-6xl">
-            Everything Wrayth Protects
+            Everything Ray watches
           </h1>
           <p className="mx-auto mb-4 max-w-2xl text-lg text-muted-foreground md:text-xl">
-            One platform. One AI teammate. Complete digital protection.
+            One AI security analyst. Every layer of your posture, monitored continuously.
           </p>
           <p className="mx-auto mb-10 max-w-2xl text-base text-muted-foreground">
-            <span className="text-foreground">Vault.</span>{" "}
-            <span className="text-foreground">Scan.</span>{" "}
-            <span className="text-foreground">Watch.</span>{" "}
-            <span className="text-foreground">Identity.</span>{" "}
+            <span className="text-foreground">Endpoint Protection.</span>{" "}
+            <span className="text-foreground">Threat Analysis.</span>{" "}
+            <span className="text-foreground">Exposure Monitoring.</span>{" "}
+            <span className="text-foreground">Microsoft 365 Security.</span>{" "}
             <span className="text-foreground">Ray.</span>
           </p>
           <Link to="/auth?mode=signup">
             <Button size="lg" className="bg-green-500 text-black hover:bg-green-600">
-              Start Free Trial
+              Start Free
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
@@ -181,27 +184,30 @@ export default function WraythFeatures() {
             </div>
 
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-              <PillarChip label="Vault" tone="border-yellow-500/30" />
-              <PillarChip label="Scan" tone="border-red-500/30" />
-              <PillarChip label="Watch" tone="border-purple-500/30" />
+              <PillarChip label="Endpoint Protection" tone="border-emerald-500/30" />
+              <PillarChip label="Threat Analysis" tone="border-red-500/30" />
+              <PillarChip label="Exposure Monitoring" tone="border-purple-500/30" />
               <PillarChip label="Identity Monitoring" tone="border-blue-500/30" />
-              <PillarChip label="Browser Extension" tone="border-emerald-500/30" />
-              <PillarChip label="Threat Intelligence" tone="border-orange-500/30" />
+              <PillarChip label="Microsoft 365 Security" tone="border-cyan-500/30" />
+              <PillarChip label="AI Recommendations" tone="border-orange-500/30" />
             </div>
           </div>
         </div>
       </section>
 
+
       {/* Vault */}
       <section id="vault" className="border-b border-border py-24 px-4">
         <div className="mx-auto max-w-6xl">
           <div className="mb-12 max-w-2xl">
-            <Badge className="mb-4 bg-yellow-500/10 text-yellow-500 border-0">Vault</Badge>
-            <h2 className="mb-3 text-4xl font-bold">Vault</h2>
+            <Badge className="mb-4 bg-yellow-500/10 text-yellow-500 border-0">Password Monitoring</Badge>
+            <h2 className="mb-3 text-4xl font-bold">Password Monitoring</h2>
+
             <p className="text-lg text-muted-foreground">
-              Your passwords never leave your device. Ray only sees them after
-              <span className="text-foreground"> you </span> unlock the Vault.
+              Zero-knowledge password storage with continuous breach monitoring. Your credentials
+              never leave your device unencrypted &mdash; Ray only sees them after <span className="text-foreground">you</span> unlock them.
             </p>
+
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -224,8 +230,9 @@ export default function WraythFeatures() {
       <section id="scan" className="border-b border-border bg-red-500/[0.02] py-24 px-4">
         <div className="mx-auto max-w-6xl">
           <div className="mb-12 max-w-2xl">
-            <Badge className="mb-4 bg-red-500/10 text-red-500 border-0">Scan</Badge>
-            <h2 className="mb-3 text-4xl font-bold">Scan</h2>
+            <Badge className="mb-4 bg-red-500/10 text-red-500 border-0">Threat Analysis</Badge>
+            <h2 className="mb-3 text-4xl font-bold">Threat Analysis</h2>
+
             <p className="text-lg text-muted-foreground">
               Instantly analyze anything suspicious. Get a verdict, an explanation, and a next step.
             </p>
@@ -280,8 +287,9 @@ export default function WraythFeatures() {
       <section id="watch" className="border-b border-border py-24 px-4">
         <div className="mx-auto max-w-6xl">
           <div className="mb-12 max-w-2xl">
-            <Badge className="mb-4 bg-purple-500/10 text-purple-400 border-0">Watch</Badge>
-            <h2 className="mb-3 text-4xl font-bold">Watch</h2>
+            <Badge className="mb-4 bg-purple-500/10 text-purple-400 border-0">Exposure Monitoring</Badge>
+            <h2 className="mb-3 text-4xl font-bold">Exposure Monitoring</h2>
+
             <p className="text-lg text-muted-foreground">
               Continuous monitoring. Not periodic scanning. Real-time awareness of your exposure.
             </p>
@@ -310,8 +318,9 @@ export default function WraythFeatures() {
             <Badge className="mb-4 bg-violet-500/10 text-violet-300 border-0">Ray</Badge>
             <h2 className="mb-3 text-4xl font-bold">Meet Ray</h2>
             <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-              Your cybersecurity teammate. Ray watches Vault, Scan, and Watch so you don't have to.
+              Your AI security analyst. Ray watches every layer of your posture so you don't have to.
             </p>
+
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
