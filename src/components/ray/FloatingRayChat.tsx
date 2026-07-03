@@ -6,10 +6,12 @@
  * soft glow. Opens the full Ray conversation on click.
  */
 import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { getRayContext, type RayContext } from '@/lib/ray';
+import { getRouteContext } from '@/lib/ray/routeContext';
 import RaySkillsPanel from './RaySkillsPanel';
 import { dedupeRecs } from './recDedupe';
 
