@@ -831,6 +831,9 @@ function buildReportDocx(
   gaps: Array<Gap & { _risk: number; _state: string }>,
   impacted: Array<[string, number]>,
   buckets: { critical: number; high: number; medium: number; low: number; missing: number; weak: number; partial: number },
+  evidenceByGapIdx: Map<number, EvidenceItem[]>,
+  checks: Record<string, boolean>,
+  scanId: string,
 ): Document {
   const children: Paragraph[] = [];
   const h1 = (t: string) => new Paragraph({ heading: HeadingLevel.HEADING_1, spacing: { before: 320, after: 140 }, children: [new TextRun({ text: t, bold: true })] });
