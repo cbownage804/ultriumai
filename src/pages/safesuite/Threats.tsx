@@ -11,6 +11,7 @@ import { RayActivityTicker } from '@/components/ray/RayActivityTicker';
 import { RayContextBridge } from '@/components/ray/RayContextBridge';
 import { ThreatScanInput } from '@/components/ray/ThreatScanInput';
 import { ThreatAllClearCard } from '@/components/ray/ThreatAllClearCard';
+import { ThreatsRayBrief } from '@/components/ray/ThreatsRayBrief';
 
 export default function WraythScan() {
   return (
