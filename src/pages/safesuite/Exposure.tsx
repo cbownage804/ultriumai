@@ -804,6 +804,16 @@ export default function WraythWeb() {
           )}
         </div>
 
+        <HowIProtectYouCard
+          lines={[
+            'Watching public breach corpora (Have I Been Pwned and equivalents).',
+            'Monitoring dark-web paste sites and credential-dump forums.',
+            'Comparing new breach records against your saved passwords.',
+            'Looking for reused credentials across your monitored identities.',
+            'Alerting you the moment a new breach touches an identity you watch.',
+          ]}
+        />
+
         {/* Threat Detail Modal */}
         <Dialog open={!!selectedThreat} onOpenChange={() => setSelectedThreat(null)}>
           <DialogContent className="max-w-2xl bg-card border-violet-500/20 text-white">
