@@ -612,40 +612,62 @@ $out -join "`n"
         posture["autoruns"] = enriched + autoruns[15:]
     _safe("autoruns_enrich", _autoruns_enrich)
 
-    # Update categories — Microsoft.Update.Session.Search() can hang for
-    # many minutes on some machines. Skip entirely if `pending_updates`
-    # already gave us the raw count; only run when we truly need the split.
+    # Windows Update enumeration — one COM scan produces titles, KBs,
+    # category, and optional/preview flags. Preview/Insider builds are
+    # excluded from `pending_updates` because the "Install pending updates"
+    # action also skips them; that keeps the tile in sync with what will
+    # actually be installed. Optional driver updates from Windows Update
+    # (the ones under Settings → Windows Update → Advanced options →
+    # Optional updates) ARE counted because Ray can install them.
     def _update_categories():
-        if int(posture.get("pending_updates") or 0) == 0:
-            posture["update_categories"] = {"security": 0, "drivers": 0, "feature": 0, "office": 0, "other": 0}
-            return
-        upd_cat = _ps(
-            "try { $s = (New-Object -ComObject Microsoft.Update.Session).CreateUpdateSearcher(); "
-            "$r = $s.Search('IsInstalled=0'); "
-            "$sec = 0; $drv = 0; $feat = 0; $off = 0; $other = 0; "
+        raw = _ps(
+            "try { "
+            "$s = (New-Object -ComObject Microsoft.Update.Session).CreateUpdateSearcher(); "
+            "$r = $s.Search('IsInstalled=0 and IsHidden=0'); "
+            "$out = @(); "
             "foreach ($u in $r.Updates) { "
-            "  $cats = ($u.Categories | ForEach-Object { $_.Name }) -join ',' ; "
-            "  if ($cats -match 'Security') { $sec++ } "
-            "  elseif ($cats -match 'Driver') { $drv++ } "
-            "  elseif ($cats -match 'Feature') { $feat++ } "
-            "  elseif ($u.Title -match 'Office|Microsoft 365') { $off++ } "
-            "  else { $other++ } } "
-            "\"$sec|$drv|$feat|$off|$other\" } catch { '0|0|0|0|0' }",
-            timeout_seconds=45,
+            "  $cats = ($u.Categories | ForEach-Object { $_.Name }) -join ','; "
+            "  $kb = ''; try { if ($u.KBArticleIDs.Count -gt 0) { $kb = 'KB' + $u.KBArticleIDs.Item(0) } } catch {} "
+            "  $isDriver = [bool]($cats -match 'Driver'); "
+            "  $isPreview = [bool]($u.Title -match '(?i)preview|beta|insider'); "
+            "  $isOptional = $isDriver -or [bool]($u.BrowseOnly); "
+            "  $cat = if ($cats -match 'Security') { 'security' } "
+            "         elseif ($isDriver) { 'drivers' } "
+            "         elseif ($cats -match 'Feature') { 'feature' } "
+            "         elseif ($u.Title -match '(?i)Office|Microsoft 365') { 'office' } "
+            "         else { 'other' }; "
+            "  $out += [pscustomobject]@{ title=$u.Title; kb=$kb; category=$cat; is_driver=$isDriver; is_preview=$isPreview; is_optional=$isOptional } "
+            "} "
+            "ConvertTo-Json -Compress -InputObject @($out) "
+            "} catch { '[]' }",
+            timeout_seconds=60,
         )
-        u_parts = (upd_cat or "").split("|")
-        while len(u_parts) < 5:
-            u_parts.append("0")
-        def _int(x):
-            try: return int(x)
-            except: return 0
-        posture["update_categories"] = {
-            "security": _int(u_parts[0]),
-            "drivers": _int(u_parts[1]),
-            "feature": _int(u_parts[2]),
-            "office": _int(u_parts[3]),
-            "other": _int(u_parts[4]),
-        }
+        items: list[dict[str, Any]] = []
+        try:
+            parsed = json.loads(raw) if raw else []
+            if isinstance(parsed, dict):
+                parsed = [parsed]
+            for it in parsed or []:
+                items.append({
+                    "title": str(it.get("title") or "").strip(),
+                    "kb": str(it.get("kb") or "").strip(),
+                    "category": str(it.get("category") or "other"),
+                    "is_driver": bool(it.get("is_driver")),
+                    "is_preview": bool(it.get("is_preview")),
+                    "is_optional": bool(it.get("is_optional")),
+                })
+        except Exception:  # noqa: BLE001
+            items = []
+        # Preview builds are informational; not counted / not installed.
+        installable = [i for i in items if not i["is_preview"]]
+        cats = {"security": 0, "drivers": 0, "feature": 0, "office": 0, "other": 0}
+        for i in installable:
+            cats[i["category"]] = cats.get(i["category"], 0) + 1
+        posture["pending_updates"] = len(installable)
+        posture["update_categories"] = cats
+        posture["pending_updates_list"] = installable[:25]
+        posture["preview_updates_available"] = len(items) - len(installable)
+
     _safe("update_categories", _update_categories)
 
     posture["logged_in_user"] = os.environ.get("USERNAME", "")
