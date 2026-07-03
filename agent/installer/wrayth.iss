@@ -13,7 +13,7 @@
 #define MyDefaultApiBase "https://nsyobmjpdpvesjwdphlh.supabase.co"
 
 #ifndef MyAppVersion
-  #define MyAppVersion "0.2.1"
+  #define MyAppVersion "0.2.2"
 #endif
 
 [Setup]
