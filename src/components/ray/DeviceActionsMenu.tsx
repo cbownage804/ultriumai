@@ -285,76 +285,137 @@ export function DeviceActionsMenu({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-72 max-h-[min(70vh,32rem)] overflow-y-auto">
-          <DropdownMenuLabel className="text-xs text-muted-foreground">
-            Protection
-          </DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => run('enable_bitlocker')}>
-            <ShieldCheck className="mr-2 h-4 w-4" /> {ACTION_LABELS.enable_bitlocker}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => run('enable_firewall')}>
-            <ShieldCheck className="mr-2 h-4 w-4" /> {ACTION_LABELS.enable_firewall}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => run('enable_defender')}>
-            <ShieldCheck className="mr-2 h-4 w-4" /> {ACTION_LABELS.enable_defender}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel className="text-xs text-muted-foreground">Scans</DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => run('run_defender_quick_scan')}>
-            <Sparkles className="mr-2 h-4 w-4" /> {ACTION_LABELS.run_defender_quick_scan}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => run('run_defender_full_scan')}>
-            <Sparkles className="mr-2 h-4 w-4" /> {ACTION_LABELS.run_defender_full_scan}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => run('enable_defender_pua')}>
-            <ShieldCheck className="mr-2 h-4 w-4" /> {ACTION_LABELS.enable_defender_pua}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => run('enable_defender_cloud')}>
-            <ShieldCheck className="mr-2 h-4 w-4" /> {ACTION_LABELS.enable_defender_cloud}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => run('update_defender_signatures')}>
-            <RefreshCw className="mr-2 h-4 w-4" /> {ACTION_LABELS.update_defender_signatures}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel className="text-xs text-muted-foreground">Remote access</DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => run('disable_rdp')}>
-            <ShieldCheck className="mr-2 h-4 w-4" /> {ACTION_LABELS.disable_rdp}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => run('enable_rdp_nla')}>
-            <ShieldCheck className="mr-2 h-4 w-4" /> {ACTION_LABELS.enable_rdp_nla}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => run('disable_remote_assistance')}>
-            <ShieldCheck className="mr-2 h-4 w-4" /> {ACTION_LABELS.disable_remote_assistance}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel className="text-xs text-muted-foreground">Passwords & accounts</DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => run('disable_browser_password_manager', { browser: 'chrome' })}>
-            <ShieldCheck className="mr-2 h-4 w-4" /> Disable Chrome password manager
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => run('disable_browser_password_manager', { browser: 'edge' })}>
-            <ShieldCheck className="mr-2 h-4 w-4" /> Disable Edge password manager
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => run('disable_builtin_administrator')}>
-            <ShieldCheck className="mr-2 h-4 w-4" /> {ACTION_LABELS.disable_builtin_administrator}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel className="text-xs text-muted-foreground">Maintenance</DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => run('install_windows_updates')}>
-            <RefreshCw className="mr-2 h-4 w-4" /> {ACTION_LABELS.install_windows_updates}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel className="text-xs text-muted-foreground">
-            If it's lost
-          </DropdownMenuLabel>
-          <DropdownMenuItem disabled={!sessionLockSupported} onClick={() => run('lock_screen')}>
-            <Lock className="mr-2 h-4 w-4" /> {ACTION_LABELS.lock_screen}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => run('sign_out_user')}
-            className="text-red-300 focus:text-red-200"
-          >
-            <LogOut className="mr-2 h-4 w-4" /> {ACTION_LABELS.sign_out_user}
-          </DropdownMenuItem>
+          {(() => {
+            let hiddenCount = 0;
+
+            const Item = ({
+              action,
+              icon: Icon,
+              label,
+              params,
+              className,
+              forceEnabled,
+            }: {
+              action: ActionType;
+              icon: typeof ShieldCheck;
+              label?: string;
+              params?: Record<string, unknown>;
+              className?: string;
+              forceEnabled?: boolean;
+            }) => {
+              const satisfied = forceEnabled ? false : isAlreadySatisfied(action, posture, params);
+              if (satisfied === true && !showAll) {
+                hiddenCount += 1;
+                return null;
+              }
+              const text = label ?? ACTION_LABELS[action];
+              return (
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    if (satisfied === true) {
+                      e.preventDefault();
+                      return;
+                    }
+                    run(action, params);
+                  }}
+                  className={className}
+                >
+                  {satisfied === true ? (
+                    <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-400" />
+                  ) : (
+                    <Icon className="mr-2 h-4 w-4" />
+                  )}
+                  <span className={satisfied === true ? 'text-muted-foreground line-through' : ''}>
+                    {text}
+                  </span>
+                  {satisfied === true && (
+                    <span className="ml-auto text-[10px] uppercase tracking-wide text-emerald-400/80">
+                      done
+                    </span>
+                  )}
+                </DropdownMenuItem>
+              );
+            };
+
+            const sections = (
+              <>
+                <DropdownMenuLabel className="text-xs text-muted-foreground">
+                  Protection
+                </DropdownMenuLabel>
+                <Item action="enable_bitlocker" icon={ShieldCheck} />
+                <Item action="enable_firewall" icon={ShieldCheck} />
+                <Item action="enable_defender" icon={ShieldCheck} />
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Scans</DropdownMenuLabel>
+                <Item action="run_defender_quick_scan" icon={Sparkles} forceEnabled />
+                <Item action="run_defender_full_scan" icon={Sparkles} forceEnabled />
+                <Item action="enable_defender_pua" icon={ShieldCheck} />
+                <Item action="enable_defender_cloud" icon={ShieldCheck} />
+                <Item action="update_defender_signatures" icon={RefreshCw} />
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Remote access</DropdownMenuLabel>
+                <Item action="disable_rdp" icon={ShieldCheck} />
+                <Item action="enable_rdp_nla" icon={ShieldCheck} />
+                <Item action="disable_remote_assistance" icon={ShieldCheck} />
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Passwords & accounts</DropdownMenuLabel>
+                <Item
+                  action="disable_browser_password_manager"
+                  icon={ShieldCheck}
+                  label="Disable Chrome password manager"
+                  params={{ browser: 'chrome' }}
+                />
+                <Item
+                  action="disable_browser_password_manager"
+                  icon={ShieldCheck}
+                  label="Disable Edge password manager"
+                  params={{ browser: 'edge' }}
+                />
+                <Item action="disable_builtin_administrator" icon={ShieldCheck} />
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Maintenance</DropdownMenuLabel>
+                <Item action="install_windows_updates" icon={RefreshCw} />
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs text-muted-foreground">
+                  If it's lost
+                </DropdownMenuLabel>
+                <DropdownMenuItem disabled={!sessionLockSupported} onClick={() => run('lock_screen')}>
+                  <Lock className="mr-2 h-4 w-4" /> {ACTION_LABELS.lock_screen}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => run('sign_out_user')}
+                  className="text-red-300 focus:text-red-200"
+                >
+                  <LogOut className="mr-2 h-4 w-4" /> {ACTION_LABELS.sign_out_user}
+                </DropdownMenuItem>
+              </>
+            );
+
+            return (
+              <>
+                {sections}
+                {(hiddenCount > 0 || showAll) && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setShowAll((v) => !v);
+                      }}
+                      className="text-xs text-muted-foreground"
+                    >
+                      <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-400" />
+                      {showAll
+                        ? 'Hide already-configured items'
+                        : `Show ${hiddenCount} already-configured item${hiddenCount === 1 ? '' : 's'}`}
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </>
+            );
+          })()}
         </DropdownMenuContent>
+
       </DropdownMenu>
 
       {recent.length > 0 && (
