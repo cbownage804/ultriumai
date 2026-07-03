@@ -268,7 +268,7 @@ export function AskRayPalette() {
                 <ScanSearch className="h-4 w-4" /> Threats
               </CommandItem>
               <CommandItem onSelect={() => goTo('/app/web')} className="gap-2">
-                <Globe className="h-4 w-4" /> Exposure
+                <Globe className="h-4 w-4" /> Identity Monitoring
               </CommandItem>
               <CommandItem onSelect={() => goTo('/app/settings')} className="gap-2">
                 <Settings className="h-4 w-4" /> Settings
