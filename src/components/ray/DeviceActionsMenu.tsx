@@ -185,7 +185,7 @@ export function DeviceActionsMenu({
             <ChevronDown className="ml-1 h-3.5 w-3.5" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-72">
+        <DropdownMenuContent align="end" className="w-72 max-h-[min(70vh,32rem)] overflow-y-auto">
           <DropdownMenuLabel className="text-xs text-muted-foreground">
             Protection
           </DropdownMenuLabel>
