@@ -230,3 +230,79 @@ export default function RayGraphExplorer() {
     </PageMotion>
   );
 }
+
+/** Global entity search — type-ahead across ray_entities.name. */
+function EntitySearch({ onPick }: { onPick: (entityId: string) => void }) {
+  const [q, setQ] = useState("");
+  const [results, setResults] = useState<RayEntity[]>([]);
+  const [open, setOpen] = useState(false);
+  const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    const term = q.trim();
+    if (!term) { setResults([]); return; }
+    let cancelled = false;
+    setSearching(true);
+    const t = setTimeout(async () => {
+      // Escape PostgREST ilike metacharacters (defense-in-depth; RLS already
+      // scopes ray_entities to the caller's org/user).
+      const safe = term.replace(/[%,().\\*]/g, "").slice(0, 100);
+      if (!safe) { setResults([]); setSearching(false); return; }
+      const { data } = await supabase
+        .from("ray_entities")
+        .select("*")
+        .ilike("name", `%${safe}%`)
+        .order("last_seen_at", { ascending: false })
+        .limit(10);
+      if (cancelled) return;
+      setResults((data as RayEntity[] | null) ?? []);
+      setSearching(false);
+    }, 200);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [q]);
+
+  return (
+    <div className="relative">
+      <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+        <Input
+          value={q}
+          onChange={(e) => { setQ(e.target.value); setOpen(true); }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 150)}
+          placeholder="Search users, devices, IOCs, policies…"
+          className="pl-8 h-9 w-[280px] text-sm"
+        />
+      </div>
+      {open && q.trim() && (
+        <div className="absolute top-full left-0 mt-1 w-[320px] rounded-md border border-border bg-popover shadow-lg z-50 max-h-[320px] overflow-y-auto">
+          {searching ? (
+            <div className="p-3 text-xs text-muted-foreground flex items-center gap-2">
+              <Loader2 className="h-3 w-3 animate-spin" /> Searching…
+            </div>
+          ) : results.length === 0 ? (
+            <div className="p-3 text-xs text-muted-foreground">No entities match.</div>
+          ) : (
+            <ul className="py-1">
+              {results.map((e) => (
+                <li key={e.id}>
+                  <button
+                    type="button"
+                    onClick={() => { onPick(e.id); setQ(""); setOpen(false); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-accent transition-colors"
+                  >
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground w-[70px] flex-shrink-0">
+                      {ENTITY_TYPE_LABELS[e.type] ?? e.type}
+                    </span>
+                    <span className="text-sm truncate">{e.name}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
