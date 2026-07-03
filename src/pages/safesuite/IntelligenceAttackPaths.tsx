@@ -452,3 +452,202 @@ function BlastCell({ label, text }: { label: string; text?: string }) {
 function Empty({ text }: { text: string }) {
   return <p className="text-sm text-muted-foreground py-6 text-center">{text}</p>;
 }
+
+/* ------------------------- entity / relationship view ------------------------ */
+
+const ENTITY_META: Record<string, { icon: React.ComponentType<{ className?: string }>; label: string; className: string }> = {
+  user:    { icon: User,      label: 'User',    className: 'bg-sky-500/10 text-sky-300 border-sky-500/30' },
+  device:  { icon: Laptop,    label: 'Device',  className: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30' },
+  account: { icon: KeyRound,  label: 'Account', className: 'bg-amber-500/10 text-amber-300 border-amber-500/30' },
+  service: { icon: AppWindow, label: 'Service', className: 'bg-violet-500/10 text-violet-300 border-violet-500/30' },
+  app:     { icon: AppWindow, label: 'App',     className: 'bg-violet-500/10 text-violet-300 border-violet-500/30' },
+  network: { icon: Network,   label: 'Network', className: 'bg-indigo-500/10 text-indigo-300 border-indigo-500/30' },
+  data:    { icon: Database,  label: 'Data',    className: 'bg-rose-500/10 text-rose-300 border-rose-500/30' },
+};
+
+const ROLE_LABEL: Record<string, string> = {
+  actor: 'Actor',
+  target: 'Target',
+  pivot: 'Pivot',
+  credential: 'Credential',
+  witness: 'Witness',
+};
+
+function entityMeta(kind?: string) {
+  return ENTITY_META[(kind ?? '').toLowerCase()] ?? {
+    icon: HelpCircle, label: kind || 'Entity',
+    className: 'bg-muted text-muted-foreground border-border',
+  };
+}
+
+function countEntities(steps: AttackStep[]): number {
+  const set = new Set<string>();
+  for (const s of steps) for (const e of s.entities ?? []) {
+    if (e?.name) set.add(`${(e.kind ?? '').toLowerCase()}::${e.name.toLowerCase()}`);
+  }
+  return set.size;
+}
+
+function EntityChip({ entity }: { entity: StepEntity }) {
+  const meta = entityMeta(entity.kind);
+  const Icon = meta.icon;
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-sm border px-1.5 py-0.5 text-[11px]',
+        meta.className,
+      )}
+      title={entity.why}
+    >
+      <Icon className="h-3 w-3" />
+      <span className="font-medium truncate max-w-[16rem]">{entity.name || meta.label}</span>
+      {entity.role && (
+        <span className="text-[9px] uppercase tracking-wider opacity-70">
+          · {ROLE_LABEL[entity.role] ?? entity.role}
+        </span>
+      )}
+    </span>
+  );
+}
+
+type EntityAgg = {
+  key: string;
+  kind: string;
+  name: string;
+  steps: { index: number; role?: string; why?: string; stepTitle?: string; phase?: string }[];
+};
+
+function aggregateEntities(steps: AttackStep[]): EntityAgg[] {
+  const map = new Map<string, EntityAgg>();
+  steps.forEach((s, i) => {
+    for (const e of s.entities ?? []) {
+      if (!e?.name) continue;
+      const kind = (e.kind ?? 'unknown').toLowerCase();
+      const key = `${kind}::${e.name.toLowerCase()}`;
+      let agg = map.get(key);
+      if (!agg) {
+        agg = { key, kind, name: e.name, steps: [] };
+        map.set(key, agg);
+      }
+      agg.steps.push({
+        index: i + 1,
+        role: e.role,
+        why: e.why,
+        stepTitle: s.title,
+        phase: s.phase,
+      });
+    }
+  });
+  return Array.from(map.values()).sort((a, b) => b.steps.length - a.steps.length);
+}
+
+function EntitiesView({ steps }: { steps: AttackStep[] }) {
+  const entities = aggregateEntities(steps);
+  if (entities.length === 0) {
+    return (
+      <Empty text="Ray did not identify specific users, devices, or accounts in this path. Feed him an investigation with real identifiers to see relationships." />
+    );
+  }
+
+  // Group by kind for the left-side summary.
+  const byKind = entities.reduce<Record<string, EntityAgg[]>>((acc, e) => {
+    (acc[e.kind] ??= []).push(e);
+    return acc;
+  }, {});
+  const kindOrder = ['user', 'device', 'account', 'service', 'app', 'network', 'data'];
+  const orderedKinds = [
+    ...kindOrder.filter(k => byKind[k]),
+    ...Object.keys(byKind).filter(k => !kindOrder.includes(k)),
+  ];
+
+  return (
+    <div className="space-y-5">
+      <p className="text-xs text-muted-foreground">
+        Every user, device, account, and system Ray tied to at least one step in this attack path — with the
+        role they played and which step numbers they appear in.
+      </p>
+
+      {/* Kind summary strip */}
+      <div className="flex flex-wrap gap-2">
+        {orderedKinds.map((k) => {
+          const meta = entityMeta(k);
+          const Icon = meta.icon;
+          return (
+            <span
+              key={k}
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-sm border px-2 py-1 text-[11px]',
+                meta.className,
+              )}
+            >
+              <Icon className="h-3 w-3" />
+              {meta.label}
+              <span className="opacity-70">· {byKind[k].length}</span>
+            </span>
+          );
+        })}
+      </div>
+
+      {/* Per-entity relationship rows */}
+      <ul className="space-y-2">
+        {entities.map((e) => {
+          const meta = entityMeta(e.kind);
+          const Icon = meta.icon;
+          return (
+            <li key={e.key} className="rounded-sm border border-border p-3">
+              <div className="flex items-start gap-3">
+                <div className={cn(
+                  'h-8 w-8 shrink-0 rounded-sm border flex items-center justify-center',
+                  meta.className,
+                )}>
+                  <Icon className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-medium truncate">{e.name}</span>
+                    <Badge variant="outline" className="rounded-sm text-[10px] uppercase tracking-wider">
+                      {meta.label}
+                    </Badge>
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      {e.steps.length} step{e.steps.length === 1 ? '' : 's'}
+                    </span>
+                  </div>
+
+                  <div className="mt-2 space-y-1.5">
+                    {e.steps.map((s, si) => (
+                      <div key={si} className="flex items-start gap-2 text-xs">
+                        <span className="h-4 w-4 shrink-0 rounded-full bg-[hsl(262_60%_64%/0.15)] border border-[hsl(262_60%_64%/0.4)] flex items-center justify-center text-[9px] text-[hsl(262_60%_75%)]">
+                          {s.index}
+                        </span>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {s.stepTitle && (
+                              <span className="text-foreground/90">{s.stepTitle}</span>
+                            )}
+                            {s.phase && (
+                              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                                {PHASE_LABEL[s.phase] ?? s.phase}
+                              </span>
+                            )}
+                            {s.role && (
+                              <Badge variant="outline" className="rounded-sm text-[9px] uppercase tracking-wider">
+                                {ROLE_LABEL[s.role] ?? s.role}
+                              </Badge>
+                            )}
+                          </div>
+                          {s.why && (
+                            <p className="text-muted-foreground mt-0.5">{s.why}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
