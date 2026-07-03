@@ -547,13 +547,15 @@ export default function WraythLanding() {
       <section className="py-28">
         <div className="container mx-auto px-4 max-w-3xl">
           <h2 className="text-3xl md:text-5xl font-semibold tracking-tight text-foreground mb-6 leading-tight">
-            Stop managing security tools.
+            Monitoring is included.
             <br />
-            <span className="text-muted-foreground">Start working with Ray.</span>
+            <span className="text-muted-foreground">Intelligence uses Compute.</span>
           </h2>
           <p className="text-muted-foreground mb-10 max-w-xl">
-            Stop juggling security software. Let Ray handle it for you.
+            The security platform protects you automatically. Ray Compute is only spent when
+            you ask for premium AI horsepower &mdash; and you'll always know why.
           </p>
+
           <Link to="/auth?tab=signup">
             <Button size="lg" className="wrayth-chamfer-sm gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
               Experience Ray
