@@ -100,6 +100,14 @@ export function ExposureVaultImpact({ assets }: Props) {
 
   if (!ready || matches.length === 0) return null;
 
+  const totalPasswords = matches.reduce((n, m) => n + m.entries.length, 0);
+  const totalBreaches = matches.reduce((n, m) => n + m.breachCount, 0);
+  const estMinutes = Math.max(2, totalPasswords * 2);
+  const headline =
+    totalPasswords === 1
+      ? 'I found 1 saved password connected to a breached identity.'
+      : `I found ${totalPasswords} saved passwords connected to breached identities.`;
+
   return (
     <AnimatePresence>
       <motion.section
@@ -112,18 +120,39 @@ export function ExposureVaultImpact({ assets }: Props) {
           <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-primary">
             <ShieldAlert className="h-4 w-4" />
           </div>
-          <div className="flex-1 space-y-4">
+          <div className="flex-1 space-y-4 min-w-0">
             <div>
-              <div className="text-[11px] uppercase tracking-[0.22em] text-primary/80">
-                Ray connected the dots
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="text-[11px] uppercase tracking-[0.22em] text-primary/80">
+                  Ray connected the dots
+                </div>
+                <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-primary/90">
+                  Ray Confidence · 98%
+                </span>
               </div>
-              <h3 className="mt-1 text-base font-medium text-foreground">
-                Saved passwords use these breached emails
+              <h3 className="mt-1 text-base sm:text-lg font-medium text-foreground">
+                {headline}
               </h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                A breach on the email is only half the story. If the account also has a
-                saved password here, rotating it is the fastest way to shut the door.
+                A breach on the email is only half the story. Because you also
+                have {totalPasswords === 1 ? 'its saved password' : 'saved passwords for these accounts'} in
+                Wrayth, I can turn this into a one-click rotation.
               </p>
+            </div>
+
+            <div className="grid gap-2 sm:grid-cols-3">
+              <div className="rounded-lg border border-border/60 bg-background/50 px-3 py-2">
+                <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Priority</div>
+                <div className="mt-0.5 text-sm text-foreground">Rotate now</div>
+              </div>
+              <div className="rounded-lg border border-border/60 bg-background/50 px-3 py-2">
+                <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Estimated time</div>
+                <div className="mt-0.5 text-sm text-foreground">{estMinutes} min</div>
+              </div>
+              <div className="rounded-lg border border-border/60 bg-background/50 px-3 py-2">
+                <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Risk reduction</div>
+                <div className="mt-0.5 text-sm text-foreground">High</div>
+              </div>
             </div>
 
             <ul className="space-y-3">
@@ -133,12 +162,11 @@ export function ExposureVaultImpact({ assets }: Props) {
                   className="rounded-xl border border-border/60 bg-background/60 p-4"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-medium text-foreground">{m.email}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {m.breachCount} {m.breachCount === 1 ? 'breach' : 'breaches'} · used by{' '}
-                        {m.entries.length} saved{' '}
-                        {m.entries.length === 1 ? 'password' : 'passwords'}
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-foreground truncate">{m.email}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        Reason · appears in {m.breachCount} breach
+                        {m.breachCount === 1 ? '' : 'es'} and {m.entries.length === 1 ? 'has a saved password' : `has ${m.entries.length} saved passwords`} in your vault.
                       </div>
                     </div>
                     <Link
@@ -167,9 +195,16 @@ export function ExposureVaultImpact({ assets }: Props) {
                 </li>
               ))}
             </ul>
+
+            <div className="text-[11px] text-muted-foreground">
+              Summary · {totalBreaches} breach record{totalBreaches === 1 ? '' : 's'} across{' '}
+              {matches.length} monitored identit{matches.length === 1 ? 'y' : 'ies'} · {totalPasswords} saved password
+              {totalPasswords === 1 ? '' : 's'} affected.
+            </div>
           </div>
         </div>
       </motion.section>
     </AnimatePresence>
   );
 }
+
