@@ -826,15 +826,15 @@ function RayTurn({
   );
 }
 
-function WhileAwayRow({ text, ok }: { text: string; ok?: boolean }) {
+function SinceRow({ item }: { item: SinceItem }) {
+  const Icon =
+    item.tone === 'good' ? CheckCircle2 : item.tone === 'warn' ? AlertTriangle : Activity;
+  const color =
+    item.tone === 'good' ? 'text-emerald-400' : item.tone === 'warn' ? 'text-amber-400' : 'text-muted-foreground';
   return (
     <li className="flex items-center gap-2">
-      {ok ? (
-        <CheckCircle2 className="h-3 w-3 text-emerald-400 shrink-0" />
-      ) : (
-        <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" />
-      )}
-      <span>{text}</span>
+      <Icon className={`h-3 w-3 shrink-0 ${color}`} />
+      <span>{item.label}</span>
     </li>
   );
 }
