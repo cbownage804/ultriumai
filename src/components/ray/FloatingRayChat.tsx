@@ -158,7 +158,7 @@ export function FloatingRayChat() {
             </span>
 
             {/* Label + contextual status (rotates by route) */}
-            <div className="flex flex-col items-start leading-tight pr-1 min-w-[168px]">
+            <div className="flex flex-col items-start leading-tight pr-1">
               <div className="flex items-center gap-1.5 text-sm font-medium text-white">
                 Ray
                 <motion.span
@@ -168,7 +168,9 @@ export function FloatingRayChat() {
                   transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
                 />
               </div>
-              <span className="relative h-[14px] w-full overflow-visible text-[10px] uppercase tracking-[0.18em] text-white/60">
+              <span className="relative block h-[14px] text-[10px] uppercase tracking-[0.18em] text-white/60">
+                {/* Invisible sizer keeps the pill wide enough for the current label */}
+                <span className="invisible whitespace-nowrap">{statusVerb}{badgeSuffix}</span>
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.span
                     key={statusVerb + badgeSuffix}
@@ -183,6 +185,7 @@ export function FloatingRayChat() {
                 </AnimatePresence>
               </span>
             </div>
+
 
 
             {/* Subtle light sweep on hover */}
