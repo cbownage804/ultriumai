@@ -1287,12 +1287,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     (async () => {
       try {
         const windowId = sender?.tab?.windowId;
-        if (windowId != null) {
-          await chrome.sidePanel.open({ windowId });
-          sendResponse({ ok: true });
-        } else {
-          sendResponse({ ok: false, error: 'no-window' });
-        }
+        const opened = await openRayPanel(windowId);
+        sendResponse(opened ? { ok: true } : { ok: false, error: 'no-panel-support' });
       } catch (e) {
         sendResponse({ ok: false, error: String(e?.message || e) });
       }
