@@ -414,17 +414,19 @@ serve(async (req) => {
   });
 
   // Write-through into the Security Graph so newly-created recommendations
-  // show up on the timeline immediately (not just on the hourly projection).
-  // Fire-and-forget; failures here must never break a scan.
+  // show up on the timeline immediately. Fire-and-forget via EdgeRuntime so
+  // the scan response returns without waiting on the sub-invocation.
   if (created > 0 || updated > 0 || auto_resolved > 0) {
-    try {
-      await admin.functions.invoke("ray-graph-sync", {
-        body: { since_hours: 2 },
-      });
-    } catch (e) {
-      console.warn("ray-graph-sync invoke failed", e);
+    const kickoff = admin.functions
+      .invoke("ray-graph-sync", { body: { since_hours: 2 } })
+      .catch((e) => console.warn("ray-graph-sync invoke failed", e));
+    // deno-lint-ignore no-explicit-any
+    const runtime = (globalThis as any).EdgeRuntime;
+    if (runtime?.waitUntil) {
+      runtime.waitUntil(kickoff);
     }
   }
+
 
 
 
