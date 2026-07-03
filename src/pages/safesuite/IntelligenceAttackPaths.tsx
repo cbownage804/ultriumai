@@ -381,6 +381,7 @@ function AttackPathView({ path, onDelete }: { path: AttackPath; onDelete: () => 
                       </div>
                     )}
                     <ReasoningPanel reasoning={s.reasoning} />
+                    <StepRemediation pathId={path.id} stepIndex={i} step={s} />
                   </li>
                 ))}
               </ol>
