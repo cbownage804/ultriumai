@@ -364,6 +364,57 @@ export default function IntelligencePolicies() {
       <div className="grid lg:grid-cols-[380px_1fr] gap-6">
         {/* Left column: form + history */}
         <div className="space-y-4">
+          {/* Template gallery */}
+          <Card className="border-border bg-card">
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <ScrollText className="h-3.5 w-3.5" /> Templates
+                </div>
+                {templateId && (
+                  <button
+                    type="button"
+                    onClick={() => { setTemplateId(null); setNotes(''); }}
+                    className="text-[11px] text-muted-foreground hover:text-foreground"
+                  >
+                    Clear template
+                  </button>
+                )}
+              </div>
+              <p className="text-[11px] text-muted-foreground -mt-1">
+                Start from a curated format. Templates preset the policy type, frameworks, and structural guidance — you can still edit anything below.
+              </p>
+              <div className="grid grid-cols-2 gap-1.5 max-h-[280px] overflow-y-auto pr-1">
+                {TEMPLATES.map(t => {
+                  const active = templateId === t.id;
+                  const Icon = t.icon;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => applyTemplate(t)}
+                      className={cn(
+                        'text-left p-2 rounded-sm border transition-colors min-h-[64px] flex flex-col gap-1',
+                        active
+                          ? 'bg-[hsl(262_60%_64%/0.12)] border-[hsl(262_60%_64%/0.5)]'
+                          : 'bg-muted/40 border-border hover:border-[hsl(262_60%_64%/0.35)]',
+                      )}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <Icon className="h-3.5 w-3.5 text-[hsl(262_60%_70%)] shrink-0" />
+                        <span className="text-[12px] font-medium leading-tight truncate">{t.label}</span>
+                        {active && <Check className="h-3 w-3 text-[hsl(262_60%_70%)] ml-auto shrink-0" />}
+                      </div>
+                      <span className="text-[10px] text-muted-foreground leading-snug line-clamp-2">
+                        {t.blurb}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
           <Card className="border-border bg-card">
             <CardContent className="p-4 space-y-4">
               <div className="space-y-2">
