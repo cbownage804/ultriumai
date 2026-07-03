@@ -538,7 +538,6 @@ export function EnrolledDevicesList() {
           );
         })}
       </CardContent>
-      <div className="px-6 pb-6"><AgentTrustCard /></div>
     </Card>
   );
 }
