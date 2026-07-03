@@ -69,6 +69,7 @@ interface Device {
   revoked_at: string | null;
   findings: Finding[];
   posture: Posture | null;
+  posture_captured_at: string | null;
 }
 
 function relative(iso: string | null): string {
