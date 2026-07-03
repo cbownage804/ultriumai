@@ -281,6 +281,7 @@ export function DeviceSecurityTabs({ deviceId, posture, capturedAt }: Props) {
 
       {/* POSTURE (hardening basics) */}
       <TabsContent value="posture" className="space-y-3 pt-3">
+        {tabs?.posture && <TabNarrative tone={tabs.posture.tone} text={tabs.posture.text} />}
         <Section title="Encryption & boot integrity">
           <Row
             label="BitLocker (C:)"
@@ -361,6 +362,7 @@ export function DeviceSecurityTabs({ deviceId, posture, capturedAt }: Props) {
 
       {/* SYSTEM */}
       <TabsContent value="system" className="space-y-3 pt-3">
+        {tabs?.system && <TabNarrative tone={tabs.system.tone} text={tabs.system.text} />}
         <Section title="Hardware">
           <Row
             label="Disk C:"
@@ -405,6 +407,7 @@ export function DeviceSecurityTabs({ deviceId, posture, capturedAt }: Props) {
 
       {/* DEFENDER */}
       <TabsContent value="defender" className="space-y-3 pt-3">
+        {tabs?.defender && <TabNarrative tone={tabs.defender.tone} text={tabs.defender.text} />}
         <Section title="Microsoft Defender Antivirus">
           <Row
             label="Enabled"
@@ -464,6 +467,7 @@ export function DeviceSecurityTabs({ deviceId, posture, capturedAt }: Props) {
 
       {/* NETWORK */}
       <TabsContent value="network" className="space-y-3 pt-3">
+        {tabs?.network && <TabNarrative tone={tabs.network.tone} text={tabs.network.text} />}
         <Section title="Remote Desktop (RDP)">
           <Row
             label="RDP listener"
@@ -513,6 +517,7 @@ export function DeviceSecurityTabs({ deviceId, posture, capturedAt }: Props) {
 
       {/* ACCOUNTS */}
       <TabsContent value="accounts" className="space-y-3 pt-3">
+        {tabs?.accounts && <TabNarrative tone={tabs.accounts.tone} text={tabs.accounts.text} />}
         <Section title={`Local administrators (${p.local_admins?.count ?? 0})`}>
           <List
             rows={(p.local_admins_detail ?? []).map((a) => ({
@@ -563,6 +568,7 @@ export function DeviceSecurityTabs({ deviceId, posture, capturedAt }: Props) {
 
       {/* SOFTWARE */}
       <TabsContent value="software" className="space-y-3 pt-3">
+        {tabs?.software && <TabNarrative tone={tabs.software.tone} text={tabs.software.text} />}
         <Section title={`Installed software (${p.installed_software?.length ?? 0})`}>
           <List
             rows={(p.installed_software ?? []).map((s) => ({
@@ -606,6 +612,7 @@ export function DeviceSecurityTabs({ deviceId, posture, capturedAt }: Props) {
 
       {/* UPDATES */}
       <TabsContent value="updates" className="space-y-3 pt-3">
+        {tabs?.updates && <TabNarrative tone={tabs.updates.tone} text={tabs.updates.text} />}
         <Section title="Windows Update">
           <Row
             label="Pending updates"
@@ -669,6 +676,7 @@ export function DeviceSecurityTabs({ deviceId, posture, capturedAt }: Props) {
 
       {/* RECOVERY KEYS */}
       <TabsContent value="keys" className="space-y-3 pt-3">
+        {tabs?.keys && <TabNarrative tone={tabs.keys.tone} text={tabs.keys.text} />}
         {recovery ? (
           <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3">
             <div className="mb-1 flex items-center gap-2 text-xs font-medium text-emerald-100">
