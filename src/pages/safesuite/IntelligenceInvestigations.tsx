@@ -407,7 +407,7 @@ function InvestigationWorkspace({ inv }: { inv: Investigation }) {
   const [busy, setBusy] = useState<FollowupType | null>(null);
   const [questionOpen, setQuestionOpen] = useState(false);
   const [question, setQuestion] = useState('');
-  const [iocHistory, setIocHistory] = useState<Record<string, { count: number; last_seen_at: string; first_seen_at: string; last_verdict: string | null; timestamps: string[] }>>({});
+  const [iocHistory, setIocHistory] = useState<Record<string, IocHistoryEntry>>({});
 
   const loadFollowups = useCallback(async () => {
     const { data } = await supabase
@@ -437,32 +437,41 @@ function InvestigationWorkspace({ inv }: { inv: Investigation }) {
       investigation_ids: string[] | null;
     }> | null) ?? [];
 
-    // Batch-fetch created_at for every investigation this user has that references any of these IOCs.
+    // Batch-fetch investigation metadata (date, verdict, label) for every
+    // linked investigation so we can render verdict history and jump-to links.
     const allInvIds = Array.from(new Set(rows.flatMap(r => r.investigation_ids ?? []).filter(Boolean)));
-    let invDates = new Map<string, string>();
+    let invMeta = new Map<string, { created_at: string; verdict: string | null; input_label: string | null; input_type: string }>();
     if (allInvIds.length > 0) {
       const { data: invRows } = await supabase
         .from('ray_investigations')
-        .select('id, created_at')
+        .select('id, created_at, verdict, input_label, input_type')
         .in('id', allInvIds);
-      invDates = new Map(((invRows as Array<{ id: string; created_at: string }> | null) ?? []).map(r => [r.id, r.created_at]));
+      invMeta = new Map(((invRows as Array<{ id: string; created_at: string; verdict: string | null; input_label: string | null; input_type: string }> | null) ?? [])
+        .map(r => [r.id, { created_at: r.created_at, verdict: r.verdict, input_label: r.input_label, input_type: r.input_type }]));
     }
 
-    const map: Record<string, { count: number; last_seen_at: string; first_seen_at: string; last_verdict: string | null; timestamps: string[] }> = {};
+    const map: Record<string, IocHistoryEntry> = {};
     for (const r of rows) {
-      const timestamps = (r.investigation_ids ?? [])
-        .map(id => invDates.get(id))
-        .filter((t): t is string => Boolean(t));
+      const sightings: IocSighting[] = (r.investigation_ids ?? [])
+        .map(id => {
+          const m = invMeta.get(id);
+          if (!m) return null;
+          return { id, created_at: m.created_at, verdict: m.verdict, label: m.input_label || m.input_type };
+        })
+        .filter((s): s is IocSighting => s !== null)
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       map[`${r.ioc_type}::${r.ioc_value_norm}`] = {
         count: r.occurrence_count,
         first_seen_at: r.first_seen_at,
         last_seen_at: r.last_seen_at,
         last_verdict: r.last_verdict,
-        timestamps,
+        timestamps: sightings.map(s => s.created_at),
+        sightings,
       };
     }
     setIocHistory(map);
   }, [inv.id, inv.iocs]);
+
 
 
   useEffect(() => {
