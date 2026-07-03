@@ -270,6 +270,9 @@ export function EnrolledDevicesList() {
     const { data: rows, error } = await supabase
       .from('wrayth_devices')
       .select('id, hostname, os, os_version, agent_version, last_seen_at, revoked_at, release_channel, last_update_check_at')
+      // Hide devices whose agent has been uninstalled/revoked so a machine
+      // that ran WraythSetup.exe /uninstall disappears from the dashboard.
+      .is('revoked_at', null)
       .order('last_seen_at', { ascending: false, nullsFirst: false });
     if (error) {
       toast.error("I couldn't load your devices", { description: error.message });
