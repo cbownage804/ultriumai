@@ -6,6 +6,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { getRayContext, type RayContext } from '@/lib/ray';
+import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import { ExplainThis } from './ExplainThis';
@@ -34,6 +35,7 @@ const STATUS_WORDS = ['Watching', 'Scanning', 'Reviewing', 'Listening', 'Monitor
 export function SidebarBriefing() {
   const { user } = useAuth();
   const [ctx, setCtx] = useState<RayContext | null>(null);
+  const [fallbackScore, setFallbackScore] = useState<number | null>(null);
   const [lastSync] = useState(() => new Date());
   const [, force] = useState(0);
   const [statusIdx, setStatusIdx] = useState(0);
@@ -44,6 +46,35 @@ export function SidebarBriefing() {
     void getRayContext(user.id).then((c) => { if (active) setCtx(c); });
     return () => { active = false; };
   }, [user]);
+
+  // Fallback: if Ray hasn't written a security_score row yet, compute the
+  // same simple vault-based score the dashboard shows so the sidebar isn't
+  // permanently stuck on "—".
+  useEffect(() => {
+    let active = true;
+    if (!user) return;
+    if (ctx?.latestScore) { setFallbackScore(null); return; }
+    (async () => {
+      const { data } = await (supabase as unknown as {
+        from: (t: string) => {
+          select: (c: string) => {
+            eq: (col: string, v: string) => Promise<{ data: Array<{ password_strength_score: number | null }> | null }>;
+          };
+        };
+      })
+        .from('safeweb_passwords')
+        .select('password_strength_score')
+        .eq('user_id', user.id);
+      if (!active) return;
+      const entries = data ?? [];
+      if (entries.length === 0) { setFallbackScore(100); return; }
+      const weak = entries.filter((e) => (e.password_strength_score ?? 0) < 60).length;
+      const strong = entries.filter((e) => (e.password_strength_score ?? 0) >= 80).length;
+      const raw = 100 - (weak / entries.length) * 40 + (strong / entries.length) * 20;
+      setFallbackScore(Math.max(0, Math.min(100, Math.round(raw))));
+    })();
+    return () => { active = false; };
+  }, [user, ctx]);
 
   // Refresh "last sync" label every minute without changing the timestamp.
   useEffect(() => {
@@ -66,7 +97,7 @@ export function SidebarBriefing() {
     return 'there';
   }, [user]);
 
-  const score = ctx?.latestScore?.score ?? null;
+  const score = ctx?.latestScore?.score ?? fallbackScore;
   const scoreTone =
     score == null ? 'text-foreground' : score >= 80 ? 'text-green-300' : score >= 60 ? 'text-yellow-300' : 'text-red-300';
 
