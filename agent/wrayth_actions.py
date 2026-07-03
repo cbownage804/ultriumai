@@ -376,21 +376,43 @@ def _disable_remote_assistance(_p: dict[str, Any]) -> tuple[bool, dict, str | No
     }, err or None if rc != 0 else None
 
 
-def _disable_browser_password_manager(p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+_BROWSER_POLICY_PATHS = {
+    "chrome": "HKLM:\\SOFTWARE\\Policies\\Google\\Chrome",
+    "edge": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge",
+    "firefox": "HKLM:\\SOFTWARE\\Policies\\Mozilla\\Firefox",
+}
+
+
+def _set_browser_password_manager(p: dict[str, Any], enabled: bool) -> tuple[bool, dict, str | None]:
     browser = str(p.get("browser") or "all").lower()
+    targets = ("chrome", "edge", "firefox") if browser == "all" else (browser,)
     scripts = []
-    if browser in ("all", "chrome"):
-        scripts.append(
-            "New-Item -Path 'HKLM:\\SOFTWARE\\Policies\\Google\\Chrome' -Force | Out-Null; "
-            "Set-ItemProperty 'HKLM:\\SOFTWARE\\Policies\\Google\\Chrome' -Name PasswordManagerEnabled -Value 0 -Type DWord;"
-        )
-    if browser in ("all", "edge"):
-        scripts.append(
-            "New-Item -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge' -Force | Out-Null; "
-            "Set-ItemProperty 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge' -Name PasswordManagerEnabled -Value 0 -Type DWord;"
-        )
+    for b in targets:
+        path = _BROWSER_POLICY_PATHS.get(b)
+        if not path:
+            continue
+        if enabled:
+            # Remove the disable policy so the browser reverts to the user's choice (default = enabled).
+            scripts.append(
+                f"if (Test-Path '{path}') {{ Remove-ItemProperty '{path}' -Name PasswordManagerEnabled -ErrorAction SilentlyContinue }};"
+            )
+        else:
+            scripts.append(
+                f"New-Item -Path '{path}' -Force | Out-Null; "
+                f"Set-ItemProperty '{path}' -Name PasswordManagerEnabled -Value 0 -Type DWord;"
+            )
+    if not scripts:
+        return False, {"browser": browser}, "unsupported browser"
     rc, out, err = _ps(" ".join(scripts) + " 'ok'")
-    return rc == 0, {"stdout": out, "browser": browser}, err or None if rc != 0 else None
+    return rc == 0, {"stdout": out, "browser": browser, "enabled": enabled}, err or None if rc != 0 else None
+
+
+def _disable_browser_password_manager(p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    return _set_browser_password_manager(p, enabled=False)
+
+
+def _enable_browser_password_manager(p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    return _set_browser_password_manager(p, enabled=True)
 
 
 def _remove_local_admin(p: dict[str, Any]) -> tuple[bool, dict, str | None]:
@@ -431,6 +453,55 @@ def _update_defender_signatures(_p: dict[str, Any]) -> tuple[bool, dict, str | N
     return rc == 0, {"stdout": out}, err or None if rc != 0 else None
 
 
+def _disable_defender_pua(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    rc, out, err = _ps("Set-MpPreference -PUAProtection Disabled; 'ok'")
+    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+
+
+def _disable_defender_cloud(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    rc, out, err = _ps(
+        "Set-MpPreference -MAPSReporting Disabled -SubmitSamplesConsent NeverSend; 'ok'"
+    )
+    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+
+
+def _disable_firewall(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    rc, out, err = _ps("Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False; 'ok'")
+    return rc == 0, {"stdout": out, "rollback_possible": True, "rollback_action": "enable_firewall"}, err or None if rc != 0 else None
+
+
+def _enable_rdp(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    rc, out, err = _ps(
+        "Set-ItemProperty 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server' "
+        "-Name fDenyTSConnections -Value 0; "
+        "Enable-NetFirewallRule -DisplayGroup 'Remote Desktop' -ErrorAction SilentlyContinue; 'ok'"
+    )
+    return rc == 0, {"stdout": out, "rollback_possible": True, "rollback_action": "disable_rdp"}, err or None if rc != 0 else None
+
+
+def _disable_rdp_nla(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    rc, out, err = _ps(
+        "Set-ItemProperty 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server\\WinStations\\RDP-Tcp' "
+        "-Name UserAuthentication -Value 0; 'ok'"
+    )
+    return rc == 0, {"stdout": out, "rollback_possible": True, "rollback_action": "enable_rdp_nla"}, err or None if rc != 0 else None
+
+
+def _enable_remote_assistance(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    rc, out, err = _ps(
+        "Set-ItemProperty 'HKLM:\\System\\CurrentControlSet\\Control\\Remote Assistance' "
+        "-Name fAllowToGetHelp -Value 1; 'ok'"
+    )
+    return rc == 0, {"stdout": out, "rollback_possible": True, "rollback_action": "disable_remote_assistance"}, err or None if rc != 0 else None
+
+
+def _enable_builtin_administrator(_p: dict[str, Any]) -> tuple[bool, dict, str | None]:
+    rc, out, err = _ps(
+        "Get-LocalUser | Where-Object { $_.SID -like '*-500' } | Enable-LocalUser; 'ok'"
+    )
+    return rc == 0, {"stdout": out}, err or None if rc != 0 else None
+
+
 def _disable_startup_item(p: dict[str, Any]) -> tuple[bool, dict, str | None]:
     location = str(p.get("location") or "").strip()
     name = str(p.get("name") or "").strip()
@@ -459,11 +530,19 @@ HANDLERS = {
     "enable_rdp_nla": _enable_rdp_nla,
     "disable_remote_assistance": _disable_remote_assistance,
     "disable_browser_password_manager": _disable_browser_password_manager,
+    "enable_browser_password_manager": _enable_browser_password_manager,
     "remove_local_admin": _remove_local_admin,
     "disable_builtin_administrator": _disable_builtin_administrator,
+    "enable_builtin_administrator": _enable_builtin_administrator,
     "enable_defender_pua": _enable_defender_pua,
+    "disable_defender_pua": _disable_defender_pua,
     "enable_defender_cloud": _enable_defender_cloud,
+    "disable_defender_cloud": _disable_defender_cloud,
     "update_defender_signatures": _update_defender_signatures,
+    "disable_firewall": _disable_firewall,
+    "enable_rdp": _enable_rdp,
+    "disable_rdp_nla": _disable_rdp_nla,
+    "enable_remote_assistance": _enable_remote_assistance,
     "disable_startup_item": _disable_startup_item,
 }
 

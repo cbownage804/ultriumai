@@ -4,6 +4,7 @@
  */
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +13,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   CheckCircle2,
   ChevronDown,
@@ -30,6 +41,7 @@ import { toast } from 'sonner';
 type ActionType =
   | 'enable_bitlocker'
   | 'enable_firewall'
+  | 'disable_firewall'
   | 'enable_defender'
   | 'run_defender_quick_scan'
   | 'run_defender_full_scan'
@@ -37,17 +49,25 @@ type ActionType =
   | 'lock_screen'
   | 'sign_out_user'
   | 'disable_rdp'
+  | 'enable_rdp'
   | 'enable_rdp_nla'
+  | 'disable_rdp_nla'
   | 'disable_remote_assistance'
+  | 'enable_remote_assistance'
   | 'disable_browser_password_manager'
+  | 'enable_browser_password_manager'
   | 'disable_builtin_administrator'
+  | 'enable_builtin_administrator'
   | 'enable_defender_pua'
+  | 'disable_defender_pua'
   | 'enable_defender_cloud'
+  | 'disable_defender_cloud'
   | 'update_defender_signatures';
 
 const ACTION_LABELS: Record<ActionType, string> = {
   enable_bitlocker: 'Turn on BitLocker (encrypt C:)',
   enable_firewall: 'Turn on Windows Firewall',
+  disable_firewall: 'Turn off Windows Firewall',
   enable_defender: 'Turn on Defender + update signatures',
   run_defender_quick_scan: 'Run Defender quick scan',
   run_defender_full_scan: 'Run Defender full scan',
@@ -55,12 +75,19 @@ const ACTION_LABELS: Record<ActionType, string> = {
   lock_screen: 'Lock the screen',
   sign_out_user: 'Sign the user out',
   disable_rdp: 'Disable Remote Desktop',
+  enable_rdp: 'Enable Remote Desktop',
   enable_rdp_nla: 'Require Network Level Auth for RDP',
+  disable_rdp_nla: 'Remove NLA requirement for RDP',
   disable_remote_assistance: 'Disable Remote Assistance',
+  enable_remote_assistance: 'Enable Remote Assistance',
   disable_browser_password_manager: 'Disable browser password manager',
+  enable_browser_password_manager: 'Re-enable browser password manager',
   disable_builtin_administrator: 'Disable built-in Administrator',
+  enable_builtin_administrator: 'Enable built-in Administrator',
   enable_defender_pua: 'Enable Defender PUA protection',
+  disable_defender_pua: 'Disable Defender PUA protection',
   enable_defender_cloud: 'Enable Defender cloud protection',
+  disable_defender_cloud: 'Disable Defender cloud protection',
   update_defender_signatures: 'Update Defender signatures',
 };
 
@@ -69,6 +96,8 @@ const ACTION_DESCRIPTIONS: Record<ActionType, string> = {
     'Encrypts the system drive (C:) with BitLocker so data is unreadable if the device is lost or stolen.',
   enable_firewall:
     'Turns on the Windows Defender Firewall for all network profiles, blocking unauthorized inbound connections.',
+  disable_firewall:
+    'Turns OFF the Windows Defender Firewall on all profiles. Only do this for short-term troubleshooting.',
   enable_defender:
     'Activates Microsoft Defender Antivirus, enables real-time protection, and downloads the latest threat signatures.',
   run_defender_quick_scan:
@@ -83,18 +112,32 @@ const ACTION_DESCRIPTIONS: Record<ActionType, string> = {
     'Signs the currently signed-in user out of Windows. Unsaved work may be lost.',
   disable_rdp:
     'Turns off Remote Desktop so no one can connect to this machine from the network.',
+  enable_rdp:
+    'Turns Remote Desktop back on and re-enables the RDP firewall rules.',
   enable_rdp_nla:
     'Requires Network Level Authentication for Remote Desktop, blocking weaker legacy connections.',
+  disable_rdp_nla:
+    'Removes the NLA requirement from Remote Desktop. Less secure — legacy clients can connect.',
   disable_remote_assistance:
     'Disables Remote Assistance so outside helpers cannot take control of the desktop.',
+  enable_remote_assistance:
+    'Re-enables Windows Remote Assistance invitations.',
   disable_browser_password_manager:
-    'Blocks Chrome/Edge from saving or autofilling passwords via group policy.',
+    'Blocks the browser from saving or autofilling passwords via enterprise policy.',
+  enable_browser_password_manager:
+    'Removes the enterprise policy so the browser\'s built-in password manager works normally again.',
   disable_builtin_administrator:
     'Disables the built-in Windows Administrator account to reduce the attack surface.',
+  enable_builtin_administrator:
+    'Re-enables the built-in Windows Administrator account. Usually not recommended.',
   enable_defender_pua:
     'Turns on Potentially Unwanted Application (PUA) blocking to catch adware and bundleware.',
+  disable_defender_pua:
+    'Turns off Defender\'s PUA (adware/bundleware) blocking.',
   enable_defender_cloud:
     'Enables cloud-delivered protection so Defender can check unknown files against Microsoft\'s cloud in real time.',
+  disable_defender_cloud:
+    'Turns off Defender cloud-delivered protection. Detection of brand-new threats will be slower.',
   update_defender_signatures:
     'Downloads the newest malware definitions so Defender can recognize the latest threats.',
 };
@@ -116,6 +159,7 @@ interface PostureShape {
   browser_passwords?: {
     chrome?: { manager_disabled_by_policy?: boolean };
     edge?: { manager_disabled_by_policy?: boolean };
+    firefox?: { manager_disabled_by_policy?: boolean };
   };
   defender_detail?: { cloud_protection?: boolean; pua_protection?: boolean };
   local_admins_detail?: Array<{ name: string; enabled?: boolean; is_builtin?: boolean }>;
@@ -234,7 +278,23 @@ export function DeviceActionsMenu({
   const [pending, setPending] = useState<ActionType | null>(null);
   const [recent, setRecent] = useState<ActionRow[]>([]);
   const [showAll, setShowAll] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{
+    action: ActionType;
+    params?: Record<string, unknown>;
+    label: string;
+    description: string;
+  } | null>(null);
   const sessionLockSupported = versionAtLeast(agentVersion, '0.1.1');
+
+  const HIGH_RISK: Set<ActionType> = new Set([
+    'disable_firewall',
+    'enable_rdp',
+    'disable_rdp_nla',
+    'enable_builtin_administrator',
+    'disable_builtin_administrator',
+    'disable_rdp',
+    'install_windows_updates',
+  ]);
 
 
   const load = async () => {
@@ -268,7 +328,11 @@ export function DeviceActionsMenu({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deviceId]);
 
-  const run = async (action_type: ActionType, params?: Record<string, unknown>) => {
+  const run = async (
+    action_type: ActionType,
+    params?: Record<string, unknown>,
+    opts?: { confirmed?: boolean },
+  ) => {
     if (action_type === 'lock_screen' && !sessionLockSupported) {
       toast.error('Update the Wrayth agent first', {
         description: 'Screen lock needs agent v0.1.1+ so the command runs in the signed-in Windows session.',
@@ -278,7 +342,12 @@ export function DeviceActionsMenu({
     setPending(action_type);
     try {
       const { error } = await supabase.functions.invoke('agent-action-request', {
-        body: { device_id: deviceId, action_type, params: params ?? {} },
+        body: {
+          device_id: deviceId,
+          action_type,
+          params: params ?? {},
+          confirmed: opts?.confirmed ?? false,
+        },
       });
       if (error) throw error;
       toast.success('Approved — I sent it to the agent.', {
@@ -290,6 +359,23 @@ export function DeviceActionsMenu({
     } finally {
       setPending(null);
     }
+  };
+
+  const requestAction = (
+    action: ActionType,
+    params?: Record<string, unknown>,
+    label?: string,
+  ) => {
+    if (HIGH_RISK.has(action)) {
+      setConfirmAction({
+        action,
+        params,
+        label: label ?? ACTION_LABELS[action],
+        description: ACTION_DESCRIPTIONS[action],
+      });
+      return;
+    }
+    run(action, params);
   };
 
   const statusIcon = (s: string) => {
@@ -319,10 +405,11 @@ export function DeviceActionsMenu({
             <ChevronDown className="ml-1 h-3.5 w-3.5" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-72 max-h-[min(70vh,32rem)] overflow-y-auto">
+        <DropdownMenuContent align="end" className="w-80 max-h-[min(70vh,32rem)] overflow-y-auto">
           {(() => {
             let hiddenCount = 0;
 
+            // Simple one-off action (no toggle state).
             const Item = ({
               action,
               icon: Icon,
@@ -345,14 +432,14 @@ export function DeviceActionsMenu({
               }
               const text = label ?? ACTION_LABELS[action];
               return (
-              <DropdownMenuItem
+                <DropdownMenuItem
                   title={ACTION_DESCRIPTIONS[action]}
                   onClick={(e) => {
                     if (satisfied === true) {
                       e.preventDefault();
                       return;
                     }
-                    run(action, params);
+                    requestAction(action, params, label);
                   }}
                   className={className}
                 >
@@ -373,41 +460,163 @@ export function DeviceActionsMenu({
               );
             };
 
+            // Toggle row for reversible settings. Shows a Switch reflecting current
+            // posture. Flipping it sends the corresponding enable/disable action.
+            const Toggle = ({
+              label,
+              tooltip,
+              enableAction,
+              disableAction,
+              enableParams,
+              disableParams,
+              satisfied,
+            }: {
+              label: string;
+              tooltip: string;
+              enableAction: ActionType;
+              disableAction: ActionType;
+              enableParams?: Record<string, unknown>;
+              disableParams?: Record<string, unknown>;
+              // true = currently in the "enabled" (desired-on) state,
+              // false = currently off, null = unknown
+              satisfied: boolean | null;
+            }) => {
+              const checked = satisfied === true;
+              const unknown = satisfied === null;
+              return (
+                <div
+                  title={tooltip}
+                  className="flex items-center justify-between gap-2 px-2 py-1.5 text-sm"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-foreground/90">{label}</div>
+                    {unknown && (
+                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70">
+                        unknown
+                      </div>
+                    )}
+                  </div>
+                  <Switch
+                    checked={checked}
+                    disabled={pending !== null}
+                    onCheckedChange={(next) => {
+                      if (next) {
+                        requestAction(enableAction, enableParams, label);
+                      } else {
+                        requestAction(disableAction, disableParams, label);
+                      }
+                    }}
+                  />
+                </div>
+              );
+            };
+
+            const chromeSat = isAlreadySatisfied('disable_browser_password_manager', posture, { browser: 'chrome' });
+            const edgeSat = isAlreadySatisfied('disable_browser_password_manager', posture, { browser: 'edge' });
+            const firefoxSat = isAlreadySatisfied('disable_browser_password_manager', posture, { browser: 'firefox' });
+
             const sections = (
               <>
                 <DropdownMenuLabel className="text-xs text-muted-foreground">
                   Protection
                 </DropdownMenuLabel>
                 <Item action="enable_bitlocker" icon={ShieldCheck} />
-                <Item action="enable_firewall" icon={ShieldCheck} />
+                <Toggle
+                  label="Windows Firewall"
+                  tooltip={ACTION_DESCRIPTIONS.enable_firewall}
+                  enableAction="enable_firewall"
+                  disableAction="disable_firewall"
+                  satisfied={isAlreadySatisfied('enable_firewall', posture)}
+                />
                 <Item action="enable_defender" icon={ShieldCheck} />
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-xs text-muted-foreground">Scans</DropdownMenuLabel>
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Defender</DropdownMenuLabel>
                 <Item action="run_defender_quick_scan" icon={Sparkles} forceEnabled />
                 <Item action="run_defender_full_scan" icon={Sparkles} forceEnabled />
-                <Item action="enable_defender_pua" icon={ShieldCheck} />
-                <Item action="enable_defender_cloud" icon={ShieldCheck} />
+                <Toggle
+                  label="Defender PUA protection"
+                  tooltip={ACTION_DESCRIPTIONS.enable_defender_pua}
+                  enableAction="enable_defender_pua"
+                  disableAction="disable_defender_pua"
+                  satisfied={isAlreadySatisfied('enable_defender_pua', posture)}
+                />
+                <Toggle
+                  label="Defender cloud protection"
+                  tooltip={ACTION_DESCRIPTIONS.enable_defender_cloud}
+                  enableAction="enable_defender_cloud"
+                  disableAction="disable_defender_cloud"
+                  satisfied={isAlreadySatisfied('enable_defender_cloud', posture)}
+                />
                 <Item action="update_defender_signatures" icon={RefreshCw} />
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel className="text-xs text-muted-foreground">Remote access</DropdownMenuLabel>
-                <Item action="disable_rdp" icon={ShieldCheck} />
-                <Item action="enable_rdp_nla" icon={ShieldCheck} />
-                <Item action="disable_remote_assistance" icon={ShieldCheck} />
+                <Toggle
+                  label="Remote Desktop (RDP)"
+                  tooltip="On = RDP allowed. Off = incoming Remote Desktop connections blocked."
+                  enableAction="enable_rdp"
+                  disableAction="disable_rdp"
+                  satisfied={
+                    posture?.rdp_security?.rdp_enabled === undefined
+                      ? null
+                      : posture.rdp_security.rdp_enabled === true
+                  }
+                />
+                <Toggle
+                  label="Require NLA for RDP"
+                  tooltip={ACTION_DESCRIPTIONS.enable_rdp_nla}
+                  enableAction="enable_rdp_nla"
+                  disableAction="disable_rdp_nla"
+                  satisfied={isAlreadySatisfied('enable_rdp_nla', posture)}
+                />
+                <Toggle
+                  label="Remote Assistance allowed"
+                  tooltip="On = users can invite helpers. Off = Remote Assistance blocked."
+                  enableAction="enable_remote_assistance"
+                  disableAction="disable_remote_assistance"
+                  satisfied={
+                    posture?.rdp_security?.remote_assistance_enabled === undefined
+                      ? null
+                      : posture.rdp_security.remote_assistance_enabled === true
+                  }
+                />
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-xs text-muted-foreground">Passwords & accounts</DropdownMenuLabel>
-                <Item
-                  action="disable_browser_password_manager"
-                  icon={ShieldCheck}
-                  label="Disable Chrome password manager"
-                  params={{ browser: 'chrome' }}
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Browser password managers</DropdownMenuLabel>
+                <Toggle
+                  label="Chrome password manager disabled"
+                  tooltip={ACTION_DESCRIPTIONS.disable_browser_password_manager}
+                  enableAction="disable_browser_password_manager"
+                  disableAction="enable_browser_password_manager"
+                  enableParams={{ browser: 'chrome' }}
+                  disableParams={{ browser: 'chrome' }}
+                  satisfied={chromeSat}
                 />
-                <Item
-                  action="disable_browser_password_manager"
-                  icon={ShieldCheck}
-                  label="Disable Edge password manager"
-                  params={{ browser: 'edge' }}
+                <Toggle
+                  label="Edge password manager disabled"
+                  tooltip={ACTION_DESCRIPTIONS.disable_browser_password_manager}
+                  enableAction="disable_browser_password_manager"
+                  disableAction="enable_browser_password_manager"
+                  enableParams={{ browser: 'edge' }}
+                  disableParams={{ browser: 'edge' }}
+                  satisfied={edgeSat}
                 />
-                <Item action="disable_builtin_administrator" icon={ShieldCheck} />
+                <Toggle
+                  label="Firefox password manager disabled"
+                  tooltip={ACTION_DESCRIPTIONS.disable_browser_password_manager}
+                  enableAction="disable_browser_password_manager"
+                  disableAction="enable_browser_password_manager"
+                  enableParams={{ browser: 'firefox' }}
+                  disableParams={{ browser: 'firefox' }}
+                  satisfied={firefoxSat}
+                />
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Local accounts</DropdownMenuLabel>
+                <Toggle
+                  label="Built-in Administrator disabled"
+                  tooltip={ACTION_DESCRIPTIONS.disable_builtin_administrator}
+                  enableAction="disable_builtin_administrator"
+                  disableAction="enable_builtin_administrator"
+                  satisfied={isAlreadySatisfied('disable_builtin_administrator', posture)}
+                />
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel className="text-xs text-muted-foreground">Maintenance</DropdownMenuLabel>
                 <Item action="install_windows_updates" icon={RefreshCw} />
@@ -418,13 +627,13 @@ export function DeviceActionsMenu({
                 <DropdownMenuItem
                   title={ACTION_DESCRIPTIONS.lock_screen}
                   disabled={!sessionLockSupported}
-                  onClick={() => run('lock_screen')}
+                  onClick={() => requestAction('lock_screen')}
                 >
                   <Lock className="mr-2 h-4 w-4" /> {ACTION_LABELS.lock_screen}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   title={ACTION_DESCRIPTIONS.sign_out_user}
-                  onClick={() => run('sign_out_user')}
+                  onClick={() => requestAction('sign_out_user')}
                   className="text-red-300 focus:text-red-200"
                 >
                   <LogOut className="mr-2 h-4 w-4" /> {ACTION_LABELS.sign_out_user}
@@ -458,6 +667,39 @@ export function DeviceActionsMenu({
         </DropdownMenuContent>
 
       </DropdownMenu>
+
+      <AlertDialog
+        open={confirmAction !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirmAction(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmAction?.label}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction?.description}
+              <br />
+              <br />
+              This is a high-impact change. Are you sure you want Ray to run it on this device?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!confirmAction) return;
+                const { action, params } = confirmAction;
+                setConfirmAction(null);
+                run(action, params, { confirmed: true });
+              }}
+            >
+              Yes, run it
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       {recent.length > 0 && (
         <div className="space-y-1 rounded-md border border-border/60 bg-background/40 p-2">

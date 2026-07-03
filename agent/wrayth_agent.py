@@ -513,6 +513,7 @@ $out -join "`n"
         ).strip()
     chrome_off = _reg_dword("HKLM:\\SOFTWARE\\Policies\\Google\\Chrome", "PasswordManagerEnabled")
     edge_off = _reg_dword("HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge", "PasswordManagerEnabled")
+    firefox_off = _reg_dword("HKLM:\\SOFTWARE\\Policies\\Mozilla\\Firefox", "PasswordManagerEnabled")
 
     def _count_passwords(login_db: Path) -> int:
         if not login_db.exists():
@@ -541,6 +542,10 @@ $out -join "`n"
         "edge": {
             "manager_disabled_by_policy": edge_off == "0",
             "stored_count": edge_logins,
+        },
+        "firefox": {
+            "manager_disabled_by_policy": firefox_off == "0",
+            "stored_count": -1,
         },
     }
 
