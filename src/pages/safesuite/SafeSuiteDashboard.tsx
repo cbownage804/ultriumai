@@ -557,7 +557,7 @@ export default function WraythDashboard() {
             text = 'Ray analyzed a threat';
           } else if (resourceLower === 'breach_check') {
             type = 'breach';
-            text = 'Ray ran an exposure check';
+            text = 'Ray checked your monitored identities';
           } else if (actionLower.includes('ray') || actionLower.includes('assist')) {
             type = 'password';
             text = 'Ray conversation';
