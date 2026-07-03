@@ -1,10 +1,15 @@
 /**
- * Workplace Embeds — connect Wrayth's KB assistant into Microsoft Teams and Slack.
- * Business/Enterprise feature. Ships as beta with placeholder OAuth + manifest download.
+ * Workplace Embeds — connect the Ray Security Assistant into Microsoft
+ * Teams (personal/static tab + optional bot) and Slack.
+ *
+ * NOTE: this is deliberately NOT a knowledge-base assistant. Ray answers
+ * from the user's Wrayth security context and approved organization
+ * memory. A real customer-document KB does not exist yet.
  */
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserSubscription } from "@/hooks/useUserSubscription";
+import { useActiveOrg } from "@/hooks/useActiveOrg";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Download, Plug, ShieldCheck, Lock, MessageSquare, Trash2, Sparkles, AlertTriangle } from "lucide-react";
+import { Loader2, Download, Plug, ShieldCheck, Lock, MessageSquare, Trash2, Sparkles, AlertTriangle, ExternalLink, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 
