@@ -234,6 +234,7 @@ ${SCHEMA_HINT}`;
     confidence_score: typeof parsed.confidence_score === "number" ? Math.max(0, Math.min(100, Math.round(parsed.confidence_score))) : null,
     summary: typeof parsed.summary === "string" ? parsed.summary : null,
     executive_summary: typeof parsed.executive_summary === "string" ? parsed.executive_summary : null,
+    reasoning: asObj(parsed.reasoning),
     technical_findings: asArray(parsed.technical_findings),
     mitre: asArray(parsed.mitre),
     iocs: asArray(parsed.iocs),
