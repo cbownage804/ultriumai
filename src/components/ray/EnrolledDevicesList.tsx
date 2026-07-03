@@ -485,7 +485,11 @@ export function EnrolledDevicesList() {
                   <DeviceActionsMenu deviceId={d.id} agentVersion={d.agent_version} disabled={!online} posture={d.posture as never} />
                 </div>
               )}
-              <DeviceIntelPanel deviceId={d.id} posture={d.posture as never} />
+              <DeviceSecurityTabs
+                deviceId={d.id}
+                posture={d.posture as never}
+                capturedAt={d.posture_captured_at}
+              />
               <DeviceTimeline deviceId={d.id} lastSeenAt={d.last_seen_at} />
 
 
