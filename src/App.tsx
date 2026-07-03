@@ -99,6 +99,7 @@ const IntelligenceCommand = lazy(() => import('@/pages/safesuite/IntelligenceCom
 const IntelligenceHistory = lazy(() => import('@/pages/safesuite/IntelligenceHistory'));
 const IntelligenceMemory = lazy(() => import('@/pages/safesuite/IntelligenceMemory'));
 const IntelligenceDrafts = lazy(() => import('@/pages/safesuite/IntelligenceDrafts'));
+const IntelligenceCampaigns = lazy(() => import('@/pages/safesuite/IntelligenceCampaigns'));
 const IntelligenceScripts = lazy(() => import('@/pages/safesuite/IntelligenceScripts'));
 const IntelligenceMalware = lazy(() => import('@/pages/safesuite/IntelligenceMalware'));
 const IntelligenceLogs = lazy(() => import('@/pages/safesuite/IntelligenceLogs'));
