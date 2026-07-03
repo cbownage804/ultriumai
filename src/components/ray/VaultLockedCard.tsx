@@ -83,7 +83,7 @@ export function VaultLockedCard({
               className="bg-violet-500 text-white hover:bg-violet-500/90 gap-2 shrink-0"
             >
               <KeyRound className="h-4 w-4" />
-              Unlock Vault
+              Unlock to check saved passwords
             </Button>
           }
         />
@@ -99,12 +99,19 @@ export function VaultLockedCard({
               </span>
             </div>
           )}
-          {checkedAt && (
-            <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-xs text-muted-foreground">
-              <span className="text-foreground/70">Last health check</span>
-              <span>· {formatDistanceToNow(checkedAt, { addSuffix: true })}</span>
-            </div>
-          )}
+          {checkedAt && (() => {
+            const daysSince = (Date.now() - checkedAt.getTime()) / 86_400_000;
+            const stale = daysSince > 14;
+            return (
+              <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-xs text-muted-foreground">
+                <span className="text-foreground/70">Last analyzed</span>
+                <span className={stale ? 'text-amber-300' : undefined}>
+                  · {formatDistanceToNow(checkedAt, { addSuffix: true })}
+                  {stale ? ' — unlock for a fresh review' : ''}
+                </span>
+              </div>
+            );
+          })()}
           {lastHealthSummary && (
             <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-xs text-foreground/80 sm:col-span-1">
               {lastHealthSummary}
