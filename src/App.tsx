@@ -199,6 +199,9 @@ function AppRouter() {
           <Route path="/app/ray/secure/:provider" element={<SuspenseWrapper><SecureProviderLauncher /></SuspenseWrapper>} />
           <Route path="/app/timeline" element={<SuspenseWrapper><RayTimelinePage /></SuspenseWrapper>} />
           <Route path="/app/timeline/:entityType/:entityId" element={<SuspenseWrapper><RayTimelinePage /></SuspenseWrapper>} />
+          <Route path="/app/graph" element={<SuspenseWrapper><RayGraphExplorer /></SuspenseWrapper>} />
+          <Route path="/app/graph/:entityId" element={<SuspenseWrapper><RayGraphExplorer /></SuspenseWrapper>} />
+
 
           <Route path="/app/missions" element={<SuspenseWrapper><Missions /></SuspenseWrapper>} />
           <Route path="/app/trends" element={<SuspenseWrapper><Trends /></SuspenseWrapper>} />
