@@ -33,6 +33,8 @@ import {
   Search, ArrowUpDown, Filter,
 } from 'lucide-react';
 import { exportFollowupPdf } from '@/lib/wraythPdf';
+import { ModuleRayBrief } from '@/components/ray/ModuleRayBrief';
+import { HowIProtectYouCard } from '@/components/ray/HowIProtectYouCard';
 
 type InputType =
   | 'url' | 'email' | 'email_headers' | 'ip' | 'domain' | 'file_hash'
