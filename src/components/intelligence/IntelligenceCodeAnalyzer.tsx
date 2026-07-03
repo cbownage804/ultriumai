@@ -433,15 +433,17 @@ function Detail({ a }: { a: Analysis }) {
           )}
         </TabsContent>
 
-        <TabsContent value="behaviors">
+        <TabsContent value="behaviors" className="space-y-4">
+          {isMalware && <BehaviorBreakdown behaviors={a.behaviors} />}
           {a.behaviors.length === 0
             ? <p className="text-sm text-muted-foreground">No distinct behaviors identified.</p>
             : (
               <div className="space-y-2">
+                <div className="text-[11px] uppercase tracking-wider text-muted-foreground">All observed behaviors</div>
                 {a.behaviors.map((b, i) => (
                   <div key={i} className="rounded-sm border border-border p-3">
                     <div className="flex items-center justify-between mb-1">
-                      <Badge variant="outline" className="text-[10px] uppercase tracking-wider">{b.category ?? 'other'}</Badge>
+                      <Badge variant="outline" className="text-[10px] uppercase tracking-wider">{(b.category ?? 'other').replace(/_/g, ' ')}</Badge>
                     </div>
                     <div className="text-sm">{b.detail}</div>
                     {b.evidence && (
