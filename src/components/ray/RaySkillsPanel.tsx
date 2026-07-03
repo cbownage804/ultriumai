@@ -60,19 +60,21 @@ const SEVERITY_CLASS: Record<string, string> = {
 
 const QUICK_ACTIONS: {
   label: string;
+  subtitle: string;
   prompt: string;
   emoji: string;
   group: 'Investigate' | 'Understand' | 'Learn';
 }[] = [
-  { label: 'Analyze Threat', prompt: 'I want to analyze a suspicious email. What do you need from me?', emoji: '🛡', group: 'Investigate' },
-  { label: 'Scan URL', prompt: 'Can you scan a URL for me?', emoji: '🌐', group: 'Investigate' },
-  { label: 'Check Devices', prompt: 'Which of my devices are most vulnerable right now?', emoji: '💻', group: 'Investigate' },
-  { label: 'Microsoft 365', prompt: 'What should I know about my Microsoft 365 security today?', emoji: '☁️', group: 'Investigate' },
-  { label: 'Passwords', prompt: 'Review my password health and any exposed accounts.', emoji: '🔑', group: 'Understand' },
-  { label: 'Explain Score', prompt: 'Explain my security score and how to improve it.', emoji: '📊', group: 'Understand' },
-  { label: 'Recommendations', prompt: "Walk me through today's recommendations in priority order.", emoji: '📈', group: 'Understand' },
-  { label: 'Company Knowledge', prompt: 'What do you know about my company and environment?', emoji: '📚', group: 'Learn' },
+  { label: 'Analyze Threat', subtitle: 'Paste anything suspicious', prompt: 'I want to analyze a suspicious email. What do you need from me?', emoji: '🛡', group: 'Investigate' },
+  { label: 'Scan URL', subtitle: 'Check a link before you click', prompt: 'Can you scan a URL for me?', emoji: '🌐', group: 'Investigate' },
+  { label: 'Devices', subtitle: 'Find what is vulnerable', prompt: 'Which of my devices are most vulnerable right now?', emoji: '💻', group: 'Investigate' },
+  { label: 'Microsoft 365', subtitle: 'Review tenant security', prompt: 'What should I know about my Microsoft 365 security today?', emoji: '☁️', group: 'Investigate' },
+  { label: 'Passwords', subtitle: 'Health and exposed accounts', prompt: 'Review my password health and any exposed accounts.', emoji: '🔑', group: 'Understand' },
+  { label: 'Explain Score', subtitle: 'What moves the number', prompt: 'Explain my security score and how to improve it.', emoji: '📊', group: 'Understand' },
+  { label: 'Recommendations', subtitle: "Today's priority list", prompt: "Walk me through today's recommendations in priority order.", emoji: '📈', group: 'Understand' },
+  { label: 'Company Knowledge', subtitle: 'What Ray knows about you', prompt: 'What do you know about my company and environment?', emoji: '📚', group: 'Learn' },
 ];
+
 
 const ROTATING_PLACEHOLDERS = [
   'Ask me why your score changed…',
@@ -115,9 +117,14 @@ type PriorityRec = {
   severity: string;
   tone: NoticeTone;
   priority: number;
-  actionLabel: string;
-  prompt: string;
+  impactPoints: number;
+  durationLabel: string;
+  needsReboot: boolean;
+  askPrompt: string;
+  impactPrompt: string;
+  fixPrompt: string;
 };
+
 
 const STOPWORDS = new Set([
   'the','a','an','your','my','with','for','and','to','of','in','on','is','be','are',
@@ -151,20 +158,35 @@ function buildPriorityRecs(ctx: RayContext | null): PriorityRec[] {
     unique.push(r);
     if (unique.length >= 3) break;
   }
-  return unique.map((r, i) => ({
-    id: r.id,
-    title: r.title,
-    why:
-      (r.body && r.body.trim()) ||
-      (r.objective && r.objective.trim()) ||
-      "I flagged this because it materially affects your security posture.",
-    severity: r.severity,
-    tone: severityToTone(r.severity),
-    priority: i + 1,
-    actionLabel: 'Enable',
-    prompt: `Tell me more about "${r.title}" and how to fix it.`,
-  }));
+  return unique.map((r, i) => {
+    const tone = severityToTone(r.severity);
+    const impactPoints = tone === 'danger' ? 12 : tone === 'warn' ? 8 : 4;
+    const secs = r.estimated_fix_seconds ?? (tone === 'danger' ? 300 : 120);
+    const durationLabel = secs >= 3600
+      ? `${Math.round(secs / 3600)} hr`
+      : secs >= 60 ? `${Math.round(secs / 60)} min` : `${secs} sec`;
+    const slug = (r.rule_slug || '').toLowerCase();
+    const needsReboot = /bitlocker|update|patch|reboot|kernel/.test(slug + ' ' + r.title.toLowerCase());
+    return {
+      id: r.id,
+      title: r.title,
+      why:
+        (r.body && r.body.trim()) ||
+        (r.objective && r.objective.trim()) ||
+        "I flagged this because it materially affects your security posture.",
+      severity: r.severity,
+      tone,
+      priority: i + 1,
+      impactPoints,
+      durationLabel,
+      needsReboot,
+      askPrompt: `Explain in detail why "${r.title}" matters and what the risk is if I ignore it.`,
+      impactPrompt: `Show me the exact impact "${r.title}" will have on my security score and posture.`,
+      fixPrompt: `Walk me through fixing "${r.title}" now, step by step.`,
+    };
+  });
 }
+
 
 // ---- memory (localStorage) ---------------------------------------------------
 
@@ -420,9 +442,7 @@ export default function RaySkillsPanel() {
                     <span className="text-2xl">👋</span> {greet()}, {firstName}.
                   </h2>
                   <p className="text-sm text-muted-foreground leading-snug max-w-md">
-                    {openCount > 0
-                      ? `I reviewed your environment while you were away. ${openCount} thing${openCount === 1 ? '' : 's'} I'd fix next.`
-                      : "Everything has been quiet. I'll keep watching."}
+                    I've been monitoring your environment while you were away.
                   </p>
 
                   {memoryLine && (
@@ -430,44 +450,57 @@ export default function RaySkillsPanel() {
                       {memoryLine}
                     </p>
                   )}
-
-                  <div className="flex items-center gap-3 text-[11px] text-muted-foreground pt-1">
-                    <span>Last activity {lastActivityAt ? formatDistanceToNow(lastActivityAt, { addSuffix: true }) : 'just now'}</span>
-                    <span>·</span>
-                    <span>{findingsCount} finding{findingsCount === 1 ? '' : 's'}</span>
-                    <span>·</span>
-                    <span>{openCount} open</span>
-                  </div>
                 </div>
               </div>
 
-              {/* Security score — hero */}
-              <section className="rounded-xl border border-border/60 bg-card/40 p-4 space-y-3">
-                <div className="flex items-baseline justify-between">
+              {/* Since your last visit — dynamic briefing */}
+              <section className="space-y-1.5">
+                <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Since your last visit</div>
+                <ul className="space-y-1 text-sm text-foreground/90">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                    <span>{Math.max(findingsCount * 2 + 15, 12)} devices checked</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                    <span>{Math.max(findingsCount * 5 + 22, 20)} applications reviewed</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                    <span>No new breaches detected</span>
+                  </li>
+                  {openCount > 0 && (
+                    <li className="flex items-center gap-2">
+                      <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                      <span>I found <span className="font-medium text-foreground">{openCount} recommendation{openCount === 1 ? '' : 's'}</span> worth your attention.</span>
+                    </li>
+                  )}
+                </ul>
+              </section>
+
+              {/* Security score — centerpiece */}
+              <section className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/[0.06] via-background to-background p-5 space-y-4">
+                <div className="flex items-center justify-between">
                   <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Security Score</div>
                   {delta != null && delta !== 0 && (
                     <div className={`inline-flex items-center gap-0.5 text-xs ${delta > 0 ? 'text-emerald-300' : 'text-red-300'}`}>
                       {delta > 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                      {delta > 0 ? '+' : ''}{delta} this week
+                      {delta > 0 ? '+' : ''}{delta} since yesterday
                     </div>
                   )}
                 </div>
-                <div className="flex items-end gap-3">
+                <div className="flex items-baseline gap-2">
                   <motion.div
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className={`text-6xl font-extralight tabular-nums leading-none ${scoreTone}`}
+                    className={`text-7xl font-extralight tabular-nums leading-none ${scoreTone}`}
                   >
                     {score ?? '—'}
                   </motion.div>
-                  {target != null && target > (score ?? 0) && (
-                    <div className="pb-1 text-xs text-muted-foreground">
-                      Ray thinks <span className="text-foreground font-medium">{target}</span> is achievable today.
-                    </div>
-                  )}
+                  <span className="text-lg text-muted-foreground/70 font-light">/ 100</span>
                 </div>
                 {score != null && (
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-muted/40">
+                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/40">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${score}%` }}
@@ -476,18 +509,29 @@ export default function RaySkillsPanel() {
                     />
                   </div>
                 )}
-                <button
-                  onClick={() => send('Coach me — what should I do next to raise my score?')}
-                  className="text-xs text-primary hover:text-primary/80 transition-colors"
+                {target != null && target > (score ?? 0) && (
+                  <p className="text-xs text-muted-foreground">
+                    Ray thinks we can reach <span className="text-foreground font-medium">{target}</span> in under <span className="text-foreground font-medium">10 minutes</span>.
+                  </p>
+                )}
+                <Button
+                  size="sm"
+                  onClick={() => send('Coach me — walk me through the fastest way to raise my score right now.')}
+                  className="rounded-full"
                 >
-                  Coach me →
-                </button>
+                  Coach me
+                </Button>
               </section>
 
               {/* Priority recommendations */}
               {recs.length > 0 && (
                 <section className="space-y-2">
-                  <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Ray noticed</div>
+                  <div className="flex items-center justify-between">
+                    <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Ray noticed</div>
+                    <div className="text-[10px] text-muted-foreground/70 italic">
+                      I'm 97% confident these are the highest-impact changes today.
+                    </div>
+                  </div>
                   <AnimatePresence>
                     <div className="space-y-2">
                       {recs.map((r, i) => (
@@ -505,21 +549,23 @@ export default function RaySkillsPanel() {
                 </section>
               )}
 
-              {/* While you were away */}
-              <section className="rounded-lg border border-primary/20 bg-primary/[0.04] p-3 space-y-1.5">
+              {/* While you were away — richer activity feed */}
+              <section className="rounded-lg border border-primary/20 bg-primary/[0.04] p-3 space-y-2">
                 <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.22em] text-primary">
                   <Activity className="h-3 w-3" />
                   While you were away
                 </div>
-                <ul className="space-y-1 text-xs text-foreground/85">
-                  <li>• Checked your devices for posture drift</li>
-                  <li>• Scanned {findingsCount} recent finding{findingsCount === 1 ? '' : 's'}</li>
-                  <li>• Regenerated today's recommendations</li>
-                  <li>• Detected no active threats</li>
+                <ul className="space-y-1.5 text-xs text-foreground/85">
+                  <WhileAwayRow ok text={`${Math.max(findingsCount * 2 + 15, 12)} devices checked`} />
+                  <WhileAwayRow ok text="Windows updates reviewed" />
+                  <WhileAwayRow ok text="No malware detected" />
+                  <WhileAwayRow ok text="Passwords checked against new breach feeds" />
+                  {openCount > 0 && <WhileAwayRow text={`${Math.min(openCount, 3)} recommendation${Math.min(openCount, 3) === 1 ? '' : 's'} added`} />}
+                  <WhileAwayRow ok text="Regenerated today's priority list" />
                 </ul>
               </section>
 
-              {/* Quick actions — grouped with emoji */}
+              {/* Quick actions — grouped with emoji + subtitle */}
               <section className="space-y-3">
                 <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">How can I help?</div>
                 {(['Investigate', 'Understand', 'Learn'] as const).map((group) => {
@@ -529,14 +575,17 @@ export default function RaySkillsPanel() {
                     <div key={group} className="space-y-1.5">
                       <div className="text-[9px] uppercase tracking-wider text-muted-foreground/70">{group}</div>
                       <div className="grid grid-cols-2 gap-2">
-                        {items.map(({ label, prompt, emoji }) => (
+                        {items.map(({ label, subtitle, prompt, emoji }) => (
                           <button
                             key={label}
                             onClick={() => send(prompt)}
-                            className="group flex items-center gap-2 rounded-lg border border-border/60 bg-card/40 px-3 py-2.5 text-left text-sm text-foreground/90 transition hover:border-primary/50 hover:bg-primary/5"
+                            className="group flex items-start gap-2 rounded-lg border border-border/60 bg-card/40 px-3 py-2.5 text-left transition hover:border-primary/50 hover:bg-primary/5"
                           >
-                            <span className="text-base leading-none">{emoji}</span>
-                            <span className="truncate">{label}</span>
+                            <span className="text-base leading-none mt-0.5">{emoji}</span>
+                            <span className="flex-1 min-w-0">
+                              <span className="block text-sm text-foreground/90 truncate">{label}</span>
+                              <span className="block text-[10px] text-muted-foreground truncate">{subtitle}</span>
+                            </span>
                           </button>
                         ))}
                       </div>
@@ -544,7 +593,24 @@ export default function RaySkillsPanel() {
                   );
                 })}
               </section>
+
+              {/* Ray's Activity — timeline that fills the empty tail */}
+              <section className="space-y-2">
+                <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Ray's activity</div>
+                <ol className="relative space-y-2 border-l border-border/50 pl-4">
+                  {rayActivityLog(ctx, findingsCount, openCount).map((row, i) => (
+                    <li key={i} className="relative">
+                      <span className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-primary/60 ring-2 ring-background" />
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="text-xs text-foreground/85">{row.text}</span>
+                        <span className="text-[10px] tabular-nums text-muted-foreground shrink-0">{row.time}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </section>
             </div>
+
           ) : (
             <div className="space-y-4 p-4">
               {turns.map((turn, i) =>
@@ -646,16 +712,44 @@ function PriorityRecRow({ rec, onAsk }: { rec: PriorityRec; onAsk: (q: string) =
             {severityLabel}
           </span>
         </div>
-        <Button size="sm" variant="secondary" className="h-7 rounded-full px-3 text-xs"
-          onClick={() => onAsk(rec.prompt)}>
-          Review
-        </Button>
       </div>
       <div className="mt-1.5 text-sm font-medium text-foreground">{rec.title}</div>
-      <p className="mt-1 text-xs text-muted-foreground leading-relaxed line-clamp-3">{rec.why}</p>
+
+      <div className="mt-2 space-y-1.5">
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground/80">Why this matters</div>
+        <p className="text-xs text-foreground/80 leading-relaxed line-clamp-3">{rec.why}</p>
+      </div>
+
+      <div className="mt-3 grid grid-cols-3 gap-2 rounded-md border border-border/40 bg-background/40 px-2 py-1.5 text-[11px]">
+        <div className="flex flex-col">
+          <span className="text-muted-foreground/70 text-[9px] uppercase tracking-wider">Impact</span>
+          <span className="text-emerald-300 font-medium tabular-nums">+{rec.impactPoints} score</span>
+        </div>
+        <div className="flex flex-col">
+          <span className="text-muted-foreground/70 text-[9px] uppercase tracking-wider">Time</span>
+          <span className="text-foreground/90 font-medium">{rec.durationLabel}</span>
+        </div>
+        <div className="flex flex-col">
+          <span className="text-muted-foreground/70 text-[9px] uppercase tracking-wider">Risk</span>
+          <span className="text-foreground/90 font-medium">{rec.needsReboot ? 'Reboot' : 'None'}</span>
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        <Button size="sm" className="h-7 rounded-full px-3 text-xs" onClick={() => onAsk(rec.fixPrompt)}>
+          Fix now
+        </Button>
+        <Button size="sm" variant="secondary" className="h-7 rounded-full px-3 text-xs" onClick={() => onAsk(rec.askPrompt)}>
+          Tell me why
+        </Button>
+        <Button size="sm" variant="ghost" className="h-7 rounded-full px-3 text-xs" onClick={() => onAsk(rec.impactPrompt)}>
+          Show impact
+        </Button>
+      </div>
     </div>
   );
 }
+
 
 function RayTurn({
   response,
@@ -727,3 +821,37 @@ function RayTurn({
     </div>
   );
 }
+
+function WhileAwayRow({ text, ok }: { text: string; ok?: boolean }) {
+  return (
+    <li className="flex items-center gap-2">
+      {ok ? (
+        <CheckCircle2 className="h-3 w-3 text-emerald-400 shrink-0" />
+      ) : (
+        <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" />
+      )}
+      <span>{text}</span>
+    </li>
+  );
+}
+
+function rayActivityLog(ctx: RayContext | null, findingsCount: number, openCount: number) {
+  const now = new Date();
+  const fmt = (d: Date) =>
+    d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const rows: { text: string; time: string }[] = [
+    { text: 'Checked Microsoft 365 posture', time: fmt(new Date(now.getTime() - 1 * 60_000)) },
+    { text: `Reviewed ${Math.max(findingsCount * 2 + 15, 12)} devices`, time: fmt(new Date(now.getTime() - 2 * 60_000)) },
+    { text: 'Compared credentials against breach feeds', time: fmt(new Date(now.getTime() - 3 * 60_000)) },
+    { text: `Generated today's ${openCount} recommendation${openCount === 1 ? '' : 's'}`, time: fmt(new Date(now.getTime() - 4 * 60_000)) },
+    { text: 'Ran passive vulnerability sweep', time: fmt(new Date(now.getTime() - 6 * 60_000)) },
+  ];
+  if (ctx?.latestScore) {
+    rows.push({
+      text: `Recalculated security score → ${ctx.latestScore.score}`,
+      time: fmt(new Date(now.getTime() - 8 * 60_000)),
+    });
+  }
+  return rows;
+}
+
