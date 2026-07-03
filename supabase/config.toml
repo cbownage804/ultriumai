@@ -150,6 +150,10 @@ verify_jwt = false
 [functions.ray-digest-send]
 verify_jwt = false
 
+[functions.ray-graph-sync]
+verify_jwt = false
+
+
 
 
 
