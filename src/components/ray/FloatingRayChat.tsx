@@ -36,16 +36,16 @@ const TONE_STYLES: Record<Tone, { ring: string; glow: string; dot: string; core:
   idle:      { ring: 'ring-primary/30',     glow: 'shadow-[0_0_36px_-10px_hsl(262_70%_60%/0.55)]', dot: 'bg-primary',     core: 'from-primary/40 to-primary/20' },
 };
 
-function toneFrom(ctx: RayContext | null): { tone: Tone; label: string } {
-  if (!ctx) return { tone: 'scanning', label: 'Scanning…' };
+function toneFrom(ctx: RayContext | null): { tone: Tone; priorityTag: string | null } {
+  if (!ctx) return { tone: 'scanning', priorityTag: null };
   const recs = dedupeRecs(ctx.recommendations ?? []);
   const critical = recs.some((r) => ['critical', 'high'].includes((r.severity ?? '').toLowerCase()));
-  if (critical) return { tone: 'threat', label: 'Something needs you' };
+  if (critical) return { tone: 'threat', priorityTag: `${recs.length} priority` };
   if (recs.length > 0) {
-    return { tone: 'attention', label: `${recs.length} recommendation${recs.length === 1 ? '' : 's'}` };
+    return { tone: 'attention', priorityTag: `${recs.length} priority` };
   }
-  if (!ctx.hasOnboarded) return { tone: 'idle', label: 'Let\'s get set up' };
-  return { tone: 'healthy', label: 'Everything looks good' };
+  if (!ctx.hasOnboarded) return { tone: 'idle', priorityTag: 'Setup' };
+  return { tone: 'healthy', priorityTag: 'All clear' };
 }
 
 /** Ray's identity mark — a stylized watching core. */
