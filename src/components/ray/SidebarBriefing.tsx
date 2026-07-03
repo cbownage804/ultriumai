@@ -55,7 +55,13 @@ export function SidebarBriefing() {
     if (!user) return;
     if (ctx?.latestScore) { setFallbackScore(null); return; }
     (async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as unknown as {
+        from: (t: string) => {
+          select: (c: string) => {
+            eq: (col: string, v: string) => Promise<{ data: Array<{ password_strength_score: number | null }> | null }>;
+          };
+        };
+      })
         .from('safeweb_passwords')
         .select('password_strength_score')
         .eq('user_id', user.id);
