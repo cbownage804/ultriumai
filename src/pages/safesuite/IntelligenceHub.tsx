@@ -20,6 +20,7 @@ import {
   ScanSearch, Bug, FileText, ClipboardCheck, ShieldCheck, ShieldAlert, Terminal, FileWarning,
   GitBranch, Network, Sparkles, Coins, Brain, ArrowUpRight, History, BookOpen, Layers, Briefcase,
 } from 'lucide-react';
+import { IntelligenceRayBrief } from '@/components/ray/IntelligenceRayBrief';
 
 type Tile = {
   id: string;
