@@ -44,7 +44,7 @@ const RAY_PHRASES: Record<VoiceKey, Phrase> = {
 
   emptyPasswords: "No passwords yet. Let's secure your first account together.",
   emptyThreats: "Nothing suspicious detected. That's exactly what we want.",
-  emptyExposure: "You're not monitoring any identities yet. Let's add one.",
+  emptyExposure: "You're not monitoring any identities yet. Let's add one so I can watch for breaches.",
   emptyTimeline: 'No activity yet. Once I start protecting you, everything will appear here.',
   emptyIntegrations: 'No accounts connected. Connect one and I can start protecting it.',
   emptyDevices: "No devices linked yet. Add one and I'll keep an eye on it.",
