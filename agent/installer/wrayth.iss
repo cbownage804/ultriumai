@@ -38,6 +38,17 @@ SetupIconFile=favicon.ico
 UninstallDisplayName={#MyAppName}
 UninstallDisplayIcon={app}\{#MyAppExeName}
 CloseApplications=no
+; Wrayth branding for the setup wizard
+WizardImageFile=WizardImage.bmp,WizardImage-large.bmp
+WizardSmallImageFile=WizardSmallImage.bmp,WizardSmallImage-large.bmp
+WizardImageStretch=yes
+WizardImageAlphaFormat=defined
+AppCopyright=© Ultrium LLC
+VersionInfoCompany={#MyAppPublisher}
+VersionInfoDescription={#MyAppName} Setup
+VersionInfoProductName={#MyAppName}
+VersionInfoProductVersion={#MyAppVersion}
+VersionInfoVersion={#MyAppVersion}
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
