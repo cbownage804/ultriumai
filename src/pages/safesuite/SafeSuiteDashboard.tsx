@@ -657,6 +657,11 @@ export default function WraythDashboard() {
       />
 
 
+      {/* 2d. Capability spine — surfaces devices, priorities, live activity,
+           M365, org memory, and agent releases so Home reflects everything
+           Ray has been built to do. */}
+      <HomeCapabilityTiles />
+
       {/* 2. Ask Ray — reinforces AI-first experience */}
       <div data-tour="quick-actions">
         <QuickActionsCard />
