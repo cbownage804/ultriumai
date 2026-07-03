@@ -1,14 +1,14 @@
 /**
  * Deep Threat Investigation — Wrayth Intelligence flagship.
  *
- * User picks an artifact type (URL, email, headers, IP, domain, file hash,
- * PowerShell, event log, Defender or M365 alert), pastes the artifact, and
- * Ray returns a structured investigation: verdict, plain-English summary,
- * technical findings, MITRE ATT&CK, IOCs, recommended response, executive
- * summary, timeline, and evidence. Each run costs 3 Ray Compute and is
- * persisted so the user can revisit prior investigations.
+ * The investigation detail is a tabbed workspace (Overview, Findings, MITRE,
+ * Indicators, Timeline, Actions, Reports). Every investigation supports
+ * one-click follow-ups — Ray reuses the case record to generate an executive
+ * report, a management explanation, a compliance-style incident report, or
+ * answer a free-form question. Follow-ups are persisted so the workspace
+ * accumulates value over time.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -18,11 +18,16 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import {
   ScanSearch, Sparkles, ShieldAlert, CheckCircle2, AlertTriangle,
-  HelpCircle, Coins, Clock, Trash2, ChevronRight, Brain, ListChecks,
-  Target, Fingerprint, FileText, Layers,
+  HelpCircle, Coins, Clock, Trash2, Brain, ListChecks,
+  Target, Fingerprint, FileText, Layers, ChevronRight, Presentation,
+  MessageCircleQuestion, FileWarning, Send, Copy, Download,
 } from 'lucide-react';
 
 type InputType =
@@ -53,6 +58,22 @@ type Investigation = {
   completed_at: string | null;
 };
 
+type FollowupType = 'executive_report' | 'management_explanation' | 'incident_report' | 'question';
+
+type Followup = {
+  id: string;
+  investigation_id: string;
+  user_id: string;
+  followup_type: FollowupType;
+  question: string | null;
+  title: string;
+  content: string | null;
+  cost_ray_compute: number;
+  status: string;
+  error: string | null;
+  created_at: string;
+};
+
 const INPUT_TYPES: Array<{ id: InputType; label: string; hint: string; multiline?: boolean }> = [
   { id: 'url', label: 'URL', hint: 'https://example.com/login' },
   { id: 'email', label: 'Email body', hint: 'Paste the suspicious message', multiline: true },
@@ -79,6 +100,33 @@ const SEVERITY_CLASS: Record<string, string> = {
   medium: 'text-amber-400',
   low: 'text-yellow-400',
   info: 'text-muted-foreground',
+};
+
+const FOLLOWUP_META: Record<FollowupType, { icon: React.ComponentType<{ className?: string }>; label: string; description: string; cost: number }> = {
+  executive_report: {
+    icon: Presentation,
+    label: 'Executive report',
+    description: 'One-page report for leadership',
+    cost: 2,
+  },
+  management_explanation: {
+    icon: MessageCircleQuestion,
+    label: 'Explain to management',
+    description: 'Plain-English summary, no jargon',
+    cost: 1,
+  },
+  incident_report: {
+    icon: FileWarning,
+    label: 'Incident report',
+    description: 'Compliance-style write-up',
+    cost: 2,
+  },
+  question: {
+    icon: Brain,
+    label: 'Ask Ray a question',
+    description: 'Free-form Q&A grounded in this case',
+    cost: 1,
+  },
 };
 
 function verdictBadge(v: string | null) {
@@ -176,8 +224,8 @@ export default function IntelligenceInvestigations() {
           </div>
           <h1 className="text-2xl sm:text-3xl font-semibold mt-1">Deep Threat Investigation</h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-            Give Ray an artifact and he produces a full investigation — plain-English summary,
-            technical findings, MITRE ATT&amp;CK mapping, IOCs, and the response he recommends.
+            Give Ray an artifact and he opens a case file — findings, MITRE mapping, IOCs, and one-click reports for
+            every audience.
           </p>
         </div>
         <Badge variant="outline" className="gap-1.5 rounded-sm">
@@ -186,9 +234,7 @@ export default function IntelligenceInvestigations() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6">
-        {/* Main column */}
         <div className="space-y-6 min-w-0">
-          {/* Composer */}
           <Card className="p-5 space-y-4">
             <div>
               <label className="text-xs uppercase tracking-wider text-muted-foreground">
@@ -214,9 +260,7 @@ export default function IntelligenceInvestigations() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs uppercase tracking-wider text-muted-foreground">
-                Artifact
-              </label>
+              <label className="text-xs uppercase tracking-wider text-muted-foreground">Artifact</label>
               {selectedInputSpec.multiline ? (
                 <Textarea
                   value={payload}
@@ -263,24 +307,16 @@ export default function IntelligenceInvestigations() {
             </div>
           </Card>
 
-          {/* Result */}
           {loading && !selected && <ResultSkeleton />}
-          {selected && <InvestigationDetail inv={selected} />}
+          {selected && <InvestigationWorkspace inv={selected} />}
           {!loading && !selected && history.length === 0 && <EmptyState />}
         </div>
 
-        {/* History */}
         <aside className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
-              Recent investigations
-            </h2>
-          </div>
+          <h2 className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Recent investigations</h2>
           <div className="space-y-2">
             {history.length === 0 && (
-              <p className="text-xs text-muted-foreground">
-                Ray has not run any investigations yet.
-              </p>
+              <p className="text-xs text-muted-foreground">Ray has not run any investigations yet.</p>
             )}
             {history.map((h) => {
               const isSelected = (selected?.id ?? null) === h.id;
@@ -356,19 +392,57 @@ function EmptyState() {
   );
 }
 
-function Section({ icon: Icon, title, children }: { icon: React.ComponentType<{ className?: string }>; title: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-muted-foreground">
-        <Icon className="h-3.5 w-3.5" />
-        {title}
-      </div>
-      <div>{children}</div>
-    </div>
-  );
-}
+/* ---------------- Workspace ---------------- */
 
-function InvestigationDetail({ inv }: { inv: Investigation }) {
+function InvestigationWorkspace({ inv }: { inv: Investigation }) {
+  const [tab, setTab] = useState('overview');
+  const [followups, setFollowups] = useState<Followup[]>([]);
+  const [busy, setBusy] = useState<FollowupType | null>(null);
+  const [questionOpen, setQuestionOpen] = useState(false);
+  const [question, setQuestion] = useState('');
+
+  const loadFollowups = useCallback(async () => {
+    const { data } = await supabase
+      .from('ray_investigation_followups')
+      .select('*')
+      .eq('investigation_id', inv.id)
+      .order('created_at', { ascending: false });
+    setFollowups((data as Followup[] | null) ?? []);
+  }, [inv.id]);
+
+  useEffect(() => {
+    setTab('overview');
+    setFollowups([]);
+    loadFollowups();
+  }, [inv.id, loadFollowups]);
+
+  async function runFollowup(type: FollowupType, q?: string) {
+    setBusy(type);
+    try {
+      const { data, error } = await supabase.functions.invoke('ray-investigate-followup', {
+        body: { investigation_id: inv.id, followup_type: type, question: q ?? null },
+      });
+      if (error) throw error;
+      const f = (data as { followup?: Followup })?.followup;
+      if (f) {
+        setFollowups((prev) => [f, ...prev]);
+        setTab('reports');
+        toast.success(`${FOLLOWUP_META[type].label} ready. ${FOLLOWUP_META[type].cost} RC used.`);
+      }
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Follow-up failed.';
+      toast.error(msg);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function deleteFollowup(id: string) {
+    const { error } = await supabase.from('ray_investigation_followups').delete().eq('id', id);
+    if (error) { toast.error('Could not delete.'); return; }
+    setFollowups((prev) => prev.filter((f) => f.id !== id));
+  }
+
   if (inv.status === 'failed') {
     return (
       <Card className="p-5 border-red-500/30 bg-red-500/5">
@@ -381,10 +455,17 @@ function InvestigationDetail({ inv }: { inv: Investigation }) {
     );
   }
 
+  const findingCount = inv.technical_findings.length;
+  const mitreCount = inv.mitre.length;
+  const iocCount = inv.iocs.length;
+  const actionCount = inv.recommended_response.length;
+  const timelineCount = inv.timeline.length;
+  const reportCount = followups.length;
+
   return (
-    <Card className="p-5 space-y-6">
+    <Card className="overflow-hidden">
       {/* Verdict strip */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-border">
+      <div className="p-5 border-b border-border flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           {verdictBadge(inv.verdict)}
           {inv.confidence && (
@@ -393,115 +474,397 @@ function InvestigationDetail({ inv }: { inv: Investigation }) {
               {typeof inv.confidence_score === 'number' && ` (${inv.confidence_score})`}
             </span>
           )}
+          {inv.input_label && (
+            <span className="text-xs text-muted-foreground hidden sm:inline">— {inv.input_label}</span>
+          )}
         </div>
         <span className="text-xs text-muted-foreground flex items-center gap-1">
           <Coins className="h-3 w-3" /> {inv.cost_ray_compute} RC · {new Date(inv.created_at).toLocaleString()}
         </span>
       </div>
 
-      {inv.summary && (
-        <Section icon={Brain} title="What Ray found">
-          <p className="text-sm leading-relaxed">{inv.summary}</p>
-        </Section>
-      )}
+      <Tabs value={tab} onValueChange={setTab} className="w-full">
+        <div className="px-5 pt-4 overflow-x-auto">
+          <TabsList className="bg-transparent p-0 h-auto gap-1 flex-wrap">
+            <WorkspaceTab value="overview" label="Overview" icon={Brain} />
+            <WorkspaceTab value="findings" label="Findings" icon={ListChecks} count={findingCount} />
+            <WorkspaceTab value="mitre" label="MITRE" icon={Target} count={mitreCount} />
+            <WorkspaceTab value="iocs" label="Indicators" icon={Fingerprint} count={iocCount} />
+            <WorkspaceTab value="timeline" label="Timeline" icon={Layers} count={timelineCount} />
+            <WorkspaceTab value="actions" label="Actions" icon={ChevronRight} count={actionCount} />
+            <WorkspaceTab value="reports" label="Reports" icon={FileText} count={reportCount} />
+          </TabsList>
+        </div>
 
-      {inv.executive_summary && (
-        <Section icon={FileText} title="Executive summary">
-          <p className="text-sm leading-relaxed text-muted-foreground italic">{inv.executive_summary}</p>
-        </Section>
-      )}
+        <div className="p-5 space-y-6">
+          <TabsContent value="overview" className="mt-0 space-y-4">
+            {inv.summary && <p className="text-sm leading-relaxed">{inv.summary}</p>}
+            {inv.executive_summary && (
+              <div className="rounded-sm border border-border p-3 bg-muted/30">
+                <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-1">
+                  Executive summary
+                </div>
+                <p className="text-sm italic text-muted-foreground">{inv.executive_summary}</p>
+              </div>
+            )}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2">
+              <StatCell label="Findings" value={findingCount} />
+              <StatCell label="MITRE" value={mitreCount} />
+              <StatCell label="IOCs" value={iocCount} />
+              <StatCell label="Actions" value={actionCount} />
+              <StatCell label="Reports" value={reportCount} />
+            </div>
+          </TabsContent>
 
-      {inv.technical_findings.length > 0 && (
-        <Section icon={ListChecks} title="Technical findings">
-          <ul className="space-y-2">
-            {inv.technical_findings.map((f, i) => (
-              <li key={i} className="rounded-sm border border-border p-3">
-                <div className="flex items-start justify-between gap-2">
-                  <span className="text-sm font-medium">{f.title ?? 'Finding'}</span>
-                  {f.severity && (
-                    <span className={cn('text-[10px] uppercase tracking-wider', SEVERITY_CLASS[f.severity.toLowerCase()] ?? 'text-muted-foreground')}>
-                      {f.severity}
+          <TabsContent value="findings" className="mt-0">
+            {findingCount === 0 ? <Empty text="Ray did not surface distinct technical findings." /> : (
+              <ul className="space-y-2">
+                {inv.technical_findings.map((f, i) => (
+                  <li key={i} className="rounded-sm border border-border p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-sm font-medium">{f.title ?? 'Finding'}</span>
+                      {f.severity && (
+                        <span className={cn('text-[10px] uppercase tracking-wider', SEVERITY_CLASS[f.severity.toLowerCase()] ?? 'text-muted-foreground')}>
+                          {f.severity}
+                        </span>
+                      )}
+                    </div>
+                    {f.detail && <p className="text-xs text-muted-foreground mt-1">{f.detail}</p>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </TabsContent>
+
+          <TabsContent value="mitre" className="mt-0">
+            {mitreCount === 0 ? <Empty text="No ATT&CK techniques mapped." /> : (
+              <div className="space-y-2">
+                {inv.mitre.map((m, i) => (
+                  <div key={i} className="rounded-sm border border-border p-3">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {m.id && <Badge variant="outline" className="rounded-sm font-mono text-xs">{m.id}</Badge>}
+                      <span className="text-sm">{m.name}</span>
+                    </div>
+                    {m.why && <p className="text-xs text-muted-foreground mt-1">{m.why}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="iocs" className="mt-0">
+            {iocCount === 0 ? <Empty text="Ray did not extract distinct indicators." /> : (
+              <div className="space-y-1.5">
+                {inv.iocs.map((ioc, i) => (
+                  <div key={i} className="flex items-start gap-2 text-xs rounded-sm border border-border p-2">
+                    {ioc.type && <Badge variant="outline" className="rounded-sm text-[10px] uppercase shrink-0">{ioc.type}</Badge>}
+                    <div className="min-w-0 flex-1">
+                      <div className="font-mono text-foreground break-all">{ioc.value}</div>
+                      {ioc.note && <div className="text-muted-foreground mt-0.5">{ioc.note}</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="timeline" className="mt-0">
+            {timelineCount === 0 ? <Empty text="No timeline reconstructed." /> : (
+              <ol className="border-l border-border pl-4 space-y-3">
+                {inv.timeline.map((t, i) => (
+                  <li key={i} className="relative">
+                    <span className="absolute -left-[19px] top-1 h-2 w-2 rounded-full bg-[hsl(262_60%_64%)]" />
+                    <p className="text-sm">{t.step}</p>
+                    {t.detail && <p className="text-xs text-muted-foreground mt-0.5">{t.detail}</p>}
+                  </li>
+                ))}
+              </ol>
+            )}
+          </TabsContent>
+
+          <TabsContent value="actions" className="mt-0">
+            {actionCount === 0 ? <Empty text="No recommended actions." /> : (
+              <ol className="space-y-2">
+                {inv.recommended_response.map((r, i) => (
+                  <li key={i} className="flex items-start gap-3 rounded-sm border border-border p-3">
+                    <span className="h-6 w-6 shrink-0 rounded-full bg-[hsl(262_60%_64%/0.12)] text-[hsl(262_60%_75%)] text-xs flex items-center justify-center">
+                      {r.priority ?? i + 1}
                     </span>
-                  )}
-                </div>
-                {f.detail && <p className="text-xs text-muted-foreground mt-1">{f.detail}</p>}
-              </li>
-            ))}
-          </ul>
-        </Section>
-      )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm">{r.action}</p>
+                      {r.owner && <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5">Owner: {r.owner}</p>}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </TabsContent>
 
-      {inv.mitre.length > 0 && (
-        <Section icon={Target} title="MITRE ATT&CK">
-          <div className="space-y-2">
-            {inv.mitre.map((m, i) => (
-              <div key={i} className="rounded-sm border border-border p-3">
-                <div className="flex items-center gap-2">
-                  {m.id && <Badge variant="outline" className="rounded-sm font-mono text-xs">{m.id}</Badge>}
-                  <span className="text-sm">{m.name}</span>
-                </div>
-                {m.why && <p className="text-xs text-muted-foreground mt-1">{m.why}</p>}
+          <TabsContent value="reports" className="mt-0">
+            {reportCount === 0 ? (
+              <Empty text="Generate an executive report, a management explanation, or ask Ray a question — the outputs land here." />
+            ) : (
+              <div className="space-y-3">
+                {followups.map((f) => (
+                  <FollowupCard key={f.id} followup={f} onDelete={() => deleteFollowup(f.id)} />
+                ))}
               </div>
-            ))}
+            )}
+          </TabsContent>
+        </div>
+
+        {/* Follow-up action strip */}
+        <div className="px-5 py-4 border-t border-border bg-muted/20">
+          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
+            One-click follow-ups
           </div>
-        </Section>
-      )}
-
-      {inv.iocs.length > 0 && (
-        <Section icon={Fingerprint} title="Indicators of compromise">
-          <div className="space-y-1.5">
-            {inv.iocs.map((ioc, i) => (
-              <div key={i} className="flex items-start gap-2 text-xs rounded-sm border border-border p-2">
-                {ioc.type && <Badge variant="outline" className="rounded-sm text-[10px] uppercase">{ioc.type}</Badge>}
-                <div className="min-w-0 flex-1">
-                  <div className="font-mono text-foreground break-all">{ioc.value}</div>
-                  {ioc.note && <div className="text-muted-foreground mt-0.5">{ioc.note}</div>}
-                </div>
-              </div>
-            ))}
+          <div className="flex flex-wrap gap-2">
+            {(['executive_report', 'management_explanation', 'incident_report'] as FollowupType[]).map((t) => {
+              const meta = FOLLOWUP_META[t];
+              const Icon = meta.icon;
+              const isBusy = busy === t;
+              return (
+                <Button
+                  key={t}
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 rounded-sm"
+                  disabled={busy !== null}
+                  onClick={() => runFollowup(t)}
+                >
+                  <Icon className={cn('h-3.5 w-3.5', isBusy && 'animate-pulse')} />
+                  {meta.label}
+                  <span className="text-[10px] text-muted-foreground">{meta.cost} RC</span>
+                </Button>
+              );
+            })}
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 rounded-sm"
+              disabled={busy !== null}
+              onClick={() => setQuestionOpen(true)}
+            >
+              <Brain className="h-3.5 w-3.5" />
+              Ask Ray a question
+              <span className="text-[10px] text-muted-foreground">1 RC</span>
+            </Button>
           </div>
-        </Section>
-      )}
+        </div>
+      </Tabs>
 
-      {inv.recommended_response.length > 0 && (
-        <Section icon={ChevronRight} title="What Ray recommends next">
-          <ol className="space-y-2">
-            {inv.recommended_response.map((r, i) => (
-              <li key={i} className="flex items-start gap-3 rounded-sm border border-border p-3">
-                <span className="h-6 w-6 shrink-0 rounded-full bg-[hsl(262_60%_64%/0.12)] text-[hsl(262_60%_75%)] text-xs flex items-center justify-center">
-                  {r.priority ?? i + 1}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm">{r.action}</p>
-                  {r.owner && <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5">Owner: {r.owner}</p>}
-                </div>
-              </li>
-            ))}
-          </ol>
-        </Section>
-      )}
-
-      {inv.timeline.length > 0 && (
-        <Section icon={Layers} title="Timeline">
-          <ol className="border-l border-border pl-4 space-y-3">
-            {inv.timeline.map((t, i) => (
-              <li key={i} className="relative">
-                <span className="absolute -left-[19px] top-1 h-2 w-2 rounded-full bg-[hsl(262_60%_64%)]" />
-                <p className="text-sm">{t.step}</p>
-                {t.detail && <p className="text-xs text-muted-foreground mt-0.5">{t.detail}</p>}
-              </li>
-            ))}
-          </ol>
-        </Section>
-      )}
-
-      {inv.evidence && Object.keys(inv.evidence).length > 0 && (
-        <Section icon={FileText} title="Evidence">
-          <pre className="text-xs bg-muted/40 rounded-sm p-3 overflow-x-auto whitespace-pre-wrap">
-{JSON.stringify(inv.evidence, null, 2)}
-          </pre>
-        </Section>
-      )}
+      <AskRayDialog
+        open={questionOpen}
+        onOpenChange={setQuestionOpen}
+        value={question}
+        onChange={setQuestion}
+        onSubmit={async () => {
+          const q = question.trim();
+          if (!q) return;
+          setQuestionOpen(false);
+          setQuestion('');
+          await runFollowup('question', q);
+        }}
+        busy={busy === 'question'}
+      />
     </Card>
+  );
+}
+
+function WorkspaceTab({
+  value, label, icon: Icon, count,
+}: { value: string; label: string; icon: React.ComponentType<{ className?: string }>; count?: number }) {
+  return (
+    <TabsTrigger
+      value={value}
+      className={cn(
+        'gap-1.5 rounded-sm border border-transparent',
+        'data-[state=active]:bg-[hsl(262_60%_64%/0.12)] data-[state=active]:border-[hsl(262_60%_64%/0.4)]',
+      )}
+    >
+      <Icon className="h-3.5 w-3.5" />
+      {label}
+      {typeof count === 'number' && count > 0 && (
+        <span className="text-[10px] text-muted-foreground">{count}</span>
+      )}
+    </TabsTrigger>
+  );
+}
+
+function StatCell({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-sm border border-border px-3 py-2">
+      <div className="text-lg font-medium leading-none">{value}</div>
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">{label}</div>
+    </div>
+  );
+}
+
+function Empty({ text }: { text: string }) {
+  return <p className="text-sm text-muted-foreground py-6 text-center">{text}</p>;
+}
+
+function FollowupCard({ followup, onDelete }: { followup: Followup; onDelete: () => void }) {
+  const meta = FOLLOWUP_META[followup.followup_type];
+  const Icon = meta.icon;
+
+  function copy() {
+    if (!followup.content) return;
+    navigator.clipboard.writeText(followup.content);
+    toast.success('Copied to clipboard.');
+  }
+
+  function download() {
+    if (!followup.content) return;
+    const slug = followup.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
+    const blob = new Blob([followup.content], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${slug || 'wrayth-report'}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <div className="rounded-sm border border-border overflow-hidden">
+      <div className="px-4 py-2.5 border-b border-border bg-muted/20 flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2 min-w-0">
+          <Icon className="h-4 w-4 text-[hsl(262_60%_70%)] shrink-0" />
+          <div className="min-w-0">
+            <div className="text-sm font-medium truncate">{followup.title}</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              {meta.label} · {followup.cost_ray_compute} RC · {new Date(followup.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={copy} aria-label="Copy">
+            <Copy className="h-3.5 w-3.5" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={download} aria-label="Download">
+            <Download className="h-3.5 w-3.5" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={onDelete} aria-label="Delete">
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+      <div className="p-4">
+        {followup.status === 'failed' ? (
+          <p className="text-sm text-red-400">Ray could not generate this output. {followup.error}</p>
+        ) : (
+          <MarkdownLite text={followup.content ?? ''} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Very small Markdown renderer — headings, bullets, bold, paragraphs.
+ * The follow-up prompts already produce clean Markdown; a full renderer is
+ * overkill and would drag in a dependency.
+ */
+function MarkdownLite({ text }: { text: string }) {
+  const lines = text.split('\n');
+  const blocks: React.ReactNode[] = [];
+  let listBuffer: string[] = [];
+  let paraBuffer: string[] = [];
+
+  const flushList = () => {
+    if (listBuffer.length === 0) return;
+    blocks.push(
+      <ul key={`ul-${blocks.length}`} className="list-disc pl-5 space-y-1 text-sm">
+        {listBuffer.map((li, i) => <li key={i}>{renderInline(li)}</li>)}
+      </ul>,
+    );
+    listBuffer = [];
+  };
+  const flushPara = () => {
+    if (paraBuffer.length === 0) return;
+    blocks.push(
+      <p key={`p-${blocks.length}`} className="text-sm leading-relaxed">
+        {renderInline(paraBuffer.join(' '))}
+      </p>,
+    );
+    paraBuffer = [];
+  };
+
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+    if (/^###\s+/.test(line)) {
+      flushList(); flushPara();
+      blocks.push(<h4 key={blocks.length} className="text-sm font-semibold mt-3">{line.replace(/^###\s+/, '')}</h4>);
+    } else if (/^##\s+/.test(line)) {
+      flushList(); flushPara();
+      blocks.push(<h3 key={blocks.length} className="text-base font-semibold mt-4">{line.replace(/^##\s+/, '')}</h3>);
+    } else if (/^#\s+/.test(line)) {
+      flushList(); flushPara();
+      blocks.push(<h2 key={blocks.length} className="text-lg font-semibold mt-4">{line.replace(/^#\s+/, '')}</h2>);
+    } else if (/^\s*[-*]\s+/.test(line)) {
+      flushPara();
+      listBuffer.push(line.replace(/^\s*[-*]\s+/, ''));
+    } else if (line.trim() === '') {
+      flushList(); flushPara();
+    } else {
+      flushList();
+      paraBuffer.push(line);
+    }
+  }
+  flushList(); flushPara();
+
+  return <div className="space-y-2">{blocks}</div>;
+}
+
+function renderInline(text: string): React.ReactNode {
+  // Split on **bold** — nothing else fancy.
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((p, i) => {
+    if (/^\*\*[^*]+\*\*$/.test(p)) {
+      return <strong key={i}>{p.slice(2, -2)}</strong>;
+    }
+    return <span key={i}>{p}</span>;
+  });
+}
+
+function AskRayDialog({
+  open, onOpenChange, value, onChange, onSubmit, busy,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  value: string;
+  onChange: (v: string) => void;
+  onSubmit: () => void | Promise<void>;
+  busy: boolean;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Brain className="h-4 w-4 text-[hsl(262_60%_70%)]" />
+            Ask Ray about this investigation
+          </DialogTitle>
+        </DialogHeader>
+        <Textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="e.g. What would happen if the user clicked this link? How confident are you? What should I tell the affected user?"
+          className="min-h-[120px]"
+          autoFocus
+        />
+        <p className="text-xs text-muted-foreground">
+          Ray only uses this investigation's record — he won't invent details.
+        </p>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={onSubmit} disabled={busy || !value.trim()} className="gap-2">
+            {busy ? <Brain className="h-4 w-4 animate-pulse" /> : <Send className="h-4 w-4" />}
+            Ask (1 RC)
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
