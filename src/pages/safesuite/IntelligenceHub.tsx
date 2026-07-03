@@ -21,6 +21,7 @@ import {
   GitBranch, Network, Sparkles, Coins, Brain, ArrowUpRight, History, BookOpen, Layers, Briefcase,
 } from 'lucide-react';
 import { IntelligenceRayBrief } from '@/components/ray/IntelligenceRayBrief';
+import { HowIProtectYouCard } from '@/components/ray/HowIProtectYouCard';
 
 type Tile = {
   id: string;
@@ -266,6 +267,16 @@ export default function IntelligenceHub() {
           )}
         </CardContent>
       </Card>
+
+      <HowIProtectYouCard
+        title="While you work…"
+        lines={[
+          "I'm keeping every module — investigations, attack paths, compliance, logs — sharing the same evidence and memory.",
+          "I'm watching for patterns that only show up when you look across cases.",
+          "Anything worth your attention lands in your Ray Brief first.",
+        ]}
+      />
     </div>
   );
 }
+

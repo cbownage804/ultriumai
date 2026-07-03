@@ -15,6 +15,8 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
+import { ModuleRayBrief } from '@/components/ray/ModuleRayBrief';
+import { HowIProtectYouCard } from '@/components/ray/HowIProtectYouCard';
 import {
   Sparkles, Coins, GitBranch, Brain, Clock, Trash2, Layers, Radar,
   Wrench, Target, ShieldAlert, AlertTriangle, CheckCircle2, HelpCircle,
@@ -202,6 +204,27 @@ export default function IntelligenceAttackPaths() {
         </Badge>
       </div>
 
+      <ModuleRayBrief
+        eventPatterns={['event_type.ilike.attack_path%', 'event_type.ilike.path%']}
+        idleLines={[
+          "I haven't modeled any attack paths for you yet.",
+          'Point me at an investigation or a device and I\u2019ll walk through initial access to impact.',
+        ]}
+        composer={({ events }) => {
+          const paths = events.length;
+          const critical = events.filter((e) => /critical|high/i.test(e.event_type + ' ' + (e.summary ?? ''))).length;
+          const lines: string[] = [];
+          lines.push(paths === 1 ? 'I modeled 1 attack path recently.' : `I modeled ${paths} attack paths recently.`);
+          if (critical > 0) {
+            lines.push(critical === 1 ? 'I found 1 worth closing.' : `I found ${critical} worth closing.`);
+            lines.push('Closing the initial-access step would eliminate the path in most cases.');
+          } else {
+            lines.push('None of them currently have a viable initial-access step.');
+          }
+          return { lines, tone: critical > 0 ? 'warn' : 'ok' };
+        }}
+      />
+
       <Card className="p-5 space-y-4">
         <div>
           <label className="text-xs uppercase tracking-wider text-muted-foreground">Source investigation (optional)</label>
@@ -285,9 +308,19 @@ export default function IntelligenceAttackPaths() {
           </div>
         </aside>
       </div>
+
+      <HowIProtectYouCard
+        title="While you work…"
+        lines={[
+          "I'm continuously reasoning about how a threat could unfold in your environment.",
+          "I'm looking for the smallest change that eliminates the largest number of paths.",
+          "If a new path opens up, I'll surface it here first.",
+        ]}
+      />
     </div>
   );
 }
+
 
 function EmptyState() {
   return (

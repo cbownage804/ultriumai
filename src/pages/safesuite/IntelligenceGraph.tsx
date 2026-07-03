@@ -19,6 +19,8 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Brain, GitFork, Network, ScanSearch, Sparkles, TriangleAlert, ExternalLink, Clock, Fingerprint } from 'lucide-react';
+import { ModuleRayBrief } from '@/components/ray/ModuleRayBrief';
+import { HowIProtectYouCard } from '@/components/ray/HowIProtectYouCard';
 
 type Investigation = {
   id: string;
@@ -206,6 +208,24 @@ export default function IntelligenceGraph() {
         </Link>
       </div>
 
+      <ModuleRayBrief
+        eventPatterns={['event_type.ilike.investigation%', 'event_type.ilike.ioc%', 'event_type.ilike.graph%']}
+        idleLines={[
+          "I haven't correlated anything new across your cases yet.",
+          'Run a few investigations and I\u2019ll start connecting the dots.',
+        ]}
+        composer={({ events }) => {
+          const iocs = events.filter((e) => /ioc/i.test(e.event_type)).length;
+          const invs = events.filter((e) => /investigation/i.test(e.event_type)).length;
+          const lines: string[] = [];
+          lines.push("I've connected your identities, devices, investigations, and policies.");
+          if (invs > 0) lines.push(`I correlated ${invs} recent ${invs === 1 ? 'case' : 'cases'} against your existing IOC graph.`);
+          if (iocs > 0) lines.push(iocs === 1 ? 'I found 1 relationship worth a second look.' : `I found ${iocs} relationships worth a second look.`);
+          else lines.push('Nothing new is clustering together right now.');
+          return { lines, tone: 'ok' };
+        }}
+      />
+
       {/* Org intelligence stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard label="Investigations" value={orgStats.totalInvestigations} icon={<ScanSearch className="h-4 w-4" />} />
@@ -359,9 +379,19 @@ export default function IntelligenceGraph() {
 
 
       <IocDetailsDialog ioc={detailIoc} onClose={() => setDetailIoc(null)} />
+
+      <HowIProtectYouCard
+        title="While you work…"
+        lines={[
+          "I'm continuously connecting your identities, devices, and investigations.",
+          "I'm looking for repeat offenders and quiet clusters you'd miss on your own.",
+          "If two cases quietly share the same actor, I'll surface it here.",
+        ]}
+      />
     </div>
   );
 }
+
 
 function StatCard({ label, value, icon, accent }: { label: string; value: number; icon: React.ReactNode; accent?: boolean }) {
   return (

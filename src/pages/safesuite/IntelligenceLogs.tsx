@@ -25,6 +25,8 @@ import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
+import { ModuleRayBrief } from '@/components/ray/ModuleRayBrief';
+import { HowIProtectYouCard } from '@/components/ray/HowIProtectYouCard';
 import {
   FileWarning, Sparkles, Upload, Coins, Clock, Brain,
   Target, Fingerprint, ListChecks, Layers, ChevronRight, AlertTriangle,
@@ -232,6 +234,28 @@ export default function IntelligenceLogs() {
         </p>
       </div>
 
+
+      <ModuleRayBrief
+        eventPatterns={['event_type.ilike.log%', 'event_type.ilike.analysis%', 'event_type.ilike.auth%']}
+        idleLines={[
+          'No logs have come across my desk in the last couple of days.',
+          "Upload an export and I'll produce a single unified report.",
+        ]}
+        composer={({ events }) => {
+          const anomalies = events.filter((e) => /anomal|suspicious|failed|malicious/i.test(e.event_type + ' ' + (e.summary ?? ''))).length;
+          const analyses = events.filter((e) => /log|analysis/i.test(e.event_type)).length;
+          const lines: string[] = [];
+          lines.push(analyses === 1 ? 'I reviewed 1 log set you uploaded recently.' : `I reviewed ${analyses} log sets you uploaded recently.`);
+          if (anomalies > 0) {
+            lines.push(anomalies === 1 ? 'I found 1 anomaly worth explaining.' : `I found ${anomalies} anomalies worth explaining.`);
+            lines.push("They don't currently indicate compromise, but I flagged them.");
+          } else {
+            lines.push('Nothing in there currently indicates compromise.');
+          }
+          return { lines, tone: anomalies > 3 ? 'warn' : 'ok' };
+        }}
+      />
+
       <div className="grid lg:grid-cols-[380px_1fr] gap-4">
         <div className="space-y-4">
           <Card className="p-4 space-y-3 border-border bg-card">
@@ -340,9 +364,19 @@ export default function IntelligenceLogs() {
           )}
         </div>
       </div>
+
+      <HowIProtectYouCard
+        title="While you work…"
+        lines={[
+          "I'm chunking and summarizing every log you upload.",
+          "I'm mapping authentication events against known attacker patterns.",
+          "I'll surface anomalies here — and interrupt you if any suggest active compromise.",
+        ]}
+      />
     </div>
   );
 }
+
 
 function StatusDot({ status }: { status: Analysis['status'] }) {
   if (status === 'complete') return <CheckCircle2 className="h-4 w-4 text-[hsl(140_60%_60%)] shrink-0" />;
