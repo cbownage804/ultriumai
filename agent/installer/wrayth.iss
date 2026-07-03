@@ -13,7 +13,7 @@
 #define MyDefaultApiBase "https://nsyobmjpdpvesjwdphlh.supabase.co"
 
 #ifndef MyAppVersion
-  #define MyAppVersion "0.2.1"
+  #define MyAppVersion "0.2.2"
 #endif
 
 [Setup]
@@ -104,21 +104,20 @@ Filename: "powershell.exe"; \
   Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$marker = '{tmp}\wrayth-agent-reboot-required.flag'; if (Get-Service -Name '{#MyServiceName}' -ErrorAction SilentlyContinue) {{ & sc.exe delete '{#MyServiceName}' | Out-Null; for ($i = 0; $i -lt 20; $i++) {{ Start-Sleep -Milliseconds 500; if (-not (Get-Service -Name '{#MyServiceName}' -ErrorAction SilentlyContinue)) {{ break }} }}; if (Get-Service -Name '{#MyServiceName}' -ErrorAction SilentlyContinue) {{ Set-Content -Path $marker -Value 'Service deletion is pending reboot.' -Encoding ASCII }} }}"""; \
   Flags: runhidden waituntilterminated; RunOnceId: "ScDeleteWraythSvc"
 ; Wait for the WraythAgent / WraythService processes AND their open file
-; handles to actually release, then retry-delete the on-disk files that
-; Inno's built-in [UninstallDelete] sweep otherwise trips over ("Some
-; elements could not be removed. These can be removed manually.").
-; We loop up to ~15s so slow log flushes / AV scanners get a chance.
+; handles to actually release, then recursively force-delete everything
+; inside {app} plus the ProgramData tree. We can't enumerate every file
+; WinSW might drop (rotated logs, .lock files, .pid files, crash dumps),
+; so we brute-force the whole directory instead of a hand-maintained list.
+; That's what fixes "Some elements could not be removed" on uninstall.
 Filename: "powershell.exe"; \
-  Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$ErrorActionPreference='SilentlyContinue'; for ($i = 0; $i -lt 30; $i++) {{ $p = Get-Process -Name 'WraythService','WraythAgent'; if (-not $p) {{ break }}; Stop-Process -InputObject $p -Force; Start-Sleep -Milliseconds 500 }}; $targets = @('{app}\WraythAgent.exe','{app}\WraythService.exe','{app}\WraythService.xml','{app}\install-wrayth-service.ps1'); Get-ChildItem -Path '{app}' -Filter 'WraythService*.log' -ErrorAction SilentlyContinue | ForEach-Object {{ $targets += $_.FullName }}; Get-ChildItem -Path '{app}' -Filter 'WraythService*.wrapper.log' -ErrorAction SilentlyContinue | ForEach-Object {{ $targets += $_.FullName }}; foreach ($t in $targets) {{ for ($j = 0; $j -lt 10; $j++) {{ if (-not (Test-Path -LiteralPath $t)) {{ break }}; try {{ Remove-Item -LiteralPath $t -Force -ErrorAction Stop }} catch {{ Start-Sleep -Milliseconds 400 }} }} }}; Get-ChildItem -Path '{commonappdata}\Wrayth\logs' -File -ErrorAction SilentlyContinue | ForEach-Object {{ for ($j = 0; $j -lt 10; $j++) {{ try {{ Remove-Item -LiteralPath $_.FullName -Force -ErrorAction Stop; break }} catch {{ Start-Sleep -Milliseconds 400 }} }} }}"""; \
+  Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$ErrorActionPreference='SilentlyContinue'; for ($i = 0; $i -lt 40; $i++) {{ $p = Get-Process -Name 'WraythService','WraythAgent','python','powershell' -ErrorAction SilentlyContinue | Where-Object {{ try {{ $_.Path -like '{app}\*' }} catch {{ $false }} }}; $svc = Get-Process -Name 'WraythService','WraythAgent' -ErrorAction SilentlyContinue; if (-not $p -and -not $svc) {{ break }}; if ($p) {{ Stop-Process -InputObject $p -Force -ErrorAction SilentlyContinue }}; if ($svc) {{ Stop-Process -InputObject $svc -Force -ErrorAction SilentlyContinue }}; Start-Sleep -Milliseconds 400 }}; Start-Sleep -Seconds 1; $sweep = @('{app}', '{commonappdata}\Wrayth'); foreach ($root in $sweep) {{ if (-not (Test-Path -LiteralPath $root)) {{ continue }}; for ($k = 0; $k -lt 20; $k++) {{ $items = Get-ChildItem -LiteralPath $root -Recurse -Force -ErrorAction SilentlyContinue | Sort-Object -Property FullName -Descending; if (-not $items) {{ break }}; foreach ($it in $items) {{ try {{ Remove-Item -LiteralPath $it.FullName -Force -Recurse -ErrorAction Stop }} catch {{}} }}; Start-Sleep -Milliseconds 300 }} }}"""; \
   Flags: runhidden waituntilterminated; RunOnceId: "WraythReleaseHandles"
 
 [UninstallDelete]
-; Both {app} and the ProgramData tree — the retry loop above already tried
-; hard, but this catches anything the loop didn't know about (e.g. rotated
-; log files or ancillary files added by future versions).
+; Brute-force sweep above already emptied these; this is the final Inno
+; pass that removes the now-empty directories themselves.
 Type: filesandordirs; Name: "{commonappdata}\Wrayth"
-Type: filesandordirs; Name: "{app}\WraythService*.log"
-Type: filesandordirs; Name: "{app}\WraythService*.wrapper.log"
+Type: filesandordirs; Name: "{app}"
 
 [Code]
 var
