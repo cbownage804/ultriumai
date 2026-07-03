@@ -146,7 +146,7 @@ chrome.commands.onCommand.addListener(async (command) => {
 async function triggerAutofill(tab) {
   const session = await chrome.storage.session.get(['unlocked', 'masterKey']);
   if (!session.unlocked) {
-    chrome.action.openPopup();
+    try { chrome.action?.openPopup?.(); } catch (_) {}
     return;
   }
   
