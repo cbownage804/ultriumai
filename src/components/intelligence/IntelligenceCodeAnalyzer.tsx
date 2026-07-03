@@ -15,6 +15,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -22,7 +24,8 @@ import { cn } from '@/lib/utils';
 import {
   Sparkles, CheckCircle2, AlertTriangle, HelpCircle, ShieldAlert,
   Coins, Clock, Brain, Target, Fingerprint, ListChecks, Layers, ChevronRight,
-  Bug, Terminal, Upload,
+  Bug, Terminal, Upload, Download, ShieldOff, Anchor, KeyRound, Radio,
+  Network, ArrowUpFromLine, Skull, Gauge,
 } from 'lucide-react';
 
 export type AnalyzerMode = 'script' | 'malware';
@@ -133,8 +136,23 @@ export function IntelligenceCodeAnalyzer({ mode }: { mode: AnalyzerMode }) {
   const onFile = async (f: File) => {
     if (f.size > 500_000) { toast.error('File too large (max 500 KB)'); return; }
     const text = await f.text();
-    setPayload(text.slice(0, 60_000));
+    const trimmed = text.trim();
+    // If the uploaded/pasted content is a bare hash, treat it as a hash artifact.
+    if (mode === 'malware' && /^[a-f0-9]{32}$|^[a-f0-9]{40}$|^[a-f0-9]{64}$/i.test(trimmed)) {
+      setPayload(trimmed.toLowerCase());
+      setLanguage('hash');
+    } else {
+      setPayload(text.slice(0, 60_000));
+    }
     if (!label) setLabel(f.name);
+  };
+
+  const onPayloadChange = (v: string) => {
+    const next = v.slice(0, 60_000);
+    setPayload(next);
+    if (mode === 'malware' && /^[a-f0-9]{32}$|^[a-f0-9]{40}$|^[a-f0-9]{64}$/i.test(next.trim())) {
+      setLanguage('hash');
+    }
   };
 
   const run = async () => {
@@ -212,10 +230,10 @@ export function IntelligenceCodeAnalyzer({ mode }: { mode: AnalyzerMode }) {
               </label>
               <Textarea
                 value={payload}
-                onChange={e => setPayload(e.target.value.slice(0, 60_000))}
+                onChange={e => onPayloadChange(e.target.value)}
                 placeholder={mode === 'script'
                   ? 'Paste script source here…'
-                  : 'Paste hash, strings output, or suspicious payload here…'}
+                  : 'Paste a hash (MD5/SHA1/SHA256), strings dump, or suspicious payload here…'}
                 className="mt-1 min-h-[220px] font-mono text-xs"
               />
             </div>
@@ -317,26 +335,43 @@ function Detail({ a }: { a: Analysis }) {
     );
   }
 
+  const isMalware = a.mode === 'malware';
+  const likelihood = typeof a.confidence_score === 'number'
+    ? a.confidence_score
+    : (a.confidence === 'high' ? 85 : a.confidence === 'medium' ? 60 : a.confidence === 'low' ? 30 : 0);
+  const riskLevel = deriveRisk(a);
+
   return (
     <Card className="border-border bg-card">
-      <div className="p-5 border-b border-border">
-        <div className={cn('inline-flex items-center gap-2 text-sm', t.color)}>
-          <V className="h-4 w-4" />
-          <span className="font-medium">{t.label}</span>
-          {a.confidence && (
-            <span className="text-muted-foreground">· {a.confidence} confidence
-              {typeof a.confidence_score === 'number' ? ` (${a.confidence_score})` : ''}
-            </span>
-          )}
+      <div className="p-5 border-b border-border space-y-3">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <div className={cn('inline-flex items-center gap-2 text-sm', t.color)}>
+            <V className="h-4 w-4" />
+            <span className="font-medium">{t.label}</span>
+            {a.confidence && (
+              <span className="text-muted-foreground">· {a.confidence} confidence</span>
+            )}
+          </div>
+          <div className="inline-flex items-center gap-2 text-xs">
+            <Badge variant="outline" className={cn('text-[10px] uppercase tracking-wider', SEVERITY[riskLevel] ?? SEVERITY.info)}>
+              Risk · {riskLevel}
+            </Badge>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <Gauge className="h-3.5 w-3.5 text-muted-foreground" />
+          <div className="text-[11px] uppercase tracking-wider text-muted-foreground w-20">Likelihood</div>
+          <Progress value={likelihood} className="h-1.5 flex-1" />
+          <div className="text-xs text-muted-foreground w-10 text-right tabular-nums">{likelihood}%</div>
         </div>
         {a.intent && (
-          <div className="mt-3 text-sm">
+          <div className="text-sm">
             <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Intent · </span>
             {a.intent}
           </div>
         )}
         {a.risk_summary && (
-          <div className="mt-1 text-sm text-muted-foreground">{a.risk_summary}</div>
+          <div className="text-sm text-muted-foreground">{a.risk_summary}</div>
         )}
       </div>
 
@@ -398,15 +433,17 @@ function Detail({ a }: { a: Analysis }) {
           )}
         </TabsContent>
 
-        <TabsContent value="behaviors">
+        <TabsContent value="behaviors" className="space-y-4">
+          {isMalware && <BehaviorBreakdown behaviors={a.behaviors} />}
           {a.behaviors.length === 0
             ? <p className="text-sm text-muted-foreground">No distinct behaviors identified.</p>
             : (
               <div className="space-y-2">
+                <div className="text-[11px] uppercase tracking-wider text-muted-foreground">All observed behaviors</div>
                 {a.behaviors.map((b, i) => (
                   <div key={i} className="rounded-sm border border-border p-3">
                     <div className="flex items-center justify-between mb-1">
-                      <Badge variant="outline" className="text-[10px] uppercase tracking-wider">{b.category ?? 'other'}</Badge>
+                      <Badge variant="outline" className="text-[10px] uppercase tracking-wider">{(b.category ?? 'other').replace(/_/g, ' ')}</Badge>
                     </div>
                     <div className="text-sm">{b.detail}</div>
                     {b.evidence && (
@@ -453,25 +490,153 @@ function Detail({ a }: { a: Analysis }) {
         </TabsContent>
 
         <TabsContent value="response">
-          {a.recommended_response.length === 0
-            ? <p className="text-sm text-muted-foreground">No recommendations.</p>
-            : (
-              <ol className="space-y-2">
-                {[...a.recommended_response].sort((x, y) => (x.priority ?? 99) - (y.priority ?? 99)).map((r, i) => (
-                  <li key={i} className="rounded-sm border border-border p-3 flex gap-3">
-                    <div className="h-6 w-6 rounded-sm bg-[hsl(262_60%_64%/0.15)] text-[hsl(262_60%_78%)] flex items-center justify-center text-xs font-medium shrink-0">
-                      {r.priority ?? i + 1}
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-sm">{r.action}</div>
-                      {r.owner && <div className="text-[11px] uppercase tracking-wider text-muted-foreground mt-1">Owner · {r.owner}</div>}
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            )}
+          <ResponseChecklist id={a.id} items={a.recommended_response} />
         </TabsContent>
       </Tabs>
     </Card>
+  );
+}
+
+// ---------- Malware Behavior Breakdown ----------
+
+const CANONICAL_BEHAVIORS: Array<{
+  key: string;
+  label: string;
+  Icon: typeof Download;
+  aliases: RegExp;
+}> = [
+  { key: 'downloads_payload',  label: 'Downloads Payload',  Icon: Download,        aliases: /downloads?_payload|stager|dropper|download|payload_fetch/i },
+  { key: 'disables_defender',  label: 'Disables Defender',  Icon: ShieldOff,       aliases: /disables?_defender|defender_off|amsi|tamper|disable.*(av|antivirus)/i },
+  { key: 'persistence',        label: 'Persistence',        Icon: Anchor,          aliases: /persistence|autorun|scheduled_task|run_key|startup/i },
+  { key: 'credential_theft',   label: 'Credential Theft',   Icon: KeyRound,        aliases: /credential_theft|credential_access|mimikatz|lsass|dump.*cred|steal.*password/i },
+  { key: 'c2_attempts',        label: 'C2 Attempts',        Icon: Radio,           aliases: /c2_attempts|\bc2\b|command.*control|beacon|callback/i },
+  { key: 'lateral_movement',   label: 'Lateral Movement',   Icon: Network,         aliases: /lateral_movement|smb.*spread|psexec|wmi_exec/i },
+  { key: 'exfiltration',       label: 'Exfiltration',       Icon: ArrowUpFromLine, aliases: /exfiltration|exfil|data_upload/i },
+  { key: 'impact',             label: 'Destructive Impact', Icon: Skull,           aliases: /impact|ransom|wipe|encrypt.*files|shadow.*delete/i },
+];
+
+function BehaviorBreakdown({ behaviors }: { behaviors: Array<{ category?: string; detail?: string; evidence?: string }> }) {
+  return (
+    <div>
+      <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">Behavior breakdown</div>
+      <div className="grid grid-cols-2 gap-2">
+        {CANONICAL_BEHAVIORS.map(({ key, label, Icon, aliases }) => {
+          const hits = behaviors.filter(b => aliases.test(`${b.category ?? ''} ${b.detail ?? ''}`));
+          const active = hits.length > 0;
+          return (
+            <div
+              key={key}
+              className={cn(
+                'rounded-sm border p-3 transition-colors',
+                active
+                  ? 'border-[hsl(0_70%_45%/0.4)] bg-[hsl(0_70%_45%/0.06)]'
+                  : 'border-border bg-muted/20 opacity-70',
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <Icon className={cn('h-4 w-4 shrink-0', active ? 'text-[hsl(0_70%_65%)]' : 'text-muted-foreground')} />
+                <div className="text-sm font-medium flex-1">{label}</div>
+                {active
+                  ? <Badge variant="outline" className="text-[10px] bg-[hsl(0_70%_45%/0.12)] text-[hsl(0_70%_75%)] border-[hsl(0_70%_45%/0.4)]">Observed</Badge>
+                  : <Badge variant="outline" className="text-[10px] text-muted-foreground">Not observed</Badge>}
+              </div>
+              {active && (
+                <ul className="mt-2 space-y-1">
+                  {hits.slice(0, 3).map((h, i) => (
+                    <li key={i} className="text-xs text-muted-foreground leading-snug">• {h.detail}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ---------- Risk derivation ----------
+
+function deriveRisk(a: Analysis): 'critical' | 'high' | 'medium' | 'low' | 'info' {
+  const v = (a.verdict ?? '').toLowerCase();
+  const sevOrder = ['info', 'low', 'medium', 'high', 'critical'] as const;
+  const topSev = a.technical_findings.reduce<typeof sevOrder[number]>((acc, f) => {
+    const s = (f.severity ?? 'info').toLowerCase() as typeof sevOrder[number];
+    return sevOrder.indexOf(s) > sevOrder.indexOf(acc) ? s : acc;
+  }, 'info');
+  if (v === 'malicious') return topSev === 'critical' ? 'critical' : 'high';
+  if (v === 'suspicious') return topSev === 'critical' || topSev === 'high' ? 'high' : 'medium';
+  if (v === 'benign') return 'low';
+  return topSev;
+}
+
+// ---------- Response Checklist ----------
+
+function ResponseChecklist({ id, items }: {
+  id: string;
+  items: Array<{ priority?: number; action?: string; owner?: string }>;
+}) {
+  const storageKey = `ray-response-checklist:${id}`;
+  const [checked, setChecked] = useState<Record<number, boolean>>(() => {
+    try { return JSON.parse(localStorage.getItem(storageKey) ?? '{}'); } catch { return {}; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem(storageKey, JSON.stringify(checked)); } catch { /* ignore */ }
+  }, [storageKey, checked]);
+
+  if (items.length === 0) {
+    return <p className="text-sm text-muted-foreground">No recommendations.</p>;
+  }
+
+  const sorted = [...items].sort((x, y) => (x.priority ?? 99) - (y.priority ?? 99));
+  const done = sorted.filter((_, i) => checked[i]).length;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
+          Recommended response · {done}/{sorted.length} complete
+        </div>
+        {done > 0 && (
+          <button
+            className="text-[11px] text-muted-foreground hover:text-foreground underline underline-offset-2"
+            onClick={() => setChecked({})}
+          >
+            Reset
+          </button>
+        )}
+      </div>
+      <ol className="space-y-2">
+        {sorted.map((r, i) => {
+          const isChecked = !!checked[i];
+          return (
+            <li
+              key={i}
+              className={cn(
+                'rounded-sm border border-border p-3 flex gap-3 items-start transition-opacity',
+                isChecked && 'opacity-60',
+              )}
+            >
+              <Checkbox
+                checked={isChecked}
+                onCheckedChange={(v) => setChecked(prev => ({ ...prev, [i]: !!v }))}
+                className="mt-0.5"
+              />
+              <div className="h-6 w-6 rounded-sm bg-[hsl(262_60%_64%/0.15)] text-[hsl(262_60%_78%)] flex items-center justify-center text-xs font-medium shrink-0">
+                {r.priority ?? i + 1}
+              </div>
+              <div className="flex-1">
+                <div className={cn('text-sm', isChecked && 'line-through')}>{r.action}</div>
+                {r.owner && (
+                  <div className="text-[11px] uppercase tracking-wider text-muted-foreground mt-1">
+                    Owner · {r.owner}
+                  </div>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
   );
 }

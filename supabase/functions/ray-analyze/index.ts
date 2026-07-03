@@ -57,6 +57,15 @@ network callbacks unless they appear in the input. If a definitive verdict
 requires a sandbox detonation you cannot perform, say so and set confidence
 accordingly.
 
+When analyzing malware, always explicitly assess these canonical behaviors and
+include one entry per observed behavior in the "behaviors" array (skip only
+if there is zero evidence): downloads_payload, disables_defender,
+persistence, credential_theft, c2_attempts, lateral_movement, exfiltration,
+impact. Use the category names above verbatim so the UI can group them.
+Every recommended_response item should be an actionable checklist step
+(isolate host, kill process, rotate credentials, block IOC, submit to
+sandbox, etc.) with a numeric priority (1 = do first).
+
 Return STRICT JSON matching the requested schema. No prose outside the JSON.`;
 
 const SCHEMA = `{
@@ -77,7 +86,7 @@ const SCHEMA = `{
     { "title": "Short title", "detail": "Technical detail tied to a code region or string.", "severity": "info | low | medium | high | critical" }
   ],
   "behaviors": [
-    { "category": "persistence | discovery | defense_evasion | credential_access | execution | c2 | exfiltration | impact | lateral_movement | collection | other", "detail": "What Ray observed.", "evidence": "Optional: a short quoted excerpt or line reference from the artifact." }
+    { "category": "downloads_payload | disables_defender | persistence | credential_theft | c2_attempts | lateral_movement | exfiltration | impact | discovery | defense_evasion | credential_access | execution | c2 | collection | other", "detail": "What Ray observed.", "evidence": "Optional: a short quoted excerpt or line reference from the artifact." }
   ],
   "mitre": [
     { "id": "T1059.001", "name": "PowerShell", "why": "Why this technique applies to the artifact." }
