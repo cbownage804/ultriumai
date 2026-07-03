@@ -253,6 +253,165 @@ export default function WraythLanding() {
         </div>
       </section>
 
+      {/* EVERYTHING RAY WATCHES */}
+      <section className="py-24 border-t border-border">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mb-10">
+            <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+              Continuous monitoring
+            </div>
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
+              Everything Ray watches
+            </h2>
+            <p className="mt-3 text-muted-foreground">
+              Twenty layers of your security posture, monitored continuously. No dashboards
+              to babysit &mdash; Ray tells you when something matters.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {RAY_WATCHES.map((item) => (
+              <span
+                key={item}
+                className="text-sm px-3 py-1.5 rounded-md border border-border/70 bg-card/40 text-foreground/90"
+              >
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* WHAT MAKES WRAYTH DIFFERENT */}
+      <section className="py-24 border-t border-border">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mb-12">
+            <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+              What makes Wrayth different
+            </div>
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
+              Alerts don't protect you. Ray does.
+            </h2>
+          </div>
+          <div className="grid gap-px bg-border border border-border wrayth-chamfer overflow-hidden">
+            {CONTRASTS.map((c) => (
+              <div key={c.trad} className="bg-background p-6 md:p-8 grid md:grid-cols-2 gap-4 md:gap-10">
+                <p className="text-muted-foreground line-through decoration-muted-foreground/40 text-base md:text-lg">
+                  {c.trad}
+                </p>
+                <p className="text-foreground font-medium text-base md:text-lg">
+                  <span className="text-primary">Ray</span>{' '}
+                  {c.ray.replace(/^Ray\s*/, '').toLowerCase().replace(/^./, (m) => m.toLowerCase())}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ONE-CLICK REMEDIATION */}
+      <section className="py-24 border-t border-border">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mb-10">
+            <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+              One-click remediation
+            </div>
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
+              Ray doesn't just recommend. Ray fixes.
+            </h2>
+            <p className="mt-3 text-muted-foreground">
+              Approved actions Ray can perform on your endpoints in seconds.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {REMEDIATIONS.map((action) => (
+              <div
+                key={action}
+                className="flex items-center gap-3 rounded-sm border border-border/60 bg-card/30 px-4 py-3"
+              >
+                <Wand2 className="h-4 w-4 text-primary shrink-0" />
+                <span className="text-sm text-foreground">{action}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* RAY WORKS EVERYWHERE */}
+      <section className="py-24 border-t border-border">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mb-10">
+            <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+              Ray works everywhere
+            </div>
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
+              Same analyst. Every surface.
+            </h2>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            {RAY_EVERYWHERE.map((e) => (
+              <div key={e.label} className="rounded-sm border border-border/60 bg-card/30 p-5">
+                <e.icon className="h-5 w-5 text-primary mb-3" />
+                <div className="text-base font-medium text-foreground">{e.label}</div>
+                <p className="mt-1 text-sm text-muted-foreground">{e.sub}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* PRIVACY — WHAT RAY NEVER SEES */}
+      <section className="py-24 border-t border-border">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mb-12">
+            <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+              Privacy by design
+            </div>
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
+              Ray monitors security. Not you.
+            </h2>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="rounded-sm border border-border/60 bg-card/30 p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <EyeOff className="h-4 w-4 text-muted-foreground" />
+                <span className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+                  Ray never sees
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {RAY_NEVER_SEES.map((item) => (
+                  <span
+                    key={item}
+                    className="text-sm px-3 py-1.5 rounded-md border border-border/60 bg-background/60 text-muted-foreground"
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-sm border border-primary/30 bg-primary/[0.03] p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Eye className="h-4 w-4 text-primary" />
+                <span className="text-[11px] uppercase tracking-[0.22em] text-primary">
+                  Ray does monitor
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {RAY_MONITORS.map((item) => (
+                  <span
+                    key={item}
+                    className="text-sm px-3 py-1.5 rounded-md border border-primary/30 bg-primary/[0.06] text-foreground"
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
       {/* PLAYBOOKS — what Ray actually does, in your hands */}
       <section className="py-24 border-t border-border">
         <div className="container mx-auto px-4">
