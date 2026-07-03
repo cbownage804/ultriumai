@@ -19,6 +19,7 @@ import {
   Sparkles, Coins, GitBranch, Brain, Clock, Trash2, Layers, Radar,
   Wrench, Target, ShieldAlert, AlertTriangle, CheckCircle2, HelpCircle,
   User, Laptop, KeyRound, AppWindow, Network, Database, Users,
+  Quote, Lightbulb, ChevronDown, ChevronRight,
 } from 'lucide-react';
 
 type EntityKind = 'user' | 'device' | 'account' | 'service' | 'app' | 'network' | 'data';
@@ -28,6 +29,17 @@ type StepEntity = {
   role?: 'actor' | 'target' | 'pivot' | 'credential' | 'witness' | string;
   why?: string;
 };
+type EvidenceItem = {
+  source?: 'investigation' | 'scenario' | 'mitre' | 'general_knowledge' | string;
+  quote?: string;
+  supports?: string;
+};
+type StepReasoning = {
+  why?: string;
+  evidence?: EvidenceItem[];
+  assumptions?: string[];
+  confidence?: 'low' | 'medium' | 'high' | string;
+};
 type AttackStep = {
   phase?: string;
   title?: string;
@@ -36,6 +48,7 @@ type AttackStep = {
   likelihood?: string;
   if_successful?: string;
   entities?: StepEntity[];
+  reasoning?: StepReasoning;
 };
 type BlastRadius = {
   users_affected?: string;
