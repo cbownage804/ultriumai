@@ -180,7 +180,7 @@ export default function RayCommandCenter() {
         actions7d,
         timeline7d,
       ] = await Promise.all([
-        supabase.from('wrayth_devices').select('id, last_seen_at, revoked_at').eq('user_id', user.id),
+        supabase.from('wrayth_devices').select('id, last_seen_at, revoked_at').eq('user_id', user.id).is('revoked_at', null),
         supabase.from('safepass_identities').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
         supabase
           .from('safepass_breach_scans')
@@ -603,7 +603,6 @@ function DevicesBriefingCard({ b, loading }: { b: DevicesBriefing | undefined; l
   }
 
   const status: BriefingStatus =
-    b.revoked > 0 ? 'attention' :
     b.dormant > b.online ? 'attention' :
     b.online === 0 ? 'attention' : 'calm';
 
@@ -619,7 +618,8 @@ function DevicesBriefingCard({ b, loading }: { b: DevicesBriefing | undefined; l
   const parts: string[] = [];
   if (b.dormant > 0) parts.push(`${b.dormant} ${b.dormant === 1 ? 'is' : 'are'} dormant`);
   if (b.stale > 0) parts.push(`${b.stale} went quiet in the last hour`);
-  if (b.revoked > 0) parts.push(`${b.revoked} ${b.revoked === 1 ? 'is' : 'are'} revoked`);
+  // Revoked devices are intentionally uninstalled — they're not shown on the
+  // Devices page, so we don't dwell on them here either.
   const matters = parts.length
     ? `${parts.join(', ')} — worth a quick look.`
     : "Fleet is behaving normally. I'll flag anything that stops checking in.";
