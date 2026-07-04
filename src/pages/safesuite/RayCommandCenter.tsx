@@ -219,6 +219,14 @@ export default function RayCommandCenter() {
 
           severity: r.severity ?? 'info',
         })),
+        devicesOnline: online,
+        devicesStale: stale,
+        devicesDormant: dormant,
+        devicesRevoked: revoked,
+        fixesQueued7d: fixesQueued,
+        fixesCompleted7d: fixesCompleted,
+        investigationsCompleted7d: invs7d.count ?? 0,
+        timelineEvents7d: timeline7d.count ?? 0,
       });
       setLoading(false);
     })();
