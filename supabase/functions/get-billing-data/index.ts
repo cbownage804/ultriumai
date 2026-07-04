@@ -106,22 +106,44 @@ const handler = async (req: Request): Promise<Response> => {
 
     logStep("Formatted subscriptions", { count: formattedSubscriptions.length });
 
-    // Fetch recent invoices
+    // Fetch recent invoices — expand line-item prices so we can filter to Wrayth products
     const invoices = await stripe.invoices.list({
       customer: customerId,
-      limit: 10,
+      limit: 25,
+      expand: ['data.lines.data.price'],
     });
 
-    const formattedInvoices = invoices.data.map(inv => ({
-      id: inv.id,
-      number: inv.number,
-      status: inv.status,
-      amount: inv.amount_paid || inv.amount_due,
-      currency: inv.currency,
-      date: new Date((inv.created || 0) * 1000).toISOString(),
-      pdfUrl: inv.invoice_pdf,
-      description: inv.lines.data[0]?.description || 'Invoice',
-    }));
+    const formattedInvoices = invoices.data
+      .filter(inv => {
+        const lines = inv.lines?.data || [];
+        return lines.some(l => {
+          const p = l.price?.product;
+          const productId = typeof p === 'string' ? p : p?.id;
+          return isWraythProduct(productId);
+        });
+      })
+      .slice(0, 10)
+      .map(inv => {
+        const wraythLine = inv.lines.data.find(l => {
+          const p = l.price?.product;
+          const productId = typeof p === 'string' ? p : p?.id;
+          return isWraythProduct(productId);
+        });
+        const productId = typeof wraythLine?.price?.product === 'string'
+          ? wraythLine.price.product
+          : wraythLine?.price?.product?.id;
+        const productInfo = productId ? PRODUCT_NAMES[productId] : undefined;
+        return {
+          id: inv.id,
+          number: inv.number,
+          status: inv.status,
+          amount: inv.amount_paid || inv.amount_due,
+          currency: inv.currency,
+          date: new Date((inv.created || 0) * 1000).toISOString(),
+          pdfUrl: inv.invoice_pdf,
+          description: productInfo?.name || wraythLine?.description || 'Wrayth subscription',
+        };
+      });
 
     logStep("Formatted invoices", { count: formattedInvoices.length });
 
