@@ -15,10 +15,11 @@ const logStep = (step: string, details?: any) => {
 // Product ID to name mapping — Wrayth-only. Any subscription/invoice not
 // tied to one of these products is filtered out of the in-app billing UI.
 const PRODUCT_NAMES: Record<string, { name: string; product: string; tier: string }> = {
-  'prod_TnSxL9TgGCz1jI': { name: 'Wrayth Pro', product: 'wrayth', tier: 'pro' },
-  'prod_TnSxu5PsRCLf38': { name: 'Wrayth Business', product: 'wrayth', tier: 'business' },
-  'prod_TsQkzLTz3wBSa2': { name: 'Wrayth Enterprise', product: 'wrayth', tier: 'enterprise' },
-  'prod_TsQme3v03oM1uh': { name: 'Wrayth Enterprise', product: 'wrayth', tier: 'enterprise' },
+  'prod_Tp7uzqASD23WKz': { name: 'Wrayth Pro', product: 'wrayth', tier: 'pro' },
+  'prod_Tp7uGQiqO9MvZo': { name: 'Wrayth Pro', product: 'wrayth', tier: 'pro' },
+  'prod_Tp7u0hIR2UlTr1': { name: 'Wrayth Business', product: 'wrayth', tier: 'business' },
+  'prod_Tp7uUCb3bDPasl': { name: 'Wrayth Business', product: 'wrayth', tier: 'business' },
+  'prod_TsPhrnVrS2CTEI': { name: 'Wrayth Enterprise', product: 'wrayth', tier: 'enterprise' },
 };
 
 const isWraythProduct = (productId: string | undefined | null): boolean =>
