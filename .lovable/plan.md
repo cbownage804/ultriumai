@@ -1,108 +1,125 @@
-# Wrayth v0.6 — Ray Intelligence Engine
+# Wrayth — Phase 2: Make It Feel Inevitable
 
-Consolidate the intelligence surface into one platform sharing a single pipeline, finish the missing modules (2, 4, 5, 6, 7), expand Module 1's input & enrichment coverage, and land the unified Intelligence Hub.
+Phase 1 (platform build) is done: Ray, Vault, Identity, Device, Threat Center, Deep Investigations, Malware/Script/Log Analysis, Attack Paths, Knowledge Graph, Policy Generator, Compliance Gap Analysis, Executive Reports, Browser Extension, Pricing, Ray Compute, Ray personality.
 
-## What's already shipped (do not rebuild)
+Phase 2 is not about adding twenty more pages. It is about making every interaction reinforce one promise:
 
-- **M1 Deep Threat Investigation** — URL, email, IP, domain, hash inputs; IOC extraction; MITRE mapping; confidence; executive + technical summary; recommended response; permanent record; follow-up actions; "Why Ray thinks this."
-- **M3 Executive Reports** — generated per investigation (`executive_summary`).
-- **M8 Incident Summary** — investigation `summary`.
-- **M9 Attack Path Reasoning** — chain, blast radius, remediation planner.
-- **M10 Board Reports** — 7/30/90-day cross-investigation digests, PDF export.
-- **Bonus** — IOC correlation (`ray_ioc_index`), Investigation Graph, threat clustering.
+> **Ray continuously watches your environment, explains what matters, and helps you fix it.**
 
-## Shared pipeline (built once, used by every module)
+Every new capability is measured against that sentence. If it doesn't reinforce it, it waits.
 
-Every intelligence module routes through the same server-side pipeline so evidence, MITRE mappings, memory, and recommendations are never duplicated.
+---
 
-```text
-input → evidence extractor → security graph (ray_entities/relationships)
-      → reasoning (LLM) → org memory (ray_org_memory / ray_ioc_index)
-      → MITRE knowledge → recommendation engine → report generator
-```
+## Guiding principles
 
-Implementation: extract the current investigation edge function's reusable phases into `supabase/functions/_shared/ray-pipeline.ts` (`extractEvidence`, `enrichIocs`, `reason`, `writeMemory`, `emitRecommendations`, `renderReport`). Every new module composes these; nothing calls the LLM directly.
+1. **Explain → Fix, not Explain → Shrug.** Every finding Ray surfaces must have an action Ray can take or guide.
+2. **Ray works when you're logged out.** Notifications, reports, and Autopilot run on schedules the user never has to babysit.
+3. **One product, many scales.** The same surfaces work for a solo user, a business, and an MSP managing hundreds of endpoints.
+4. **Coherent beats feature-rich.** Prefer deepening an existing surface over adding a new page.
 
-## New modules
+---
 
-### M2 — Malware Behavior Analysis
-- Route: `/app/intelligence/malware`
-- Input: script/binary text OR file hash.
-- Output: behaviors, MITRE IDs, likelihood %, risk, suggested response.
-- Table: `ray_malware_analyses` (linked to `ray_investigations` when triggered from one).
-- Cost: 4 credits.
+## Roadmap (in build order)
 
-### M4 — Security Policy Generator
-- Route: `/app/intelligence/policies`
-- Pick policy type (10) × standards (CIS/NIST/HIPAA/SOC2/ISO27001).
-- Editable rich-text output; export DOCX + PDF.
-- Table: `ray_policies` (title, type, standards, body_md, org_id).
-- Cost: 10 credits.
+### 1. Executive Dashboard — the Command Center ⭐
+The default landing surface for every logged-in user. One screen that answers "what should I care about today?"
+- Top: Ray's morning brief (already exists) — elevate to hero.
+- Risk score + trend (7/30/90).
+- Priority queue: top 5 findings across every module with inline **Fix it** buttons.
+- Fleet pulse (Business/MSP): devices online, updates pending, breaches this week, MFA coverage.
+- "Ray closed X items this week" — proof Ray is working.
+- Route: `/app` becomes the Command Center; current dashboards move to `/app/overview` if needed.
 
-### M5 — Compliance Gap Analysis
-- Route: `/app/intelligence/compliance`
-- Two modes: upload existing policies OR analyze live Wrayth data.
-- Output: per-control pass/fail with evidence, overall %, remediation roadmap.
-- Table: `ray_compliance_scans` + `ray_compliance_findings`.
-- Cost: 15 credits.
+### 2. One-click Remediation Engine ⭐⭐⭐⭐⭐
+The single biggest gap between Wrayth and every traditional dashboard. Ray stops saying "BitLocker is disabled" and starts saying "I can enable BitLocker now."
 
-### M6 — Large Log Analysis
-- Route: `/app/intelligence/logs`
-- Accept EVTX, CSV, Sentinel/Defender export, syslog, IIS, Apache, VPN, firewall.
-- Client-side chunking (50k lines/chunk) → map-reduce summarization edge function.
-- Output: observed events, top IPs/users, timeline, recommendations.
-- Table: `ray_log_analyses` (file_name, byte_count, summary_json).
-- Cost: 5 credits.
+**Remediation catalog (v1):**
+- Enable BitLocker
+- Enable / repair Defender
+- Turn on Tamper Protection
+- Enable Firewall (all profiles)
+- Install pending Windows updates
+- Rotate a compromised password (via Vault)
+- Enable MFA on a provider
+- Disable SMBv1
+- Disable RDP
+- Apply Microsoft security baseline
+- Quarantine suspicious browser extension
+- Run a saved remediation script
 
-### M7 — Script Analysis
-- Route: `/app/intelligence/scripts`
-- Paste PowerShell/Batch/Bash/Python/JS.
-- Output: purpose, safety, risk, MITRE, indicators, network/registry/file/persistence changes, plain-English explanation.
-- Reuses M2's edge function with a `mode: 'script'` flag.
-- Cost: 2 credits.
+**Architecture:**
+- New table `ray_remediations` (id, org_id, target_device_id, action_key, params, status, requested_by, approved_by, executed_at, result_json, ray_confidence).
+- Edge function `ray-remediation-dispatch` — validates action, checks policy, either queues for the Vanguard agent or executes cloud-side (password rotation, MFA enable via provider APIs).
+- Vanguard agent gets a `remediation_worker` that polls its queue, executes signed actions, reports back.
+- Every Ray recommendation card gets a **Fix it** / **Fix it for me** button when a matching `action_key` exists.
+- Every remediation is auditable, reversible where possible, and shows up in the executive report.
 
-## Module 1 expansions
+### 3. Notification Center
+Ray works even when the user isn't looking.
+- **Channels:** Email (v1), Teams, Slack, Discord, Mobile push (future — wait until the app exists).
+- **Events:** new breached identity, remediation succeeded/failed, priority auto-closed, weekly digest ready, high-severity investigation, device fell offline, license/subscription events.
+- **Per-user preferences:** channel × event matrix, quiet hours, digest vs. real-time.
+- **Tables:** `ray_notification_prefs`, `ray_notification_events`, `ray_notification_deliveries`.
+- **Delivery:** edge function `ray-notify` fans out; Teams/Slack/Discord via connectors (existing standard_connectors flow); email via Resend/existing transactional path.
+- Every notification links back to the exact Command Center card that triggered it.
 
-- Add input types: `email_headers`, `zip`, `attachment`, `powershell`, `event_log`, `defender_alert`, `m365_alert`.
-- Add enrichers (best-effort, degrade gracefully): VirusTotal (if secret set), WHOIS, passive DNS, SPF/DKIM/DMARC parser for header inputs.
-- Enrichers live in `_shared/enrichers/` and are called during `extractEvidence`.
+### 4. Scheduled Executive Reporting
+Reports arrive without anyone asking.
+- **Cadences:** Monday morning executive summary, weekly risk report, monthly compliance report, quarterly board packet.
+- Reuse existing `render_board_report` PDF pipeline — just add the scheduler and template variants.
+- **Per-org config:** which reports, which day/time, which recipients, which channel (email attachment / Teams post / dashboard-only).
+- **Cron:** `pg_cron` + `pg_net` → edge function `ray-scheduled-reports`.
+- MSP-tier: per-client reports, co-branded, delivered to the client's contact list.
 
-## Intelligence Hub
+### 5. Fleet / Organization Management
+Business and MSP tiers stop feeling like "one user with more seats."
+- **Inventories:** Devices, Users, Sites, Clients (MSP only).
+- **Global search:** one bar, searches devices + users + sites + clients + findings + investigations + policies.
+- **Cross-client intelligence (MSP):** "This CVE affects 12 devices across 4 clients." "This phishing sender hit 3 of your clients this week."
+- **Global recommendations:** apply a policy or remediation to a filter (all Windows 11 devices at Client A) not one device at a time.
+- **Tables:** most already exist (`org_devices`, `msp_clients`, etc.) — this phase is UI + bulk-action edge functions.
 
-New landing at `/app/intelligence` with:
-- Grid of module tiles (Investigations, Malware, Logs, Scripts, Incident Reports, Executive Reports, Board Reports, Compliance, Policies, Attack Paths, Graph).
-- "Recent activity" feed (unions the module tables).
-- Reorganize sidebar: single **AI Intelligence** section with 11 items; sub-items collapsible.
+### 6. Ray Autopilot — the signature feature
+Guided, policy-controlled automation. **Never automatic by default.** The user or admin decides.
 
-## Ray Compute pricing
+**Approval modes (per action, per org, per client):**
+- Always ask
+- Ask only for high-risk actions
+- Automatically perform safe actions
+- Never automate
 
-Wire the credit cost table into `ai_credit_ledger` per module. Every module page shows cost before running.
+**v1 autopilot actions:**
+- Install Windows security updates
+- Rotate compromised passwords (Vault-managed only)
+- Quarantine suspicious browser extensions
+- Enable Defender / Tamper Protection / Firewall settings that drifted
+- Close resolved recommendations
+- Apply a saved remediation script on a schedule
 
-## Sprint breakdown
+**Tables:** `ray_autopilot_policies` (org_id, client_id nullable, action_key, mode, constraints), `ray_autopilot_runs` (policy_id, target, decision, executed, result).
 
-1. **Sprint A — foundation:** extract shared pipeline; Intelligence Hub landing; sidebar reorg.
-2. **Sprint B — M7 + M2:** script/malware behavior (share one function).
-3. **Sprint C — M6:** large log analysis with chunking.
-4. **Sprint D — M4:** policy generator + DOCX export.
-5. **Sprint E — M5:** compliance gap analysis.
-6. **Sprint F — M1 expansion:** new input types + enrichers.
+**MSP mode:** apply one autopilot policy across many clients at once, with per-client overrides.
 
-Each sprint ends with a shipped, usable feature — no half-built modules.
+Autopilot reuses the Remediation Engine — it is a scheduler + policy layer on top, not a new execution path.
 
-## Technical notes
+### 7. Browser Store Launch
+Chrome Web Store + Edge Add-ons + Firefox AMO. Blocked on the readiness checklist in `docs/wrayth-extension-launch.md`. Ship in that order.
 
-- New tables all follow existing RLS pattern (`user_id`, `org_id`, `authenticated`+`service_role` grants, has_role for admin).
-- All edge functions use `google/gemini-2.5-flash` by default; escalate to `google/gemini-2.5-pro` for M5/M9 (compliance + attack paths) where reasoning depth matters.
-- File uploads (EVTX, ZIP, attachments) go through a private storage bucket `ray-intelligence-uploads` with 7-day auto-expiry.
-- DOCX export via `docx` package; PDF continues to use `wraythPdf.ts`.
-- Hub feed is a single view `ray_intelligence_activity` unioning the module tables.
+### 8. Public Beta
+Once 1–7 are shipped: open signup, publish the marketing site's beta pricing, and let real users in.
 
-## Out of scope for v0.6
+---
 
-- Real-time collaboration on investigations.
-- Custom MITRE overlays / user-authored playbooks.
-- Cross-tenant intelligence sharing.
+## What we are explicitly not doing in Phase 2
 
-## Suggested starting point
+- No new intelligence module types (Phase 1 already covers the surface).
+- No new AI providers or model routing changes.
+- No new pricing tiers — the existing tiers already contemplate Business and MSP.
+- No native mobile app yet — Command Center must be mobile-web-excellent first.
+- No third-party marketplace / plugin API. That's Phase 3.
 
-Sprint A (foundation + hub) — smallest, highest leverage, unlocks every later sprint. Want me to start there, or pick a specific module to build first?
+---
+
+## Definition of done for Phase 2
+
+- A new user lands on the Command Center, sees 3–5 things Ray wants them to fix, clicks **Fix it** on one, and it's actually fixed inside 60 seconds — with the result showing up in their next scheduled report and (if they opted in) as a Teams/Slack notification. No other product on the market does that end-to-end for SMB and MSP.
