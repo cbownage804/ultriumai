@@ -16,13 +16,19 @@ import { formatDistanceToNow } from 'date-fns';
 import {
   Activity,
   AlertTriangle,
+  CheckCircle2,
   Fingerprint,
+  MessageSquare,
   Monitor,
   ScanSearch,
   ShieldCheck,
   Sparkles,
   Target,
   TrendingUp,
+  Wifi,
+  WifiOff,
+  Wrench,
+  Zap,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,7 +38,11 @@ import { RayPageTemplate } from '@/components/ray/RayPageTemplate';
 import { RayBrief } from '@/components/ray/RayBrief';
 import { TodayPriorityCard, type TodayPriority } from '@/components/ray/TodayPriorityCard';
 import { RayConversationCard } from '@/components/ray/RayConversationCard';
+import { FixWithRayButton } from '@/components/ray/FixWithRayButton';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+
 
 type OverallRisk = 'calm' | 'attention' | 'urgent';
 
