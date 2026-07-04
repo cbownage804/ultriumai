@@ -1,13 +1,66 @@
 /**
  * Wrayth Subscription Tiers Configuration
- * Defines feature access and limits for each tier
+ *
+ * Capability-first pricing. Every plan gets unlimited monitoring, unlimited
+ * Ray conversations, password vault, browser extension, and daily/weekly
+ * briefings. Tiers differ by which advanced capabilities are unlocked and by
+ * the monthly Ray Compute (RC) allowance included for advanced AI workflows.
+ *
+ * There are no per-message, per-scan, per-password, or per-minute quotas.
  */
 
 export type WraythTier = 'free' | 'pro' | 'business' | 'enterprise';
 
+export type Capability =
+  // Included with every plan
+  | 'ray_conversations'
+  | 'password_manager'
+  | 'browser_extension'
+  | 'device_monitoring'
+  | 'identity_monitoring'
+  | 'threat_center'
+  | 'daily_brief'
+  | 'weekly_brief'
+  | 'security_score'
+  | 'recommendations'
+  // Pro+
+  | 'threat_investigation'
+  | 'malware_analysis'
+  | 'log_analysis'
+  | 'script_analysis'
+  | 'graph'
+  | 'reports'
+  | 'microsoft_365_monitoring'
+  // Business+
+  | 'team_management'
+  | 'organization_memory'
+  | 'executive_dashboard'
+  | 'executive_reports'
+  | 'policy_generator'
+  | 'compliance'
+  | 'shared_investigations'
+  | 'shared_timeline'
+  | 'knowledge_graph'
+  | 'scheduled_reports'
+  // Enterprise
+  | 'sso'
+  | 'scim'
+  | 'api_access'
+  | 'custom_ai'
+  | 'private_models'
+  | 'compliance_automation'
+  | 'dedicated_support'
+  | 'custom_onboarding'
+  | 'multi_org';
+
+// -- Legacy shims (declared early so TierConfig / SAFESUITE_TIERS can use them) --
+export type LegacyFeatureKey =
+  | 'vault' | 'scan' | 'watch' | 'ray' | 'ray_voice' | 'whitelabeling' | 'team';
+
 export interface FeatureLimit {
   enabled: boolean;
-  limit: number; // -1 = unlimited
+  /** -1 = unlimited. Kept for legacy call sites; we no longer meter these. */
+  limit: number;
   team?: boolean;
 }
 
@@ -16,179 +69,218 @@ export interface TierFeatures {
   scan: FeatureLimit;
   watch: FeatureLimit;
   ray: FeatureLimit;
-  ray_voice: FeatureLimit;  // Voice minutes per month
+  ray_voice: FeatureLimit;
   whitelabeling: FeatureLimit;
-  team: FeatureLimit;  // Team/User Management feature
+  team: FeatureLimit;
 }
+
+const LEGACY_CAPABILITY_MAP: Record<LegacyFeatureKey, Capability> = {
+  vault: 'password_manager',
+  scan: 'threat_center',
+  watch: 'identity_monitoring',
+  ray: 'ray_conversations',
+  ray_voice: 'ray_conversations',
+  whitelabeling: 'team_management',
+  team: 'team_management',
+};
+
 
 export interface TierConfig {
   id: WraythTier;
   name: string;
+  tagline: string;
   description: string;
-  price: number; // in cents
-  yearlyPrice: number; // in cents (annual billing)
-  features: TierFeatures;
+  /** Monthly price in cents. */
+  price: number;
+  /** Annual billing, total per year in cents. */
+  yearlyPrice: number;
+  /** Ray Compute included per month (per user for team plans). null = custom. */
+  rayCompute: number | null;
+  capabilities: Set<Capability>;
   stripePriceId?: string;
   stripeYearlyPriceId?: string;
   badge?: string;
   popular?: boolean;
-  perUser?: boolean; // true if price is per-user
-  priceLabel?: string; // custom price label like "/user/mo"
+  perUser?: boolean;
+  priceLabel?: string;
+  /** Legacy shim — see FeatureLimit / LegacyFeatureKey below. */
+  features: TierFeatures;
 }
 
-export const SAFESUITE_TIERS: Record<WraythTier, TierConfig> = {
+const ALWAYS_INCLUDED: Capability[] = [
+  'ray_conversations',
+  'password_manager',
+  'browser_extension',
+  'device_monitoring',
+  'identity_monitoring',
+  'threat_center',
+  'daily_brief',
+  'weekly_brief',
+  'security_score',
+  'recommendations',
+];
+
+const PRO_UNLOCKS: Capability[] = [
+  'threat_investigation',
+  'malware_analysis',
+  'log_analysis',
+  'script_analysis',
+  'graph',
+  'reports',
+  'microsoft_365_monitoring',
+];
+
+const BUSINESS_UNLOCKS: Capability[] = [
+  'team_management',
+  'organization_memory',
+  'executive_dashboard',
+  'executive_reports',
+  'policy_generator',
+  'compliance',
+  'shared_investigations',
+  'shared_timeline',
+  'knowledge_graph',
+  'scheduled_reports',
+];
+
+const ENTERPRISE_UNLOCKS: Capability[] = [
+  'sso',
+  'scim',
+  'api_access',
+  'custom_ai',
+  'private_models',
+  'compliance_automation',
+  'dedicated_support',
+  'custom_onboarding',
+  'multi_org',
+];
+
+type TierSpec = Omit<TierConfig, 'features'>;
+
+const TIER_SPECS: Record<WraythTier, TierSpec> = {
   free: {
     id: 'free',
     name: 'Free',
-    description: 'Essential security tools for personal use',
+    tagline: 'For individuals getting started',
+    description: 'Personal AI security with unlimited Ray conversations.',
     price: 0,
     yearlyPrice: 0,
+    rayCompute: 0,
     badge: 'Free Forever',
-    features: {
-      vault: { enabled: true, limit: 25 },      // 25 passwords
-      scan: { enabled: true, limit: 5 },       // 5 scans/month
-      watch: { enabled: false, limit: 0 },
-      ray: { enabled: true, limit: 25 },    // 25 AI messages/month
-      ray_voice: { enabled: false, limit: 0 }, // No voice for free tier
-      whitelabeling: { enabled: false, limit: 0 }, // Not available on free
-      team: { enabled: false, limit: 0 }           // Team management not available
-    }
+    capabilities: new Set<Capability>(ALWAYS_INCLUDED),
   },
   pro: {
     id: 'pro',
     name: 'Pro',
-    description: 'Advanced protection for power users',
-    price: 999,  // $9.99/mo
-    yearlyPrice: 9590, // $95.90/year (~$7.99/mo)
-    stripePriceId: 'price_1SrTegH1u6E0bsJTKpGm5qxr',
+    tagline: 'For power users and consultants',
+    description: 'Everything in Free plus advanced investigations and analysis.',
+    price: 1500,
+    yearlyPrice: 15000,
+    rayCompute: 25,
+    stripePriceId: 'price_1TpZiYH1u6E0bsJTt1q6wSMT',
     stripeYearlyPriceId: 'price_1SrTeiH1u6E0bsJTarTH7ajs',
     badge: 'Most Popular',
     popular: true,
-    features: {
-      vault: { enabled: true, limit: 100 },     // 100 passwords
-      scan: { enabled: true, limit: 100 },     // 100 scans/month
-      watch: { enabled: true, limit: 5 },        // 5 monitored assets
-      ray: { enabled: true, limit: 100 },   // 100 AI messages/month
-      ray_voice: { enabled: true, limit: 2 }, // 2 voice minutes/month
-      whitelabeling: { enabled: false, limit: 0 }, // Not available on pro
-      team: { enabled: false, limit: 0 }           // Team management not available
-    }
+    capabilities: new Set<Capability>([...ALWAYS_INCLUDED, ...PRO_UNLOCKS]),
   },
   business: {
     id: 'business',
     name: 'Business',
-    description: 'Complete security suite for teams',
-    price: 2999,  // $29.99/user/mo (matches live Stripe price_1SrTejH1u6E0bsJTwd4K8st5)
-    yearlyPrice: 28790, // $287.90/year per user (~$23.99/user/mo) (matches Stripe price_1SrTelH1u6E0bsJTmep4lSIP)
+    tagline: 'AI security platform for teams',
+    description: 'Everything in Pro plus team collaboration, executive reporting, and compliance.',
+    price: 3900,
+    yearlyPrice: 39000,
+    rayCompute: 100,
     stripePriceId: 'price_1SrTejH1u6E0bsJTwd4K8st5',
     stripeYearlyPriceId: 'price_1SrTelH1u6E0bsJTmep4lSIP',
     badge: 'For Teams',
     perUser: true,
     priceLabel: '/user/mo',
-    features: {
-      vault: { enabled: true, limit: 500, team: true },  // 500 passwords + Team sharing
-      scan: { enabled: true, limit: 500 },              // 500 scans/month
-      watch: { enabled: true, limit: 50 },                // 50 monitored assets
-      ray: { enabled: true, limit: 250 },            // 250 AI messages/month
-      ray_voice: { enabled: true, limit: 5 },        // 5 voice minutes/month
-      whitelabeling: { enabled: true, limit: 1 },           // 1 brand (Business)
-      team: { enabled: true, limit: 20 }                    // Up to 20 team members
-    }
+    capabilities: new Set<Capability>([...ALWAYS_INCLUDED, ...PRO_UNLOCKS, ...BUSINESS_UNLOCKS]),
   },
   enterprise: {
     id: 'enterprise',
     name: 'Enterprise',
-    description: 'Maximum security for large organizations',
-    price: 4500,  // $45/user/mo
-    yearlyPrice: 43200, // $432/year per user (~$36/user/mo)
-    stripePriceId: 'price_1SuesEH1u6E0bsJT6o2Hxp0T', // $45/mo live Stripe price
-    stripeYearlyPriceId: 'price_enterprise_yearly', // Contact sales — no live yearly price yet
+    tagline: 'Governance and scale for regulated organizations',
+    description: 'Everything in Business plus SSO, SCIM, API, private models, and dedicated support.',
+    price: 4500,
+    yearlyPrice: 43200,
+    rayCompute: null,
+    stripePriceId: 'price_1SuesEH1u6E0bsJT6o2Hxp0T',
+    stripeYearlyPriceId: 'price_enterprise_yearly',
     badge: 'Enterprise',
     perUser: true,
     priceLabel: '/user/mo',
-    features: {
-      vault: { enabled: true, limit: 1500, team: true }, // 1500 passwords + Team sharing
-      scan: { enabled: true, limit: 1500 },             // 1500 scans/month
-      watch: { enabled: true, limit: 150 },               // 150 monitored assets
-      ray: { enabled: true, limit: 750 },            // 750 AI messages/month
-      ray_voice: { enabled: true, limit: 15 },       // 15 voice minutes/month
-      whitelabeling: { enabled: true, limit: -1 },          // Unlimited brands
-      team: { enabled: true, limit: 60 }                    // Up to 60 team members
-    }
-  }
+    capabilities: new Set<Capability>([
+      ...ALWAYS_INCLUDED,
+      ...PRO_UNLOCKS,
+      ...BUSINESS_UNLOCKS,
+      ...ENTERPRISE_UNLOCKS,
+    ]),
+  },
 };
 
-// Feature descriptions for UI
-export const FEATURE_DESCRIPTIONS: Record<keyof TierFeatures, {
-  name: string;
-  description: string;
-  icon: string;
-  limitUnit: string; // What the limit number represents
-  limitUnitPlural: string;
-}> = {
-  vault: {
-    name: 'Vault',
-    description: 'Zero-knowledge password vault with enterprise-grade encryption',
-    icon: 'KeyRound',
-    limitUnit: 'password',
-    limitUnitPlural: 'passwords'
-  },
-  scan: {
-    name: 'Scan',
-    description: 'Unified email, URL, and document security scanner',
-    icon: 'ScanSearch',
-    limitUnit: 'scan/mo',
-    limitUnitPlural: 'scans/mo'
-  },
-  watch: {
-    name: 'Watch',
-    description: 'Dark web monitoring with AI threat analysis',
-    icon: 'Globe',
-    limitUnit: 'monitored asset',
-    limitUnitPlural: 'monitored assets'
-  },
-  ray: {
-    name: 'Ray',
-    description: 'Your AI security teammate — plain-language guidance and action',
-    icon: 'Bot',
-    limitUnit: 'message/mo',
-    limitUnitPlural: 'messages/mo'
-  },
-  ray_voice: {
-    name: 'Ray Voice',
-    description: 'Voice conversations with Ray',
-    icon: 'Mic',
-    limitUnit: 'minute/mo',
-    limitUnitPlural: 'minutes/mo'
-  },
-
-  whitelabeling: {
-    name: 'Whitelabeling',
-    description: 'Custom branding with your logo, colors, and domain',
-    icon: 'Palette',
-    limitUnit: 'brand',
-    limitUnitPlural: 'brands'
-  },
-  team: {
-    name: 'Team Management',
-    description: 'Invite and manage team members with their own vaults',
-    icon: 'Users',
-    limitUnit: 'user',
-    limitUnitPlural: 'users'
-  }
-};
-
-// Format limit with unit for display
-export function formatLimitWithUnit(feature: keyof TierFeatures, limit: number): string {
-  if (limit === -1) return 'Unlimited';
-  if (limit === 0) return '';
-  
-  const featureInfo = FEATURE_DESCRIPTIONS[feature];
-  const unit = limit === 1 ? featureInfo.limitUnit : featureInfo.limitUnitPlural;
-  return `${limit} ${unit}`;
+function buildLegacyFeatures(caps: Set<Capability>): TierFeatures {
+  const legacy = {} as TierFeatures;
+  (Object.keys(LEGACY_CAPABILITY_MAP) as LegacyFeatureKey[]).forEach((k) => {
+    const enabled = caps.has(LEGACY_CAPABILITY_MAP[k]);
+    legacy[k] = { enabled, limit: enabled ? -1 : 0 };
+  });
+  return legacy;
 }
 
-// Helper functions
+export const SAFESUITE_TIERS: Record<WraythTier, TierConfig> = Object.fromEntries(
+  (Object.entries(TIER_SPECS) as [WraythTier, TierSpec][]).map(([tier, spec]) => [
+    tier,
+    { ...spec, features: buildLegacyFeatures(spec.capabilities) },
+  ]),
+) as Record<WraythTier, TierConfig>;
+
+// Human labels for capabilities (used in pricing UI + gating messages)
+export const CAPABILITY_LABELS: Record<Capability, string> = {
+  ray_conversations: 'Unlimited Ray conversations',
+  password_manager: 'Password manager',
+  browser_extension: 'Browser extension',
+  device_monitoring: 'Unlimited device monitoring',
+  identity_monitoring: 'Unlimited identity monitoring',
+  threat_center: 'Threat Center',
+  daily_brief: 'Daily security brief',
+  weekly_brief: 'Weekly security brief',
+  security_score: 'Daily security score',
+  recommendations: 'AI recommendations',
+
+  threat_investigation: 'Threat Investigations',
+  malware_analysis: 'Malware Analysis',
+  log_analysis: 'Log Analysis',
+  script_analysis: 'Script Analysis',
+  graph: 'Security Graph',
+  reports: 'Reports',
+  microsoft_365_monitoring: 'Microsoft 365 monitoring',
+
+  team_management: 'Team management',
+  organization_memory: 'Organization memory',
+  executive_dashboard: 'Executive Dashboard',
+  executive_reports: 'Executive Reports',
+  policy_generator: 'Policy Generator',
+  compliance: 'Compliance',
+  shared_investigations: 'Shared investigations',
+  shared_timeline: 'Shared timeline',
+  knowledge_graph: 'Organization knowledge graph',
+  scheduled_reports: 'Scheduled reports',
+
+  sso: 'SSO (SAML / OIDC)',
+  scim: 'SCIM provisioning',
+  api_access: 'API access',
+  custom_ai: 'Custom AI',
+  private_models: 'Private AI models',
+  compliance_automation: 'Compliance automation',
+  dedicated_support: 'Dedicated support',
+  custom_onboarding: 'Custom onboarding',
+  multi_org: 'Unlimited organizations',
+};
+
+// Helpers -------------------------------------------------------------------
+
 export function getTierByPriceId(priceId: string): WraythTier | null {
   for (const [tier, config] of Object.entries(SAFESUITE_TIERS)) {
     if (config.stripePriceId === priceId || config.stripeYearlyPriceId === priceId) {
@@ -198,16 +290,8 @@ export function getTierByPriceId(priceId: string): WraythTier | null {
   return null;
 }
 
-export function getFeatureLimit(tier: WraythTier, feature: keyof TierFeatures): FeatureLimit {
-  return SAFESUITE_TIERS[tier].features[feature];
-}
-
-export function isFeatureEnabled(tier: WraythTier, feature: keyof TierFeatures): boolean {
-  return SAFESUITE_TIERS[tier].features[feature].enabled;
-}
-
-export function getFeatureLimitValue(tier: WraythTier, feature: keyof TierFeatures): number {
-  return SAFESUITE_TIERS[tier].features[feature].limit;
+export function tierHasCapability(tier: WraythTier, capability: Capability): boolean {
+  return SAFESUITE_TIERS[tier].capabilities.has(capability);
 }
 
 export function formatPrice(cents: number): string {
@@ -215,14 +299,103 @@ export function formatPrice(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
 }
 
-export function formatMonthlyPrice(tier: TierConfig, yearly: boolean = false): string {
+export function formatMonthlyPrice(tier: TierConfig, yearly = false): string {
   if (tier.price === 0) return 'Free';
-  
   const priceLabel = tier.priceLabel || '/mo';
-  
   if (yearly) {
     const monthlyFromYearly = tier.yearlyPrice / 12 / 100;
     return `$${monthlyFromYearly.toFixed(0)}${priceLabel}`;
   }
   return `$${(tier.price / 100).toFixed(0)}${priceLabel}`;
 }
+
+// ------------------------------------------------------------------
+// Back-compat shims
+//
+// A number of legacy call sites still ask "is X feature enabled" or "what is
+// the limit for Y" — where X/Y were the old quota-based feature names
+// (vault, scan, watch, ray, ray_voice, whitelabeling, team). We now treat all
+// of those as unlimited on any paid tier that has the corresponding
+// capability, and we no longer expose numeric caps. These shims let the
+// pre-existing UI code compile without lying to users about counts.
+// ------------------------------------------------------------------
+
+// (LegacyFeatureKey, LEGACY_CAPABILITY_MAP, FeatureLimit are defined at the top of this file for TDZ safety.)
+
+
+export function isFeatureEnabled(tier: WraythTier, feature: LegacyFeatureKey): boolean {
+  return tierHasCapability(tier, LEGACY_CAPABILITY_MAP[feature]);
+}
+
+export function getFeatureLimit(tier: WraythTier, feature: LegacyFeatureKey): FeatureLimit {
+  const enabled = isFeatureEnabled(tier, feature);
+  return { enabled, limit: enabled ? -1 : 0 };
+}
+
+export function getFeatureLimitValue(tier: WraythTier, feature: LegacyFeatureKey): number {
+  return isFeatureEnabled(tier, feature) ? -1 : 0;
+}
+
+export function formatLimitWithUnit(_feature: LegacyFeatureKey, limit: number): string {
+  if (limit === -1) return 'Unlimited';
+  return '';
+}
+
+// Legacy descriptor (kept for any UI that iterates it)
+export const FEATURE_DESCRIPTIONS: Record<LegacyFeatureKey, {
+  name: string;
+  description: string;
+  icon: string;
+  limitUnit: string;
+  limitUnitPlural: string;
+}> = {
+  vault: {
+    name: 'Password Manager',
+    description: 'Zero-knowledge password vault, unlimited entries.',
+    icon: 'KeyRound',
+    limitUnit: '',
+    limitUnitPlural: '',
+  },
+  scan: {
+    name: 'Threat Center',
+    description: 'Unified email, URL, and document security scanner.',
+    icon: 'ScanSearch',
+    limitUnit: '',
+    limitUnitPlural: '',
+  },
+  watch: {
+    name: 'Identity Monitoring',
+    description: 'Unlimited identity and dark web monitoring.',
+    icon: 'Globe',
+    limitUnit: '',
+    limitUnitPlural: '',
+  },
+  ray: {
+    name: 'Ray',
+    description: 'Your AI security analyst — unlimited conversations.',
+    icon: 'Bot',
+    limitUnit: '',
+    limitUnitPlural: '',
+  },
+  ray_voice: {
+    name: 'Ray Voice',
+    description: 'Voice conversations with Ray.',
+    icon: 'Mic',
+    limitUnit: '',
+    limitUnitPlural: '',
+  },
+  whitelabeling: {
+    name: 'Whitelabeling',
+    description: 'Custom branding with your logo, colors, and domain.',
+    icon: 'Palette',
+    limitUnit: '',
+    limitUnitPlural: '',
+  },
+  team: {
+    name: 'Team Management',
+    description: 'Invite and manage team members with shared vaults.',
+    icon: 'Users',
+    limitUnit: '',
+    limitUnitPlural: '',
+  },
+};
