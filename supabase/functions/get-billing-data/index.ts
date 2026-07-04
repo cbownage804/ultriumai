@@ -12,13 +12,17 @@ const logStep = (step: string, details?: any) => {
   console.log(`[GET-BILLING-DATA] ${step}${detailsStr}`);
 };
 
-// Product ID to name mapping
-const PRODUCT_NAMES: Record<string, { name: string; product: string }> = {
-  'prod_TnSxL9TgGCz1jI': { name: 'Wrayth Pro', product: 'wrayth' },
-  'prod_TnSxu5PsRCLf38': { name: 'Wrayth Business', product: 'wrayth' },
-  'prod_TsQkzLTz3wBSa2': { name: 'Wrayth Enterprise', product: 'wrayth' },
-  'prod_TsQme3v03oM1uh': { name: 'Wrayth Enterprise', product: 'wrayth' },
+// Product ID to name mapping — Wrayth-only. Any subscription/invoice not
+// tied to one of these products is filtered out of the in-app billing UI.
+const PRODUCT_NAMES: Record<string, { name: string; product: string; tier: string }> = {
+  'prod_TnSxL9TgGCz1jI': { name: 'Wrayth Pro', product: 'wrayth', tier: 'pro' },
+  'prod_TnSxu5PsRCLf38': { name: 'Wrayth Business', product: 'wrayth', tier: 'business' },
+  'prod_TsQkzLTz3wBSa2': { name: 'Wrayth Enterprise', product: 'wrayth', tier: 'enterprise' },
+  'prod_TsQme3v03oM1uh': { name: 'Wrayth Enterprise', product: 'wrayth', tier: 'enterprise' },
 };
+
+const isWraythProduct = (productId: string | undefined | null): boolean =>
+  !!productId && !!PRODUCT_NAMES[productId];
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') {
