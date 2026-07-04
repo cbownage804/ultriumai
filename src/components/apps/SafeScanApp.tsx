@@ -11,7 +11,8 @@ import {
   ScanSearch, ClipboardList, Compass, MessageCircle, Gauge, CalendarCheck,
 } from 'lucide-react';
 import { InstallAgentDialog } from '@/components/ray/InstallAgentDialog';
-import { EnrolledDevicesList } from '@/components/ray/EnrolledDevicesList';
+// EnrolledDevicesList now lives on /app/devices — a single source of truth
+// for the fleet. SafeScan focuses on the install pitch.
 
 interface ScanAppProps {
   isWhiteLabeled?: boolean;
