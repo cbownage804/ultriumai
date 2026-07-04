@@ -4,21 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBillingData, formatCurrency } from "@/hooks/useBillingData";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
-import { Crown, Zap, Shield, Calendar, ExternalLink, AlertCircle, Loader2 } from 'lucide-react';
+import { Shield, Calendar, ExternalLink, AlertCircle, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 const productIcons: Record<string, React.ReactNode> = {
-  safesuite: <Shield className="h-5 w-5 text-green-500" />,
-  ai_studio: <Zap className="h-5 w-5 text-violet-500" />,
-  vanguard: <Crown className="h-5 w-5 text-yellow-500" />,
+  wrayth: <Shield className="h-5 w-5 text-violet-400" />,
 };
 
 const productColors: Record<string, string> = {
-  safesuite: 'border-green-500/30 bg-gradient-to-r from-green-500/5 to-green-500/5',
-  ai_studio: 'border-violet-500/30 bg-gradient-to-r from-violet-500/5 to-purple-500/5',
-  vanguard: 'border-yellow-500/30 bg-gradient-to-r from-yellow-500/5 to-yellow-500/5',
+  wrayth: 'border-violet-500/30 bg-gradient-to-r from-violet-500/5 to-purple-500/5',
 };
 
 export const SubscriptionOverview = () => {
@@ -63,24 +59,16 @@ export const SubscriptionOverview = () => {
       <Card>
         <CardHeader>
           <CardTitle>Your Subscriptions</CardTitle>
-          <CardDescription>You don't have any active subscriptions</CardDescription>
+          <CardDescription>You don't have any active Wrayth subscriptions</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-6">
             <p className="text-muted-foreground mb-4">
-              Unlock premium features by subscribing to one of our products
+              Unlock Pro, Business, or Enterprise features by upgrading your plan.
             </p>
-            <div className="flex flex-wrap justify-center gap-2">
-              <Button asChild variant="outline">
-                <Link to="/pricing">Wrayth</Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link to="/pricing/ai-studio">AI Studio</Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link to="/pricing/vanguard">Vanguard</Link>
-              </Button>
-            </div>
+            <Button asChild>
+              <Link to="/pricing">View Wrayth plans</Link>
+            </Button>
           </div>
         </CardContent>
       </Card>

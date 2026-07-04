@@ -12,13 +12,17 @@ const logStep = (step: string, details?: any) => {
   console.log(`[GET-BILLING-DATA] ${step}${detailsStr}`);
 };
 
-// Product ID to name mapping
-const PRODUCT_NAMES: Record<string, { name: string; product: string }> = {
-  'prod_TnSxL9TgGCz1jI': { name: 'Wrayth Pro', product: 'wrayth' },
-  'prod_TnSxu5PsRCLf38': { name: 'Wrayth Business', product: 'wrayth' },
-  'prod_TsQkzLTz3wBSa2': { name: 'Wrayth Enterprise', product: 'wrayth' },
-  'prod_TsQme3v03oM1uh': { name: 'Wrayth Enterprise', product: 'wrayth' },
+// Product ID to name mapping — Wrayth-only. Any subscription/invoice not
+// tied to one of these products is filtered out of the in-app billing UI.
+const PRODUCT_NAMES: Record<string, { name: string; product: string; tier: string }> = {
+  'prod_TnSxL9TgGCz1jI': { name: 'Wrayth Pro', product: 'wrayth', tier: 'pro' },
+  'prod_TnSxu5PsRCLf38': { name: 'Wrayth Business', product: 'wrayth', tier: 'business' },
+  'prod_TsQkzLTz3wBSa2': { name: 'Wrayth Enterprise', product: 'wrayth', tier: 'enterprise' },
+  'prod_TsQme3v03oM1uh': { name: 'Wrayth Enterprise', product: 'wrayth', tier: 'enterprise' },
 };
+
+const isWraythProduct = (productId: string | undefined | null): boolean =>
+  !!productId && !!PRODUCT_NAMES[productId];
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') {
@@ -74,52 +78,72 @@ const handler = async (req: Request): Promise<Response> => {
       expand: ['data.items.data.price.product'],
     });
 
-    const formattedSubscriptions = subscriptions.data.map(sub => {
-      const item = sub.items.data[0];
-      const price = item.price;
-      const productId = typeof price.product === 'string' ? price.product : price.product?.id;
-      const productInfo = PRODUCT_NAMES[productId || ''] || { name: 'Subscription', product: 'unknown' };
-      
-      // Determine tier from price metadata or product name
-      let tier = 'standard';
-      const productName = typeof price.product === 'object' ? price.product?.name : '';
-      if (productName?.toLowerCase().includes('pro')) tier = 'pro';
-      if (productName?.toLowerCase().includes('business')) tier = 'business';
-      if (productName?.toLowerCase().includes('enterprise')) tier = 'enterprise';
-      if (productName?.toLowerCase().includes('starter')) tier = 'starter';
-      
-      return {
-        id: sub.id,
-        product: productInfo.product,
-        productName: productInfo.name || productName || 'Subscription',
-        tier,
-        status: sub.status,
-        amount: price.unit_amount || 0,
-        currency: price.currency,
-        interval: price.recurring?.interval || 'month',
-        currentPeriodEnd: new Date(sub.current_period_end * 1000).toISOString(),
-        cancelAtPeriodEnd: sub.cancel_at_period_end,
-      };
-    });
+    const formattedSubscriptions = subscriptions.data
+      .filter(sub => {
+        const price = sub.items.data[0]?.price;
+        const productId = typeof price?.product === 'string' ? price.product : price?.product?.id;
+        return isWraythProduct(productId);
+      })
+      .map(sub => {
+        const item = sub.items.data[0];
+        const price = item.price;
+        const productId = typeof price.product === 'string' ? price.product : price.product?.id;
+        const productInfo = PRODUCT_NAMES[productId || '']!;
+
+        return {
+          id: sub.id,
+          product: productInfo.product,
+          productName: productInfo.name,
+          tier: productInfo.tier,
+          status: sub.status,
+          amount: price.unit_amount || 0,
+          currency: price.currency,
+          interval: price.recurring?.interval || 'month',
+          currentPeriodEnd: new Date(sub.current_period_end * 1000).toISOString(),
+          cancelAtPeriodEnd: sub.cancel_at_period_end,
+        };
+      });
 
     logStep("Formatted subscriptions", { count: formattedSubscriptions.length });
 
-    // Fetch recent invoices
+    // Fetch recent invoices — expand line-item prices so we can filter to Wrayth products
     const invoices = await stripe.invoices.list({
       customer: customerId,
-      limit: 10,
+      limit: 25,
+      expand: ['data.lines.data.price'],
     });
 
-    const formattedInvoices = invoices.data.map(inv => ({
-      id: inv.id,
-      number: inv.number,
-      status: inv.status,
-      amount: inv.amount_paid || inv.amount_due,
-      currency: inv.currency,
-      date: new Date((inv.created || 0) * 1000).toISOString(),
-      pdfUrl: inv.invoice_pdf,
-      description: inv.lines.data[0]?.description || 'Invoice',
-    }));
+    const formattedInvoices = invoices.data
+      .filter(inv => {
+        const lines = inv.lines?.data || [];
+        return lines.some(l => {
+          const p = l.price?.product;
+          const productId = typeof p === 'string' ? p : p?.id;
+          return isWraythProduct(productId);
+        });
+      })
+      .slice(0, 10)
+      .map(inv => {
+        const wraythLine = inv.lines.data.find(l => {
+          const p = l.price?.product;
+          const productId = typeof p === 'string' ? p : p?.id;
+          return isWraythProduct(productId);
+        });
+        const productId = typeof wraythLine?.price?.product === 'string'
+          ? wraythLine.price.product
+          : wraythLine?.price?.product?.id;
+        const productInfo = productId ? PRODUCT_NAMES[productId] : undefined;
+        return {
+          id: inv.id,
+          number: inv.number,
+          status: inv.status,
+          amount: inv.amount_paid || inv.amount_due,
+          currency: inv.currency,
+          date: new Date((inv.created || 0) * 1000).toISOString(),
+          pdfUrl: inv.invoice_pdf,
+          description: productInfo?.name || wraythLine?.description || 'Wrayth subscription',
+        };
+      });
 
     logStep("Formatted invoices", { count: formattedInvoices.length });
 
