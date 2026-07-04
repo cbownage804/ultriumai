@@ -20,7 +20,6 @@ import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import {
   Activity,
-  AlertTriangle,
   CheckCircle2,
   Fingerprint,
   KeyRound,
@@ -32,11 +31,10 @@ import {
   Sparkles,
   Target,
   TrendingUp,
-  Wifi,
-  WifiOff,
   Wrench,
   Zap,
 } from 'lucide-react';
+
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useRayBrain, type RayRecommendation } from '@/lib/ray/brain';
