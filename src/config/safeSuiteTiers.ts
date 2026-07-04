@@ -53,6 +53,38 @@ export type Capability =
   | 'custom_onboarding'
   | 'multi_org';
 
+// -- Legacy shims (declared early so TierConfig / SAFESUITE_TIERS can use them) --
+export type LegacyFeatureKey =
+  | 'vault' | 'scan' | 'watch' | 'ray' | 'ray_voice' | 'whitelabeling' | 'team';
+
+export interface FeatureLimit {
+  enabled: boolean;
+  /** -1 = unlimited. Kept for legacy call sites; we no longer meter these. */
+  limit: number;
+  team?: boolean;
+}
+
+export interface TierFeatures {
+  vault: FeatureLimit;
+  scan: FeatureLimit;
+  watch: FeatureLimit;
+  ray: FeatureLimit;
+  ray_voice: FeatureLimit;
+  whitelabeling: FeatureLimit;
+  team: FeatureLimit;
+}
+
+const LEGACY_CAPABILITY_MAP: Record<LegacyFeatureKey, Capability> = {
+  vault: 'password_manager',
+  scan: 'threat_center',
+  watch: 'identity_monitoring',
+  ray: 'ray_conversations',
+  ray_voice: 'ray_conversations',
+  whitelabeling: 'team_management',
+  team: 'team_management',
+};
+
+
 export interface TierConfig {
   id: WraythTier;
   name: string;
