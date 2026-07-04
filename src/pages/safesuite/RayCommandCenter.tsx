@@ -425,6 +425,17 @@ export default function RayCommandCenter() {
           />
         </section>
 
+        {/* Priority queue — top items with Fix it buttons */}
+        <PriorityQueue recs={brain.recommendations.slice(0, 5)} loading={loading} />
+
+        {/* Fleet pulse */}
+        <FleetPulse stats={enriched} loading={loading} />
+
+        {/* Proof of work — last 7 days */}
+        <ProofOfWork stats={enriched} loading={loading} />
+
+
+
         {/* Executive summary */}
         <section className="wrayth-chamfer border border-border bg-card/40 p-5 sm:p-6">
           <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-[0.22em] text-violet-300/80">
