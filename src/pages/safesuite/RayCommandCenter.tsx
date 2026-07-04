@@ -62,7 +62,18 @@ interface CommandStats {
     occurred_at: string;
     severity: string;
   }>;
+  // Fleet pulse
+  devicesOnline: number;
+  devicesStale: number;
+  devicesDormant: number;
+  devicesRevoked: number;
+  // Proof of work (last 7d)
+  fixesQueued7d: number;
+  fixesCompleted7d: number;
+  investigationsCompleted7d: number;
+  timelineEvents7d: number;
 }
+
 
 function greetingFor(firstName?: string): string {
   const hour = new Date().getHours();
