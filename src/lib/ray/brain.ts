@@ -53,16 +53,48 @@ export type RayRecommendation = {
 };
 
 /**
- * Client-side consolidation: even if two open rows share an objective (a
- * DB race, an older row from before the unique index, or an AI-generated
- * rec whose objective was slugged from the title), Ray only ever shows
- * one card per objective. Highest priority wins; ties break to most recent.
+ * Semantic family collapsing — different rows can legitimately share the
+ * same user-facing goal even when their `objective` slugs differ (e.g. the
+ * AI writer emits "Establish password monitoring" on one run and
+ * "Start protecting your passwords" on another). We map both to the same
+ * family so the priority queue never shows two cards that mean the same
+ * thing. Highest priority within a family wins; ties break to most recent.
  */
+function objectiveFamily(r: RayRecommendation): string {
+  const raw = (r.objective && r.objective.trim()) || '';
+  const text = `${r.title ?? ''} ${r.body ?? ''}`.toLowerCase();
+
+  // Vault onboarding — every "start protecting / establish password
+  // monitoring / import passwords / save your first password" variant is
+  // the same job: get credentials into Wrayth. Only one card, ever.
+  if (
+    raw === 'import_passwords' ||
+    /\bimport.*password|save.*first password|password manager\b/.test(text) ||
+    /\bprotect(ing)?\s+your\s+passwords?\b/.test(text) ||
+    /\bpassword\s+monitoring\b/.test(text) ||
+    /\bestablish.*password|start.*protect.*password\b/.test(text)
+  ) {
+    return 'family:import_passwords';
+  }
+  if (raw === 'rotate_breached' || /\bbreach|pwned|compromised\b/.test(text)) return 'family:rotate_breached';
+  if (raw === 'stop_password_reuse' || /\breus(e|ed|ing)|duplicate password\b/.test(text)) return 'family:stop_password_reuse';
+  if (raw === 'strengthen_weak_passwords' || /\bweak password|strengthen password\b/.test(text)) return 'family:strengthen_weak_passwords';
+  if (/\bmfa|2fa|two[- ]?factor|authenticator|2-step\b/.test(text)) {
+    // MFA per provider stays distinct — Google vs Microsoft vs Apple are
+    // real separate actions with different fix flows.
+    if (raw.startsWith('mfa_')) return `family:${raw}`;
+    return 'family:enable_mfa';
+  }
+  if (/\bdark[- ]?web|monitor.*(email|identity|exposure)\b/.test(text)) return 'family:monitor_exposure';
+
+  return raw ? `obj:${raw}` : `title:${(r.title ?? '').toLowerCase().trim()}`;
+}
+
 export function consolidateByObjective(recs: RayRecommendation[]): RayRecommendation[] {
   const seen = new Map<string, RayRecommendation>();
   const out: RayRecommendation[] = [];
   for (const r of recs) {
-    const key = (r.objective && r.objective.trim()) || `title:${r.title.toLowerCase().trim()}`;
+    const key = objectiveFamily(r);
     const existing = seen.get(key);
     if (!existing) {
       seen.set(key, r);
