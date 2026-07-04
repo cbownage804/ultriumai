@@ -399,13 +399,3 @@ export const FEATURE_DESCRIPTIONS: Record<LegacyFeatureKey, {
     limitUnitPlural: '',
   },
 };
-
-export interface TierFeatures {
-  vault: FeatureLimit;
-  scan: FeatureLimit;
-  watch: FeatureLimit;
-  ray: FeatureLimit;
-  ray_voice: FeatureLimit;
-  whitelabeling: FeatureLimit;
-  team: FeatureLimit;
-}
