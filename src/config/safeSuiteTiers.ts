@@ -71,6 +71,8 @@ export interface TierConfig {
   popular?: boolean;
   perUser?: boolean;
   priceLabel?: string;
+  /** Legacy shim — see FeatureLimit / LegacyFeatureKey below. */
+  features: TierFeatures;
 }
 
 const ALWAYS_INCLUDED: Capability[] = [
