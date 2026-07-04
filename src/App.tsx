@@ -27,6 +27,7 @@ const WraythLanding = lazy(() => import('@/pages/safesuite/SafeSuiteLanding'));
 const WraythAuth = lazy(() => import('@/pages/safesuite/SafeSuiteAuth'));
 const WraythDashboard = lazy(() => import('@/pages/safesuite/SafeSuiteDashboard'));
 const RayCommandCenter = lazy(() => import('@/pages/safesuite/RayCommandCenter'));
+const RayRemediationLibrary = lazy(() => import('@/pages/safesuite/RayRemediationLibrary'));
 const Upgrade = lazy(() => import('@/pages/safesuite/Upgrade'));
 const WraythBilling = lazy(() => import('@/pages/safesuite/SafeSuiteBilling'));
 const WraythSettings = lazy(() => import('@/pages/safesuite/SafeSuiteSettings'));
@@ -226,6 +227,7 @@ function AppRouter() {
           <Route path="/app/ray/skills" element={<SuspenseWrapper><RaySkills /></SuspenseWrapper>} />
           <Route path="/app/ray/recommendations" element={<SuspenseWrapper><RayRecommendations /></SuspenseWrapper>} />
           <Route path="/app/ray/memory" element={<SuspenseWrapper><RayMemory /></SuspenseWrapper>} />
+          <Route path="/app/ray/remediation-library" element={<SuspenseWrapper><RayRemediationLibrary /></SuspenseWrapper>} />
           <Route path="/app/ray/digest" element={<SuspenseWrapper><RayDigest /></SuspenseWrapper>} />
 
           <Route path="/app/ray/playbook/:runId" element={<SuspenseWrapper><PlaybookRunnerPage /></SuspenseWrapper>} />

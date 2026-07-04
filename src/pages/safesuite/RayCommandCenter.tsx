@@ -561,8 +561,14 @@ function PriorityQueue({ recs, loading }: { recs: RayRecommendation[]; loading: 
           {recs.length > 0 ? `Top ${recs.length} · fix from here` : ''}
         </span>
         <Link
-          to="/app/ray/recommendations"
+          to="/app/ray/remediation-library"
           className="ml-auto text-[11px] text-violet-300 hover:text-violet-200"
+        >
+          Fix library →
+        </Link>
+        <Link
+          to="/app/ray/recommendations"
+          className="text-[11px] text-violet-300 hover:text-violet-200"
         >
           Review all →
         </Link>
