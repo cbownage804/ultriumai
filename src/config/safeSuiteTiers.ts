@@ -123,7 +123,9 @@ const ENTERPRISE_UNLOCKS: Capability[] = [
   'multi_org',
 ];
 
-export const SAFESUITE_TIERS: Record<WraythTier, TierConfig> = {
+type TierSpec = Omit<TierConfig, 'features'>;
+
+const TIER_SPECS: Record<WraythTier, TierSpec> = {
   free: {
     id: 'free',
     name: 'Free',
@@ -140,10 +142,10 @@ export const SAFESUITE_TIERS: Record<WraythTier, TierConfig> = {
     name: 'Pro',
     tagline: 'For power users and consultants',
     description: 'Everything in Free plus advanced investigations and analysis.',
-    price: 1500, // $15/mo
-    yearlyPrice: 15000, // $150/yr (~$12.50/mo, 2 months free)
+    price: 1500,
+    yearlyPrice: 15000,
     rayCompute: 25,
-    stripePriceId: 'price_1TpZiYH1u6E0bsJTt1q6wSMT', // $15/mo live
+    stripePriceId: 'price_1TpZiYH1u6E0bsJTt1q6wSMT',
     stripeYearlyPriceId: 'price_1SrTeiH1u6E0bsJTarTH7ajs',
     badge: 'Most Popular',
     popular: true,
@@ -154,8 +156,8 @@ export const SAFESUITE_TIERS: Record<WraythTier, TierConfig> = {
     name: 'Business',
     tagline: 'AI security platform for teams',
     description: 'Everything in Pro plus team collaboration, executive reporting, and compliance.',
-    price: 3900, // $39/user/mo
-    yearlyPrice: 39000, // $390/yr per user
+    price: 3900,
+    yearlyPrice: 39000,
     rayCompute: 100,
     stripePriceId: 'price_1SrTejH1u6E0bsJTwd4K8st5',
     stripeYearlyPriceId: 'price_1SrTelH1u6E0bsJTmep4lSIP',
@@ -171,7 +173,7 @@ export const SAFESUITE_TIERS: Record<WraythTier, TierConfig> = {
     description: 'Everything in Business plus SSO, SCIM, API, private models, and dedicated support.',
     price: 4500,
     yearlyPrice: 43200,
-    rayCompute: null, // custom pool
+    rayCompute: null,
     stripePriceId: 'price_1SuesEH1u6E0bsJT6o2Hxp0T',
     stripeYearlyPriceId: 'price_enterprise_yearly',
     badge: 'Enterprise',
@@ -185,6 +187,22 @@ export const SAFESUITE_TIERS: Record<WraythTier, TierConfig> = {
     ]),
   },
 };
+
+function buildLegacyFeatures(caps: Set<Capability>): TierFeatures {
+  const legacy = {} as TierFeatures;
+  (Object.keys(LEGACY_CAPABILITY_MAP) as LegacyFeatureKey[]).forEach((k) => {
+    const enabled = caps.has(LEGACY_CAPABILITY_MAP[k]);
+    legacy[k] = { enabled, limit: enabled ? -1 : 0 };
+  });
+  return legacy;
+}
+
+export const SAFESUITE_TIERS: Record<WraythTier, TierConfig> = Object.fromEntries(
+  (Object.entries(TIER_SPECS) as [WraythTier, TierSpec][]).map(([tier, spec]) => [
+    tier,
+    { ...spec, features: buildLegacyFeatures(spec.capabilities) },
+  ]),
+) as Record<WraythTier, TierConfig>;
 
 // Human labels for capabilities (used in pricing UI + gating messages)
 export const CAPABILITY_LABELS: Record<Capability, string> = {
