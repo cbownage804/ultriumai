@@ -180,7 +180,7 @@ export default function RayCommandCenter() {
         actions7d,
         timeline7d,
       ] = await Promise.all([
-        supabase.from('wrayth_devices').select('id, last_seen_at, revoked_at').eq('user_id', user.id),
+        supabase.from('wrayth_devices').select('id, last_seen_at, revoked_at').eq('user_id', user.id).is('revoked_at', null),
         supabase.from('safepass_identities').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
         supabase
           .from('safepass_breach_scans')
