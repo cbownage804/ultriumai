@@ -267,9 +267,18 @@ Return JSON ONLY in this exact shape:
       if (/\bbreach|pwned|compromised\b/.test(t)) return "rotate_breached";
       if (/\breus(e|ed|ing)|duplicate password/.test(t)) return "stop_password_reuse";
       if (/\bweak password|strengthen password/.test(t)) return "strengthen_weak_passwords";
-      if (/\bmfa|2fa|two[- ]?factor|authenticator\b/.test(t)) return "enable_mfa";
+      if (/\bmfa|2fa|two[- ]?factor|authenticator|2-step\b/.test(t)) return "enable_mfa";
       if (/\bdark[- ]?web|monitor.*(email|identity|exposure)/.test(t)) return "monitor_exposure";
-      if (/\bimport.*password|save.*first password|password manager/.test(t)) return "import_passwords";
+      // Every "protect your passwords / establish password monitoring /
+      // start protecting / import passwords / password manager" variant is
+      // the same vault-onboarding job. Collapse to import_passwords so the
+      // partial unique index keeps only one open row.
+      if (
+        /\bimport.*password|save.*first password|password manager\b/.test(t) ||
+        /\bprotect(ing)?\s+your\s+passwords?\b/.test(t) ||
+        /\bpassword\s+monitoring\b/.test(t) ||
+        /\bestablish.*password|start.*protect.*password\b/.test(t)
+      ) return "import_passwords";
       if (/\bextension|autofill|browser/.test(t)) return "install_extension";
       if (/\bpasskey/.test(t)) return "adopt_passkeys";
       // Deterministic fallback so repeated identical titles collapse.
