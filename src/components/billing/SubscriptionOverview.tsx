@@ -59,24 +59,16 @@ export const SubscriptionOverview = () => {
       <Card>
         <CardHeader>
           <CardTitle>Your Subscriptions</CardTitle>
-          <CardDescription>You don't have any active subscriptions</CardDescription>
+          <CardDescription>You don't have any active Wrayth subscriptions</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-6">
             <p className="text-muted-foreground mb-4">
-              Unlock premium features by subscribing to one of our products
+              Unlock Pro, Business, or Enterprise features by upgrading your plan.
             </p>
-            <div className="flex flex-wrap justify-center gap-2">
-              <Button asChild variant="outline">
-                <Link to="/pricing">Wrayth</Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link to="/pricing/ai-studio">AI Studio</Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link to="/pricing/vanguard">Vanguard</Link>
-              </Button>
-            </div>
+            <Button asChild>
+              <Link to="/pricing">View Wrayth plans</Link>
+            </Button>
           </div>
         </CardContent>
       </Card>
