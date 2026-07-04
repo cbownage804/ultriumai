@@ -16,13 +16,19 @@ import { formatDistanceToNow } from 'date-fns';
 import {
   Activity,
   AlertTriangle,
+  CheckCircle2,
   Fingerprint,
+  MessageSquare,
   Monitor,
   ScanSearch,
   ShieldCheck,
   Sparkles,
   Target,
   TrendingUp,
+  Wifi,
+  WifiOff,
+  Wrench,
+  Zap,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,7 +38,11 @@ import { RayPageTemplate } from '@/components/ray/RayPageTemplate';
 import { RayBrief } from '@/components/ray/RayBrief';
 import { TodayPriorityCard, type TodayPriority } from '@/components/ray/TodayPriorityCard';
 import { RayConversationCard } from '@/components/ray/RayConversationCard';
+import { FixWithRayButton } from '@/components/ray/FixWithRayButton';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+
 
 type OverallRisk = 'calm' | 'attention' | 'urgent';
 
@@ -52,7 +62,18 @@ interface CommandStats {
     occurred_at: string;
     severity: string;
   }>;
+  // Fleet pulse
+  devicesOnline: number;
+  devicesStale: number;
+  devicesDormant: number;
+  devicesRevoked: number;
+  // Proof of work (last 7d)
+  fixesQueued7d: number;
+  fixesCompleted7d: number;
+  investigationsCompleted7d: number;
+  timelineEvents7d: number;
 }
+
 
 function greetingFor(firstName?: string): string {
   const hour = new Date().getHours();
@@ -101,11 +122,21 @@ export default function RayCommandCenter() {
     if (!user?.id) return;
     let cancelled = false;
     (async () => {
-      const [devices, identities, invsOpen, invsDone, compliance, events] = await Promise.all([
-        supabase
-          .from('wrayth_devices')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', user.id),
+      const now = Date.now();
+      const sevenDaysAgo = new Date(now - 7 * 86400_000).toISOString();
+      const staleCutoff = new Date(now - 10 * 60_000).toISOString(); // seen in last 10 min = online
+      const dormantCutoff = new Date(now - 24 * 3600_000).toISOString(); // >24h = dormant
+      const [
+        identities,
+        invsOpen,
+        invsDone,
+        compliance,
+        events,
+        deviceRows,
+        actions7d,
+        invs7d,
+        timeline7d,
+      ] = await Promise.all([
         supabase
           .from('safepass_identities')
           .select('id', { count: 'exact', head: true })
@@ -134,26 +165,68 @@ export default function RayCommandCenter() {
           .eq('user_id', user.id)
           .order('occurred_at', { ascending: false })
           .limit(6),
+        supabase
+          .from('wrayth_devices')
+          .select('id, last_seen_at, revoked_at')
+          .eq('user_id', user.id),
+        supabase
+          .from('wrayth_device_actions')
+          .select('id, status, completed_at, created_at')
+          .eq('user_id', user.id)
+          .gte('created_at', sevenDaysAgo),
+        supabase
+          .from('ray_investigations')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('status', 'complete')
+          .gte('completed_at', sevenDaysAgo),
+        supabase
+          .from('ray_timeline')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .gte('occurred_at', sevenDaysAgo),
       ]);
 
       if (cancelled) return;
+
+      const devs = (deviceRows.data as Array<{ id: string; last_seen_at: string | null; revoked_at: string | null }>) ?? [];
+      let online = 0, stale = 0, dormant = 0, revoked = 0;
+      for (const d of devs) {
+        if (d.revoked_at) { revoked++; continue; }
+        if (!d.last_seen_at) { dormant++; continue; }
+        if (d.last_seen_at >= staleCutoff) online++;
+        else if (d.last_seen_at >= dormantCutoff) stale++;
+        else dormant++;
+      }
+      const acts = (actions7d.data as Array<{ status: string }>) ?? [];
+      const fixesQueued = acts.length;
+      const fixesCompleted = acts.filter((a) => a.status === 'completed' || a.status === 'success').length;
 
       setStats({
         criticalCount: 0, // filled from recommendations below
         highCount: 0,
         mediumCount: 0,
-        protectedDevices: devices.count ?? 0,
+        protectedDevices: devs.filter((d) => !d.revoked_at).length,
         monitoredIdentities: identities.count ?? 0,
         openInvestigations: invsOpen.count ?? 0,
         completedInvestigations: invsDone.count ?? 0,
-        compliancePosture: (compliance.data as any)?.overall_score ?? null,
-        complianceFramework: (compliance.data as any)?.framework ?? null,
-        recentEvents: ((events.data as any[]) ?? []).map((r) => ({
+        compliancePosture: (compliance.data as { overall_score?: number } | null)?.overall_score ?? null,
+        complianceFramework: (compliance.data as { framework?: string } | null)?.framework ?? null,
+        recentEvents: ((events.data as Array<{ id: string; summary: string | null; occurred_at: string; severity: string | null }>) ?? []).map((r) => ({
           id: r.id,
           summary: r.summary ?? 'Ray recorded an event',
           occurred_at: r.occurred_at,
+
           severity: r.severity ?? 'info',
         })),
+        devicesOnline: online,
+        devicesStale: stale,
+        devicesDormant: dormant,
+        devicesRevoked: revoked,
+        fixesQueued7d: fixesQueued,
+        fixesCompleted7d: fixesCompleted,
+        investigationsCompleted7d: invs7d.count ?? 0,
+        timelineEvents7d: timeline7d.count ?? 0,
       });
       setLoading(false);
     })();
@@ -352,6 +425,17 @@ export default function RayCommandCenter() {
           />
         </section>
 
+        {/* Priority queue — top items with Fix it buttons */}
+        <PriorityQueue recs={brain.recommendations.slice(0, 5)} loading={loading} />
+
+        {/* Fleet pulse */}
+        <FleetPulse stats={enriched} loading={loading} />
+
+        {/* Proof of work — last 7 days */}
+        <ProofOfWork stats={enriched} loading={loading} />
+
+
+
         {/* Executive summary */}
         <section className="wrayth-chamfer border border-border bg-card/40 p-5 sm:p-6">
           <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-[0.22em] text-violet-300/80">
@@ -455,3 +539,181 @@ function MetricCard({ label, value, sub, icon, href, valueClassName }: MetricCar
     body
   );
 }
+
+/* ─────────────────────────── priority queue ─────────────────────────── */
+
+function priorityTone(p: number) {
+  if (p >= 90) return { label: 'Critical', cls: 'border-red-500/40 text-red-300 bg-red-500/5' };
+  if (p >= 70) return { label: 'High', cls: 'border-amber-500/40 text-amber-200 bg-amber-500/5' };
+  if (p >= 40) return { label: 'Medium', cls: 'border-yellow-500/30 text-yellow-200 bg-yellow-500/5' };
+  return { label: 'Low', cls: 'border-border text-muted-foreground bg-background/40' };
+}
+
+function PriorityQueue({ recs, loading }: { recs: RayRecommendation[]; loading: boolean }) {
+  return (
+    <section className="wrayth-chamfer border border-border bg-card/40 overflow-hidden">
+      <div className="px-5 py-3 border-b border-border/60 flex items-center gap-2">
+        <Target className="h-3.5 w-3.5 text-violet-300" />
+        <span className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+          Priority queue
+        </span>
+        <span className="text-[11px] text-muted-foreground/70">
+          {recs.length > 0 ? `Top ${recs.length} · fix from here` : ''}
+        </span>
+        <Link
+          to="/app/ray/recommendations"
+          className="ml-auto text-[11px] text-violet-300 hover:text-violet-200"
+        >
+          Review all →
+        </Link>
+      </div>
+      {loading ? (
+        <div className="p-6 text-sm text-muted-foreground">Loading…</div>
+      ) : recs.length === 0 ? (
+        <div className="p-6 text-sm text-muted-foreground italic flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 text-green-400" />
+          Nothing pending — I'll interrupt you here if anything critical appears.
+        </div>
+      ) : (
+        <ul className="divide-y divide-border/40">
+          {recs.map((r) => {
+            const tone = priorityTone(r.priority);
+            return (
+              <li key={r.id} className="px-5 py-3 flex items-start gap-3">
+                <Badge
+                  variant="outline"
+                  className={cn('shrink-0 text-[10px] uppercase tracking-wide', tone.cls)}
+                >
+                  {tone.label}
+                </Badge>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm text-foreground/90 font-medium truncate">{r.title}</div>
+                  {r.body && (
+                    <div className="text-[12px] text-muted-foreground line-clamp-2 mt-0.5">
+                      {r.body}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <FixWithRayButton
+                    recommendation={r}
+                    size="sm"
+                    variant="outline"
+                    label="Fix it"
+                  />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-[11px] text-violet-300 hover:text-violet-200"
+                    onClick={() =>
+                      window.dispatchEvent(
+                        new CustomEvent('ray:panel-open', {
+                          detail: {
+                            message: `What should I do about "${r.title}"?`,
+                            context: { kind: 'recommendation', id: r.id, title: r.title, body: r.body ?? undefined },
+                          },
+                        }),
+                      )
+                    }
+                  >
+                    <MessageSquare className="h-3.5 w-3.5 mr-1" /> Ask Ray
+                  </Button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+/* ─────────────────────────── fleet pulse ─────────────────────────── */
+
+function FleetPulse({ stats, loading }: { stats: CommandStats | null; loading: boolean }) {
+  const total = stats ? stats.devicesOnline + stats.devicesStale + stats.devicesDormant + stats.devicesRevoked : 0;
+  const pct = (n: number) => (total > 0 ? Math.round((n / total) * 100) : 0);
+
+  return (
+    <section className="wrayth-chamfer border border-border bg-card/40 p-5">
+      <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-[0.22em] text-violet-300/80">
+        <Monitor className="h-3 w-3" /> Fleet pulse
+        <Link to="/app/devices" className="ml-auto text-[11px] text-violet-300 hover:text-violet-200 normal-case tracking-normal">
+          Manage devices →
+        </Link>
+      </div>
+      {loading || !stats ? (
+        <div className="mt-3 text-sm text-muted-foreground">Loading…</div>
+      ) : total === 0 ? (
+        <div className="mt-3 text-sm text-muted-foreground italic">
+          No devices enrolled yet.{' '}
+          <Link to="/app/devices" className="text-violet-300 hover:text-violet-200">
+            Install the agent →
+          </Link>
+        </div>
+      ) : (
+        <>
+          <div className="mt-3 flex h-1.5 w-full overflow-hidden rounded-full bg-background/60">
+            {stats.devicesOnline > 0 && <div className="bg-green-500" style={{ width: `${pct(stats.devicesOnline)}%` }} />}
+            {stats.devicesStale > 0 && <div className="bg-yellow-500" style={{ width: `${pct(stats.devicesStale)}%` }} />}
+            {stats.devicesDormant > 0 && <div className="bg-muted-foreground/40" style={{ width: `${pct(stats.devicesDormant)}%` }} />}
+            {stats.devicesRevoked > 0 && <div className="bg-red-500/70" style={{ width: `${pct(stats.devicesRevoked)}%` }} />}
+          </div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-4 text-[12px]">
+            <PulseStat icon={<Wifi className="h-3.5 w-3.5 text-green-400" />} label="Online" value={stats.devicesOnline} hint="≤10 min ago" />
+            <PulseStat icon={<Activity className="h-3.5 w-3.5 text-yellow-400" />} label="Stale" value={stats.devicesStale} hint="within 24h" />
+            <PulseStat icon={<WifiOff className="h-3.5 w-3.5 text-muted-foreground" />} label="Dormant" value={stats.devicesDormant} hint=">24h" />
+            <PulseStat icon={<AlertTriangle className="h-3.5 w-3.5 text-red-400" />} label="Revoked" value={stats.devicesRevoked} hint="no longer trusted" />
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+function PulseStat({ icon, label, value, hint }: { icon: React.ReactNode; label: string; value: number; hint: string }) {
+  return (
+    <div className="rounded border border-border/60 bg-background/30 px-2.5 py-2">
+      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+        {icon}{label}
+      </div>
+      <div className="text-lg font-light text-foreground leading-none mt-1">{value}</div>
+      <div className="text-[10px] text-muted-foreground mt-0.5">{hint}</div>
+    </div>
+  );
+}
+
+/* ─────────────────────────── proof of work ─────────────────────────── */
+
+function ProofOfWork({ stats, loading }: { stats: CommandStats | null; loading: boolean }) {
+  return (
+    <section className="wrayth-chamfer border border-border bg-card/40 p-5">
+      <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-[0.22em] text-violet-300/80">
+        <Zap className="h-3 w-3" /> What Ray did this week
+        <span className="ml-auto text-[10px] text-muted-foreground normal-case tracking-normal">Last 7 days</span>
+      </div>
+      {loading || !stats ? (
+        <div className="mt-3 text-sm text-muted-foreground">Loading…</div>
+      ) : (
+        <div className="mt-3 grid gap-2 sm:grid-cols-4 text-[12px]">
+          <ProofStat icon={<Wrench className="h-3.5 w-3.5 text-violet-300" />} value={stats.fixesQueued7d} label="Fixes queued" />
+          <ProofStat icon={<CheckCircle2 className="h-3.5 w-3.5 text-green-400" />} value={stats.fixesCompleted7d} label="Fixes completed" />
+          <ProofStat icon={<ScanSearch className="h-3.5 w-3.5 text-violet-300" />} value={stats.investigationsCompleted7d} label="Investigations closed" />
+          <ProofStat icon={<Activity className="h-3.5 w-3.5 text-violet-300" />} value={stats.timelineEvents7d} label="Events recorded" />
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ProofStat({ icon, value, label }: { icon: React.ReactNode; value: number; label: string }) {
+  return (
+    <div className="rounded border border-border/60 bg-background/30 px-2.5 py-2">
+      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+        {icon}{label}
+      </div>
+      <div className="text-lg font-light text-foreground leading-none mt-1">{value}</div>
+    </div>
+  );
+}
+
