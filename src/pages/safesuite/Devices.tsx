@@ -1,8 +1,13 @@
 /**
- * Devices — Ray's view of where the user is signed in.
- * Now built on the shared RayPageTemplate so it reads like every other
- * Ray module: brief → since last visit → today's priority → live data →
- * how I protect you.
+ * Devices — the single home for everything Ray knows about the machines
+ * and browsers that make up this user's environment.
+ *
+ * Layout:
+ *   1. Ray brief (device-focused)
+ *   2. Since your last visit
+ *   3. Enrolled agents (wrayth_devices)   ← primary
+ *   4. Recent sign-ins (ray_timeline)      ← secondary
+ *   5. "While you work" protect-lines
  */
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
@@ -14,6 +19,8 @@ import { RayPageHeader } from '@/components/ray/RayPageHeader';
 import { RayConversationCard } from '@/components/ray/RayConversationCard';
 import { DevicesRayBrief } from '@/components/ray/DevicesRayBrief';
 import { RayPageTemplate } from '@/components/ray/RayPageTemplate';
+import { EnrolledDevicesList } from '@/components/ray/EnrolledDevicesList';
+import { InstallAgentDialog } from '@/components/ray/InstallAgentDialog';
 import { cn } from '@/lib/utils';
 
 interface DeviceRow {
@@ -77,6 +84,7 @@ const ICONS = { desktop: Monitor, mobile: Smartphone, tablet: Tablet } as const;
 export default function Devices() {
   const { user } = useAuth();
   const [historical, setHistorical] = useState<DeviceRow[]>([]);
+  const [enrolledCount, setEnrolledCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const current = useMemo(detectCurrent, []);
 
@@ -84,16 +92,23 @@ export default function Devices() {
     if (!user?.id) return;
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from('ray_timeline')
-        .select('id, event_type, occurred_at, summary, payload')
-        .eq('user_id', user.id)
-        .or('event_type.ilike.device%,event_type.ilike.session%')
-        .order('occurred_at', { ascending: false })
-        .limit(20);
+      const [timelineRes, devicesRes] = await Promise.all([
+        supabase
+          .from('ray_timeline')
+          .select('id, event_type, occurred_at, summary, payload')
+          .eq('user_id', user.id)
+          .or('event_type.ilike.device%,event_type.ilike.session%')
+          .order('occurred_at', { ascending: false })
+          .limit(20),
+        supabase
+          .from('wrayth_devices')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .is('revoked_at', null),
+      ]);
 
       if (cancelled) return;
-      const rows: DeviceRow[] = (data ?? []).map((row: any) => {
+      const rows: DeviceRow[] = (timelineRes.data ?? []).map((row: any) => {
         const payload = (row.payload ?? {}) as Record<string, unknown>;
         const os = String(payload.os ?? payload.platform ?? 'Unknown');
         const kind: DeviceRow['kind'] = /iPhone|Android/i.test(os) ? 'mobile' : /iPad/i.test(os) ? 'tablet' : 'desktop';
@@ -108,6 +123,7 @@ export default function Devices() {
         };
       });
       setHistorical(rows);
+      setEnrolledCount(devicesRes.count ?? 0);
       setLoading(false);
     })();
     return () => {
@@ -115,7 +131,8 @@ export default function Devices() {
     };
   }, [user?.id]);
 
-  const devices = useMemo(() => [current, ...historical], [current, historical]);
+  const signIns = useMemo(() => [current, ...historical], [current, historical]);
+  const enrolled = enrolledCount ?? 0;
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -123,28 +140,58 @@ export default function Devices() {
         header={
           <RayPageHeader
             title="Devices"
-            description="Every place I've seen you sign in from."
+            description="Every machine I'm actively protecting, plus every browser you've signed in from."
           />
         }
-        brief={<DevicesRayBrief deviceCount={devices.length} />}
+        brief={<DevicesRayBrief deviceCount={enrolled + signIns.length} />}
         sinceLines={[
-          { label: `${devices.length} ${devices.length === 1 ? 'session' : 'sessions'} accounted for` },
+          {
+            label: enrolled === 0
+              ? 'No agents enrolled yet'
+              : `${enrolled} ${enrolled === 1 ? 'agent is' : 'agents are'} reporting in`,
+          },
+          { label: `${signIns.length} ${signIns.length === 1 ? 'browser session' : 'browser sessions'} accounted for` },
           { label: 'No unfamiliar sign-ins' },
           { label: 'Session fingerprints verified' },
         ]}
         protectLines={[
+          "I'm watching every enrolled machine for posture drift, threats, and stale updates.",
           "I'm watching for sign-ins from places you don't normally use.",
-          'I match every session against the browsers and devices I already know about.',
           "If something new shows up, I'll surface it here and in your Ray Brief.",
         ]}
       >
         <RayConversationCard context="devices" />
 
+        {/* ── 1. Enrolled agents ────────────────────────────────────────── */}
+        <section className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-3.5 w-3.5 text-violet-300" />
+              <span className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+                Enrolled agents
+              </span>
+              <span className="text-[11px] text-muted-foreground/60">
+                {enrolledCount === null ? '' : enrolledCount}
+              </span>
+            </div>
+            <InstallAgentDialog />
+          </div>
+          {enrolledCount === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border/60 bg-card/30 p-6 text-sm text-muted-foreground">
+              You haven't installed the Wrayth agent on any machine yet. Once you do,
+              I'll start reporting posture, findings, and a live security score right here.
+            </div>
+          ) : (
+            <EnrolledDevicesList />
+          )}
+        </section>
+
+        {/* ── 2. Recent sign-ins ────────────────────────────────────────── */}
         <section className="rounded-2xl border border-border bg-card/40 overflow-hidden">
           <div className="px-5 py-3 border-b border-border/60 flex items-center gap-2">
             <Eye className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">Active &amp; recent</span>
-            <span className="text-[11px] text-muted-foreground/60 ml-auto">{devices.length}</span>
+            <span className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">Recent sign-ins</span>
+            <span className="text-[11px] text-muted-foreground/60 ml-auto">{signIns.length}</span>
           </div>
 
           {loading ? (
@@ -153,7 +200,7 @@ export default function Devices() {
             </div>
           ) : (
             <ul className="divide-y divide-border/40">
-              {devices.map((device, idx) => {
+              {signIns.map((device, idx) => {
                 const Icon = ICONS[device.kind];
                 return (
                   <motion.li
@@ -177,7 +224,7 @@ export default function Devices() {
                       <div className="flex items-center gap-2">
                         <div className="text-sm text-foreground truncate">{device.label}</div>
                         {device.current && (
-                          <span className="text-[10px] uppercase tracking-[0.22em] text-violet-300">This device</span>
+                          <span className="text-[10px] uppercase tracking-[0.22em] text-violet-300">This session</span>
                         )}
                       </div>
                       <div className="text-xs text-muted-foreground italic mt-0.5">{device.note}</div>
