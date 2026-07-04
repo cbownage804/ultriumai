@@ -78,33 +78,31 @@ const handler = async (req: Request): Promise<Response> => {
       expand: ['data.items.data.price.product'],
     });
 
-    const formattedSubscriptions = subscriptions.data.map(sub => {
-      const item = sub.items.data[0];
-      const price = item.price;
-      const productId = typeof price.product === 'string' ? price.product : price.product?.id;
-      const productInfo = PRODUCT_NAMES[productId || ''] || { name: 'Subscription', product: 'unknown' };
-      
-      // Determine tier from price metadata or product name
-      let tier = 'standard';
-      const productName = typeof price.product === 'object' ? price.product?.name : '';
-      if (productName?.toLowerCase().includes('pro')) tier = 'pro';
-      if (productName?.toLowerCase().includes('business')) tier = 'business';
-      if (productName?.toLowerCase().includes('enterprise')) tier = 'enterprise';
-      if (productName?.toLowerCase().includes('starter')) tier = 'starter';
-      
-      return {
-        id: sub.id,
-        product: productInfo.product,
-        productName: productInfo.name || productName || 'Subscription',
-        tier,
-        status: sub.status,
-        amount: price.unit_amount || 0,
-        currency: price.currency,
-        interval: price.recurring?.interval || 'month',
-        currentPeriodEnd: new Date(sub.current_period_end * 1000).toISOString(),
-        cancelAtPeriodEnd: sub.cancel_at_period_end,
-      };
-    });
+    const formattedSubscriptions = subscriptions.data
+      .filter(sub => {
+        const price = sub.items.data[0]?.price;
+        const productId = typeof price?.product === 'string' ? price.product : price?.product?.id;
+        return isWraythProduct(productId);
+      })
+      .map(sub => {
+        const item = sub.items.data[0];
+        const price = item.price;
+        const productId = typeof price.product === 'string' ? price.product : price.product?.id;
+        const productInfo = PRODUCT_NAMES[productId || '']!;
+
+        return {
+          id: sub.id,
+          product: productInfo.product,
+          productName: productInfo.name,
+          tier: productInfo.tier,
+          status: sub.status,
+          amount: price.unit_amount || 0,
+          currency: price.currency,
+          interval: price.recurring?.interval || 'month',
+          currentPeriodEnd: new Date(sub.current_period_end * 1000).toISOString(),
+          cancelAtPeriodEnd: sub.cancel_at_period_end,
+        };
+      });
 
     logStep("Formatted subscriptions", { count: formattedSubscriptions.length });
 
