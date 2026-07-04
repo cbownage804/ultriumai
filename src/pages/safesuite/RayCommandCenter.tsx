@@ -539,3 +539,181 @@ function MetricCard({ label, value, sub, icon, href, valueClassName }: MetricCar
     body
   );
 }
+
+/* ─────────────────────────── priority queue ─────────────────────────── */
+
+function priorityTone(p: number) {
+  if (p >= 90) return { label: 'Critical', cls: 'border-red-500/40 text-red-300 bg-red-500/5' };
+  if (p >= 70) return { label: 'High', cls: 'border-amber-500/40 text-amber-200 bg-amber-500/5' };
+  if (p >= 40) return { label: 'Medium', cls: 'border-yellow-500/30 text-yellow-200 bg-yellow-500/5' };
+  return { label: 'Low', cls: 'border-border text-muted-foreground bg-background/40' };
+}
+
+function PriorityQueue({ recs, loading }: { recs: RayRecommendation[]; loading: boolean }) {
+  return (
+    <section className="wrayth-chamfer border border-border bg-card/40 overflow-hidden">
+      <div className="px-5 py-3 border-b border-border/60 flex items-center gap-2">
+        <Target className="h-3.5 w-3.5 text-violet-300" />
+        <span className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+          Priority queue
+        </span>
+        <span className="text-[11px] text-muted-foreground/70">
+          {recs.length > 0 ? `Top ${recs.length} · fix from here` : ''}
+        </span>
+        <Link
+          to="/app/ray/recommendations"
+          className="ml-auto text-[11px] text-violet-300 hover:text-violet-200"
+        >
+          Review all →
+        </Link>
+      </div>
+      {loading ? (
+        <div className="p-6 text-sm text-muted-foreground">Loading…</div>
+      ) : recs.length === 0 ? (
+        <div className="p-6 text-sm text-muted-foreground italic flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 text-green-400" />
+          Nothing pending — I'll interrupt you here if anything critical appears.
+        </div>
+      ) : (
+        <ul className="divide-y divide-border/40">
+          {recs.map((r) => {
+            const tone = priorityTone(r.priority);
+            return (
+              <li key={r.id} className="px-5 py-3 flex items-start gap-3">
+                <Badge
+                  variant="outline"
+                  className={cn('shrink-0 text-[10px] uppercase tracking-wide', tone.cls)}
+                >
+                  {tone.label}
+                </Badge>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm text-foreground/90 font-medium truncate">{r.title}</div>
+                  {r.body && (
+                    <div className="text-[12px] text-muted-foreground line-clamp-2 mt-0.5">
+                      {r.body}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <FixWithRayButton
+                    recommendation={r}
+                    size="sm"
+                    variant="outline"
+                    label="Fix it"
+                  />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-[11px] text-violet-300 hover:text-violet-200"
+                    onClick={() =>
+                      window.dispatchEvent(
+                        new CustomEvent('ray:panel-open', {
+                          detail: {
+                            message: `What should I do about "${r.title}"?`,
+                            context: { kind: 'recommendation', id: r.id, title: r.title, body: r.body ?? undefined },
+                          },
+                        }),
+                      )
+                    }
+                  >
+                    <MessageSquare className="h-3.5 w-3.5 mr-1" /> Ask Ray
+                  </Button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+/* ─────────────────────────── fleet pulse ─────────────────────────── */
+
+function FleetPulse({ stats, loading }: { stats: CommandStats | null; loading: boolean }) {
+  const total = stats ? stats.devicesOnline + stats.devicesStale + stats.devicesDormant + stats.devicesRevoked : 0;
+  const pct = (n: number) => (total > 0 ? Math.round((n / total) * 100) : 0);
+
+  return (
+    <section className="wrayth-chamfer border border-border bg-card/40 p-5">
+      <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-[0.22em] text-violet-300/80">
+        <Monitor className="h-3 w-3" /> Fleet pulse
+        <Link to="/app/devices" className="ml-auto text-[11px] text-violet-300 hover:text-violet-200 normal-case tracking-normal">
+          Manage devices →
+        </Link>
+      </div>
+      {loading || !stats ? (
+        <div className="mt-3 text-sm text-muted-foreground">Loading…</div>
+      ) : total === 0 ? (
+        <div className="mt-3 text-sm text-muted-foreground italic">
+          No devices enrolled yet.{' '}
+          <Link to="/app/devices" className="text-violet-300 hover:text-violet-200">
+            Install the agent →
+          </Link>
+        </div>
+      ) : (
+        <>
+          <div className="mt-3 flex h-1.5 w-full overflow-hidden rounded-full bg-background/60">
+            {stats.devicesOnline > 0 && <div className="bg-green-500" style={{ width: `${pct(stats.devicesOnline)}%` }} />}
+            {stats.devicesStale > 0 && <div className="bg-yellow-500" style={{ width: `${pct(stats.devicesStale)}%` }} />}
+            {stats.devicesDormant > 0 && <div className="bg-muted-foreground/40" style={{ width: `${pct(stats.devicesDormant)}%` }} />}
+            {stats.devicesRevoked > 0 && <div className="bg-red-500/70" style={{ width: `${pct(stats.devicesRevoked)}%` }} />}
+          </div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-4 text-[12px]">
+            <PulseStat icon={<Wifi className="h-3.5 w-3.5 text-green-400" />} label="Online" value={stats.devicesOnline} hint="≤10 min ago" />
+            <PulseStat icon={<Activity className="h-3.5 w-3.5 text-yellow-400" />} label="Stale" value={stats.devicesStale} hint="within 24h" />
+            <PulseStat icon={<WifiOff className="h-3.5 w-3.5 text-muted-foreground" />} label="Dormant" value={stats.devicesDormant} hint=">24h" />
+            <PulseStat icon={<AlertTriangle className="h-3.5 w-3.5 text-red-400" />} label="Revoked" value={stats.devicesRevoked} hint="no longer trusted" />
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+function PulseStat({ icon, label, value, hint }: { icon: React.ReactNode; label: string; value: number; hint: string }) {
+  return (
+    <div className="rounded border border-border/60 bg-background/30 px-2.5 py-2">
+      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+        {icon}{label}
+      </div>
+      <div className="text-lg font-light text-foreground leading-none mt-1">{value}</div>
+      <div className="text-[10px] text-muted-foreground mt-0.5">{hint}</div>
+    </div>
+  );
+}
+
+/* ─────────────────────────── proof of work ─────────────────────────── */
+
+function ProofOfWork({ stats, loading }: { stats: CommandStats | null; loading: boolean }) {
+  return (
+    <section className="wrayth-chamfer border border-border bg-card/40 p-5">
+      <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-[0.22em] text-violet-300/80">
+        <Zap className="h-3 w-3" /> What Ray did this week
+        <span className="ml-auto text-[10px] text-muted-foreground normal-case tracking-normal">Last 7 days</span>
+      </div>
+      {loading || !stats ? (
+        <div className="mt-3 text-sm text-muted-foreground">Loading…</div>
+      ) : (
+        <div className="mt-3 grid gap-2 sm:grid-cols-4 text-[12px]">
+          <ProofStat icon={<Wrench className="h-3.5 w-3.5 text-violet-300" />} value={stats.fixesQueued7d} label="Fixes queued" />
+          <ProofStat icon={<CheckCircle2 className="h-3.5 w-3.5 text-green-400" />} value={stats.fixesCompleted7d} label="Fixes completed" />
+          <ProofStat icon={<ScanSearch className="h-3.5 w-3.5 text-violet-300" />} value={stats.investigationsCompleted7d} label="Investigations closed" />
+          <ProofStat icon={<Activity className="h-3.5 w-3.5 text-violet-300" />} value={stats.timelineEvents7d} label="Events recorded" />
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ProofStat({ icon, value, label }: { icon: React.ReactNode; value: number; label: string }) {
+  return (
+    <div className="rounded border border-border/60 bg-background/30 px-2.5 py-2">
+      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+        {icon}{label}
+      </div>
+      <div className="text-lg font-light text-foreground leading-none mt-1">{value}</div>
+    </div>
+  );
+}
+
