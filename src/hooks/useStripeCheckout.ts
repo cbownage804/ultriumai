@@ -8,22 +8,22 @@ import { useNavigate } from 'react-router-dom';
 export const SAFESUITE_PRICES = {
   pro: {
     monthly: {
-      priceId: 'price_1SrTegH1u6E0bsJTKpGm5qxr',
-      amount: 999, // $9.99
+      priceId: 'price_1TpZiYH1u6E0bsJTt1q6wSMT',
+      amount: 1500, // $15/mo
     },
     yearly: {
       priceId: 'price_1SrTeiH1u6E0bsJTarTH7ajs',
-      amount: 9588, // $95.88/year ($7.99/mo)
+      amount: 15000, // $150/yr (~$12.50/mo)
     }
   },
   business: {
     monthly: {
       priceId: 'price_1SrTejH1u6E0bsJTwd4K8st5',
-      amount: 2999, // $29.99/user/mo (matches live Stripe)
+      amount: 3900, // $39/user/mo
     },
     yearly: {
       priceId: 'price_1SrTelH1u6E0bsJTmep4lSIP',
-      amount: 28790, // $287.90/year per user (matches live Stripe)
+      amount: 39000, // $390/yr per user
     }
   },
   enterprise: {
