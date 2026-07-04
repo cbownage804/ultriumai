@@ -3,9 +3,6 @@ project_id = "nsyobmjpdpvesjwdphlh"
 # Wrayth Edge Functions Configuration
 # Keep this file in sync with supabase/functions/*; stale product blocks were removed during Wrayth cleanup.
 
-[functions.archive-non-wrayth-products]
-verify_jwt = false
-
 [functions.check-subscription]
 verify_jwt = true
 
