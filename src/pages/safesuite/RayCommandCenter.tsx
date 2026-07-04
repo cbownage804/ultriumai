@@ -122,11 +122,21 @@ export default function RayCommandCenter() {
     if (!user?.id) return;
     let cancelled = false;
     (async () => {
-      const [devices, identities, invsOpen, invsDone, compliance, events] = await Promise.all([
-        supabase
-          .from('wrayth_devices')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', user.id),
+      const now = Date.now();
+      const sevenDaysAgo = new Date(now - 7 * 86400_000).toISOString();
+      const staleCutoff = new Date(now - 10 * 60_000).toISOString(); // seen in last 10 min = online
+      const dormantCutoff = new Date(now - 24 * 3600_000).toISOString(); // >24h = dormant
+      const [
+        identities,
+        invsOpen,
+        invsDone,
+        compliance,
+        events,
+        deviceRows,
+        actions7d,
+        invs7d,
+        timeline7d,
+      ] = await Promise.all([
         supabase
           .from('safepass_identities')
           .select('id', { count: 'exact', head: true })
@@ -155,24 +165,58 @@ export default function RayCommandCenter() {
           .eq('user_id', user.id)
           .order('occurred_at', { ascending: false })
           .limit(6),
+        supabase
+          .from('wrayth_devices')
+          .select('id, last_seen_at, revoked_at')
+          .eq('user_id', user.id),
+        supabase
+          .from('wrayth_device_actions')
+          .select('id, status, completed_at, created_at')
+          .eq('user_id', user.id)
+          .gte('created_at', sevenDaysAgo),
+        supabase
+          .from('ray_investigations')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('status', 'complete')
+          .gte('completed_at', sevenDaysAgo),
+        supabase
+          .from('ray_timeline')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .gte('occurred_at', sevenDaysAgo),
       ]);
 
       if (cancelled) return;
+
+      const devs = (deviceRows.data as Array<{ id: string; last_seen_at: string | null; revoked_at: string | null }>) ?? [];
+      let online = 0, stale = 0, dormant = 0, revoked = 0;
+      for (const d of devs) {
+        if (d.revoked_at) { revoked++; continue; }
+        if (!d.last_seen_at) { dormant++; continue; }
+        if (d.last_seen_at >= staleCutoff) online++;
+        else if (d.last_seen_at >= dormantCutoff) stale++;
+        else dormant++;
+      }
+      const acts = (actions7d.data as Array<{ status: string }>) ?? [];
+      const fixesQueued = acts.length;
+      const fixesCompleted = acts.filter((a) => a.status === 'completed' || a.status === 'success').length;
 
       setStats({
         criticalCount: 0, // filled from recommendations below
         highCount: 0,
         mediumCount: 0,
-        protectedDevices: devices.count ?? 0,
+        protectedDevices: devs.filter((d) => !d.revoked_at).length,
         monitoredIdentities: identities.count ?? 0,
         openInvestigations: invsOpen.count ?? 0,
         completedInvestigations: invsDone.count ?? 0,
-        compliancePosture: (compliance.data as any)?.overall_score ?? null,
-        complianceFramework: (compliance.data as any)?.framework ?? null,
-        recentEvents: ((events.data as any[]) ?? []).map((r) => ({
+        compliancePosture: (compliance.data as { overall_score?: number } | null)?.overall_score ?? null,
+        complianceFramework: (compliance.data as { framework?: string } | null)?.framework ?? null,
+        recentEvents: ((events.data as Array<{ id: string; summary: string | null; occurred_at: string; severity: string | null }>) ?? []).map((r) => ({
           id: r.id,
           summary: r.summary ?? 'Ray recorded an event',
           occurred_at: r.occurred_at,
+
           severity: r.severity ?? 'info',
         })),
       });
