@@ -137,7 +137,7 @@ export function ScanApp({ brandName = 'Wrayth' }: ScanAppProps) {
         </div>
       </div>
 
-      <EnrolledDevicesList />
+      
     </div>
   );
 }
