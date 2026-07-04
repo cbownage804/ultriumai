@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBillingData, formatCurrency } from "@/hooks/useBillingData";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
-import { Crown, Zap, Shield, Calendar, ExternalLink, AlertCircle, Loader2 } from 'lucide-react';
+import { Shield, Calendar, ExternalLink, AlertCircle, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
