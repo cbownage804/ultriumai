@@ -288,31 +288,8 @@ export function formatMonthlyPrice(tier: TierConfig, yearly = false): string {
 // pre-existing UI code compile without lying to users about counts.
 // ------------------------------------------------------------------
 
-export type LegacyFeatureKey =
-  | 'vault'
-  | 'scan'
-  | 'watch'
-  | 'ray'
-  | 'ray_voice'
-  | 'whitelabeling'
-  | 'team';
+// (LegacyFeatureKey, LEGACY_CAPABILITY_MAP, FeatureLimit are defined at the top of this file for TDZ safety.)
 
-const LEGACY_CAPABILITY_MAP: Record<LegacyFeatureKey, Capability> = {
-  vault: 'password_manager',
-  scan: 'threat_center',
-  watch: 'identity_monitoring',
-  ray: 'ray_conversations',
-  ray_voice: 'ray_conversations',
-  whitelabeling: 'team_management',
-  team: 'team_management',
-};
-
-export interface FeatureLimit {
-  enabled: boolean;
-  /** -1 = unlimited. Kept for legacy call sites; we no longer meter these. */
-  limit: number;
-  team?: boolean;
-}
 
 export function isFeatureEnabled(tier: WraythTier, feature: LegacyFeatureKey): boolean {
   return tierHasCapability(tier, LEGACY_CAPABILITY_MAP[feature]);
