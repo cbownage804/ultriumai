@@ -83,6 +83,16 @@ export default function RayRemediationLibrary() {
           "Reversible actions can be undone from the same catalog.",
         ]}
       >
+        {/* Timeline link */}
+        <section className="flex justify-end">
+          <Button asChild size="sm" variant="ghost">
+            <Link to="/app/ray/remediation-timeline">
+              <History className="h-3.5 w-3.5 mr-1.5" />
+              View remediation history
+            </Link>
+          </Button>
+        </section>
+
         {/* Filters */}
         <section className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
