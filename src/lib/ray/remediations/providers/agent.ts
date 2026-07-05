@@ -29,26 +29,28 @@ export async function executeAgentRemediation(
   const agentActionId = payload?.action?.id ?? null;
 
   // Mirror to the unified audit table so Timeline sees it immediately.
+  const insertRow = {
+    user_id: ctx.userId,
+    provider: 'agent',
+    slug: r.slug,
+    action_type: r.action_type,
+    category: r.category,
+    risk: r.risk,
+    target_type: 'device',
+    target_id: ctx.targetId,
+    target_label: ctx.targetLabel ?? null,
+    status: 'pending',
+    params: params as never,
+    requires_reboot: !!r.requiresReboot,
+    reversible: !!r.reversible,
+    reverse_slug: r.reverseSlug ?? null,
+    confirmed_by_user: ctx.confirmed || r.risk !== 'high',
+    agent_action_id: agentActionId,
+  };
   const { data: audit } = await supabase
     .from('wrayth_remediation_actions')
-    .insert({
-      user_id: ctx.userId,
-      provider: 'agent',
-      slug: r.slug,
-      action_type: r.action_type,
-      category: r.category,
-      risk: r.risk,
-      target_type: 'device',
-      target_id: ctx.targetId,
-      target_label: ctx.targetLabel ?? null,
-      status: 'pending',
-      params,
-      requires_reboot: !!r.requiresReboot,
-      reversible: !!r.reversible,
-      reverse_slug: r.reverseSlug ?? null,
-      confirmed_by_user: ctx.confirmed || r.risk !== 'high',
-      agent_action_id: agentActionId,
-    })
+    // deno-lint-ignore no-explicit-any
+    .insert(insertRow as any)
     .select('id')
     .single();
 
