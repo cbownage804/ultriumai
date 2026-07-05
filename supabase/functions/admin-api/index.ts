@@ -103,24 +103,40 @@ const actions: Record<string, (req: Request, body: any, actor: string) => Promis
       provider: u.app_metadata?.provider ?? 'email',
     }));
     if (q) items = items.filter((u) => (u.email ?? '').toLowerCase().includes(q.toLowerCase()));
-    // Attach platform role + subscription tier
+    // Attach platform role, subscription tier, RC balance, primary organization.
     const ids = items.map((i) => i.id);
-    const [{ data: adminsRows }, { data: subs }, { data: creditsRows }] = await Promise.all([
+    const [{ data: adminsRows }, { data: subs }, { data: creditsRows }, { data: ownedOrgs }, { data: memberships }] = await Promise.all([
       db.from('platform_admins').select('user_id, role').in('user_id', ids),
       db.from('subscribers').select('user_id, subscription_tier, subscribed').in('user_id', ids),
       db.from('user_credits').select('user_id, balance').in('user_id', ids),
+      db.from('org_teams').select('id, name, owner_id').in('owner_id', ids),
+      db.from('org_team_members').select('user_id, organization_id, org_teams:org_teams(id, name)').in('user_id', ids).eq('status', 'active'),
     ]);
     const adminMap = new Map((adminsRows ?? []).map((r: any) => [r.user_id, r.role]));
     const subMap = new Map((subs ?? []).map((r: any) => [r.user_id, r]));
     const credMap = new Map((creditsRows ?? []).map((r: any) => [r.user_id, r.balance]));
+    // Prefer owned orgs; fall back to first active membership.
+    const orgByUser = new Map<string, { id: string; name: string | null }>();
+    for (const o of (ownedOrgs ?? []) as any[]) {
+      if (!orgByUser.has(o.owner_id)) orgByUser.set(o.owner_id, { id: o.id, name: o.name });
+    }
+    for (const m of (memberships ?? []) as any[]) {
+      if (orgByUser.has(m.user_id)) continue;
+      orgByUser.set(m.user_id, { id: m.organization_id, name: m.org_teams?.name ?? null });
+    }
     return {
-      items: items.map((u) => ({
-        ...u,
-        platform_role: adminMap.get(u.id) ?? null,
-        tier: subMap.get(u.id)?.subscription_tier ?? 'free',
-        subscribed: subMap.get(u.id)?.subscribed ?? false,
-        rc_balance: credMap.get(u.id) ?? 0,
-      })),
+      items: items.map((u) => {
+        const org = orgByUser.get(u.id);
+        return {
+          ...u,
+          platform_role: adminMap.get(u.id) ?? null,
+          tier: subMap.get(u.id)?.subscription_tier ?? 'free',
+          subscribed: subMap.get(u.id)?.subscribed ?? false,
+          rc_balance: credMap.get(u.id) ?? 0,
+          org_id: org?.id ?? null,
+          org_name: org?.name ?? null,
+        };
+      }),
     };
   },
 
