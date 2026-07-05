@@ -74,7 +74,7 @@ export async function listChains(userId: string): Promise<RemediationChain[]> {
     name: r.name as string,
     description: (r.description as string | null) ?? null,
     trigger_slug: (r.trigger_slug as string | null) ?? null,
-    steps: (r.steps as ChainStep[]) ?? [],
+    steps: (r.steps as unknown as ChainStep[]) ?? [],
     active: !!r.active,
   }));
 }
