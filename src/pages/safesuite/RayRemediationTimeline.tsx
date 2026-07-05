@@ -83,7 +83,7 @@ export default function RayRemediationTimeline() {
     (async () => {
       const { data } = await supabase
         .from('wrayth_remediation_actions')
-        .select('id, provider, slug, action_type, target_type, target_id, target_label, status, risk, category, duration_ms, error, created_at')
+        .select('id, provider, slug, action_type, target_type, target_id, target_label, status, risk, category, duration_ms, error, created_at, lifecycle_state, reversible, reverse_slug')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(200);
@@ -98,7 +98,7 @@ export default function RayRemediationTimeline() {
         () => {
           supabase
             .from('wrayth_remediation_actions')
-            .select('id, provider, slug, action_type, target_type, target_id, target_label, status, risk, category, duration_ms, error, created_at')
+            .select('id, provider, slug, action_type, target_type, target_id, target_label, status, risk, category, duration_ms, error, created_at, lifecycle_state, reversible, reverse_slug')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })
             .limit(200)
