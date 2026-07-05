@@ -249,6 +249,9 @@ function AppRouter() {
           <Route path="/app/ray/memory" element={<SuspenseWrapper><RayMemory /></SuspenseWrapper>} />
           <Route path="/app/ray/remediation-library" element={<SuspenseWrapper><RayRemediationLibrary /></SuspenseWrapper>} />
           <Route path="/app/ray/remediation-timeline" element={<SuspenseWrapper><RayRemediationTimeline /></SuspenseWrapper>} />
+          <Route path="/app/ray/remediation-queue" element={<SuspenseWrapper><RemediationQueuePage /></SuspenseWrapper>} />
+          <Route path="/app/ray/remediation-policy" element={<SuspenseWrapper><RemediationPolicySettings /></SuspenseWrapper>} />
+          <Route path="/app/ray/maintenance-windows" element={<SuspenseWrapper><MaintenanceWindowSettings /></SuspenseWrapper>} />
           <Route path="/app/ray/digest" element={<SuspenseWrapper><RayDigest /></SuspenseWrapper>} />
 
           <Route path="/app/ray/playbook/:runId" element={<SuspenseWrapper><PlaybookRunnerPage /></SuspenseWrapper>} />
