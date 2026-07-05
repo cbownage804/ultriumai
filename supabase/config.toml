@@ -28,6 +28,9 @@ verify_jwt = true
 [functions.ms-graph-sync]
 verify_jwt = true
 
+[functions.ms-graph-remediate]
+verify_jwt = true
+
 [functions.ray-action]
 verify_jwt = true
 
