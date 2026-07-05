@@ -127,10 +127,34 @@ export default function AdminDashboard() {
           }
         >
           <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
-            <AdminMetricCard label="Users" value={data?.users ?? 0} />
-            <AdminMetricCard label="Organizations" value={data?.orgs ?? 0} />
-            <AdminMetricCard label="MSPs" value={data?.msps ?? 0} />
-            <AdminMetricCard label="Devices" value={data?.devices ?? 0} />
+            <AdminMetricCard
+              label="Users"
+              value={data?.users ?? 0}
+              hint={
+                (data?.users_active_30d != null || data?.users_new_7d != null)
+                  ? `${data?.users_active_30d ?? 0} active (30d) · +${data?.users_new_7d ?? 0} this week`
+                  : undefined
+              }
+            />
+            <AdminMetricCard
+              label="Organizations"
+              value={data?.orgs ?? 0}
+              hint={data?.orgs_active != null ? `${data.orgs_active} active` : undefined}
+            />
+            <AdminMetricCard
+              label="MSPs"
+              value={data?.msps ?? 0}
+              hint={data?.msp_clients != null ? `Managing ${data.msp_clients} clients` : undefined}
+            />
+            <AdminMetricCard
+              label="Devices"
+              value={data?.devices ?? 0}
+              hint={
+                (data?.devices_online != null || data?.devices_offline != null)
+                  ? `${data?.devices_online ?? 0} online · ${data?.devices_offline ?? 0} offline`
+                  : undefined
+              }
+            />
             <AdminMetricCard label="Threats (24h)" value={data?.threats_24h ?? 0} />
             <AdminMetricCard label="RC used today" value={Number(data?.rc_today ?? 0).toLocaleString()} />
           </div>
