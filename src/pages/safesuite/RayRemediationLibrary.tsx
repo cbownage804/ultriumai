@@ -1,12 +1,14 @@
 /**
  * RayRemediationLibrary — browsable catalog of every one-click fix Ray can
- * dispatch to a Wrayth-enrolled device. Grouped by category with per-item
- * Fix It buttons that queue the action via the device picker.
+ * dispatch. Grouped by category with per-item Fix It buttons that queue the
+ * action via the device picker.
  */
 import { useMemo, useState } from 'react';
-import { RotateCw, Search, Sparkles, ShieldCheck } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { History, RotateCw, Search, Sparkles, ShieldCheck } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { RayPageHeader } from '@/components/ray/RayPageHeader';
 import { RayPageTemplate } from '@/components/ray/RayPageTemplate';
@@ -81,6 +83,16 @@ export default function RayRemediationLibrary() {
           "Reversible actions can be undone from the same catalog.",
         ]}
       >
+        {/* Timeline link */}
+        <section className="flex justify-end">
+          <Button asChild size="sm" variant="ghost">
+            <Link to="/app/ray/remediation-timeline">
+              <History className="h-3.5 w-3.5 mr-1.5" />
+              View remediation history
+            </Link>
+          </Button>
+        </section>
+
         {/* Filters */}
         <section className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
