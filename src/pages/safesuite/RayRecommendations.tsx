@@ -128,6 +128,8 @@ export default function RayRecommendations() {
         </Button>
       </div>
 
+      <PendingRemediationsCard />
+
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
         <TabsList>
           <TabsTrigger value="open">Open</TabsTrigger>
