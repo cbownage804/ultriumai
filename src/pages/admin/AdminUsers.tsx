@@ -111,7 +111,7 @@ export default function AdminUsers() {
                 <TabsContent value="overview" className="space-y-3 mt-4">
                   {!detail ? <Skeleton className="h-32" /> : (
                     <>
-                      <Row k="Tier" v={detail.subscription?.subscription_tier ?? 'free'} />
+                      <Row k="Plan" v={formatTier(detail.subscription?.subscription_tier)} />
                       <Row k="Subscribed" v={String(detail.subscription?.subscribed ?? false)} />
                       <Row k="Subscription ends" v={detail.subscription?.subscription_end ?? '—'} />
                       <Row k="RC balance" v={detail.credits?.balance ?? 0} />
