@@ -212,8 +212,128 @@ const actions: Record<string, (req: Request, body: any, actor: string) => Promis
 
   async 'orgs.list'() {
     const db = admin();
-    const { data: orgs } = await db.from('organizations').select('*').limit(500);
-    return { items: orgs ?? [] };
+    // Source of truth for real customer orgs is org_teams (user-owned workspaces).
+    const { data: orgs } = await db.from('org_teams').select('id, name, slug, owner_id, billing_email, created_at, updated_at').limit(500);
+    const rows = orgs ?? [];
+    const ownerIds = Array.from(new Set(rows.map((o: any) => o.owner_id).filter(Boolean))) as string[];
+    const orgIds = rows.map((o: any) => o.id);
+
+    const [ownerAuth, ownerProfiles, memberRows, deviceRows, subRows] = await Promise.all([
+      ownerIds.length ? db.auth.admin.listUsers({ page: 1, perPage: 200 }) : Promise.resolve({ data: { users: [] as any[] } } as any),
+      ownerIds.length ? db.from('profiles').select('id, full_name').in('id', ownerIds) : Promise.resolve({ data: [] as any[] } as any),
+      orgIds.length ? db.from('org_team_members').select('organization_id').in('organization_id', orgIds).eq('status', 'active') : Promise.resolve({ data: [] as any[] } as any),
+      orgIds.length ? db.from('devices').select('org_id, last_checkin').in('org_id', orgIds) : Promise.resolve({ data: [] as any[] } as any),
+      ownerIds.length ? db.from('subscribers').select('user_id, subscription_tier').in('user_id', ownerIds) : Promise.resolve({ data: [] as any[] } as any),
+    ]);
+    const emailByOwner = new Map<string, string | null>();
+    for (const u of (ownerAuth.data?.users ?? []) as any[]) {
+      if (ownerIds.includes(u.id)) emailByOwner.set(u.id, u.email ?? null);
+    }
+    const nameByOwner = new Map((ownerProfiles.data ?? []).map((p: any) => [p.id, p.full_name]));
+    const tierByOwner = new Map((subRows.data ?? []).map((s: any) => [s.user_id, s.subscription_tier]));
+    const memberCount = new Map<string, number>();
+    for (const m of (memberRows.data ?? []) as any[]) {
+      memberCount.set(m.organization_id, (memberCount.get(m.organization_id) ?? 0) + 1);
+    }
+    const deviceCount = new Map<string, number>();
+    const lastActivity = new Map<string, string | null>();
+    for (const d of (deviceRows.data ?? []) as any[]) {
+      deviceCount.set(d.org_id, (deviceCount.get(d.org_id) ?? 0) + 1);
+      const cur = lastActivity.get(d.org_id) ?? null;
+      if (d.last_checkin && (!cur || d.last_checkin > cur)) lastActivity.set(d.org_id, d.last_checkin);
+    }
+    return {
+      items: rows.map((o: any) => ({
+        id: o.id,
+        name: o.name,
+        slug: o.slug,
+        owner_id: o.owner_id,
+        owner_email: emailByOwner.get(o.owner_id) ?? null,
+        owner_display_name: nameByOwner.get(o.owner_id) ?? null,
+        tier: tierByOwner.get(o.owner_id) ?? 'free',
+        member_count: (memberCount.get(o.id) ?? 0) + 1, // owner always counts
+        device_count: deviceCount.get(o.id) ?? 0,
+        created_at: o.created_at,
+        last_activity_at: lastActivity.get(o.id) ?? o.updated_at ?? o.created_at,
+      })),
+    };
+  },
+
+  async 'orgs.get'(_req, body) {
+    const db = admin();
+    const id = body.id as string;
+    const { data: org } = await db.from('org_teams').select('*').eq('id', id).maybeSingle();
+    if (!org) return { org: null, members: [], devices: [], remediations: [], timeline: [], billing: { stripe_customer_id: null, subscription_end: null, seats: 0, max_seats: null, rc_balance: 0 } };
+
+    const [{ data: memberRows }, { data: devices }, { data: remediations }, { data: timeline }, { data: sub }, { data: cred }] = await Promise.all([
+      db.from('org_team_members').select('user_id, email, role, status, joined_at').eq('organization_id', id),
+      db.from('devices').select('id, hostname, agent_version, status, last_checkin').eq('org_id', id).order('last_checkin', { ascending: false }).limit(200),
+      db.from('wrayth_remediation_actions').select('id, action_type, provider, status, created_at, duration_ms').eq('org_id' as any, id).order('created_at', { ascending: false }).limit(50).then((r) => r).catch(() => ({ data: [] })),
+      db.from('ray_org_timeline').select('id, occurred_at, category, summary, severity').eq('org_id', id).order('occurred_at', { ascending: false }).limit(30),
+      org.owner_id ? db.from('subscribers').select('*').eq('user_id', org.owner_id).maybeSingle() : Promise.resolve({ data: null } as any),
+      org.owner_id ? db.from('user_credits').select('balance').eq('user_id', org.owner_id).maybeSingle() : Promise.resolve({ data: null } as any),
+    ]);
+
+    // Attach owner email + name to org for the detail header.
+    let ownerEmail: string | null = null;
+    let ownerName: string | null = null;
+    if (org.owner_id) {
+      const { data: u } = await db.auth.admin.getUserById(org.owner_id);
+      ownerEmail = u?.user?.email ?? null;
+      const { data: p } = await db.from('profiles').select('full_name').eq('id', org.owner_id).maybeSingle();
+      ownerName = p?.full_name ?? null;
+    }
+
+    // Enrich member rows with email + last_sign_in via a single auth list.
+    const memberIds = (memberRows ?? []).map((m: any) => m.user_id).filter(Boolean);
+    const authInfo = new Map<string, { email: string | null; last_sign_in_at: string | null }>();
+    if (memberIds.length) {
+      const { data: authUsers } = await db.auth.admin.listUsers({ page: 1, perPage: 200 });
+      for (const u of authUsers?.users ?? []) {
+        if (memberIds.includes(u.id)) authInfo.set(u.id, { email: u.email ?? null, last_sign_in_at: u.last_sign_in_at ?? null });
+      }
+    }
+
+    const members = (memberRows ?? []).map((m: any) => ({
+      user_id: m.user_id,
+      email: authInfo.get(m.user_id)?.email ?? m.email ?? null,
+      role: m.role,
+      status: m.status,
+      joined_at: m.joined_at,
+      last_sign_in_at: authInfo.get(m.user_id)?.last_sign_in_at ?? null,
+    }));
+
+    const lastDeviceCheckin = (devices ?? [])
+      .map((d: any) => d.last_checkin)
+      .filter(Boolean)
+      .sort()
+      .pop() ?? null;
+
+    return {
+      org: {
+        id: org.id,
+        name: org.name,
+        slug: org.slug,
+        owner_id: org.owner_id,
+        owner_email: ownerEmail,
+        owner_display_name: ownerName,
+        tier: sub?.subscription_tier ?? 'free',
+        billing_email: org.billing_email,
+        created_at: org.created_at,
+        last_activity_at: lastDeviceCheckin ?? org.updated_at ?? org.created_at,
+      },
+      members,
+      devices: devices ?? [],
+      remediations: (remediations as any[]) ?? [],
+      timeline: timeline ?? [],
+      billing: {
+        stripe_customer_id: sub?.stripe_customer_id ?? null,
+        subscription_end: sub?.subscription_end ?? null,
+        seats: members.length + 1,
+        max_seats: org.max_members ?? null,
+        rc_balance: Number(cred?.balance ?? 0),
+      },
+    };
   },
 
   async 'msps.list'() {
