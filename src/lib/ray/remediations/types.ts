@@ -60,7 +60,37 @@ export interface Remediation {
   defaultParams?: Record<string, unknown>;
   /** Human-readable preview bullets rendered as "Ray will: …". */
   previewLines: string[];
+  // — Phase 2 trust + rollback metadata (all optional, additive) —
+  /** Data source Ray used to justify this fix ("Microsoft Defender", "HIBP", "Wrayth Agent"). */
+  sourceLabel?: string;
+  /** Static baseline confidence 0–100. Resolver may adjust per-instance. */
+  confidenceHint?: number;
+  /** Preview bullets shown when the user clicks Undo. */
+  undoLines?: string[];
+  /** Free-text keywords used by the recommendation resolver. */
+  keywords?: string[];
 }
+
+/** Lifecycle states for queued remediations. */
+export type LifecycleState =
+  | 'queued'
+  | 'pending_approval'
+  | 'approved'
+  | 'running'
+  | 'verifying'
+  | 'completed'
+  | 'failed'
+  | 'rolled_back'
+  | 'cancelled';
+
+/** Auto-fix modes (org policy). */
+export type AutoFixMode =
+  | 'never'
+  | 'suggest_only'
+  | 'auto_low'
+  | 'auto_medium'
+  | 'auto_except_critical'
+  | 'autonomous';
 
 export const CATEGORY_LABELS: Record<RemediationCategory, string> = {
   encryption: 'Disk encryption',

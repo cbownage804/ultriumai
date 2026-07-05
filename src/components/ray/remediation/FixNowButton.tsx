@@ -24,6 +24,7 @@ import type { Remediation } from '@/lib/ray/remediations/types';
 import { executeRemediation, type ExecuteResult } from '@/lib/ray/remediations/providers';
 import { TargetPicker, type ResolvedTarget } from './TargetPicker';
 import { RemediationRunner } from './RemediationRunner';
+import { TrustIndicators } from './TrustIndicators';
 
 const RISK_CLS: Record<'low' | 'medium' | 'high', string> = {
   low: 'border-emerald-500/40 text-emerald-200',
@@ -175,6 +176,8 @@ export function FixNowButton({
                     ))}
                   </ul>
                 </div>
+
+                <TrustIndicators remediation={r} />
 
                 {!presetTarget && (
                   <TargetPicker

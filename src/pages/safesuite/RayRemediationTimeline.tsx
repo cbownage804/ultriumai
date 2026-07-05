@@ -15,6 +15,7 @@ import { RayZeroState } from '@/components/ray/zero-state';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { PROVIDER_LABELS } from '@/lib/ray/remediations/types';
+import { UndoButton } from '@/components/ray/remediation/UndoButton';
 
 interface Row {
   id: string;
@@ -30,6 +31,9 @@ interface Row {
   duration_ms: number | null;
   error: string | null;
   created_at: string;
+  lifecycle_state: string | null;
+  reversible: boolean | null;
+  reverse_slug: string | null;
 }
 
 const STATUS_ICON: Record<Row['status'], JSX.Element> = {
@@ -79,7 +83,7 @@ export default function RayRemediationTimeline() {
     (async () => {
       const { data } = await supabase
         .from('wrayth_remediation_actions')
-        .select('id, provider, slug, action_type, target_type, target_id, target_label, status, risk, category, duration_ms, error, created_at')
+        .select('id, provider, slug, action_type, target_type, target_id, target_label, status, risk, category, duration_ms, error, created_at, lifecycle_state, reversible, reverse_slug')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(200);
@@ -94,7 +98,7 @@ export default function RayRemediationTimeline() {
         () => {
           supabase
             .from('wrayth_remediation_actions')
-            .select('id, provider, slug, action_type, target_type, target_id, target_label, status, risk, category, duration_ms, error, created_at')
+            .select('id, provider, slug, action_type, target_type, target_id, target_label, status, risk, category, duration_ms, error, created_at, lifecycle_state, reversible, reverse_slug')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })
             .limit(200)
@@ -229,6 +233,25 @@ export default function RayRemediationTimeline() {
                           </div>
                         )}
                       </div>
+                      {r.status === 'succeeded' && r.reversible && r.lifecycle_state !== 'rolled_back' && (
+                        <UndoButton
+                          row={{
+                            id: r.id,
+                            slug: r.slug,
+                            provider: r.provider,
+                            target_id: r.target_id,
+                            target_label: r.target_label,
+                            reversible: !!r.reversible,
+                            reverse_slug: r.reverse_slug,
+                            lifecycle_state: r.lifecycle_state,
+                          }}
+                        />
+                      )}
+                      {r.lifecycle_state === 'rolled_back' && (
+                        <Badge variant="outline" className="text-[10px] border-emerald-500/40 text-emerald-200">
+                          rolled back
+                        </Badge>
+                      )}
                     </li>
                   );
                 })}

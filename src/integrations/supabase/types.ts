@@ -37566,16 +37566,64 @@ export type Database = {
         }
         Relationships: []
       }
+      wrayth_maintenance_windows: {
+        Row: {
+          active: boolean
+          created_at: string
+          end_time: string | null
+          id: string
+          mode: string
+          name: string
+          start_time: string | null
+          timezone: string
+          updated_at: string
+          user_id: string
+          weekday_mask: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          mode?: string
+          name: string
+          start_time?: string | null
+          timezone?: string
+          updated_at?: string
+          user_id: string
+          weekday_mask?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          mode?: string
+          name?: string
+          start_time?: string | null
+          timezone?: string
+          updated_at?: string
+          user_id?: string
+          weekday_mask?: number
+        }
+        Relationships: []
+      }
       wrayth_remediation_actions: {
         Row: {
           action_type: string
           agent_action_id: string | null
+          approved_at: string | null
+          approved_by: string | null
           category: string | null
+          chain_id: string | null
+          chain_step_index: number | null
+          confidence: number | null
           confirmed_by_user: boolean
           created_at: string
           duration_ms: number | null
           error: string | null
           id: string
+          lifecycle_state: string
           new_state: Json | null
           params: Json
           permission_scopes: string[] | null
@@ -37586,7 +37634,10 @@ export type Database = {
           reverse_slug: string | null
           reversible: boolean
           risk: string
+          rollback_of: string | null
+          scheduled_for: string | null
           slug: string
+          source_label: string | null
           status: string
           target_id: string
           target_label: string | null
@@ -37597,12 +37648,18 @@ export type Database = {
         Insert: {
           action_type: string
           agent_action_id?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           category?: string | null
+          chain_id?: string | null
+          chain_step_index?: number | null
+          confidence?: number | null
           confirmed_by_user?: boolean
           created_at?: string
           duration_ms?: number | null
           error?: string | null
           id?: string
+          lifecycle_state?: string
           new_state?: Json | null
           params?: Json
           permission_scopes?: string[] | null
@@ -37613,7 +37670,10 @@ export type Database = {
           reverse_slug?: string | null
           reversible?: boolean
           risk: string
+          rollback_of?: string | null
+          scheduled_for?: string | null
           slug: string
+          source_label?: string | null
           status?: string
           target_id: string
           target_label?: string | null
@@ -37624,12 +37684,18 @@ export type Database = {
         Update: {
           action_type?: string
           agent_action_id?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           category?: string | null
+          chain_id?: string | null
+          chain_step_index?: number | null
+          confidence?: number | null
           confirmed_by_user?: boolean
           created_at?: string
           duration_ms?: number | null
           error?: string | null
           id?: string
+          lifecycle_state?: string
           new_state?: Json | null
           params?: Json
           permission_scopes?: string[] | null
@@ -37640,7 +37706,10 @@ export type Database = {
           reverse_slug?: string | null
           reversible?: boolean
           risk?: string
+          rollback_of?: string | null
+          scheduled_for?: string | null
           slug?: string
+          source_label?: string | null
           status?: string
           target_id?: string
           target_label?: string | null
@@ -37656,7 +37725,89 @@ export type Database = {
             referencedRelation: "wrayth_device_actions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "wrayth_remediation_actions_rollback_of_fkey"
+            columns: ["rollback_of"]
+            isOneToOne: false
+            referencedRelation: "wrayth_remediation_actions"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      wrayth_remediation_chains: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string | null
+          id: string
+          is_template: boolean
+          name: string
+          steps: Json
+          trigger_slug: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_template?: boolean
+          name: string
+          steps?: Json
+          trigger_slug?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_template?: boolean
+          name?: string
+          steps?: Json
+          trigger_slug?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wrayth_remediation_policies: {
+        Row: {
+          always_auto: string[]
+          auto_fix_mode: string
+          created_at: string
+          id: string
+          never_auto: string[]
+          notify_on_complete: boolean
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          always_auto?: string[]
+          auto_fix_mode?: string
+          created_at?: string
+          id?: string
+          never_auto?: string[]
+          notify_on_complete?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          always_auto?: string[]
+          auto_fix_mode?: string
+          created_at?: string
+          id?: string
+          never_auto?: string[]
+          notify_on_complete?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       xdr_attack_chains: {
         Row: {
