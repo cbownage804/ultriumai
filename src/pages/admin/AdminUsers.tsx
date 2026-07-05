@@ -11,10 +11,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 
+import { formatOrgName, formatTier, tierBadgeVariant, relativeTime } from '@/lib/admin/labels';
+
 interface AdminUser {
   id: string; email: string; created_at: string; last_sign_in_at?: string;
   banned_until?: string | null; platform_role?: string | null;
   tier?: string; subscribed?: boolean; rc_balance?: number;
+  org_name?: string | null; org_id?: string | null;
 }
 
 export default function AdminUsers() {
@@ -60,10 +63,11 @@ export default function AdminUsers() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Email</TableHead>
-                    <TableHead>Tier</TableHead>
+                    <TableHead>Organization</TableHead>
+                    <TableHead>Plan</TableHead>
                     <TableHead>Platform Role</TableHead>
-                    <TableHead>RC</TableHead>
-                    <TableHead>Last sign-in</TableHead>
+                    <TableHead className="text-right">RC</TableHead>
+                    <TableHead>Last activity</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -71,10 +75,11 @@ export default function AdminUsers() {
                   {filtered.map((u) => (
                     <TableRow key={u.id} className="cursor-pointer" onClick={() => setSel(u)}>
                       <TableCell className="font-medium">{u.email}</TableCell>
-                      <TableCell><Badge variant="secondary">{u.tier ?? 'free'}</Badge></TableCell>
+                      <TableCell className="text-sm">{formatOrgName(u.org_name, 'personal')}</TableCell>
+                      <TableCell><Badge variant={tierBadgeVariant(u.tier)}>{formatTier(u.tier)}</Badge></TableCell>
                       <TableCell>{u.platform_role ? <Badge>{u.platform_role}</Badge> : <span className="text-muted-foreground text-xs">—</span>}</TableCell>
-                      <TableCell>{u.rc_balance ?? 0}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleString() : '—'}</TableCell>
+                      <TableCell className="text-right tabular-nums">{u.rc_balance ?? 0}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{relativeTime(u.last_sign_in_at)}</TableCell>
                       <TableCell>
                         {u.banned_until && u.banned_until !== 'none' ? <Badge variant="destructive">Suspended</Badge> : <Badge variant="outline">Active</Badge>}
                       </TableCell>
@@ -106,7 +111,7 @@ export default function AdminUsers() {
                 <TabsContent value="overview" className="space-y-3 mt-4">
                   {!detail ? <Skeleton className="h-32" /> : (
                     <>
-                      <Row k="Tier" v={detail.subscription?.subscription_tier ?? 'free'} />
+                      <Row k="Plan" v={formatTier(detail.subscription?.subscription_tier)} />
                       <Row k="Subscribed" v={String(detail.subscription?.subscribed ?? false)} />
                       <Row k="Subscription ends" v={detail.subscription?.subscription_end ?? '—'} />
                       <Row k="RC balance" v={detail.credits?.balance ?? 0} />

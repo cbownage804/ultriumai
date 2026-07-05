@@ -1,33 +1,39 @@
 import { NavLink, Outlet, Navigate, useLocation } from 'react-router-dom';
 import { usePlatformRole } from '@/hooks/usePlatformRole';
-import { Shield, Users, Building2, Briefcase, DollarSign, Settings2, Radar, Server, Sparkles, ScrollText, AlertTriangle, LayoutDashboard, ArrowLeft } from 'lucide-react';
+import {
+  Shield, Users, Building2, Briefcase, DollarSign, Settings2, Radar, Server,
+  Sparkles, ScrollText, AlertTriangle, LayoutDashboard, ArrowLeft, Bell, LifeBuoy,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PageSkeleton } from '@/components/ui/PageSkeleton';
 
+/**
+ * Sidebar structure — Phase 3A reorganization.
+ * Grouped so Platform, MSPs, Operations, Billing, Platform Ops read
+ * naturally. Danger Zone remains isolated at the bottom.
+ */
 const NAV = [
   { section: 'Platform', items: [
-    { to: '/admin', end: true, label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/admin/users', label: 'Users', icon: Users },
+    { to: '/admin', end: true, label: 'Command Center', icon: LayoutDashboard },
     { to: '/admin/organizations', label: 'Organizations', icon: Building2 },
+    { to: '/admin/users', label: 'Users', icon: Users },
   ]},
   { section: 'MSPs', items: [
     { to: '/admin/msps', label: 'MSPs & Clients', icon: Briefcase },
   ]},
+  { section: 'Operations', items: [
+    { to: '/admin/threat', label: 'Security Operations', icon: Radar },
+    { to: '/admin/fleet', label: 'Agent Fleet', icon: Server },
+    { to: '/admin/ai', label: 'Ray Analytics', icon: Sparkles },
+  ]},
   { section: 'Billing', items: [
     { to: '/admin/billing', label: 'Revenue & Stripe', icon: DollarSign },
   ]},
-  { section: 'Operations', items: [
-    { to: '/admin/ops/announcements', label: 'Announcements', icon: ScrollText },
+  { section: 'Platform Ops', items: [
     { to: '/admin/ops/flags', label: 'Feature Flags', icon: Settings2 },
+    { to: '/admin/ops/announcements', label: 'Announcements', icon: Bell },
     { to: '/admin/ops/audit', label: 'Audit Log', icon: ScrollText },
-    { to: '/admin/ops/support', label: 'Support Tickets', icon: ScrollText },
-  ]},
-  { section: 'Security Operations', items: [
-    { to: '/admin/threat', label: 'Global Threats', icon: Radar },
-    { to: '/admin/fleet', label: 'Agent Fleet', icon: Server },
-  ]},
-  { section: 'Ray Intelligence', items: [
-    { to: '/admin/ai', label: 'Ray Analytics', icon: Sparkles },
+    { to: '/admin/ops/support', label: 'Support Tickets', icon: LifeBuoy },
   ]},
 ];
 
@@ -46,7 +52,7 @@ export default function AdminLayout() {
           <div className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-primary" />
             <div>
-              <div className="font-semibold text-sm">Wrayth Admin</div>
+              <div className="font-semibold text-sm">Wrayth Control Plane</div>
               <div className="text-[10px] text-muted-foreground uppercase tracking-widest">{roles.join(' · ')}</div>
             </div>
           </div>
@@ -74,7 +80,6 @@ export default function AdminLayout() {
             </div>
           ))}
 
-          {/* Visual gap + separator to psychologically distance Danger Zone from normal admin tasks. */}
           <div className="pt-16">
             <div className="border-t border-destructive/20 mx-3 mb-3" />
             <NavLink
