@@ -233,6 +233,25 @@ export default function RayRemediationTimeline() {
                           </div>
                         )}
                       </div>
+                      {r.status === 'succeeded' && r.reversible && r.lifecycle_state !== 'rolled_back' && (
+                        <UndoButton
+                          row={{
+                            id: r.id,
+                            slug: r.slug,
+                            provider: r.provider,
+                            target_id: r.target_id,
+                            target_label: r.target_label,
+                            reversible: !!r.reversible,
+                            reverse_slug: r.reverse_slug,
+                            lifecycle_state: r.lifecycle_state,
+                          }}
+                        />
+                      )}
+                      {r.lifecycle_state === 'rolled_back' && (
+                        <Badge variant="outline" className="text-[10px] border-emerald-500/40 text-emerald-200">
+                          rolled back
+                        </Badge>
+                      )}
                     </li>
                   );
                 })}
