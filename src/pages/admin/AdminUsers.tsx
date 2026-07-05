@@ -63,10 +63,11 @@ export default function AdminUsers() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Email</TableHead>
-                    <TableHead>Tier</TableHead>
+                    <TableHead>Organization</TableHead>
+                    <TableHead>Plan</TableHead>
                     <TableHead>Platform Role</TableHead>
-                    <TableHead>RC</TableHead>
-                    <TableHead>Last sign-in</TableHead>
+                    <TableHead className="text-right">RC</TableHead>
+                    <TableHead>Last activity</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -74,10 +75,11 @@ export default function AdminUsers() {
                   {filtered.map((u) => (
                     <TableRow key={u.id} className="cursor-pointer" onClick={() => setSel(u)}>
                       <TableCell className="font-medium">{u.email}</TableCell>
-                      <TableCell><Badge variant="secondary">{u.tier ?? 'free'}</Badge></TableCell>
+                      <TableCell className="text-sm">{formatOrgName(u.org_name, 'personal')}</TableCell>
+                      <TableCell><Badge variant={tierBadgeVariant(u.tier)}>{formatTier(u.tier)}</Badge></TableCell>
                       <TableCell>{u.platform_role ? <Badge>{u.platform_role}</Badge> : <span className="text-muted-foreground text-xs">—</span>}</TableCell>
-                      <TableCell>{u.rc_balance ?? 0}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleString() : '—'}</TableCell>
+                      <TableCell className="text-right tabular-nums">{u.rc_balance ?? 0}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{relativeTime(u.last_sign_in_at)}</TableCell>
                       <TableCell>
                         {u.banned_until && u.banned_until !== 'none' ? <Badge variant="destructive">Suspended</Badge> : <Badge variant="outline">Active</Badge>}
                       </TableCell>
