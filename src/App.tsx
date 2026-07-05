@@ -348,6 +348,27 @@ function AppRouter() {
           <Route path="/_launch" element={<SuspenseWrapper><LaunchChecklist /></SuspenseWrapper>} />
         ) : null}
 
+        {/* Platform Admin Console — access gated inside AdminLayout by has_platform_role */}
+        <Route path="/admin" element={
+          <ProtectedRoute>
+            <SuspenseWrapper><AdminLayout /></SuspenseWrapper>
+          </ProtectedRoute>
+        }>
+          <Route index element={<SuspenseWrapper><AdminDashboard /></SuspenseWrapper>} />
+          <Route path="users" element={<SuspenseWrapper><AdminUsers /></SuspenseWrapper>} />
+          <Route path="organizations" element={<SuspenseWrapper><AdminOrganizations /></SuspenseWrapper>} />
+          <Route path="msps" element={<SuspenseWrapper><AdminMsps /></SuspenseWrapper>} />
+          <Route path="billing" element={<SuspenseWrapper><AdminBilling /></SuspenseWrapper>} />
+          <Route path="ops/announcements" element={<SuspenseWrapper><AdminAnnouncements /></SuspenseWrapper>} />
+          <Route path="ops/flags" element={<SuspenseWrapper><AdminFlags /></SuspenseWrapper>} />
+          <Route path="ops/audit" element={<SuspenseWrapper><AdminAuditLog /></SuspenseWrapper>} />
+          <Route path="ops/support" element={<SuspenseWrapper><AdminSupport /></SuspenseWrapper>} />
+          <Route path="threat" element={<SuspenseWrapper><AdminThreatIntel /></SuspenseWrapper>} />
+          <Route path="fleet" element={<SuspenseWrapper><AdminAgentFleet /></SuspenseWrapper>} />
+          <Route path="ai" element={<SuspenseWrapper><AdminAiAnalytics /></SuspenseWrapper>} />
+          <Route path="danger" element={<SuspenseWrapper><AdminDangerZone /></SuspenseWrapper>} />
+        </Route>
+
         <Route path="*" element={<NotFound />} />
       </Routes>
 
