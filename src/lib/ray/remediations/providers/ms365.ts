@@ -1,8 +1,8 @@
 /**
  * Microsoft 365 executor — calls the `ms-graph-remediate` edge function
- * and records the audit row synchronously. Cloud actions complete inline;
- * no async agent polling.
+ * and records the audit row synchronously.
  */
+// deno-lint-ignore-file no-explicit-any
 import { supabase } from '@/integrations/supabase/client';
 import type { Remediation } from '../types';
 import type { ExecuteContext, ExecuteResult } from './types';
@@ -13,26 +13,27 @@ export async function executeMs365Remediation(
 ): Promise<ExecuteResult> {
   const started = Date.now();
 
-  // Pre-write the audit row as "running" so Timeline / Runner see it.
+  const preRow: any = {
+    user_id: ctx.userId,
+    provider: 'ms365',
+    slug: r.slug,
+    action_type: r.action_type,
+    category: r.category,
+    risk: r.risk,
+    target_type: r.target,
+    target_id: ctx.targetId,
+    target_label: ctx.targetLabel ?? null,
+    status: 'running',
+    params: (ctx.params ?? {}) as any,
+    reversible: !!r.reversible,
+    reverse_slug: r.reverseSlug ?? null,
+    confirmed_by_user: ctx.confirmed,
+    permission_scopes: r.requiredPermissions ?? [],
+  };
+
   const { data: audit, error: auditErr } = await supabase
     .from('wrayth_remediation_actions')
-    .insert({
-      user_id: ctx.userId,
-      provider: 'ms365',
-      slug: r.slug,
-      action_type: r.action_type,
-      category: r.category,
-      risk: r.risk,
-      target_type: r.target,
-      target_id: ctx.targetId,
-      target_label: ctx.targetLabel ?? null,
-      status: 'running',
-      params: ctx.params ?? {},
-      reversible: !!r.reversible,
-      reverse_slug: r.reverseSlug ?? null,
-      confirmed_by_user: ctx.confirmed,
-      permission_scopes: r.requiredPermissions ?? [],
-    })
+    .insert(preRow)
     .select('id')
     .single();
   if (auditErr) throw new Error(auditErr.message);
@@ -65,9 +66,9 @@ export async function executeMs365Remediation(
   if (auditId) {
     await supabase.from('wrayth_remediation_actions').update({
       status: 'succeeded',
-      result: payload?.result ?? null,
-      previous_state: payload?.previous ?? null,
-      new_state: payload?.new ?? null,
+      result: (payload?.result ?? null) as any,
+      previous_state: (payload?.previous ?? null) as any,
+      new_state: (payload?.new ?? null) as any,
       duration_ms: duration,
     }).eq('id', auditId);
   }
