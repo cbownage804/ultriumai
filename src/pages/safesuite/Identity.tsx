@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { RayPageHeader } from '@/components/ray/RayPageHeader';
 import { RayConversationCard } from '@/components/ray/RayConversationCard';
 import { IdentityGraphPanel } from '@/components/ray/IdentityGraphPanel';
+import { RayZeroState } from '@/components/ray/zero-state';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -117,17 +118,17 @@ export default function Identity() {
             <Loader2 className="h-5 w-5 animate-spin" />
           </div>
         ) : assets.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-card/30 p-8 text-center">
-            <p className="text-sm text-foreground">I'm not watching any identities yet.</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Add an email, domain, or brand and I'll start monitoring breach data and dark-web mentions.
-            </p>
-            <Link to="/app/exposure" className="inline-block mt-4">
-              <Button size="sm" className="rounded-sm bg-violet-500 hover:bg-violet-400 text-white">
-                <Plus className="h-4 w-4 mr-2" /> Add the first one
-              </Button>
-            </Link>
-          </div>
+          <RayZeroState
+            icon={AtSign}
+            title="I&rsquo;m not watching any identities yet."
+            body="Add an email, domain, or brand and I&rsquo;ll start monitoring breach databases, dark-web mentions, and paste sites for you — continuously, in the background."
+            expectations={[
+              'Breach exposure per identity, refreshed on every sweep.',
+              'Dark-web mentions tied back to your specific accounts.',
+              'A cross-referenced graph so a leaked email links to the passwords and devices it touches.',
+            ]}
+            action={{ label: 'Add the first identity', href: '/app/exposure' }}
+          />
         ) : (
           Object.entries(grouped).map(([type, items]) => {
             const meta = TYPE_META[type] ?? { label: type, icon: Hash };
