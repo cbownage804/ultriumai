@@ -15,9 +15,15 @@ import { PlatformStatusStrip } from '@/components/admin/PlatformStatusStrip';
 
 interface Overview {
   users?: number;
+  users_active_30d?: number;
+  users_new_7d?: number;
   orgs?: number;
+  orgs_active?: number;
   msps?: number;
+  msp_clients?: number;
   devices?: number;
+  devices_online?: number;
+  devices_offline?: number;
   threats_24h?: number;
   rc_today?: number;
 }
