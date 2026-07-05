@@ -1,178 +1,228 @@
-# One-Click Remediation Engine — Phase 1
+# Phase 2 — Make Ray Feel Autonomous
 
-Turn every Ray recommendation into a real, auditable **Fix Now** action across
-two providers: the **Wrayth Windows Agent** and **Microsoft 365 / Entra ID /
-Defender**. Architecture is provider-pluggable so Meraki, Huntress, Datto,
-SentinelOne, etc. can drop in later without UI changes.
+Build on the Phase 1 One-Click Remediation Engine so Ray moves from reactive
+("here are recommendations") to proactive ("I can fix 5 things for you, want
+me to?") while giving orgs real controls: approval policies, maintenance
+windows, rollback, chained remediations, and trust indicators.
 
-## What already exists (foundation we build on)
+## Delivery order (each layer is shippable on its own)
 
-- `src/lib/ray/remediations/catalog.ts` — 17 Windows agent actions, typed and grouped
-- `src/components/ray/RemediationDispatchButton.tsx` — device picker + dispatch
-- `supabase/functions/agent-action-request` + `agent-action-poll` + `agent-action-result` — full dispatch/ack loop
-- `supabase/functions/ms-graph-oauth-*` + `ms-graph-sync` — M365 tenant linking works
-- `RayFixPanel`, `FixWithRayButton`, `PlaybookRunner` — existing execution UIs to extend
-- `wrayth_device_actions` table — action queue + audit source of truth
+1. **Pending Remediations on Home** — the single biggest perceived-intelligence
+   win. Everything else amplifies it.
+2. **Approval policy + org auto-fix settings**
+3. **Queued remediation lifecycle** (Queued → Approved → Running → Verifying → Completed → Rollback available)
+4. **Rollback (Undo) per action**
+5. **Maintenance windows**
+6. **Remediation chains** (playbook-style multi-step)
+7. **Trust indicators** on every card (confidence, source, risk, rollback)
+8. **Completion notifications** (in-app first; email/Teams/Slack later)
+
+## What already exists
+
+- `wrayth_remediation_actions` table with `provider`, `status`, `previous_state`, `new_state`, `duration_ms`
+- Executor registry (`agent`, `ms365`) with the `FixNowButton` + `RemediationRunner` UI
+- `ms-graph-remediate` edge function with rollback-friendly state snapshots
+- `RayRemediationTimeline` page streaming from Realtime
+- `RayRecommendationsCard` with per-rec "Ask Ray" (perfect insertion point for pending fixes)
 
 ## Architecture
 
-### Unified `Remediation` model (extended)
+### 1. Pending Remediations feed
 
-Rewrite `Remediation` as a **provider-agnostic** contract. Existing agent items keep working; M365 items plug into the same shape.
+Map each open `ray_recommendations` row to a remediation slug (when one
+exists) via a new resolver `src/lib/ray/remediations/resolver.ts`:
 
 ```ts
-type ProviderId = 'agent' | 'ms365' | 'defender'; // future: meraki | huntress | ...
-type ConfirmMode = 'none' | 'confirm' | 'typed_name' | 'two_person';
-
-interface Remediation {
-  slug: string;
-  title: string;
-  summary: string;
-  why: string;
-  category: RemediationCategory;      // extended with 'identity' | 'mail' | 'session_cloud'
-  risk: 'low' | 'medium' | 'high';
-  provider: ProviderId;
-  action_type: string;                // provider-native action id
-  requiredPermissions: string[];      // e.g. 'ms365:User.ReadWrite.All'
-  requiresConfirmation: ConfirmMode;
-  requiresReboot?: boolean;
-  reversible: boolean;
-  reverseSlug?: string;
-  estimatedSeconds: number;
-  successRate?: number;               // shown as "99%" on the card
-  target: 'device' | 'user' | 'tenant' | 'message';
-  platforms?: Array<'windows' | 'macos' | 'linux'>;
-  paramsSchema?: JSONSchema;          // preview UI renders from this
-  previewLines: (ctx) => string[];    // "Ray will: ..." bullets
-}
+resolveRemediationForRec(rec): { remediation, target, params, confidence } | null
 ```
 
-### Executor registry (`src/lib/ray/remediations/providers/`)
+New component `PendingRemediationsCard` (Home + Ray recommendations top-of-page):
 
-- `agent.ts` — wraps existing `agent-action-request` dispatcher
-- `ms365.ts` — calls new `ms-graph-remediate` edge function
-- `index.ts` — `executeRemediation(remediation, target, params)` picks executor by `provider`
-
-### New Microsoft 365 edge function: `ms-graph-remediate`
-
-Single endpoint, action-router style (same pattern as `admin-api`). Uses stored tenant tokens from `ms-graph-oauth-callback` output. Actions:
-
-| slug | Graph call |
-|---|---|
-| `force-password-reset` | `POST /users/{id}/authentication/methods/{id}/resetPassword` |
-| `revoke-sessions` | `POST /users/{id}/revokeSignInSessions` |
-| `block-signin` | `PATCH /users/{id}` `accountEnabled:false` |
-| `unblock-signin` | `PATCH /users/{id}` `accountEnabled:true` |
-| `require-mfa` | `PATCH /policies/authenticationMethodsPolicy/...` per-user |
-| `reset-mfa-methods` | `DELETE /users/{id}/authentication/methods/{id}` (loop) |
-| `disable-legacy-auth` | Conditional Access policy patch (block legacy auth) |
-| `enable-security-defaults` | `PATCH /policies/identitySecurityDefaultsEnforcementPolicy` |
-| `remove-inbox-rules` | `GET/DELETE /users/{id}/mailFolders/inbox/messageRules` |
-| `remove-forwarding` | `PATCH /users/{id}/mailboxSettings` |
-| `quarantine-message` | Defender for O365 `/security/threatSubmission` |
-| `block-sender` | Tenant allow/block list `/security/tenantAllowBlockLists` |
-| `disable-user` / `enable-user` | `PATCH /users/{id}` accountEnabled |
-| `dismiss-risky-signin` | `POST /identityProtection/riskyUsers/dismiss` |
-
-Every call records to `wrayth_device_actions` (target_type = `user|tenant|message`) with `previous_state` snapshot for rollback awareness.
-
-### Confirmation & preview flow
-
-`<RemediationPreviewDialog>` — single dialog shared by all providers. Renders:
-
-```text
-Ray will:
-  ✓ line 1
-  ✓ line 2
-Estimated time: 2m   Restart: not required   Reversible: yes
-[Cancel]  [Fix Now]
+```
+Ray can safely fix:
+  ✓ Enable SmartScreen                 Low risk    ~30s
+  ✓ Disable SMBv1                      Med risk    ~1m
+  ✓ Force MFA registration (3 users)   Low risk    ~45s
+  ✓ Rotate 3 breached passwords        Low risk    ~2m
+Estimated: 4 minutes
+[ Review ]  [ Fix everything ]
 ```
 
-For `typed_name` risk, requires user to type target device/user. For `two_person`, dispatches a pending approval record (deferred to Phase 2 — Phase 1 stubs the UI and records intent).
+`Fix everything` opens a batch preview → queues each as a job.
 
-### Execution progress
+### 2. Approval policy (org-scoped settings)
 
-`<RemediationRunner>` — streams the same 6 phases used in the spec: Connecting → Sending → Acknowledged → Applying → Verifying → Completed. Subscribes to `wrayth_device_actions` row via Supabase Realtime and updates from `status` transitions written by the executors.
+New table `wrayth_remediation_policies` (one row per org):
 
-### Activity Timeline
-
-New page `src/pages/safesuite/RayRemediationTimeline.tsx` — reverse-chronological feed of every remediation across all providers. Filter by device, user, tenant, category, risk. Row layout:
-
-```text
-2:31 PM   Ray enabled Windows Firewall on R15         ok        [details]
-2:34 PM   Ray revoked 3 Azure sessions for jane@…     ok        [details]
-2:36 PM   Ray enabled BitLocker on R15                pending   [details]
+```
+org_id uuid pk
+auto_fix_mode text  -- never | suggest_only | auto_low | auto_medium | auto_except_critical | autonomous
+always_auto text[] -- category slugs
+never_auto  text[] -- category slugs
+notify_on_complete bool
+updated_at, updated_by
 ```
 
-Backed by `wrayth_device_actions` — no schema change beyond what's below.
+Settings page `src/pages/safesuite/RemediationPolicySettings.tsx` — radio
+group for `auto_fix_mode`, chip pickers for always/never lists.
 
-### Audit log
+Enforcement:
+- `FixNowButton` reads the policy; if a rec falls under `never_auto`, disables Fix Now with reason chip.
+- The **queue processor** (edge function `remediation-queue-tick`, cron every 60s) auto-approves+runs items that match the policy tier.
 
-Existing `wrayth_device_actions` already stores initiator, target, timestamps, status, error. Add columns:
-- `previous_state jsonb` (snapshot before change)
-- `new_state jsonb` (snapshot after)
-- `duration_ms int`
-- `provider text` (agent | ms365 | defender)
-- `permission_scopes text[]` (which scopes were used)
+### 3. Queued remediation lifecycle
 
-### Where "Fix Now" appears (Phase 1 surfaces)
+Add columns to `wrayth_remediation_actions`:
 
-1. **Ray Recommendations** (`RayRecommendationsCard`) — swap the generic CTA for `<FixNowButton remediation={…}>` when a rec maps to a catalog slug.
-2. **Device pages** — DeviceSecurityTabs posture rows get inline Fix Now.
-3. **Morning Brief / Home** — `TodayPriorityCard` upgrades to actionable Fix Now for top rec.
-4. **Threat Center** — findings with a mapped remediation.
+```
+lifecycle_state text default 'running'
+  -- queued | pending_approval | approved | running | verifying | completed | failed | rolled_back
+scheduled_for timestamptz null   -- honors maintenance windows
+approved_by uuid null
+approved_at timestamptz null
+chain_id uuid null                -- FK to wrayth_remediation_chains(id)
+chain_step_index int null
+rollback_of uuid null              -- self-FK: this row undoes another
+```
 
-Compliance failures + identity findings ride on the same component; no per-surface work beyond wiring the remediation slug.
+State machine lives in `src/lib/ray/remediations/lifecycle.ts`; edge function
+`remediation-queue-tick` transitions rows and dispatches executors.
+
+New UI: `RemediationQueuePage.tsx` — grouped by state, bulk approve, cancel.
+
+### 4. Rollback
+
+Every completed row already stores `previous_state`. Add:
+
+- `previewLines`-style `undoLines` on each `Remediation` in the catalog
+- `undoAction(action_type, previous_state)` per executor. Agent side: reuse
+  inverse `action_type` (e.g. `enable_firewall` ↔ `disable_firewall`, if
+  applicable) OR replay the raw previous_state where the action is a
+  PATCH-style Graph call.
+- New button on completed rows in Timeline + Runner completion screen:
+  `Undo` → dispatches an inverse job with `rollback_of = <original_id>`.
+
+Slugs whose `reversible = false` render `Undo` disabled with tooltip.
+
+### 5. Maintenance windows
+
+New table `wrayth_maintenance_windows` (org-scoped):
+
+```
+id, org_id, name, mode (immediate|business_hours|overnight|weekends|custom)
+timezone, weekday_mask int, start_time time, end_time time
+active bool
+```
+
+When queueing, resolver sets `scheduled_for` to next window opening.
+`remediation-queue-tick` only picks up rows where `scheduled_for <= now()`.
+
+UI: `MaintenanceWindowSettings.tsx` — presets + custom editor.
+
+### 6. Remediation chains
+
+New table `wrayth_remediation_chains`:
+
+```
+id, org_id, name, trigger_slug text, steps jsonb
+  -- [{slug, params_from_prev, halt_on_fail}, ...]
+created_at, active bool
+```
+
+Seed with the exemplar chain:
+
+```
+weak_password_detected
+ → force-password-reset
+ → revoke-sessions
+ → require-mfa
+ → notify-user
+ → verify-signin  (30-min wait, checks last successful signin)
+ → close-incident
+```
+
+Chain runner in `src/lib/ray/remediations/chain.ts`; queue processor
+advances step-by-step, writing each as its own `wrayth_remediation_actions`
+row with `chain_id + chain_step_index`.
+
+Runner UI extension: shows chain steps as a vertical timeline inside
+`RemediationRunner`.
+
+### 7. Trust indicators
+
+Extend `Remediation` type with:
+
+```ts
+confidenceHint?: number        // static baseline, 0-100
+sourceLabel: string            // 'Microsoft Defender', 'Wrayth Agent', 'HIBP'
+```
+
+Compute per-instance confidence in resolver (baseline × signal freshness).
+Render a compact strip on every `FixNowButton` preview and on Timeline rows:
+
+```
+Confidence 99%   ·   Source: Microsoft Defender   ·   Risk: Low   ·   Rollback: Yes
+```
+
+### 8. Notifications
+
+MVP: on `lifecycle_state → completed|failed|rolled_back`, insert into
+existing `notifications` table with a `remediation_summary` type. Existing
+bell UI picks them up. Email/Teams/Slack scaffolded behind a feature flag
+for later.
 
 ## File map
 
 **New**
-- `src/lib/ray/remediations/types.ts` — provider-agnostic types
-- `src/lib/ray/remediations/ms365.ts` — M365 catalog entries
-- `src/lib/ray/remediations/providers/agent.ts`
-- `src/lib/ray/remediations/providers/ms365.ts`
-- `src/lib/ray/remediations/providers/index.ts` — executor registry
-- `src/lib/ray/remediations/preview.ts` — preview line builders
-- `src/components/ray/remediation/RemediationPreviewDialog.tsx`
-- `src/components/ray/remediation/RemediationRunner.tsx`
-- `src/components/ray/remediation/FixNowButton.tsx` — new unified entry point (wraps preview + runner)
-- `src/components/ray/remediation/TargetPicker.tsx` — picks device / user / tenant based on `target`
-- `src/pages/safesuite/RayRemediationTimeline.tsx`
-- `supabase/functions/ms-graph-remediate/index.ts`
+- `src/lib/ray/remediations/resolver.ts` — rec → remediation mapping
+- `src/lib/ray/remediations/lifecycle.ts` — state machine
+- `src/lib/ray/remediations/chain.ts` — chain runner
+- `src/lib/ray/remediations/policy.ts` — policy fetch + evaluation
+- `src/components/ray/remediation/PendingRemediationsCard.tsx`
+- `src/components/ray/remediation/BatchFixDialog.tsx`
+- `src/components/ray/remediation/TrustIndicators.tsx`
+- `src/components/ray/remediation/UndoButton.tsx`
+- `src/pages/safesuite/RemediationPolicySettings.tsx`
+- `src/pages/safesuite/RemediationQueuePage.tsx`
+- `src/pages/safesuite/MaintenanceWindowSettings.tsx`
+- `supabase/functions/remediation-queue-tick/index.ts` (cron every 60s)
 
 **Edited**
-- `src/lib/ray/remediations/catalog.ts` — migrate to new types, keep existing slugs
-- `src/components/ray/RemediationDispatchButton.tsx` — thin wrapper over `FixNowButton`
-- `src/components/ray/RayRecommendationsCard.tsx` — inline Fix Now
-- `src/pages/safesuite/RayRemediationLibrary.tsx` — provider filter chip
-- `src/App.tsx` — route for `/app/ray/remediation-timeline`
-- `src/layouts/WraythLayout.tsx` — nav entry
+- `src/lib/ray/remediations/catalog.ts` — add `sourceLabel`, `confidenceHint`, `undoLines`, reverse pairings
+- `src/lib/ray/remediations/providers/{agent,ms365}.ts` — add `undoAction()`
+- `src/components/ray/remediation/FixNowButton.tsx` — policy gate + trust strip + `scheduled_for`
+- `src/components/ray/remediation/RemediationRunner.tsx` — chain view, Undo button on completion
+- `src/pages/safesuite/RayRemediationTimeline.tsx` — Undo per row, lifecycle filter
+- `src/pages/safesuite/RayRecommendations*.tsx` + Home page — mount `PendingRemediationsCard`
+- `src/App.tsx` + `src/layouts/WraythLayout.tsx` — routes/nav for Queue, Policy, Windows
 
-**Migration**
-- Add `previous_state`, `new_state`, `duration_ms`, `provider`, `permission_scopes` to `wrayth_device_actions`
-- Extend `target_type` check to include `user | tenant | message`
+**Migrations**
+- Add columns to `wrayth_remediation_actions` (lifecycle_state, scheduled_for, approved_by/at, chain_id, chain_step_index, rollback_of)
+- Create `wrayth_remediation_policies`, `wrayth_maintenance_windows`, `wrayth_remediation_chains` with GRANTs + RLS
+- pg_cron schedule for `remediation-queue-tick`
 
-## Delivery order
+## Explicitly out of scope for Phase 2
 
-1. Types + catalog migration + executor registry (no behavior change)
-2. Preview dialog + runner + FixNowButton (Windows agent flows use it end-to-end)
-3. `ms-graph-remediate` edge function (Entra actions first: reset password, revoke sessions, block signin, disable user)
-4. M365 catalog entries + executor + target picker for users
-5. Remediation Timeline page + audit column migration
-6. Wire into Ray Recommendations + Device pages + Morning Brief
-7. Mail actions (inbox rules, forwarding, quarantine, block sender) — last, largest Graph surface
+- Email / Teams / Slack notification delivery (in-app only)
+- Multi-org policy inheritance (single org row for now)
+- ML-based confidence scoring (static baselines)
+- Chain editor UI — chains are seeded/coded; visual builder is Phase 3
+- Two-person approval flow (Phase 3, alongside chain editor)
 
-## Explicitly out of scope for Phase 1
+## Risks
 
-- Browser extension deployment / policy push (Phase 2)
-- Third-party integrations (Meraki / Huntress / Datto / SentinelOne / CrowdStrike)
-- Two-person approval workflow (stub UI only, records intent)
-- Automated rollback runner (schema supports it, no UI yet)
-- macOS / Linux agent actions
+- **Auto-fix regret** — misclassified "low risk" auto-runs damage trust. Ship
+  with `suggest_only` as the default; every auto-run writes an easily
+  visible Timeline entry with a one-click Undo.
+- **Cron cost** — `remediation-queue-tick` runs every 60s; keep it O(pending
+  rows) with a partial index on `(lifecycle_state, scheduled_for)`.
+- **Rollback fidelity** — some agent actions are not truly reversible
+  (e.g. force-logoff). Mark `reversible=false` and never show Undo.
+- **Chain fan-out** — a chain that fails mid-way must halt or continue per
+  `halt_on_fail` per step, never silently abandon state.
 
-## Risks & gotchas
+## After Phase 2
 
-- **Graph token freshness**: `ms-graph-remediate` must refresh access tokens using stored refresh tokens; add helper `getFreshGraphToken(tenantId)`.
-- **Permission escalation**: every M365 action declares required scopes; the executor 403s early if the tenant token lacks them and surfaces "Reconnect Microsoft 365 with these scopes: …" instead of a raw Graph error.
-- **Idempotency**: dispatch keys must dedupe rapid double-clicks — reuse `wrayth_device_actions.id` UNIQUE on `(target, action_type, in-flight)`.
-- **Realtime billing**: Runner subscribes per active action; unsubscribe on unmount to avoid the Realtime cost spiral called out in project memory.
+Security Playbooks — reusable investigation+response workflows built on the
+same lifecycle + chain plumbing, tying investigations, graph memory,
+remediation, and reporting into one incident flow.
