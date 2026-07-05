@@ -196,8 +196,18 @@ export default function RayGraphExplorer() {
             <Loader2 className="h-5 w-5 animate-spin" />
           </div>
         ) : !focus ? (
-          <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-            No entities yet. Ray's next scan will populate the graph.
+          <div className="flex h-full items-center justify-center p-6">
+            <RayZeroState
+              title="I don't have anything on the graph yet."
+              body="Once your first device checks in, identity connects, or a scan completes, I'll start mapping entities and how they relate. Click any node to recenter the view."
+              expectations={[
+                'Users, devices, accounts, mailboxes, and organizations you own',
+                'Breaches, incidents, and IOCs I correlate to those entities',
+                'Recommendations and policies I attach to what I find',
+              ]}
+              action={{ label: 'Connect Microsoft 365', href: '/app/integrations' }}
+              secondaryAction={{ label: 'Enroll a device', href: '/app/devices' }}
+            />
           </div>
         ) : (
           <ReactFlow
