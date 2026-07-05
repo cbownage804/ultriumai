@@ -366,6 +366,7 @@ function AppRouter() {
           <Route index element={<SuspenseWrapper><AdminDashboard /></SuspenseWrapper>} />
           <Route path="users" element={<SuspenseWrapper><AdminUsers /></SuspenseWrapper>} />
           <Route path="organizations" element={<SuspenseWrapper><AdminOrganizations /></SuspenseWrapper>} />
+          <Route path="organizations/:id" element={<SuspenseWrapper><AdminOrganizationDetail /></SuspenseWrapper>} />
           <Route path="msps" element={<SuspenseWrapper><AdminMsps /></SuspenseWrapper>} />
           <Route path="billing" element={<SuspenseWrapper><AdminBilling /></SuspenseWrapper>} />
           <Route path="ops/announcements" element={<SuspenseWrapper><AdminAnnouncements /></SuspenseWrapper>} />
