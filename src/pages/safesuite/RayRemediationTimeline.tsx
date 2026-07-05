@@ -15,6 +15,7 @@ import { RayZeroState } from '@/components/ray/zero-state';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { PROVIDER_LABELS } from '@/lib/ray/remediations/types';
+import { UndoButton } from '@/components/ray/remediation/UndoButton';
 
 interface Row {
   id: string;
