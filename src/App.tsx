@@ -29,6 +29,9 @@ const WraythDashboard = lazy(() => import('@/pages/safesuite/SafeSuiteDashboard'
 const RayCommandCenter = lazy(() => import('@/pages/safesuite/RayCommandCenter'));
 const RayRemediationLibrary = lazy(() => import('@/pages/safesuite/RayRemediationLibrary'));
 const RayRemediationTimeline = lazy(() => import('@/pages/safesuite/RayRemediationTimeline'));
+const RemediationQueuePage = lazy(() => import('@/pages/safesuite/RemediationQueuePage'));
+const RemediationPolicySettings = lazy(() => import('@/pages/safesuite/RemediationPolicySettings'));
+const MaintenanceWindowSettings = lazy(() => import('@/pages/safesuite/MaintenanceWindowSettings'));
 const Upgrade = lazy(() => import('@/pages/safesuite/Upgrade'));
 const WraythBilling = lazy(() => import('@/pages/safesuite/SafeSuiteBilling'));
 const WraythSettings = lazy(() => import('@/pages/safesuite/SafeSuiteSettings'));
