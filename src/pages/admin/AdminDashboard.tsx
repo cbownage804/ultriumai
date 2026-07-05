@@ -1,14 +1,16 @@
 /**
  * Admin → Platform Dashboard. Three-state (Loading / Empty / Active).
- * Never shows "0 / 0 / 0" tiles as if they meant something.
+ * Never shows "0 / 0 / 0" tiles as if they meant something and never leaks
+ * infrastructure terminology to the operator.
  */
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { callAdmin } from '@/hooks/usePlatformRole';
 import { AdminPageHeader, AdminMetricCard } from '@/components/admin/AdminPrimitives';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageState } from '@/components/ui/page-state';
 import { RayZeroState } from '@/components/ray/zero-state';
-import { Activity } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Activity, AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface Overview {
   users?: number;
@@ -23,13 +25,38 @@ export default function AdminDashboard() {
   const [data, setData] = useState<Overview | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [retrying, setRetrying] = useState(false);
+
+  const load = useCallback(async () => {
+    setErr(null);
+    try {
+      const result = await callAdmin<Overview>('dashboard');
+      setData(result);
+    } catch (e) {
+      // Log the real exception for telemetry, show a customer-safe message.
+      console.error('[admin-dashboard] telemetry fetch failed', e);
+      setErr(
+        "Ray couldn't reach the platform telemetry service. This is usually transient — the retry will pick it up automatically."
+      );
+    } finally {
+      setLoading(false);
+      setRetrying(false);
+    }
+  }, []);
 
   useEffect(() => {
-    callAdmin<Overview>('dashboard')
-      .then(setData)
-      .catch((e) => setErr(e.message))
-      .finally(() => setLoading(false));
-  }, []);
+    load();
+  }, [load]);
+
+  // Auto-retry once after 5s on the first failure.
+  useEffect(() => {
+    if (!err || retrying) return;
+    const t = setTimeout(() => {
+      setRetrying(true);
+      load();
+    }, 5000);
+    return () => clearTimeout(t);
+  }, [err, retrying, load]);
 
   const hasSignal =
     !!data &&
@@ -43,8 +70,27 @@ export default function AdminDashboard() {
   return (
     <div>
       <AdminPageHeader title="Platform Dashboard" subtitle="Global health of the Wrayth platform" />
-      <div className="p-6">
-        {err && <div className="text-sm text-destructive mb-4">Failed: {err}</div>}
+      <div className="p-6 space-y-4">
+        {err && (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 flex items-start gap-3">
+            <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground">Unable to reach the telemetry service.</p>
+              <p className="text-sm text-muted-foreground mt-1">{err}</p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => { setRetrying(true); load(); }}
+              disabled={retrying}
+              className="shrink-0"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${retrying ? 'animate-spin' : ''}`} />
+              Retry
+            </Button>
+          </div>
+        )}
+
         <PageState
           isLoading={loading && !err}
           hasData={hasSignal}
@@ -61,16 +107,18 @@ export default function AdminDashboard() {
               title="The platform is quiet — no live telemetry to summarize yet."
               body={
                 <>
-                  This dashboard aggregates real signals from every tenant: user counts,
-                  organizations, MSPs, enrolled devices, threat detections, and Ray Compute
-                  usage. Until customers begin using the platform there is nothing meaningful
-                  to display — Wrayth won&rsquo;t pretend otherwise with a wall of zeros.
+                  When customers begin using Wrayth this dashboard becomes your NOC.
+                  Until then Wrayth won&rsquo;t pretend otherwise with a wall of zeros —
+                  every tile below appears the moment its underlying signal starts flowing.
                 </>
               }
               expectations={[
-                'Live user, organization, and MSP counts across every tenant.',
-                'Total enrolled devices reporting in from the Wrayth agent.',
-                'Threats detected in the last 24 hours and Ray Compute consumed today.',
+                'Active organizations, MSPs, and users across every tenant',
+                'Devices checking in from the Wrayth agent',
+                'Threats detected in the last 24 hours',
+                'Ray Compute consumed today and running usage trend',
+                'Fleet health: agent versions, offline endpoints, patch state',
+                'Platform alerts and subscription growth',
               ]}
             />
           }

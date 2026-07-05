@@ -22,17 +22,16 @@ const NAV = [
     { to: '/admin/ops/audit', label: 'Audit Log', icon: ScrollText },
     { to: '/admin/ops/support', label: 'Support Tickets', icon: ScrollText },
   ]},
-  { section: 'Threat Intel', items: [
+  { section: 'Security Operations', items: [
     { to: '/admin/threat', label: 'Global Threats', icon: Radar },
     { to: '/admin/fleet', label: 'Agent Fleet', icon: Server },
   ]},
-  { section: 'AI', items: [
-    { to: '/admin/ai', label: 'AI Analytics', icon: Sparkles },
-  ]},
-  { section: 'Danger', items: [
-    { to: '/admin/danger', label: 'Danger Zone', icon: AlertTriangle },
+  { section: 'Ray Intelligence', items: [
+    { to: '/admin/ai', label: 'Ray Analytics', icon: Sparkles },
   ]},
 ];
+
+const DANGER_ITEM = { to: '/admin/danger', label: 'Danger Zone', icon: AlertTriangle };
 
 export default function AdminLayout() {
   const { isAdmin, loading, roles } = usePlatformRole();
@@ -74,6 +73,23 @@ export default function AdminLayout() {
               </div>
             </div>
           ))}
+
+          {/* Visual gap + separator to psychologically distance Danger Zone from normal admin tasks. */}
+          <div className="pt-16">
+            <div className="border-t border-destructive/20 mx-3 mb-3" />
+            <NavLink
+              to={DANGER_ITEM.to}
+              className={({ isActive }) => cn(
+                'flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors',
+                isActive
+                  ? 'bg-destructive/15 text-destructive'
+                  : 'text-muted-foreground hover:text-destructive hover:bg-destructive/10',
+              )}
+            >
+              <DANGER_ITEM.icon className="h-4 w-4" />
+              {DANGER_ITEM.label}
+            </NavLink>
+          </div>
         </nav>
         <div className="p-3 border-t border-border/60">
           <NavLink to="/app/dashboard" className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground">
