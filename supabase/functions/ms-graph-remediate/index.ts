@@ -210,9 +210,35 @@ Deno.serve(async (req) => {
     const userId = userData.user.id;
 
     const body = await req.json();
-    const action_type = String(body?.action_type ?? '');
-    const target_id = String(body?.target_id ?? '');
-    const params = (body?.params && typeof body.params === 'object') ? body.params : {};
+    let action_type = String(body?.action_type ?? '');
+    let target_id = String(body?.target_id ?? '');
+    let params = (body?.params && typeof body.params === 'object') ? body.params : {};
+    const undo_of_audit_id = body?.undo_of_audit_id ? String(body.undo_of_audit_id) : null;
+
+    // Undo path — look up the original action's previous_state and derive the inverse.
+    if (undo_of_audit_id) {
+      const admin0 = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      );
+      const { data: orig } = await admin0
+        .from('wrayth_remediation_actions')
+        .select('slug, action_type, target_id, previous_state, provider')
+        .eq('id', undo_of_audit_id)
+        .maybeSingle();
+      if (!orig) return json({ error: 'undo_target_not_found' }, 404);
+      target_id = String(orig.target_id);
+      // Simple inverse map — patch back to snapshot for account-enabled toggles.
+      if (orig.action_type === 'block_signin' || orig.action_type === 'disable_user') {
+        action_type = 'unblock_signin';
+      } else if (orig.action_type === 'unblock_signin') {
+        action_type = 'block_signin';
+      } else {
+        return json({ error: 'action_not_reversible' }, 400);
+      }
+      params = {};
+    }
+
     if (!action_type || !target_id) return json({ error: 'bad_request' }, 400);
 
     const admin = createClient(
