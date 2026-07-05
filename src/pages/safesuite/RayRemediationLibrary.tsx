@@ -1,12 +1,14 @@
 /**
  * RayRemediationLibrary — browsable catalog of every one-click fix Ray can
- * dispatch to a Wrayth-enrolled device. Grouped by category with per-item
- * Fix It buttons that queue the action via the device picker.
+ * dispatch. Grouped by category with per-item Fix It buttons that queue the
+ * action via the device picker.
  */
 import { useMemo, useState } from 'react';
-import { RotateCw, Search, Sparkles, ShieldCheck } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { History, RotateCw, Search, Sparkles, ShieldCheck } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { RayPageHeader } from '@/components/ray/RayPageHeader';
 import { RayPageTemplate } from '@/components/ray/RayPageTemplate';
