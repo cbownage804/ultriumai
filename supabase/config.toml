@@ -196,3 +196,9 @@ verify_jwt = false
 
 [functions.agent-uninstall]
 verify_jwt = false
+
+[functions.admin-api]
+verify_jwt = false
+
+[functions.admin-wipe-users]
+verify_jwt = false

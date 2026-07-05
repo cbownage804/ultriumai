@@ -114,6 +114,22 @@ const IntelligenceComplianceReport = lazy(() => import('@/pages/safesuite/Intell
 
 // Dev-only: internal Launch Checklist (Wrayth 5.0 polish sprint).
 const LaunchChecklist = lazy(() => import('@/pages/dev/LaunchChecklist'));
+
+// Platform admin console
+const AdminLayout = lazy(() => import('@/pages/admin/AdminLayout'));
+const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
+const AdminUsers = lazy(() => import('@/pages/admin/AdminUsers'));
+const AdminOrganizations = lazy(() => import('@/pages/admin/AdminOrganizations'));
+const AdminMsps = lazy(() => import('@/pages/admin/AdminMsps'));
+const AdminBilling = lazy(() => import('@/pages/admin/AdminBilling'));
+const AdminAnnouncements = lazy(() => import('@/pages/admin/AdminAnnouncements'));
+const AdminFlags = lazy(() => import('@/pages/admin/AdminFlags'));
+const AdminAuditLog = lazy(() => import('@/pages/admin/AdminAuditLog'));
+const AdminSupport = lazy(() => import('@/pages/admin/AdminSupport'));
+const AdminThreatIntel = lazy(() => import('@/pages/admin/AdminThreatIntel'));
+const AdminAgentFleet = lazy(() => import('@/pages/admin/AdminAgentFleet'));
+const AdminAiAnalytics = lazy(() => import('@/pages/admin/AdminAiAnalytics'));
+const AdminDangerZone = lazy(() => import('@/pages/admin/AdminDangerZone'));
 const DEV_ROUTES_ENABLED =
   import.meta.env.DEV ||
   (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug'));
@@ -331,6 +347,27 @@ function AppRouter() {
         {DEV_ROUTES_ENABLED ? (
           <Route path="/_launch" element={<SuspenseWrapper><LaunchChecklist /></SuspenseWrapper>} />
         ) : null}
+
+        {/* Platform Admin Console — access gated inside AdminLayout by has_platform_role */}
+        <Route path="/admin" element={
+          <ProtectedRoute>
+            <SuspenseWrapper><AdminLayout /></SuspenseWrapper>
+          </ProtectedRoute>
+        }>
+          <Route index element={<SuspenseWrapper><AdminDashboard /></SuspenseWrapper>} />
+          <Route path="users" element={<SuspenseWrapper><AdminUsers /></SuspenseWrapper>} />
+          <Route path="organizations" element={<SuspenseWrapper><AdminOrganizations /></SuspenseWrapper>} />
+          <Route path="msps" element={<SuspenseWrapper><AdminMsps /></SuspenseWrapper>} />
+          <Route path="billing" element={<SuspenseWrapper><AdminBilling /></SuspenseWrapper>} />
+          <Route path="ops/announcements" element={<SuspenseWrapper><AdminAnnouncements /></SuspenseWrapper>} />
+          <Route path="ops/flags" element={<SuspenseWrapper><AdminFlags /></SuspenseWrapper>} />
+          <Route path="ops/audit" element={<SuspenseWrapper><AdminAuditLog /></SuspenseWrapper>} />
+          <Route path="ops/support" element={<SuspenseWrapper><AdminSupport /></SuspenseWrapper>} />
+          <Route path="threat" element={<SuspenseWrapper><AdminThreatIntel /></SuspenseWrapper>} />
+          <Route path="fleet" element={<SuspenseWrapper><AdminAgentFleet /></SuspenseWrapper>} />
+          <Route path="ai" element={<SuspenseWrapper><AdminAiAnalytics /></SuspenseWrapper>} />
+          <Route path="danger" element={<SuspenseWrapper><AdminDangerZone /></SuspenseWrapper>} />
+        </Route>
 
         <Route path="*" element={<NotFound />} />
       </Routes>

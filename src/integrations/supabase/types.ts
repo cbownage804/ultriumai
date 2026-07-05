@@ -16639,6 +16639,30 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_admins: {
+        Row: {
+          granted_at: string
+          granted_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["platform_role"]
+          user_id: string
+        }
+        Insert: {
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["platform_role"]
+          user_id: string
+        }
+        Update: {
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["platform_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       platform_changelog: {
         Row: {
           created_at: string
@@ -38802,6 +38826,13 @@ export type Database = {
         }[]
       }
       get_user_safesuite_team: { Args: { _user_id: string }; Returns: string }
+      has_platform_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["platform_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -38838,6 +38869,7 @@ export type Database = {
         Args: { p_org_id: string; p_user_id: string }
         Returns: boolean
       }
+      is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       is_safesuite_team_admin: {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
@@ -38963,6 +38995,12 @@ export type Database = {
       command_status: "queued" | "running" | "done" | "error" | "expired"
       device_status: "online" | "offline" | "stale" | "unknown"
       helpdesk_role: "msp_admin" | "msp_staff" | "client_admin" | "client_staff"
+      platform_role:
+        | "super_admin"
+        | "support"
+        | "billing_ops"
+        | "platform_ops"
+        | "read_only"
       portal_user_role: "admin" | "manager" | "user" | "readonly"
       ray_investigation_followup_type:
         | "executive_report"
@@ -39150,6 +39188,13 @@ export const Constants = {
       command_status: ["queued", "running", "done", "error", "expired"],
       device_status: ["online", "offline", "stale", "unknown"],
       helpdesk_role: ["msp_admin", "msp_staff", "client_admin", "client_staff"],
+      platform_role: [
+        "super_admin",
+        "support",
+        "billing_ops",
+        "platform_ops",
+        "read_only",
+      ],
       portal_user_role: ["admin", "manager", "user", "readonly"],
       ray_investigation_followup_type: [
         "executive_report",
