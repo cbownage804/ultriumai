@@ -156,8 +156,19 @@ export default function OrgDashboard() {
           </div>
           <div className="shrink-0 text-right">
             <div className="text-xs uppercase tracking-widest text-muted-foreground mb-1">How you're doing</div>
-            <div className={cn('text-5xl font-extralight leading-none', scoreTone(overall))}>{overall}</div>
-            <div className="mt-2"><DeltaPill delta={delta} /></div>
+            {health ? (
+              <>
+                <div className={cn('text-5xl font-extralight leading-none', scoreTone(overall))}>{overall}</div>
+                <div className="mt-2"><DeltaPill delta={delta} /></div>
+              </>
+            ) : (
+              <>
+                <div className="text-5xl font-extralight leading-none text-muted-foreground/60">—</div>
+                <div className="mt-2 text-[11px] text-muted-foreground italic max-w-[180px]">
+                  Ray hasn't scored {activeOrg.name} yet. Run a scan and I'll grade every area.
+                </div>
+              </>
+            )}
           </div>
         </div>
         <div className="mt-6 flex flex-wrap gap-2">
