@@ -57,7 +57,8 @@ export function TargetPicker({ remediation, value, onChange }: Props) {
         // Cheap read: vanguard_m365_mfa_status has user rows we already sync.
         const { data, error } = await supabase
           .from('vanguard_m365_mfa_status')
-          .select('user_id, user_principal_name, display_name')
+          .select('m365_user_id, user_principal_name, display_name')
+          .eq('user_id', user.id)
           .order('display_name', { ascending: true })
           .limit(500);
         if (!cancelled) {
@@ -66,7 +67,7 @@ export function TargetPicker({ remediation, value, onChange }: Props) {
             setUsers([]);
           } else {
             setUsers(data.map((r) => ({
-              id: (r as { user_id: string }).user_id,
+              id: (r as { m365_user_id: string }).m365_user_id,
               userPrincipalName: (r as { user_principal_name: string | null }).user_principal_name,
               displayName: (r as { display_name: string | null }).display_name,
             })));
