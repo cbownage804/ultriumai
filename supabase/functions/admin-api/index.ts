@@ -268,7 +268,7 @@ const actions: Record<string, (req: Request, body: any, actor: string) => Promis
     const [{ data: memberRows }, { data: devices }, { data: remediations }, { data: timeline }, { data: sub }, { data: cred }] = await Promise.all([
       db.from('org_team_members').select('user_id, email, role, status, joined_at').eq('organization_id', id),
       db.from('devices').select('id, hostname, agent_version, status, last_checkin').eq('org_id', id).order('last_checkin', { ascending: false }).limit(200),
-      db.from('wrayth_remediation_actions').select('id, action_type, provider, status, created_at, duration_ms').eq('org_id' as any, id).order('created_at', { ascending: false }).limit(50).then((r) => r).catch(() => ({ data: [] })),
+      org.owner_id ? db.from('wrayth_remediation_actions').select('id, action_type, provider, status, created_at, duration_ms').eq('user_id', org.owner_id).order('created_at', { ascending: false }).limit(50) : Promise.resolve({ data: [] } as any),
       db.from('ray_org_timeline').select('id, occurred_at, category, summary, severity').eq('org_id', id).order('occurred_at', { ascending: false }).limit(30),
       org.owner_id ? db.from('subscribers').select('*').eq('user_id', org.owner_id).maybeSingle() : Promise.resolve({ data: null } as any),
       org.owner_id ? db.from('user_credits').select('balance').eq('user_id', org.owner_id).maybeSingle() : Promise.resolve({ data: null } as any),
