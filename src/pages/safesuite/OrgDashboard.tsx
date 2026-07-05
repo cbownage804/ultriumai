@@ -156,8 +156,19 @@ export default function OrgDashboard() {
           </div>
           <div className="shrink-0 text-right">
             <div className="text-xs uppercase tracking-widest text-muted-foreground mb-1">How you're doing</div>
-            <div className={cn('text-5xl font-extralight leading-none', scoreTone(overall))}>{overall}</div>
-            <div className="mt-2"><DeltaPill delta={delta} /></div>
+            {health ? (
+              <>
+                <div className={cn('text-5xl font-extralight leading-none', scoreTone(overall))}>{overall}</div>
+                <div className="mt-2"><DeltaPill delta={delta} /></div>
+              </>
+            ) : (
+              <>
+                <div className="text-5xl font-extralight leading-none text-muted-foreground/60">—</div>
+                <div className="mt-2 text-[11px] text-muted-foreground italic max-w-[180px]">
+                  Ray hasn't scored {activeOrg.name} yet. Run a scan and I'll grade every area.
+                </div>
+              </>
+            )}
           </div>
         </div>
         <div className="mt-6 flex flex-wrap gap-2">
@@ -177,25 +188,28 @@ export default function OrgDashboard() {
         </Card>
       )}
 
-      {/* Organization Health grid */}
-      <section>
-        <h2 className="text-xs uppercase tracking-[0.3em] text-muted-foreground mb-3">How you're doing</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {HEALTH_AREAS.map(({ key, label, icon: Icon }) => {
-            const v = (health?.[key] as number) ?? 0;
-            const note = (health?.ray_notes as Record<string, string> | undefined)?.[label.toLowerCase().replace(/s$/, '')];
-            return (
-              <Card key={key as string} className="p-4 bg-card border-border">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                  <Icon className="h-3.5 w-3.5" /> {label}
-                </div>
-                <div className={cn('text-2xl font-light', scoreTone(v))}>{v}</div>
-                {note && <div className="text-xs text-muted-foreground mt-2 line-clamp-2">{note}</div>}
-              </Card>
-            );
-          })}
-        </div>
-      </section>
+      {/* Organization Health grid — hidden until Ray has scored the org.
+          A grid of "0"s would look like real zero-scores, which would be false. */}
+      {health && (
+        <section>
+          <h2 className="text-xs uppercase tracking-[0.3em] text-muted-foreground mb-3">How you're doing</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {HEALTH_AREAS.map(({ key, label, icon: Icon }) => {
+              const v = (health[key] as number) ?? 0;
+              const note = (health.ray_notes as Record<string, string> | undefined)?.[label.toLowerCase().replace(/s$/, '')];
+              return (
+                <Card key={key as string} className="p-4 bg-card border-border">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                    <Icon className="h-3.5 w-3.5" /> {label}
+                  </div>
+                  <div className={cn('text-2xl font-light', scoreTone(v))}>{v}</div>
+                  {note && <div className="text-xs text-muted-foreground mt-2 line-clamp-2">{note}</div>}
+                </Card>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Employee intelligence */}
       <section>
