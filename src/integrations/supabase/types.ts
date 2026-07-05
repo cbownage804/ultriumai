@@ -37566,6 +37566,98 @@ export type Database = {
         }
         Relationships: []
       }
+      wrayth_remediation_actions: {
+        Row: {
+          action_type: string
+          agent_action_id: string | null
+          category: string | null
+          confirmed_by_user: boolean
+          created_at: string
+          duration_ms: number | null
+          error: string | null
+          id: string
+          new_state: Json | null
+          params: Json
+          permission_scopes: string[] | null
+          previous_state: Json | null
+          provider: string
+          requires_reboot: boolean
+          result: Json | null
+          reverse_slug: string | null
+          reversible: boolean
+          risk: string
+          slug: string
+          status: string
+          target_id: string
+          target_label: string | null
+          target_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          agent_action_id?: string | null
+          category?: string | null
+          confirmed_by_user?: boolean
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          new_state?: Json | null
+          params?: Json
+          permission_scopes?: string[] | null
+          previous_state?: Json | null
+          provider: string
+          requires_reboot?: boolean
+          result?: Json | null
+          reverse_slug?: string | null
+          reversible?: boolean
+          risk: string
+          slug: string
+          status?: string
+          target_id: string
+          target_label?: string | null
+          target_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          agent_action_id?: string | null
+          category?: string | null
+          confirmed_by_user?: boolean
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          new_state?: Json | null
+          params?: Json
+          permission_scopes?: string[] | null
+          previous_state?: Json | null
+          provider?: string
+          requires_reboot?: boolean
+          result?: Json | null
+          reverse_slug?: string | null
+          reversible?: boolean
+          risk?: string
+          slug?: string
+          status?: string
+          target_id?: string
+          target_label?: string | null
+          target_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wrayth_remediation_actions_agent_action_id_fkey"
+            columns: ["agent_action_id"]
+            isOneToOne: false
+            referencedRelation: "wrayth_device_actions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       xdr_attack_chains: {
         Row: {
           chain_id: string
