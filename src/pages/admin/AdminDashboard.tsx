@@ -1,5 +1,5 @@
 /**
- * Admin → Platform Dashboard. Three-state (Loading / Empty / Active).
+ * Admin → Platform Command Center. Three-state (Loading / Empty / Active).
  * Never shows "0 / 0 / 0" tiles as if they meant something and never leaks
  * infrastructure terminology to the operator.
  */
@@ -11,6 +11,7 @@ import { PageState } from '@/components/ui/page-state';
 import { RayZeroState } from '@/components/ray/zero-state';
 import { Button } from '@/components/ui/button';
 import { Activity, AlertTriangle, RefreshCw } from 'lucide-react';
+import { PlatformStatusStrip } from '@/components/admin/PlatformStatusStrip';
 
 interface Overview {
   users?: number;
@@ -33,7 +34,6 @@ export default function AdminDashboard() {
       const result = await callAdmin<Overview>('dashboard');
       setData(result);
     } catch (e) {
-      // Log the real exception for telemetry, show a customer-safe message.
       console.error('[admin-dashboard] telemetry fetch failed', e);
       setErr(
         "Ray couldn't reach the platform telemetry service. This is usually transient — the retry will pick it up automatically."
@@ -44,17 +44,11 @@ export default function AdminDashboard() {
     }
   }, []);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
 
-  // Auto-retry once after 5s on the first failure.
   useEffect(() => {
     if (!err || retrying) return;
-    const t = setTimeout(() => {
-      setRetrying(true);
-      load();
-    }, 5000);
+    const t = setTimeout(() => { setRetrying(true); load(); }, 5000);
     return () => clearTimeout(t);
   }, [err, retrying, load]);
 
@@ -69,8 +63,11 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      <AdminPageHeader title="Platform Dashboard" subtitle="Global health of the Wrayth platform" />
-      <div className="p-6 space-y-4">
+      <AdminPageHeader title="Platform Command Center" subtitle="Global health of the Wrayth platform" />
+      <div className="p-6 space-y-6">
+        {/* Platform Health strip — always visible, driven by real service probes. */}
+        <PlatformStatusStrip />
+
         {err && (
           <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 flex items-start gap-3">
             <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
