@@ -1,0 +1,81 @@
+{
+  "policy": "Wrayth Zero-Fake-Data — no demo/seeded/sample/placeholder security data in any product surface. Every screen renders true zero-state driven by real telemetry.",
+  "scanned_at": "2026-07-05",
+  "scope": [
+    "src/pages/safesuite/**",
+    "src/pages/onboarding/**",
+    "src/pages/admin/**",
+    "src/components/ray/**",
+    "src/components/intelligence/**",
+    "src/components/safepass/**"
+  ],
+  "out_of_scope": [
+    "src/pages/pricing/**",
+    "src/pages/WraythResources.tsx",
+    "src/components/demos/** (marketing surface on public routes)",
+    "src/dev/**",
+    "src/pages/safesuite/WraythEnterprise.tsx (marketing landing)",
+    "src/pages/safesuite/products/** (marketing product pages)"
+  ],
+  "summary": "Codebase is largely compliant. Ray components carry defensive comments enforcing the rule ('No fake activity', 'Nothing is hardcoded or mocked', 'render nothing — no placeholder bars'). Only ONE hard offender found and fixed in this pass.",
+  "findings": {
+    "critical_fixed_now": [
+      {
+        "file": "src/pages/safesuite/SafePassUsers.tsx",
+        "lines": "95-99",
+        "was": "Hardcoded fake user roster: Alice Johnson, Bob Williams, Carol Davis, David Brown rendered inside <UsersTeaserContent /> behind a TeaserLock.",
+        "now": "Replaced with feature-explanation cards (Invite / Enforce MFA / Rotate & Revoke / Role-based Access). No fabricated identities.",
+        "status": "FIXED"
+      }
+    ],
+    "acceptable_math_random": [
+      {
+        "file": "src/components/safepass/VaultLoadingScreen.tsx:39",
+        "reason": "Cosmetic progress-bar tick during vault unlock — not telemetry."
+      },
+      {
+        "file": "src/components/ray/ScoreCelebration.tsx:56-57",
+        "reason": "Confetti animation geometry — visual only."
+      },
+      {
+        "file": "src/components/ray/RayProactiveGreeting.tsx:108",
+        "reason": "Deterministic per-mount seed for greeting variation — not fake data."
+      }
+    ],
+    "acceptable_placeholders": {
+      "count": "~110 hits",
+      "reason": "All hits are <input placeholder=\"...\"> hint text (e.g. 'you@example.com', 'John Doe', 'Acme Corp', '4242 4242 4242 4242'). These are form-field guidance, not rendered data. Correct UX pattern — kept."
+    },
+    "defensive_comments_confirming_policy": [
+      "src/components/ray/RayActivityTicker.tsx: 'No fake activity — every line maps to a job'",
+      "src/components/ray/RayWatchingCard.tsx: 'status message is derived from real counts — no fake activity'",
+      "src/components/ray/ThreatAllClearCard.tsx: 'so we don't fake it'",
+      "src/components/ray/PasswordProtectionCard.tsx: 'that starts to feel like fake…'",
+      "src/components/ray/AccountHealthPanel.tsx:120: 'No detected accounts + no scores → render nothing (no placeholder bars)'",
+      "src/components/ray/DeviceSecurityTabs.tsx: 'Nothing is hardcoded or mocked. If a section has no data the tab still…'",
+      "src/pages/safesuite/SafeSuiteDashboard.tsx: 'All data is fetched from real database - no mock data'",
+      "src/pages/onboarding/RayOnboarding.tsx: 'No demo data.'",
+      "src/pages/onboarding/RayOnboarding.tsx:716: 'Calculated from real findings — not a placeholder.'"
+    ],
+    "review_next_phases": [
+      {
+        "file": "src/pages/admin/AdminBilling.tsx",
+        "lines": "16-17",
+        "note": "MRR/ARR labeled '(est.)' and computed from real payment_transactions. When the table is empty it renders $0. Acceptable, but Phase 4 will hide the widget entirely when count === 0 rather than show $0."
+      }
+    ],
+    "false_positives": [
+      "'sample'/'malware' terms in IntelligenceMalware.tsx refer to actual customer-submitted malware samples, not fixtures.",
+      "'Book a Demo' CTAs in WraythEnterprise.tsx are marketing copy on a public landing.",
+      "'Sample submission' in DeviceSecurityTabs.tsx maps to Defender's real telemetry field.",
+      "Ticker/greeting/CardName placeholder strings that describe *user input hints* are UX, not data."
+    ]
+  },
+  "next_phases": [
+    "Phase 2: build src/components/ray/zero-state/ primitives (RayZeroState, RaySetupChecklist, RayNextAction, useHasAnyData).",
+    "Phase 5: wrayth_setup_progress table so zero-states share setup signal.",
+    "Phase 3: apply primitives to Home → Threat Center → Devices → Investigations → Compliance → Identities → Vault → Graph → Reports → Timeline → Malware → Policies → Attack Paths → Memory. Each page: swap silent-empty with Ray-voice educational zero-state + CTA.",
+    "Phase 4: hide zeroed metric widgets on admin (MRR/ARR, RC consumption) when underlying tables are empty; render explanatory copy instead of $0.",
+    "Phase 6: contributor README under src/components/ray/zero-state/README.md documenting the rule."
+  ]
+}
