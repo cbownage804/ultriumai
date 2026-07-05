@@ -136,7 +136,7 @@ export default function RayRemediationTimeline() {
         header={
           <RayPageHeader
             title="Remediation Timeline"
-            question="Everything I've fixed \u2014 or tried to fix \u2014 across your fleet."
+            question="Everything I've fixed — or tried to fix — across your fleet."
             description="Every Fix Now action Ray dispatched, across Windows agents and Microsoft 365. Full audit trail with duration, target, and outcome."
           />
         }
@@ -170,7 +170,7 @@ export default function RayRemediationTimeline() {
       >
         {rows === null ? (
           <section className="wrayth-chamfer border border-border bg-card/40 p-6 text-sm text-muted-foreground flex items-center gap-2">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading timeline\u2026
+            <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading timeline…
           </section>
         ) : rows.length === 0 ? (
           <RayZeroState
@@ -220,8 +220,8 @@ export default function RayRemediationTimeline() {
                         <div className="text-[12px] text-muted-foreground mt-0.5 flex items-center gap-1 flex-wrap">
                           {r.target_type === 'user' ? <UserIcon className="h-3 w-3" /> : <MonitorSmartphone className="h-3 w-3" />}
                           <span className="text-foreground/80">{r.target_label ?? r.target_id}</span>
-                          <span>\u00b7 {formatDistanceToNow(new Date(r.created_at), { addSuffix: true })}</span>
-                          {dur && <span>\u00b7 {dur}</span>}
+                          <span>· {formatDistanceToNow(new Date(r.created_at), { addSuffix: true })}</span>
+                          {dur && <span>· {dur}</span>}
                         </div>
                         {r.error && (
                           <div className="text-[12px] text-red-300 mt-1 truncate">
