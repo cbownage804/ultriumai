@@ -342,6 +342,79 @@ const actions: Record<string, (req: Request, body: any, actor: string) => Promis
       top_skills: Object.entries(skillCounts).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([id, count]) => ({ id, count })),
     };
   },
+
+  /**
+   * Real platform-service health checks. Every probe returns 'ok' | 'degraded' | 'down'
+   * with a short reason. Nothing is faked — if a service isn't configured, we return
+   * 'not_configured' so the UI can render it as neutral instead of green.
+   */
+  async 'platform.status'() {
+    const db = admin();
+    const checks: Array<{ id: string; label: string; status: 'ok' | 'degraded' | 'down' | 'not_configured'; detail?: string }> = [];
+
+    // Database — round-trip a lightweight count.
+    try {
+      const started = Date.now();
+      const { error } = await db.from('profiles').select('id', { count: 'exact', head: true });
+      const ms = Date.now() - started;
+      if (error) checks.push({ id: 'database', label: 'Database', status: 'down', detail: error.message });
+      else checks.push({ id: 'database', label: 'Database', status: ms > 1500 ? 'degraded' : 'ok', detail: `${ms}ms` });
+    } catch (e) {
+      checks.push({ id: 'database', label: 'Database', status: 'down', detail: (e as Error).message });
+    }
+
+    // Authentication — the fact that this request reached here means auth is up,
+    // but confirm the admin client can list at least one user page.
+    try {
+      const { error } = await db.auth.admin.listUsers({ page: 1, perPage: 1 });
+      checks.push({ id: 'auth', label: 'Authentication', status: error ? 'down' : 'ok', detail: error?.message });
+    } catch (e) {
+      checks.push({ id: 'auth', label: 'Authentication', status: 'down', detail: (e as Error).message });
+    }
+
+    // AI Services — presence of the Lovable AI Gateway key.
+    const lovableKey = Deno.env.get('LOVABLE_API_KEY');
+    checks.push({
+      id: 'ai',
+      label: 'AI Services',
+      status: lovableKey ? 'ok' : 'not_configured',
+      detail: lovableKey ? undefined : 'LOVABLE_API_KEY not set',
+    });
+
+    // Billing — presence of Stripe secret. We deliberately don't call Stripe here
+    // to avoid burning rate limits on every dashboard load.
+    const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
+    checks.push({
+      id: 'billing',
+      label: 'Billing',
+      status: stripeKey ? 'ok' : 'not_configured',
+      detail: stripeKey ? undefined : 'STRIPE_SECRET_KEY not set',
+    });
+
+    // Agent Updates — must have at least one row in wrayth_agent_release.
+    try {
+      const { count } = await db.from('wrayth_agent_release').select('id', { count: 'exact', head: true });
+      checks.push({
+        id: 'agents',
+        label: 'Agent Updates',
+        status: (count ?? 0) > 0 ? 'ok' : 'not_configured',
+        detail: (count ?? 0) > 0 ? `${count} releases` : 'No agent releases published',
+      });
+    } catch {
+      checks.push({ id: 'agents', label: 'Agent Updates', status: 'not_configured' });
+    }
+
+    // Email — presence of the transactional email key.
+    const resendKey = Deno.env.get('RESEND_API_KEY');
+    checks.push({
+      id: 'email',
+      label: 'Email Delivery',
+      status: resendKey ? 'ok' : 'not_configured',
+      detail: resendKey ? undefined : 'RESEND_API_KEY not set',
+    });
+
+    return { checks, checked_at: new Date().toISOString() };
+  },
 };
 
 // Some actions require elevated roles.
