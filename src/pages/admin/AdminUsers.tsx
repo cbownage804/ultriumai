@@ -11,10 +11,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 
+import { formatOrgName, formatTier, tierBadgeVariant, relativeTime } from '@/lib/admin/labels';
+
 interface AdminUser {
   id: string; email: string; created_at: string; last_sign_in_at?: string;
   banned_until?: string | null; platform_role?: string | null;
   tier?: string; subscribed?: boolean; rc_balance?: number;
+  org_name?: string | null; org_id?: string | null;
 }
 
 export default function AdminUsers() {
