@@ -72,7 +72,8 @@ export default function AdminAiAnalytics() {
             <AdminMetricCard label="Agent runs (30d)" value={d?.runs_30d ?? 0} />
             <AdminMetricCard label="Investigations (30d)" value={d?.investigations_30d ?? 0} />
           </div>
-          <AdminSection title="Top skills invoked" className="mt-6">
+          <div className="mt-6">
+          <AdminSection title="Top skills invoked">
             {(d?.top_skills ?? []).length === 0 ? (
               <p className="text-sm text-muted-foreground italic">No skills invoked in this window.</p>
             ) : (
@@ -86,6 +87,7 @@ export default function AdminAiAnalytics() {
               </div>
             )}
           </AdminSection>
+          </div>
         </PageState>
       </div>
     </div>
