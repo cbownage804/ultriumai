@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Brain, Plus, Trash2, ShieldCheck, Sparkles, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { RayZeroState } from "@/components/ray/zero-state";
 
 type MemoryRow = {
   id: string;
@@ -272,9 +273,16 @@ export default function RayMemory() {
           {loading ? (
             <div className="text-muted-foreground py-6 text-center">Loading memory…</div>
           ) : rows.length === 0 ? (
-            <div className="py-10 text-center text-muted-foreground">
-              No facts yet. Add the first thing Ray should know about {activeOrg?.name}.
-            </div>
+            <RayZeroState
+              size="sm"
+              title={`I don't remember anything about ${activeOrg?.name ?? 'your organization'} yet.`}
+              body="Teach me a fact — the MFA provider you use, the person on call after hours, the printer that keeps failing — and I'll use it every time I investigate, recommend, or brief."
+              expectations={[
+                'Facts you tell me directly (identity, endpoint, vendor, policy…)',
+                'Verified answers I recall during investigations and recommendations',
+                'Confidence and source, so you always know why I know something',
+              ]}
+            />
           ) : pageRows.length === 0 ? (
             <div className="py-10 text-center text-muted-foreground">
               No facts match your search.

@@ -17,6 +17,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { ModuleRayBrief } from '@/components/ray/ModuleRayBrief';
 import { HowIProtectYouCard } from '@/components/ray/HowIProtectYouCard';
+import { RayZeroState } from '@/components/ray/zero-state';
 import {
   Sparkles, Coins, GitBranch, Brain, Clock, Trash2, Layers, Radar,
   Wrench, Target, ShieldAlert, AlertTriangle, CheckCircle2, HelpCircle,
@@ -324,16 +325,16 @@ export default function IntelligenceAttackPaths() {
 
 function EmptyState() {
   return (
-    <Card className="p-10 text-center border-dashed">
-      <div className="mx-auto h-12 w-12 rounded-full bg-[hsl(262_60%_64%/0.1)] flex items-center justify-center mb-3">
-        <GitBranch className="h-6 w-6 text-[hsl(262_60%_70%)]" />
-      </div>
-      <h3 className="text-base font-medium">Reason about an attack path</h3>
-      <p className="text-sm text-muted-foreground max-w-md mx-auto mt-1">
-        Pick a completed investigation, describe a scenario, or both — Ray will walk through how the attack could
-        unfold and what would stop it.
-      </p>
-    </Card>
+    <RayZeroState
+      icon={GitBranch}
+      title="I haven't reconstructed any attack paths yet."
+      body="Pick a completed investigation, describe a scenario, or both — I'll walk through how the attack could unfold, who's in the blast radius, and what would stop it."
+      expectations={[
+        'A step-by-step chain from initial access to impact',
+        'Every user, device, account, and system involved — with the role they played',
+        'A prioritized remediation plan you can hand to the team',
+      ]}
+    />
   );
 }
 

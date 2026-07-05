@@ -35,6 +35,7 @@ import {
 import { exportFollowupPdf } from '@/lib/wraythPdf';
 import { ModuleRayBrief } from '@/components/ray/ModuleRayBrief';
 import { HowIProtectYouCard } from '@/components/ray/HowIProtectYouCard';
+import { RayZeroState } from '@/components/ray/zero-state';
 
 type InputType =
   | 'url' | 'email' | 'email_headers' | 'ip' | 'domain' | 'file_hash'
@@ -626,16 +627,16 @@ function ResultSkeleton() {
 
 function EmptyState() {
   return (
-    <Card className="p-10 text-center border-dashed">
-      <div className="mx-auto h-12 w-12 rounded-full bg-[hsl(262_60%_64%/0.1)] flex items-center justify-center mb-3">
-        <ScanSearch className="h-6 w-6 text-[hsl(262_60%_70%)]" />
-      </div>
-      <h3 className="text-base font-medium">Give Ray something to look at</h3>
-      <p className="text-sm text-muted-foreground max-w-md mx-auto mt-1">
-        Paste a suspicious URL, an email, a PowerShell script, a Defender alert — anything you
-        want an AI security analyst to unpack.
-      </p>
-    </Card>
+    <RayZeroState
+      icon={ScanSearch}
+      title="I haven't looked into anything for you yet."
+      body="Paste a suspicious URL, an email header block, a PowerShell script, a Defender alert — anything you want an AI security analyst to unpack. I'll walk through what it is, whether it's dangerous, and what to do."
+      expectations={[
+        'A verdict with plain-English reasoning, not just a score',
+        'MITRE ATT&CK mapping, IOCs, and a timeline you can hand to leadership',
+        'One-click follow-ups: exec summary, incident report, or a free-form question',
+      ]}
+    />
   );
 }
 

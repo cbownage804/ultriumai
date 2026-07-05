@@ -30,6 +30,7 @@ import {
   type RayEntity,
 } from "@/lib/ray/graph";
 import { supabase } from "@/integrations/supabase/client";
+import { RayZeroState } from "@/components/ray/zero-state";
 
 const TYPE_COLOR: Record<string, string> = {
   user: "#8b5cf6",
