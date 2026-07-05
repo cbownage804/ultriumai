@@ -31,6 +31,9 @@ interface Row {
   duration_ms: number | null;
   error: string | null;
   created_at: string;
+  lifecycle_state: string | null;
+  reversible: boolean | null;
+  reverse_slug: string | null;
 }
 
 const STATUS_ICON: Record<Row['status'], JSX.Element> = {
