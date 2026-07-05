@@ -35,7 +35,19 @@ export async function callAdmin<T = any>(action: string, body: Record<string, un
   const { data, error } = await supabase.functions.invoke('admin-api', {
     body: { action, ...body },
   });
-  if (error) throw error;
-  if ((data as any)?.error) throw new Error((data as any).error);
+  if (error) {
+    // Log the raw infra error for telemetry; surface a customer-safe message.
+    console.error(`[admin-api:${action}] transport error`, error);
+    throw new Error("Ray couldn't reach the platform telemetry service. Try again in a moment.");
+  }
+  if ((data as any)?.error) {
+    const raw = String((data as any).error);
+    console.error(`[admin-api:${action}] server error`, raw);
+    // Pass through domain errors (permissions, validation) but scrub infra jargon.
+    const scrubbed = /edge function|fetch failed|network|timeout/i.test(raw)
+      ? "Ray couldn't reach the platform telemetry service. Try again in a moment."
+      : raw;
+    throw new Error(scrubbed);
+  }
   return data as T;
 }
