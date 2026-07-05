@@ -64,76 +64,36 @@ import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TeaserLock } from "@/components/safesuite/TeaserLock";
 
-// Teaser content showing user management UI
+// Teaser content — explains the feature. Never fabricates users.
 function UsersTeaserContent() {
+  const bullets = [
+    { icon: UserPlus, title: 'Invite teammates', body: 'Add colleagues by email. They land on a guided setup that provisions their vault.' },
+    { icon: Shield,   title: 'Enforce MFA',      body: 'Require app-based MFA org-wide. Ray flags any account that falls out of compliance.' },
+    { icon: KeyRound, title: 'Rotate & revoke',  body: 'Reset a member\u2019s master password or revoke access in one click.' },
+    { icon: Crown,    title: 'Role-based access',body: 'Admin, Member, and read-only roles map to what each person can see and change.' },
+  ];
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Team Members</h2>
-          <p className="text-muted-foreground">Manage users and their access permissions</p>
-        </div>
-        <Button type="button" disabled aria-disabled className="gap-2 pointer-events-none opacity-70">
-          <UserPlus className="h-4 w-4" />
-          Invite User
-        </Button>
+      <div>
+        <h2 className="text-2xl font-bold">Team Members</h2>
+        <p className="text-muted-foreground">
+          Wrayth doesn\u2019t simulate a team here. Once you invite real teammates, they appear in this table
+          with their live MFA status, role, and last sign-in.
+        </p>
       </div>
-      
       <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>MFA</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {[
-                { name: 'Alice Johnson', email: 'alice@company.com', role: 'Admin', mfa: true, active: true },
-                { name: 'Bob Williams', email: 'bob@company.com', role: 'Member', mfa: true, active: true },
-                { name: 'Carol Davis', email: 'carol@company.com', role: 'Member', mfa: false, active: true },
-                { name: 'David Brown', email: 'david@company.com', role: 'Member', mfa: true, active: false },
-              ].map((user, i) => (
-                <TableRow key={i}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{user.name}</p>
-                        <p className="text-xs text-muted-foreground">{user.email}</p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={user.role === 'Admin' ? 'default' : 'secondary'}>{user.role}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    {user.mfa ? (
-                      <Shield className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <ShieldOff className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={user.active ? 'outline' : 'secondary'} className={user.active ? 'text-green-500 border-green-500/30' : ''}>
-                      {user.active ? 'Active' : 'Inactive'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Button type="button" disabled aria-disabled variant="ghost" size="sm" className="pointer-events-none opacity-70">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <CardContent className="grid gap-4 p-6 sm:grid-cols-2">
+          {bullets.map(({ icon: Icon, title, body }) => (
+            <div key={title} className="flex gap-3">
+              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                <Icon className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">{title}</p>
+                <p className="text-xs text-muted-foreground">{body}</p>
+              </div>
+            </div>
+          ))}
         </CardContent>
       </Card>
     </div>
