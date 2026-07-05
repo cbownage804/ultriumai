@@ -177,6 +177,8 @@ export function FixNowButton({
                   </ul>
                 </div>
 
+                <TrustIndicators remediation={r} />
+
                 {!presetTarget && (
                   <TargetPicker
                     remediation={r}
