@@ -21,6 +21,7 @@ import { DevicesRayBrief } from '@/components/ray/DevicesRayBrief';
 import { RayPageTemplate } from '@/components/ray/RayPageTemplate';
 import { EnrolledDevicesList } from '@/components/ray/EnrolledDevicesList';
 import { InstallAgentDialog } from '@/components/ray/InstallAgentDialog';
+import { RayZeroState } from '@/components/ray/zero-state';
 import { cn } from '@/lib/utils';
 
 interface DeviceRow {
@@ -176,11 +177,23 @@ export default function Devices() {
             </div>
             <InstallAgentDialog />
           </div>
-          {enrolledCount === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border/60 bg-card/30 p-6 text-sm text-muted-foreground">
-              You haven't installed the Wrayth agent on any machine yet. Once you do,
-              I'll start reporting posture, findings, and a live security score right here.
+          {enrolledCount === null ? (
+            <div className="flex items-center justify-center py-10">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             </div>
+          ) : enrolledCount === 0 ? (
+            <RayZeroState
+              size="sm"
+              icon={ShieldCheck}
+              title="No devices are checking in yet."
+              body="Install the Wrayth agent on a machine and it will report posture, findings, and a live security score right here — automatically, no configuration required."
+              expectations={[
+                'Real-time device posture (OS version, disk encryption, EDR status).',
+                'Findings and drift Ray detects as your fleet changes.',
+                'A live per-device security score you can drill into.',
+              ]}
+              action={{ label: 'Download the agent', href: '/app/devices/download' }}
+            />
           ) : (
             <EnrolledDevicesList />
           )}
