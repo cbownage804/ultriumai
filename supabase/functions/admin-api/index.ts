@@ -45,20 +45,44 @@ const actions: Record<string, (req: Request, body: any, actor: string) => Promis
 
   async 'dashboard'() {
     const db = admin();
-    const [users, orgs, msps, devices, threats, credits] = await Promise.all([
+    const now = Date.now();
+    const dayAgo = new Date(now - 24 * 3600 * 1000).toISOString();
+    const weekAgo = new Date(now - 7 * 24 * 3600 * 1000).toISOString();
+    const monthAgo = new Date(now - 30 * 24 * 3600 * 1000).toISOString();
+
+    const [
+      users, usersActive, usersNew,
+      orgTeams, orgTeamsActive,
+      msps, mspClients,
+      devices, devicesOnline,
+      threats, credits,
+    ] = await Promise.all([
       db.from('profiles').select('id', { count: 'exact', head: true }),
-      db.from('organizations').select('id', { count: 'exact', head: true }),
+      db.from('profiles').select('id', { count: 'exact', head: true }).gte('updated_at', monthAgo),
+      db.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', weekAgo),
+      db.from('org_teams').select('id', { count: 'exact', head: true }),
+      db.from('org_teams').select('id', { count: 'exact', head: true }).gte('updated_at', monthAgo),
       db.from('msps').select('id', { count: 'exact', head: true }),
+      db.from('msp_clients').select('id', { count: 'exact', head: true }),
       db.from('devices').select('id', { count: 'exact', head: true }),
-      db.from('security_alerts').select('id', { count: 'exact', head: true }).gte('created_at', new Date(Date.now() - 24 * 3600 * 1000).toISOString()),
-      db.from('ai_credit_ledger').select('credits_delta').gte('created_at', new Date(Date.now() - 24 * 3600 * 1000).toISOString()),
+      db.from('devices').select('id', { count: 'exact', head: true }).eq('status', 'online'),
+      db.from('security_alerts').select('id', { count: 'exact', head: true }).gte('created_at', dayAgo),
+      db.from('ai_credit_ledger').select('credits_delta').gte('created_at', dayAgo),
     ]);
     const rcToday = (credits.data ?? []).reduce((s: number, r: any) => s + Math.abs(Number(r.credits_delta ?? 0)), 0);
+    const deviceTotal = devices.count ?? 0;
+    const onlineCount = devicesOnline.count ?? 0;
     return {
       users: users.count ?? 0,
-      orgs: orgs.count ?? 0,
+      users_active_30d: usersActive.count ?? 0,
+      users_new_7d: usersNew.count ?? 0,
+      orgs: orgTeams.count ?? 0,
+      orgs_active: orgTeamsActive.count ?? 0,
       msps: msps.count ?? 0,
-      devices: devices.count ?? 0,
+      msp_clients: mspClients.count ?? 0,
+      devices: deviceTotal,
+      devices_online: onlineCount,
+      devices_offline: Math.max(0, deviceTotal - onlineCount),
       threats_24h: threats.count ?? 0,
       rc_today: rcToday,
     };
