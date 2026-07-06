@@ -222,7 +222,43 @@ export default function AdminOrganizationDetail() {
                 </Card>
               </TabsContent>
 
+              <TabsContent value="investigations" className="mt-4">
+                <Card>
+                  <CardContent className="p-0">
+                    {detail.investigations.length === 0 ? (
+                      <div className="p-8 text-center text-sm text-muted-foreground">
+                        No investigations opened for this organization yet.
+                      </div>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Subject</TableHead>
+                            <TableHead>Verdict</TableHead>
+                            <TableHead>Confidence</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Opened</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {detail.investigations.map((i) => (
+                            <TableRow key={i.id}>
+                              <TableCell className="font-medium max-w-[24rem] truncate">{i.input_label ?? i.id.slice(0, 8)}</TableCell>
+                              <TableCell>{i.verdict ? <Badge variant={i.verdict === 'malicious' ? 'destructive' : i.verdict === 'benign' ? 'default' : 'secondary'}>{i.verdict}</Badge> : <span className="text-xs text-muted-foreground">—</span>}</TableCell>
+                              <TableCell className="text-xs text-muted-foreground">{i.confidence ?? '—'}</TableCell>
+                              <TableCell><Badge variant={i.status === 'completed' ? 'default' : 'outline'}>{i.status}</Badge></TableCell>
+                              <TableCell className="text-xs text-muted-foreground">{relativeTime(i.created_at)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
               <TabsContent value="remediations" className="mt-4">
+
                 <Card>
                   <CardContent className="p-0">
                     {detail.remediations.length === 0 ? (
