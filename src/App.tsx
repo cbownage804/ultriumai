@@ -126,6 +126,7 @@ const AdminUsers = lazy(() => import('@/pages/admin/AdminUsers'));
 const AdminOrganizations = lazy(() => import('@/pages/admin/AdminOrganizations'));
 const AdminOrganizationDetail = lazy(() => import('@/pages/admin/AdminOrganizationDetail'));
 const AdminMsps = lazy(() => import('@/pages/admin/AdminMsps'));
+const AdminMspDetail = lazy(() => import('@/pages/admin/AdminMspDetail'));
 const AdminBilling = lazy(() => import('@/pages/admin/AdminBilling'));
 const AdminAnnouncements = lazy(() => import('@/pages/admin/AdminAnnouncements'));
 const AdminFlags = lazy(() => import('@/pages/admin/AdminFlags'));
