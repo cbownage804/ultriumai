@@ -98,12 +98,33 @@ export default function AdminOrganizationDetail() {
           </div>
         ) : (
           <>
+            {/* Ray brief */}
+            {detail.ray_brief && (
+              <Card className="border-primary/30 bg-primary/5">
+                <CardContent className="p-4 flex gap-3 items-start">
+                  <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <div className="text-sm">
+                    <div className="text-[10px] uppercase tracking-widest text-primary/80 mb-1">Ray Brief</div>
+                    {detail.ray_brief}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Header meta strip */}
             <div className="grid gap-4 md:grid-cols-4">
               <AdminMetricCard label="Plan" value={<Badge variant={tierBadgeVariant(org?.tier)}>{formatTier(org?.tier)}</Badge>} />
               <AdminMetricCard label="Owner" value={<span className="text-base font-semibold">{formatOwnerLabel(org?.owner_email, org?.owner_display_name)}</span>} />
-              <AdminMetricCard label="Members" value={detail.members.length} hint={`${detail.members.filter(m => m.status === 'active').length} active`} />
+              <AdminMetricCard label="Members" value={detail.members.length + 1} hint={`${detail.members.filter(m => m.status === 'active').length} active`} />
               <AdminMetricCard label="Devices" value={detail.devices.length} hint={`${detail.devices.filter(d => d.status === 'online' || d.status === 'active').length} online`} />
+            </div>
+
+            {/* Security posture */}
+            <div className="grid gap-4 md:grid-cols-4">
+              <AdminMetricCard label="Security score" value={detail.health?.overall_score ?? '—'} hint={detail.health ? `${detail.health.score_delta > 0 ? '+' : ''}${detail.health.score_delta} this week` : 'Awaiting first snapshot'} />
+              <AdminMetricCard label="Active threats" value={detail.active_threats} hint={detail.active_threats === 0 ? 'All clear' : 'Needs review'} />
+              <AdminMetricCard label="Investigations" value={detail.investigations.length} hint={`${detail.investigations.filter(i => i.status !== 'completed' && i.status !== 'closed').length} open`} />
+              <AdminMetricCard label="Remediations" value={detail.remediations.length} hint={`${detail.remediations.filter(r => r.status === 'completed').length} completed`} />
             </div>
 
             <Tabs defaultValue="overview" className="w-full">
@@ -111,10 +132,12 @@ export default function AdminOrganizationDetail() {
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="users">Users</TabsTrigger>
                 <TabsTrigger value="devices">Devices</TabsTrigger>
+                <TabsTrigger value="investigations">Investigations</TabsTrigger>
                 <TabsTrigger value="remediations">Remediations</TabsTrigger>
                 <TabsTrigger value="activity">Activity</TabsTrigger>
                 <TabsTrigger value="billing">Billing</TabsTrigger>
               </TabsList>
+
 
               <TabsContent value="overview" className="mt-4">
                 <Card>
