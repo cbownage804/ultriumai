@@ -711,7 +711,7 @@ const actions: Record<string, (req: Request, body: any, actor: string) => Promis
       safe(db.from('support_tickets').select('id', { count: 'exact', head: true }).in('status', ['open', 'pending', 'in_progress']), { count: 0 } as any),
       safe(db.from('feature_flags').select('id, key, enabled, rollout_percentage, updated_at').order('updated_at', { ascending: false }).limit(20), { data: [] } as any),
       safe(db.from('wrayth_agent_release').select('version, channel, published_at, notes').order('published_at', { ascending: false }).limit(1).maybeSingle(), { data: null } as any),
-      safe(db.from('wrayth_devices').select('agent_version').eq('revoked_at', null as any), { data: [] } as any),
+      safe(db.from('wrayth_devices').select('agent_version').is('revoked_at', null), { data: [] } as any),
       safe(db.from('wrayth_remediation_actions').select('id', { count: 'exact', head: true }).eq('status', 'failed').gte('created_at', dayAgo), { count: 0 } as any),
       safe(db.from('wrayth_remediation_actions').select('id', { count: 'exact', head: true }).eq('status', 'completed').gte('created_at', dayAgo), { count: 0 } as any),
     ]);
