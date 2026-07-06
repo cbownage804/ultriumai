@@ -13,7 +13,7 @@ export function AdminPageHeader({ title, subtitle, actions }: { title: string; s
   );
 }
 
-export function AdminMetricCard({ label, value, hint }: { label: string; value: ReactNode; hint?: string }) {
+export function AdminMetricCard({ label, value, hint }: { label: string; value: ReactNode; hint?: ReactNode }) {
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -21,7 +21,7 @@ export function AdminMetricCard({ label, value, hint }: { label: string; value: 
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{value}</div>
-        {hint && <p className="text-xs text-muted-foreground mt-1">{hint}</p>}
+        {hint && <div className="text-xs text-muted-foreground mt-1">{hint}</div>}
       </CardContent>
     </Card>
   );

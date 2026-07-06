@@ -126,6 +126,7 @@ const AdminUsers = lazy(() => import('@/pages/admin/AdminUsers'));
 const AdminOrganizations = lazy(() => import('@/pages/admin/AdminOrganizations'));
 const AdminOrganizationDetail = lazy(() => import('@/pages/admin/AdminOrganizationDetail'));
 const AdminMsps = lazy(() => import('@/pages/admin/AdminMsps'));
+const AdminMspDetail = lazy(() => import('@/pages/admin/AdminMspDetail'));
 const AdminBilling = lazy(() => import('@/pages/admin/AdminBilling'));
 const AdminAnnouncements = lazy(() => import('@/pages/admin/AdminAnnouncements'));
 const AdminFlags = lazy(() => import('@/pages/admin/AdminFlags'));
@@ -368,6 +369,7 @@ function AppRouter() {
           <Route path="organizations" element={<SuspenseWrapper><AdminOrganizations /></SuspenseWrapper>} />
           <Route path="organizations/:id" element={<SuspenseWrapper><AdminOrganizationDetail /></SuspenseWrapper>} />
           <Route path="msps" element={<SuspenseWrapper><AdminMsps /></SuspenseWrapper>} />
+          <Route path="msps/:id" element={<SuspenseWrapper><AdminMspDetail /></SuspenseWrapper>} />
           <Route path="billing" element={<SuspenseWrapper><AdminBilling /></SuspenseWrapper>} />
           <Route path="ops/announcements" element={<SuspenseWrapper><AdminAnnouncements /></SuspenseWrapper>} />
           <Route path="ops/flags" element={<SuspenseWrapper><AdminFlags /></SuspenseWrapper>} />
