@@ -129,7 +129,7 @@ export default function AdminBilling() {
               hint={
                 <span className={growthPos ? 'text-emerald-500' : 'text-destructive'}>
                   {growthPos ? '▲' : '▼'} {Math.abs(growth).toFixed(1)}% vs prior 30d
-                </span> as any
+                </span>
               }
             />
             <AdminMetricCard label="ARR (est.)" value={money(d?.arr_estimate)} hint="MRR × 12" />
@@ -149,7 +149,7 @@ export default function AdminBilling() {
                   <span className="text-destructive inline-flex items-center gap-0.5">
                     <ArrowDownRight className="h-4 w-4" />{d?.churned_30d ?? 0}
                   </span>
-                </span> as any
+                </span>
               }
               hint={`Churn ${Number(d?.churn_pct ?? 0).toFixed(1)}%`}
             />
