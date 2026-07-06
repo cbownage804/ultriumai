@@ -285,7 +285,9 @@ export default function AdminOrganizationDetail() {
                               <TableCell><Badge variant="outline">{r.provider}</Badge></TableCell>
                               <TableCell><Badge variant={r.status === 'completed' ? 'default' : r.status === 'failed' ? 'destructive' : 'secondary'}>{r.status}</Badge></TableCell>
                               <TableCell className="text-xs text-muted-foreground">{r.duration_ms ? `${(r.duration_ms / 1000).toFixed(1)}s` : '—'}</TableCell>
+                              <TableCell>{r.reversible ? <Badge variant="outline">Available</Badge> : <span className="text-xs text-muted-foreground">—</span>}</TableCell>
                               <TableCell className="text-xs text-muted-foreground">{relativeTime(r.created_at)}</TableCell>
+
                             </TableRow>
                           ))}
                         </TableBody>
