@@ -273,6 +273,13 @@ export function EnrolledDevicesList() {
   const [activeTabByDevice, setActiveTabByDevice] = useState<Record<string, string>>({});
 
   const load = async () => {
+    // Best-effort: sweep devices that haven't checked in for 15+ minutes so
+    // uninstalled/offline machines drop off the list even when the agent's
+    // uninstaller couldn't reach agent-uninstall (offline, blocked, config
+    // already deleted). Server-side pg_cron runs the same sweep every 5 min.
+    try {
+      await supabase.rpc('sweep_stale_wrayth_devices', { stale_minutes: 15 });
+    } catch { /* non-fatal */ }
     const { data: rows, error } = await supabase
       .from('wrayth_devices')
       .select('id, hostname, os, os_version, agent_version, last_seen_at, enrolled_at, revoked_at, release_channel, last_update_check_at')
