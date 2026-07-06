@@ -87,12 +87,16 @@ export default function AdminReleaseReadiness() {
       <div>
         <AdminPageHeader title="Release Readiness" />
         <div className="p-6">
-          <PageState
-            variant="error"
-            title="Couldn't load readiness signals"
-            description={err ?? 'No data returned.'}
-            action={<Button onClick={load}><RefreshCw className="h-4 w-4 mr-2" />Retry</Button>}
-          />
+          <Card>
+            <CardContent className="p-6 flex items-start gap-3">
+              <XCircle className="h-5 w-5 text-destructive mt-0.5" />
+              <div className="flex-1">
+                <div className="font-semibold">Couldn't load readiness signals</div>
+                <div className="text-sm text-muted-foreground mt-1">{err ?? 'No data returned.'}</div>
+              </div>
+              <Button onClick={load} size="sm"><RefreshCw className="h-4 w-4 mr-2" />Retry</Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
