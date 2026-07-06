@@ -379,6 +379,7 @@ function AppRouter() {
           <Route path="threat" element={<SuspenseWrapper><AdminThreatIntel /></SuspenseWrapper>} />
           <Route path="fleet" element={<SuspenseWrapper><AdminAgentFleet /></SuspenseWrapper>} />
           <Route path="ai" element={<SuspenseWrapper><AdminAiAnalytics /></SuspenseWrapper>} />
+          <Route path="ops/release" element={<SuspenseWrapper><AdminReleaseReadiness /></SuspenseWrapper>} />
           <Route path="danger" element={<SuspenseWrapper><AdminDangerZone /></SuspenseWrapper>} />
         </Route>
 
