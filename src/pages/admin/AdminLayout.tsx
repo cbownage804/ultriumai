@@ -2,7 +2,7 @@ import { NavLink, Outlet, Navigate, useLocation } from 'react-router-dom';
 import { usePlatformRole } from '@/hooks/usePlatformRole';
 import {
   Shield, Users, Building2, Briefcase, DollarSign, Settings2, Radar, Server,
-  Sparkles, ScrollText, AlertTriangle, LayoutDashboard, ArrowLeft, Bell, LifeBuoy,
+  Sparkles, ScrollText, AlertTriangle, LayoutDashboard, ArrowLeft, Bell, LifeBuoy, Rocket,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PageSkeleton } from '@/components/ui/PageSkeleton';
@@ -30,6 +30,7 @@ const NAV = [
     { to: '/admin/billing', label: 'Revenue & Stripe', icon: DollarSign },
   ]},
   { section: 'Platform Ops', items: [
+    { to: '/admin/ops/release', label: 'Release Readiness', icon: Rocket },
     { to: '/admin/ops/flags', label: 'Feature Flags', icon: Settings2 },
     { to: '/admin/ops/announcements', label: 'Announcements', icon: Bell },
     { to: '/admin/ops/audit', label: 'Audit Log', icon: ScrollText },

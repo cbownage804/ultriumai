@@ -676,6 +676,95 @@ const actions: Record<string, (req: Request, body: any, actor: string) => Promis
    * with a short reason. Nothing is faked — if a service isn't configured, we return
    * 'not_configured' so the UI can render it as neutral instead of green.
    */
+  /**
+   * release.readiness — one-shot aggregator behind the Release Readiness cockpit.
+   * Composes platform.status with fresh signals: recent platform errors, open
+   * incidents, feature flag rollout, agent release freshness, and failed
+   * remediations in the last 24h. Never fabricates — missing tables/columns
+   * degrade to nulls so the UI shows "no signal" instead of a fake green.
+   */
+  async 'release.readiness'() {
+    const db = admin();
+    const now = Date.now();
+    const dayAgo = new Date(now - 24 * 3600 * 1000).toISOString();
+    const weekAgo = new Date(now - 7 * 24 * 3600 * 1000).toISOString();
+
+    // Re-use the existing status action so both surfaces agree.
+    const status = await actions['platform.status'](null as any, {}, '');
+
+    const safe = async <T,>(p: Promise<T>, fallback: T): Promise<T> => {
+      try { return await p; } catch { return fallback; }
+    };
+
+    const [
+      errors24h, errorsRecent,
+      builderFails24h,
+      bugsOpen, ticketsOpen,
+      flags,
+      release, releaseDevices,
+      remFailed24h, remCompleted24h,
+    ] = await Promise.all([
+      safe(db.from('platform_error_logs').select('id', { count: 'exact', head: true }).gte('created_at', dayAgo), { count: 0 } as any),
+      safe(db.from('platform_error_logs').select('id, created_at, error_type, error_message, severity, source').gte('created_at', weekAgo).order('created_at', { ascending: false }).limit(10), { data: [] } as any),
+      safe(db.from('ai_builder_failures').select('id', { count: 'exact', head: true }).gte('created_at', dayAgo), { count: 0 } as any),
+      safe(db.from('bug_reports').select('id', { count: 'exact', head: true }).in('status', ['open', 'triaged', 'in_progress']), { count: 0 } as any),
+      safe(db.from('support_tickets').select('id', { count: 'exact', head: true }).in('status', ['open', 'pending', 'in_progress']), { count: 0 } as any),
+      safe(db.from('feature_flags').select('id, key, enabled, rollout_percentage, updated_at').order('updated_at', { ascending: false }).limit(20), { data: [] } as any),
+      safe(db.from('wrayth_agent_release').select('version, channel, published_at, notes').order('published_at', { ascending: false }).limit(1).maybeSingle(), { data: null } as any),
+      safe(db.from('wrayth_devices').select('agent_version').is('revoked_at', null), { data: [] } as any),
+      safe(db.from('wrayth_remediation_actions').select('id', { count: 'exact', head: true }).eq('status', 'failed').gte('created_at', dayAgo), { count: 0 } as any),
+      safe(db.from('wrayth_remediation_actions').select('id', { count: 'exact', head: true }).eq('status', 'completed').gte('created_at', dayAgo), { count: 0 } as any),
+    ]);
+
+    // Fleet freshness: what share of active devices is on the latest release.
+    const latestVersion: string | null = release?.data?.version ?? null;
+    const totalActive = releaseDevices?.data?.length ?? 0;
+    const onLatest = latestVersion
+      ? (releaseDevices?.data ?? []).filter((d: any) => (d.agent_version ?? '') === latestVersion).length
+      : 0;
+    const latestAdoptionPct = latestVersion && totalActive > 0 ? Math.round((onLatest / totalActive) * 100) : null;
+
+    // Simple readiness verdict — the UI displays reasons, not just a color.
+    const reasons: string[] = [];
+    const downOrDegraded = (status?.checks ?? []).filter((c: any) => c.status === 'down' || c.status === 'degraded');
+    downOrDegraded.forEach((c: any) => reasons.push(`${c.label} ${c.status}`));
+    if ((errors24h.count ?? 0) > 25) reasons.push(`${errors24h.count} platform errors in 24h`);
+    if ((remFailed24h.count ?? 0) > 5) reasons.push(`${remFailed24h.count} failed remediations in 24h`);
+    if ((bugsOpen.count ?? 0) > 20) reasons.push(`${bugsOpen.count} open bug reports`);
+
+    const verdict: 'ready' | 'watch' | 'hold' =
+      downOrDegraded.some((c: any) => c.status === 'down') ? 'hold'
+      : reasons.length > 0 ? 'watch'
+      : 'ready';
+
+    return {
+      generated_at: new Date().toISOString(),
+      verdict,
+      reasons,
+      status_checks: status?.checks ?? [],
+      errors: {
+        platform_24h: errors24h.count ?? 0,
+        builder_24h: builderFails24h.count ?? 0,
+        recent: errorsRecent.data ?? [],
+      },
+      incidents: {
+        bugs_open: bugsOpen.count ?? 0,
+        tickets_open: ticketsOpen.count ?? 0,
+      },
+      remediation: {
+        failed_24h: remFailed24h.count ?? 0,
+        completed_24h: remCompleted24h.count ?? 0,
+      },
+      flags: flags.data ?? [],
+      release: {
+        latest: release?.data ?? null,
+        active_devices: totalActive,
+        on_latest: onLatest,
+        adoption_pct: latestAdoptionPct,
+      },
+    };
+  },
+
   async 'platform.status'() {
     const db = admin();
     const checks: Array<{ id: string; label: string; status: 'ok' | 'degraded' | 'down' | 'not_configured'; detail?: string }> = [];

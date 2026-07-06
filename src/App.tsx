@@ -136,6 +136,7 @@ const AdminThreatIntel = lazy(() => import('@/pages/admin/AdminThreatIntel'));
 const AdminAgentFleet = lazy(() => import('@/pages/admin/AdminAgentFleet'));
 const AdminAiAnalytics = lazy(() => import('@/pages/admin/AdminAiAnalytics'));
 const AdminDangerZone = lazy(() => import('@/pages/admin/AdminDangerZone'));
+const AdminReleaseReadiness = lazy(() => import('@/pages/admin/AdminReleaseReadiness'));
 const DEV_ROUTES_ENABLED =
   import.meta.env.DEV ||
   (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug'));
@@ -378,6 +379,7 @@ function AppRouter() {
           <Route path="threat" element={<SuspenseWrapper><AdminThreatIntel /></SuspenseWrapper>} />
           <Route path="fleet" element={<SuspenseWrapper><AdminAgentFleet /></SuspenseWrapper>} />
           <Route path="ai" element={<SuspenseWrapper><AdminAiAnalytics /></SuspenseWrapper>} />
+          <Route path="ops/release" element={<SuspenseWrapper><AdminReleaseReadiness /></SuspenseWrapper>} />
           <Route path="danger" element={<SuspenseWrapper><AdminDangerZone /></SuspenseWrapper>} />
         </Route>
 
