@@ -30,6 +30,7 @@ const NAV = [
     { to: '/admin/billing', label: 'Revenue & Stripe', icon: DollarSign },
   ]},
   { section: 'Platform Ops', items: [
+    { to: '/admin/ops/release', label: 'Release Readiness', icon: Rocket },
     { to: '/admin/ops/flags', label: 'Feature Flags', icon: Settings2 },
     { to: '/admin/ops/announcements', label: 'Announcements', icon: Bell },
     { to: '/admin/ops/audit', label: 'Audit Log', icon: ScrollText },
