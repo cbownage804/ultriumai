@@ -273,7 +273,9 @@ export default function AdminOrganizationDetail() {
                             <TableHead>Provider</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Duration</TableHead>
+                            <TableHead>Rollback</TableHead>
                             <TableHead>When</TableHead>
+
                           </TableRow>
                         </TableHeader>
                         <TableBody>
