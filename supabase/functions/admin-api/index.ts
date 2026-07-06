@@ -101,20 +101,26 @@ const actions: Record<string, (req: Request, body: any, actor: string) => Promis
       banned_until: (u as any).banned_until ?? null,
       email_confirmed_at: u.email_confirmed_at,
       provider: u.app_metadata?.provider ?? 'email',
+      mfa_enabled: Array.isArray((u as any).factors) && (u as any).factors.length > 0,
     }));
     if (q) items = items.filter((u) => (u.email ?? '').toLowerCase().includes(q.toLowerCase()));
-    // Attach platform role, subscription tier, RC balance, primary organization.
+    // Attach platform role, subscription tier, RC balance, primary organization, device count.
     const ids = items.map((i) => i.id);
-    const [{ data: adminsRows }, { data: subs }, { data: creditsRows }, { data: ownedOrgs }, { data: memberships }] = await Promise.all([
+    const [{ data: adminsRows }, { data: subs }, { data: creditsRows }, { data: ownedOrgs }, { data: memberships }, { data: deviceRows }] = await Promise.all([
       db.from('platform_admins').select('user_id, role').in('user_id', ids),
       db.from('subscribers').select('user_id, subscription_tier, subscribed').in('user_id', ids),
       db.from('user_credits').select('user_id, balance').in('user_id', ids),
       db.from('org_teams').select('id, name, owner_id').in('owner_id', ids),
       db.from('org_team_members').select('user_id, organization_id, org_teams:org_teams(id, name)').in('user_id', ids).eq('status', 'active'),
+      db.from('devices').select('user_id').in('user_id', ids),
     ]);
     const adminMap = new Map((adminsRows ?? []).map((r: any) => [r.user_id, r.role]));
     const subMap = new Map((subs ?? []).map((r: any) => [r.user_id, r]));
     const credMap = new Map((creditsRows ?? []).map((r: any) => [r.user_id, r.balance]));
+    const deviceMap = new Map<string, number>();
+    for (const d of (deviceRows ?? []) as any[]) {
+      deviceMap.set(d.user_id, (deviceMap.get(d.user_id) ?? 0) + 1);
+    }
     // Prefer owned orgs; fall back to first active membership.
     const orgByUser = new Map<string, { id: string; name: string | null }>();
     for (const o of (ownedOrgs ?? []) as any[]) {
@@ -133,6 +139,7 @@ const actions: Record<string, (req: Request, body: any, actor: string) => Promis
           tier: subMap.get(u.id)?.subscription_tier ?? 'free',
           subscribed: subMap.get(u.id)?.subscribed ?? false,
           rc_balance: credMap.get(u.id) ?? 0,
+          device_count: deviceMap.get(u.id) ?? 0,
           org_id: org?.id ?? null,
           org_name: org?.name ?? null,
         };
@@ -143,14 +150,43 @@ const actions: Record<string, (req: Request, body: any, actor: string) => Promis
   async 'users.get'(_req, body) {
     const db = admin();
     const id = body.id as string;
-    const [{ data: u }, { data: profile }, { data: sub }, { data: cred }, { data: devices }] = await Promise.all([
+    const [
+      { data: u }, { data: profile }, { data: sub }, { data: cred }, { data: devices },
+      { data: threats }, { data: remediations }, { data: investigations }, { data: audit },
+    ] = await Promise.all([
       db.auth.admin.getUserById(id),
       db.from('profiles').select('*').eq('id', id).maybeSingle(),
       db.from('subscribers').select('*').eq('user_id', id).maybeSingle(),
       db.from('user_credits').select('*').eq('user_id', id).maybeSingle(),
       db.from('devices').select('id, name, os, last_seen_at, status').eq('user_id', id).limit(50),
+      db.from('security_alerts').select('id, title, severity, status, created_at').eq('user_id', id).order('created_at', { ascending: false }).limit(50),
+      db.from('wrayth_remediation_actions').select('id, action_type, provider, status, created_at, duration_ms, reversible').eq('user_id', id).order('created_at', { ascending: false }).limit(50),
+      db.from('ray_investigations').select('id, input_label, status, verdict, confidence, created_at').eq('user_id', id).order('created_at', { ascending: false }).limit(30),
+      db.from('admin_audit_trails').select('id, action, actor_user_id, created_at, metadata').eq('target_id', id).order('created_at', { ascending: false }).limit(50),
     ]);
-    return { user: u?.user ?? null, profile, subscription: sub, credits: cred, devices: devices ?? [] };
+    const mfaEnabled = Array.isArray((u?.user as any)?.factors) && (u?.user as any).factors.length > 0;
+    const activeThreats = (threats ?? []).filter((t: any) => t.status !== 'resolved' && t.status !== 'closed').length;
+    const daysSince = (u?.user?.last_sign_in_at)
+      ? Math.floor((Date.now() - new Date(u.user.last_sign_in_at).getTime()) / (24 * 3600 * 1000))
+      : null;
+    const name = (profile?.full_name || u?.user?.email?.split('@')[0] || 'This user').split(' ')[0];
+    const rayBrief = [
+      `${name} has ${devices?.length ?? 0} device${(devices?.length ?? 0) === 1 ? '' : 's'}`,
+      activeThreats > 0 ? `${activeThreats} active threat${activeThreats === 1 ? '' : 's'}` : 'no active threats',
+      mfaEnabled ? 'MFA enabled' : 'MFA not enrolled',
+      daysSince !== null ? `last signed in ${daysSince === 0 ? 'today' : `${daysSince} day${daysSince === 1 ? '' : 's'} ago`}` : 'has never signed in',
+    ].join(', ') + '.';
+    return {
+      user: u?.user ?? null,
+      profile, subscription: sub, credits: cred,
+      devices: devices ?? [],
+      threats: threats ?? [],
+      remediations: remediations ?? [],
+      investigations: investigations ?? [],
+      audit: audit ?? [],
+      mfa_enabled: mfaEnabled,
+      ray_brief: rayBrief,
+    };
   },
 
   async 'users.suspend'(_req, body, actor) {
@@ -265,14 +301,21 @@ const actions: Record<string, (req: Request, body: any, actor: string) => Promis
     const { data: org } = await db.from('org_teams').select('*').eq('id', id).maybeSingle();
     if (!org) return { org: null, members: [], devices: [], remediations: [], timeline: [], billing: { stripe_customer_id: null, subscription_end: null, seats: 0, max_seats: null, rc_balance: 0 } };
 
-    const [{ data: memberRows }, { data: devices }, { data: remediations }, { data: timeline }, { data: sub }, { data: cred }] = await Promise.all([
+    const [
+      { data: memberRows }, { data: devices }, { data: remediations }, { data: timeline },
+      { data: sub }, { data: cred }, { data: health }, { data: investigations }, threatsRes,
+    ] = await Promise.all([
       db.from('org_team_members').select('user_id, email, role, status, joined_at').eq('organization_id', id),
       db.from('devices').select('id, hostname, agent_version, status, last_checkin').eq('org_id', id).order('last_checkin', { ascending: false }).limit(200),
-      org.owner_id ? db.from('wrayth_remediation_actions').select('id, action_type, provider, status, created_at, duration_ms').eq('user_id', org.owner_id).order('created_at', { ascending: false }).limit(50) : Promise.resolve({ data: [] } as any),
+      org.owner_id ? db.from('wrayth_remediation_actions').select('id, action_type, provider, status, created_at, duration_ms, reversible').eq('user_id', org.owner_id).order('created_at', { ascending: false }).limit(50) : Promise.resolve({ data: [] } as any),
       db.from('ray_org_timeline').select('id, occurred_at, category, summary, severity').eq('org_id', id).order('occurred_at', { ascending: false }).limit(30),
       org.owner_id ? db.from('subscribers').select('*').eq('user_id', org.owner_id).maybeSingle() : Promise.resolve({ data: null } as any),
       org.owner_id ? db.from('user_credits').select('balance').eq('user_id', org.owner_id).maybeSingle() : Promise.resolve({ data: null } as any),
+      db.from('ray_org_health').select('*').eq('org_id', id).order('snapshot_date', { ascending: false }).limit(1).maybeSingle(),
+      org.owner_id ? db.from('ray_investigations').select('id, input_label, status, verdict, confidence, created_at').eq('user_id', org.owner_id).order('created_at', { ascending: false }).limit(30) : Promise.resolve({ data: [] } as any),
+      org.owner_id ? db.from('security_alerts').select('id, severity, status', { count: 'exact', head: false }).eq('user_id', org.owner_id).neq('status', 'resolved') : Promise.resolve({ data: [] } as any),
     ]);
+    const activeThreats = Array.isArray(threatsRes?.data) ? threatsRes.data.length : 0;
 
     // Attach owner email + name to org for the detail header.
     let ownerEmail: string | null = null;
@@ -309,6 +352,17 @@ const actions: Record<string, (req: Request, body: any, actor: string) => Promis
       .sort()
       .pop() ?? null;
 
+    const displayName = (org.name ?? '').trim() || 'This workspace';
+    const onlineDevices = (devices ?? []).filter((d: any) => d.status === 'online' || d.status === 'active').length;
+    const openInvestigations = (investigations ?? []).filter((i: any) => i.status !== 'completed' && i.status !== 'closed').length;
+    const rayBriefParts = [
+      `${displayName} has ${devices?.length ?? 0} enrolled device${(devices?.length ?? 0) === 1 ? '' : 's'} (${onlineDevices} online) and ${members.length + 1} identit${members.length === 0 ? 'y' : 'ies'}`,
+    ];
+    if (health) rayBriefParts.push(`security score ${health.overall_score}${health.score_delta ? ` (${health.score_delta > 0 ? '+' : ''}${health.score_delta} this week)` : ''}`);
+    if (activeThreats > 0) rayBriefParts.push(`${activeThreats} active threat${activeThreats === 1 ? '' : 's'}`);
+    if (openInvestigations > 0) rayBriefParts.push(`${openInvestigations} open investigation${openInvestigations === 1 ? '' : 's'}`);
+    const rayBrief = rayBriefParts.join(', ') + '.';
+
     return {
       org: {
         id: org.id,
@@ -326,6 +380,10 @@ const actions: Record<string, (req: Request, body: any, actor: string) => Promis
       devices: devices ?? [],
       remediations: (remediations as any[]) ?? [],
       timeline: timeline ?? [],
+      investigations: investigations ?? [],
+      health: health ?? null,
+      active_threats: activeThreats,
+      ray_brief: rayBrief,
       billing: {
         stripe_customer_id: sub?.stripe_customer_id ?? null,
         subscription_end: sub?.subscription_end ?? null,

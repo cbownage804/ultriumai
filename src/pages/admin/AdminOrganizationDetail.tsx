@@ -15,7 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Sparkles } from 'lucide-react';
 import { formatOrgName, formatOwnerLabel, formatTier, relativeTime, tierBadgeVariant } from '@/lib/admin/labels';
 
 interface OrgDetail {
@@ -33,8 +33,16 @@ interface OrgDetail {
   } | null;
   members: Array<{ user_id: string; email: string | null; role: string; status: string; joined_at: string | null; last_sign_in_at: string | null }>;
   devices: Array<{ id: string; hostname: string | null; agent_version: string | null; status: string | null; last_checkin: string | null }>;
-  remediations: Array<{ id: string; action_type: string; provider: string; status: string; created_at: string; duration_ms: number | null }>;
+  remediations: Array<{ id: string; action_type: string; provider: string; status: string; created_at: string; duration_ms: number | null; reversible?: boolean }>;
   timeline: Array<{ id: string; occurred_at: string; category: string; summary: string; severity: string }>;
+  investigations: Array<{ id: string; input_label: string | null; status: string; verdict: string | null; confidence: string | null; created_at: string }>;
+  health: {
+    overall_score: number; score_delta: number;
+    identity_score: number; device_score: number; threat_score: number;
+    exposure_score: number; compliance_score: number;
+  } | null;
+  active_threats: number;
+  ray_brief: string;
   billing: {
     stripe_customer_id: string | null;
     subscription_end: string | null;
@@ -90,12 +98,33 @@ export default function AdminOrganizationDetail() {
           </div>
         ) : (
           <>
+            {/* Ray brief */}
+            {detail.ray_brief && (
+              <Card className="border-primary/30 bg-primary/5">
+                <CardContent className="p-4 flex gap-3 items-start">
+                  <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <div className="text-sm">
+                    <div className="text-[10px] uppercase tracking-widest text-primary/80 mb-1">Ray Brief</div>
+                    {detail.ray_brief}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Header meta strip */}
             <div className="grid gap-4 md:grid-cols-4">
               <AdminMetricCard label="Plan" value={<Badge variant={tierBadgeVariant(org?.tier)}>{formatTier(org?.tier)}</Badge>} />
               <AdminMetricCard label="Owner" value={<span className="text-base font-semibold">{formatOwnerLabel(org?.owner_email, org?.owner_display_name)}</span>} />
-              <AdminMetricCard label="Members" value={detail.members.length} hint={`${detail.members.filter(m => m.status === 'active').length} active`} />
+              <AdminMetricCard label="Members" value={detail.members.length + 1} hint={`${detail.members.filter(m => m.status === 'active').length} active`} />
               <AdminMetricCard label="Devices" value={detail.devices.length} hint={`${detail.devices.filter(d => d.status === 'online' || d.status === 'active').length} online`} />
+            </div>
+
+            {/* Security posture */}
+            <div className="grid gap-4 md:grid-cols-4">
+              <AdminMetricCard label="Security score" value={detail.health?.overall_score ?? '—'} hint={detail.health ? `${detail.health.score_delta > 0 ? '+' : ''}${detail.health.score_delta} this week` : 'Awaiting first snapshot'} />
+              <AdminMetricCard label="Active threats" value={detail.active_threats} hint={detail.active_threats === 0 ? 'All clear' : 'Needs review'} />
+              <AdminMetricCard label="Investigations" value={detail.investigations.length} hint={`${detail.investigations.filter(i => i.status !== 'completed' && i.status !== 'closed').length} open`} />
+              <AdminMetricCard label="Remediations" value={detail.remediations.length} hint={`${detail.remediations.filter(r => r.status === 'completed').length} completed`} />
             </div>
 
             <Tabs defaultValue="overview" className="w-full">
@@ -103,10 +132,12 @@ export default function AdminOrganizationDetail() {
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="users">Users</TabsTrigger>
                 <TabsTrigger value="devices">Devices</TabsTrigger>
+                <TabsTrigger value="investigations">Investigations</TabsTrigger>
                 <TabsTrigger value="remediations">Remediations</TabsTrigger>
                 <TabsTrigger value="activity">Activity</TabsTrigger>
                 <TabsTrigger value="billing">Billing</TabsTrigger>
               </TabsList>
+
 
               <TabsContent value="overview" className="mt-4">
                 <Card>
@@ -191,7 +222,43 @@ export default function AdminOrganizationDetail() {
                 </Card>
               </TabsContent>
 
+              <TabsContent value="investigations" className="mt-4">
+                <Card>
+                  <CardContent className="p-0">
+                    {detail.investigations.length === 0 ? (
+                      <div className="p-8 text-center text-sm text-muted-foreground">
+                        No investigations opened for this organization yet.
+                      </div>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Subject</TableHead>
+                            <TableHead>Verdict</TableHead>
+                            <TableHead>Confidence</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Opened</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {detail.investigations.map((i) => (
+                            <TableRow key={i.id}>
+                              <TableCell className="font-medium max-w-[24rem] truncate">{i.input_label ?? i.id.slice(0, 8)}</TableCell>
+                              <TableCell>{i.verdict ? <Badge variant={i.verdict === 'malicious' ? 'destructive' : i.verdict === 'benign' ? 'default' : 'secondary'}>{i.verdict}</Badge> : <span className="text-xs text-muted-foreground">—</span>}</TableCell>
+                              <TableCell className="text-xs text-muted-foreground">{i.confidence ?? '—'}</TableCell>
+                              <TableCell><Badge variant={i.status === 'completed' ? 'default' : 'outline'}>{i.status}</Badge></TableCell>
+                              <TableCell className="text-xs text-muted-foreground">{relativeTime(i.created_at)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
               <TabsContent value="remediations" className="mt-4">
+
                 <Card>
                   <CardContent className="p-0">
                     {detail.remediations.length === 0 ? (
@@ -206,7 +273,9 @@ export default function AdminOrganizationDetail() {
                             <TableHead>Provider</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Duration</TableHead>
+                            <TableHead>Rollback</TableHead>
                             <TableHead>When</TableHead>
+
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -216,7 +285,9 @@ export default function AdminOrganizationDetail() {
                               <TableCell><Badge variant="outline">{r.provider}</Badge></TableCell>
                               <TableCell><Badge variant={r.status === 'completed' ? 'default' : r.status === 'failed' ? 'destructive' : 'secondary'}>{r.status}</Badge></TableCell>
                               <TableCell className="text-xs text-muted-foreground">{r.duration_ms ? `${(r.duration_ms / 1000).toFixed(1)}s` : '—'}</TableCell>
+                              <TableCell>{r.reversible ? <Badge variant="outline">Available</Badge> : <span className="text-xs text-muted-foreground">—</span>}</TableCell>
                               <TableCell className="text-xs text-muted-foreground">{relativeTime(r.created_at)}</TableCell>
+
                             </TableRow>
                           ))}
                         </TableBody>

@@ -10,6 +10,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Sparkles, ShieldCheck, ShieldOff } from 'lucide-react';
 
 import { formatOrgName, formatTier, tierBadgeVariant, relativeTime } from '@/lib/admin/labels';
 
@@ -18,6 +19,21 @@ interface AdminUser {
   banned_until?: string | null; platform_role?: string | null;
   tier?: string; subscribed?: boolean; rc_balance?: number;
   org_name?: string | null; org_id?: string | null;
+  mfa_enabled?: boolean; device_count?: number;
+}
+
+interface UserDetail {
+  user: any;
+  profile: any;
+  subscription: any;
+  credits: any;
+  devices: Array<{ id: string; name: string | null; os: string | null; last_seen_at: string | null; status: string | null }>;
+  threats: Array<{ id: string; title: string; severity: string; status: string; created_at: string }>;
+  remediations: Array<{ id: string; action_type: string; provider: string; status: string; created_at: string; duration_ms: number | null; reversible?: boolean }>;
+  investigations: Array<{ id: string; input_label: string | null; status: string; verdict: string | null; confidence: string | null; created_at: string }>;
+  audit: Array<{ id: string; action: string; actor_user_id: string | null; created_at: string; metadata: any }>;
+  mfa_enabled: boolean;
+  ray_brief: string;
 }
 
 export default function AdminUsers() {
@@ -25,7 +41,7 @@ export default function AdminUsers() {
   const [items, setItems] = useState<AdminUser[] | null>(null);
   const [q, setQ] = useState('');
   const [sel, setSel] = useState<AdminUser | null>(null);
-  const [detail, setDetail] = useState<any>(null);
+  const [detail, setDetail] = useState<UserDetail | null>(null);
 
   const load = () => callAdmin<{ items: AdminUser[] }>('users.list', { search: q }).then((r) => setItems(r.items)).catch((e) => toast.error(e.message));
   useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
@@ -33,10 +49,13 @@ export default function AdminUsers() {
   useEffect(() => {
     if (!sel) return;
     setDetail(null);
-    callAdmin('users.get', { id: sel.id }).then(setDetail).catch((e) => toast.error(e.message));
+    callAdmin<UserDetail>('users.get', { id: sel.id }).then(setDetail).catch((e) => toast.error(e.message));
   }, [sel]);
 
-  const filtered = useMemo(() => (items ?? []).filter((u) => u.email?.toLowerCase().includes(q.toLowerCase())), [items, q]);
+  const filtered = useMemo(() => (items ?? []).filter((u) => {
+    const hay = [u.email, u.org_name, u.platform_role].filter(Boolean).join(' ').toLowerCase();
+    return hay.includes(q.toLowerCase());
+  }), [items, q]);
 
   const act = async (action: string, body: Record<string, unknown>, success: string) => {
     try { await callAdmin(action, body); toast.success(success); load(); }
@@ -50,7 +69,7 @@ export default function AdminUsers() {
         subtitle={items ? `${items.length} accounts` : 'Loading…'}
         actions={
           <div className="flex gap-2 items-center">
-            <Input placeholder="Search email…" value={q} onChange={(e) => setQ(e.target.value)} className="w-72" />
+            <Input placeholder="Search email, org, role…" value={q} onChange={(e) => setQ(e.target.value)} className="w-72" />
             <Button variant="outline" onClick={load}>Refresh</Button>
           </div>
         }
@@ -66,6 +85,8 @@ export default function AdminUsers() {
                     <TableHead>Organization</TableHead>
                     <TableHead>Plan</TableHead>
                     <TableHead>Platform Role</TableHead>
+                    <TableHead className="text-center">MFA</TableHead>
+                    <TableHead className="text-right">Devices</TableHead>
                     <TableHead className="text-right">RC</TableHead>
                     <TableHead>Last activity</TableHead>
                     <TableHead>Status</TableHead>
@@ -78,6 +99,12 @@ export default function AdminUsers() {
                       <TableCell className="text-sm">{formatOrgName(u.org_name, 'personal')}</TableCell>
                       <TableCell><Badge variant={tierBadgeVariant(u.tier)}>{formatTier(u.tier)}</Badge></TableCell>
                       <TableCell>{u.platform_role ? <Badge>{u.platform_role}</Badge> : <span className="text-muted-foreground text-xs">—</span>}</TableCell>
+                      <TableCell className="text-center">
+                        {u.mfa_enabled
+                          ? <ShieldCheck className="h-4 w-4 text-primary inline" aria-label="MFA enabled" />
+                          : <ShieldOff className="h-4 w-4 text-muted-foreground inline" aria-label="MFA not enrolled" />}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">{u.device_count ?? 0}</TableCell>
                       <TableCell className="text-right tabular-nums">{u.rc_balance ?? 0}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{relativeTime(u.last_sign_in_at)}</TableCell>
                       <TableCell>
@@ -93,7 +120,7 @@ export default function AdminUsers() {
       </div>
 
       <Sheet open={!!sel} onOpenChange={(o) => !o && setSel(null)}>
-        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+        <SheetContent className="w-full sm:max-w-3xl overflow-y-auto">
           {sel && (
             <>
               <SheetHeader>
@@ -101,21 +128,39 @@ export default function AdminUsers() {
                 <SheetDescription>{sel.id}</SheetDescription>
               </SheetHeader>
 
+              {detail?.ray_brief && (
+                <div className="mt-4 rounded-md border border-primary/30 bg-primary/5 p-3 flex gap-2 items-start">
+                  <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <div className="text-sm">
+                    <div className="text-[10px] uppercase tracking-widest text-primary/80 mb-1">Ray Brief</div>
+                    {detail.ray_brief}
+                  </div>
+                </div>
+              )}
+
               <Tabs defaultValue="overview" className="mt-6">
-                <TabsList>
+                <TabsList className="flex-wrap h-auto">
                   <TabsTrigger value="overview">Overview</TabsTrigger>
                   <TabsTrigger value="devices">Devices</TabsTrigger>
+                  <TabsTrigger value="investigations">Investigations</TabsTrigger>
+                  <TabsTrigger value="threats">Threats</TabsTrigger>
+                  <TabsTrigger value="remediations">Remediations</TabsTrigger>
+                  <TabsTrigger value="billing">Billing</TabsTrigger>
+                  <TabsTrigger value="audit">Audit</TabsTrigger>
                   <TabsTrigger value="actions">Actions</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="overview" className="space-y-3 mt-4">
+                <TabsContent value="overview" className="space-y-2 mt-4">
                   {!detail ? <Skeleton className="h-32" /> : (
                     <>
                       <Row k="Plan" v={formatTier(detail.subscription?.subscription_tier)} />
                       <Row k="Subscribed" v={String(detail.subscription?.subscribed ?? false)} />
-                      <Row k="Subscription ends" v={detail.subscription?.subscription_end ?? '—'} />
+                      <Row k="MFA" v={detail.mfa_enabled ? 'Enrolled' : 'Not enrolled'} />
                       <Row k="RC balance" v={detail.credits?.balance ?? 0} />
-                      <Row k="Profile display name" v={detail.profile?.display_name ?? '—'} />
+                      <Row k="Devices" v={detail.devices.length} />
+                      <Row k="Active investigations" v={detail.investigations.filter(i => i.status !== 'completed' && i.status !== 'closed').length} />
+                      <Row k="Active threats" v={detail.threats.filter(t => t.status !== 'resolved' && t.status !== 'closed').length} />
+                      <Row k="Profile display name" v={detail.profile?.full_name ?? '—'} />
                       <Row k="Created" v={sel.created_at ? new Date(sel.created_at).toLocaleString() : '—'} />
                       <Row k="Last sign-in" v={sel.last_sign_in_at ? new Date(sel.last_sign_in_at).toLocaleString() : '—'} />
                     </>
@@ -123,18 +168,102 @@ export default function AdminUsers() {
                 </TabsContent>
 
                 <TabsContent value="devices" className="mt-4">
-                  {!detail ? <Skeleton className="h-24" /> : (
-                    <div className="space-y-2">
-                      {detail.devices.length === 0 ? <div className="text-sm text-muted-foreground">No devices.</div> :
-                        detail.devices.map((d: any) => (
+                  {!detail ? <Skeleton className="h-24" /> :
+                    detail.devices.length === 0 ? <Empty msg="No devices enrolled to this user." /> : (
+                      <div className="space-y-2">
+                        {detail.devices.map((d) => (
                           <div key={d.id} className="flex justify-between border border-border/60 rounded-md p-2 text-sm">
-                            <div><div className="font-medium">{d.name ?? d.id}</div><div className="text-xs text-muted-foreground">{d.os}</div></div>
+                            <div><div className="font-medium">{d.name ?? d.id}</div><div className="text-xs text-muted-foreground">{d.os ?? '—'}</div></div>
                             <div className="text-xs text-muted-foreground">{d.last_seen_at ? new Date(d.last_seen_at).toLocaleString() : '—'}</div>
                           </div>
-                        ))
-                      }
-                    </div>
+                        ))}
+                      </div>
+                    )}
+                </TabsContent>
+
+                <TabsContent value="investigations" className="mt-4">
+                  {!detail ? <Skeleton className="h-24" /> :
+                    detail.investigations.length === 0 ? <Empty msg="No investigations opened by or for this user." /> : (
+                      <div className="space-y-2">
+                        {detail.investigations.map((i) => (
+                          <div key={i.id} className="border border-border/60 rounded-md p-2 text-sm space-y-1">
+                            <div className="flex justify-between gap-2">
+                              <div className="font-medium truncate">{i.input_label ?? i.id.slice(0, 8)}</div>
+                              <Badge variant={i.status === 'completed' ? 'default' : 'outline'}>{i.status}</Badge>
+                            </div>
+                            <div className="flex gap-2 text-xs text-muted-foreground">
+                              {i.verdict && <Badge variant={i.verdict === 'malicious' ? 'destructive' : 'secondary'}>{i.verdict}</Badge>}
+                              <span>{relativeTime(i.created_at)}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                </TabsContent>
+
+                <TabsContent value="threats" className="mt-4">
+                  {!detail ? <Skeleton className="h-24" /> :
+                    detail.threats.length === 0 ? <Empty msg="No security alerts for this user." /> : (
+                      <div className="space-y-2">
+                        {detail.threats.map((t) => (
+                          <div key={t.id} className="border border-border/60 rounded-md p-2 text-sm">
+                            <div className="flex justify-between gap-2">
+                              <div className="font-medium truncate">{t.title}</div>
+                              <Badge variant={t.severity === 'critical' || t.severity === 'high' ? 'destructive' : 'secondary'}>{t.severity}</Badge>
+                            </div>
+                            <div className="text-xs text-muted-foreground">{t.status} · {relativeTime(t.created_at)}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                </TabsContent>
+
+                <TabsContent value="remediations" className="mt-4">
+                  {!detail ? <Skeleton className="h-24" /> :
+                    detail.remediations.length === 0 ? <Empty msg="Ray hasn't run any remediations for this user." /> : (
+                      <div className="space-y-2">
+                        {detail.remediations.map((r) => (
+                          <div key={r.id} className="border border-border/60 rounded-md p-2 text-sm">
+                            <div className="flex justify-between gap-2">
+                              <div className="font-medium">{r.action_type}</div>
+                              <Badge variant={r.status === 'completed' ? 'default' : r.status === 'failed' ? 'destructive' : 'secondary'}>{r.status}</Badge>
+                            </div>
+                            <div className="text-xs text-muted-foreground flex gap-2">
+                              <span>{r.provider}</span>
+                              {r.duration_ms ? <span>{(r.duration_ms / 1000).toFixed(1)}s</span> : null}
+                              {r.reversible && <Badge variant="outline">Rollback available</Badge>}
+                              <span>{relativeTime(r.created_at)}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                </TabsContent>
+
+                <TabsContent value="billing" className="mt-4 space-y-2">
+                  {!detail ? <Skeleton className="h-24" /> : (
+                    <>
+                      <Row k="Plan" v={formatTier(detail.subscription?.subscription_tier)} />
+                      <Row k="Subscribed" v={String(detail.subscription?.subscribed ?? false)} />
+                      <Row k="Subscription ends" v={detail.subscription?.subscription_end ? new Date(detail.subscription.subscription_end).toLocaleDateString() : '—'} />
+                      <Row k="Stripe customer" v={detail.subscription?.stripe_customer_id ?? '—'} />
+                      <Row k="RC balance" v={detail.credits?.balance ?? 0} />
+                    </>
                   )}
+                </TabsContent>
+
+                <TabsContent value="audit" className="mt-4">
+                  {!detail ? <Skeleton className="h-24" /> :
+                    detail.audit.length === 0 ? <Empty msg="No admin actions recorded against this user." /> : (
+                      <div className="space-y-1">
+                        {detail.audit.map((a) => (
+                          <div key={a.id} className="border-b border-border/40 py-1.5 text-sm flex justify-between gap-2">
+                            <span className="font-medium">{a.action}</span>
+                            <span className="text-xs text-muted-foreground">{relativeTime(a.created_at)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                 </TabsContent>
 
                 <TabsContent value="actions" className="mt-4 space-y-3">
@@ -191,4 +320,8 @@ function Row({ k, v }: { k: string; v: any }) {
       <span className="font-medium">{String(v)}</span>
     </div>
   );
+}
+
+function Empty({ msg }: { msg: string }) {
+  return <div className="text-sm text-muted-foreground text-center py-6">{msg}</div>;
 }
