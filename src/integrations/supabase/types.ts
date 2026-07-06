@@ -39168,6 +39168,10 @@ export type Database = {
         }
         Returns: string
       }
+      sweep_stale_wrayth_devices: {
+        Args: { stale_minutes?: number }
+        Returns: number
+      }
       upsert_device_from_checkin: {
         Args: {
           p_agent_version: string
