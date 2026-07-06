@@ -143,14 +143,43 @@ const actions: Record<string, (req: Request, body: any, actor: string) => Promis
   async 'users.get'(_req, body) {
     const db = admin();
     const id = body.id as string;
-    const [{ data: u }, { data: profile }, { data: sub }, { data: cred }, { data: devices }] = await Promise.all([
+    const [
+      { data: u }, { data: profile }, { data: sub }, { data: cred }, { data: devices },
+      { data: threats }, { data: remediations }, { data: investigations }, { data: audit },
+    ] = await Promise.all([
       db.auth.admin.getUserById(id),
       db.from('profiles').select('*').eq('id', id).maybeSingle(),
       db.from('subscribers').select('*').eq('user_id', id).maybeSingle(),
       db.from('user_credits').select('*').eq('user_id', id).maybeSingle(),
       db.from('devices').select('id, name, os, last_seen_at, status').eq('user_id', id).limit(50),
+      db.from('security_alerts').select('id, title, severity, status, created_at').eq('user_id', id).order('created_at', { ascending: false }).limit(50),
+      db.from('wrayth_remediation_actions').select('id, action_type, provider, status, created_at, duration_ms, reversible').eq('user_id', id).order('created_at', { ascending: false }).limit(50),
+      db.from('ray_investigations').select('id, input_label, status, verdict, confidence, created_at').eq('user_id', id).order('created_at', { ascending: false }).limit(30),
+      db.from('admin_audit_trails').select('id, action, actor_user_id, created_at, metadata').eq('target_id', id).order('created_at', { ascending: false }).limit(50),
     ]);
-    return { user: u?.user ?? null, profile, subscription: sub, credits: cred, devices: devices ?? [] };
+    const mfaEnabled = Array.isArray((u?.user as any)?.factors) && (u?.user as any).factors.length > 0;
+    const activeThreats = (threats ?? []).filter((t: any) => t.status !== 'resolved' && t.status !== 'closed').length;
+    const daysSince = (u?.user?.last_sign_in_at)
+      ? Math.floor((Date.now() - new Date(u.user.last_sign_in_at).getTime()) / (24 * 3600 * 1000))
+      : null;
+    const name = (profile?.full_name || u?.user?.email?.split('@')[0] || 'This user').split(' ')[0];
+    const rayBrief = [
+      `${name} has ${devices?.length ?? 0} device${(devices?.length ?? 0) === 1 ? '' : 's'}`,
+      activeThreats > 0 ? `${activeThreats} active threat${activeThreats === 1 ? '' : 's'}` : 'no active threats',
+      mfaEnabled ? 'MFA enabled' : 'MFA not enrolled',
+      daysSince !== null ? `last signed in ${daysSince === 0 ? 'today' : `${daysSince} day${daysSince === 1 ? '' : 's'} ago`}` : 'has never signed in',
+    ].join(', ') + '.';
+    return {
+      user: u?.user ?? null,
+      profile, subscription: sub, credits: cred,
+      devices: devices ?? [],
+      threats: threats ?? [],
+      remediations: remediations ?? [],
+      investigations: investigations ?? [],
+      audit: audit ?? [],
+      mfa_enabled: mfaEnabled,
+      ray_brief: rayBrief,
+    };
   },
 
   async 'users.suspend'(_req, body, actor) {
