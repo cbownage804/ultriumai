@@ -2,7 +2,7 @@ import { NavLink, Outlet, Navigate, useLocation } from 'react-router-dom';
 import { usePlatformRole } from '@/hooks/usePlatformRole';
 import {
   Shield, Users, Building2, Briefcase, DollarSign, Settings2, Radar, Server,
-  Sparkles, ScrollText, AlertTriangle, LayoutDashboard, ArrowLeft, Bell, LifeBuoy,
+  Sparkles, ScrollText, AlertTriangle, LayoutDashboard, ArrowLeft, Bell, LifeBuoy, Rocket,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PageSkeleton } from '@/components/ui/PageSkeleton';
