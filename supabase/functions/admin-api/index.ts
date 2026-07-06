@@ -338,16 +338,47 @@ const actions: Record<string, (req: Request, body: any, actor: string) => Promis
 
   async 'msps.list'() {
     const db = admin();
-    const { data } = await db.from('msps').select('id, name, plan, status, created_at').limit(500);
+    const { data } = await db
+      .from('msps')
+      .select('id, company_name, brand_name, subscription_tier, is_active, contact_email, created_at, max_clients, monthly_rate_per_user')
+      .order('created_at', { ascending: false })
+      .limit(500);
     const ids = (data ?? []).map((m: any) => m.id);
-    const { data: clients } = await db.from('msp_clients').select('msp_id, id, name, status').in('msp_id', ids);
+    const { data: clients } = ids.length
+      ? await db
+          .from('msp_clients')
+          .select('msp_id, id, company_name, billing_status, health_status, is_active, current_users, endpoints, alerts, monthly_rate')
+          .in('msp_id', ids)
+      : { data: [] as any[] };
     const byMsp = new Map<string, any[]>();
     (clients ?? []).forEach((c: any) => {
       if (!byMsp.has(c.msp_id)) byMsp.set(c.msp_id, []);
       byMsp.get(c.msp_id)!.push(c);
     });
     return {
-      items: (data ?? []).map((m: any) => ({ ...m, clients: byMsp.get(m.id) ?? [] })),
+      items: (data ?? []).map((m: any) => {
+        const cs = byMsp.get(m.id) ?? [];
+        const active_clients = cs.filter((c: any) => c.is_active !== false).length;
+        const endpoints = cs.reduce((s: number, c: any) => s + Number(c.endpoints ?? c.current_users ?? 0), 0);
+        const alerts = cs.reduce((s: number, c: any) => s + Number(c.alerts ?? 0), 0);
+        const mrr = cs.reduce((s: number, c: any) => s + Number(c.monthly_rate ?? 0), 0);
+        const critical_clients = cs.filter((c: any) => (c.health_status ?? '').toLowerCase() === 'critical').length;
+        return {
+          id: m.id,
+          name: m.brand_name || m.company_name || 'Unnamed MSP',
+          tier: m.subscription_tier ?? 'msp',
+          status: m.is_active === false ? 'inactive' : 'active',
+          contact_email: m.contact_email,
+          created_at: m.created_at,
+          clients_count: cs.length,
+          active_clients,
+          endpoints,
+          alerts,
+          mrr,
+          critical_clients,
+          clients: cs.slice(0, 4),
+        };
+      }),
     };
   },
 
@@ -356,11 +387,25 @@ const actions: Record<string, (req: Request, body: any, actor: string) => Promis
     const id = body.id;
     const [{ data: msp }, { data: clients }, { data: staff }, { data: revenue }] = await Promise.all([
       db.from('msps').select('*').eq('id', id).maybeSingle(),
-      db.from('msp_clients').select('*').eq('msp_id', id),
+      db.from('msp_clients').select('*').eq('msp_id', id).order('company_name'),
       db.from('msp_staff').select('*').eq('msp_id', id),
-      db.from('msp_revenue').select('*').eq('msp_id', id).order('created_at', { ascending: false }).limit(30),
+      db.from('msp_revenue').select('*').eq('msp_id', id).order('created_at', { ascending: false }).limit(60),
     ]);
-    return { msp, clients: clients ?? [], staff: staff ?? [], revenue: revenue ?? [] };
+    const cs = clients ?? [];
+    const totals = {
+      clients: cs.length,
+      active_clients: cs.filter((c: any) => c.is_active !== false).length,
+      endpoints: cs.reduce((s: number, c: any) => s + Number(c.endpoints ?? c.current_users ?? 0), 0),
+      alerts: cs.reduce((s: number, c: any) => s + Number(c.alerts ?? 0), 0),
+      mrr: cs.reduce((s: number, c: any) => s + Number(c.monthly_rate ?? 0), 0),
+      health: {
+        healthy: cs.filter((c: any) => (c.health_status ?? '').toLowerCase() === 'healthy').length,
+        warning: cs.filter((c: any) => (c.health_status ?? '').toLowerCase() === 'warning').length,
+        critical: cs.filter((c: any) => (c.health_status ?? '').toLowerCase() === 'critical').length,
+        unknown: cs.filter((c: any) => !c.health_status).length,
+      },
+    };
+    return { msp, clients: cs, staff: staff ?? [], revenue: revenue ?? [], totals };
   },
 
   async 'billing.overview'() {
@@ -368,37 +413,102 @@ const actions: Record<string, (req: Request, body: any, actor: string) => Promis
     const now = Date.now();
     const dayAgo = new Date(now - 24 * 3600 * 1000).toISOString();
     const monthAgo = new Date(now - 30 * 24 * 3600 * 1000).toISOString();
+    const twoMonthsAgo = new Date(now - 60 * 24 * 3600 * 1000).toISOString();
 
     const [{ data: subs }, { data: txns }, { data: credits }] = await Promise.all([
-      db.from('subscribers').select('subscription_tier, subscribed'),
-      db.from('payment_transactions').select('amount, status, created_at, transaction_type').gte('created_at', monthAgo),
-      db.from('ai_credit_ledger').select('credits_delta, reason, created_at').gte('created_at', dayAgo),
+      db
+        .from('subscribers')
+        .select('subscription_tier, subscribed, status, cancel_at_period_end, subscription_end, created_at, updated_at'),
+      db
+        .from('payment_transactions')
+        .select('amount, status, created_at, transaction_type, description, user_id, stripe_payment_intent_id')
+        .gte('created_at', twoMonthsAgo)
+        .order('created_at', { ascending: false }),
+      db.from('ai_credit_ledger').select('credits_delta, reason, created_at').gte('created_at', monthAgo),
     ]);
 
-    const planMix: Record<string, number> = { free: 0, pro: 0, business: 0, enterprise: 0, msp: 0 };
+    const planMix: Record<string, number> = {};
     (subs ?? []).forEach((s: any) => {
-      const t = (s.subscription_tier ?? 'free').toString().toLowerCase();
+      if (!s.subscribed) return;
+      const t = (s.subscription_tier ?? 'unknown').toString().toLowerCase();
       planMix[t] = (planMix[t] ?? 0) + 1;
     });
+
     const paidCount = (subs ?? []).filter((s: any) => s.subscribed).length;
-    const revenue30d = (txns ?? [])
-      .filter((t: any) => t.status === 'succeeded' || t.status === 'completed')
-      .reduce((s: number, t: any) => s + Number(t.amount ?? 0), 0);
-    const rcToday = (credits ?? []).reduce((s: number, c: any) => s + Math.abs(Number(c.credits_delta ?? 0)), 0);
-    const purchasesToday = (credits ?? []).filter((c: any) => (c.reason ?? '').includes('purchase')).length;
+    const total = (subs ?? []).length;
+
+    // payment_transactions.amount is stored in CENTS.
+    const succeeded = (txns ?? []).filter((t: any) => t.status === 'succeeded' || t.status === 'completed' || t.status === 'paid');
+    const last30 = succeeded.filter((t: any) => t.created_at >= monthAgo);
+    const prior30 = succeeded.filter((t: any) => t.created_at < monthAgo);
+    const cents = (arr: any[]) => arr.reduce((s: number, t: any) => s + Number(t.amount ?? 0), 0);
+    const rev30 = cents(last30) / 100;
+    const revPrior = cents(prior30) / 100;
+    const growthPct = revPrior > 0 ? ((rev30 - revPrior) / revPrior) * 100 : rev30 > 0 ? 100 : 0;
+
+    // Daily revenue trend (last 30 days, dollars).
+    const trend: Array<{ date: string; revenue: number }> = [];
+    for (let i = 29; i >= 0; i--) {
+      const start = new Date(now - i * 24 * 3600 * 1000);
+      start.setUTCHours(0, 0, 0, 0);
+      const end = new Date(start.getTime() + 24 * 3600 * 1000);
+      const startIso = start.toISOString();
+      const endIso = end.toISOString();
+      const dayTotal = cents(last30.filter((t: any) => t.created_at >= startIso && t.created_at < endIso)) / 100;
+      trend.push({ date: startIso.slice(0, 10), revenue: dayTotal });
+    }
+
+    const refunds30 = (txns ?? []).filter((t: any) => t.created_at >= monthAgo && (t.status === 'refunded' || t.transaction_type === 'refund'));
+    const failed30 = (txns ?? []).filter((t: any) => t.created_at >= monthAgo && t.status === 'failed');
+
+    const newSubs30 = (subs ?? []).filter((s: any) => s.subscribed && s.created_at && s.created_at >= monthAgo).length;
+    const churned30 = (subs ?? []).filter(
+      (s: any) => (s.status === 'canceled' || s.cancel_at_period_end === true) && (s.updated_at ?? s.subscription_end ?? '') >= monthAgo,
+    ).length;
+    const churnPct = paidCount + churned30 > 0 ? (churned30 / (paidCount + churned30)) * 100 : 0;
+    const arpu = paidCount > 0 ? rev30 / paidCount : 0;
+
+    const rcConsumed30 = (credits ?? [])
+      .filter((c: any) => Number(c.credits_delta ?? 0) < 0)
+      .reduce((s: number, c: any) => s + Math.abs(Number(c.credits_delta)), 0);
+    const rcToday = (credits ?? [])
+      .filter((c: any) => c.created_at >= dayAgo)
+      .reduce((s: number, c: any) => s + Math.abs(Number(c.credits_delta ?? 0)), 0);
+    const purchasesToday = (credits ?? []).filter(
+      (c: any) => (c.reason ?? '').includes('purchase') && c.created_at >= dayAgo,
+    ).length;
+
+    const recent = (txns ?? []).slice(0, 12).map((t: any) => ({
+      id: t.stripe_payment_intent_id ?? undefined,
+      created_at: t.created_at,
+      amount: Number(t.amount ?? 0) / 100,
+      status: t.status,
+      type: t.transaction_type,
+      description: t.description,
+    }));
 
     return {
-      mrr_estimate: revenue30d, // rough approximation from last 30d succeeded payments
-      arr_estimate: revenue30d * 12,
+      mrr_estimate: rev30,
+      arr_estimate: rev30 * 12,
+      growth_pct: growthPct,
+      revenue_trend: trend,
       paid_subscribers: paidCount,
-      total_subscribers: (subs ?? []).length,
+      total_subscribers: total,
+      new_subs_30d: newSubs30,
+      churned_30d: churned30,
+      churn_pct: churnPct,
+      arpu,
       plan_mix: planMix,
       rc_today: rcToday,
+      rc_30d: rcConsumed30,
       purchases_today: purchasesToday,
-      failed_payments: (txns ?? []).filter((t: any) => t.status === 'failed').length,
-      refunds: (txns ?? []).filter((t: any) => t.status === 'refunded').length,
+      failed_payments: failed30.length,
+      refunds: refunds30.length,
+      refunds_amount_30d: cents(refunds30) / 100,
+      recent_transactions: recent,
     };
   },
+
 
   async 'ops.announcements.list'() {
     const { data } = await admin().from('admin_announcements').select('*').order('created_at', { ascending: false }).limit(100);
