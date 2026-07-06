@@ -12,7 +12,7 @@ import { AdminPageHeader, AdminMetricCard, AdminSection } from '@/components/adm
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PageState } from '@/components/ui/page-state';
+import { Card, CardContent } from '@/components/ui/card';
 import { CheckCircle2, AlertTriangle, XCircle, RefreshCw, Rocket, Bug, LifeBuoy, Flag, Server, Zap } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
