@@ -15,7 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Sparkles } from 'lucide-react';
 import { formatOrgName, formatOwnerLabel, formatTier, relativeTime, tierBadgeVariant } from '@/lib/admin/labels';
 
 interface OrgDetail {
@@ -33,8 +33,16 @@ interface OrgDetail {
   } | null;
   members: Array<{ user_id: string; email: string | null; role: string; status: string; joined_at: string | null; last_sign_in_at: string | null }>;
   devices: Array<{ id: string; hostname: string | null; agent_version: string | null; status: string | null; last_checkin: string | null }>;
-  remediations: Array<{ id: string; action_type: string; provider: string; status: string; created_at: string; duration_ms: number | null }>;
+  remediations: Array<{ id: string; action_type: string; provider: string; status: string; created_at: string; duration_ms: number | null; reversible?: boolean }>;
   timeline: Array<{ id: string; occurred_at: string; category: string; summary: string; severity: string }>;
+  investigations: Array<{ id: string; input_label: string | null; status: string; verdict: string | null; confidence: string | null; created_at: string }>;
+  health: {
+    overall_score: number; score_delta: number;
+    identity_score: number; device_score: number; threat_score: number;
+    exposure_score: number; compliance_score: number;
+  } | null;
+  active_threats: number;
+  ray_brief: string;
   billing: {
     stripe_customer_id: string | null;
     subscription_end: string | null;
