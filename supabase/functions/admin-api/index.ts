@@ -301,14 +301,21 @@ const actions: Record<string, (req: Request, body: any, actor: string) => Promis
     const { data: org } = await db.from('org_teams').select('*').eq('id', id).maybeSingle();
     if (!org) return { org: null, members: [], devices: [], remediations: [], timeline: [], billing: { stripe_customer_id: null, subscription_end: null, seats: 0, max_seats: null, rc_balance: 0 } };
 
-    const [{ data: memberRows }, { data: devices }, { data: remediations }, { data: timeline }, { data: sub }, { data: cred }] = await Promise.all([
+    const [
+      { data: memberRows }, { data: devices }, { data: remediations }, { data: timeline },
+      { data: sub }, { data: cred }, { data: health }, { data: investigations }, threatsRes,
+    ] = await Promise.all([
       db.from('org_team_members').select('user_id, email, role, status, joined_at').eq('organization_id', id),
       db.from('devices').select('id, hostname, agent_version, status, last_checkin').eq('org_id', id).order('last_checkin', { ascending: false }).limit(200),
-      org.owner_id ? db.from('wrayth_remediation_actions').select('id, action_type, provider, status, created_at, duration_ms').eq('user_id', org.owner_id).order('created_at', { ascending: false }).limit(50) : Promise.resolve({ data: [] } as any),
+      org.owner_id ? db.from('wrayth_remediation_actions').select('id, action_type, provider, status, created_at, duration_ms, reversible').eq('user_id', org.owner_id).order('created_at', { ascending: false }).limit(50) : Promise.resolve({ data: [] } as any),
       db.from('ray_org_timeline').select('id, occurred_at, category, summary, severity').eq('org_id', id).order('occurred_at', { ascending: false }).limit(30),
       org.owner_id ? db.from('subscribers').select('*').eq('user_id', org.owner_id).maybeSingle() : Promise.resolve({ data: null } as any),
       org.owner_id ? db.from('user_credits').select('balance').eq('user_id', org.owner_id).maybeSingle() : Promise.resolve({ data: null } as any),
+      db.from('ray_org_health').select('*').eq('org_id', id).order('snapshot_date', { ascending: false }).limit(1).maybeSingle(),
+      org.owner_id ? db.from('ray_investigations').select('id, input_label, status, verdict, confidence, created_at').eq('user_id', org.owner_id).order('created_at', { ascending: false }).limit(30) : Promise.resolve({ data: [] } as any),
+      org.owner_id ? db.from('security_alerts').select('id, severity, status', { count: 'exact', head: false }).eq('user_id', org.owner_id).neq('status', 'resolved') : Promise.resolve({ data: [] } as any),
     ]);
+    const activeThreats = Array.isArray(threatsRes?.data) ? threatsRes.data.length : 0;
 
     // Attach owner email + name to org for the detail header.
     let ownerEmail: string | null = null;
