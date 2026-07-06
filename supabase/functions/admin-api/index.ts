@@ -352,6 +352,17 @@ const actions: Record<string, (req: Request, body: any, actor: string) => Promis
       .sort()
       .pop() ?? null;
 
+    const displayName = (org.name ?? '').trim() || 'This workspace';
+    const onlineDevices = (devices ?? []).filter((d: any) => d.status === 'online' || d.status === 'active').length;
+    const openInvestigations = (investigations ?? []).filter((i: any) => i.status !== 'completed' && i.status !== 'closed').length;
+    const rayBriefParts = [
+      `${displayName} has ${devices?.length ?? 0} enrolled device${(devices?.length ?? 0) === 1 ? '' : 's'} (${onlineDevices} online) and ${members.length + 1} identit${members.length === 0 ? 'y' : 'ies'}`,
+    ];
+    if (health) rayBriefParts.push(`security score ${health.overall_score}${health.score_delta ? ` (${health.score_delta > 0 ? '+' : ''}${health.score_delta} this week)` : ''}`);
+    if (activeThreats > 0) rayBriefParts.push(`${activeThreats} active threat${activeThreats === 1 ? '' : 's'}`);
+    if (openInvestigations > 0) rayBriefParts.push(`${openInvestigations} open investigation${openInvestigations === 1 ? '' : 's'}`);
+    const rayBrief = rayBriefParts.join(', ') + '.';
+
     return {
       org: {
         id: org.id,
@@ -369,6 +380,10 @@ const actions: Record<string, (req: Request, body: any, actor: string) => Promis
       devices: devices ?? [],
       remediations: (remediations as any[]) ?? [],
       timeline: timeline ?? [],
+      investigations: investigations ?? [],
+      health: health ?? null,
+      active_threats: activeThreats,
+      ray_brief: rayBrief,
       billing: {
         stripe_customer_id: sub?.stripe_customer_id ?? null,
         subscription_end: sub?.subscription_end ?? null,
