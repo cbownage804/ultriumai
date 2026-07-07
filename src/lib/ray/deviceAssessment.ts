@@ -121,16 +121,35 @@ function computeDeductions(p: DevicePosture): ScoreDeduction[] {
   }
 
   // Session
+  const screenLockManual: ManualSteps = {
+    os: 'Windows 10 / 11',
+    steps: [
+      'Press Windows key + I to open Settings.',
+      'Go to Personalization → Lock screen → Screen saver.',
+      'Tick "On resume, display logon screen" and set Wait to 15 minutes (or less).',
+      'Click Apply, then OK.',
+      'For laptops, also check System → Power & battery → Screen and sleep and set the "Screen off" timeout to 15 minutes.',
+    ],
+    deepLink: { label: 'Open Lock screen settings', href: 'ms-settings:lockscreen' },
+  };
   if (typeof p.screen_lock_seconds === 'number') {
     if (p.screen_lock_seconds === 0) {
-      d.push({ points: 4, reason: 'Screen lock timeout is not configured' });
+      d.push({
+        points: 4,
+        reason: 'Screen lock timeout is not configured',
+        fix: "I can't set this remotely — Windows blocks it",
+        manual: screenLockManual,
+      });
     } else if (p.screen_lock_seconds > 900) {
       d.push({
         points: 2,
         reason: `Screen locks after ${Math.round(p.screen_lock_seconds / 60)} min (baseline is 15)`,
+        fix: "I can't set this remotely — Windows blocks it",
+        manual: screenLockManual,
       });
     }
   }
+
 
   // RDP
   if (p.rdp_security?.rdp_enabled) {
