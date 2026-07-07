@@ -5,9 +5,10 @@
  */
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronUp, Sparkles, ShieldCheck, ShieldAlert, ShieldX } from 'lucide-react';
-import { assessDevice } from '@/lib/ray/deviceAssessment';
+import { ChevronDown, ChevronUp, Sparkles, ShieldCheck, ShieldAlert, ShieldX, BookOpen, ExternalLink } from 'lucide-react';
+import { assessDevice, type ScoreDeduction } from '@/lib/ray/deviceAssessment';
 import type { DevicePosture } from './DeviceSecurityTabs';
+
 
 const TONE_STYLES = {
   good: { border: 'border-emerald-500/30', bg: 'from-emerald-500/8 to-transparent', text: 'text-emerald-100', icon: ShieldCheck, iconColor: 'text-emerald-300' },
@@ -75,16 +76,9 @@ export function DeviceAssessment({ posture }: { posture: DevicePosture | null })
                   .slice()
                   .sort((a, b) => b.points - a.points)
                   .map((d, i) => (
-                    <li key={i} className="flex items-start gap-2 text-[11px]">
-                      <span className="w-9 shrink-0 text-right font-mono tabular-nums text-red-300/90">
-                        −{d.points}
-                      </span>
-                      <span className="flex-1 text-foreground/85">{d.reason}</span>
-                      {d.fix && (
-                        <span className="text-[10px] italic text-violet-300/80">{d.fix}</span>
-                      )}
-                    </li>
+                    <DeductionRow key={i} d={d} />
                   ))}
+
               </motion.ul>
             )}
           </AnimatePresence>
@@ -93,6 +87,72 @@ export function DeviceAssessment({ posture }: { posture: DevicePosture | null })
     </div>
   );
 }
+
+function DeductionRow({ d }: { d: ScoreDeduction }) {
+  const [open, setOpen] = useState(false);
+  const hasManual = !!d.manual;
+  return (
+    <li className="text-[11px]">
+      <div className="flex items-start gap-2">
+        <span className="w-9 shrink-0 text-right font-mono tabular-nums text-red-300/90">
+          −{d.points}
+        </span>
+        <div className="flex-1">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span className="text-foreground/85">{d.reason}</span>
+            {d.fix && !hasManual && (
+              <span className="text-[10px] italic text-violet-300/80">{d.fix}</span>
+            )}
+            {hasManual && (
+              <button
+                onClick={() => setOpen((v) => !v)}
+                className="inline-flex items-center gap-1 text-[10px] font-medium text-violet-300 hover:text-violet-200 transition-colors"
+              >
+                <BookOpen className="h-3 w-3" />
+                {open ? 'Hide steps' : 'Show me how'}
+              </button>
+            )}
+          </div>
+          {d.fix && hasManual && (
+            <div className="mt-0.5 text-[10px] italic text-muted-foreground/80">{d.fix}</div>
+          )}
+          <AnimatePresence initial={false}>
+            {open && d.manual && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.18 }}
+                className="overflow-hidden"
+              >
+                <div className="mt-2 rounded-md border border-violet-500/20 bg-violet-500/5 p-2.5">
+                  <div className="mb-1.5 text-[10px] uppercase tracking-wider text-violet-200/80">
+                    {d.manual.os} · manual steps
+                  </div>
+                  <ol className="list-decimal space-y-1 pl-4 text-[11px] text-foreground/85">
+                    {d.manual.steps.map((s, i) => (
+                      <li key={i}>{s}</li>
+                    ))}
+                  </ol>
+                  {d.manual.deepLink && (
+                    <a
+                      href={d.manual.deepLink.href}
+                      className="mt-2 inline-flex items-center gap-1 text-[10px] font-medium text-violet-300 hover:text-violet-200 transition-colors"
+                    >
+                      {d.manual.deepLink.label}
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </li>
+  );
+}
+
 
 /** Small inline one-liner used at the top of each tab. */
 export function TabNarrative({ tone, text }: { tone: 'good' | 'warn' | 'bad' | 'neutral'; text: string }) {
