@@ -249,7 +249,7 @@ function AutorunsList({
     let cancelled = false;
     (async () => {
       const { data } = await supabase
-        .from('wrayth_autorun_allowlist' as never)
+        .from('wrayth_autorun_allowlist' as any)
         .select('id, location, name, device_id')
         .eq('user_id', user.id)
         .or(`device_id.eq.${deviceId},device_id.is.null`);
@@ -341,7 +341,7 @@ function AutorunsList({
     if (!user) return;
     try {
       const { data, error } = await supabase
-        .from('wrayth_autorun_allowlist' as never)
+        .from('wrayth_autorun_allowlist' as any)
         .insert({
           user_id: user.id,
           device_id: deviceId,
@@ -374,7 +374,7 @@ function AutorunsList({
     if (!entry) return;
     try {
       const { error } = await supabase
-        .from('wrayth_autorun_allowlist' as never)
+        .from('wrayth_autorun_allowlist' as any)
         .delete()
         .eq('id', entry.id);
       if (error) throw error;
