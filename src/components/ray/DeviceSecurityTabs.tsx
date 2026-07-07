@@ -836,14 +836,10 @@ export function DeviceSecurityTabs({ deviceId, hostname, posture, capturedAt, va
           />
         </Section>
         <Section title={`Startup items (${p.autoruns?.length ?? 0})`}>
-          <List
-            rows={(p.autoruns ?? []).map((a) => ({
-              primary: a.name,
-              secondary: a.command,
-              badge: a.signed === true ? 'signed' : a.signed === false ? 'unsigned' : a.signature,
-              badgeTone: a.signed === true ? 'good' : a.signed === false ? 'bad' : 'warn',
-            }))}
-            emptyLabel="No autoruns reported."
+          <AutorunsList
+            deviceId={deviceId}
+            hostname={hostname}
+            autoruns={p.autoruns ?? []}
           />
         </Section>
         <Section title={`Non-Microsoft services (${p.non_ms_services?.length ?? 0})`}>
