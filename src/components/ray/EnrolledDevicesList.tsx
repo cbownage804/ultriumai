@@ -28,6 +28,8 @@ import { DeviceSecurityHistory } from './DeviceSecurityHistory';
 import { AgentVersionBadge } from './AgentVersionBadge';
 import { DeviceTransparencyCard } from './DeviceTransparencyCard';
 import { DeviceAssessment } from './DeviceAssessment';
+import { assessDevice } from '@/lib/ray/deviceAssessment';
+
 import { AskRayCommandBox } from './AskRayCommandBox';
 import { RayProactiveGreeting } from './RayProactiveGreeting';
 
@@ -443,14 +445,22 @@ export function EnrolledDevicesList() {
 
               {d.posture && <DeviceAssessment posture={d.posture as never} />}
 
-              {!d.revoked_at && (
-                <RayProactiveGreeting
-                  deviceId={d.id}
-                  hostname={d.hostname}
-                  posture={d.posture as never}
-                  score={(d.posture as never as { _ray?: { score?: number } } | null)?._ray?.score ?? null}
-                />
-              )}
+              {!d.revoked_at && (() => {
+                // Use the freshly computed assessment score so Ray's continuity
+                // line ("You're now at X/100") matches the score shown in the
+                // assessment card above — the stored `_ray.score` can lag by a
+                // posture cycle when we deduct for newly detected items.
+                const liveScore = assessDevice(d.posture as never)?.score ?? null;
+                return (
+                  <RayProactiveGreeting
+                    deviceId={d.id}
+                    hostname={d.hostname}
+                    posture={d.posture as never}
+                    score={liveScore}
+                  />
+                );
+              })()}
+
 
               {!d.revoked_at && (
                 <AskRayCommandBox
