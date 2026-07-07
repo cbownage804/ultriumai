@@ -26671,6 +26671,8 @@ export type Database = {
       }
       safeweb_threats: {
         Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
           affected_assets: string[]
           asset_id: string | null
           confidence_score: number
@@ -26695,6 +26697,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
           affected_assets?: string[]
           asset_id?: string | null
           confidence_score?: number
@@ -26719,6 +26723,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
           affected_assets?: string[]
           asset_id?: string | null
           confidence_score?: number
