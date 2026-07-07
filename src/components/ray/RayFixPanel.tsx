@@ -97,9 +97,9 @@ export function RayFixPanel({
     <div className="rounded-md border border-violet-500/30 bg-violet-500/5 p-3 space-y-3">
       <div className="flex items-center gap-3">
         <div className="flex flex-col">
-          <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Security score</span>
+          <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Ray can auto-fix</span>
           <span className={`text-2xl font-semibold leading-none ${tone}`}>
-            {scoreValue ?? '—'}<span className="text-xs text-muted-foreground">/100</span>
+            {plan.length}<span className="text-xs text-muted-foreground"> item{plan.length === 1 ? '' : 's'}</span>
           </span>
         </div>
         <div className="flex-1">
@@ -108,10 +108,11 @@ export function RayFixPanel({
           </div>
           <div className="mt-1 text-[11px] text-muted-foreground">
             {plan.length === 0
-              ? 'Ray has nothing pending — this machine looks clean.'
-              : `${safe.length} safe · ${review.length} need review`}
+              ? 'Ray has no queueable actions right now — see the assessment above for anything Windows blocks us from fixing remotely.'
+              : `${safe.length} safe · ${review.length} need review · score ${scoreValue ?? '—'}/100`}
           </div>
         </div>
+
         {safe.length > 0 && (
           <Button
             size="sm" disabled={disabled || running} onClick={fixSafe}
