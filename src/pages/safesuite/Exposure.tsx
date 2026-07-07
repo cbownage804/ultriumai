@@ -58,6 +58,7 @@ interface MonitoredAsset {
 
 interface ThreatDetails {
   id: string;
+  asset_id?: string | null;
   threat_type: string;
   title: string;
   description: string;
@@ -73,6 +74,8 @@ interface ThreatDetails {
   last_seen: string;
   tags: string[];
   created_at: string;
+  acknowledged_at?: string | null;
+  acknowledged_by?: string | null;
 }
 
 export default function WraythWeb() {
@@ -97,6 +100,9 @@ export default function WraythWeb() {
   const [selectedThreat, setSelectedThreat] = useState<ThreatDetails | null>(null);
   const [aiRecommendation, setAiRecommendation] = useState<string | null>(null);
   const [loadingRecommendation, setLoadingRecommendation] = useState(false);
+  // Per-asset acknowledgement summary: total and how many still need review.
+  const [ackSummary, setAckSummary] = useState<Record<string, { total: number; unacked: number }>>({});
+  const [acking, setAcking] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (user) {
@@ -106,20 +112,89 @@ export default function WraythWeb() {
 
   const loadData = async () => {
     try {
-      const { data: assetsData, error: assetsError } = await supabase
-        .from('safeweb_assets')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false });
+      const [assetsRes, threatsRes] = await Promise.all([
+        supabase
+          .from('safeweb_assets')
+          .select('*')
+          .eq('user_id', user?.id)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('safeweb_threats')
+          .select('id, asset_id, acknowledged_at')
+          .eq('user_id', user?.id),
+      ]);
 
-      if (assetsError) throw assetsError;
-      setAssets(assetsData || []);
+      if (assetsRes.error) throw assetsRes.error;
+      setAssets(assetsRes.data || []);
+
+      const summary: Record<string, { total: number; unacked: number }> = {};
+      for (const t of threatsRes.data || []) {
+        if (!t.asset_id) continue;
+        const s = summary[t.asset_id] ?? { total: 0, unacked: 0 };
+        s.total += 1;
+        if (!t.acknowledged_at) s.unacked += 1;
+        summary[t.asset_id] = s;
+      }
+      setAckSummary(summary);
     } catch (error) {
       console.error('Error loading Watch data:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  /** Count of threats still needing user attention for an asset. */
+  const unackCount = (asset: MonitoredAsset) =>
+    ackSummary[asset.id]?.unacked ?? asset.threats_found ?? 0;
+
+  const acknowledgeThreat = async (threat: ThreatDetails) => {
+    if (!user || threat.acknowledged_at) return;
+    setAcking((prev) => new Set(prev).add(threat.id));
+    try {
+      const now = new Date().toISOString();
+      const { error } = await supabase
+        .from('safeweb_threats')
+        .update({ acknowledged_at: now, acknowledged_by: user.id })
+        .eq('id', threat.id);
+      if (error) throw error;
+
+      // Update loaded threats in place so the UI reflects the ack immediately.
+      setThreats((prev) => {
+        const next = { ...prev };
+        for (const [aid, list] of Object.entries(prev)) {
+          if (list.some((t) => t.id === threat.id)) {
+            next[aid] = list.map((t) =>
+              t.id === threat.id ? { ...t, acknowledged_at: now, acknowledged_by: user.id } : t,
+            );
+          }
+        }
+        return next;
+      });
+
+      if (threat.asset_id) {
+        setAckSummary((prev) => {
+          const cur = prev[threat.asset_id!] ?? { total: 0, unacked: 0 };
+          return {
+            ...prev,
+            [threat.asset_id!]: { total: cur.total, unacked: Math.max(0, cur.unacked - 1) },
+          };
+        });
+      }
+    } catch (e: any) {
+      toast({
+        title: "Couldn't acknowledge",
+        description: e.message || 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setAcking((prev) => {
+        const next = new Set(prev);
+        next.delete(threat.id);
+        return next;
+      });
+    }
+  };
+
 
   const loadThreatsForAsset = async (assetId: string) => {
     if (threats[assetId]) return; // Already loaded
@@ -343,15 +418,30 @@ export default function WraythWeb() {
         </Badge>
       );
     }
-    
-    if (asset.threats_found > 0) {
+
+    const unacked = unackCount(asset);
+    const total = ackSummary[asset.id]?.total ?? asset.threats_found ?? 0;
+
+    if (unacked > 0) {
       return (
         <Badge variant="destructive" className="cursor-pointer" onClick={() => toggleAssetExpand(asset.id)}>
-          <XCircle className="h-3 w-3 mr-1" /> {asset.threats_found} Threat{asset.threats_found > 1 ? 's' : ''}
+          <XCircle className="h-3 w-3 mr-1" /> {unacked} Threat{unacked > 1 ? 's' : ''}
         </Badge>
       );
     }
-    
+
+    if (total > 0) {
+      return (
+        <Badge
+          variant="outline"
+          className="cursor-pointer border-muted-foreground/30 text-muted-foreground"
+          onClick={() => toggleAssetExpand(asset.id)}
+        >
+          <CheckCircle className="h-3 w-3 mr-1" /> Acknowledged
+        </Badge>
+      );
+    }
+
     return (
       <Badge variant="outline" className="border-green-500/30 text-green-500">
         <CheckCircle className="h-3 w-3 mr-1" /> Clean
@@ -617,11 +707,24 @@ export default function WraythWeb() {
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-medium text-white">{asset.asset_value}</p>
                           {(() => {
-                            const n = asset.threats_found ?? 0;
-                            const label = n === 0 ? 'Healthy' : n >= 5 ? 'Critical' : n >= 2 ? 'Medium' : 'Low';
+                            // Severity chip reflects only threats that still need action.
+                            const n = unackCount(asset);
+                            const total = ackSummary[asset.id]?.total ?? asset.threats_found ?? 0;
+                            const label =
+                              n === 0
+                                ? total > 0
+                                  ? 'Acknowledged'
+                                  : 'Healthy'
+                                : n >= 5
+                                  ? 'Critical'
+                                  : n >= 2
+                                    ? 'Medium'
+                                    : 'Low';
                             const cls =
                               n === 0
-                                ? 'border-green-500/30 bg-green-500/10 text-green-300'
+                                ? total > 0
+                                  ? 'border-muted-foreground/30 bg-muted/40 text-muted-foreground'
+                                  : 'border-green-500/30 bg-green-500/10 text-green-300'
                                 : n >= 5
                                   ? 'border-red-500/30 bg-red-500/10 text-red-300'
                                   : n >= 2
@@ -635,9 +738,14 @@ export default function WraythWeb() {
                           })()}
                         </div>
                         <p className="text-sm text-gray-400 mt-0.5">
-                          {(asset.threats_found ?? 0) === 0
-                            ? 'No breach records'
-                            : `${asset.threats_found} breach record${asset.threats_found === 1 ? '' : 's'}`}
+                          {(() => {
+                            const total = ackSummary[asset.id]?.total ?? asset.threats_found ?? 0;
+                            const unacked = unackCount(asset);
+                            if (total === 0) return 'No breach records';
+                            if (unacked === 0)
+                              return `${total} breach record${total === 1 ? '' : 's'} · all acknowledged`;
+                            return `${unacked} of ${total} breach record${total === 1 ? '' : 's'} need review`;
+                          })()}
                           {' · '}
                           Last scanned {asset.last_scan_at ? new Date(asset.last_scan_at).toLocaleDateString() : 'never'}
                         </p>
@@ -645,7 +753,7 @@ export default function WraythWeb() {
                     </div>
                     <div className="flex items-center gap-2">
                       {getStatusBadge(asset)}
-                      {asset.threats_found > 0 && (
+                      {(ackSummary[asset.id]?.total ?? asset.threats_found ?? 0) > 0 && (
                         <Button
                           variant="ghost"
                           size="sm"
@@ -735,20 +843,36 @@ export default function WraythWeb() {
                           <p className="text-sm font-medium text-gray-400 mb-3">
                             Individual breaches:
                           </p>
-                          {threats[asset.id].map((threat) => (
+                          {threats[asset.id].map((threat) => {
+                            const isAcked = !!threat.acknowledged_at;
+                            return (
                             <div
                               key={threat.id}
-                              className="p-4 bg-muted rounded-lg border border-red-500/20 hover:border-red-500/40 transition-colors cursor-pointer"
+                              className={
+                                isAcked
+                                  ? 'p-4 bg-muted/40 rounded-lg border border-border/40 hover:border-border/60 transition-colors cursor-pointer opacity-70'
+                                  : 'p-4 bg-muted rounded-lg border border-red-500/20 hover:border-red-500/40 transition-colors cursor-pointer'
+                              }
                               onClick={() => setSelectedThreat(threat)}
                             >
                               <div className="flex items-start justify-between gap-4">
                                 <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <ShieldAlert className="h-4 w-4 text-red-500 flex-shrink-0" />
-                                    <h4 className="font-medium text-white truncate">{threat.title}</h4>
-                                    <Badge className={`${getSeverityColor(threat.severity)} text-xs`}>
-                                      {threat.severity}
-                                    </Badge>
+                                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                    <ShieldAlert
+                                      className={`h-4 w-4 flex-shrink-0 ${isAcked ? 'text-muted-foreground' : 'text-red-500'}`}
+                                    />
+                                    <h4 className={`font-medium truncate ${isAcked ? 'text-gray-300 line-through decoration-muted-foreground/50' : 'text-white'}`}>
+                                      {threat.title}
+                                    </h4>
+                                    {isAcked ? (
+                                      <Badge variant="outline" className="border-muted-foreground/40 text-muted-foreground text-[10px] uppercase tracking-wider">
+                                        Acknowledged
+                                      </Badge>
+                                    ) : (
+                                      <Badge className={`${getSeverityColor(threat.severity)} text-xs`}>
+                                        {threat.severity}
+                                      </Badge>
+                                    )}
                                   </div>
                                   <p className="text-sm text-gray-400 line-clamp-2">
                                     {stripHtml(threat.description)}
@@ -762,36 +886,68 @@ export default function WraythWeb() {
                                       <Calendar className="h-3 w-3" />
                                       {new Date(threat.first_seen).toLocaleDateString()}
                                     </span>
+                                    {isAcked && threat.acknowledged_at && (
+                                      <span className="flex items-center gap-1">
+                                        <CheckCircle className="h-3 w-3" />
+                                        Acknowledged {new Date(threat.acknowledged_at).toLocaleDateString()}
+                                      </span>
+                                    )}
                                   </div>
-                                  {/* Ray recommends — actionable next steps derived from the threat */}
-                                  <div className="mt-3 rounded-md border border-violet-500/15 bg-violet-500/[0.04] px-3 py-2">
-                                    <div className="text-[10px] uppercase tracking-[0.22em] text-violet-300/80 mb-1.5">
-                                      Ray recommends
+                                  {!isAcked && (
+                                    <div className="mt-3 rounded-md border border-violet-500/15 bg-violet-500/[0.04] px-3 py-2">
+                                      <div className="text-[10px] uppercase tracking-[0.22em] text-violet-300/80 mb-1.5">
+                                        Ray recommends
+                                      </div>
+                                      <ul className="space-y-1">
+                                        {getRayActions(threat).map((action, i) => (
+                                          <li key={i} className="flex items-center gap-2 text-xs text-gray-300">
+                                            <CheckCircle className="h-3 w-3 text-green-400 shrink-0" />
+                                            <span>{action}</span>
+                                          </li>
+                                        ))}
+                                      </ul>
                                     </div>
-                                    <ul className="space-y-1">
-                                      {getRayActions(threat).map((action, i) => (
-                                        <li key={i} className="flex items-center gap-2 text-xs text-gray-300">
-                                          <CheckCircle className="h-3 w-3 text-green-400 shrink-0" />
-                                          <span>{action}</span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
+                                  )}
                                 </div>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-violet-400 hover:text-violet-300"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedThreat(threat);
-                                  }}
-                                >
-                                  <Info className="h-4 w-4" />
-                                </Button>
+                                <div className="flex flex-col items-end gap-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-violet-400 hover:text-violet-300"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedThreat(threat);
+                                    }}
+                                  >
+                                    <Info className="h-4 w-4" />
+                                  </Button>
+                                  {isAcked ? (
+                                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground px-2">
+                                      Reviewed
+                                    </span>
+                                  ) : (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="border-violet-500/30 text-violet-300 hover:bg-violet-500/10"
+                                      disabled={acking.has(threat.id)}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        acknowledgeThreat(threat);
+                                      }}
+                                    >
+                                      {acking.has(threat.id) ? (
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                      ) : (
+                                        <><CheckCircle className="h-3 w-3 mr-1" /> Acknowledge</>
+                                      )}
+                                    </Button>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       ) : (
                         <p className="text-center text-gray-400 py-4">No threat details available</p>
