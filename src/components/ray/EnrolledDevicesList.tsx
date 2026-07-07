@@ -28,6 +28,8 @@ import { DeviceSecurityHistory } from './DeviceSecurityHistory';
 import { AgentVersionBadge } from './AgentVersionBadge';
 import { DeviceTransparencyCard } from './DeviceTransparencyCard';
 import { DeviceAssessment } from './DeviceAssessment';
+import { assessDevice } from '@/lib/ray/deviceAssessment';
+
 import { AskRayCommandBox } from './AskRayCommandBox';
 import { RayProactiveGreeting } from './RayProactiveGreeting';
 
