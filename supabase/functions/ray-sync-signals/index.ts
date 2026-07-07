@@ -98,12 +98,15 @@ serve(async (req) => {
       });
     }
 
-    // ---- Watch: exposure (safeweb_threats active) ----
+    // ---- Watch: exposure (safeweb_threats active + not acknowledged) ----
+    // Acknowledged historical breaches must not inflate open-threat tallies
+    // in Ray's morning brief or activity ticker; the user already reviewed them.
     const { data: webThreats } = await supabase
       .from("safeweb_threats")
-      .select("id,severity,status,created_at")
+      .select("id,severity,status,created_at,acknowledged_at")
       .eq("user_id", userId)
       .neq("status", "resolved")
+      .is("acknowledged_at", null)
       .limit(50);
     for (const t of webThreats ?? []) {
       findings.push({
