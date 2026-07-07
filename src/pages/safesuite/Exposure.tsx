@@ -707,11 +707,24 @@ export default function WraythWeb() {
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-medium text-white">{asset.asset_value}</p>
                           {(() => {
-                            const n = asset.threats_found ?? 0;
-                            const label = n === 0 ? 'Healthy' : n >= 5 ? 'Critical' : n >= 2 ? 'Medium' : 'Low';
+                            // Severity chip reflects only threats that still need action.
+                            const n = unackCount(asset);
+                            const total = ackSummary[asset.id]?.total ?? asset.threats_found ?? 0;
+                            const label =
+                              n === 0
+                                ? total > 0
+                                  ? 'Acknowledged'
+                                  : 'Healthy'
+                                : n >= 5
+                                  ? 'Critical'
+                                  : n >= 2
+                                    ? 'Medium'
+                                    : 'Low';
                             const cls =
                               n === 0
-                                ? 'border-green-500/30 bg-green-500/10 text-green-300'
+                                ? total > 0
+                                  ? 'border-muted-foreground/30 bg-muted/40 text-muted-foreground'
+                                  : 'border-green-500/30 bg-green-500/10 text-green-300'
                                 : n >= 5
                                   ? 'border-red-500/30 bg-red-500/10 text-red-300'
                                   : n >= 2
@@ -725,9 +738,14 @@ export default function WraythWeb() {
                           })()}
                         </div>
                         <p className="text-sm text-gray-400 mt-0.5">
-                          {(asset.threats_found ?? 0) === 0
-                            ? 'No breach records'
-                            : `${asset.threats_found} breach record${asset.threats_found === 1 ? '' : 's'}`}
+                          {(() => {
+                            const total = ackSummary[asset.id]?.total ?? asset.threats_found ?? 0;
+                            const unacked = unackCount(asset);
+                            if (total === 0) return 'No breach records';
+                            if (unacked === 0)
+                              return `${total} breach record${total === 1 ? '' : 's'} · all acknowledged`;
+                            return `${unacked} of ${total} breach record${total === 1 ? '' : 's'} need review`;
+                          })()}
                           {' · '}
                           Last scanned {asset.last_scan_at ? new Date(asset.last_scan_at).toLocaleDateString() : 'never'}
                         </p>
@@ -735,7 +753,7 @@ export default function WraythWeb() {
                     </div>
                     <div className="flex items-center gap-2">
                       {getStatusBadge(asset)}
-                      {asset.threats_found > 0 && (
+                      {(ackSummary[asset.id]?.total ?? asset.threats_found ?? 0) > 0 && (
                         <Button
                           variant="ghost"
                           size="sm"
