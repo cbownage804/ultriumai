@@ -12,7 +12,21 @@ import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Copy, Eye, EyeOff, KeyRound, MessageSquare, ShieldAlert, ShieldCheck, Trash2 } from 'lucide-react';
+import { CheckCircle2, Copy, Eye, EyeOff, KeyRound, MessageSquare, ShieldAlert, ShieldCheck, Trash2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { scoreAutorun, type AutorunRisk } from '@/lib/ray/autorunRisk';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { assessDevice } from '@/lib/ray/deviceAssessment';
