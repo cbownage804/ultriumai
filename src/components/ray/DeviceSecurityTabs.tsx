@@ -214,6 +214,17 @@ function List({
   );
 }
 
+interface AllowlistEntry {
+  id: string;
+  location: string;
+  name: string;
+  device_id: string | null;
+}
+
+function autorunKey(location: string, name: string) {
+  return `${location}::${name}`;
+}
+
 function AutorunsList({
   deviceId,
   hostname,
@@ -223,44 +234,160 @@ function AutorunsList({
   hostname?: string;
   autoruns: AutorunEntry[];
 }) {
-  const [pending, setPending] = useState<string | null>(null);
+  const { user } = useAuth();
+  const [pending, setPending] = useState<Set<string>>(new Set());
   const [disabled, setDisabled] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [allowlist, setAllowlist] = useState<AllowlistEntry[]>([]);
+  const [showTrusted, setShowTrusted] = useState(false);
+  const [confirmBulk, setConfirmBulk] = useState(false);
+  const [bulkRunning, setBulkRunning] = useState(false);
+
+  // Load allowlist for this user (both device-scoped and global entries).
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('wrayth_autorun_allowlist' as never)
+        .select('id, location, name, device_id')
+        .eq('user_id', user.id)
+        .or(`device_id.eq.${deviceId},device_id.is.null`);
+      if (cancelled) return;
+      setAllowlist((data as unknown as AllowlistEntry[]) ?? []);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, deviceId]);
+
+  const trustedKeys = useMemo(
+    () => new Set(allowlist.map((e) => autorunKey(e.location, e.name))),
+    [allowlist],
+  );
+
+  const rows = useMemo(() => {
+    return autoruns.map((a) => {
+      const k = autorunKey(a.location, a.name);
+      return {
+        entry: a,
+        key: k,
+        risk: scoreAutorun(a) as AutorunRisk,
+        trusted: trustedKeys.has(k),
+      };
+    });
+  }, [autoruns, trustedKeys]);
+
+  const visibleRows = useMemo(() => {
+    const filtered = showTrusted ? rows : rows.filter((r) => !r.trusted);
+    // Sort: high risk unsigned first, then medium, then signed, then trusted at the bottom.
+    return [...filtered].sort((a, b) => {
+      if (a.trusted !== b.trusted) return a.trusted ? 1 : -1;
+      const au = a.entry.signed === false ? 0 : 1;
+      const bu = b.entry.signed === false ? 0 : 1;
+      if (au !== bu) return au - bu;
+      return b.risk.score - a.risk.score;
+    });
+  }, [rows, showTrusted]);
+
+  const trustedCount = rows.length - rows.filter((r) => !r.trusted).length;
+
+  const selectableUnsigned = useMemo(
+    () => visibleRows.filter((r) => r.entry.signed === false && !r.trusted && r.entry.location?.includes('Run')),
+    [visibleRows],
+  );
+
+  const allSelected =
+    selectableUnsigned.length > 0 && selectableUnsigned.every((r) => selected.has(r.key));
 
   if (!autoruns || autoruns.length === 0) {
     return <Empty>No autoruns reported.</Empty>;
   }
 
-  const key = (a: AutorunEntry) => `${a.location}::${a.name}`;
+  const toggleSelect = (k: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(k)) next.delete(k);
+      else next.add(k);
+      return next;
+    });
+  };
 
-  const askRay = (a: AutorunEntry) => {
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(selectableUnsigned.map((r) => r.key)));
+    }
+  };
+
+  const askRay = (a: AutorunEntry, risk: AutorunRisk) => {
+    const reasonList = risk.reasons.map((r) => `- ${r}`).join('\n') || '- (no additional heuristics tripped)';
     const prompt =
-      `Take a look at this unsigned autorun on ${hostname ?? 'this device'} and tell me plainly whether it's safe to keep enabled, ` +
-      `and if not, what to do about it.\n\n` +
-      `Name: ${a.name}\nLocation: ${a.location}\nCommand: ${a.command}\nPublisher: ${a.publisher ?? 'unknown'}\nSigned: ${a.signed === false ? 'no' : a.signed === true ? 'yes' : 'unknown'}`;
+      `Take a look at this autorun on ${hostname ?? 'this device'} and tell me plainly whether it's safe to keep enabled, and if not, what to do about it.\n\n` +
+      `Name: ${a.name}\nLocation: ${a.location}\nCommand: ${a.command}\nPublisher: ${a.publisher ?? 'unknown'}\nSigned: ${a.signed === false ? 'no' : a.signed === true ? 'yes' : 'unknown'}\n\n` +
+      `My heuristic risk score is ${risk.score}/100 (${risk.level}) for these reasons:\n${reasonList}`;
     window.dispatchEvent(
       new CustomEvent('ray:panel-open', {
         detail: {
           message: prompt,
-          context: {
-            kind: 'device',
-            id: deviceId,
-            title: `Autorun: ${a.name}`,
-          },
+          context: { kind: 'device', id: deviceId, title: `Autorun: ${a.name}` },
         },
       }),
     );
   };
 
-  const disableItem = async (a: AutorunEntry) => {
-    const k = key(a);
-    // Agent's disable handler only supports Run registry keys today.
-    if (!a.location || !a.location.includes('Run')) {
-      toast.error("I can't disable this one from here", {
-        description: 'Only registry Run/RunOnce autoruns are safely removable via the agent right now. Ask me and I\'ll walk you through disabling it manually.',
+  const trustItem = async (a: AutorunEntry) => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from('wrayth_autorun_allowlist' as never)
+        .insert({
+          user_id: user.id,
+          device_id: deviceId,
+          location: a.location,
+          name: a.name,
+        })
+        .select('id, location, name, device_id')
+        .single();
+      if (error) throw error;
+      setAllowlist((prev) => [...prev, data as unknown as AllowlistEntry]);
+      setSelected((prev) => {
+        const next = new Set(prev);
+        next.delete(autorunKey(a.location, a.name));
+        return next;
       });
-      return;
+      toast.success(`Trusted "${a.name}"`, {
+        description: 'I\'ll stop flagging it in the unsigned review from now on.',
+      });
+    } catch (e: unknown) {
+      toast.error("I couldn't save that to your allowlist", {
+        description: e instanceof Error ? e.message : 'Unknown error',
+      });
     }
-    setPending(k);
+  };
+
+  const untrustItem = async (a: AutorunEntry) => {
+    const entry = allowlist.find(
+      (e) => e.location === a.location && e.name === a.name,
+    );
+    if (!entry) return;
+    try {
+      const { error } = await supabase
+        .from('wrayth_autorun_allowlist' as never)
+        .delete()
+        .eq('id', entry.id);
+      if (error) throw error;
+      setAllowlist((prev) => prev.filter((e) => e.id !== entry.id));
+    } catch (e: unknown) {
+      toast.error("I couldn't remove that allowlist entry", {
+        description: e instanceof Error ? e.message : 'Unknown error',
+      });
+    }
+  };
+
+  const queueDisable = async (a: AutorunEntry): Promise<boolean> => {
+    if (!a.location?.includes('Run')) return false;
     try {
       const { error } = await supabase.functions.invoke('agent-action-request', {
         body: {
@@ -272,85 +399,263 @@ function AutorunsList({
         },
       });
       if (error) throw error;
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const disableOne = async (a: AutorunEntry) => {
+    const k = autorunKey(a.location, a.name);
+    if (!a.location?.includes('Run')) {
+      toast.error("I can't disable this one from here", {
+        description:
+          "Only registry Run/RunOnce autoruns are safely removable via the agent right now. Ask me and I'll walk you through disabling it manually.",
+      });
+      return;
+    }
+    setPending((s) => new Set(s).add(k));
+    const ok = await queueDisable(a);
+    setPending((s) => {
+      const next = new Set(s);
+      next.delete(k);
+      return next;
+    });
+    if (ok) {
       setDisabled((s) => new Set(s).add(k));
       toast.success(`I sent it — ${a.name} will stop running at startup`, {
         description: 'It runs on the next agent check-in (usually within 30 seconds).',
       });
-    } catch (e: unknown) {
-      toast.error("I couldn't disable that autorun", {
-        description: e instanceof Error ? e.message : 'Unknown error',
-      });
-    } finally {
-      setPending(null);
+    } else {
+      toast.error("I couldn't disable that autorun");
     }
   };
 
-  // Unsigned items float to the top so the review is obvious.
-  const sorted = [...autoruns].sort((a, b) => {
-    const au = a.signed === false ? 0 : 1;
-    const bu = b.signed === false ? 0 : 1;
-    return au - bu;
-  });
+  const runBulkDisable = async () => {
+    setBulkRunning(true);
+    const targets = visibleRows.filter((r) => selected.has(r.key));
+    let ok = 0;
+    let fail = 0;
+    for (const t of targets) {
+      // eslint-disable-next-line no-await-in-loop
+      const success = await queueDisable(t.entry);
+      if (success) {
+        ok += 1;
+        setDisabled((s) => new Set(s).add(t.key));
+      } else {
+        fail += 1;
+      }
+    }
+    setBulkRunning(false);
+    setConfirmBulk(false);
+    setSelected(new Set());
+    if (ok > 0) {
+      toast.success(`Queued ${ok} autorun${ok === 1 ? '' : 's'} for disable`, {
+        description:
+          fail > 0
+            ? `${fail} couldn't be queued — probably not in a Run registry key.`
+            : 'They stop running at startup on the next agent check-in.',
+      });
+    } else if (fail > 0) {
+      toast.error("I couldn't queue any of those");
+    }
+  };
 
   return (
-    <div className="max-h-72 space-y-1 overflow-y-auto rounded border border-border/40 bg-background/40 p-2">
-      {sorted.map((a) => {
-        const k = key(a);
-        const isUnsigned = a.signed === false;
-        const gone = disabled.has(k);
-        return (
-          <div
-            key={k}
-            className={`flex items-center gap-2 rounded px-1 py-1 text-[11px] ${gone ? 'opacity-50' : ''}`}
+    <TooltipProvider delayDuration={300}>
+      {/* Bulk selection bar */}
+      {selectableUnsigned.length > 0 && (
+        <div className="mb-2 flex flex-wrap items-center gap-2 rounded-md border border-border/40 bg-background/40 px-2 py-1.5 text-[11px]">
+          <Checkbox
+            id={`autorun-select-all-${deviceId}`}
+            checked={allSelected}
+            onCheckedChange={toggleSelectAll}
+            className="h-3.5 w-3.5"
+          />
+          <label htmlFor={`autorun-select-all-${deviceId}`} className="cursor-pointer text-muted-foreground">
+            Select all unsigned ({selectableUnsigned.length})
+          </label>
+          <span className="ml-auto text-muted-foreground">
+            {selected.size} selected
+          </span>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 gap-1 px-2 text-[10px] text-red-200 hover:text-red-100 hover:bg-red-500/10 disabled:opacity-40"
+            disabled={selected.size === 0}
+            onClick={() => setConfirmBulk(true)}
           >
-            <span className="truncate font-medium text-foreground/90">{a.name}</span>
-            <Badge
-              variant="outline"
-              className={
-                'text-[9px] ' +
-                (a.signed === true
-                  ? 'border-emerald-500/40 text-emerald-200'
-                  : isUnsigned
-                  ? 'border-yellow-500/40 text-yellow-100'
-                  : 'border-border/40 text-muted-foreground')
-              }
+            <Trash2 className="h-3 w-3" /> Disable selected
+          </Button>
+        </div>
+      )}
+
+      <div className="max-h-96 space-y-1 overflow-y-auto rounded border border-border/40 bg-background/40 p-2">
+        {visibleRows.map(({ entry: a, key: k, risk, trusted }) => {
+          const isUnsigned = a.signed === false;
+          const gone = disabled.has(k);
+          const isPending = pending.has(k);
+          const isSelectable = isUnsigned && !trusted && !!a.location?.includes('Run');
+          const isSelected = selected.has(k);
+
+          return (
+            <div
+              key={k}
+              className={`flex items-center gap-2 rounded px-1 py-1 text-[11px] ${gone ? 'opacity-40 line-through' : ''} ${trusted ? 'opacity-70' : ''}`}
             >
-              {a.signed === true ? 'signed' : isUnsigned ? 'unsigned' : a.signature ?? 'unknown'}
-            </Badge>
-            <span className="ml-auto max-w-[45%] truncate text-muted-foreground" title={a.command}>
-              {a.command}
-            </span>
-            {gone ? (
-              <span className="shrink-0 text-[10px] text-muted-foreground">disabled</span>
-            ) : (
-              <div className="flex shrink-0 items-center gap-1">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-6 gap-1 px-2 text-[10px]"
-                  onClick={() => askRay(a)}
-                  title="Ask Ray about this autorun"
+              {isSelectable && !gone ? (
+                <Checkbox
+                  checked={isSelected}
+                  onCheckedChange={() => toggleSelect(k)}
+                  className="h-3.5 w-3.5"
+                />
+              ) : (
+                <span className="inline-block w-3.5" />
+              )}
+
+              <span className="truncate font-medium text-foreground/90">{a.name}</span>
+
+              {trusted ? (
+                <Badge variant="outline" className="border-emerald-500/40 text-[9px] text-emerald-200">
+                  trusted
+                </Badge>
+              ) : (
+                <Badge
+                  variant="outline"
+                  className={
+                    'text-[9px] ' +
+                    (a.signed === true
+                      ? 'border-emerald-500/40 text-emerald-200'
+                      : isUnsigned
+                      ? 'border-yellow-500/40 text-yellow-100'
+                      : 'border-border/40 text-muted-foreground')
+                  }
                 >
-                  <MessageSquare className="h-3 w-3" /> Ask Ray
-                </Button>
-                {isUnsigned && (
+                  {a.signed === true ? 'signed' : isUnsigned ? 'unsigned' : a.signature ?? 'unknown'}
+                </Badge>
+              )}
+
+              {isUnsigned && !trusted && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge
+                      variant="outline"
+                      className={
+                        'cursor-help text-[9px] ' +
+                        (risk.level === 'high'
+                          ? 'border-red-500/40 text-red-200'
+                          : risk.level === 'medium'
+                          ? 'border-amber-500/40 text-amber-100'
+                          : 'border-emerald-500/40 text-emerald-200')
+                      }
+                    >
+                      risk {risk.score}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs text-[11px]">
+                    <div className="mb-1 font-medium">Why Ray flagged this ({risk.level})</div>
+                    <ul className="list-disc space-y-0.5 pl-4">
+                      {risk.reasons.map((r, i) => (
+                        <li key={i}>{r}</li>
+                      ))}
+                    </ul>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+
+              <span
+                className="ml-auto max-w-[40%] truncate text-muted-foreground"
+                title={a.command}
+              >
+                {isUnsigned && !trusted ? risk.summary : a.command}
+              </span>
+
+              {gone ? (
+                <span className="shrink-0 text-[10px] text-muted-foreground">disabled</span>
+              ) : (
+                <div className="flex shrink-0 items-center gap-1">
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="h-6 gap-1 px-2 text-[10px] text-red-200 hover:text-red-100 hover:bg-red-500/10"
-                    onClick={() => disableItem(a)}
-                    disabled={pending === k}
-                    title="Stop this from running at startup"
+                    className="h-6 gap-1 px-2 text-[10px]"
+                    onClick={() => askRay(a, risk)}
+                    title="Ask Ray about this autorun"
                   >
-                    <Trash2 className="h-3 w-3" /> {pending === k ? 'Sending…' : 'Disable'}
+                    <MessageSquare className="h-3 w-3" /> Ask Ray
                   </Button>
-                )}
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
+                  {trusted ? (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 gap-1 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+                      onClick={() => untrustItem(a)}
+                      title="Remove from allowlist"
+                    >
+                      Untrust
+                    </Button>
+                  ) : (
+                    isUnsigned && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 gap-1 px-2 text-[10px] text-emerald-200 hover:text-emerald-100 hover:bg-emerald-500/10"
+                          onClick={() => trustItem(a)}
+                          title="Mark as trusted — hide from the unsigned review"
+                        >
+                          <CheckCircle2 className="h-3 w-3" /> Trust
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 gap-1 px-2 text-[10px] text-red-200 hover:text-red-100 hover:bg-red-500/10"
+                          onClick={() => disableOne(a)}
+                          disabled={isPending}
+                          title="Stop this from running at startup"
+                        >
+                          <Trash2 className="h-3 w-3" /> {isPending ? 'Sending…' : 'Disable'}
+                        </Button>
+                      </>
+                    )
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {trustedCount > 0 && (
+        <button
+          type="button"
+          onClick={() => setShowTrusted((s) => !s)}
+          className="mt-1 text-[10px] text-muted-foreground hover:text-foreground/80"
+        >
+          {showTrusted
+            ? `Hide ${trustedCount} trusted autorun${trustedCount === 1 ? '' : 's'}`
+            : `Show ${trustedCount} trusted autorun${trustedCount === 1 ? '' : 's'}`}
+        </button>
+      )}
+
+      <AlertDialog open={confirmBulk} onOpenChange={(v) => !bulkRunning && setConfirmBulk(v)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Disable {selected.size} autorun{selected.size === 1 ? '' : 's'}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              I'll queue a disable command for each selected startup item on{' '}
+              <span className="font-medium text-foreground">{hostname ?? 'this device'}</span>.
+              They stop running at boot on the next agent check-in. Nothing else on the machine is touched, and you can re-enable them manually if needed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkRunning}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={runBulkDisable} disabled={bulkRunning}>
+              {bulkRunning ? 'Queuing…' : `Disable ${selected.size}`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </TooltipProvider>
   );
 }
 
