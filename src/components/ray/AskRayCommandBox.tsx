@@ -227,7 +227,8 @@ export function AskRayCommandBox({ deviceId, hostname, posture, disabled, active
           onClick={submit}
           disabled={disabled || !value.trim()}
           className="absolute bottom-2 right-2 h-7 w-7 rounded-full bg-violet-500 p-0 text-white hover:bg-violet-400 disabled:opacity-40"
-          aria-label="Send to Ray"
+          aria-label="Send to Ray (⌘/Ctrl+Enter)"
+          title="Send to Ray (⌘/Ctrl+Enter)"
         >
           <ArrowUp className="h-3.5 w-3.5" />
         </Button>
