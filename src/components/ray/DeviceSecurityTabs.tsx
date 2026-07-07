@@ -340,7 +340,7 @@ function AutorunsList({
   );
 }
 
-export function DeviceSecurityTabs({ deviceId, posture, capturedAt, value, onValueChange }: Props) {
+export function DeviceSecurityTabs({ deviceId, hostname, posture, capturedAt, value, onValueChange }: Props) {
   const [recovery, setRecovery] = useState<{ key: string; id: string; capturedAt: string } | null>(
     null,
   );
