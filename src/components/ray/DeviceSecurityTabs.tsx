@@ -12,7 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Copy, Eye, EyeOff, KeyRound, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { Copy, Eye, EyeOff, KeyRound, MessageSquare, ShieldAlert, ShieldCheck, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { assessDevice } from '@/lib/ray/deviceAssessment';
