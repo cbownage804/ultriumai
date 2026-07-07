@@ -418,15 +418,30 @@ export default function WraythWeb() {
         </Badge>
       );
     }
-    
-    if (asset.threats_found > 0) {
+
+    const unacked = unackCount(asset);
+    const total = ackSummary[asset.id]?.total ?? asset.threats_found ?? 0;
+
+    if (unacked > 0) {
       return (
         <Badge variant="destructive" className="cursor-pointer" onClick={() => toggleAssetExpand(asset.id)}>
-          <XCircle className="h-3 w-3 mr-1" /> {asset.threats_found} Threat{asset.threats_found > 1 ? 's' : ''}
+          <XCircle className="h-3 w-3 mr-1" /> {unacked} Threat{unacked > 1 ? 's' : ''}
         </Badge>
       );
     }
-    
+
+    if (total > 0) {
+      return (
+        <Badge
+          variant="outline"
+          className="cursor-pointer border-muted-foreground/30 text-muted-foreground"
+          onClick={() => toggleAssetExpand(asset.id)}
+        >
+          <CheckCircle className="h-3 w-3 mr-1" /> Acknowledged
+        </Badge>
+      );
+    }
+
     return (
       <Badge variant="outline" className="border-green-500/30 text-green-500">
         <CheckCircle className="h-3 w-3 mr-1" /> Clean
