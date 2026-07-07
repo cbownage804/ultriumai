@@ -281,15 +281,59 @@ def collect_windows() -> dict[str, Any]:
     if last_patch:
         posture["last_patch_at"] = last_patch.strip()
 
-    # Screen lock timeout
-    lock = _ps(
-        "try { (Get-ItemProperty 'HKCU:\\Control Panel\\Desktop' -Name ScreenSaveTimeOut)."
+    # Screen lock timeout — Windows exposes this through THREE independent
+    # mechanisms and any one of them is enough to actually lock the session:
+    #   1. Screensaver with "On resume, display logon screen" checked
+    #      (HKCU\Control Panel\Desktop\ScreenSaveTimeOut, seconds, requires
+    #       ScreenSaverIsSecure=1 to actually lock).
+    #   2. Power plan "Console lock display off timeout" — the value that
+    #      System > Power > "Turn my screen off after" writes when the machine
+    #      is joined to a policy, exposed via powercfg SUB_VIDEO VIDEOCONLOCK.
+    #   3. Interactive logon: Machine inactivity limit
+    #      (HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System
+    #       \InactivityTimeoutSecs) — the AD/Intune-managed baseline.
+    # We take the smallest configured value; 0/absent means "not set".
+    candidates: list[int] = []
+    ss_timeout = _ps(
+        "try { (Get-ItemProperty 'HKCU:\\Control Panel\\Desktop' -Name ScreenSaveTimeOut -EA Stop)."
         "ScreenSaveTimeOut } catch { '0' }"
     )
+    ss_secure = _ps(
+        "try { (Get-ItemProperty 'HKCU:\\Control Panel\\Desktop' -Name ScreenSaverIsSecure -EA Stop)."
+        "ScreenSaverIsSecure } catch { '0' }"
+    )
     try:
-        posture["screen_lock_seconds"] = int(lock)
+        if int(ss_secure or 0) == 1 and int(ss_timeout or 0) > 0:
+            candidates.append(int(ss_timeout))
     except ValueError:
-        posture["screen_lock_seconds"] = 0
+        pass
+
+    inactivity = _ps(
+        "try { (Get-ItemProperty 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System'"
+        " -Name InactivityTimeoutSecs -EA Stop).InactivityTimeoutSecs } catch { '0' }"
+    )
+    try:
+        if int(inactivity or 0) > 0:
+            candidates.append(int(inactivity))
+    except ValueError:
+        pass
+
+    # Power plan console lock timeout (seconds). VIDEOCONLOCK == 8EC4B3A5-6868-48c2-BE75-4F3044BE88A7
+    conlock = _ps(
+        "try { $g = (powercfg /getactivescheme) -replace '.*: ([-0-9a-f]+) .*','$1';"
+        " $out = powercfg /query $g SUB_VIDEO 8EC4B3A5-6868-48c2-BE75-4F3044BE88A7 2>$null;"
+        " ($out | Select-String 'Current AC Power Setting Index').Line -replace '.*: 0x','' } catch { '' }"
+    )
+    try:
+        if conlock:
+            secs = int(str(conlock).strip(), 16)
+            if secs > 0:
+                candidates.append(secs)
+    except ValueError:
+        pass
+
+    posture["screen_lock_seconds"] = min(candidates) if candidates else 0
+
 
     # Browsers
     browsers: list[dict[str, str]] = []
