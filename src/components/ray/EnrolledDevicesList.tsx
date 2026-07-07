@@ -475,11 +475,12 @@ export function EnrolledDevicesList() {
               {d.posture && (
                 <RayFixPanel
                   deviceId={d.id}
-                  score={d.posture._ray?.score}
+                  score={assessDevice(d.posture as never)?.score ?? d.posture._ray?.score}
                   plan={d.posture._ray?.fix_plan ?? []}
                   disabled={!online}
                 />
               )}
+
 
               {d.posture && (() => {
                 const chips = buildPostureChips(d.posture);
