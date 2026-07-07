@@ -10,11 +10,23 @@ import type { DevicePosture } from '@/components/ray/DeviceSecurityTabs';
 
 export type Severity = 'good' | 'warn' | 'bad' | 'neutral';
 
+export interface ManualSteps {
+  /** Short label for the how-to block, e.g. "Windows 11". */
+  os: string;
+  /** Ordered, plain-English steps the user can follow themselves. */
+  steps: string[];
+  /** Optional deep-link (e.g. ms-settings:) that opens the right screen. */
+  deepLink?: { label: string; href: string };
+}
+
 export interface ScoreDeduction {
   points: number;
   reason: string;
   fix?: string;
+  /** When Ray can't automate this, offer copy-pasteable instructions. */
+  manual?: ManualSteps;
 }
+
 
 export interface TabSummary {
   tone: Severity;
