@@ -86,6 +86,7 @@ export interface DevicePosture {
 
 interface Props {
   deviceId: string;
+  hostname?: string;
   posture: DevicePosture | null;
   capturedAt?: string | null;
   value?: string;
