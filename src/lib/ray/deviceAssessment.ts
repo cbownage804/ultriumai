@@ -302,7 +302,7 @@ function summarizeKeys(p: DevicePosture): TabSummary {
     return { tone: 'bad', text: 'BitLocker is off, so no recovery key exists yet.' };
   }
   if (p.disk_encryption?.enabled) {
-    return { tone: 'warn', text: 'BitLocker is on — approve "Turn on BitLocker" once so I can escrow the recovery key here.' };
+    return { tone: 'good', text: "BitLocker is on — I'll grab the recovery key on this device's next check-in and pin it below." };
   }
   return { tone: 'neutral', text: 'Encryption status hasn\u2019t been reported yet.' };
 }

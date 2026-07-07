@@ -204,6 +204,7 @@ export function DeviceSecurityTabs({ deviceId, posture, capturedAt, value, onVal
     null,
   );
   const [showKey, setShowKey] = useState(false);
+  const [autoEscrowState, setAutoEscrowState] = useState<'idle' | 'queued' | 'running'>('idle');
 
   useEffect(() => {
     let cancelled = false;
@@ -235,6 +236,91 @@ export function DeviceSecurityTabs({ deviceId, posture, capturedAt, value, onVal
       cancelled = true;
     };
   }, [deviceId]);
+
+  // Auto-escrow: if BitLocker is on but Ray hasn't captured the recovery key
+  // yet, silently queue an `enable_bitlocker` run. The agent script is
+  // idempotent — when BitLocker is already on it just reads the recovery
+  // password out and reports it back, which lands in the query above.
+  useEffect(() => {
+    if (!posture?.disk_encryption?.enabled) return;
+    if (recovery) return;
+    if (autoEscrowState !== 'idle') return;
+
+    let cancelled = false;
+    (async () => {
+      // Skip if there's already a pending / running enable_bitlocker action.
+      const { data: existing } = await supabase
+        .from('wrayth_device_actions')
+        .select('id, status')
+        .eq('device_id', deviceId)
+        .eq('action_type', 'enable_bitlocker')
+        .in('status', ['pending', 'approved', 'dispatched', 'running'])
+        .limit(1);
+      if (cancelled) return;
+      if (existing && existing.length > 0) {
+        setAutoEscrowState('running');
+        return;
+      }
+
+      setAutoEscrowState('queued');
+      const { error } = await supabase.functions.invoke('agent-action-request', {
+        body: {
+          device_id: deviceId,
+          action_type: 'enable_bitlocker',
+          params: {},
+          confirmed: true,
+          source: 'auto_escrow',
+        },
+      });
+      if (cancelled) return;
+      if (error) {
+        // Fall back to idle so the manual "Turn on BitLocker" affordance still works.
+        setAutoEscrowState('idle');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [deviceId, posture?.disk_encryption?.enabled, recovery, autoEscrowState]);
+
+  // Live subscription: when the escrow action finishes we pick up the new key.
+  useEffect(() => {
+    const channel = supabase
+      .channel(`bitlocker-escrow-${deviceId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'wrayth_device_actions',
+          filter: `device_id=eq.${deviceId}`,
+        },
+        (payload) => {
+          const row = payload.new as {
+            action_type?: string;
+            status?: string;
+            result?: { recovery_password?: string; recovery_key_id?: string } | null;
+            completed_at?: string;
+          };
+          if (row?.action_type !== 'enable_bitlocker') return;
+          if (row.status === 'succeeded' && row.result?.recovery_password) {
+            setRecovery({
+              key: row.result.recovery_password,
+              id: row.result.recovery_key_id ?? '',
+              capturedAt: row.completed_at ?? new Date().toISOString(),
+            });
+            setAutoEscrowState('idle');
+          } else if (row.status === 'failed') {
+            setAutoEscrowState('idle');
+          }
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [deviceId]);
+
 
   const copyKey = async () => {
     if (!recovery?.key) return;
@@ -734,8 +820,11 @@ export function DeviceSecurityTabs({ deviceId, posture, capturedAt, value, onVal
           </div>
         ) : (
           <Empty>
-            No escrowed recovery key yet. Approve "Turn on BitLocker" from the
-            actions menu and Ray will capture the recovery password here.
+            {posture?.disk_encryption?.enabled
+              ? autoEscrowState !== 'idle'
+                ? "I'm capturing the BitLocker recovery key from this device now — it'll appear here as soon as the agent checks in."
+                : "I'll capture the BitLocker recovery key from this device on its next check-in."
+              : "No escrowed recovery key yet. BitLocker isn't on for this drive — turn it on and I'll capture the recovery password here automatically."}
           </Empty>
         )}
         {p.disk_encryption?.enabled === false && (
@@ -751,11 +840,13 @@ export function DeviceSecurityTabs({ deviceId, posture, capturedAt, value, onVal
           <div className="flex items-start gap-2 rounded-md border border-yellow-500/30 bg-yellow-500/5 p-2 text-[11px] text-yellow-100">
             <ShieldCheck className="h-3.5 w-3.5 mt-0.5" />
             <span>
-              BitLocker is on, but no recovery key has been escrowed through Ray.
-              Run "Turn on BitLocker" once so the key is captured for you.
+              {autoEscrowState !== 'idle'
+                ? "BitLocker is on. I've asked this device for the recovery key and I'll show it here as soon as it checks in (usually within 30 seconds)."
+                : "BitLocker is on. I'll grab the recovery key on the next check-in and pin it here."}
             </span>
           </div>
         )}
+
       </TabsContent>
     </Tabs>
   );
