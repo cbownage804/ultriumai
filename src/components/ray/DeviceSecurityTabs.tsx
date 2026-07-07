@@ -12,7 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Copy, Eye, EyeOff, KeyRound, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { Copy, Eye, EyeOff, KeyRound, MessageSquare, ShieldAlert, ShieldCheck, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { assessDevice } from '@/lib/ray/deviceAssessment';
@@ -86,6 +86,7 @@ export interface DevicePosture {
 
 interface Props {
   deviceId: string;
+  hostname?: string;
   posture: DevicePosture | null;
   capturedAt?: string | null;
   value?: string;
@@ -199,7 +200,147 @@ function List({
   );
 }
 
-export function DeviceSecurityTabs({ deviceId, posture, capturedAt, value, onValueChange }: Props) {
+function AutorunsList({
+  deviceId,
+  hostname,
+  autoruns,
+}: {
+  deviceId: string;
+  hostname?: string;
+  autoruns: AutorunEntry[];
+}) {
+  const [pending, setPending] = useState<string | null>(null);
+  const [disabled, setDisabled] = useState<Set<string>>(new Set());
+
+  if (!autoruns || autoruns.length === 0) {
+    return <Empty>No autoruns reported.</Empty>;
+  }
+
+  const key = (a: AutorunEntry) => `${a.location}::${a.name}`;
+
+  const askRay = (a: AutorunEntry) => {
+    const prompt =
+      `Take a look at this unsigned autorun on ${hostname ?? 'this device'} and tell me plainly whether it's safe to keep enabled, ` +
+      `and if not, what to do about it.\n\n` +
+      `Name: ${a.name}\nLocation: ${a.location}\nCommand: ${a.command}\nPublisher: ${a.publisher ?? 'unknown'}\nSigned: ${a.signed === false ? 'no' : a.signed === true ? 'yes' : 'unknown'}`;
+    window.dispatchEvent(
+      new CustomEvent('ray:panel-open', {
+        detail: {
+          message: prompt,
+          context: {
+            kind: 'device',
+            id: deviceId,
+            title: `Autorun: ${a.name}`,
+          },
+        },
+      }),
+    );
+  };
+
+  const disableItem = async (a: AutorunEntry) => {
+    const k = key(a);
+    // Agent's disable handler only supports Run registry keys today.
+    if (!a.location || !a.location.includes('Run')) {
+      toast.error("I can't disable this one from here", {
+        description: 'Only registry Run/RunOnce autoruns are safely removable via the agent right now. Ask me and I\'ll walk you through disabling it manually.',
+      });
+      return;
+    }
+    setPending(k);
+    try {
+      const { error } = await supabase.functions.invoke('agent-action-request', {
+        body: {
+          device_id: deviceId,
+          action_type: 'disable_startup_item',
+          params: { location: a.location, name: a.name },
+          confirmed: true,
+          source: 'autoruns_review',
+        },
+      });
+      if (error) throw error;
+      setDisabled((s) => new Set(s).add(k));
+      toast.success(`I sent it — ${a.name} will stop running at startup`, {
+        description: 'It runs on the next agent check-in (usually within 30 seconds).',
+      });
+    } catch (e: unknown) {
+      toast.error("I couldn't disable that autorun", {
+        description: e instanceof Error ? e.message : 'Unknown error',
+      });
+    } finally {
+      setPending(null);
+    }
+  };
+
+  // Unsigned items float to the top so the review is obvious.
+  const sorted = [...autoruns].sort((a, b) => {
+    const au = a.signed === false ? 0 : 1;
+    const bu = b.signed === false ? 0 : 1;
+    return au - bu;
+  });
+
+  return (
+    <div className="max-h-72 space-y-1 overflow-y-auto rounded border border-border/40 bg-background/40 p-2">
+      {sorted.map((a) => {
+        const k = key(a);
+        const isUnsigned = a.signed === false;
+        const gone = disabled.has(k);
+        return (
+          <div
+            key={k}
+            className={`flex items-center gap-2 rounded px-1 py-1 text-[11px] ${gone ? 'opacity-50' : ''}`}
+          >
+            <span className="truncate font-medium text-foreground/90">{a.name}</span>
+            <Badge
+              variant="outline"
+              className={
+                'text-[9px] ' +
+                (a.signed === true
+                  ? 'border-emerald-500/40 text-emerald-200'
+                  : isUnsigned
+                  ? 'border-yellow-500/40 text-yellow-100'
+                  : 'border-border/40 text-muted-foreground')
+              }
+            >
+              {a.signed === true ? 'signed' : isUnsigned ? 'unsigned' : a.signature ?? 'unknown'}
+            </Badge>
+            <span className="ml-auto max-w-[45%] truncate text-muted-foreground" title={a.command}>
+              {a.command}
+            </span>
+            {gone ? (
+              <span className="shrink-0 text-[10px] text-muted-foreground">disabled</span>
+            ) : (
+              <div className="flex shrink-0 items-center gap-1">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 gap-1 px-2 text-[10px]"
+                  onClick={() => askRay(a)}
+                  title="Ask Ray about this autorun"
+                >
+                  <MessageSquare className="h-3 w-3" /> Ask Ray
+                </Button>
+                {isUnsigned && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 gap-1 px-2 text-[10px] text-red-200 hover:text-red-100 hover:bg-red-500/10"
+                    onClick={() => disableItem(a)}
+                    disabled={pending === k}
+                    title="Stop this from running at startup"
+                  >
+                    <Trash2 className="h-3 w-3" /> {pending === k ? 'Sending…' : 'Disable'}
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export function DeviceSecurityTabs({ deviceId, hostname, posture, capturedAt, value, onValueChange }: Props) {
   const [recovery, setRecovery] = useState<{ key: string; id: string; capturedAt: string } | null>(
     null,
   );
@@ -695,14 +836,10 @@ export function DeviceSecurityTabs({ deviceId, posture, capturedAt, value, onVal
           />
         </Section>
         <Section title={`Startup items (${p.autoruns?.length ?? 0})`}>
-          <List
-            rows={(p.autoruns ?? []).map((a) => ({
-              primary: a.name,
-              secondary: a.command,
-              badge: a.signed === true ? 'signed' : a.signed === false ? 'unsigned' : a.signature,
-              badgeTone: a.signed === true ? 'good' : a.signed === false ? 'bad' : 'warn',
-            }))}
-            emptyLabel="No autoruns reported."
+          <AutorunsList
+            deviceId={deviceId}
+            hostname={hostname}
+            autoruns={p.autoruns ?? []}
           />
         </Section>
         <Section title={`Non-Microsoft services (${p.non_ms_services?.length ?? 0})`}>

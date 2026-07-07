@@ -514,6 +514,7 @@ export function EnrolledDevicesList() {
 
               <DeviceSecurityTabs
                 deviceId={d.id}
+                hostname={d.hostname}
                 posture={d.posture as never}
                 capturedAt={d.posture_captured_at}
                 value={activeTabByDevice[d.id] ?? 'posture'}
