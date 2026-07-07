@@ -76,16 +76,9 @@ export function DeviceAssessment({ posture }: { posture: DevicePosture | null })
                   .slice()
                   .sort((a, b) => b.points - a.points)
                   .map((d, i) => (
-                    <li key={i} className="flex items-start gap-2 text-[11px]">
-                      <span className="w-9 shrink-0 text-right font-mono tabular-nums text-red-300/90">
-                        −{d.points}
-                      </span>
-                      <span className="flex-1 text-foreground/85">{d.reason}</span>
-                      {d.fix && (
-                        <span className="text-[10px] italic text-violet-300/80">{d.fix}</span>
-                      )}
-                    </li>
+                    <DeductionRow key={i} d={d} />
                   ))}
+
               </motion.ul>
             )}
           </AnimatePresence>
