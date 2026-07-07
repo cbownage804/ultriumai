@@ -5,9 +5,10 @@
  */
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronUp, Sparkles, ShieldCheck, ShieldAlert, ShieldX } from 'lucide-react';
-import { assessDevice } from '@/lib/ray/deviceAssessment';
+import { ChevronDown, ChevronUp, Sparkles, ShieldCheck, ShieldAlert, ShieldX, BookOpen, ExternalLink } from 'lucide-react';
+import { assessDevice, type ScoreDeduction } from '@/lib/ray/deviceAssessment';
 import type { DevicePosture } from './DeviceSecurityTabs';
+
 
 const TONE_STYLES = {
   good: { border: 'border-emerald-500/30', bg: 'from-emerald-500/8 to-transparent', text: 'text-emerald-100', icon: ShieldCheck, iconColor: 'text-emerald-300' },
