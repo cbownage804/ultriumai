@@ -204,6 +204,7 @@ export function DeviceSecurityTabs({ deviceId, posture, capturedAt, value, onVal
     null,
   );
   const [showKey, setShowKey] = useState(false);
+  const [autoEscrowState, setAutoEscrowState] = useState<'idle' | 'queued' | 'running'>('idle');
 
   useEffect(() => {
     let cancelled = false;
@@ -235,6 +236,91 @@ export function DeviceSecurityTabs({ deviceId, posture, capturedAt, value, onVal
       cancelled = true;
     };
   }, [deviceId]);
+
+  // Auto-escrow: if BitLocker is on but Ray hasn't captured the recovery key
+  // yet, silently queue an `enable_bitlocker` run. The agent script is
+  // idempotent — when BitLocker is already on it just reads the recovery
+  // password out and reports it back, which lands in the query above.
+  useEffect(() => {
+    if (!posture?.disk_encryption?.enabled) return;
+    if (recovery) return;
+    if (autoEscrowState !== 'idle') return;
+
+    let cancelled = false;
+    (async () => {
+      // Skip if there's already a pending / running enable_bitlocker action.
+      const { data: existing } = await supabase
+        .from('wrayth_device_actions')
+        .select('id, status')
+        .eq('device_id', deviceId)
+        .eq('action_type', 'enable_bitlocker')
+        .in('status', ['pending', 'running', 'queued'])
+        .limit(1);
+      if (cancelled) return;
+      if (existing && existing.length > 0) {
+        setAutoEscrowState('running');
+        return;
+      }
+
+      setAutoEscrowState('queued');
+      const { error } = await supabase.functions.invoke('agent-action-request', {
+        body: {
+          device_id: deviceId,
+          action_type: 'enable_bitlocker',
+          params: {},
+          confirmed: true,
+          source: 'auto_escrow',
+        },
+      });
+      if (cancelled) return;
+      if (error) {
+        // Fall back to idle so the manual "Turn on BitLocker" affordance still works.
+        setAutoEscrowState('idle');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [deviceId, posture?.disk_encryption?.enabled, recovery, autoEscrowState]);
+
+  // Live subscription: when the escrow action finishes we pick up the new key.
+  useEffect(() => {
+    const channel = supabase
+      .channel(`bitlocker-escrow-${deviceId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'wrayth_device_actions',
+          filter: `device_id=eq.${deviceId}`,
+        },
+        (payload) => {
+          const row = payload.new as {
+            action_type?: string;
+            status?: string;
+            result?: { recovery_password?: string; recovery_key_id?: string } | null;
+            completed_at?: string;
+          };
+          if (row?.action_type !== 'enable_bitlocker') return;
+          if (row.status === 'succeeded' && row.result?.recovery_password) {
+            setRecovery({
+              key: row.result.recovery_password,
+              id: row.result.recovery_key_id ?? '',
+              capturedAt: row.completed_at ?? new Date().toISOString(),
+            });
+            setAutoEscrowState('idle');
+          } else if (row.status === 'failed') {
+            setAutoEscrowState('idle');
+          }
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [deviceId]);
+
 
   const copyKey = async () => {
     if (!recovery?.key) return;
