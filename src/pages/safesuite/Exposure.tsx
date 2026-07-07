@@ -100,6 +100,9 @@ export default function WraythWeb() {
   const [selectedThreat, setSelectedThreat] = useState<ThreatDetails | null>(null);
   const [aiRecommendation, setAiRecommendation] = useState<string | null>(null);
   const [loadingRecommendation, setLoadingRecommendation] = useState(false);
+  // Per-asset acknowledgement summary: total and how many still need review.
+  const [ackSummary, setAckSummary] = useState<Record<string, { total: number; unacked: number }>>({});
+  const [acking, setAcking] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (user) {
@@ -109,20 +112,89 @@ export default function WraythWeb() {
 
   const loadData = async () => {
     try {
-      const { data: assetsData, error: assetsError } = await supabase
-        .from('safeweb_assets')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false });
+      const [assetsRes, threatsRes] = await Promise.all([
+        supabase
+          .from('safeweb_assets')
+          .select('*')
+          .eq('user_id', user?.id)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('safeweb_threats')
+          .select('id, asset_id, acknowledged_at')
+          .eq('user_id', user?.id),
+      ]);
 
-      if (assetsError) throw assetsError;
-      setAssets(assetsData || []);
+      if (assetsRes.error) throw assetsRes.error;
+      setAssets(assetsRes.data || []);
+
+      const summary: Record<string, { total: number; unacked: number }> = {};
+      for (const t of threatsRes.data || []) {
+        if (!t.asset_id) continue;
+        const s = summary[t.asset_id] ?? { total: 0, unacked: 0 };
+        s.total += 1;
+        if (!t.acknowledged_at) s.unacked += 1;
+        summary[t.asset_id] = s;
+      }
+      setAckSummary(summary);
     } catch (error) {
       console.error('Error loading Watch data:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  /** Count of threats still needing user attention for an asset. */
+  const unackCount = (asset: MonitoredAsset) =>
+    ackSummary[asset.id]?.unacked ?? asset.threats_found ?? 0;
+
+  const acknowledgeThreat = async (threat: ThreatDetails) => {
+    if (!user || threat.acknowledged_at) return;
+    setAcking((prev) => new Set(prev).add(threat.id));
+    try {
+      const now = new Date().toISOString();
+      const { error } = await supabase
+        .from('safeweb_threats')
+        .update({ acknowledged_at: now, acknowledged_by: user.id })
+        .eq('id', threat.id);
+      if (error) throw error;
+
+      // Update loaded threats in place so the UI reflects the ack immediately.
+      setThreats((prev) => {
+        const next = { ...prev };
+        for (const [aid, list] of Object.entries(prev)) {
+          if (list.some((t) => t.id === threat.id)) {
+            next[aid] = list.map((t) =>
+              t.id === threat.id ? { ...t, acknowledged_at: now, acknowledged_by: user.id } : t,
+            );
+          }
+        }
+        return next;
+      });
+
+      if (threat.asset_id) {
+        setAckSummary((prev) => {
+          const cur = prev[threat.asset_id!] ?? { total: 0, unacked: 0 };
+          return {
+            ...prev,
+            [threat.asset_id!]: { total: cur.total, unacked: Math.max(0, cur.unacked - 1) },
+          };
+        });
+      }
+    } catch (e: any) {
+      toast({
+        title: "Couldn't acknowledge",
+        description: e.message || 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setAcking((prev) => {
+        const next = new Set(prev);
+        next.delete(threat.id);
+        return next;
+      });
+    }
+  };
+
 
   const loadThreatsForAsset = async (assetId: string) => {
     if (threats[assetId]) return; // Already loaded
