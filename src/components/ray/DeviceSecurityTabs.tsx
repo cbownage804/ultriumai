@@ -820,8 +820,11 @@ export function DeviceSecurityTabs({ deviceId, posture, capturedAt, value, onVal
           </div>
         ) : (
           <Empty>
-            No escrowed recovery key yet. Approve "Turn on BitLocker" from the
-            actions menu and Ray will capture the recovery password here.
+            {posture?.disk_encryption?.enabled
+              ? autoEscrowState !== 'idle'
+                ? "I'm capturing the BitLocker recovery key from this device now — it'll appear here as soon as the agent checks in."
+                : "I'll capture the BitLocker recovery key from this device on its next check-in."
+              : "No escrowed recovery key yet. BitLocker isn't on for this drive — turn it on and I'll capture the recovery password here automatically."}
           </Empty>
         )}
         {p.disk_encryption?.enabled === false && (
@@ -837,11 +840,13 @@ export function DeviceSecurityTabs({ deviceId, posture, capturedAt, value, onVal
           <div className="flex items-start gap-2 rounded-md border border-yellow-500/30 bg-yellow-500/5 p-2 text-[11px] text-yellow-100">
             <ShieldCheck className="h-3.5 w-3.5 mt-0.5" />
             <span>
-              BitLocker is on, but no recovery key has been escrowed through Ray.
-              Run "Turn on BitLocker" once so the key is captured for you.
+              {autoEscrowState !== 'idle'
+                ? "BitLocker is on. I've asked this device for the recovery key and I'll show it here as soon as it checks in (usually within 30 seconds)."
+                : "BitLocker is on. I'll grab the recovery key on the next check-in and pin it here."}
             </span>
           </div>
         )}
+
       </TabsContent>
     </Tabs>
   );
