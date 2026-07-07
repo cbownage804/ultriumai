@@ -155,7 +155,9 @@ export function AskRayCommandBox({ deviceId, hostname, posture, disabled, active
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    // Only submit on ⌘/Ctrl+Enter. Plain Enter inserts a newline so typing
+    // never accidentally pops open the floating Ray panel.
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
       submit();
     }
