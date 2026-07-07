@@ -37282,6 +37282,44 @@ export type Database = {
         }
         Relationships: []
       }
+      wrayth_autorun_allowlist: {
+        Row: {
+          created_at: string
+          device_id: string | null
+          id: string
+          location: string
+          name: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_id?: string | null
+          id?: string
+          location: string
+          name: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string | null
+          id?: string
+          location?: string
+          name?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wrayth_autorun_allowlist_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "wrayth_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wrayth_device_actions: {
         Row: {
           action_type: Database["public"]["Enums"]["wrayth_action_type"]
