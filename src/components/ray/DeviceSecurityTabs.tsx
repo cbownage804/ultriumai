@@ -254,7 +254,7 @@ export function DeviceSecurityTabs({ deviceId, posture, capturedAt, value, onVal
         .select('id, status')
         .eq('device_id', deviceId)
         .eq('action_type', 'enable_bitlocker')
-        .in('status', ['pending', 'running', 'queued'])
+        .in('status', ['pending', 'approved', 'dispatched', 'running'])
         .limit(1);
       if (cancelled) return;
       if (existing && existing.length > 0) {
