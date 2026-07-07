@@ -58,6 +58,7 @@ interface MonitoredAsset {
 
 interface ThreatDetails {
   id: string;
+  asset_id?: string | null;
   threat_type: string;
   title: string;
   description: string;
@@ -73,6 +74,8 @@ interface ThreatDetails {
   last_seen: string;
   tags: string[];
   created_at: string;
+  acknowledged_at?: string | null;
+  acknowledged_by?: string | null;
 }
 
 export default function WraythWeb() {
