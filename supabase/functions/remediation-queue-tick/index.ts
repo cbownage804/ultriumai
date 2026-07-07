@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
 
     try {
       if (row.provider === "agent") {
-        const { error: fErr } = await supabase.functions.invoke("agent-action-request", {
+        const { data: dispatchData, error: fErr } = await supabase.functions.invoke("agent-action-request", {
           body: {
             device_id: row.target_id,
             action_type: row.action_type,
@@ -57,6 +57,16 @@ Deno.serve(async (req) => {
           },
         });
         if (fErr) throw new Error(fErr.message);
+        // Link the resulting device_actions row back to this remediation so
+        // `agent-action-result` can cascade the terminal status. Without
+        // this, cron-dispatched actions never close out in Ray's timeline.
+        const agentActionId = (dispatchData as any)?.action?.id ?? null;
+        if (agentActionId) {
+          await supabase
+            .from("wrayth_remediation_actions")
+            .update({ agent_action_id: agentActionId })
+            .eq("id", row.id);
+        }
       } else if (row.provider === "ms365" || row.provider === "defender") {
         const { error: fErr } = await supabase.functions.invoke("ms-graph-remediate", {
           body: {
@@ -76,10 +86,9 @@ Deno.serve(async (req) => {
     }
 
     if (ok) {
-      // Agent runs async — leave status; ms365 completes inline and marks itself.
-      if (row.provider === "agent") {
-        // no-op; agent-action-poll/agent-action-result update the row.
-      }
+      // Agent runs async — agent-action-result flips lifecycle_state to
+      // completed/failed once the device reports back. MS365 executes
+      // inline and ms-graph-remediate updates the audit row directly.
     } else {
       await supabase
         .from("wrayth_remediation_actions")

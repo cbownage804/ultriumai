@@ -434,7 +434,23 @@ export function useRayNotices(limit = 3) {
       }
       if (!cancelled) await refresh();
     })();
-    return () => { cancelled = true; };
+
+    // Subscribe so server-side notice writes (from scans, ingest, cron)
+    // surface without requiring a page reload. Ray "interrupts" only work
+    // if the client actually hears about them in real time.
+    const channel = supabase
+      .channel(`ray-notices-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'ray_notices', filter: `user_id=eq.${user.id}` },
+        () => { void refresh(); },
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
   }, [user, refresh]);
 
   const top = useMemo(() => {
