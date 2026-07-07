@@ -124,14 +124,15 @@ function computeDeductions(p: DevicePosture): ScoreDeduction[] {
   const screenLockManual: ManualSteps = {
     os: 'Windows 10 / 11',
     steps: [
-      'Press Windows key + I to open Settings.',
-      'Go to Personalization → Lock screen → Screen saver.',
-      'Tick "On resume, display logon screen" and set Wait to 15 minutes (or less).',
-      'Click Apply, then OK.',
-      'For laptops, also check System → Power & battery → Screen and sleep and set the "Screen off" timeout to 15 minutes.',
+      'Heads up: System → Power → "Turn screen off after" only blanks the display, it doesn\u2019t lock the session — Windows won\u2019t count it and neither will Ray.',
+      'Press Windows key + R, type control desk.cpl,,@screensaver and press Enter (this opens the Screen Saver settings directly).',
+      'Pick any screen saver (Blank is fine), set Wait to 15 minutes (or less), and TICK "On resume, display logon screen". This last checkbox is what actually locks the machine.',
+      'Click Apply, then OK. The next posture check-in will pick it up and your score will move.',
+      'Managed fleets: set the "Interactive logon: Machine inactivity limit" security policy (or Intune "DeviceLock/MaxInactivityTimeDeviceLock") to 900 seconds — Ray reads that too.',
     ],
-    deepLink: { label: 'Open Lock screen settings', href: 'ms-settings:lockscreen' },
+    deepLink: { label: 'Open Screen Saver settings', href: 'ms-settings:lockscreen' },
   };
+
   if (typeof p.screen_lock_seconds === 'number') {
     if (p.screen_lock_seconds === 0) {
       d.push({
