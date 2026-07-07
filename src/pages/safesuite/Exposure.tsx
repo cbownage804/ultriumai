@@ -843,20 +843,36 @@ export default function WraythWeb() {
                           <p className="text-sm font-medium text-gray-400 mb-3">
                             Individual breaches:
                           </p>
-                          {threats[asset.id].map((threat) => (
+                          {threats[asset.id].map((threat) => {
+                            const isAcked = !!threat.acknowledged_at;
+                            return (
                             <div
                               key={threat.id}
-                              className="p-4 bg-muted rounded-lg border border-red-500/20 hover:border-red-500/40 transition-colors cursor-pointer"
+                              className={
+                                isAcked
+                                  ? 'p-4 bg-muted/40 rounded-lg border border-border/40 hover:border-border/60 transition-colors cursor-pointer opacity-70'
+                                  : 'p-4 bg-muted rounded-lg border border-red-500/20 hover:border-red-500/40 transition-colors cursor-pointer'
+                              }
                               onClick={() => setSelectedThreat(threat)}
                             >
                               <div className="flex items-start justify-between gap-4">
                                 <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <ShieldAlert className="h-4 w-4 text-red-500 flex-shrink-0" />
-                                    <h4 className="font-medium text-white truncate">{threat.title}</h4>
-                                    <Badge className={`${getSeverityColor(threat.severity)} text-xs`}>
-                                      {threat.severity}
-                                    </Badge>
+                                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                    <ShieldAlert
+                                      className={`h-4 w-4 flex-shrink-0 ${isAcked ? 'text-muted-foreground' : 'text-red-500'}`}
+                                    />
+                                    <h4 className={`font-medium truncate ${isAcked ? 'text-gray-300 line-through decoration-muted-foreground/50' : 'text-white'}`}>
+                                      {threat.title}
+                                    </h4>
+                                    {isAcked ? (
+                                      <Badge variant="outline" className="border-muted-foreground/40 text-muted-foreground text-[10px] uppercase tracking-wider">
+                                        Acknowledged
+                                      </Badge>
+                                    ) : (
+                                      <Badge className={`${getSeverityColor(threat.severity)} text-xs`}>
+                                        {threat.severity}
+                                      </Badge>
+                                    )}
                                   </div>
                                   <p className="text-sm text-gray-400 line-clamp-2">
                                     {stripHtml(threat.description)}
@@ -870,36 +886,68 @@ export default function WraythWeb() {
                                       <Calendar className="h-3 w-3" />
                                       {new Date(threat.first_seen).toLocaleDateString()}
                                     </span>
+                                    {isAcked && threat.acknowledged_at && (
+                                      <span className="flex items-center gap-1">
+                                        <CheckCircle className="h-3 w-3" />
+                                        Acknowledged {new Date(threat.acknowledged_at).toLocaleDateString()}
+                                      </span>
+                                    )}
                                   </div>
-                                  {/* Ray recommends — actionable next steps derived from the threat */}
-                                  <div className="mt-3 rounded-md border border-violet-500/15 bg-violet-500/[0.04] px-3 py-2">
-                                    <div className="text-[10px] uppercase tracking-[0.22em] text-violet-300/80 mb-1.5">
-                                      Ray recommends
+                                  {!isAcked && (
+                                    <div className="mt-3 rounded-md border border-violet-500/15 bg-violet-500/[0.04] px-3 py-2">
+                                      <div className="text-[10px] uppercase tracking-[0.22em] text-violet-300/80 mb-1.5">
+                                        Ray recommends
+                                      </div>
+                                      <ul className="space-y-1">
+                                        {getRayActions(threat).map((action, i) => (
+                                          <li key={i} className="flex items-center gap-2 text-xs text-gray-300">
+                                            <CheckCircle className="h-3 w-3 text-green-400 shrink-0" />
+                                            <span>{action}</span>
+                                          </li>
+                                        ))}
+                                      </ul>
                                     </div>
-                                    <ul className="space-y-1">
-                                      {getRayActions(threat).map((action, i) => (
-                                        <li key={i} className="flex items-center gap-2 text-xs text-gray-300">
-                                          <CheckCircle className="h-3 w-3 text-green-400 shrink-0" />
-                                          <span>{action}</span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
+                                  )}
                                 </div>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-violet-400 hover:text-violet-300"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedThreat(threat);
-                                  }}
-                                >
-                                  <Info className="h-4 w-4" />
-                                </Button>
+                                <div className="flex flex-col items-end gap-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-violet-400 hover:text-violet-300"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedThreat(threat);
+                                    }}
+                                  >
+                                    <Info className="h-4 w-4" />
+                                  </Button>
+                                  {isAcked ? (
+                                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground px-2">
+                                      Reviewed
+                                    </span>
+                                  ) : (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="border-violet-500/30 text-violet-300 hover:bg-violet-500/10"
+                                      disabled={acking.has(threat.id)}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        acknowledgeThreat(threat);
+                                      }}
+                                    >
+                                      {acking.has(threat.id) ? (
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                      ) : (
+                                        <><CheckCircle className="h-3 w-3 mr-1" /> Acknowledge</>
+                                      )}
+                                    </Button>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       ) : (
                         <p className="text-center text-gray-400 py-4">No threat details available</p>
